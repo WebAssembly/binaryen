@@ -191,26 +191,30 @@ void TranslateToFuzzReader::setupMemory() {
     // need at least one segment for memory.inits
     size_t numSegments = upTo(8) + 1;
     for (size_t i = 0; i < numSegments; i++) {
-      Memory::Segment segment;
-      segment.isPassive = bool(upTo(2));
+      auto segment = builder.makeDataSegment();
+      segment->setName(Name::fromInt(i), false);
+      segment->isPassive = bool(upTo(2));
       size_t segSize = upTo(USABLE_MEMORY * 2);
-      segment.data.resize(segSize);
+      segment->data.resize(segSize);
       for (size_t j = 0; j < segSize; j++) {
-        segment.data[j] = upTo(512);
+        segment->data[j] = upTo(512);
       }
-      if (!segment.isPassive) {
-        segment.offset = builder.makeConst(int32_t(memCovered));
+      if (!segment->isPassive) {
+        segment->offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
       }
-      wasm.memory.segments.push_back(segment);
+      wasm.dataSegments.push_back(std::move(segment));
     }
   } else {
     // init some data
-    wasm.memory.segments.emplace_back(builder.makeConst(int32_t(0)));
+    auto segment = builder.makeDataSegment();
+    segment->offset = builder.makeConst(int32_t(0));
+    segment->setName(Name::fromInt(0), false);
+    wasm.dataSegments.push_back(std::move(segment));
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
-      wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
+      wasm.dataSegments[0]->data.push_back(value >= 256 ? 0 : (value & 0xff));
     }
   }
   // Add memory hasher helper (for the hash, see hash.h). The function looks
@@ -326,10 +330,10 @@ void TranslateToFuzzReader::setupTags() {
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
-  for (auto& segment : wasm.memory.segments) {
-    Address maxOffset = segment.data.size();
-    if (!segment.isPassive) {
-      if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
+  for (auto& segment : wasm.dataSegments) {
+    Address maxOffset = segment->data.size();
+    if (!segment->isPassive) {
+      if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
         // Using a non-imported global in a segment offset is not valid in
         // wasm. This can occur due to us making what used to be an imported
         // global, in initial contents, be not imported any more. To fix that,
@@ -342,11 +346,11 @@ void TranslateToFuzzReader::finalizeMemory() {
         if (!wasm.getGlobal(offset->name)->imported()) {
           // TODO: It would be better to avoid segment overlap so that
           //       MemoryPacking can run.
-          segment.offset =
+          segment->offset =
             builder.makeConst(Literal::makeFromInt32(0, Type::i32));
         }
       }
-      if (auto* offset = segment.offset->dynCast<Const>()) {
+      if (auto* offset = segment->offset->dynCast<Const>()) {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
@@ -2905,8 +2909,8 @@ Expression* TranslateToFuzzReader::makeMemoryInit() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  uint32_t segment = upTo(wasm.memory.segments.size());
-  size_t totalSize = wasm.memory.segments[segment].data.size();
+  uint32_t segment = upTo(wasm.dataSegments.size());
+  size_t totalSize = wasm.dataSegments[segment]->data.size();
   size_t offsetVal = upTo(totalSize);
   size_t sizeVal = upTo(totalSize - offsetVal);
   Expression* dest = makePointer();
@@ -2919,7 +2923,7 @@ Expression* TranslateToFuzzReader::makeDataDrop() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  return builder.makeDataDrop(upTo(wasm.memory.segments.size()));
+  return builder.makeDataDrop(upTo(wasm.dataSegments.size()));
 }
 
 Expression* TranslateToFuzzReader::makeMemoryCopy() {

@@ -3768,23 +3768,25 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->memory.segments.emplace_back(Name(),
-                                       segmentPassive[i],
-                                       (Expression*)segmentOffsets[i],
-                                       segments[i],
-                                       segmentSizes[i]);
+    auto curr = Builder::makeDataSegment(Name::fromInt(i),
+                                         segmentPassive[i],
+                                         (Expression*)segmentOffsets[i],
+                                         segments[i],
+                                         segmentSizes[i]);
+    curr->hasExplicitName = false;
+    wasm->dataSegments.push_back(std::move(curr));
   }
 }
 
 // Memory segments
 
 uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
-  return ((Module*)module)->memory.segments.size();
+  return ((Module*)module)->dataSegments.size();
 }
 uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
                                             BinaryenIndex id) {
   auto* wasm = (Module*)module;
-  if (wasm->memory.segments.size() <= id) {
+  if (wasm->dataSegments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
 
@@ -3797,13 +3799,13 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
     return false;
   };
 
-  const auto& segment = wasm->memory.segments[id];
+  const auto& segment = wasm->dataSegments[id];
 
   int64_t ret;
-  if (globalOffset(segment.offset, ret)) {
+  if (globalOffset(segment->offset, ret)) {
     return ret;
   }
-  if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+  if (auto* get = segment->offset->dynCast<GlobalGet>()) {
     Global* global = wasm->getGlobal(get->name);
     if (globalOffset(global->init, ret)) {
       return ret;
@@ -3846,29 +3848,29 @@ bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
-  const auto& segments = ((Module*)module)->memory.segments;
+  const auto& segments = ((Module*)module)->dataSegments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  return segments[id].data.size();
+  return segments[id]->data.size();
 }
 bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
                                      BinaryenIndex id) {
-  const auto& segments = ((Module*)module)->memory.segments;
+  const auto& segments = ((Module*)module)->dataSegments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
-  return segments[id].isPassive;
+  return segments[id]->isPassive;
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                    BinaryenIndex id,
                                    char* buffer) {
-  const auto& segments = ((Module*)module)->memory.segments;
+  const auto& segments = ((Module*)module)->dataSegments;
   if (segments.size() <= id) {
     Fatal() << "invalid segment id.";
   }
   const auto& segment = segments[id];
-  std::copy(segment.data.cbegin(), segment.data.cend(), buffer);
+  std::copy(segment->data.cbegin(), segment->data.cend(), buffer);
 }
 
 // Start function. One per module

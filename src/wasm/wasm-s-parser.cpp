@@ -3038,8 +3038,9 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       } else {
         offset->set(Literal(int32_t(0)));
       }
-      parseInnerData(inner, j, {}, offset, false);
-      wasm.memory.initial = wasm.memory.segments[0].data.size();
+      parseInnerData(
+        inner, j, Name::fromInt(dataCounter++), false, offset, false);
+      wasm.memory.initial = wasm.dataSegments[0]->data.size();
       return;
     }
   }
@@ -3073,9 +3074,15 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
-      wasm.memory.segments.emplace_back(offset, data.data(), data.size());
+      auto segment = Builder::makeDataSegment(
+        Name::fromInt(dataCounter++), false, offset, data.data(), data.size());
+      segment->hasExplicitName = false;
+      wasm.dataSegments.push_back(std::move(segment));
     } else {
-      wasm.memory.segments.emplace_back(offset, "", 0);
+      auto segment =
+        Builder::makeDataSegment(Name::fromInt(dataCounter++), false, offset);
+      segment->hasExplicitName = false;
+      wasm.dataSegments.push_back(std::move(segment));
     }
     i++;
   }
@@ -3085,13 +3092,15 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   if (!wasm.memory.exists) {
     throw ParseException("data but no memory", s.line, s.col);
   }
+  Index i = 1;
+  Name name = Name::fromInt(dataCounter++);
+  bool hasExplicitName = false;
   bool isPassive = true;
   Expression* offset = nullptr;
-  Index i = 1;
-  Name name;
 
   if (s[i]->isStr() && s[i]->dollared()) {
     name = s[i++]->str();
+    hasExplicitName = true;
   }
 
   if (s[i]->isList()) {
@@ -3112,11 +3121,15 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     isPassive = false;
   }
 
-  parseInnerData(s, i, name, offset, isPassive);
+  parseInnerData(s, i, name, hasExplicitName, offset, isPassive);
 }
 
-void SExpressionWasmBuilder::parseInnerData(
-  Element& s, Index i, Name name, Expression* offset, bool isPassive) {
+void SExpressionWasmBuilder::parseInnerData(Element& s,
+                                            Index i,
+                                            Name name,
+                                            bool hasExplicitName,
+                                            Expression* offset,
+                                            bool isPassive) {
   std::vector<char> data;
   while (i < s.size()) {
     const char* input = s[i++]->c_str();
@@ -3124,8 +3137,10 @@ void SExpressionWasmBuilder::parseInnerData(
       stringToBinary(input, size, data);
     }
   }
-  wasm.memory.segments.emplace_back(
-    name, isPassive, offset, data.data(), data.size());
+  auto curr =
+    Builder::makeDataSegment(name, isPassive, offset, data.data(), data.size());
+  curr->hasExplicitName = hasExplicitName;
+  wasm.dataSegments.push_back(std::move(curr));
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {

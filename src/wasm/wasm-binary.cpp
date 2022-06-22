@@ -517,36 +517,36 @@ void WasmBinaryWriter::writeExports() {
 }
 
 void WasmBinaryWriter::writeDataCount() {
-  if (!wasm->features.hasBulkMemory() || !wasm->memory.segments.size()) {
+  if (!wasm->features.hasBulkMemory() || !wasm->dataSegments.size()) {
     return;
   }
   auto start = startSection(BinaryConsts::Section::DataCount);
-  o << U32LEB(wasm->memory.segments.size());
+  o << U32LEB(wasm->dataSegments.size());
   finishSection(start);
 }
 
 void WasmBinaryWriter::writeDataSegments() {
-  if (wasm->memory.segments.size() == 0) {
+  if (wasm->dataSegments.size() == 0) {
     return;
   }
-  if (wasm->memory.segments.size() > WebLimitations::MaxDataSegments) {
+  if (wasm->dataSegments.size() > WebLimitations::MaxDataSegments) {
     std::cerr << "Some VMs may not accept this binary because it has a large "
               << "number of data segments. Run the limit-segments pass to "
               << "merge segments.\n";
   }
   auto start = startSection(BinaryConsts::Section::Data);
-  o << U32LEB(wasm->memory.segments.size());
-  for (auto& segment : wasm->memory.segments) {
+  o << U32LEB(wasm->dataSegments.size());
+  for (auto& segment : wasm->dataSegments) {
     uint32_t flags = 0;
-    if (segment.isPassive) {
+    if (segment->isPassive) {
       flags |= BinaryConsts::IsPassive;
     }
     o << U32LEB(flags);
-    if (!segment.isPassive) {
-      writeExpression(segment.offset);
+    if (!segment->isPassive) {
+      writeExpression(segment->offset);
       o << int8_t(BinaryConsts::End);
     }
-    writeInlineBuffer(segment.data.data(), segment.data.size());
+    writeInlineBuffer(segment->data.data(), segment->data.size());
   }
   finishSection(start);
 }
@@ -919,8 +919,8 @@ void WasmBinaryWriter::writeNames() {
   // data segment names
   if (wasm->memory.exists) {
     Index count = 0;
-    for (auto& seg : wasm->memory.segments) {
-      if (seg.name.is()) {
+    for (auto& seg : wasm->dataSegments) {
+      if (seg->hasExplicitName) {
         count++;
       }
     }
@@ -929,11 +929,11 @@ void WasmBinaryWriter::writeNames() {
       auto substart =
         startSubsection(BinaryConsts::UserSections::Subsection::NameData);
       o << U32LEB(count);
-      for (Index i = 0; i < wasm->memory.segments.size(); i++) {
-        auto& seg = wasm->memory.segments[i];
-        if (seg.name.is()) {
+      for (Index i = 0; i < wasm->dataSegments.size(); i++) {
+        auto& seg = wasm->dataSegments[i];
+        if (seg->name.is()) {
           o << U32LEB(i);
-          writeEscapedName(seg.name.str);
+          writeEscapedName(seg->name.str);
         }
       }
       finishSubsection(substart);
@@ -1482,7 +1482,7 @@ void WasmBinaryBuilder::read() {
         readDataSegments();
         break;
       case BinaryConsts::Section::DataCount:
-        readDataCount();
+        readDataSegmentCount();
         break;
       case BinaryConsts::Section::Table:
         readTableDeclarations();
@@ -2791,7 +2791,7 @@ Expression* WasmBinaryBuilder::popTypedExpression(Type type) {
 }
 
 void WasmBinaryBuilder::validateBinary() {
-  if (hasDataCount && wasm.memory.segments.size() != dataCount) {
+  if (hasDataCount && dataSegments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
   }
 }
@@ -2809,7 +2809,9 @@ void WasmBinaryBuilder::processNames() {
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
-
+  for (auto& segment : dataSegments) {
+    wasm.addDataSegment(std::move(segment));
+  }
   // now that we have names, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
@@ -2888,8 +2890,8 @@ void WasmBinaryBuilder::processNames() {
   wasm.updateMaps();
 }
 
-void WasmBinaryBuilder::readDataCount() {
-  BYN_TRACE("== readDataCount\n");
+void WasmBinaryBuilder::readDataSegmentCount() {
+  BYN_TRACE("== readDataSegmentCount\n");
   hasDataCount = true;
   dataCount = getU32LEB();
 }
@@ -2898,26 +2900,27 @@ void WasmBinaryBuilder::readDataSegments() {
   BYN_TRACE("== readDataSegments\n");
   auto num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
-    Memory::Segment curr;
+    auto curr = Builder::makeDataSegment();
     uint32_t flags = getU32LEB();
     if (flags > 2) {
       throwError("bad segment flags, must be 0, 1, or 2, not " +
                  std::to_string(flags));
     }
-    curr.isPassive = flags & BinaryConsts::IsPassive;
+    curr->setName(Name::fromInt(i), false);
+    curr->isPassive = flags & BinaryConsts::IsPassive;
     if (flags & BinaryConsts::HasIndex) {
       auto memIndex = getU32LEB();
       if (memIndex != 0) {
         throwError("nonzero memory index");
       }
     }
-    if (!curr.isPassive) {
-      curr.offset = readExpression();
+    if (!curr->isPassive) {
+      curr->offset = readExpression();
     }
     auto size = getU32LEB();
     auto data = getByteView(size);
-    curr.data = {data.first, data.second};
-    wasm.memory.segments.push_back(std::move(curr));
+    curr->data = {data.first, data.second};
+    dataSegments.push_back(std::move(curr));
   }
 }
 
@@ -3254,14 +3257,16 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameData) {
       auto num = getU32LEB();
+      NameProcessor processor;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        if (index < wasm.memory.segments.size()) {
-          wasm.memory.segments[i].name = rawName;
+        auto name = processor.process(rawName);
+        if (index < dataSegments.size()) {
+          dataSegments[i]->setExplicitName(name);
         } else {
-          std::cerr << "warning: memory index out of bounds in name section, "
-                       "memory subsection: "
+          std::cerr << "warning: data index out of bounds in name section, "
+                       "data subsection: "
                     << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
