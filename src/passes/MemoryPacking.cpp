@@ -102,7 +102,8 @@ struct MemoryPacking : public Pass {
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
   void dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
-  bool canSplit(const std::unique_ptr<DataSegment>& segment, const Referrers& referrers);
+  bool canSplit(const std::unique_ptr<DataSegment>& segment,
+                const Referrers& referrers);
   void calculateRanges(const std::unique_ptr<DataSegment>& segment,
                        const Referrers& referrers,
                        std::vector<Range>& ranges);
