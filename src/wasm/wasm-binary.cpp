@@ -52,7 +52,7 @@ void WasmBinaryWriter::write() {
   writeImports();
   writeFunctionSignatures();
   writeTableDeclarations();
-  writeMemory();
+  writeMemories();
   writeTags();
   if (wasm->features.hasStrings()) {
     writeStrings();
@@ -203,18 +203,21 @@ void WasmBinaryWriter::writeStart() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::writeMemory() {
-  if (wasm->memories.empty() || wasm->memories[0]->imported()) {
+void WasmBinaryWriter::writeMemories() {
+  if (importInfo->getNumDefinedTags() == 0) {
     return;
   }
-  BYN_TRACE("== writeMemory\n");
+  BYN_TRACE("== writeMemories\n");
   auto start = startSection(BinaryConsts::Section::Memory);
-  o << U32LEB(1); // Define 1 memory
-  writeResizableLimits(wasm->memories[0]->initial,
-                       wasm->memories[0]->max,
-                       wasm->memories[0]->hasMax(),
-                       wasm->memories[0]->shared,
-                       wasm->memories[0]->is64());
+  auto num = importInfo->getNumDefinedTables();
+  o << U32LEB(num);
+  ModuleUtils::iterDefinedMemories(*wasm, [&](Memory* memory) {
+    writeResizableLimits(memory->initial,
+                         memory->max,
+                         memory->hasMax(),
+                         memory->shared,
+                         memory->is64());
+  });
   finishSection(start);
 }
 
@@ -333,16 +336,16 @@ void WasmBinaryWriter::writeImports() {
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
     o << U32LEB(getTypeIndex(tag->sig));
   });
-  if (wasm->memories[0]->imported()) {
+  ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
     BYN_TRACE("write one memory\n");
-    writeImportHeader(&*wasm->memories[0]);
+    writeImportHeader(memory);
     o << U32LEB(int32_t(ExternalKind::Memory));
-    writeResizableLimits(wasm->memories[0]->initial,
-                         wasm->memories[0]->max,
-                         wasm->memories[0]->hasMax(),
-                         wasm->memories[0]->shared,
-                         wasm->memories[0]->is64());
-  }
+    writeResizableLimits(memory->initial,
+                         memory->max,
+                         memory->hasMax(),
+                         memory->shared,
+                         memory->is64());
+  });
   ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     BYN_TRACE("write one table\n");
     writeImportHeader(table);
@@ -566,8 +569,7 @@ void WasmBinaryWriter::writeExports() {
         o << U32LEB(getTableIndex(curr->value));
         break;
       case ExternalKind::Memory:
-        // TODO: fix with multi-memory
-        o << U32LEB(0);
+        o << U32LEB(getMemoryIndex(curr->value));
         break;
       case ExternalKind::Global:
         o << U32LEB(getGlobalIndex(curr->value));
@@ -626,6 +628,12 @@ uint32_t WasmBinaryWriter::getFunctionIndex(Name name) const {
 uint32_t WasmBinaryWriter::getTableIndex(Name name) const {
   auto it = indexes.tableIndexes.find(name);
   assert(it != indexes.tableIndexes.end());
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getMemoryIndex(Name name) const {
+  auto it = indexes.memoryIndexes.find(name);
+  assert(it != indexes.memoryIndexes.end());
   return it->second;
 }
 
@@ -930,12 +938,28 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // memory names
-  if (!wasm->memories.empty() && wasm->memories[0]->hasExplicitName) {
-    auto substart =
-      startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
-    o << U32LEB(1) << U32LEB(0); // currently exactly 1 memory at index 0
-    writeEscapedName(wasm->memories[0]->name.str);
-    finishSubsection(substart);
+  {
+    std::vector<std::pair<Index, Memory*>> memoriesWithNames;
+    Index checked = 0;
+    auto check = [&](Memory* curr) {
+      if (curr->hasExplicitName) {
+        memoriesWithNames.push_back({checked, curr});
+      }
+      checked++;
+    };
+    ModuleUtils::iterImportedMemories(*wasm, check);
+    ModuleUtils::iterDefinedMemories(*wasm, check);
+    assert(checked == indexes.globalIndexes.size());
+    if (memoriesWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
+      o << U32LEB(memoriesWithNames.size());
+      for (auto& [index, memory] : memoriesWithNames) {
+        o << U32LEB(index);
+        writeEscapedName(memory->name.str);
+      }
+      finishSubsection(substart);
+    }
   }
 
   // global names
@@ -1013,7 +1037,7 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // TODO: label, type, and element names
+  // TODO: label names
   // see: https://github.com/WebAssembly/extended-name-section
 
   // GC field names
@@ -1547,7 +1571,7 @@ void WasmBinaryBuilder::read() {
         readStart();
         break;
       case BinaryConsts::Section::Memory:
-        readMemory();
+        readMemories();
         break;
       case BinaryConsts::Section::Type:
         readTypes();
@@ -1963,25 +1987,20 @@ void WasmBinaryBuilder::readStart() {
   startIndex = getU32LEB();
 }
 
-void WasmBinaryBuilder::readMemory() {
-  BYN_TRACE("== readMemory\n");
-  auto numMemories = getU32LEB();
-  if (!numMemories) {
-    return;
+void WasmBinaryBuilder::readMemories() {
+  BYN_TRACE("== readMemories\n");
+  auto num = getU32LEB();
+  BYN_TRACE("num: " << num << std::endl);
+  for (size_t i = 0; i < num; i++) {
+    BYN_TRACE("read one\n");
+    auto memory = Builder::makeMemory();
+    getResizableLimits(memory->initial,
+                       memory->max,
+                       memory->shared,
+                       memory->indexType,
+                       Memory::kUnlimitedSize);
+    memories.push_back(std::move(memory));
   }
-  if (numMemories != 1) {
-    throwError("Must be exactly 1 memory");
-  }
-  if (!wasm.memories.empty()) {
-    throwError("Memory cannot be both imported and defined");
-  }
-  auto memory = Builder::makeMemory();
-  getResizableLimits(memory->initial,
-                     memory->max,
-                     memory->shared,
-                     memory->indexType,
-                     Memory::kUnlimitedSize);
-  memories.push_back(std::move(memory));
 }
 
 void WasmBinaryBuilder::readTypes() {
@@ -2172,6 +2191,13 @@ Name WasmBinaryBuilder::getTableName(Index index) {
   return wasm.tables[index]->name;
 }
 
+Name WasmBinaryBuilder::getMemoryName(Index index) {
+  if (index >= wasm.memories.size()) {
+    throwError("invalid memory index");
+  }
+  return wasm.memories[index]->name;
+}
+
 Name WasmBinaryBuilder::getGlobalName(Index index) {
   if (index >= wasm.globals.size()) {
     throwError("invalid global index");
@@ -2271,16 +2297,16 @@ void WasmBinaryBuilder::readImports() {
       }
       case ExternalKind::Memory: {
         Name name(std::string("mimport$") + std::to_string(memoryCounter++));
-        auto curr = builder.makeMemory(name);
-        wasm.addMemory(std::move(curr));
-        wasm.memories[0]->module = module;
-        wasm.memories[0]->base = base;
-        wasm.memories[0]->name = name;
-        getResizableLimits(wasm.memories[0]->initial,
-                           wasm.memories[0]->max,
-                           wasm.memories[0]->shared,
-                           wasm.memories[0]->indexType,
+        auto memory = builder.makeMemory(name);
+        memory->module = module;
+        memory->base = base;
+        getResizableLimits(memory->initial,
+                           memory->max,
+                           memory->shared,
+                           memory->indexType,
                            Memory::kUnlimitedSize);
+        memoryImports.push_back(memory.get());
+        wasm.addMemory(std::move(memory));
         break;
       }
       case ExternalKind::Global: {
@@ -2925,8 +2951,8 @@ void WasmBinaryBuilder::processNames() {
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
-  if (!memories.empty()) {
-    wasm.addMemory(std::move(memories[0]));
+  for (auto& memory : memories) {
+    wasm.addMemory(std::move(memory));
   }
   for (auto& segment : dataSegments) {
     wasm.addDataSegment(std::move(segment));
@@ -2948,7 +2974,7 @@ void WasmBinaryBuilder::processNames() {
         curr->value = getTableName(index);
         break;
       case ExternalKind::Memory:
-        curr->value = wasm.memories[0]->name;
+        curr->value = getMemoryName(index);
         break;
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
@@ -3338,11 +3364,16 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameMemory) {
       auto num = getU32LEB();
+      NameProcessor processor;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        if (index == 0) {
-          memories[0]->setExplicitName(escape(rawName));
+        auto name = processor.process(rawName);
+        auto numMemoryImports = memoryImports.size();
+        if (index < numMemoryImports) {
+          memoryImports[index]->setExplicitName(name);
+        } else if (index - numMemoryImports < memories.size()) {
+          memories[index - numMemoryImports]->setExplicitName(name);
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
@@ -4315,6 +4346,7 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
     throwError("Alignment must be of a reasonable size");
   }
   alignment = Bits::pow2(rawAlignment);
+  // TODO (nashley): reinterpret the alignment as a bit field per the proposal
   offset = getUPtrLEB();
 }
 

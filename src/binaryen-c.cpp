@@ -3656,7 +3656,7 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto memory = std::make_unique<Memory>();
+  auto memory = Builder::makeMemory(internalName); 
   memory->module = externalModuleName;
   memory->base = externalBaseName;
   memory->shared = shared;
@@ -3875,6 +3875,7 @@ const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
 // Memory. One per module
 
 void BinaryenSetMemory(BinaryenModuleRef module,
+                       const char* internalName,
                        BinaryenIndex initial,
                        BinaryenIndex maximum,
                        const char* exportName,
@@ -3886,6 +3887,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        bool shared) {
   auto* wasm = (Module*)module;
   auto memory = Builder::makeMemory();
+  memory->name = internalName;
   memory->initial = initial;
   memory->max = int32_t(maximum); // Make sure -1 extends.
   memory->shared = shared;
@@ -3899,12 +3901,13 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     auto curr = Builder::makeDataSegment(Name::fromInt(i),
+                                         memory->name,
                                          segmentPassive[i],
                                          (Expression*)segmentOffsets[i],
                                          segments[i],
                                          segmentSizes[i]);
     curr->hasExplicitName = false;
-    wasm->dataSegments.push_back(std::move(curr));
+    wasm->addDataSegment(std::move(curr));
   }
 }
 
@@ -3948,45 +3951,55 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
 bool BinaryenHasMemory(BinaryenModuleRef module) {
   return !((Module*)module)->memories.empty();
 }
-BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
-  assert(!((Module*)module)->memories.empty());
-  return ((Module*)module)->memories[0]->initial;
-}
-bool BinaryenMemoryHasMax(BinaryenModuleRef module) {
-  assert(!((Module*)module)->memories.empty());
-  return ((Module*)module)->memories[0]->hasMax();
-}
-BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
-  assert(!((Module*)module)->memories.empty());
-  return ((Module*)module)->memories[0]->max;
-}
-const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
-  if (((Module*)module)->memories.empty()) {
-    return "";
+BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module, const char* name) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
   }
-
-  auto& memory = ((Module*)module)->memories[0];
+  return memory->initial;
+}
+bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
+  }
+  return memory->hasMax();
+}
+BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
+  }
+  return memory->max;
+}
+const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module, const char* name) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
+  }
   if (memory->imported()) {
     return memory->module.c_str();
   } else {
     return "";
   }
 }
-const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
-  if (((Module*)module)->memories.empty()) {
-    return "";
+const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module, const char* name) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
   }
-
-  auto& memory = ((Module*)module)->memories[0];
   if (memory->imported()) {
     return memory->base.c_str();
   } else {
     return "";
   }
 }
-bool BinaryenMemoryIsShared(BinaryenModuleRef module) {
-  assert(!((Module*)module)->memories.empty());
-  return ((Module*)module)->memories[0]->shared;
+bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
+  }
+  return memory->shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {

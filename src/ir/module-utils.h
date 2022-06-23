@@ -221,14 +221,18 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 // Convenient iteration over imported/non-imported module elements
 
 template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
-  if (!wasm.memories.empty() && wasm.memories[0]->imported()) {
-    visitor(wasm.memories[0].get());
+  for (auto& import : wasm.memories) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
-  if (!wasm.memories.empty() && !wasm.memories[0]->imported()) {
-    visitor(wasm.memories[0].get());
+  for (auto& import : wasm.memories) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 

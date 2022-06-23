@@ -495,6 +495,19 @@ Name SExpressionWasmBuilder::getTableName(Element& s) {
   }
 }
 
+Name SExpressionWasmBuilder::getMemoryName(Element& s) {
+  if (s.dollared()) {
+    return s.str();
+  } else {
+    // index
+    size_t offset = atoi(s.str().c_str());
+    if (offset >= memoryNames.size()) {
+      throw ParseException("unknown table in getMemoryName", s.line, s.col);
+    }
+    return memoryNames[offset];
+  }
+}
+
 Name SExpressionWasmBuilder::getGlobalName(Element& s) {
   if (s.dollared()) {
     return s.str();
@@ -1358,8 +1371,17 @@ Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
+  auto name = Name::fromInt(0);
+  if (s.size() > 0) {
+    name = s[1]->str();
+  }
+  auto* memory = wasm.getMemoryOrNull(name);
+  if (!memory) {
+    throw ParseException("invalid memory name in memory.size", s.line, s.col);
+  }
+
   auto ret = allocator.alloc<MemorySize>();
-  if (wasm.memories[0]->is64()) {
+  if (memory->is64()) {
     ret->make64();
   }
   ret->finalize();
@@ -1367,11 +1389,22 @@ Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeMemoryGrow(Element& s) {
+  auto name = Name::fromInt(0);
+  Index i = 1;
+  if (s[i]->isStr()) {
+    name = s[1]->str();
+    i++;
+  }
+  auto* memory = wasm.getMemoryOrNull(name);
+  if (!memory) {
+    throw ParseException("invalid memory name in memory.grow", s.line, s.col);
+  }
+
   auto ret = allocator.alloc<MemoryGrow>();
-  if (wasm.memories[0]->is64()) {
+  if (memory->is64()) {
     ret->make64();
   }
-  ret->delta = parseExpression(s[1]);
+  ret->delta = parseExpression(s[i]);
   ret->finalize();
   return ret;
 }
@@ -2995,35 +3028,35 @@ void SExpressionWasmBuilder::stringToBinary(const char* input,
   data.resize(actual);
 }
 
-Index SExpressionWasmBuilder::parseMemoryIndex(Element& s, Index i) {
+Index SExpressionWasmBuilder::parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory) {
   if (i < s.size() && s[i]->isStr()) {
     if (s[i]->str() == "i64") {
       i++;
-      wasm.memories[0]->indexType = Type::i64;
+      memory->indexType = Type::i64;
     } else if (s[i]->str() == "i32") {
       i++;
-      wasm.memories[0]->indexType = Type::i32;
+      memory->indexType = Type::i32;
     }
   }
   return i;
 }
 
-Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
-  i = parseMemoryIndex(s, i);
+Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory) {
+  i = parseMemoryIndex(s, i, memory);
   if (i == s.size()) {
     throw ParseException("missing memory limits", s.line, s.col);
   }
   auto initElem = s[i++];
-  wasm.memories[0]->initial = getAddress(initElem);
-  if (!wasm.memories[0]->is64()) {
-    checkAddress(wasm.memories[0]->initial, "excessive memory init", initElem);
+  memory->initial = getAddress(initElem);
+  if (!memory->is64()) {
+    checkAddress(memory->initial, "excessive memory init", initElem);
   }
   if (i == s.size()) {
-    wasm.memories[0]->max = Memory::kUnlimitedSize;
+    memory->max = Memory::kUnlimitedSize;
   } else {
     auto maxElem = s[i++];
-    wasm.memories[0]->max = getAddress(maxElem);
-    if (!wasm.memories[0]->is64() && wasm.memories[0]->max > Memory::kMaxSize32) {
+    memory->max = getAddress(maxElem);
+    if (memory->is64() && memory->max > Memory::kMaxSize32) {
       throw ParseException(
         "total memory must be <= 4GB", maxElem->line, maxElem->col);
     }
@@ -3032,24 +3065,24 @@ Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
 }
 
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
-  if (!wasm.memories.empty()) {
-    throw ParseException("too many memories", s.line, s.col);
-  }
   auto memory = make_unique<Memory>();
   memory->shared = false;
   Index i = 1;
   if (s[i]->dollared()) {
     memory->setExplicitName(s[i++]->str());
+  } else {
+    memory->name = Name::fromInt(memoryCounter++);
   }
-  wasm.addMemory(std::move(memory));
-  i = parseMemoryIndex(s, i);
+  memoryNames.push_back(memory->name);
+
+  i = parseMemoryIndex(s, i, memory);
   Name importModule, importBase;
   if (s[i]->isList()) {
     auto& inner = *s[i];
     if (elementStartsWith(inner, EXPORT)) {
       auto ex = make_unique<Export>();
       ex->name = inner[1]->str();
-      ex->value = wasm.memories[0]->name;
+      ex->value = memory->name;
       ex->kind = ExternalKind::Memory;
       if (wasm.getExportOrNull(ex->name)) {
         throw ParseException("duplicate export", inner.line, inner.col);
@@ -3057,33 +3090,35 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       wasm.addExport(ex.release());
       i++;
     } else if (elementStartsWith(inner, IMPORT)) {
-      wasm.memories[0]->module = inner[1]->str();
-      wasm.memories[0]->base = inner[2]->str();
+      memory->module = inner[1]->str();
+      memory->base = inner[2]->str();
       i++;
     } else if (elementStartsWith(inner, SHARED)) {
-      wasm.memories[0]->shared = true;
-      parseMemoryLimits(inner, 1);
+      memory->shared = true;
+      parseMemoryLimits(inner, 1, memory);
       i++;
     } else {
       if (!(inner.size() > 0 ? inner[0]->str() != IMPORT : true)) {
         throw ParseException("bad import ending", inner.line, inner.col);
       }
       // (memory (data ..)) format
-      auto j = parseMemoryIndex(inner, 1);
+      auto j = parseMemoryIndex(inner, 1, memory);
       auto offset = allocator.alloc<Const>();
-      if (wasm.memories[0]->is64()) {
+      if (memory->is64()) {
         offset->set(Literal(int64_t(0)));
       } else {
         offset->set(Literal(int32_t(0)));
       }
-      parseInnerData(
-        inner, j, Name::fromInt(dataCounter++), false, offset, false);
-      wasm.memories[0]->initial = wasm.dataSegments[0]->data.size();
+      auto seg =
+        Builder::makeDataSegment(Name::fromInt(dataCounter++), memory->name, false, offset);
+      parseInnerData(inner, j, seg);
+      wasm.addDataSegment(std::move(seg));
+      memory->initial = wasm.dataSegments[0]->data.size();
       return;
     }
   }
-  if (!wasm.memories[0]->shared) {
-    i = parseMemoryLimits(s, i);
+  if (!memory->shared) {
+    i = parseMemoryLimits(s, i, memory);
   }
 
   // Parse memory initializers.
@@ -3096,13 +3131,13 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     } else {
       auto offsetElem = curr[j++];
       offsetValue = getAddress(offsetElem);
-      if (!wasm.memories[0]->is64()) {
+      if (memory->is64()) {
         checkAddress(offsetValue, "excessive memory offset", offsetElem);
       }
     }
     const char* input = curr[j]->c_str();
     auto* offset = allocator.alloc<Const>();
-    if (wasm.memories[0]->is64()) {
+    if (memory->is64()) {
       offset->type = Type::i64;
       offset->value = Literal(offsetValue);
     } else {
@@ -3113,17 +3148,18 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       std::vector<char> data;
       stringToBinary(input, size, data);
       auto segment = Builder::makeDataSegment(
-        Name::fromInt(dataCounter++), false, offset, data.data(), data.size());
+        Name::fromInt(dataCounter++), memory->name, false, offset, data.data(), data.size());
       segment->hasExplicitName = false;
-      wasm.dataSegments.push_back(std::move(segment));
+      wasm.addDataSegment(std::move(segment));
     } else {
       auto segment =
-        Builder::makeDataSegment(Name::fromInt(dataCounter++), false, offset);
+        Builder::makeDataSegment(Name::fromInt(dataCounter++), memory->name, false, offset);
       segment->hasExplicitName = false;
-      wasm.dataSegments.push_back(std::move(segment));
+      wasm.addDataSegment(std::move(segment));
     }
     i++;
   }
+  wasm.addMemory(std::move(memory));
 }
 
 void SExpressionWasmBuilder::parseData(Element& s) {
@@ -3133,6 +3169,7 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   Index i = 1;
   Name name = Name::fromInt(dataCounter++);
   bool hasExplicitName = false;
+  Name memory;
   bool isPassive = true;
   Expression* offset = nullptr;
 
@@ -3144,10 +3181,9 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   if (s[i]->isList()) {
     // Optional (memory <memoryidx>)
     if (elementStartsWith(s[i], MEMORY)) {
-      // TODO: we're just skipping memory since we have only one. Assign the
-      //  memory name to the segment when we support multiple memories.
-      i += 1;
-    }
+      auto& inner = *s[i++];
+      memory = getMemoryName(*inner[1]);
+    }//TODO (nashley): need an else condition to set memory name
 
     // Offset expression (offset (<expr>)) | (<expr>)
     auto& inner = *s[i++];
@@ -3159,15 +3195,16 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     isPassive = false;
   }
 
-  parseInnerData(s, i, name, hasExplicitName, offset, isPassive);
+  auto seg =
+    Builder::makeDataSegment(name, memory, isPassive, offset);
+  seg->hasExplicitName = hasExplicitName;
+  parseInnerData(s, i, seg);
+  wasm.addDataSegment(std::move(seg));
 }
 
 void SExpressionWasmBuilder::parseInnerData(Element& s,
                                             Index i,
-                                            Name name,
-                                            bool hasExplicitName,
-                                            Expression* offset,
-                                            bool isPassive) {
+                                            std::unique_ptr<DataSegment>& seg) {
   std::vector<char> data;
   while (i < s.size()) {
     const char* input = s[i++]->c_str();
@@ -3175,10 +3212,8 @@ void SExpressionWasmBuilder::parseInnerData(Element& s,
       stringToBinary(input, size, data);
     }
   }
-  auto curr =
-    Builder::makeDataSegment(name, isPassive, offset, data.data(), data.size());
-  curr->hasExplicitName = hasExplicitName;
-  wasm.dataSegments.push_back(std::move(curr));
+  seg->data.resize(data.size());
+  std::copy_n(data.data(), data.size(), seg->data.begin());
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {
@@ -3225,9 +3260,6 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       kind = ExternalKind::Function;
     } else if (elementStartsWith(*s[3], MEMORY)) {
       kind = ExternalKind::Memory;
-      if (!wasm.memories.empty()) {
-        throw ParseException("more than one memory", s[3]->line, s[3]->col);
-      }
     } else if (elementStartsWith(*s[3], TABLE)) {
       kind = ExternalKind::Table;
     } else if (elementStartsWith(*s[3], GLOBAL)) {
@@ -3324,18 +3356,21 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     memory->setName(name, hasExplicitName);
     memory->module = module;
     memory->base = base;
-    wasm.addMemory(std::move(memory));
+    memoryNames.push_back(name);
+
     if (inner[j]->isList()) {
       auto& limits = *inner[j];
       if (!elementStartsWith(limits, SHARED)) {
         throw ParseException(
           "bad memory limit declaration", inner[j]->line, inner[j]->col);
       }
-      wasm.memories[0]->shared = true;
-      j = parseMemoryLimits(limits, 1);
+      memory->shared = true;
+      j = parseMemoryLimits(limits, 1, memory);
     } else {
-      j = parseMemoryLimits(inner, j);
+      j = parseMemoryLimits(inner, j, memory);
     }
+
+    wasm.addMemory(std::move(memory));
   } else if (kind == ExternalKind::Tag) {
     auto tag = make_unique<Tag>();
     HeapType tagType;

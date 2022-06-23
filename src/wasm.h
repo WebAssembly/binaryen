@@ -2029,6 +2029,7 @@ public:
 
 class DataSegment : public Named {
 public:
+  Name memory;
   bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize

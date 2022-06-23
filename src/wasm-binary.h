@@ -1187,6 +1187,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
+    std::unordered_map<Name, Index> memoryIndexes;
     std::unordered_map<Name, Index> dataIndexes;
 
     BinaryIndexes(Module& wasm) {
@@ -1209,6 +1210,7 @@ class WasmBinaryWriter {
       addIndexes(wasm.functions, functionIndexes);
       addIndexes(wasm.tags, tagIndexes);
       addIndexes(wasm.tables, tableIndexes);
+      addIndexes(wasm.memories, memoryIndexes);
 
       for (auto& curr : wasm.elementSegments) {
         auto index = elemIndexes.size();
@@ -1281,7 +1283,7 @@ public:
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
   void writeStart();
-  void writeMemory();
+  void writeMemories();
   void writeTypes();
   void writeImports();
 
@@ -1297,6 +1299,7 @@ public:
 
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getTableIndex(Name name) const;
+  uint32_t getMemoryIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
@@ -1466,12 +1469,13 @@ public:
   void verifyInt64(int64_t x);
   void readHeader();
   void readStart();
-  void readMemory();
+  void readMemories();
   void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
   Name getTableName(Index index);
+  Name getMemoryName(Index index);
   Name getGlobalName(Index index);
   Name getTagName(Index index);
 
@@ -1529,6 +1533,12 @@ public:
   // we store memories here after being read from binary, before we know their
   // names
   std::vector<std::unique_ptr<Memory>> memories;
+  // we store memory imports here before wasm.addMemoryImport after we know
+  // their names
+  std::vector<Memory*> memoryImports;
+  // at index i we have all references to the memory i
+  std::map<Index, std::vector<Expression*>> memoryRefs;
+
   // we store data here after being read from binary, before we know their names
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
 

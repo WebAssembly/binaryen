@@ -122,13 +122,11 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
     if (memory->module == env->name) {
-      env->memories[0]->name = wasm.memories[0]->name;
-      env->memories[0]->initial = memory->initial;
-      env->memories[0]->max = memory->max;
-      env->memories[0]->shared = memory->shared;
-      env->memories[0]->indexType = memory->indexType;
+      auto* copied = ModuleUtils::copyMemory(memory, *env);
+      copied->module = Name();
+      copied->base = Name();
       env->addExport(Builder(*env).makeExport(
-        wasm.memories[0]->base, wasm.memories[0]->name, ExternalKind::Memory));
+        memory->base, copied->name, ExternalKind::Memory));
     }
   });
 
