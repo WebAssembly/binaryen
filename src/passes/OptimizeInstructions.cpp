@@ -25,6 +25,7 @@
 #include <ir/abstract.h>
 #include <ir/bits.h>
 #include <ir/cost.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/eh-utils.h>
 #include <ir/find_all.h>
@@ -1373,9 +1374,12 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
-    if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
-      replaceCurrent(
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+    if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      auto* result = Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
+      replaceCurrent(getDroppedChildren(curr,
+                                *getModule(),
+                                getPassOptions(),
+                                result));
       return;
     }
 
