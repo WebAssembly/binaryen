@@ -1373,8 +1373,8 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Equality does not depend on the type, so casts may be removable.
-    skipCast(curr->left);
-    skipCast(curr->right);
+    skipCast(curr->left, Type::eqref);
+    skipCast(curr->right, Type::eqref);
 
     // Identical references compare equal.
     if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
@@ -1414,17 +1414,24 @@ struct OptimizeInstructions
   // cases where we don't actually care about the type but just the value, that
   // is, if casts of the type do not affect our behavior (which is the case in
   // ref.eq for example).
-  void skipCast(Expression*& input) {
+  //
+  // |requiredType| is the type we require as the final output here, or a
+  // subtype of it. We will not remove a cast that would leave something that
+  // would break that. If |requiredType| is not provided we will accept any type
+  // there.
+  void skipCast(Expression*& input, Type requiredType = Type::anyref) {
     // Traps-never-happen mode is a requirement for us to optimize here.
     if (!getPassOptions().trapsNeverHappen) {
       return;
     }
     while (1) {
       if (auto* as = input->dynCast<RefAs>()) {
-        input = as->value;
-        continue;
+        if (Type::isSubType(as->value->type, requiredType)) {
+          input = as->value;
+          continue;
+        }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (!cast->rtt) {
+        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
           input = cast->ref;
           continue;
         }
