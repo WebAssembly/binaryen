@@ -1374,6 +1374,10 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
+    // (Technically we do not need to check if the inputs are also foldable into
+    // a single one, but we do not have utility code to handle non-foldable
+    // cases yet; the foldable case we do handle is the common one of the first
+    // child being a tee and the second a get of that tee. TODO)
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
