@@ -37,34 +37,36 @@ bool flatten(Module& wasm) {
     }
   }
 
-  auto& memory = wasm.memory;
+  auto& dataSegments = wasm.dataSegments;
 
-  if (memory.segments.size() == 0) {
+  if (dataSegments.size() == 0) {
     return true;
   }
 
   std::vector<char> data;
-  for (auto& segment : memory.segments) {
-    if (segment.isPassive) {
+  for (auto& segment : dataSegments) {
+    if (segment->isPassive) {
       return false;
     }
-    auto* offset = segment.offset->dynCast<Const>();
+    auto* offset = segment->offset->dynCast<Const>();
     if (!offset) {
       return false;
     }
   }
-  for (auto& segment : memory.segments) {
-    auto* offset = segment.offset->dynCast<Const>();
+  for (auto& segment : dataSegments) {
+    auto* offset = segment->offset->dynCast<Const>();
     Index start = offset->value.getInteger();
-    Index end = start + segment.data.size();
+    Index end = start + segment->data.size();
     if (end > data.size()) {
       data.resize(end);
     }
-    std::copy(segment.data.begin(), segment.data.end(), data.begin() + start);
+    std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
   }
-  memory.segments.resize(1);
-  memory.segments[0].offset->cast<Const>()->value = Literal(int32_t(0));
-  memory.segments[0].data.swap(data);
+  dataSegments.resize(1);
+  dataSegments[0]->offset->cast<Const>()->value = Literal(int32_t(0));
+  dataSegments[0]->data.swap(data);
+  wasm.removeDataSegments(
+    [&](DataSegment* curr) { return curr->name != dataSegments[0]->name; });
 
   return true;
 }

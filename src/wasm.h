@@ -1862,6 +1862,13 @@ public:
   }
 };
 
+class DataSegment : public Named {
+public:
+  bool isPassive = false;
+  Expression* offset = nullptr;
+  std::vector<char> data; // TODO: optimize
+};
+
 class Memory : public Importable {
 public:
   static const Address::address32_t kPageSize = 64 * 1024;
@@ -1870,37 +1877,9 @@ public:
   static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
-  struct Segment {
-    // For use in name section only
-    Name name;
-    bool isPassive = false;
-    Expression* offset = nullptr;
-    std::vector<char> data; // TODO: optimize
-    Segment() = default;
-    Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, const char* init, Address size)
-      : offset(offset) {
-      data.resize(size);
-      std::copy_n(init, size, data.begin());
-    }
-    Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
-      data.swap(init);
-    }
-    Segment(Name name,
-            bool isPassive,
-            Expression* offset,
-            const char* init,
-            Address size)
-      : name(name), isPassive(isPassive), offset(offset) {
-      data.resize(size);
-      std::copy_n(init, size, data.begin());
-    }
-  };
-
   bool exists = false;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
-  std::vector<Segment> segments;
 
   bool shared = false;
   Type indexType = Type::i32;
@@ -1913,7 +1892,6 @@ public:
     name = "";
     initial = 0;
     max = kMaxSize32;
-    segments.clear();
     shared = false;
     indexType = Type::i32;
   }
@@ -1957,6 +1935,7 @@ public:
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<DataSegment>> dataSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
   Memory memory;
@@ -1992,6 +1971,7 @@ private:
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
+  std::unordered_map<Name, DataSegment*> dataSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
   std::unordered_map<Name, Tag*> tagsMap;
 
@@ -2002,12 +1982,14 @@ public:
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
+  DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
+  DataSegment* getDataSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Tag* getTagOrNull(Name name);
@@ -2021,6 +2003,7 @@ public:
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  DataSegment* addDataSegment(std::unique_ptr<DataSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Tag* addTag(std::unique_ptr<Tag>&& curr);
 
@@ -2030,6 +2013,7 @@ public:
   void removeFunction(Name name);
   void removeTable(Name name);
   void removeElementSegment(Name name);
+  void removeDataSegment(Name name);
   void removeGlobal(Name name);
   void removeTag(Name name);
 
@@ -2037,6 +2021,7 @@ public:
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
+  void removeDataSegments(std::function<bool(DataSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);
 
