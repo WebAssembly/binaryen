@@ -563,7 +563,9 @@ void MemoryPacking::createSplitSegments(
       }
       segmentCount++;
     }
+    // TODO (nashley): Add a proper name for the memory
     auto curr = Builder::makeDataSegment(name,
+                                         "",
                                          segment->isPassive,
                                          offset,
                                          &segment->data[range.start],

@@ -94,12 +94,6 @@ public:
     return table;
   }
 
-  static std::unique_ptr<Memory>makeMemory(Name name = Name::fromInt(0)) {
-    auto memory = std::make_unique<Memory>();
-    memory->name = name;
-    return memory;
-  }
-
   static std::unique_ptr<ElementSegment>
   makeElementSegment(Name name,
                      Name table,
@@ -113,14 +107,22 @@ public:
     return seg;
   }
 
+  static std::unique_ptr<Memory>makeMemory(Name name = Name::fromInt(0)) {
+    auto memory = std::make_unique<Memory>();
+    memory->name = name;
+    return memory;
+  }
+
   static std::unique_ptr<DataSegment>
   makeDataSegment(Name name = "",
+                  Name memory = "",
                   bool isPassive = false,
                   Expression* offset = nullptr,
                   const char* init = "",
                   Address size = 0) {
     auto seg = std::make_unique<DataSegment>();
     seg->name = name;
+    seg->memory = memory;
     seg->isPassive = isPassive;
     seg->offset = offset;
     seg->data.resize(size);

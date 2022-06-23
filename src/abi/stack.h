@@ -50,6 +50,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   }
   // align the size
   size = stackAlign(size);
+  // TODO(nashley): identify the proper memory
   auto pointerType = !wasm.memories.empty() ? wasm.memories[0]->indexType : Type::i32;
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);

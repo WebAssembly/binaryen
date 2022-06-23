@@ -2503,7 +2503,7 @@ function wrapModule(module, self = {}) {
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false) {
+  self['setMemory'] = function(internalName, initial, maximum, exportName, segments = [], shared = false) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     return preserveStack(() => {
       const segmentsLen = segments.length;
@@ -2520,7 +2520,7 @@ function wrapModule(module, self = {}) {
         segmentOffset[i] = offset;
       }
       return Module['_BinaryenSetMemory'](
-        module, initial, maximum, strToStack(exportName),
+        module, strToStack(internalName), initial, maximum, strToStack(exportName),
         i32sToStack(segmentData),
         i8sToStack(segmentPassive),
         i32sToStack(segmentOffset),
@@ -2533,15 +2533,15 @@ function wrapModule(module, self = {}) {
   self['hasMemory'] = function() {
     return Boolean(Module['_BinaryenHasMemory'](module));
   };
-  self['getMemoryInfo'] = function() {
+  self['getMemoryInfo'] = function(name) {
     var memoryInfo = {
-      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
-      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
-      'initial': Module['_BinaryenMemoryGetInitial'](module),
-      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
+      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module, strToStack(name))),
+      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module, strToStack(name))),
+      'initial': Module['_BinaryenMemoryGetInitial'](module, strToStack(name)),
+      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module, strToStack(name)))
     };
-    if (Module['_BinaryenMemoryHasMax'](module)) {
-      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+    if (Module['_BinaryenMemoryHasMax'](module, strToStack(name))) {
+      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module, strToStack(name));
     }
     return memoryInfo;
   };

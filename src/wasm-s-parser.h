@@ -126,6 +126,7 @@ class SExpressionWasmBuilder {
 
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
+  std::vector<Name> memoryNames;
   std::vector<Name> globalNames;
   std::vector<Name> tagNames;
   int functionCounter = 0;
@@ -168,6 +169,7 @@ private:
 
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
+  Name getMemoryName(Element& s);
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
@@ -319,8 +321,8 @@ private:
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
-  Index parseMemoryLimits(Element& s, Index i);
-  Index parseMemoryIndex(Element& s, Index i);
+  Index parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory);
+  Index parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
@@ -336,10 +338,7 @@ private:
   void parseData(Element& s);
   void parseInnerData(Element& s,
                       Index i,
-                      Name name,
-                      bool hasExplicitName,
-                      Expression* offset,
-                      bool isPassive);
+                      std::unique_ptr<DataSegment>& seg);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);

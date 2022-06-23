@@ -2307,6 +2307,7 @@ BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 // Each memory has data in segments, a start offset in segmentOffsets, and a
 // size in segmentSizes. exportName can be NULL
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
+                                    const char* internalName,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
                                     const char* exportName,
@@ -2318,13 +2319,13 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     bool shared);
 
 BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
-BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module);
-BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module);
-BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module, const char* name);
+BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name);
 BINARYEN_API const char*
-BinaryenMemoryImportGetModule(BinaryenModuleRef module);
-BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module);
-BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module);
+BinaryenMemoryImportGetModule(BinaryenModuleRef module, const char* name);
+BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module, const char* name);
+BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name);
 
 // Memory segments. Query utilities.
 
