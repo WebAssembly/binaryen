@@ -1372,6 +1372,10 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    // Equality does not depend on the type, so casts may be removable.
+    skipCast(curr->left);
+    skipCast(curr->right);
+
     // Identical references compare equal.
     if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
       replaceCurrent(
@@ -1399,6 +1403,29 @@ struct OptimizeInstructions
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull) {
           input = as->value;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  // As skipNonNullCast, but skips all casts if we can do so. This is useful in
+  // cases where we don't actually care about the type but just the value, that
+  // is, if casts of the type do not affect our behavior (which is the case in
+  // ref.eq for example).
+  void skipCast(Expression*& input) {
+    // Traps-never-happen mode is a requirement for us to optimize here.
+    if (!getPassOptions().trapsNeverHappen) {
+      return;
+    }
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        input = as->value;
+        continue;
+      } else if (auto* cast = input->dynCast<RefCast>()) {
+        if (!cast->rtt) {
+          input = cast->ref;
           continue;
         }
       }
