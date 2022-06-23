@@ -1375,11 +1375,10 @@ struct OptimizeInstructions
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
-      auto* result = Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildren(curr,
-                                *getModule(),
-                                getPassOptions(),
-                                result));
+      auto* result =
+        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
+      replaceCurrent(
+        getDroppedChildren(curr, *getModule(), getPassOptions(), result));
       return;
     }
 
