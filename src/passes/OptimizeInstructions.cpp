@@ -801,7 +801,7 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    if (auto* ret = preserveShift(curr)) {
+    if (auto* ret = combineAnyBitwise(curr)) {
       return replaceCurrent(ret);
     }
     if (curr->op == AndInt32 || curr->op == OrInt32) {
@@ -2715,6 +2715,32 @@ private:
     return nullptr;
   }
 
+  // We can combine `and`, `or`, `xor` operations, e.g.
+  //   (X op Z) ^ (Y op Z)  ==>   (x ^ y) op Z
+  //   (X op Z) | (Y op Z)  ==>   (x | y) op Z
+  //   (X op Z) & (Y op Z)  ==>   (x & y) op Z
+  Expression* combineAnyBitwise(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      BinaryOp op;
+      Binary *bx, *by;
+      Expression *x, *y, *z1, *z2;
+      if (matches(curr,
+                  binary(&op,
+                         binary(&bx, any(&x), any(&z1)),
+                         binary(&by, any(&y), any(&z2)))) &&
+          bx->op == by->op && hasAnyBitwise(op) && canReorder(z1, y) &&
+          areConsecutiveInputsEqualAndFoldable(z1, z2) && preserveShift(bx)) {
+        bx->right = y;
+        curr->right = z1;
+        std::swap(curr->op, bx->op);
+        return curr;
+      }
+    }
+    return nullptr;
+  }
+
   // Check whether an operation preserves the Or operation through it, that is,
   //
   //   F(x | y) = F(x) | F(y)
@@ -2821,26 +2847,26 @@ private:
   // (x << z) op (y << z)    ==>   (x op y) << z,   op = `|`, `&`, `^`
   // (x >> z) op (y >> z)    ==>   (x op y) >> z,   op = `|`, `&`, `^`
   // (x >>> z) op (y >>> z)  ==>   (x op y) >>> z,  op = `|`, `&`, `^`
-  Expression* preserveShift(Binary* curr) {
+  bool preserveShift(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
-    {
-      BinaryOp opLhs, opMid, opRhs;
-      Expression *x, *y, *z1, *z2;
-      if (matches(curr,
-                  binary(&opMid,
-                         binary(&opLhs, any(&x), any(&z1)),
-                         binary(&opRhs, any(&y), any(&z2)))) &&
-          (opLhs == opRhs) && hasAnyShift(opLhs) && hasAnyBitwise(opMid) &&
-          areConsecutiveInputsEqualAndFoldable(z1, z2)) {
-        auto* lhs = curr->left->cast<Binary>();
-        lhs->right = y;
-        curr->right = z1;
-        std::swap(curr->op, lhs->op);
-        return curr;
-      }
+
+    // (x << z) op (y << z)    ==>   (x op y) << z
+    if (matches(curr, binary(Shl, any(), any()))) {
+      return true;
     }
-    return nullptr;
+
+    // (x >> z) op (y >> z)    ==>   (x op y) >> z
+    if (matches(curr, binary(ShrS, any(), any()))) {
+      return true;
+    }
+
+    // (x >>> z) op (y >>> z)    ==>   (x op y) >>> z
+    if (matches(curr, binary(ShrU, any(), any()))) {
+      return true;
+    }
+
+    return false;
   }
 
   // fold constant factors into the offset
