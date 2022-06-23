@@ -1846,6 +1846,10 @@ struct OptimizeInstructions
       return;
     }
 
+    // What the reference points to does not depend on the type, so casts may be
+    // removable.
+    skipCast(curr->value);
+
     // Optimizating RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
     // since RefIsNull is a single byte (the others are 2), while adding a Const

@@ -46,4 +46,31 @@
       )
     )
   )
+
+  ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; TNH-NEXT:  (ref.is_null
+  ;; TNH-NEXT:   (local.get $a)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast_static $struct
+  ;; NO_TNH-NEXT:    (ref.as_data
+  ;; NO_TNH-NEXT:     (local.get $a)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (i32.const 0)
+  ;; NO_TNH-NEXT: )
+  (func $ref.is (param $a (ref null eq)) (result i32)
+    (ref.is_null
+      (ref.cast_static $struct
+        (ref.as_non_null
+          (ref.as_data
+            (local.get $a)
+          )
+        )
+      )
+    )
+  )
 )
