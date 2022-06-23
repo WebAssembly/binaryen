@@ -6,13 +6,13 @@
   ;; NO_TNH:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; TNH:      (func $set-of-as-non-null (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
+  ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; TNH-NEXT:  (ref.eq
   ;; TNH-NEXT:   (local.get $a)
   ;; TNH-NEXT:   (local.get $b)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $set-of-as-non-null (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
+  ;; NO_TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; NO_TNH-NEXT:  (ref.eq
   ;; NO_TNH-NEXT:   (ref.as_non_null
   ;; NO_TNH-NEXT:    (ref.cast_static $struct
@@ -24,7 +24,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $set-of-as-non-null (param $a (ref null eq)) (param $b (ref null eq)) (result i32)
+  (func $ref.eq (param $a (ref null eq)) (param $b (ref null eq)) (result i32)
     ;; When traps never happen we can remove all the casts here, since they do
     ;; not affect the comparison of the references.
     (ref.eq
