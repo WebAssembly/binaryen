@@ -233,8 +233,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    setTempRet0 });
 export var a = retasmFunc.a;
 export var b = retasmFunc.b;

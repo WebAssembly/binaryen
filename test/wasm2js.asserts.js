@@ -67,8 +67,7 @@ function asmFunc0(env) {
  };
 }
 
-var retasmFunc0 = asmFunc0(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc0 = asmFunc0({ abort() { throw new Error('abort'); } });
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;

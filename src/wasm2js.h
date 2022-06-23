@@ -2505,7 +2505,7 @@ void Wasm2JSGlue::emitPre() {
     } else {
       out << "  ret.grow = function(by) {\n"
           << "    var old = this.length;\n"
-          << "    this.length = this.length + by;\n"
+          << "    this.length += by;\n"
           << "    return old;\n"
           << "  };\n";
     }
@@ -2589,7 +2589,7 @@ void Wasm2JSGlue::emitPostES6() {
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
   out << "var ret" << moduleName.str << " = " << moduleName.str << "(";
-  out << "  { abort: function() { throw new Error('abort'); }";
+  out << "{ abort() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
@@ -2606,7 +2606,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << ",\n    " << asmangle(import->base.str) << ": { buffer : mem"
+    out << ",\n    " << asmangle(import->base.str) << ": { buffer: mem"
         << moduleName.str << " }";
   });
 
@@ -2619,7 +2619,7 @@ void Wasm2JSGlue::emitPostES6() {
     out << ",\n    " << asmangle(import->base.str);
   });
 
-  out << "\n  });\n";
+  out << " });\n";
 
   if (flags.allowAsserts) {
     return;
@@ -2907,7 +2907,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
     // TODO: support bytes=1, 2, 4 as well as 8.
     var view = new BigInt64Array(bufferView.buffer); // TODO cache
     ptr = (ptr + offset) >> 3;
-    var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << BigInt(32));
+    var value = BigInt(valueLow >>> 0) | (BigInt(valueHigh >>> 0) << 32n);
     var result;
     switch (op) {
       case 0: { // Add
@@ -2936,8 +2936,8 @@ void Wasm2JSGlue::emitSpecialSupport() {
       }
       default: throw 'bad op';
     }
-    var low = Number(result & BigInt(0xffffffff)) | 0;
-    var high = Number((result >> BigInt(32)) & BigInt(0xffffffff)) | 0;
+    var low = Number(result & 0xffffffffn) | 0;
+    var high = Number((result >> 32n) & 0xffffffffn) | 0;
     stashedBits = high;
     return low;
   }

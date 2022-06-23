@@ -67,8 +67,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var eq_i64 = retasmFunc.eq_i64;
 export var ne_i64 = retasmFunc.ne_i64;
 export var ge_s_i64 = retasmFunc.ge_s_i64;

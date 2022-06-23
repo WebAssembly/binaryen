@@ -90,7 +90,6 @@ function asmFunc(env) {
 }
 
 var memasmFunc = new ArrayBuffer(16777216);
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    memory: { buffer : memasmFunc }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    memory: { buffer: memasmFunc } });
 export var baz = retasmFunc.baz;

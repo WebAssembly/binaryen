@@ -1148,9 +1148,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    setTempRet0 });
 export var f32_nan = retasmFunc.f32_nan;
 export var f32_positive_nan = retasmFunc.f32_positive_nan;
 export var f32_negative_nan = retasmFunc.f32_negative_nan;

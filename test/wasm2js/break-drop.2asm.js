@@ -32,8 +32,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var br = retasmFunc.br;
 export var br_if = retasmFunc.br_if;
 export var br_table = retasmFunc.br_table;

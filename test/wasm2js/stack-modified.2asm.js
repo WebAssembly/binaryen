@@ -571,9 +571,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    setTempRet0 });
 export var fac_expr = retasmFunc.fac_expr;
 export var fac_stack = retasmFunc.fac_stack;
 export var fac_stack_raw = retasmFunc.fac_stack_raw;

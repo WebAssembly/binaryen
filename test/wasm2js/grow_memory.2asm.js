@@ -73,8 +73,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var memory = retasmFunc.memory;
 export var grow = retasmFunc.grow;
 export var current = retasmFunc.current;

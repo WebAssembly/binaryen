@@ -230,7 +230,6 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var check_add_i64 = retasmFunc.check_add_i64;
 export var check_sub_i64 = retasmFunc.check_sub_i64;

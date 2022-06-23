@@ -177,8 +177,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var foo1 = retasmFunc.foo1;
 export var foo2 = retasmFunc.foo2;
 export var foo3 = retasmFunc.foo3;
