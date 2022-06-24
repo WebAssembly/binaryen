@@ -135,8 +135,8 @@ struct GUFAOptimizer
 
     auto replaceWithUnreachable = [&]() {
       if (canReplaceWithUnreachable(curr)) {
-        replaceCurrent(
-          getDroppedChildrenAndAppend(curr, wasm, options, builder.makeUnreachable()));
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, wasm, options, builder.makeUnreachable()));
       } else {
         // We can't remove this, but we can at least put an unreachable
         // right after it.
