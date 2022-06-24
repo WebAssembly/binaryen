@@ -171,9 +171,7 @@
 
   ;; TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (ref.is_null
-  ;; TNH-NEXT:   (ref.cast_static $struct
-  ;; TNH-NEXT:    (local.get $a)
-  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (local.get $a)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
