@@ -58,15 +58,15 @@
  (data (i32.const 8) "\0d\00\00\00~\00l\00i\00b\00/\00a\00r\00r\00a\00y\00.\00t\00s\00")
  (data (i32.const 40) "\1c\00\00\00~\00l\00i\00b\00/\00i\00n\00t\00e\00r\00n\00a\00l\00/\00a\00r\00r\00a\00y\00b\00u\00f\00f\00e\00r\00.\00t\00s\00")
  (import "env" "abort" (func $~lib/env/abort (param i32 i32 i32 i32)))
- ;; CHECK:      (data (i32.const 8) "\0d\00\00\00~\00l\00i\00b\00/\00a\00r\00r\00a\00y\00.\00t\00s\00")
-
- ;; CHECK:      (data (i32.const 40) "\1c\00\00\00~\00l\00i\00b\00/\00i\00n\00t\00e\00r\00n\00a\00l\00/\00a\00r\00r\00a\00y\00b\00u\00f\00f\00e\00r\00.\00t\00s\00")
-
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 0))
 
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))
 
  ;; CHECK:      (global $global$5 (mut i32) (i32.const 0))
+
+ ;; CHECK:      (data (i32.const 8) "\0d\00\00\00~\00l\00i\00b\00/\00a\00r\00r\00a\00y\00.\00t\00s\00")
+
+ ;; CHECK:      (data (i32.const 40) "\1c\00\00\00~\00l\00i\00b\00/\00i\00n\00t\00e\00r\00n\00a\00l\00/\00a\00r\00r\00a\00y\00b\00u\00f\00f\00e\00r\00.\00t\00s\00")
 
  ;; CHECK:      (table $0 1 funcref)
  (table $0 1 funcref)

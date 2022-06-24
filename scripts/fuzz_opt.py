@@ -119,7 +119,7 @@ def randomize_feature_opts():
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
-    print('randomized feature opts:', ' '.join(FEATURE_OPTS))
+    print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
 
 ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
@@ -1050,7 +1050,7 @@ def test_one(random_input, given_wasm):
     pick_initial_contents()
 
     opts = randomize_opt_flags()
-    print('randomized opts:', ' '.join(opts))
+    print('randomized opts:', '\n  ' + '\n  '.join(opts))
     print()
 
     if given_wasm:

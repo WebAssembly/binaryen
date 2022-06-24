@@ -4,17 +4,61 @@
 
 (module $parse
  ;; types
+ ;; CHECK:      (type $s0 (struct ))
+
  ;; CHECK:      (type $void (func))
  (type $void (func))
  ;; CHECK:      (type $many (func (param i32 i64 f32 f64) (result anyref (ref func))))
  (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
                    (result anyref (ref func))))
 
+ (type $s0 (struct))
+ (type $s1 (struct (field)))
+ ;; CHECK:      (type $s2 (struct (field i32)))
+ (type $s2 (struct i32))
+ ;; CHECK:      (type $s3 (struct (field i64)))
+ (type $s3 (struct (field i64)))
+ ;; CHECK:      (type $s4 (struct (field $x f32)))
+ (type $s4 (struct (field $x f32)))
+ ;; CHECK:      (type $s5 (struct (field i32) (field i64)))
+ (type $s5 (struct i32 i64))
+ ;; CHECK:      (type $s6 (struct (field i64) (field f32)))
+ (type $s6 (struct (field i64 f32)))
+ ;; CHECK:      (type $s7 (struct (field $x f32) (field $y f64)))
+ (type $s7 (struct (field $x f32) (field $y f64)))
+ ;; CHECK:      (type $s8 (struct (field i32) (field i64) (field $z f32) (field f64) (field (mut i32))))
+ (type $s8 (struct i32 (field) i64 (field $z f32) (field f64 (mut i32))))
+
+ ;; CHECK:      (type $a0 (array i32))
+ (type $a0 (array i32))
+ ;; CHECK:      (type $a1 (array i64))
+ (type $a1 (array (field i64)))
+ ;; CHECK:      (type $a2 (array (mut f32)))
+ (type $a2 (array (mut f32)))
+ ;; CHECK:      (type $a3 (array (mut f64)))
+ (type $a3 (array (field $x (mut f64))))
+
  ;; globals
  (global $g1 (export "g1") (export "g1.1") (import "mod" "g1") i32)
  (global $g2 (import "mod" "g2") (mut i64))
  (global (import "" "g3") (ref 0))
  (global (import "mod" "") (ref null $many))
+
+ ;; uninteresting globals just to use the types
+ ;; TODO: replace these with a function.
+ (global $s0 (import "mod" "s0") (mut (ref $s0)))
+ (global $s1 (import "mod" "s1") (mut (ref $s1)))
+ (global $s2 (import "mod" "s2") (mut (ref $s2)))
+ (global $s3 (import "mod" "s3") (mut (ref $s3)))
+ (global $s4 (import "mod" "s4") (mut (ref $s4)))
+ (global $s5 (import "mod" "s5") (mut (ref $s5)))
+ (global $s6 (import "mod" "s6") (mut (ref $s6)))
+ (global $s7 (import "mod" "s7") (mut (ref $s7)))
+ (global $s8 (import "mod" "s8") (mut (ref $s8)))
+ (global $a0 (import "mod" "a0") (mut (ref $a0)))
+ (global $a1 (import "mod" "a1") (mut (ref $a1)))
+ (global $a2 (import "mod" "a2") (mut (ref $a2)))
+ (global $a3 (import "mod" "a3") (mut (ref $a3)))
 )
 ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
@@ -23,6 +67,32 @@
 ;; CHECK:      (import "" "g3" (global $gimport$0 (ref $void)))
 
 ;; CHECK:      (import "mod" "" (global $gimport$1 (ref null $many)))
+
+;; CHECK:      (import "mod" "s0" (global $s0 (mut (ref $s0))))
+
+;; CHECK:      (import "mod" "s1" (global $s1 (mut (ref $s0))))
+
+;; CHECK:      (import "mod" "s2" (global $s2 (mut (ref $s2))))
+
+;; CHECK:      (import "mod" "s3" (global $s3 (mut (ref $s3))))
+
+;; CHECK:      (import "mod" "s4" (global $s4 (mut (ref $s4))))
+
+;; CHECK:      (import "mod" "s5" (global $s5 (mut (ref $s5))))
+
+;; CHECK:      (import "mod" "s6" (global $s6 (mut (ref $s6))))
+
+;; CHECK:      (import "mod" "s7" (global $s7 (mut (ref $s7))))
+
+;; CHECK:      (import "mod" "s8" (global $s8 (mut (ref $s8))))
+
+;; CHECK:      (import "mod" "a0" (global $a0 (mut (ref $a0))))
+
+;; CHECK:      (import "mod" "a1" (global $a1 (mut (ref $a1))))
+
+;; CHECK:      (import "mod" "a2" (global $a2 (mut (ref $a2))))
+
+;; CHECK:      (import "mod" "a3" (global $a3 (mut (ref $a3))))
 
 ;; CHECK:      (export "g1" (global $g1))
 

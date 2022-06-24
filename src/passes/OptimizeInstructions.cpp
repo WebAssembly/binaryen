@@ -25,6 +25,7 @@
 #include <ir/abstract.h>
 #include <ir/bits.h>
 #include <ir/cost.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/eh-utils.h>
 #include <ir/find_all.h>
@@ -1372,10 +1373,20 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    // Equality does not depend on the type, so casts may be removable.
+    skipCast(curr->left, Type::eqref);
+    skipCast(curr->right, Type::eqref);
+
     // Identical references compare equal.
-    if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
-      replaceCurrent(
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+    // (Technically we do not need to check if the inputs are also foldable into
+    // a single one, but we do not have utility code to handle non-foldable
+    // cases yet; the foldable case we do handle is the common one of the first
+    // child being a tee and the second a get of that tee. TODO)
+    if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      auto* result =
+        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, *getModule(), getPassOptions(), result));
       return;
     }
 
@@ -1399,6 +1410,36 @@ struct OptimizeInstructions
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull) {
           input = as->value;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  // As skipNonNullCast, but skips all casts if we can do so. This is useful in
+  // cases where we don't actually care about the type but just the value, that
+  // is, if casts of the type do not affect our behavior (which is the case in
+  // ref.eq for example).
+  //
+  // |requiredType| is the type we require as the final output here, or a
+  // subtype of it. We will not remove a cast that would leave something that
+  // would break that. If |requiredType| is not provided we will accept any type
+  // there.
+  void skipCast(Expression*& input, Type requiredType = Type::anyref) {
+    // Traps-never-happen mode is a requirement for us to optimize here.
+    if (!getPassOptions().trapsNeverHappen) {
+      return;
+    }
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        if (Type::isSubType(as->value->type, requiredType)) {
+          input = as->value;
+          continue;
+        }
+      } else if (auto* cast = input->dynCast<RefCast>()) {
+        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
+          input = cast->ref;
           continue;
         }
       }
@@ -1836,6 +1877,21 @@ struct OptimizeInstructions
         replaceCurrent(builder.makeSequence(
           builder.makeDrop(curr->value),
           builder.makeConst(Literal::makeZero(Type::i32))));
+      } else {
+        // What the reference points to does not depend on the type, so casts
+        // may be removable. Do this right before returning because removing a
+        // cast may remove info that we could have used to optimize. For
+        // example:
+        //
+        //  (ref.is_func
+        //    (ref.as_func
+        //      (local.get $anyref)))
+        //
+        // The local has no useful type info. The cast forces it to be a
+        // function, so we can replace the ref.is with 1. But if we removed the
+        // ref.as first then we'd not have the type info we need to optimize
+        // that way.
+        skipCast(curr->value);
       }
       return;
     }
@@ -1875,6 +1931,9 @@ struct OptimizeInstructions
         }
       }
     }
+
+    // See above comment.
+    skipCast(curr->value);
   }
 
   void visitRefAs(RefAs* curr) {

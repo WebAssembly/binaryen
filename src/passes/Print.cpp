@@ -3006,57 +3006,57 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printMemoryHeader(curr);
       o << '\n';
     }
-    for (auto segment : curr->segments) {
-      doIndent(o, indent);
-      o << '(';
-      printMajor(o, "data ");
-      if (segment.name.is()) {
-        printName(segment.name, o);
-        o << ' ';
-      }
-      if (!segment.isPassive) {
-        visit(segment.offset);
-        o << ' ';
-      }
-      o << "\"";
-      for (size_t i = 0; i < segment.data.size(); i++) {
-        unsigned char c = segment.data[i];
-        switch (c) {
-          case '\n':
-            o << "\\n";
-            break;
-          case '\r':
-            o << "\\0d";
-            break;
-          case '\t':
-            o << "\\t";
-            break;
-          case '\f':
-            o << "\\0c";
-            break;
-          case '\b':
-            o << "\\08";
-            break;
-          case '\\':
-            o << "\\\\";
-            break;
-          case '"':
-            o << "\\\"";
-            break;
-          case '\'':
-            o << "\\'";
-            break;
-          default: {
-            if (c >= 32 && c < 127) {
-              o << c;
-            } else {
-              o << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
-            }
+  }
+  void visitDataSegment(DataSegment* curr) {
+    doIndent(o, indent);
+    o << '(';
+    printMajor(o, "data ");
+    if (curr->hasExplicitName) {
+      printName(curr->name, o);
+      o << ' ';
+    }
+    if (!curr->isPassive) {
+      visit(curr->offset);
+      o << ' ';
+    }
+    o << "\"";
+    for (size_t i = 0; i < curr->data.size(); i++) {
+      unsigned char c = curr->data[i];
+      switch (c) {
+        case '\n':
+          o << "\\n";
+          break;
+        case '\r':
+          o << "\\0d";
+          break;
+        case '\t':
+          o << "\\t";
+          break;
+        case '\f':
+          o << "\\0c";
+          break;
+        case '\b':
+          o << "\\08";
+          break;
+        case '\\':
+          o << "\\\\";
+          break;
+        case '"':
+          o << "\\\"";
+          break;
+        case '\'':
+          o << "\\'";
+          break;
+        default: {
+          if (c >= 32 && c < 127) {
+            o << c;
+          } else {
+            o << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
           }
         }
       }
-      o << "\")" << maybeNewLine;
     }
+    o << "\")" << maybeNewLine;
   }
   void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {
     doIndent(o, indent) << ";; dylink section\n";
@@ -3134,6 +3134,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedMemories(
       *curr, [&](Memory* memory) { visitMemory(memory); });
+    for (auto& segment : curr->dataSegments) {
+      visitDataSegment(segment.get());
+    }
     ModuleUtils::iterDefinedTables(*curr,
                                    [&](Table* table) { visitTable(table); });
     for (auto& segment : curr->elementSegments) {
