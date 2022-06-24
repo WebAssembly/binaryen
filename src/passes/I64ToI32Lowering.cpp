@@ -539,6 +539,39 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
+  void lowerExtendSInt64(Unary* curr) {
+    TempVar highBits = getTemp();
+    TempVar lowBits = getTemp();
+
+    // free the temp var
+    fetchOutParam(curr->value);
+
+    Expression* lowValue = curr->value;
+    switch (curr->op) {
+      case ExtendS8Int64:
+        lowValue = builder->makeUnary(ExtendS8Int32, lowValue);
+        break;
+      case ExtendS16Int64:
+        lowValue = builder->makeUnary(ExtendS16Int32, lowValue);
+        break;
+      default:
+        break;
+    }
+
+    LocalSet* setLow = builder->makeLocalSet(lowBits, lowValue);
+    LocalSet* setHigh = builder->makeLocalSet(
+      highBits,
+      builder->makeBinary(ShrSInt32,
+                          builder->makeLocalGet(lowBits, Type::i32),
+                          builder->makeConst(int32_t(31))));
+
+    Block* result = builder->blockify(
+      setLow, setHigh, builder->makeLocalGet(lowBits, Type::i32));
+
+    setOutParam(result, std::move(highBits));
+    replaceCurrent(result);
+  }
+
   void lowerWrapInt64(Unary* curr) {
     // free the temp var
     fetchOutParam(curr->value);
@@ -845,6 +878,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ConvertUInt64ToFloat32:
       case ConvertUInt64ToFloat64:
       case ReinterpretInt64:
+      case ExtendS8Int64:
+      case ExtendS16Int64:
+      case ExtendS32Int64:
         return true;
       default:
         return false;
@@ -894,6 +930,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ConvertUInt64ToFloat32:
       case ConvertUInt64ToFloat64:
         lowerConvertIntToFloat(curr);
+        break;
+      case ExtendS8Int64:
+      case ExtendS16Int64:
+      case ExtendS32Int64:
+        lowerExtendSInt64(curr);
         break;
       case PopcntInt64:
         WASM_UNREACHABLE("i64.popcnt should already be removed");
