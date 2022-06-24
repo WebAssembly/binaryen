@@ -36,7 +36,7 @@ inline Expression* getDroppedChildrenAndAppend(Expression* curr,
                                                Module& wasm,
                                                const PassOptions& options,
                                                Expression* last) {
-          Builder builder(wasm);
+  Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
     if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
