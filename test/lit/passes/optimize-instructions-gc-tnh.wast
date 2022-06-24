@@ -194,38 +194,13 @@
 
   ;; TNH:      (func $ref.is_func_a (type $anyref_=>_i32) (param $a anyref) (result i32)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.cast_static $struct
-  ;; TNH-NEXT:    (local.get $a)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (i32.const 0)
-  ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_func_a (type $anyref_=>_i32) (param $a anyref) (result i32)
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast_static $struct
-  ;; NO_TNH-NEXT:    (local.get $a)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (i32.const 0)
-  ;; NO_TNH-NEXT: )
-  (func $ref.is_func_a (param $a (ref null any)) (result i32)
-    ;; As above, but ref.is_func instead. Again, we can remove the cast in TNH.
-    (ref.is_func
-      (ref.cast_static $struct
-        (local.get $a)
-      )
-    )
-  )
-
-  ;; TNH:      (func $ref.is_func_b (type $anyref_=>_i32) (param $a anyref) (result i32)
-  ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (ref.as_func
   ;; TNH-NEXT:    (local.get $a)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (i32.const 1)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_func_b (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; NO_TNH:      (func $ref.is_func_a (type $anyref_=>_i32) (param $a anyref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.as_func
   ;; NO_TNH-NEXT:    (local.get $a)
@@ -233,7 +208,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (i32.const 1)
   ;; NO_TNH-NEXT: )
-  (func $ref.is_func_b (param $a (ref null any)) (result i32)
+  (func $ref.is_func_a (param $a (ref null any)) (result i32)
     ;; The check must succeed. We can return 1 here, and drop the rest, with or
     ;; without TNH (in particular, TNH should not just remove the cast but not
     ;; return a 1).
@@ -244,7 +219,7 @@
     )
   )
 
-  ;; TNH:      (func $ref.is_func_c (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; TNH:      (func $ref.is_func_b (type $anyref_=>_i32) (param $a anyref) (result i32)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (ref.as_data
   ;; TNH-NEXT:    (local.get $a)
@@ -252,7 +227,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (i32.const 0)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_func_c (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; NO_TNH:      (func $ref.is_func_b (type $anyref_=>_i32) (param $a anyref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.as_data
   ;; NO_TNH-NEXT:    (local.get $a)
@@ -260,7 +235,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (i32.const 0)
   ;; NO_TNH-NEXT: )
-  (func $ref.is_func_c (param $a (ref null any)) (result i32)
+  (func $ref.is_func_b (param $a (ref null any)) (result i32)
     ;; A case where the type cannot match, and we return 0.
     (ref.is_func
       (ref.as_data
