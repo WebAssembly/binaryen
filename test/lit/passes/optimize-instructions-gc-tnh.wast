@@ -136,9 +136,14 @@
   )
 
   ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
-  ;; TNH-NEXT:  (ref.is_null
-  ;; TNH-NEXT:   (local.get $a)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (ref.cast_static $struct
+  ;; TNH-NEXT:    (ref.as_data
+  ;; TNH-NEXT:     (local.get $a)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (i32.const 0)
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
@@ -151,6 +156,8 @@
   ;; NO_TNH-NEXT:  (i32.const 0)
   ;; NO_TNH-NEXT: )
   (func $ref.is (param $a (ref null eq)) (result i32)
+    ;; In this case non-nullability is enough to tell that the ref.is will
+    ;; return 0. TNH does not help here.
     (ref.is_null
       (ref.cast_static $struct
         (ref.as_non_null
@@ -158,6 +165,81 @@
             (local.get $a)
           )
         )
+      )
+    )
+  )
+
+  ;; TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; TNH-NEXT:  (ref.is_null
+  ;; TNH-NEXT:   (local.get $a)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; NO_TNH-NEXT:  (ref.is_null
+  ;; NO_TNH-NEXT:   (ref.cast_static $struct
+  ;; NO_TNH-NEXT:    (local.get $a)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.is_b(param $a (ref null eq)) (result i32)
+    ;; Here we only have a cast, and no ref.as operations that force the value
+    ;; to be non-nullable. That means we cannot remove the ref.is, but we can
+    ;; remove the cast in TNH.
+    (ref.is_null
+      (ref.cast_static $struct
+        (local.get $a)
+      )
+    )
+  )
+
+  ;; TNH:      (func $ref.is_func_a (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (ref.as_func
+  ;; TNH-NEXT:    (local.get $a)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (i32.const 1)
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $ref.is_func_a (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_func
+  ;; NO_TNH-NEXT:    (local.get $a)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (i32.const 1)
+  ;; NO_TNH-NEXT: )
+  (func $ref.is_func_a (param $a (ref null any)) (result i32)
+    ;; The check must succeed. We can return 1 here, and drop the rest, with or
+    ;; without TNH (in particular, TNH should not just remove the cast but not
+    ;; return a 1).
+    (ref.is_func
+      (ref.as_func
+        (local.get $a)
+      )
+    )
+  )
+
+  ;; TNH:      (func $ref.is_func_b (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (ref.as_data
+  ;; TNH-NEXT:    (local.get $a)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (i32.const 0)
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $ref.is_func_b (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_data
+  ;; NO_TNH-NEXT:    (local.get $a)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (i32.const 0)
+  ;; NO_TNH-NEXT: )
+  (func $ref.is_func_b (param $a (ref null any)) (result i32)
+    ;; A case where the type cannot match, and we return 0.
+    (ref.is_func
+      (ref.as_data
+        (local.get $a)
       )
     )
   )

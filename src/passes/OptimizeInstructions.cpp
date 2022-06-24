@@ -1853,10 +1853,6 @@ struct OptimizeInstructions
       return;
     }
 
-    // What the reference points to does not depend on the type, so casts may be
-    // removable.
-    skipCast(curr->value);
-
     // Optimizating RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
     // since RefIsNull is a single byte (the others are 2), while adding a Const
@@ -1874,6 +1870,21 @@ struct OptimizeInstructions
         replaceCurrent(builder.makeSequence(
           builder.makeDrop(curr->value),
           builder.makeConst(Literal::makeZero(Type::i32))));
+      } else {
+        // What the reference points to does not depend on the type, so casts
+        // may be removable. Do this right before returning because removing a
+        // cast may remove info that we could have used to optimize. For
+        // example:
+        //
+        //  (ref.is_func
+        //    (ref.as_func
+        //      (local.get $anyref)))
+        //
+        // The local has no useful type info. The cast forces it to be a
+        // function, so we can replace the ref.is with 1. But if we removed the
+        // ref.as first then we'd not have the type info we need to optimize
+        // that way.
+        skipCast(curr->value);
       }
       return;
     }
@@ -1913,6 +1924,9 @@ struct OptimizeInstructions
         }
       }
     }
+
+    // See above comment.
+    skipCast(curr->value);
   }
 
   void visitRefAs(RefAs* curr) {
