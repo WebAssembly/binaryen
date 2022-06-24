@@ -32,11 +32,11 @@ namespace wasm {
 //
 // The caller must also pass in a last item to append to the output (which is
 // typically what the original expression is replaced with).
-Expression* getDroppedChildrenAndAppend(Expression* curr,
-                                        Module& wasm,
-                                        const PassOptions& options,
-                                        Expression* last) {
-  Builder builder(wasm);
+inline Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                               Module& wasm,
+                                               const PassOptions& options,
+                                               Expression* last) {
+          Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
     if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
