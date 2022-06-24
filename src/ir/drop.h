@@ -30,11 +30,12 @@ namespace wasm {
 // keep the children around; this utility will automatically remove any children
 // we do not actually need to keep, based on their effects.
 //
-// The caller can also pass in an optional last item to add to the output.
-Expression* getDroppedChildren(Expression* curr,
-                               Module& wasm,
-                               const PassOptions& options,
-                               Expression* last = nullptr) {
+// The caller must also pass in a last item to append to the output (which is
+// typically what the original expression is replaced with).
+Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                        Module& wasm,
+                                        const PassOptions& options,
+                                        Expression* last) {
   Builder builder(wasm);
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
@@ -49,12 +50,7 @@ Expression* getDroppedChildren(Expression* curr,
       contents.push_back(child);
     }
   }
-  if (last) {
-    contents.push_back(last);
-  }
-  if (contents.size() == 0) {
-    return builder.makeNop();
-  }
+  contents.push_back(last);
   if (contents.size() == 1) {
     return contents[0];
   }
