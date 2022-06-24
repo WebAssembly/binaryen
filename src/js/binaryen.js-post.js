@@ -2518,23 +2518,34 @@ function wrapModule(module, self = {}) {
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
+
+  self['memorySegment'] = {
+    'offset'(id) {
+      return Module['_BinaryenGetMemorySegmentByteOffset'](module, id);
+    },
+    'data'(id) {
+      const size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
+      const ptr = _malloc(size);
+      Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
+      const res = new Uint8Array(size);
+      res.set(new Uint8Array(buffer, ptr, size));
+      _free(ptr);
+      return res.buffer;
+    },
+    'passive'(id) {
+      return Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id));
+    }
+  }
+
   self['getMemorySegmentInfoByIndex'] = function(id) {
-    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id));
+    const passive = self['memorySegment']['passive'](id);
     let offset = null;
     if (!passive) {
-      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, id);
+      offset = self['memorySegment']['offset'](id)
     }
     return {
       'offset': offset,
-      'data': (function(){
-        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
-        const ptr = _malloc(size);
-        Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
-        const res = new Uint8Array(size);
-        res.set(new Uint8Array(buffer, ptr, size));
-        _free(ptr);
-        return res.buffer;
-      })(),
+      'data': self['memorySegment']['data'](id),
       'passive': passive
     };
   };
