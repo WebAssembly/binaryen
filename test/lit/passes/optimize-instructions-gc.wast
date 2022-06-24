@@ -979,6 +979,16 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-eq-corner-cases (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
@@ -1005,6 +1015,16 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.tee $x
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-eq-corner-cases (param $x eqref)
@@ -1056,6 +1076,15 @@
           (nop)
           (local.get $x)
         )
+      )
+    )
+    ;; a tee does not prevent optimization, as we can fold the tee and the get.
+    (drop
+      (ref.eq
+        (local.tee $x
+          (local.get $x)
+        )
+        (local.get $x)
       )
     )
   )

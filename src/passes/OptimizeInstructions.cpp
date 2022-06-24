@@ -25,6 +25,7 @@
 #include <ir/abstract.h>
 #include <ir/bits.h>
 #include <ir/cost.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/eh-utils.h>
 #include <ir/find_all.h>
@@ -1377,9 +1378,15 @@ struct OptimizeInstructions
     skipCast(curr->right, Type::eqref);
 
     // Identical references compare equal.
-    if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
-      replaceCurrent(
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+    // (Technically we do not need to check if the inputs are also foldable into
+    // a single one, but we do not have utility code to handle non-foldable
+    // cases yet; the foldable case we do handle is the common one of the first
+    // child being a tee and the second a get of that tee. TODO)
+    if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      auto* result =
+        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, *getModule(), getPassOptions(), result));
       return;
     }
 
