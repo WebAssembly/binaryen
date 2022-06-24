@@ -1373,6 +1373,10 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    // Equality does not depend on the type, so casts may be removable.
+    skipCast(curr->left, Type::eqref);
+    skipCast(curr->right, Type::eqref);
+
     // Identical references compare equal.
     // (Technically we do not need to check if the inputs are also foldable into
     // a single one, but we do not have utility code to handle non-foldable
@@ -1406,6 +1410,36 @@ struct OptimizeInstructions
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull) {
           input = as->value;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  // As skipNonNullCast, but skips all casts if we can do so. This is useful in
+  // cases where we don't actually care about the type but just the value, that
+  // is, if casts of the type do not affect our behavior (which is the case in
+  // ref.eq for example).
+  //
+  // |requiredType| is the type we require as the final output here, or a
+  // subtype of it. We will not remove a cast that would leave something that
+  // would break that. If |requiredType| is not provided we will accept any type
+  // there.
+  void skipCast(Expression*& input, Type requiredType = Type::anyref) {
+    // Traps-never-happen mode is a requirement for us to optimize here.
+    if (!getPassOptions().trapsNeverHappen) {
+      return;
+    }
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        if (Type::isSubType(as->value->type, requiredType)) {
+          input = as->value;
+          continue;
+        }
+      } else if (auto* cast = input->dynCast<RefCast>()) {
+        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
+          input = cast->ref;
           continue;
         }
       }
@@ -1825,6 +1859,10 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
+
+    // What the reference points to does not depend on the type, so casts may be
+    // removable.
+    skipCast(curr->value);
 
     // Optimizating RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
