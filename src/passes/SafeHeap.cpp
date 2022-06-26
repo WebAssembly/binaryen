@@ -82,9 +82,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
       return;
     }
     Builder builder(*getModule());
+    auto mem = getModule()->getMemory(curr->memory);
     replaceCurrent(
       builder.makeCall(getLoadName(curr),
-                       {curr->ptr, builder.makeConstPtr(curr->offset.addr)},
+                       {curr->ptr, builder.makeConstPtr(curr->offset.addr, mem->indexType)},
                        curr->type));
   }
 
@@ -94,9 +95,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
       return;
     }
     Builder builder(*getModule());
+    auto mem = getModule()->getMemory(curr->memory);
     replaceCurrent(builder.makeCall(
       getStoreName(curr),
-      {curr->ptr, builder.makeConstPtr(curr->offset.addr), curr->value},
+      {curr->ptr, builder.makeConstPtr(curr->offset.addr, mem->indexType), curr->value},
       Type::none));
   }
 };
@@ -274,19 +276,20 @@ struct SafeHeap : public Pass {
       return;
     }
     // pointer, offset
-    auto indexType = module->memories[0]->indexType;
+    auto mem = module->getMemory(style.memory);
+    auto indexType = mem->indexType;
     auto funcSig = Signature({indexType, indexType}, style.type);
     auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       2,
-      builder.makeBinary(module->memories[0]->is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(mem->is64() ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(style.type, builder, 2, style.bytes, module));
+      makeBoundsCheck(style.type, builder, 2, style.bytes, module, mem->indexType, mem->is64(), mem->name));
     // check proper alignment
     if (style.align > 1) {
       block->list.push_back(makeAlignCheck(style.align, builder, 2, module));
@@ -313,7 +316,9 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto indexType = module->memories[0]->indexType;
+    auto mem = module->getMemory(style.memory);
+    auto indexType = mem->indexType;
+    bool is64 = mem->is64();
     // pointer, offset, value
     auto funcSig =
       Signature({indexType, indexType, style.valueType}, Type::none);
@@ -322,12 +327,12 @@ struct SafeHeap : public Pass {
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       3,
-      builder.makeBinary(module->memories[0]->is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(is64 ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3, style.bytes, module));
+      makeBoundsCheck(style.valueType, builder, 3, style.bytes, module, indexType, is64, mem->name));
     // check proper alignment
     if (style.align > 1) {
       block->list.push_back(makeAlignCheck(style.align, builder, 3, module));
@@ -357,16 +362,15 @@ struct SafeHeap : public Pass {
   }
 
   Expression* makeBoundsCheck(
-    Type type, Builder& builder, Index local, Index bytes, Module* module) {
-    auto indexType = module->memories[0]->indexType;
-    auto upperOp = module->memories[0]->is64()
+    Type type, Builder& builder, Index local, Index bytes, Module* module, Type indexType, bool is64, Name memory) {
+    auto upperOp = is64
                      ? options.lowMemoryUnused ? LtUInt64 : EqInt64
                      : options.lowMemoryUnused ? LtUInt32 : EqInt32;
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
       brkLocation =
-        builder.makeCall(sbrk, {builder.makeConstPtr(0)}, indexType);
+        builder.makeCall(sbrk, {builder.makeConstPtr(0, indexType)}, indexType);
     } else {
       Expression* sbrkPtr;
       if (dynamicTopPtr.is()) {
@@ -374,22 +378,22 @@ struct SafeHeap : public Pass {
       } else {
         sbrkPtr = builder.makeCall(getSbrkPtr, {}, indexType);
       }
-      auto size = module->memories[0]->is64() ? 8 : 4;
-      brkLocation = builder.makeLoad(size, false, 0, size, sbrkPtr, indexType);
+      auto size = is64 ? 8 : 4;
+      brkLocation = builder.makeLoad(size, false, 0, size, sbrkPtr, indexType, memory);
     }
-    auto gtuOp = module->memories[0]->is64() ? GtUInt64 : GtUInt32;
-    auto addOp = module->memories[0]->is64() ? AddInt64 : AddInt32;
+    auto gtuOp = is64 ? GtUInt64 : GtUInt32;
+    auto addOp = is64 ? AddInt64 : AddInt32;
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(upperOp,
                            builder.makeLocalGet(local, indexType),
-                           builder.makeConstPtr(upperBound)),
+                           builder.makeConstPtr(upperBound, indexType)),
         builder.makeBinary(
           gtuOp,
           builder.makeBinary(addOp,
                              builder.makeLocalGet(local, indexType),
-                             builder.makeConstPtr(bytes)),
+                             builder.makeConstPtr(bytes, indexType)),
           brkLocation)),
       builder.makeCall(segfault, {}, Type::none));
   }

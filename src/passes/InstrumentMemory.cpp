@@ -100,9 +100,9 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {
     id++;
     Builder builder(*getModule());
-    assert(!getModule()->memories.empty());
-    auto indexType = getModule()->memories[0]->indexType;
-    auto offset = builder.makeConstPtr(curr->offset.addr);
+    auto mem = getModule()->getMemory(curr->memory);
+    auto indexType = mem->indexType;
+    auto offset = builder.makeConstPtr(curr->offset.addr, indexType);
     curr->ptr = builder.makeCall(load_ptr,
                                  {builder.makeConst(int32_t(id)),
                                   builder.makeConst(int32_t(curr->bytes)),
@@ -134,8 +134,9 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     id++;
     Builder builder(*getModule());
     assert(!getModule()->memories.empty());
-    auto indexType = getModule()->memories[0]->indexType;
-    auto offset = builder.makeConstPtr(curr->offset.addr);
+    auto mem = getModule()->getMemory(curr->memory);
+    auto indexType = mem->indexType;
+    auto offset = builder.makeConstPtr(curr->offset.addr, indexType);
     curr->ptr = builder.makeCall(store_ptr,
                                  {builder.makeConst(int32_t(id)),
                                   builder.makeConst(int32_t(curr->bytes)),

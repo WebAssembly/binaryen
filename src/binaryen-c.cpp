@@ -1036,14 +1036,16 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    uint32_t offset,
                                    uint32_t align,
                                    BinaryenType type,
-                                   BinaryenExpressionRef ptr) {
+                                   BinaryenExpressionRef ptr,
+                                   const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeLoad(bytes,
                                               !!signed_,
                                               offset,
                                               align ? align : bytes,
                                               (Expression*)ptr,
-                                              Type(type)));
+                                              Type(type),
+                                              name));
 }
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     uint32_t bytes,
@@ -1051,14 +1053,16 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     uint32_t align,
                                     BinaryenExpressionRef ptr,
                                     BinaryenExpressionRef value,
-                                    BinaryenType type) {
+                                    BinaryenType type,
+                                    const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeStore(bytes,
                                                offset,
                                                align ? align : bytes,
                                                (Expression*)ptr,
                                                (Expression*)value,
-                                               Type(type)));
+                                               Type(type),
+                                               name));
 }
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
                                     BinaryenLiteral value) {
@@ -1105,13 +1109,15 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module) {
-  auto* ret = Builder(*(Module*)module).makeMemorySize();
+BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
+                                          const char* name) {
+  auto* ret = Builder(*(Module*)module).makeMemorySize(name);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
-                                         BinaryenExpressionRef delta) {
-  auto* ret = Builder(*(Module*)module).makeMemoryGrow((Expression*)delta);
+                                         BinaryenExpressionRef delta,
+                                          const char* name) {
+  auto* ret = Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
@@ -1124,21 +1130,23 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          uint32_t bytes,
                                          uint32_t offset,
                                          BinaryenType type,
-                                         BinaryenExpressionRef ptr) {
+                                         BinaryenExpressionRef ptr,
+                                         const char* name) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type)));
+      .makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type), name));
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           uint32_t bytes,
                                           uint32_t offset,
                                           BinaryenExpressionRef ptr,
                                           BinaryenExpressionRef value,
-                                          BinaryenType type) {
+                                          BinaryenType type,
+                                          const char* name) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeAtomicStore(
-        bytes, offset, (Expression*)ptr, (Expression*)value, Type(type)));
+        bytes, offset, (Expression*)ptr, (Expression*)value, Type(type), name));
 }
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenOp op,
@@ -1146,14 +1154,16 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenIndex offset,
                                         BinaryenExpressionRef ptr,
                                         BinaryenExpressionRef value,
-                                        BinaryenType type) {
+                                        BinaryenType type,
+                                        const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeAtomicRMW(AtomicRMWOp(op),
                                                    bytes,
                                                    offset,
                                                    (Expression*)ptr,
                                                    (Expression*)value,
-                                                   Type(type)));
+                                                   Type(type),
+                                                   name));
 }
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenIndex bytes,
@@ -1161,33 +1171,38 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenExpressionRef ptr,
                                             BinaryenExpressionRef expected,
                                             BinaryenExpressionRef replacement,
-                                            BinaryenType type) {
+                                            BinaryenType type,
+                                            const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeAtomicCmpxchg(bytes,
                                                        offset,
                                                        (Expression*)ptr,
                                                        (Expression*)expected,
                                                        (Expression*)replacement,
-                                                       Type(type)));
+                                                       Type(type),
+                                                       name));
 }
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef ptr,
                                          BinaryenExpressionRef expected,
                                          BinaryenExpressionRef timeout,
-                                         BinaryenType expectedType) {
+                                         BinaryenType expectedType,
+                                         const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeAtomicWait((Expression*)ptr,
                                                     (Expression*)expected,
                                                     (Expression*)timeout,
                                                     Type(expectedType),
-                                                    0));
+                                                    0,
+                                                    name));
 }
 BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            BinaryenExpressionRef ptr,
-                                           BinaryenExpressionRef notifyCount) {
+                                           BinaryenExpressionRef notifyCount,
+                                           const char* name) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeAtomicNotify((Expression*)ptr, (Expression*)notifyCount, 0));
+      .makeAtomicNotify((Expression*)ptr, (Expression*)notifyCount, 0, name));
 }
 BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
   return static_cast<Expression*>(Builder(*(Module*)module).makeAtomicFence());
@@ -1269,11 +1284,12 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          uint32_t segment,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef offset,
-                                         BinaryenExpressionRef size) {
+                                         BinaryenExpressionRef size,
+                                         const char* name) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeMemoryInit(
-        segment, (Expression*)dest, (Expression*)offset, (Expression*)size));
+        segment, (Expression*)dest, (Expression*)offset, (Expression*)size, name));
 }
 
 BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
@@ -1285,21 +1301,25 @@ BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef source,
-                                         BinaryenExpressionRef size) {
+                                         BinaryenExpressionRef size,
+                                         const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeMemoryCopy((Expression*)dest,
                                                     (Expression*)source,
-                                                    (Expression*)size));
+                                                    (Expression*)size,
+                                                    name));
 }
 
 BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef value,
-                                         BinaryenExpressionRef size) {
+                                         BinaryenExpressionRef size,
+                                         const char* name) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeMemoryFill((Expression*)dest,
                                                     (Expression*)value,
-                                                    (Expression*)size));
+                                                    (Expression*)size,
+                                                    name));
 }
 
 BinaryenExpressionRef BinaryenTupleMake(BinaryenModuleRef module,

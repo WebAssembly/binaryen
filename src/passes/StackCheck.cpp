@@ -145,16 +145,17 @@ struct StackCheck : public Pass {
 
     Builder builder(*module);
 
+    // TODO (nashley): Remove the hardcoded Type::i32 below
     // Add the globals.
     auto stackBase =
       module->addGlobal(builder.makeGlobal(stackBaseName,
                                            stackPointer->type,
-                                           builder.makeConstPtr(0),
+                                           builder.makeConstPtr(0, Type::i32),
                                            Builder::Mutable));
     auto stackLimit =
       module->addGlobal(builder.makeGlobal(stackLimitName,
                                            stackPointer->type,
-                                           builder.makeConstPtr(0),
+                                           builder.makeConstPtr(0, Type::i32),
                                            Builder::Mutable));
 
     // Instrument all the code.

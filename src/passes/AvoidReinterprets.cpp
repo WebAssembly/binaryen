@@ -174,8 +174,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
           auto& info = iter->second;
           Builder builder(*module);
           auto* ptr = curr->ptr;
-          assert(!getModule()->memories.empty());
-          auto indexType = getModule()->memories[0]->indexType;
+          auto mem = getModule()->getMemory(curr->memory);
+          auto indexType = mem->indexType;
           curr->ptr = builder.makeLocalGet(info.ptrLocal, indexType);
           // Note that the other load can have its sign set to false - if the
           // original were an integer, the other is a float anyhow; and if
@@ -197,7 +197,8 @@ struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
                                 load->offset,
                                 load->align,
                                 ptr,
-                                load->type.reinterpret());
+                                load->type.reinterpret(),
+                                load->memory);
       }
     } finalOptimizer(infos, localGraph, getModule(), getPassOptions());
 

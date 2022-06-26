@@ -1699,7 +1699,7 @@ public:
   BreakTarget getBreakTarget(int32_t offset);
   Name getExceptionTargetName(int32_t offset);
 
-  void readMemoryAccess(Address& alignment, Address& offset);
+  Index readMemoryAccess(Address& alignment, Address& offset);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);

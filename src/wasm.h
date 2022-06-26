@@ -971,6 +971,7 @@ public:
   Address align;
   bool isAtomic;
   Expression* ptr;
+  Name memory;
 
   // type must be set during creation, cannot be inferred
 
@@ -989,6 +990,7 @@ public:
   Expression* ptr;
   Expression* value;
   Type valueType;
+  Name memory;
 
   void finalize();
 };
@@ -1003,6 +1005,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* value;
+  Name memory;
 
   void finalize();
 };
@@ -1017,6 +1020,7 @@ public:
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
+  Name memory;
 
   void finalize();
 };
@@ -1031,6 +1035,7 @@ public:
   Expression* expected;
   Expression* timeout;
   Type expectedType;
+  Name memory;
 
   void finalize();
 };
@@ -1043,6 +1048,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* notifyCount;
+  Name memory;
 
   void finalize();
 };
@@ -1131,6 +1137,7 @@ public:
   Address offset;
   Address align;
   Expression* ptr;
+  Name memory;
 
   Index getMemBytes();
   void finalize();
@@ -1148,6 +1155,7 @@ public:
   uint8_t index;
   Expression* ptr;
   Expression* vec;
+  Name memory;
 
   bool isStore();
   bool isLoad() { return !isStore(); }
@@ -1164,6 +1172,7 @@ public:
   Expression* dest;
   Expression* offset;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1186,6 +1195,7 @@ public:
   Expression* dest;
   Expression* source;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1198,6 +1208,7 @@ public:
   Expression* dest;
   Expression* value;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1281,6 +1292,7 @@ public:
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1293,6 +1305,7 @@ public:
 
   Expression* delta = nullptr;
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
