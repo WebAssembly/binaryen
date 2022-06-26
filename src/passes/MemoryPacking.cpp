@@ -83,13 +83,13 @@ const size_t DATA_DROP_SIZE = 3;
 
 Expression*
 makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
-  assert(!module.memories.empty());
+  auto mem = module.getMemory(curr->memory);
   return builder.makeBinary(
-    module.memories[0]->is64() ? GtUInt64 : GtUInt32,
+    mem->is64() ? GtUInt64 : GtUInt32,
     curr->dest,
-    builder.makeBinary(module.memories[0]->is64() ? ShlInt64 : ShlInt32,
+    builder.makeBinary(mem->is64() ? ShlInt64 : ShlInt32,
                        builder.makeMemorySize(),
-                       builder.makeConstPtr(16)));
+                       builder.makeConstPtr(16, mem->indexType)));
 }
 
 } // anonymous namespace

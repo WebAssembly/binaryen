@@ -112,9 +112,12 @@ void Instrumenter::instrumentFuncs() {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
                                   funcIdx,
-                                  builder.makeConstPtr(0),
+                                  // TODO (nashley): Fix hardcoded type below
+                                  builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
-                                  Type::i32),
+                                  Type::i32,
+                                  // TODO (nashley): Fix hardcoded name below
+                                  Name::fromInt(0)),
           func->body,
           func->body->type);
         ++funcIdx;
@@ -170,7 +173,8 @@ void Instrumenter::addProfileExport() {
 
   // Write the hash followed by all the time stamps
   Expression* writeData =
-    builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64);
+                                  // TODO (nashley): Fix hardcoded name below
+    builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64, Name::fromInt(0));
   uint32_t offset = 8;
 
   switch (options.storageKind) {
@@ -183,7 +187,9 @@ void Instrumenter::addProfileExport() {
                             1,
                             getAddr(),
                             builder.makeGlobalGet(global, Type::i32),
-                            Type::i32));
+                            Type::i32,
+                            // TODO (nashley): Fix hardcoded name
+                            Name::fromInt(0)));
         offset += 4;
       }
       break;
@@ -232,8 +238,11 @@ void Instrumenter::addProfileExport() {
                   getAddr(),
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
-                builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32),
-                Type::i32),
+                // TODO (nashley): Fix hardcoded name
+                builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32, Name::fromInt(0)),
+                Type::i32,
+                // TODO (nashley): Fix hardcoded name
+                Name::fromInt(0)),
               builder.makeLocalSet(
                 funcIdxVar,
                 builder.makeBinary(

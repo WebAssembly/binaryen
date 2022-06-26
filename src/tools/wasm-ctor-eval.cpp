@@ -333,29 +333,29 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // called during initialization
   void tableStore(Name tableName, Index index, const Literal& value) override {}
 
-  int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
-  uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
-  int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }
-  uint16_t load16u(Address addr) override { return doLoad<uint16_t>(addr); }
-  int32_t load32s(Address addr) override { return doLoad<int32_t>(addr); }
-  uint32_t load32u(Address addr) override { return doLoad<uint32_t>(addr); }
-  int64_t load64s(Address addr) override { return doLoad<int64_t>(addr); }
-  uint64_t load64u(Address addr) override { return doLoad<uint64_t>(addr); }
+  int8_t load8s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int8_t>(addr); }
+  uint8_t load8u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint8_t>(addr); }
+  int16_t load16s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int16_t>(addr); }
+  uint16_t load16u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint16_t>(addr); }
+  int32_t load32s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int32_t>(addr); }
+  uint32_t load32u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint32_t>(addr); }
+  int64_t load64s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int64_t>(addr); }
+  uint64_t load64u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint64_t>(addr); }
 
-  void store8(Address addr, int8_t value) override {
+  void store8(Address addr, int8_t value, Name memoryName = Name::fromInt(0)) override {
     doStore<int8_t>(addr, value);
   }
-  void store16(Address addr, int16_t value) override {
+  void store16(Address addr, int16_t value, Name memoryName = Name::fromInt(0)) override {
     doStore<int16_t>(addr, value);
   }
-  void store32(Address addr, int32_t value) override {
+  void store32(Address addr, int32_t value, Name memoryName = Name::fromInt(0)) override {
     doStore<int32_t>(addr, value);
   }
-  void store64(Address addr, int64_t value) override {
+  void store64(Address addr, int64_t value, Name memoryName = Name::fromInt(0)) override {
     doStore<int64_t>(addr, value);
   }
 
-  bool growMemory(Address /*oldSize*/, Address /*newSize*/) override {
+  bool growMemory(Name memoryName, Address /*oldSize*/, Address /*newSize*/) override {
     throw FailToEvalException("grow memory");
   }
 
@@ -382,7 +382,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
 private:
   // TODO: handle unaligned too, see shell-interface
-
+  // TODO (nashley): Change the below fns to use a specific memory
   template<typename T> T* getMemory(Address address) {
     // resize the memory buffer as needed.
     auto max = address + sizeof(T);
