@@ -377,6 +377,10 @@ enum EncodedType {
   // run-time type info type, without depth index n
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
+  stringref = -0x1c, // 0x64
+  stringview_wtf8 = -0x1d, // 0x63
+  stringview_wtf16 = -0x1e, // 0x62
+  stringview_iter = -0x1f, // 0x61
   // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f

@@ -1322,6 +1322,18 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::dataref:
       ret = BinaryConsts::EncodedType::dataref;
       break;
+    case Type::stringref:
+      ret = BinaryConsts::EncodedType::stringref;
+      break;
+    case Type::stringview_wtf8:
+      ret = BinaryConsts::EncodedType::stringview_wtf8;
+      break;
+    case Type::stringview_wtf16:
+      ret = BinaryConsts::EncodedType::stringview_wtf16;
+      break;
+    case Type::stringview_iter:
+      ret = BinaryConsts::EncodedType::stringview_iter;
+      break;
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1350,6 +1362,18 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
         break;
       case HeapType::data:
         ret = BinaryConsts::EncodedHeapType::data;
+        break;
+      case HeapType::string:
+        ret = BinaryConsts::EncodedHeapType::string;
+        break;
+      case HeapType::stringview_wtf8:
+        ret = BinaryConsts::EncodedHeapType::stringview_wtf8;
+        break;
+      case HeapType::stringview_wtf16:
+        ret = BinaryConsts::EncodedHeapType::stringview_wtf16;
+        break;
+      case HeapType::stringview_iter:
+        ret = BinaryConsts::EncodedHeapType::stringview_iter;
         break;
     }
   } else {
@@ -1698,6 +1722,18 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
       return true;
     case BinaryConsts::EncodedType::dataref:
       out = Type(HeapType::data, NonNullable);
+      return true;
+    case BinaryConsts::EncodedType::stringref:
+      out = Type(HeapType::string, NonNullable);
+      return true;
+    case BinaryConsts::EncodedType::stringview_wtf8:
+      out = Type(HeapType::stringview_wtf8, NonNullable);
+      return true;
+    case BinaryConsts::EncodedType::stringview_wtf16:
+      out = Type(HeapType::stringview_wtf16, NonNullable);
+      return true;
+    case BinaryConsts::EncodedType::stringview_iter:
+      out = Type(HeapType::stringview_iter, NonNullable);
       return true;
     default:
       return false;
