@@ -402,6 +402,10 @@ enum EncodedHeapType {
   eq = -0x13,   // 0x6d
   i31 = -0x16,  // 0x6a
   data = -0x19, // 0x67
+  string = -0x1c, // 0x64
+  stringview_wtf8 = -0x1d, // 0x63
+  stringview_wtf16 = -0x1e, // 0x62
+  stringview_iter = -0x1f, // 0x61
 };
 
 namespace UserSections {
