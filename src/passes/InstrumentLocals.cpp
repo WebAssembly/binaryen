@@ -108,6 +108,12 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::dataref:
         import = get_dataref;
         break;
+      case Type::stringref:
+      case Type::stringview_wtf8:
+      case Type::stringview_wtf16:
+      case Type::stringview_iter: {
+        WASM_UNREACHABLE("TODO: string types");
+      }
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -165,6 +171,12 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::dataref:
         import = set_dataref;
         break;
+      case Type::stringref:
+      case Type::stringview_wtf8:
+      case Type::stringview_wtf16:
+      case Type::stringview_iter: {
+        WASM_UNREACHABLE("TODO: string types");
+      }
       case Type::unreachable:
         return; // nothing to do here
       default:
