@@ -502,7 +502,7 @@ Name SExpressionWasmBuilder::getMemoryName(Element& s) {
     // index
     size_t offset = atoi(s.str().c_str());
     if (offset >= memoryNames.size()) {
-      throw ParseException("unknown table in getMemoryName", s.line, s.col);
+      throw ParseException("unknown memory in getMemoryName", s.line, s.col);
     }
     return memoryNames[offset];
   }
@@ -3294,8 +3294,7 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     if (elementStartsWith(s[i], MEMORY)) {
       auto& inner = *s[i++];
       memory = getMemoryName(*inner[1]);
-    }//TODO (nashley): need an else condition to set memory name
-
+    }
     // Offset expression (offset (<expr>)) | (<expr>)
     auto& inner = *s[i++];
     if (elementStartsWith(inner, OFFSET)) {

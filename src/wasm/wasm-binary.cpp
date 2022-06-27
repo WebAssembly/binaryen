@@ -3080,10 +3080,18 @@ void WasmBinaryBuilder::readDataSegments() {
     curr->setName(Name::fromInt(i), false);
     curr->isPassive = flags & BinaryConsts::IsPassive;
     if (flags & BinaryConsts::HasIndex) {
-      auto memIndex = getU32LEB();
-      if (memIndex != 0) {
-        throwError("nonzero memory index");
+      auto memIdx = getU32LEB();
+      Memory* memory = nullptr;
+      auto numMemoryImports = memoryImports.size();
+      if (memIdx < numMemoryImports) {
+        memory = memoryImports[memIdx];
+      } else if (memIdx - numMemoryImports < memories.size()) {
+        memory = memories[memIdx - numMemoryImports].get();
       }
+      if (!memory) {
+        throwError("Memory index out of range while reading data segments.");
+      }
+      curr->memory = Name::fromInt(memIdx);
     }
     if (!curr->isPassive) {
       curr->offset = readExpression();
