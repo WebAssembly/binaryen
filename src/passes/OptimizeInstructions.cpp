@@ -1408,18 +1408,19 @@ struct OptimizeInstructions
   //      (struct.get $A 0
   //        (ref.cast $B ..))
   //
-  //    The cast changes the type of the reference. If it is not necessary for
-  //    validation then it may be removed in principle. Also, the struct.get
-  //    consumes the reference, so the type does not propagate upwards, and
-  //    cannot help anything else. Despite all the above, it is still risky to
-  //    remove such a cast, since e.g. GUFA does benefit from such information:
+  //    The cast only changes the type of the reference, which is consumed in
+  //    this expression and so we don't have more parents to consider. But it is
+  //    risky to remove this cast, since e.g. GUFA does benefit from such info:
   //    it tells GUFA that we are reading from a $B here, and not the supertype
   //    $A. If $B may contain fewer values in field 0 than $A, then GUFA might
   //    be able to optimize better with this cast. But in traps-never-happen
   //    mode we can assume that only $B can arrive here, which means GUFA should
   //    be able to infer that even without the cast. Thus, in traps-never-happen
-  //    mode we could optimize out such a cast (assuming the code still
-  //    validates, of course), but not otherwise.
+  //    mode we should optimize out such a cast (assuming the code still
+  //    validates, of course), but not otherwise. (This may not always be the
+  //    optimal decision, say if GUFA hits a limitation and does not manage to
+  //    make the inference that only $B can arrive, but as it is important to
+  //    remove such redundant casts, we have to draw a line somewhere.)
 
   // If an instruction traps on a null input, there is no need for a
   // ref.as_non_null on that input: we will trap either way (and the binaryen
