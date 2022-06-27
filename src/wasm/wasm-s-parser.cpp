@@ -1193,7 +1193,7 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
     return Type::stringview_wtf16;
   }
-  if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[16] == 0)) {
+  if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
     return Type::stringview_iter;
   }
   if (allowError) {
