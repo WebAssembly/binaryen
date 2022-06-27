@@ -115,7 +115,7 @@ public:
 
   static std::unique_ptr<DataSegment>
   makeDataSegment(Name name = "",
-                  Name memory = "",
+                  Name memory = Name::fromInt(0),
                   bool isPassive = false,
                   Expression* offset = nullptr,
                   const char* init = "",
