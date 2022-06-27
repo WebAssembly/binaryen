@@ -621,6 +621,10 @@ HeapType getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       }
       return HeapType::any;
     case HeapType::data:
+    case HeapType::string:
+    case HeapType::stringview_wtf8:
+    case HeapType::stringview_wtf16:
+    case HeapType::stringview_iter:
       return HeapType::any;
   }
   WASM_UNREACHABLE("unexpected basic type");
@@ -680,6 +684,14 @@ std::optional<Type> TypeInfo::getCanonical() const {
           case HeapType::i31:
           case HeapType::data:
             break;
+          case HeapType::string:
+            return Type::stringref;
+          case HeapType::stringview_wtf8:
+            return Type::stringview_wtf8;
+          case HeapType::stringview_wtf16:
+            return Type::stringview_wtf16;
+          case HeapType::stringview_iter:
+            return Type::stringview_iter;
         }
       } else {
         if (basic == HeapType::i31) {
@@ -1096,6 +1108,10 @@ unsigned Type::getByteSize() const {
       case Type::eqref:
       case Type::i31ref:
       case Type::dataref:
+      case Type::stringref:
+      case Type::stringview_wtf8:
+      case Type::stringview_wtf16:
+      case Type::stringview_iter:
       case Type::none:
       case Type::unreachable:
         break;
@@ -1214,6 +1230,14 @@ HeapType Type::getHeapType() const {
         return HeapType::i31;
       case Type::dataref:
         return HeapType::data;
+      case Type::stringref:
+        return HeapType::stringref;
+      case Type::stringview_wtf8:
+        return HeapType::stringview_wtf8;
+      case Type::stringview_wtf16:
+        return HeapType::stringview_wtf16;
+      case Type::stringview_iter:
+        return HeapType::stringview_iter;
     }
     WASM_UNREACHABLE("Unexpected type");
   } else {
@@ -1739,6 +1763,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
         return false;
       case HeapType::data:
         return a.isData();
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        return false;
     }
   }
   if (a.isBasic()) {
