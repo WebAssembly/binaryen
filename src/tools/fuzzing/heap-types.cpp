@@ -303,7 +303,7 @@ struct HeapTypeGeneratorImpl {
           return generateSubEq();
         case HeapType::data:
           return generateSubData();
-        case HeapType::stringref:
+        case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
@@ -395,7 +395,7 @@ struct HeapTypeGeneratorImpl {
           return HeapType::i31;
         case HeapType::data:
           return pickSubData();
-        case HeapType::stringref:
+        case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
@@ -513,7 +513,7 @@ struct HeapTypeGeneratorImpl {
           }
         case HeapType::data:
           return DataKind{};
-        case HeapType::stringref:
+        case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:

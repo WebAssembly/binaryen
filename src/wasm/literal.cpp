@@ -143,7 +143,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
           return;
         case HeapType::func:
         case HeapType::data:
-        case HeapType::stringref:
+        case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
@@ -558,7 +558,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           break;
         case HeapType::func:
         case HeapType::data:
-        case HeapType::stringref:
+        case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
