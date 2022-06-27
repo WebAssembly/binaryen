@@ -403,9 +403,9 @@ enum EncodedHeapType {
   i31 = -0x16,  // 0x6a
   data = -0x19, // 0x67
   string = -0x1c, // 0x64
-  stringview_wtf8 = -0x1d, // 0x63
-  stringview_wtf16 = -0x1e, // 0x62
-  stringview_iter = -0x1f, // 0x61
+  // stringview/iter constants are identical to type, and cannot be duplicated
+  // here as that would be a compiler error. see
+  // https://github.com/WebAssembly/stringref/issues/12
 };
 
 namespace UserSections {
