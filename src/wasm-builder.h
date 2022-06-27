@@ -107,9 +107,17 @@ public:
     return seg;
   }
 
-  static std::unique_ptr<Memory>makeMemory(Name name = Name::fromInt(0)) {
+  static std::unique_ptr<Memory>makeMemory(Name name = Name::fromInt(0),
+                                           Address initial = 0,
+                                           Address max = Memory::kMaxSize32,
+                                           bool shared = false,
+                                           Type indexType = Type::i32) {
     auto memory = std::make_unique<Memory>();
     memory->name = name;
+    memory->initial = initial;
+    memory->max = max;
+    memory->shared = shared;
+    memory->indexType = indexType;
     return memory;
   }
 

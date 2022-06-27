@@ -32,14 +32,14 @@ namespace wasm::MemoryUtils {
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
 bool flatten(Module& wasm);
 
-// TODO (nashley): make the below fn relevant
-// Ensures that the memory exists (of minimal size).
-/*inline void ensureExists(Memory& memory) {
-  if (!memory.exists) {
-    memory.exists = true;
-    memory.initial = memory.max = 1;
+// Ensures that a memory exists (of minimal size).
+inline void ensureExists(Module* wasm) {
+  if (wasm->memories.empty()) {
+    auto memory = Builder::makeMemory();
+    memory->initial = memory->max = 1;
+    wasm->addMemory(std::move(memory));
   }
-}*/
+}
 
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.

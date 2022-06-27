@@ -596,8 +596,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                         Type::i32));
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
-    // TODO (nashley): Fix below
-    // MemoryUtils::ensureExists(getModule()->memory);
+    MemoryUtils::ensureExists(getModule());
     ABI::wasm2js::ensureHelpers(getModule());
   }
 
@@ -615,8 +614,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                         Type::none),
       builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}, Type::f64));
     replaceCurrent(result);
-    // TODO (nashley): Fix below
-    // MemoryUtils::ensureExists(getModule()->memory);
+    MemoryUtils::ensureExists(getModule());
     ABI::wasm2js::ensureHelpers(getModule());
   }
 
