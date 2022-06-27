@@ -2078,6 +2078,14 @@ std::ostream& TypePrinter::print(Type type) {
         return os << "i31ref";
       case Type::dataref:
         return os << "dataref";
+      case Type::stringref:
+        return os << "stringref";
+      case Type::stringview_wtf8:
+        return os << "stringview_wtf8";
+      case Type::stringview_wtf16:
+        return os << "stringview_wtf16";
+      case Type::stringview_iter:
+        return os << "stringview_iter";
     }
   }
 
@@ -2117,6 +2125,14 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "i31";
       case HeapType::data:
         return os << "data";
+      case HeapType::string:
+        return os << "string";
+      case HeapType::stringview_wtf8:
+        return os << "stringview_wtf8";
+      case HeapType::stringview_wtf16:
+        return os << "stringview_wtf16";
+      case HeapType::stringview_iter:
+        return os << "stringview_iter";
     }
   }
 
