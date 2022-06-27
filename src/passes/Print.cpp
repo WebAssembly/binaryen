@@ -2390,7 +2390,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
     }
 
-    int startControlFlowDepth = controlFlowDepth;
     controlFlowDepth += stack.size();
     auto* top = stack.back();
     while (stack.size() > 0) {
@@ -2413,6 +2412,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         }
         printFullLine(list[i]);
       }
+      controlFlowDepth--;
     }
     decIndent();
     if (full) {
@@ -2421,7 +2421,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         o << ' ' << curr->name;
       }
     }
-    controlFlowDepth = startControlFlowDepth;
   }
   void visitIf(If* curr) {
     controlFlowDepth++;
