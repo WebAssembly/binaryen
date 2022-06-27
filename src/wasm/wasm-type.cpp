@@ -1231,7 +1231,7 @@ HeapType Type::getHeapType() const {
       case Type::dataref:
         return HeapType::data;
       case Type::stringref:
-        return HeapType::stringref;
+        return HeapType::string;
       case Type::stringview_wtf8:
         return HeapType::stringview_wtf8;
       case Type::stringview_wtf16:
