@@ -1367,13 +1367,13 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
         ret = BinaryConsts::EncodedHeapType::string;
         break;
       case HeapType::stringview_wtf8:
-        ret = BinaryConsts::EncodedHeapType::stringview_wtf8;
+        ret = BinaryConsts::EncodedHeapType::stringview_wtf8_heap;
         break;
       case HeapType::stringview_wtf16:
-        ret = BinaryConsts::EncodedHeapType::stringview_wtf16;
+        ret = BinaryConsts::EncodedHeapType::stringview_wtf16_heap;
         break;
       case HeapType::stringview_iter:
-        ret = BinaryConsts::EncodedHeapType::stringview_iter;
+        ret = BinaryConsts::EncodedHeapType::stringview_iter_heap;
         break;
     }
   } else {
