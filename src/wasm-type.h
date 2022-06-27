@@ -351,6 +351,8 @@ public:
     i31,
     data,
     string,
+    // Identical to the BasicType names for now, but see
+    // https://github.com/WebAssembly/stringref/issues/12
     stringview_wtf8,
     stringview_wtf16,
     stringview_iter,
