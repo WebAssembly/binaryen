@@ -1724,16 +1724,16 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
       out = Type(HeapType::data, NonNullable);
       return true;
     case BinaryConsts::EncodedType::stringref:
-      out = Type(HeapType::string, NonNullable);
+      out = Type::stringref;
       return true;
     case BinaryConsts::EncodedType::stringview_wtf8:
-      out = Type(HeapType::stringview_wtf8, NonNullable);
+      out = Type::stringview_wtf8;
       return true;
     case BinaryConsts::EncodedType::stringview_wtf16:
-      out = Type(HeapType::stringview_wtf16, NonNullable);
+      out = Type::stringview_wtf16;
       return true;
     case BinaryConsts::EncodedType::stringview_iter:
-      out = Type(HeapType::stringview_iter, NonNullable);
+      out = Type::stringview_iter;
       return true;
     default:
       return false;
@@ -1756,6 +1756,18 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::data:
       out = HeapType::data;
+      return true;
+    case BinaryConsts::EncodedHeapType::string:
+      out = HeapType::string;
+      return true;
+    case BinaryConsts::EncodedHeapType::stringview_wtf8_heap:
+      out = HeapType::stringview_wtf8;
+      return true;
+    case BinaryConsts::EncodedHeapType::stringview_wtf16_heap:
+      out = HeapType::stringview_wtf16;
+      return true;
+    case BinaryConsts::EncodedHeapType::stringview_iter_heap:
+      out = HeapType::stringview_iter;
       return true;
     default:
       return false;

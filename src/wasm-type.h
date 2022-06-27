@@ -109,14 +109,15 @@ public:
     funcref,
     anyref,
     eqref,
-    i31ref,
-    dataref,
     stringref,
     stringview_wtf8,
     stringview_wtf16,
-    stringview_iter
+    stringview_iter,
+    // From here types are non-nullable.
+    i31ref,
+    dataref
   };
-  static constexpr BasicType _last_basic_type = stringview_iter;
+  static constexpr BasicType _last_basic_type = dataref;
 
   Type() : id(none) {}
 

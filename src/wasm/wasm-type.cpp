@@ -1034,7 +1034,7 @@ bool Type::isData() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= eqref; // except i31ref and dataref
+    return id >= funcref && id < i31ref; // all except i31ref and dataref
   } else {
     return getTypeInfo(*this)->isNullable();
   }
