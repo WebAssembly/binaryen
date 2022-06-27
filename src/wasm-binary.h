@@ -375,12 +375,12 @@ enum EncodedType {
   // run-time type info type, with depth index n
   rtt_n = -0x17, // 0x69
   // run-time type info type, without depth index n
-  rtt = -0x18,     // 0x68
-  dataref = -0x19, // 0x67
-  stringref = -0x1c, // 0x64
-  stringview_wtf8 = -0x1d, // 0x63
+  rtt = -0x18,              // 0x68
+  dataref = -0x19,          // 0x67
+  stringref = -0x1c,        // 0x64
+  stringview_wtf8 = -0x1d,  // 0x63
   stringview_wtf16 = -0x1e, // 0x62
-  stringview_iter = -0x1f, // 0x61
+  stringview_iter = -0x1f,  // 0x61
   // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -397,18 +397,18 @@ enum EncodedType {
 };
 
 enum EncodedHeapType {
-  func = -0x10, // 0x70
-  any = -0x11,  // 0x6f
-  eq = -0x13,   // 0x6d
-  i31 = -0x16,  // 0x6a
-  data = -0x19, // 0x67
+  func = -0x10,   // 0x70
+  any = -0x11,    // 0x6f
+  eq = -0x13,     // 0x6d
+  i31 = -0x16,    // 0x6a
+  data = -0x19,   // 0x67
   string = -0x1c, // 0x64
   // stringview/iter constants are identical to type, and cannot be duplicated
   // here as that would be a compiler error, so add _heap suffixes. See
   // https://github.com/WebAssembly/stringref/issues/12
-  stringview_wtf8_heap = -0x1d, // 0x63
+  stringview_wtf8_heap = -0x1d,  // 0x63
   stringview_wtf16_heap = -0x1e, // 0x62
-  stringview_iter_heap = -0x1f, // 0x61
+  stringview_iter_heap = -0x1f,  // 0x61
 };
 
 namespace UserSections {
