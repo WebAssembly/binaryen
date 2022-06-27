@@ -185,8 +185,7 @@ void TranslateToFuzzReader::build() {
 
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
-  // TODO (nashley): Fix below fn
-  // MemoryUtils::ensureExists(wasm.memory);
+  MemoryUtils::ensureExists(&wasm);
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
