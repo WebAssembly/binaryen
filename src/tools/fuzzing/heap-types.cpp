@@ -303,6 +303,11 @@ struct HeapTypeGeneratorImpl {
           return generateSubEq();
         case HeapType::data:
           return generateSubData();
+        case HeapType::stringref:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected index");
     }
@@ -390,6 +395,11 @@ struct HeapTypeGeneratorImpl {
           return HeapType::i31;
         case HeapType::data:
           return pickSubData();
+        case HeapType::stringref:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected kind");
     }
@@ -503,6 +513,11 @@ struct HeapTypeGeneratorImpl {
           }
         case HeapType::data:
           return DataKind{};
+        case HeapType::stringref:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected kind");
     } else {

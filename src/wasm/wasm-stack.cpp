@@ -192,6 +192,10 @@ void BinaryInstWriter::visitLoad(Load* curr) {
       case Type::eqref:
       case Type::i31ref:
       case Type::dataref:
+      case Type::stringref:
+      case Type::stringview_wtf8:
+      case Type::stringview_wtf16:
+      case Type::stringview_iter:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -295,6 +299,10 @@ void BinaryInstWriter::visitStore(Store* curr) {
       case Type::eqref:
       case Type::i31ref:
       case Type::dataref:
+      case Type::stringref:
+      case Type::stringview_wtf8:
+      case Type::stringview_wtf16:
+      case Type::stringview_iter:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -747,6 +755,10 @@ void BinaryInstWriter::visitConst(Const* curr) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
+    case Type::stringref:
+    case Type::stringview_wtf8:
+    case Type::stringview_wtf16:
+    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
