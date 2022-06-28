@@ -1410,7 +1410,7 @@ struct OptimizeInstructions
   //
   //    The cast only changes the type of the reference, which is consumed in
   //    this expression and so we don't have more parents to consider. But it is
-  //    risky to remove this cast, since e.g. GUFA does benefit from such info:
+  //    risky to remove this cast, since e.g. GUFA benefits from such info:
   //    it tells GUFA that we are reading from a $B here, and not the supertype
   //    $A. If $B may contain fewer values in field 0 than $A, then GUFA might
   //    be able to optimize better with this cast. But in traps-never-happen
