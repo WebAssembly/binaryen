@@ -1938,10 +1938,9 @@ struct OptimizeInstructions
           builder.makeDrop(curr->value),
           builder.makeConst(Literal::makeZero(Type::i32))));
       } else {
-        // What the reference points to does not depend on the type, so casts
-        // may be removable. Do this right before returning because removing a
-        // cast may remove info that we could have used to optimize, see
-        // "notes on removing casts".
+        // See the comment on the other call to this lower down. Because of that
+        // other code path we run this optimization at the end (though in this
+        // code path it would be fine either way).
         skipCast(curr->value);
       }
       return;
@@ -1983,7 +1982,10 @@ struct OptimizeInstructions
       }
     }
 
-    // See above comment.
+    // What the reference points to does not depend on the type, so casts
+    // may be removable. Do this right before returning because removing a
+    // cast may remove info that we could have used to optimize, see
+    // "notes on removing casts".
     skipCast(curr->value);
   }
 
