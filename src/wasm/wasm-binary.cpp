@@ -7045,13 +7045,13 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::StringNewWTF8) {
     auto policy = getU32LEB();
     switch (policy) {
-      case StringNewPolicy::StringNewUTF8:
+      case BinaryConsts::StringNewPolicy::UTF8:
         op = StringNewUTF8;
         break;
-      case StringNewPolicy::StringNewWTF8:
+      case BinaryConsts::StringNewPolicy::WTF8:
         op = StringNewWTF8;
         break;
-      case StringNewPolicy::StringNewReplace:
+      case BinaryConsts::StringNewPolicy::Replace:
         op = StringNewReplace;
         break;
       default:

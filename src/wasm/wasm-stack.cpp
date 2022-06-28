@@ -2251,15 +2251,15 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   switch (curr->op) {
     case StringNewUTF8:
       o << U32LEB(BinaryConsts::StringNewWTF8)
-        << U32LEB(StringNewPolicy::StringNewUTF8);
+        << U32LEB(BinaryConsts::StringNewPolicy::UTF8);
       break;
     case StringNewWTF8:
       o << U32LEB(BinaryConsts::StringNewWTF8)
-        << U32LEB(StringNewPolicy::StringNewWTF8);
+        << U32LEB(BinaryConsts::StringNewPolicy::WTF8);
       break;
     case StringNewReplace:
       o << U32LEB(BinaryConsts::StringNewWTF8)
-        << U32LEB(StringNewPolicy::StringNewReplace);
+        << U32LEB(BinaryConsts::StringNewPolicy::Replace);
       break;
     case StringNewWTF16:
       o << U32LEB(BinaryConsts::StringNewWTF16);

@@ -1148,9 +1148,9 @@ enum MemoryAccess {
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
 enum class StringNewPolicy {
-  StringNewUTF8 = 0x00,
-  StringNewWTF8 = 0x01,
-  StringNewReplace = 0x02,
+  UTF8 = 0x00,
+  WTF8 = 0x01,
+  Replace = 0x02,
 };
 
 enum FeaturePrefix {

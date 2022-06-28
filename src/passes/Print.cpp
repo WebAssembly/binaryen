@@ -2214,7 +2214,7 @@ struct PrintExpressionContents
       case StringNewReplace:
         printMedium(o, "string.new_wtf8 replace");
         break;
-      case StringNewUTF16:
+      case StringNewWTF16:
         printMedium(o, "string.new_wtf16");
         break;
       default:
