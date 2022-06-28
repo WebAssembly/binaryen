@@ -119,8 +119,9 @@ struct GUFAOptimizer
       return;
     }
 
-    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal) {
-      // Without nominal typing we can't analyze subtypes, so we cannot infer
+    if (type.isRef() && (getTypeSystem() != TypeSystem::Nominal &&
+                         getTypeSystem() != TypeSystem::Isorecursive)) {
+      // Without type info we can't analyze subtypes, so we cannot infer
       // anything about refs.
       return;
     }
