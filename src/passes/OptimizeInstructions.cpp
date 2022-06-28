@@ -1195,14 +1195,14 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    optimizeMemoryAccess(curr->ptr, curr->offset);
+    optimizeMemoryAccess(curr->ptr, curr->offset, curr->memory);
   }
 
   void visitStore(Store* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
-    optimizeMemoryAccess(curr->ptr, curr->offset);
+    optimizeMemoryAccess(curr->ptr, curr->offset, curr->memory);
     optimizeStoredValue(curr->value, curr->bytes);
     if (auto* unary = curr->value->dynCast<Unary>()) {
       if (unary->op == WrapInt64) {
@@ -2991,7 +2991,7 @@ private:
   }
 
   // fold constant factors into the offset
-  void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
+  void optimizeMemoryAccess(Expression*& ptr, Address& offset, Name memory) {
     // ptr may be a const, but it isn't worth folding that in (we still have a
     // const); in fact, it's better to do the opposite for gzip purposes as well
     // as for readability.
@@ -2999,8 +2999,8 @@ private:
     if (last) {
       uint64_t value64 = last->value.getInteger();
       uint64_t offset64 = offset;
-      assert(!getModule()->memories.empty());
-      if (getModule()->memories[0]->is64()) {
+      auto mem = getModule()->getMemory(memory);
+      if (mem->is64()) {
         last->value = Literal(int64_t(value64 + offset64));
         offset = 0;
       } else {

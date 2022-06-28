@@ -867,9 +867,7 @@ void evalCtors(Module& wasm,
 static bool canEval(Module& wasm) {
   // Check if we can flatten memory. We need to do so currently because of how
   // we assume memory is simple and flat. TODO
-  size_t segCount = wasm.dataSegments.size();
-  MemoryUtils::flatten(wasm);
-  if (segCount == wasm.dataSegments.size()) {
+  if (!MemoryUtils::flatten(wasm)) {
     std::cout << "  ...stopping since could not flatten memory\n";
     return false;
   }

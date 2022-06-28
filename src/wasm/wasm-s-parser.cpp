@@ -378,6 +378,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
     auto& s = *module[j];
     preParseFunctionType(s);
     preParseImports(s);
+    preParseMemory(s);
     if (elementStartsWith(s, FUNC) && !isImport(s)) {
       implementedFunctions++;
     }
@@ -423,19 +424,26 @@ void SExpressionWasmBuilder::preParseImports(Element& curr) {
   }
 }
 
+void SExpressionWasmBuilder::preParseMemory(Element& curr) {
+  IString id = curr[0]->str();
+  if (id == MEMORY) {
+    parseMemory(curr);
+  }
+}
+
 void SExpressionWasmBuilder::parseModuleElement(Element& curr) {
   if (isImport(curr)) {
     return; // already done
   }
   IString id = curr[0]->str();
+  if (id == MEMORY) {
+    return; // already done
+  }
   if (id == START) {
     return parseStart(curr);
   }
   if (id == FUNC) {
     return parseFunction(curr);
-  }
-  if (id == MEMORY) {
-    return parseMemory(curr);
   }
   if (id == DATA) {
     return parseData(curr);
@@ -1418,17 +1426,15 @@ Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
-  auto memName = Name::fromInt(0);
-  if (s[1]->dollared()) {
-    memName = s[1]->str();
-  }
-  auto memory = wasm.getMemoryOrNull(memName);
-  if (!memory) {
-    throw ParseException("invalid memory name in memory.size", s.line, s.col);
-  }
   auto ret = allocator.alloc<MemorySize>();
-  ret->memory = memName;
-  if (memory->is64()) {
+  Index i = 1;
+  Index memIdx = 0;
+  if (s.size() > 1) {
+    memIdx = atoi(s[i]->c_str());
+  }
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
+  if (mem.is64()) {
     ret->make64();
   }
   ret->finalize();
@@ -1436,18 +1442,16 @@ Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeMemoryGrow(Element& s) {
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    memName = s[i++]->str();
-  }
-  auto memory = wasm.getMemoryOrNull(memName);
-  if (!memory) {
-    throw ParseException("invalid memory name in memory.grow", s.line, s.col);
-  }
   auto ret = allocator.alloc<MemoryGrow>();
-  ret->memory = memName;
-  if (memory->is64()) {
+  Index i = 1;
+  Index memIdx = 0;
+  if (s.size() > 2) {
+    std::cout << "in new init code\n";
+    memIdx = atoi(s[i++]->c_str());
+  }
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
+  if (mem.is64()) {
     ret->make64();
   }
   ret->delta = parseExpression(s[i]);
@@ -1971,17 +1975,15 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   ret->type = type;
   ret->bytes = parseMemBytes(extra, type.getByteSize());
   ret->signed_ = extra[0] && extra[1] == 's';
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in load", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this s[1] isn't a list of instructions or  mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
@@ -1995,17 +1997,15 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   ret->isAtomic = isAtomic;
   ret->valueType = type;
   ret->bytes = parseMemBytes(extra, type.getByteSize());
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in store", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
@@ -2050,17 +2050,15 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   } else {
     throw ParseException("bad atomic rmw operator", s.line, s.col);
   }
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in atomic RMW", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   Address align;
   i = parseMemAttributes(i, s, ret->offset, align, ret->bytes);
   if (align != ret->bytes) {
@@ -2079,18 +2077,16 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   auto ret = allocator.alloc<AtomicCmpxchg>();
   ret->type = type;
   ret->bytes = bytes;
+  Index i = 1;
   Address align;
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in atomic cmpxchg", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   i = parseMemAttributes(i, s, ret->offset, align, ret->bytes);
   if (align != ret->bytes) {
     throw ParseException(
@@ -2116,17 +2112,15 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   } else {
     WASM_UNREACHABLE("Invalid prefix for memory.atomic.wait");
   }
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in memory.atomic.wait", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   i = parseMemAttributes(i, s, ret->offset, align, expectedAlign);
   if (align != expectedAlign) {
     throw ParseException(
@@ -2142,18 +2136,16 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
 Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   auto ret = allocator.alloc<AtomicNotify>();
   ret->type = Type::i32;
-  Address align;
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in memory.atomic.notify", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
+  Address align;
   i = parseMemAttributes(i, s, ret->offset, align, 4);
   if (align != 4) {
     throw ParseException(
@@ -2263,17 +2255,15 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
       defaultAlign = 8;
       break;
   }
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in SIMDLoad", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign);
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
@@ -2311,17 +2301,15 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
     default:
       WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
   }
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in SIMDLoadStoreLane", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  // Check to make sure this str isn't the mem attributes
+  if (!s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i]->c_str());
+    i++;
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign);
   ret->index = parseLaneIndex(s[i++], lanes);
   ret->ptr = parseExpression(s[i++]);
@@ -2332,17 +2320,14 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
 
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
   auto ret = allocator.alloc<MemoryInit>();
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in memory.init", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  if (s.size() > 5) {
+    std::cout << "in new init code\n";
+    memIdx = atoi(s[i++]->c_str());
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   ret->segment = atoi(s[i++]->str().c_str());
   ret->dest = parseExpression(s[i++]);
   ret->offset = parseExpression(s[i++]);
@@ -2360,17 +2345,14 @@ Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeMemoryCopy(Element& s) {
   auto ret = allocator.alloc<MemoryCopy>();
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in memory.copy", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  if (s.size() > 4) {
+    std::cout << "in new copy code\n";
+    memIdx = atoi(s[i++]->c_str());
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   ret->dest = parseExpression(s[i++]);
   ret->source = parseExpression(s[i++]);
   ret->size = parseExpression(s[i]);
@@ -2380,17 +2362,14 @@ Expression* SExpressionWasmBuilder::makeMemoryCopy(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
   auto ret = allocator.alloc<MemoryFill>();
-  size_t i = 1;
-  auto memName = Name::fromInt(0);
-  if (s[i]->dollared()) {
-    auto memory = wasm.getMemoryOrNull(s[i]->str());
-    if (!memory) {
-      throw ParseException("invalid memory name in memory.fill", s.line, s.col);
-    } else {
-      memName = s[i++]->str();
-    }
+  Index i = 1;
+  Index memIdx = 0;
+  if (s.size() > 4) {
+    std::cout << "in new fill code\n";
+    memIdx = atoi(s[i++]->c_str());
   }
-  ret->memory = memName;
+  auto mem = wasm.getMemoryAtIdx(memIdx);
+  ret->memory = mem.name;
   ret->dest = parseExpression(s[i++]);
   ret->value = parseExpression(s[i++]);
   ret->size = parseExpression(s[i]);

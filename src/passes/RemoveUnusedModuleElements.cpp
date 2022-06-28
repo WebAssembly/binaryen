@@ -32,7 +32,7 @@
 
 namespace wasm {
 
-enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
+enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment, Memory, DataSegment };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -43,7 +43,6 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
-  bool usesMemory = false;
 
   // The signatures that we have seen a call_ref for. When we see a RefFunc of a
   // signature in here, we know it is reachable.
@@ -104,6 +103,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
             *module, curr.second, [&](ElementSegment* segment) {
               walk(segment->offset);
             });
+        } else if (kind == ModuleElementKind::Memory) {
+          ModuleUtils::iterMemorySegments(*module, curr.second, [&](DataSegment* segment) {
+            walk(segment->offset);
+          });
         }
       }
     }
@@ -120,6 +123,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     maybeAdd(ModuleElement(ModuleElementKind::Table, name));
     ModuleUtils::iterTableSegments(*module, name, [&](ElementSegment* segment) {
       maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+    });
+  }
+
+  // Add a reference to a memory and all its segments.
+  void maybeAddMemory(Name name) {
+    maybeAdd(ModuleElement(ModuleElementKind::Memory, name));
+    ModuleUtils::iterMemorySegments(*module, name, [&](DataSegment* segment) {
+      maybeAdd(ModuleElement(ModuleElementKind::DataSegment, segment->name));
     });
   }
 
@@ -177,26 +188,25 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     calledSignatures.insert(type);
   }
 
-  void visitGlobalGet(GlobalGet* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
+  void visitGlobalGet(GlobalGet* curr) { maybeAddMemory(curr->name); }
+  void visitGlobalSet(GlobalSet* curr) { maybeAddMemory(curr->name); }
+  void visitLoad(Load* curr) { maybeAddMemory(curr->memory); }
+  void visitStore(Store* curr) { maybeAddMemory(curr->memory); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { maybeAddMemory(curr->memory); }
+  void visitAtomicRMW(AtomicRMW* curr) { maybeAddMemory(curr->memory); }
+  void visitAtomicWait(AtomicWait* curr) { maybeAddMemory(curr->memory); }
+  void visitAtomicNotify(AtomicNotify* curr) { maybeAddMemory(curr->memory); }
+  // TODO (nashley): How to get memory name for atomic fence, is it parsed?
+  //void visitAtomicFence(AtomicFence* curr) { maybeAddMemory(curr->name); }
+  void visitMemoryInit(MemoryInit* curr) { maybeAddMemory(curr->memory); }
+  void visitDataDrop(DataDrop* curr) {
+    auto seg = module->getDataSegment(Name::fromInt(curr->segment));
+    maybeAddMemory(seg->memory);
   }
-  void visitGlobalSet(GlobalSet* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
-  }
-
-  void visitLoad(Load* curr) { usesMemory = true; }
-  void visitStore(Store* curr) { usesMemory = true; }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { usesMemory = true; }
-  void visitAtomicRMW(AtomicRMW* curr) { usesMemory = true; }
-  void visitAtomicWait(AtomicWait* curr) { usesMemory = true; }
-  void visitAtomicNotify(AtomicNotify* curr) { usesMemory = true; }
-  void visitAtomicFence(AtomicFence* curr) { usesMemory = true; }
-  void visitMemoryInit(MemoryInit* curr) { usesMemory = true; }
-  void visitDataDrop(DataDrop* curr) { usesMemory = true; }
-  void visitMemoryCopy(MemoryCopy* curr) { usesMemory = true; }
-  void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
-  void visitMemorySize(MemorySize* curr) { usesMemory = true; }
-  void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
+  void visitMemoryCopy(MemoryCopy* curr) { maybeAddMemory(curr->memory); }
+  void visitMemoryFill(MemoryFill* curr) { maybeAddMemory(curr->memory); }
+  void visitMemorySize(MemorySize* curr) { maybeAddMemory(curr->memory); }
+  void visitMemoryGrow(MemoryGrow* curr) { maybeAddMemory(curr->memory); }
   void visitRefFunc(RefFunc* curr) {
     auto type = curr->type.getHeapType();
     if (calledSignatures.count(type)) {
@@ -257,8 +267,14 @@ struct RemoveUnusedModuleElements : public Pass {
           roots.emplace_back(ModuleElementKind::ElementSegment, segment->name);
         }
       });
+    ModuleUtils::iterActiveDataSegments(
+      *module, [&](DataSegment* segment) {
+        auto memory = module->getMemory(segment->memory);
+        if (memory->imported() && !segment->data.empty()) {
+          roots.emplace_back(ModuleElementKind::DataSegment, segment->name);
+        }
+      });
     // Exports are roots.
-    bool exportsMemory = false;
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         roots.emplace_back(ModuleElementKind::Function, curr->value);
@@ -274,14 +290,13 @@ struct RemoveUnusedModuleElements : public Pass {
                                segment->name);
           });
       } else if (curr->kind == ExternalKind::Memory) {
-        exportsMemory = true;
+        roots.emplace_back(ModuleElementKind::Memory, curr->value);
+        ModuleUtils::iterMemorySegments(
+          *module, curr->value, [&](DataSegment* segment) {
+            roots.emplace_back(ModuleElementKind::DataSegment,
+                               segment->name);
+          });
       }
-    }
-    // Check for special imports, which are roots.
-    bool importsMemory = false;
-    assert(!module->memories.empty());
-    if (module->memories[0]->imported()) {
-      importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
     // TODO: Compute this based on which ElementSegments are actually reachable,
@@ -361,19 +376,17 @@ struct RemoveUnusedModuleElements : public Pass {
     //       to a function from an element segment, we may be able to remove
     //       that function, etc.)
 
-    // Handle the memory
-    if (!exportsMemory && !analyzer.usesMemory) {
-      if (!importsMemory) {
-        // The memory is unobservable to the outside, we can remove the
-        // contents.
-        module->dataSegments.clear();
-      }
-      if (module->dataSegments.empty()) {
-        module->memories[0]->module = module->memories[0]->base = Name();
-        module->memories[0]->initial = 0;
-        module->memories[0]->max = 0;
-      }
-    }
+    // Since we've removed all empty data segments, here we mark all memories
+    // that have a segment left.
+    std::unordered_set<Name> nonemptyMemories;
+    ModuleUtils::iterActiveDataSegments(
+      *module,
+      [&](DataSegment* segment) { nonemptyMemories.insert(segment->memory); });
+    module->removeMemories([&](Memory* curr) {
+      return (nonemptyMemories.count(curr->name) == 0 || !curr->imported()) &&
+             analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Memory, curr->name)) == 0;
+    });
   }
 };
 

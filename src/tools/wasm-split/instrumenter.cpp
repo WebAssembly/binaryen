@@ -173,8 +173,8 @@ void Instrumenter::addProfileExport() {
 
   // Write the hash followed by all the time stamps
   Expression* writeData =
-                                  // TODO (nashley): Fix hardcoded name below
-    builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64, Name::fromInt(0));
+  // TODO (nashley): Fix hardcoded name below
+  builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64, Name::fromInt(0));
   uint32_t offset = 8;
 
   switch (options.storageKind) {

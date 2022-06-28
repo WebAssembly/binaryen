@@ -31,7 +31,7 @@ namespace wasm::MemoryUtils {
 // With the introduction of multi-memories, at most flatten will now condense
 // the wasm.dataSegments vector to a count == to wasm.memories.size(), with one
 // data segment per memmory.
-void  flatten(Module& wasm);
+bool flatten(Module& wasm);
 
 // Ensures that a memory exists (of minimal size).
 inline void ensureExists(Module* wasm) {
