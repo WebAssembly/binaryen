@@ -179,6 +179,10 @@ struct GUFAOptimizer
     // example, a block may return (ref any), that is, not allow a null, but in
     // practice only a null may flow there if it goes through casts that will
     // trap at runtime.
+    // TODO: GUFA should eventually do this, but it will require it properly
+    //       filtering content not just on ref.cast as it does now, but also
+    //       ref.as etc. Once it does those we could assert on the type being
+    //       valid here.
     if (Type::isSubType(c->type, curr->type)) {
       if (canRemove(curr)) {
         replaceCurrent(getDroppedChildrenAndAppend(curr, wasm, options, c));
