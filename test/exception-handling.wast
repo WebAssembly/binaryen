@@ -352,4 +352,17 @@
       )
     )
   )
+
+  ;; When 'delegate' is next to a nested block, make sure its delegate argument
+  ;; is parsed correctly.
+  (func $nested-block-and-try
+    (block $l0
+      (block $l1)
+      (try
+        (do)
+        (delegate 1) ;; to caller
+      )
+    )
+    (nop)
+  )
 )

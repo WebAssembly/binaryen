@@ -393,4 +393,17 @@
    )
   )
  )
+ (func $nested-block-and-try
+  (block $l0
+   (block $l1
+   )
+   (try $try
+    (do
+     (nop)
+    )
+    (delegate 1)
+   )
+  )
+  (nop)
+ )
 )

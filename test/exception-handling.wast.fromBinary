@@ -424,5 +424,18 @@
    )
   )
  )
+ (func $nested-block-and-try
+  (block $label$1
+   (block $label$2
+   )
+   (try $label$5
+    (do
+     (nop)
+    )
+    (delegate 1)
+   )
+  )
+  (nop)
+ )
 )
 

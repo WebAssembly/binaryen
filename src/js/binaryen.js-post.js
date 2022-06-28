@@ -2519,8 +2519,13 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
   self['getMemorySegmentInfoByIndex'] = function(id) {
+    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id));
+    let offset = null;
+    if (!passive) {
+      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, id);
+    }
     return {
-      'offset': Module['_BinaryenGetMemorySegmentByteOffset'](module, id),
+      'offset': offset,
       'data': (function(){
         const size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
         const ptr = _malloc(size);
@@ -2530,7 +2535,7 @@ function wrapModule(module, self = {}) {
         _free(ptr);
         return res.buffer;
       })(),
-      'passive': Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id))
+      'passive': passive
     };
   };
   self['setStart'] = function(start) {
