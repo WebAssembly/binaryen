@@ -376,6 +376,7 @@ enum EncodedType {
   rtt_n = -0x17, // 0x69
   // run-time type info type, without depth index n
   rtt = -0x18,              // 0x68
+  // gc and string reference types
   dataref = -0x19,          // 0x67
   stringref = -0x1c,        // 0x64
   stringview_wtf8 = -0x1d,  // 0x63
