@@ -2203,6 +2203,24 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid ref.is_*");
     }
   }
+  void visitStringNew(StringNew* curr) {
+    switch (curr->op) {
+      case StringNewUTF8:
+        printMedium(o, "string.new_wtf8 utf8");
+        break;
+      case StringNewWTF8:
+        printMedium(o, "string.new_wtf8 wtf8");
+        break;
+      case StringNewReplace:
+        printMedium(o, "string.new_wtf8 replace");
+        break;
+      case StringNewUTF16:
+        printMedium(o, "string.new_wtf16");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.new*");
+    }
+  }
 };
 
 // Prints an expression in s-expr format, including both the
