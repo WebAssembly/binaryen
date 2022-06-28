@@ -77,10 +77,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
       WASM_UNREACHABLE("TODO: reftypes");
     case Type::none:
     case Type::unreachable:
@@ -108,10 +104,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal::makeNull(Type(x.type).getHeapType());
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
       WASM_UNREACHABLE("TODO: reftypes");
     case Type::none:
     case Type::unreachable:

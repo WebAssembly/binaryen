@@ -1322,18 +1322,6 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::dataref:
       ret = BinaryConsts::EncodedType::dataref;
       break;
-    case Type::stringref:
-      ret = BinaryConsts::EncodedType::stringref;
-      break;
-    case Type::stringview_wtf8:
-      ret = BinaryConsts::EncodedType::stringview_wtf8;
-      break;
-    case Type::stringview_wtf16:
-      ret = BinaryConsts::EncodedType::stringview_wtf16;
-      break;
-    case Type::stringview_iter:
-      ret = BinaryConsts::EncodedType::stringview_iter;
-      break;
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1724,16 +1712,16 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
       out = Type(HeapType::data, NonNullable);
       return true;
     case BinaryConsts::EncodedType::stringref:
-      out = Type::stringref;
+      out = Type(HeapType::string, Nullable);
       return true;
     case BinaryConsts::EncodedType::stringview_wtf8:
-      out = Type::stringview_wtf8;
+      out = Type(HeapType::stringview_wtf8, Nullable);
       return true;
     case BinaryConsts::EncodedType::stringview_wtf16:
-      out = Type::stringview_wtf16;
+      out = Type(HeapType::stringview_wtf16, Nullable);
       return true;
     case BinaryConsts::EncodedType::stringview_iter:
-      out = Type::stringview_iter;
+      out = Type(HeapType::stringview_iter, Nullable);
       return true;
     default:
       return false;

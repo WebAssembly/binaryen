@@ -685,13 +685,13 @@ std::optional<Type> TypeInfo::getCanonical() const {
           case HeapType::data:
             break;
           case HeapType::string:
-            return Type::stringref;
+            return Type(HeapType::string, Nullable);
           case HeapType::stringview_wtf8:
-            return Type::stringview_wtf8;
+            return Type(HeapType::stringview_wtf8, Nullable);
           case HeapType::stringview_wtf16:
-            return Type::stringview_wtf16;
+            return Type(HeapType::stringview_wtf16, Nullable);
           case HeapType::stringview_iter:
-            return Type::stringview_iter;
+            return Type(HeapType::stringview_iter, Nullable);
         }
       } else {
         if (basic == HeapType::i31) {
@@ -1108,10 +1108,6 @@ unsigned Type::getByteSize() const {
       case Type::eqref:
       case Type::i31ref:
       case Type::dataref:
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
       case Type::none:
       case Type::unreachable:
         break;
@@ -1230,14 +1226,6 @@ HeapType Type::getHeapType() const {
         return HeapType::i31;
       case Type::dataref:
         return HeapType::data;
-      case Type::stringref:
-        return HeapType::string;
-      case Type::stringview_wtf8:
-        return HeapType::stringview_wtf8;
-      case Type::stringview_wtf16:
-        return HeapType::stringview_wtf16;
-      case Type::stringview_iter:
-        return HeapType::stringview_iter;
     }
     WASM_UNREACHABLE("Unexpected type");
   } else {
@@ -2107,14 +2095,6 @@ std::ostream& TypePrinter::print(Type type) {
         return os << "i31ref";
       case Type::dataref:
         return os << "dataref";
-      case Type::stringref:
-        return os << "stringref";
-      case Type::stringview_wtf8:
-        return os << "stringview_wtf8";
-      case Type::stringview_wtf16:
-        return os << "stringview_wtf16";
-      case Type::stringview_iter:
-        return os << "stringview_iter";
     }
   }
 

@@ -67,12 +67,6 @@ static Expression* toABI(Expression* value, Module* module) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter: {
-      WASM_UNREACHABLE("reference types cannot be converted to i64");
-    }
     case Type::none: {
       // the value is none, but we need a value here
       value =
@@ -115,11 +109,7 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
-    case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter: {
+    case Type::dataref: {
       WASM_UNREACHABLE("reference types cannot be converted from i64");
     }
     case Type::none: {

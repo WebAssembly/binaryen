@@ -109,10 +109,6 @@ public:
     funcref,
     anyref,
     eqref,
-    stringref,
-    stringview_wtf8,
-    stringview_wtf16,
-    stringview_iter,
     // From here types are non-nullable.
     i31ref,
     dataref
@@ -159,10 +155,6 @@ public:
   // │ eqref            ║ x │   │ x │ x │    n  │ │  n_ullable
   // │ i31ref           ║ x │   │ x │ x │       │ │
   // │ dataref          ║ x │   │ x │ x │       │ │
-  // │ stringref        ║ x │   │ x │ x │    n  │ │
-  // │ stringview_wtf8  ║ x │   │ x │ x │    n  │ │
-  // │ stringview_wtf16 ║ x │   │ x │ x │    n  │ │
-  // │ stringview_iter  ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ───────╫───┼───┼───┼───┤───────┤ │
   // │ Ref              ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple            ║   │ x │   │ x │       │

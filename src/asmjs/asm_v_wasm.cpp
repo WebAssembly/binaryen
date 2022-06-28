@@ -38,10 +38,6 @@ JsType wasmToJsType(Type type) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
       WASM_UNREACHABLE("reference types are not supported by wasm2js");
     case Type::none:
       return JS_NONE;
@@ -74,10 +70,6 @@ char getSig(Type type) {
       return 'I';
     case Type::dataref:
       return 'D';
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
       WASM_UNREACHABLE("TODO: sig of string types");
     case Type::none:
       return 'v';

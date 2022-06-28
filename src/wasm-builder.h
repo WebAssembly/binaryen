@@ -1204,10 +1204,6 @@ public:
       case Type::i31ref:
         return makeI31New(makeConst(0));
       case Type::dataref:
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
         return curr;
       case Type::none:
         return ExpressionManipulator::nop(curr);

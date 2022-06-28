@@ -632,10 +632,6 @@ struct Reducer
               case Type::eqref:
               case Type::i31ref:
               case Type::dataref:
-              case Type::stringref:
-              case Type::stringview_wtf8:
-              case Type::stringview_wtf16:
-              case Type::stringview_iter:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -663,10 +659,6 @@ struct Reducer
               case Type::eqref:
               case Type::i31ref:
               case Type::dataref:
-              case Type::stringref:
-              case Type::stringview_wtf8:
-              case Type::stringview_wtf16:
-              case Type::stringview_iter:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -694,10 +686,6 @@ struct Reducer
               case Type::eqref:
               case Type::i31ref:
               case Type::dataref:
-              case Type::stringref:
-              case Type::stringview_wtf8:
-              case Type::stringview_wtf16:
-              case Type::stringview_iter:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -725,10 +713,6 @@ struct Reducer
               case Type::eqref:
               case Type::i31ref:
               case Type::dataref:
-              case Type::stringref:
-              case Type::stringview_wtf8:
-              case Type::stringview_wtf16:
-              case Type::stringview_iter:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -742,10 +726,6 @@ struct Reducer
           case Type::eqref:
           case Type::i31ref:
           case Type::dataref:
-          case Type::stringref:
-          case Type::stringview_wtf8:
-          case Type::stringview_wtf16:
-          case Type::stringview_iter:
             continue; // not implemented yet
           case Type::none:
           case Type::unreachable:

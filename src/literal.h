@@ -791,10 +791,6 @@ template<> struct hash<wasm::Literal> {
         case wasm::Type::anyref:
         case wasm::Type::eqref:
         case wasm::Type::dataref:
-        case wasm::Type::stringref:
-        case wasm::Type::stringview_wtf8:
-        case wasm::Type::stringview_wtf16:
-        case wasm::Type::stringview_iter:
           return hashRef();
         case wasm::Type::i31ref:
           wasm::rehash(digest, a.geti31(true));

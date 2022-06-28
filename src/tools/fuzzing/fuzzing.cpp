@@ -1468,10 +1468,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -1575,10 +1571,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -1714,10 +1706,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::eqref:
         case Type::i31ref:
         case Type::dataref:
-        case Type::stringref:
-        case Type::stringview_wtf8:
-        case Type::stringview_wtf16:
-        case Type::stringview_iter:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("invalid type");
@@ -1764,10 +1752,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::eqref:
         case Type::i31ref:
         case Type::dataref:
-        case Type::stringref:
-        case Type::stringview_wtf8:
-        case Type::stringview_wtf16:
-        case Type::stringview_iter:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1837,10 +1821,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::eqref:
         case Type::i31ref:
         case Type::dataref:
-        case Type::stringref:
-        case Type::stringview_wtf8:
-        case Type::stringview_wtf16:
-        case Type::stringview_iter:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1869,10 +1849,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::eqref:
         case Type::i31ref:
         case Type::dataref:
-        case Type::stringref:
-        case Type::stringview_wtf8:
-        case Type::stringview_wtf16:
-        case Type::stringview_iter:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2144,10 +2120,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case Type::eqref:
         case Type::i31ref:
         case Type::dataref:
-        case Type::stringref:
-        case Type::stringview_wtf8:
-        case Type::stringview_wtf16:
-        case Type::stringview_iter:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2288,10 +2260,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2530,10 +2498,6 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2741,10 +2705,6 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

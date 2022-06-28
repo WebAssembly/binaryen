@@ -126,10 +126,6 @@ inline UnaryOp getUnary(Type type, Op op) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -302,10 +298,6 @@ inline BinaryOp getBinary(Type type, Op op) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;
