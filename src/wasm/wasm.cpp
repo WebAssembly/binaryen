@@ -1173,6 +1173,14 @@ void RefAs::finalize() {
   }
 }
 
+void StringNew::finalize() {
+  if (ptr->type == Type::unreachable || length->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::stringref;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
