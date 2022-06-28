@@ -1413,14 +1413,17 @@ struct OptimizeInstructions
   //    risky to remove this cast, since e.g. GUFA benefits from such info:
   //    it tells GUFA that we are reading from a $B here, and not the supertype
   //    $A. If $B may contain fewer values in field 0 than $A, then GUFA might
-  //    be able to optimize better with this cast. But in traps-never-happen
-  //    mode we can assume that only $B can arrive here, which means GUFA should
-  //    be able to infer that even without the cast. Thus, in traps-never-happen
-  //    mode we should optimize out such a cast (assuming the code still
-  //    validates, of course), but not otherwise. (This may not always be the
-  //    optimal decision, say if GUFA hits a limitation and does not manage to
-  //    make the inference that only $B can arrive, but as it is important to
-  //    remove such redundant casts, we have to draw a line somewhere.)
+  //    be able to optimize better with this cast. Now, in traps-never-happen
+  //    mode we can assume that only $B can arrive here, which means GUFA might
+  //    be able to infer that even without the cast - but it might not, if we
+  //    hit a limitation of GUFA. Some code patterns simply cannot be expected
+  //    to be always inferred, say if a data structure has a tagged variant,
+  //    where a property is always in sync with whether a reference is say a
+  //    function - we can't expect GUFA to always detect such invariant
+  //    properties of programs. Given the large amount of potential benefit we
+  //    can get from a successful optimization in GUFA, any reduction there may
+  //    be a bad idea, so we should be very careful and probably *not* remove
+  //    such casts.
 
   // If an instruction traps on a null input, there is no need for a
   // ref.as_non_null on that input: we will trap either way (and the binaryen
