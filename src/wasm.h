@@ -2155,6 +2155,8 @@ private:
 public:
   Module() = default;
 
+  Memory getMemoryAtIdx(Index idx);
+
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Table* getTable(Name name);

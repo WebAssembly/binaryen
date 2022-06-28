@@ -159,6 +159,7 @@ private:
   void preParseFunctionType(Element& s);
   bool isImport(Element& curr);
   void preParseImports(Element& curr);
+  void preParseMemory(Element& curr);
   void parseModuleElement(Element& curr);
 
   // function parsing state

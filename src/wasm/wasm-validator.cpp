@@ -499,7 +499,10 @@ void validateCallParamsAndResult(T* curr,
     validateCallParamsAndResult(curr, sigType, curr);
   }
 
-  Type indexType() { return getModule()->memories[0]->indexType; }
+  Type indexType(Name memory) {
+    auto mem = getModule()->getMemory(memory);
+    return mem->indexType;
+  }
 };
 
 void FunctionValidator::noteLabelName(Name name) {
@@ -954,7 +957,7 @@ void FunctionValidator::visitLoad(Load* curr) {
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "load pointer type must match memory index type");
   if (curr->isAtomic) {
@@ -986,7 +989,7 @@ void FunctionValidator::visitStore(Store* curr) {
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "store pointer must match memory index type");
   shouldBeUnequal(curr->value->type,
@@ -1010,7 +1013,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "AtomicRMW pointer type must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->type,
@@ -1030,7 +1033,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "cmpxchg pointer must match memory index type");
   if (curr->expected->type != Type::unreachable &&
@@ -1064,7 +1067,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "AtomicWait pointer must match memory index type");
   shouldBeIntOrUnreachable(
@@ -1090,7 +1093,7 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "AtomicNotify pointer must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1248,7 +1251,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     curr->type, Type(Type::v128), curr, "load_splat must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "load_splat address must match memory index type");
   Type memAlignType = Type::none;
@@ -1288,7 +1291,7 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   }
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "loadX_lane or storeX_lane address must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1335,7 +1338,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
     curr->type, Type(Type::none), curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "memory.init dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
@@ -1378,17 +1381,17 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "memory.copy dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->source->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "memory.copy source must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "memory.copy size must match memory index type");
   shouldBeFalse(
@@ -1403,7 +1406,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "memory.fill dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type,
@@ -1412,7 +1415,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
                                     "memory.fill value must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    indexType(),
+    indexType(curr->memory),
     curr,
     "memory.fill size must match memory index type");
   shouldBeFalse(
@@ -2028,7 +2031,7 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   shouldBeFalse(
     getModule()->memories.empty(), curr, "Memory operations require a memory");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
-                                    indexType(),
+                                    indexType(curr->memory),
                                     curr,
                                     "memory.grow must match memory index type");
 }
