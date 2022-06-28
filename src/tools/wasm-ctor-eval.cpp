@@ -144,6 +144,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
   // A representation of the contents of wasm memory as we execute.
+  std::unordered_map<Name, std::vector<char>> memories;
   std::vector<char> memory;
 
   CtorEvalExternalInterface(
@@ -158,7 +159,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     clearApplyState();
 
     // If nothing was ever written to memory then there is nothing to update.
-    if (!memory.empty()) {
+    if (memories.empty()) {
       applyMemoryToModule();
     }
 
@@ -845,7 +846,9 @@ void evalCtors(Module& wasm,
 static bool canEval(Module& wasm) {
   // Check if we can flatten memory. We need to do so currently because of how
   // we assume memory is simple and flat. TODO
-  if (!MemoryUtils::flatten(wasm)) {
+  size_t segCount = wasm.dataSegments.size();
+  MemoryUtils::flatten(wasm);
+  if (segCount == wasm.dataSegments.size()) {
     std::cout << "  ...stopping since could not flatten memory\n";
     return false;
   }
