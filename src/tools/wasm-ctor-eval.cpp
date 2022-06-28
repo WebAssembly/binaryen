@@ -145,7 +145,6 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   // A representation of the contents of wasm memory as we execute.
   std::unordered_map<Name, std::vector<char>> memories;
-  std::vector<char> memory;
 
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
@@ -158,8 +157,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   void applyToModule() {
     clearApplyState();
 
-    // If nothing was ever written to memory then there is nothing to update.
-    if (memories.empty()) {
+    // If nothing was ever written to memories then there is nothing to update.
+    if (!memories.empty()) {
       applyMemoryToModule();
     }
 
@@ -334,26 +333,26 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // called during initialization
   void tableStore(Name tableName, Index index, const Literal& value) override {}
 
-  int8_t load8s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int8_t>(addr); }
-  uint8_t load8u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint8_t>(addr); }
-  int16_t load16s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int16_t>(addr); }
-  uint16_t load16u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint16_t>(addr); }
-  int32_t load32s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int32_t>(addr); }
-  uint32_t load32u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint32_t>(addr); }
-  int64_t load64s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int64_t>(addr); }
-  uint64_t load64u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint64_t>(addr); }
+  int8_t load8s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int8_t>(addr, memoryName); }
+  uint8_t load8u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint8_t>(addr, memoryName); }
+  int16_t load16s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int16_t>(addr, memoryName); }
+  uint16_t load16u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint16_t>(addr, memoryName); }
+  int32_t load32s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int32_t>(addr, memoryName); }
+  uint32_t load32u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint32_t>(addr, memoryName); }
+  int64_t load64s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int64_t>(addr, memoryName); }
+  uint64_t load64u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint64_t>(addr, memoryName); }
 
   void store8(Address addr, int8_t value, Name memoryName = Name::fromInt(0)) override {
-    doStore<int8_t>(addr, value);
+    doStore<int8_t>(addr, value, memoryName);
   }
   void store16(Address addr, int16_t value, Name memoryName = Name::fromInt(0)) override {
-    doStore<int16_t>(addr, value);
+    doStore<int16_t>(addr, value, memoryName);
   }
   void store32(Address addr, int32_t value, Name memoryName = Name::fromInt(0)) override {
-    doStore<int32_t>(addr, value);
+    doStore<int32_t>(addr, value, memoryName);
   }
   void store64(Address addr, int64_t value, Name memoryName = Name::fromInt(0)) override {
-    doStore<int64_t>(addr, value);
+    doStore<int64_t>(addr, value, memoryName);
   }
 
   bool growMemory(Name memoryName, Address /*oldSize*/, Address /*newSize*/) override {
@@ -383,8 +382,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
 private:
   // TODO: handle unaligned too, see shell-interface
-  // TODO (nashley): Change the below fns to use a specific memory
-  template<typename T> T* getMemory(Address address) {
+  template<typename T> T* getMemory(Address address, Name memoryName) {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      Fatal() << "memory not found: " << memoryName;
+    }
+    auto& memory = it->second;
     // resize the memory buffer as needed.
     auto max = address + sizeof(T);
     if (max > memory.size()) {
@@ -393,15 +396,15 @@ private:
     return (T*)(&memory[address]);
   }
 
-  template<typename T> void doStore(Address address, T value) {
+  template<typename T> void doStore(Address address, T value, Name memoryName) {
     // do a memcpy to avoid undefined behavior if unaligned
-    memcpy(getMemory<T>(address), &value, sizeof(T));
+    memcpy(getMemory<T>(address, memoryName), &value, sizeof(T));
   }
 
-  template<typename T> T doLoad(Address address) {
+  template<typename T> T doLoad(Address address, Name memoryName) {
     // do a memcpy to avoid undefined behavior if unaligned
     T ret;
-    memcpy(&ret, getMemory<T>(address), sizeof(T));
+    memcpy(&ret, getMemory<T>(address, memoryName), sizeof(T));
     return ret;
   }
 
@@ -422,21 +425,39 @@ private:
   }
 
   void applyMemoryToModule() {
-    // Memory must have already been flattened into the standard form: one
-    // segment at offset 0, or none.
-    if (wasm->dataSegments.empty()) {
-      Builder builder(*wasm);
-      auto curr = builder.makeDataSegment();
-      curr->offset = builder.makeConst(int32_t(0));
-      curr->setName(Name::fromInt(0), false);
-      wasm->dataSegments.push_back(std::move(curr));
-    }
-    auto& segment = wasm->dataSegments[0];
-    assert(segment->offset->cast<Const>()->value.getInteger() == 0);
+    // One of the memories  must have already had its data segments flattened into the standard form: one
+    // segment at offset 0, or none. Set the memory on the flattened data
+    // segment or create a new one if none exists.
+    auto it = memories.begin();
+    while (it != memories.end()) {
+      size_t segCount = 0;
+      auto memName = it->first;
+      auto base = std::string(memName.c_str());
+      auto segName = Name(base + "_flattened");
+      auto curr = wasm->getDataSegmentOrNull(segName);
+      for (auto& seg : wasm->dataSegments) {
+        if (seg->memory == memName) {
+          segCount++;
+        }
+      }
+      // Preventing making a new segment for a memory that was never flattened
+      if (segCount > 1) {
+        continue;
+      }
+      if (!curr) {
+        Builder builder(*wasm);
+        auto newSeg = builder.makeDataSegment();
+        newSeg->offset = builder.makeConst(int32_t(0));
+        newSeg->setName(Name::fromInt(wasm->dataSegments.size()-1), false);
+        wasm->dataSegments.push_back(std::move(newSeg));
+        curr = &*newSeg;
+      }
+      assert(curr->offset->cast<Const>()->value.getInteger() == 0);
 
-    // Copy the current memory contents after execution into the Module's
-    // memory.
-    segment->data = memory;
+      // Copy the current memory contents after execution into the Module's
+      // memory.
+      curr->data = it->second;
+    }
   }
 
   // Serializing GC data requires more work than linear memory, because

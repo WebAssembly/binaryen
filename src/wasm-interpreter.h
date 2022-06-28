@@ -2681,6 +2681,7 @@ private:
       size.finalize();
 
       MemoryInit init;
+      init.memory = segment->memory;
       init.segment = i;
       init.dest = segment->offset;
       init.offset = &offset;
