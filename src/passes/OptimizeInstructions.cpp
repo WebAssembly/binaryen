@@ -1417,13 +1417,29 @@ struct OptimizeInstructions
   //    mode we can assume that only $B can arrive here, which means GUFA might
   //    be able to infer that even without the cast - but it might not, if we
   //    hit a limitation of GUFA. Some code patterns simply cannot be expected
-  //    to be always inferred, say if a data structure has a tagged variant,
-  //    where a property is always in sync with whether a reference is say a
-  //    function - we can't expect GUFA to always detect such invariant
-  //    properties of programs. Given the large amount of potential benefit we
-  //    can get from a successful optimization in GUFA, any reduction there may
-  //    be a bad idea, so we should be very careful and probably *not* remove
-  //    such casts.
+  //    to be always inferred, say if a data structure has a tagged variant:
+  //
+  //      {
+  //        tag: i32,
+  //        ref: anyref
+  //      }
+  //
+  //    Imagine that if tag == 0 then the reference always contains struct $A,
+  //    and if tag == 1 then it always contains a struct $B, and so forth. We
+  //    can't expect GUFA to figure out such invariants in general. But by
+  //    having casts in the right places we can help GUFA optimize:
+  //
+  //      (if
+  //        (ref == 1)
+  //        (struct.get $A 0
+  //          (ref.cast $B ..))
+  //
+  //    We know it must be a $B due to the tag. By keeping the cast there we can
+  //    make sure that optimizations can benefit from that.
+  //
+  //    Given the large amount of potential benefit we can get from a successful
+  //    optimization in GUFA, any reduction there may be a bad idea, so we
+  //    should be very careful and probably *not* remove such casts.
 
   // If an instruction traps on a null input, there is no need for a
   // ref.as_non_null on that input: we will trap either way (and the binaryen
