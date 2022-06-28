@@ -585,8 +585,9 @@ enum BrOnOp {
 
 enum StringNewOp {
   StringNewUTF8,
-  StringNewWFT8,
+  StringNewWTF8,
   StringNewReplace,
+  StringNewWTF16
 };
 
 //

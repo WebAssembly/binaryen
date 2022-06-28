@@ -1135,6 +1135,8 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  StringNewWTF8 = 0x80,
+  StringNewWTF16 = 0x81,
 };
 
 enum MemoryAccess {
@@ -1144,6 +1146,12 @@ enum MemoryAccess {
 };
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
+
+enum class StringNewPolicy {
+  StringNewUTF8 = 0x00,
+  StringNewWTF8 = 0x01,
+  StringNewReplace = 0x02,
+};
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -1700,6 +1708,7 @@ public:
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
+  bool maybeVisitStringNew(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

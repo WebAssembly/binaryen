@@ -2246,6 +2246,29 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringNew(StringNew* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringNewUTF8:
+      o << U32LEB(BinaryConsts::StringNewWTF8)
+        << U32LEB(StringNewPolicy::StringNewUTF8);
+      break;
+    case StringNewWTF8:
+      o << U32LEB(BinaryConsts::StringNewWTF8)
+        << U32LEB(StringNewPolicy::StringNewWTF8);
+      break;
+    case StringNewReplace:
+      o << U32LEB(BinaryConsts::StringNewWTF8)
+        << U32LEB(StringNewPolicy::StringNewReplace);
+      break;
+    case StringNewWTF16:
+      o << U32LEB(BinaryConsts::StringNewWTF16);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid ref.as_*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
