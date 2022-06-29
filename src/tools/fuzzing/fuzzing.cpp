@@ -3091,6 +3091,11 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::data:
         // TODO: nontrivial types as well.
         return HeapType::data;
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        WASM_UNREACHABLE("TODO: fuzz strings");
     }
   }
   // TODO: nontrivial types as well.

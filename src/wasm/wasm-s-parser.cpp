@@ -1184,6 +1184,18 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type::dataref;
   }
+  if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
+    return Type(HeapType::string, Nullable);
+  }
+  if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+    return Type(HeapType::stringview_wtf8, Nullable);
+  }
+  if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+    return Type(HeapType::stringview_wtf16, Nullable);
+  }
+  if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+    return Type(HeapType::stringview_iter, Nullable);
+  }
   if (allowError) {
     return Type::none;
   }
@@ -1221,6 +1233,20 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     if (str[1] == 'a' && str[2] == 't' && str[3] == 'a' &&
         (prefix || str[4] == 0)) {
       return HeapType::data;
+    }
+  }
+  if (str[0] == 's') {
+    if (strncmp(str, "string", 6) == 0 && (prefix || str[6] == 0)) {
+      return HeapType::string;
+    }
+    if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+      return HeapType::stringview_wtf8;
+    }
+    if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+      return HeapType::stringview_wtf16;
+    }
+    if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+      return HeapType::stringview_iter;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);

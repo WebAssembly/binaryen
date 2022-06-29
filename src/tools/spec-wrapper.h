@@ -62,9 +62,8 @@ inline std::string generateSpecWrapper(Module& wasm) {
           ret += "(ref.null eq)";
           break;
         case Type::i31ref:
-          WASM_UNREACHABLE("TODO: i31ref");
         case Type::dataref:
-          WASM_UNREACHABLE("TODO: dataref");
+          WASM_UNREACHABLE("TODO: reftypes");
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

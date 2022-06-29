@@ -14,6 +14,9 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+- Change constant values of some reference types in the C and JS APIs. This is
+  only observable if you hardcode specific values instead of calling the
+  relevant methods (like `BinaryenTypeDataref()`). (#4755)
 
 v109
 ----

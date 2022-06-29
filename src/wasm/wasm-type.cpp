@@ -621,6 +621,10 @@ HeapType getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       }
       return HeapType::any;
     case HeapType::data:
+    case HeapType::string:
+    case HeapType::stringview_wtf8:
+    case HeapType::stringview_wtf16:
+    case HeapType::stringview_iter:
       return HeapType::any;
   }
   WASM_UNREACHABLE("unexpected basic type");
@@ -679,6 +683,10 @@ std::optional<Type> TypeInfo::getCanonical() const {
             return Type::eqref;
           case HeapType::i31:
           case HeapType::data:
+          case HeapType::string:
+          case HeapType::stringview_wtf8:
+          case HeapType::stringview_wtf16:
+          case HeapType::stringview_iter:
             break;
         }
       } else {
@@ -1739,6 +1747,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
         return false;
       case HeapType::data:
         return a.isData();
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        return false;
     }
   }
   if (a.isBasic()) {
@@ -2117,6 +2130,14 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "i31";
       case HeapType::data:
         return os << "data";
+      case HeapType::string:
+        return os << "string";
+      case HeapType::stringview_wtf8:
+        return os << "stringview_wtf8";
+      case HeapType::stringview_wtf16:
+        return os << "stringview_wtf16";
+      case HeapType::stringview_iter:
+        return os << "stringview_iter";
     }
   }
 

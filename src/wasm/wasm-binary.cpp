@@ -1351,6 +1351,18 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       case HeapType::data:
         ret = BinaryConsts::EncodedHeapType::data;
         break;
+      case HeapType::string:
+        ret = BinaryConsts::EncodedHeapType::string;
+        break;
+      case HeapType::stringview_wtf8:
+        ret = BinaryConsts::EncodedHeapType::stringview_wtf8_heap;
+        break;
+      case HeapType::stringview_wtf16:
+        ret = BinaryConsts::EncodedHeapType::stringview_wtf16_heap;
+        break;
+      case HeapType::stringview_iter:
+        ret = BinaryConsts::EncodedHeapType::stringview_iter_heap;
+        break;
     }
   } else {
     WASM_UNREACHABLE("TODO: compound GC types");
@@ -1699,6 +1711,18 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::dataref:
       out = Type(HeapType::data, NonNullable);
       return true;
+    case BinaryConsts::EncodedType::stringref:
+      out = Type(HeapType::string, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::stringview_wtf8:
+      out = Type(HeapType::stringview_wtf8, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::stringview_wtf16:
+      out = Type(HeapType::stringview_wtf16, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::stringview_iter:
+      out = Type(HeapType::stringview_iter, Nullable);
+      return true;
     default:
       return false;
   }
@@ -1720,6 +1744,18 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::data:
       out = HeapType::data;
+      return true;
+    case BinaryConsts::EncodedHeapType::string:
+      out = HeapType::string;
+      return true;
+    case BinaryConsts::EncodedHeapType::stringview_wtf8_heap:
+      out = HeapType::stringview_wtf8;
+      return true;
+    case BinaryConsts::EncodedHeapType::stringview_wtf16_heap:
+      out = HeapType::stringview_wtf16;
+      return true;
+    case BinaryConsts::EncodedHeapType::stringview_iter_heap:
+      out = HeapType::stringview_iter;
       return true;
     default:
       return false;

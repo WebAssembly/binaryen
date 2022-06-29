@@ -76,9 +76,8 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       assert(x.isNull() && "unexpected non-null reference type literal");
       break;
     case Type::i31ref:
-      WASM_UNREACHABLE("TODO: i31ref");
     case Type::dataref:
-      WASM_UNREACHABLE("TODO: dataref");
+      WASM_UNREACHABLE("TODO: reftypes");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -104,9 +103,8 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::eqref:
       return Literal::makeNull(Type(x.type).getHeapType());
     case Type::i31ref:
-      WASM_UNREACHABLE("TODO: i31ref");
     case Type::dataref:
-      WASM_UNREACHABLE("TODO: dataref");
+      WASM_UNREACHABLE("TODO: reftypes");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
