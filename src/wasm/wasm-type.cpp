@@ -683,15 +683,11 @@ std::optional<Type> TypeInfo::getCanonical() const {
             return Type::eqref;
           case HeapType::i31:
           case HeapType::data:
-            break;
           case HeapType::string:
-            return Type::stringref;
           case HeapType::stringview_wtf8:
-            return Type::stringview_wtf8;
           case HeapType::stringview_wtf16:
-            return Type::stringview_wtf16;
           case HeapType::stringview_iter:
-            return Type::stringview_iter;
+            break;
         }
       } else {
         if (basic == HeapType::i31) {
@@ -1034,7 +1030,7 @@ bool Type::isData() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id < i31ref; // all except i31ref and dataref
+    return id >= funcref && id <= eqref; // except i31ref and dataref
   } else {
     return getTypeInfo(*this)->isNullable();
   }
@@ -1108,10 +1104,6 @@ unsigned Type::getByteSize() const {
       case Type::eqref:
       case Type::i31ref:
       case Type::dataref:
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
       case Type::none:
       case Type::unreachable:
         break;
@@ -1230,14 +1222,6 @@ HeapType Type::getHeapType() const {
         return HeapType::i31;
       case Type::dataref:
         return HeapType::data;
-      case Type::stringref:
-        return HeapType::string;
-      case Type::stringview_wtf8:
-        return HeapType::stringview_wtf8;
-      case Type::stringview_wtf16:
-        return HeapType::stringview_wtf16;
-      case Type::stringview_iter:
-        return HeapType::stringview_iter;
     }
     WASM_UNREACHABLE("Unexpected type");
   } else {
@@ -2107,14 +2091,6 @@ std::ostream& TypePrinter::print(Type type) {
         return os << "i31ref";
       case Type::dataref:
         return os << "dataref";
-      case Type::stringref:
-        return os << "stringref";
-      case Type::stringview_wtf8:
-        return os << "stringview_wtf8";
-      case Type::stringview_wtf16:
-        return os << "stringview_wtf16";
-      case Type::stringview_iter:
-        return os << "stringview_iter";
     }
   }
 

@@ -1185,16 +1185,16 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::dataref;
   }
   if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
-    return Type::stringref;
+    return Type(HeapType::string, Nullable);
   }
   if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
-    return Type::stringview_wtf8;
+    return Type(HeapType::stringview_wtf8, Nullable);
   }
   if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
-    return Type::stringview_wtf16;
+    return Type(HeapType::stringview_wtf16, Nullable);
   }
   if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
-    return Type::stringview_iter;
+    return Type(HeapType::stringview_iter, Nullable);
   }
   if (allowError) {
     return Type::none;
@@ -1768,10 +1768,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
       WASM_UNREACHABLE("unexpected const type");
     case Type::none:
     case Type::unreachable: {

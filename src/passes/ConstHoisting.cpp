@@ -95,11 +95,7 @@ private:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
-      case Type::dataref:
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter: {
+      case Type::dataref: {
         return false;
       }
       case Type::none:

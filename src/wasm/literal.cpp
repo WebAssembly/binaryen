@@ -52,11 +52,6 @@ Literal::Literal(Type type) : type(type) {
       case Type::i31ref:
       case Type::dataref:
         break;
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
-        WASM_UNREACHABLE("TODO: string types");
     }
   }
 
@@ -111,11 +106,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::i31ref:
       case Type::dataref:
         break;
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
-        WASM_UNREACHABLE("TODO: string types");
     }
   }
   if (other.isData()) {
@@ -370,10 +360,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -418,10 +404,6 @@ bool Literal::operator==(const Literal& other) const {
       case Type::anyref:
       case Type::eqref:
       case Type::dataref:
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
         return compareRef();
       case Type::unreachable:
         break;
@@ -601,10 +583,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       case Type::eqref:
       case Type::i31ref:
       case Type::dataref:
-      case Type::stringref:
-      case Type::stringview_wtf8:
-      case Type::stringview_wtf16:
-      case Type::stringview_iter:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -828,10 +806,6 @@ Literal Literal::eqz() const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -855,10 +829,6 @@ Literal Literal::neg() const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -882,10 +852,6 @@ Literal Literal::abs() const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1026,10 +992,6 @@ Literal Literal::add(const Literal& other) const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1053,10 +1015,6 @@ Literal Literal::sub(const Literal& other) const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1159,10 +1117,6 @@ Literal Literal::mul(const Literal& other) const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1398,10 +1352,6 @@ Literal Literal::eq(const Literal& other) const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1425,10 +1375,6 @@ Literal Literal::ne(const Literal& other) const {
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-    case Type::stringref:
-    case Type::stringview_wtf8:
-    case Type::stringview_wtf16:
-    case Type::stringview_iter:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
