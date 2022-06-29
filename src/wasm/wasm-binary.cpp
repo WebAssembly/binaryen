@@ -3827,6 +3827,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayCopy(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringNew(curr, opcode)) {
+        break;
+      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7022,6 +7025,34 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
   validateHeapTypeUsingChild(srcRef, srcHeapType);
   out =
     Builder(wasm).makeArrayCopy(destRef, destIndex, srcRef, srcIndex, length);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
+  StringNewOp op;
+  if (code == BinaryConsts::StringNewWTF8) {
+    auto policy = getU32LEB();
+    switch (policy) {
+      case BinaryConsts::StringNewPolicy::UTF8:
+        op = StringNewUTF8;
+        break;
+      case BinaryConsts::StringNewPolicy::WTF8:
+        op = StringNewWTF8;
+        break;
+      case BinaryConsts::StringNewPolicy::Replace:
+        op = StringNewReplace;
+        break;
+      default:
+        throwError("bad policy for string.new");
+    }
+  } else if (code == BinaryConsts::StringNewWTF16) {
+    op = StringNewWTF16;
+  } else {
+    return false;
+  }
+  auto* length = popNonVoidExpression();
+  auto* ptr = popNonVoidExpression();
+  out = Builder(wasm).makeStringNew(op, ptr, length);
   return true;
 }
 
