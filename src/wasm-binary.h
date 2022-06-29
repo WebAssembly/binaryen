@@ -1730,7 +1730,7 @@ public:
   // Let is lowered into a block.
   void visitLet(Block* curr);
 
-  void throwError(std::string text);
+  [[noreturn]] void throwError(std::string text);
 
   // Struct/Array instructions have an unnecessary heap type that is just for
   // validation (except for the case of unreachability, but that's not a problem
