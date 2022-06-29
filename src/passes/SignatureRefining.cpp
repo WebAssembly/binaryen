@@ -48,6 +48,9 @@ struct SignatureRefining : public Pass {
   std::unordered_map<HeapType, Signature> newSignatures;
 
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "SignatureRefining requires nominal typing";
     }
