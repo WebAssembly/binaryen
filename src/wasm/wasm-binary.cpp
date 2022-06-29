@@ -7048,7 +7048,7 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   } else if (code == BinaryConsts::StringNewWTF16) {
     op = StringNewWTF16;
   } else {
-    WASM_UNREACHABLE("bad string.new code");
+    return false;
   }
   auto* length = popNonVoidExpression();
   auto* ptr = popNonVoidExpression();
