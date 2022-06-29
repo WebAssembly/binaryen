@@ -1430,7 +1430,7 @@ struct OptimizeInstructions
   //    having casts in the right places we can help GUFA optimize:
   //
   //      (if
-  //        (ref == 1)
+  //        (tag == 1)
   //        (struct.get $A 0
   //          (ref.cast $B ..))
   //
