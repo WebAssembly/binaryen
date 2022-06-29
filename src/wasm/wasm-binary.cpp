@@ -2216,11 +2216,12 @@ Name WasmBinaryBuilder::getTableName(Index index) {
   return wasm.tables[index]->name;
 }
 
-Name WasmBinaryBuilder::getMemoryName(Index index) {
+Name WasmBinaryBuilder::getMemoryNameAtIdx(Index index) {
   if (index >= wasm.memories.size()) {
     throwError("invalid memory index");
   }
-  return wasm.memories[index]->name;
+  auto& memory = wasm.memories[index];
+  return memory.name;
 }
 
 Name WasmBinaryBuilder::getGlobalName(Index index) {
@@ -3001,7 +3002,7 @@ void WasmBinaryBuilder::processNames() {
         curr->value = getTableName(index);
         break;
       case ExternalKind::Memory:
-        curr->value = getMemoryName(index);
+        curr->value = getMemoryNameAtIdx(index);
         break;
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
@@ -3030,31 +3031,31 @@ void WasmBinaryBuilder::processNames() {
   for (auto& [index, refs] : memoryRefs) {
     for (auto* ref : refs) {
       if (auto* load = ref->dynCast<Load>()) {
-        load->memory = getMemoryName(index);
+        load->memory = getMemoryNameAtIdx(index);
       } else if (auto* store = ref->dynCast<Store>()) {
-        store->memory = getMemoryName(index);
+        store->memory = getMemoryNameAtIdx(index);
       } else if (auto* size = ref->dynCast<MemorySize>()) {
-        size->memory = getMemoryName(index);
+        size->memory = getMemoryNameAtIdx(index);
       } else if (auto* grow = ref->dynCast<MemoryGrow>()) {
-        grow->memory = getMemoryName(index);
+        grow->memory = getMemoryNameAtIdx(index);
       } else if (auto* fill = ref->dynCast<MemoryFill>()) {
-        fill->memory = getMemoryName(index);
+        fill->memory = getMemoryNameAtIdx(index);
       } else if (auto* copy = ref->dynCast<MemoryCopy>()) {
-        copy->memory = getMemoryName(index);
+        copy->memory = getMemoryNameAtIdx(index);
       } else if (auto* init = ref->dynCast<MemoryInit>()) {
-        init->memory = getMemoryName(index);
+        init->memory = getMemoryNameAtIdx(index);
       } else if (auto* rmw = ref->dynCast<AtomicRMW>()) {
-        rmw->memory = getMemoryName(index);
+        rmw->memory = getMemoryNameAtIdx(index);
       } else if (auto* cmpxchg = ref->dynCast<AtomicCmpxchg>()) {
-        cmpxchg->memory = getMemoryName(index);
+        cmpxchg->memory = getMemoryNameAtIdx(index);
       } else if (auto* wait = ref->dynCast<AtomicWait>()) {
-        wait->memory = getMemoryName(index);
+        wait->memory = getMemoryNameAtIdx(index);
       } else if (auto* notify = ref->dynCast<AtomicNotify>()) {
-        notify->memory = getMemoryName(index);
+        notify->memory = getMemoryNameAtIdx(index);
       } else if (auto* simdLoad = ref->dynCast<SIMDLoad>()) {
-        simdLoad->memory = getMemoryName(index);
+        simdLoad->memory = getMemoryNameAtIdx(index);
       } else if (auto* simdLane = ref->dynCast<SIMDLoadStoreLane>()) {
-        simdLane->memory = getMemoryName(index);
+        simdLane->memory = getMemoryNameAtIdx(index);
       } else {
         WASM_UNREACHABLE("Invalid type in memory references");
       }
