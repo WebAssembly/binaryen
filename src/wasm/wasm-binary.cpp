@@ -7043,7 +7043,7 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
         op = StringNewReplace;
         break;
       default:
-      throwError("bad policy for string.new");
+        throwError("bad policy for string.new");
     }
   } else if (code == BinaryConsts::StringNewWTF16) {
     op = StringNewWTF16;
