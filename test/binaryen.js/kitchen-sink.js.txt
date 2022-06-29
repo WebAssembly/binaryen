@@ -20,10 +20,10 @@
   // 8
   // BinaryenTypeEqref: 9
   // 9
-  // BinaryenTypeI31ref: 14
-  // 14
-  // BinaryenTypeDataref: 15
-  // 15
+  // BinaryenTypeI31ref: 10
+  // 10
+  // BinaryenTypeDataref: 11
+  // 11
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -4860,7 +4860,6 @@ sizeof Literal: 24
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
- (data "hello, passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))

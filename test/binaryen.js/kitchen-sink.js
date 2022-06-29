@@ -1091,9 +1091,9 @@ function test_for_each() {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
-  var expected_offsets = [10, 125, null];
-  var expected_data = ["hello, world", "segment data 2", "hello, passive"];
-  var expected_passive = [false, false, true];
+  var expected_offsets = [10, 125];
+  var expected_data = ["hello, world", "segment data 2"];
+  var expected_passive = [false, false];
 
   var glos = [
     module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1])),
@@ -1115,11 +1115,6 @@ function test_for_each() {
       passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
-    },
-    {
-      passive: expected_passive[2],
-      offset: expected_offsets[2],
-      data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
