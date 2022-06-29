@@ -120,7 +120,7 @@ def randomize_feature_opts():
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
     # Type system flags only make sense when GC is enabled
-    if "--disable-gc" not in FEATURE_OPTS:
+    if '--disable-gc' not in FEATURE_OPTS:
         FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
 
 
