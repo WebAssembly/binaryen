@@ -303,6 +303,7 @@ private:
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
+  Expression* makeStringNew(Element& s, StringNewOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

@@ -21,5 +21,29 @@
     (param $j (ref stringview_wtf8))
     (param $k (ref stringview_wtf16))
     (param $l (ref stringview_iter))
+    (drop
+      (string.new_wtf8 utf8
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (string.new_wtf8 wtf8
+        (i32.const 3)
+        (i32.const 4)
+      )
+    )
+    (drop
+      (string.new_wtf8 replace
+        (i32.const 5)
+        (i32.const 6)
+      )
+    )
+    (drop
+      (string.new_wtf16
+        (i32.const 7)
+        (i32.const 8)
+      )
+    )
   )
 )

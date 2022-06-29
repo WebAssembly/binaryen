@@ -3126,56 +3126,72 @@ switch (op[0]) {
         if (strcmp(op, "select") == 0) { return makeSelect(s); }
         goto parse_error;
       case 't': {
-        switch (op[7]) {
-          case 'g': {
-            switch (op[10]) {
-              case '\0':
-                if (strcmp(op, "struct.get") == 0) { return makeStructGet(s); }
+        switch (op[3]) {
+          case 'i': {
+            switch (op[14]) {
+              case '1':
+                if (strcmp(op, "string.new_wtf16") == 0) { return makeStringNew(s, StringNewWTF16); }
                 goto parse_error;
-              case '_': {
-                switch (op[11]) {
-                  case 's':
-                    if (strcmp(op, "struct.get_s") == 0) { return makeStructGet(s, true); }
-                    goto parse_error;
-                  case 'u':
-                    if (strcmp(op, "struct.get_u") == 0) { return makeStructGet(s, false); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case '8':
+                if (strcmp(op, "string.new_wtf8") == 0) { return makeStringNew(s, StringNewWTF8); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
-          case 'n': {
-            switch (op[10]) {
-              case '\0':
-                if (strcmp(op, "struct.new") == 0) { return makeStructNewStatic(s, false); }
-                goto parse_error;
-              case '_': {
-                switch (op[11]) {
-                  case 'd': {
-                    switch (op[18]) {
-                      case '\0':
-                        if (strcmp(op, "struct.new_default") == 0) { return makeStructNewStatic(s, true); }
+          case 'u': {
+            switch (op[7]) {
+              case 'g': {
+                switch (op[10]) {
+                  case '\0':
+                    if (strcmp(op, "struct.get") == 0) { return makeStructGet(s); }
+                    goto parse_error;
+                  case '_': {
+                    switch (op[11]) {
+                      case 's':
+                        if (strcmp(op, "struct.get_s") == 0) { return makeStructGet(s, true); }
                         goto parse_error;
-                      case '_':
-                        if (strcmp(op, "struct.new_default_with_rtt") == 0) { return makeStructNew(s, true); }
+                      case 'u':
+                        if (strcmp(op, "struct.get_u") == 0) { return makeStructGet(s, false); }
                         goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'w':
-                    if (strcmp(op, "struct.new_with_rtt") == 0) { return makeStructNew(s, false); }
-                    goto parse_error;
                   default: goto parse_error;
                 }
               }
+              case 'n': {
+                switch (op[10]) {
+                  case '\0':
+                    if (strcmp(op, "struct.new") == 0) { return makeStructNewStatic(s, false); }
+                    goto parse_error;
+                  case '_': {
+                    switch (op[11]) {
+                      case 'd': {
+                        switch (op[18]) {
+                          case '\0':
+                            if (strcmp(op, "struct.new_default") == 0) { return makeStructNewStatic(s, true); }
+                            goto parse_error;
+                          case '_':
+                            if (strcmp(op, "struct.new_default_with_rtt") == 0) { return makeStructNew(s, true); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'w':
+                        if (strcmp(op, "struct.new_with_rtt") == 0) { return makeStructNew(s, false); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  default: goto parse_error;
+                }
+              }
+              case 's':
+                if (strcmp(op, "struct.set") == 0) { return makeStructSet(s); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
-          case 's':
-            if (strcmp(op, "struct.set") == 0) { return makeStructSet(s); }
-            goto parse_error;
           default: goto parse_error;
         }
       }

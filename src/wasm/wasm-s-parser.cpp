@@ -2935,6 +2935,23 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, parseExpression(s[1]));
 }
 
+Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
+  size_t i = 1;
+  if (op == StringNewWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplace;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringNew(op, parseExpression(s[i]), parseExpression(s[i + 1]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.
