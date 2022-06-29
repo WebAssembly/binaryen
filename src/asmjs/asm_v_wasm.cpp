@@ -70,7 +70,6 @@ char getSig(Type type) {
       return 'I';
     case Type::dataref:
       return 'D';
-      WASM_UNREACHABLE("TODO: sig of string types");
     case Type::none:
       return 'v';
     case Type::unreachable:

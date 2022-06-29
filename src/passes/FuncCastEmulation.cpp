@@ -66,7 +66,9 @@ static Expression* toABI(Expression* value, Module* module) {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
-    case Type::dataref:
+    case Type::dataref: {
+      WASM_UNREACHABLE("reference types cannot be converted to i64");
+    }
     case Type::none: {
       // the value is none, but we need a value here
       value =

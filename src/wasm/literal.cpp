@@ -52,7 +52,6 @@ Literal::Literal(Type type) : type(type) {
       case Type::i31ref:
       case Type::dataref:
         break;
-        WASM_UNREACHABLE("TODO: string types");
     }
   }
 
@@ -107,7 +106,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::i31ref:
       case Type::dataref:
         break;
-        WASM_UNREACHABLE("TODO: string types");
     }
   }
   if (other.isData()) {
