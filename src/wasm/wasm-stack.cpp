@@ -2253,7 +2253,7 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
       o << U32LEB(BinaryConsts::StringNewWTF16);
       break;
     default:
-      WASM_UNREACHABLE("invalid ref.as_*");
+      WASM_UNREACHABLE("invalid string.new*");
   }
 }
 
