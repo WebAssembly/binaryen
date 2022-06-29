@@ -39,7 +39,6 @@ TYPE_SYSTEM_FLAG = '--nominal'
 
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = ['--all-features']
-CONSTANT_FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
 
 INPUT_SIZE_MIN = 1024
 INPUT_SIZE_MEAN = 40 * 1024
@@ -120,6 +119,9 @@ def randomize_feature_opts():
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
+    # Type system flags only make sense when GC is enabled
+    if '--disable-gc' not in FEATURE_OPTS:
+        FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
 
 
 ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
@@ -819,8 +821,8 @@ class CheckDeterminism(TestCaseHandler):
         b1 = open('b1.wasm', 'rb').read()
         b2 = open('b2.wasm', 'rb').read()
         if (b1 != b2):
-            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat', TYPE_SYSTEM_FLAG])
-            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat', TYPE_SYSTEM_FLAG])
+            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat', FEATURE_OPTS])
+            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat', FEATURE_OPTS])
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
             compare(t1, t2, 'Output must be deterministic.', verbose=False)
@@ -1379,10 +1381,8 @@ on valid wasm files.)
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
-echo "At least one of the next two values should be 0:"
-%(wasm_opt)s %(typesystem)s --detect-features %(temp_wasm)s
-echo "  " $?
-%(wasm_opt)s %(typesystem)s --all-features %(temp_wasm)s
+echo "The following value should be 0:"
+%(wasm_opt)s %(features)s %(temp_wasm)s
 echo "  " $?
 
 # run the command
@@ -1419,7 +1419,7 @@ echo "  " $?
                          'auto_init': auto_init,
                          'original_wasm': original_wasm,
                          'temp_wasm': os.path.abspath('t.wasm'),
-                         'typesystem': TYPE_SYSTEM_FLAG,
+                         'features': ' '.join(FEATURE_OPTS),
                          'reduce_sh': os.path.abspath('reduce.sh')})
 
                 print('''\
@@ -1441,7 +1441,7 @@ You can reduce the testcase by running this now:
 vvvv
 
 
-%(wasm_reduce)s %(type_system_flag)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
+%(wasm_reduce)s %(features)s %(original_wasm)s '--command=bash %(reduce_sh)s' -t %(temp_wasm)s -w %(working_wasm)s
 
 
 ^^^^
@@ -1449,9 +1449,8 @@ vvvv
 
 Make sure to verify by eye that the output says something like this:
 
-At least one of the next two values should be 0:
+The following value should be 0:
   0
-  1
 The following value should be 1:
   1
 
@@ -1471,7 +1470,7 @@ After reduction, the reduced file will be in %(working_wasm)s
                        'working_wasm': os.path.abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
                        'reduce_sh': os.path.abspath('reduce.sh'),
-                       'type_system_flag': TYPE_SYSTEM_FLAG})
+                       'features': ' '.join(FEATURE_OPTS)})
                 break
         if given_seed is not None:
             break

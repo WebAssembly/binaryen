@@ -176,6 +176,9 @@ struct PCVScanner
 
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "ConstantFieldPropagation requires nominal typing";
     }
