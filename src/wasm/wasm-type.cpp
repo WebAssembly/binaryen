@@ -683,15 +683,11 @@ std::optional<Type> TypeInfo::getCanonical() const {
             return Type::eqref;
           case HeapType::i31:
           case HeapType::data:
-            break;
           case HeapType::string:
-            return Type(HeapType::string, Nullable);
           case HeapType::stringview_wtf8:
-            return Type(HeapType::stringview_wtf8, Nullable);
           case HeapType::stringview_wtf16:
-            return Type(HeapType::stringview_wtf16, Nullable);
           case HeapType::stringview_iter:
-            return Type(HeapType::stringview_iter, Nullable);
+            break;
         }
       } else {
         if (basic == HeapType::i31) {
