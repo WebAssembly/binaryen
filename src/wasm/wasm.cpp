@@ -1177,7 +1177,7 @@ void StringNew::finalize() {
   if (ptr->type == Type::unreachable || length->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::stringref;
+    type = Type(HeapType::string, NonNullable);
   }
 }
 
