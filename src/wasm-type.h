@@ -111,7 +111,7 @@ public:
     eqref,
     // From here types are non-nullable.
     i31ref,
-    dataref
+    dataref,
   };
   static constexpr BasicType _last_basic_type = dataref;
 
@@ -140,26 +140,26 @@ public:
   // Predicates
   //                      Compound Concrete
   //   Type             Basic │ Single│
-  // ╒══════════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
-  // │ none             ║ x │   │   │   │       │
-  // │ unreachable      ║ x │   │   │   │       │
-  // ├──────────────────╫───┼───┼───┼───┤───────┤
-  // │ i32              ║ x │   │ x │ x │ I     │ ┐ Number
-  // │ i64              ║ x │   │ x │ x │ I     │ │  I_nteger
-  // │ f32              ║ x │   │ x │ x │   F   │ │  F_loat
-  // │ f64              ║ x │   │ x │ x │   F   │ │  V_ector
-  // │ v128             ║ x │   │ x │ x │     V │ ┘
-  // ├─ Aliases ────────╫───┼───┼───┼───┤───────┤
-  // │ funcref          ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ anyref           ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ eqref            ║ x │   │ x │ x │    n  │ │  n_ullable
-  // │ i31ref           ║ x │   │ x │ x │       │ │
-  // │ dataref          ║ x │   │ x │ x │       │ │
-  // ├─ Compound ───────╫───┼───┼───┼───┤───────┤ │
-  // │ Ref              ║   │ x │ x │ x │ f? n? │◄┘
-  // │ Tuple            ║   │ x │   │ x │       │
-  // │ Rtt              ║   │ x │ x │ x │       │
-  // └──────────────────╨───┴───┴───┴───┴───────┘
+  // ╒═════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
+  // │ none        ║ x │   │   │   │       │
+  // │ unreachable ║ x │   │   │   │       │
+  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // │ i32         ║ x │   │ x │ x │ I     │ ┐ Number
+  // │ i64         ║ x │   │ x │ x │ I     │ │  I_nteger
+  // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
+  // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
+  // │ v128        ║ x │   │ x │ x │     V │ ┘
+  // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
+  // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ i31ref      ║ x │   │ x │ x │  │ │
+  // │ dataref     ║ x │   │ x │ x │       │ │
+  // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
+  // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
+  // │ Tuple       ║   │ x │   │ x │       │
+  // │ Rtt         ║   │ x │ x │ x │       │
+  // └─────────────╨───┴───┴───┴───┴───────┘
   constexpr bool isBasic() const { return id <= _last_basic_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
