@@ -4860,6 +4860,7 @@ sizeof Literal: 24
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
+ (data "hello, passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))
