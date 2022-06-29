@@ -2103,11 +2103,27 @@ std::ostream& TypePrinter::print(Type type) {
   if (type.isTuple()) {
     print(type.getTuple());
   } else if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (type.isNullable() && heapType.isBasic()) {
+      // Print shorthands for certain nullable basic heap types.
+      switch (heapType.getBasic()) {
+        case HeapType::string:
+          return os << "stringref";
+        case HeapType::stringview_wtf8:
+          return os << "stringview_wtf8";
+        case HeapType::stringview_wtf16:
+          return os << "stringview_wtf16";
+        case HeapType::stringview_iter:
+          return os << "stringview_iter";
+        default:
+          break;
+      }
+    }
     os << "(ref ";
     if (type.isNullable()) {
       os << "null ";
     }
-    printHeapTypeName(type.getHeapType());
+    printHeapTypeName(heapType);
     os << ')';
   } else if (type.isRtt()) {
     print(type.getRtt());
