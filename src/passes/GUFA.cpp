@@ -161,10 +161,13 @@ struct GUFAOptimizer
     }
 
     if (contents.isNull() && curr->type.isNullable()) {
-      // Null values are all identical, so just fix up the type here (the null's
-      // type might not fit in this expression).
-      contents =
-        PossibleContents::literal(Literal::makeNull(curr->type.getHeapType()));
+      // Null values are all identical, so just fix up the type here if we need
+      // to (the null's type might not fit in this expression, if it passed
+      // through casts).
+      if (!Type::isSubType(contents.getType(), curr->type)) {
+        contents = PossibleContents::literal(
+          Literal::makeNull(curr->type.getHeapType()));
+      }
 
       // Note that if curr's type is *not* nullable, then the code will trap at
       // runtime (the null must arrive through a cast that will trap). We handle
