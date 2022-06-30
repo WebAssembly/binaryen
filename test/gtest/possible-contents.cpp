@@ -27,10 +27,14 @@ void assertCombination(const T& a, const T& b, const T& c) {
   T temp1 = a;
   temp1.combine(b);
   assertEqualSymmetric(temp1, c);
+  // Also check the type, as nulls will compare equal even if their types
+  // differ. We want to make sure even the types are identical.
+  assertEqualSymmetric(temp1.getType(), c.getType());
 
   T temp2 = b;
   temp2.combine(a);
   assertEqualSymmetric(temp2, c);
+  assertEqualSymmetric(temp2.getType(), c.getType());
 }
 
 // Parse a module from text and return it.
