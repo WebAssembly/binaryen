@@ -1327,6 +1327,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // parent, and we need to do some special handling because of that child-
     // parent connection.
     auto* child = exprLoc->expr;
+    WASM_UNUSED(child);
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
