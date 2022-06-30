@@ -54,7 +54,7 @@ void WasmBinaryWriter::write() {
   writeTableDeclarations();
   writeMemory();
   writeTags();
-  if (wasm.features.hasStrings()) {
+  if (wasm->features.hasStrings()) {
     writeStrings();
   }
   writeGlobals();
@@ -455,7 +455,7 @@ void WasmBinaryWriter::writeFunctions() {
 }
 
 void WasmBinaryWriter::writeStrings() {
-  assert(wasm.features.hasStrings());
+  assert(wasm->features.hasStrings());
 
   // Scan the entire wasm to find the relevant strings.
   // To find all the string literals we must scan all the code.
@@ -464,59 +464,60 @@ void WasmBinaryWriter::writeStrings() {
   struct StringWalker : public PostWalker<StringWalker> {
     StringSet& strings;
 
-    StringWalker(StringSet& strings)
-      : strings(strings){void visitStringConst(StringConst * curr){
-          strings.push_back(curr->string);
-  }
-};
+    StringWalker(StringSet& strings) : strings(strings) {}
 
-ModuleUtils::ParallelFunctionAnalysis<StringSet>
-  analysis(wasm, [&](Function* func, StringSet& strings) {
-    if (!func->imported()) {
-      StringWalker(strings).walk(func->body);
+    void visitStringConst(StringConst * curr) {
+      strings.push_back(curr->string);
     }
-  });
+  };
 
-// Also walk the global module code (for simplicity, also add it to the
-// function map, using a "function" key of nullptr).
-auto& globalStrings = analysis.map[nullptr];
-StringWalker(globalStrings).walkModuleCode(&wasm);
+  ModuleUtils::ParallelFunctionAnalysis<StringSet>
+    analysis(wasm, [&](Function* func, StringSet& strings) {
+      if (!func->imported()) {
+        StringWalker(strings).walk(func->body);
+      }
+    });
 
-// Generate the indexes from the combined set of necessary strings,
-// which we sort for determinism.
-StringSet allStrings;
-for (auto& [func, strings] : analysis.map) {
-  for (auto& string : strings) {
-    allStrings.insert(string);
+  // Also walk the global module code (for simplicity, also add it to the
+  // function map, using a "function" key of nullptr).
+  auto& globalStrings = analysis.map[nullptr];
+  StringWalker(globalStrings).walkModuleCode(&wasm);
+
+  // Generate the indexes from the combined set of necessary strings,
+  // which we sort for determinism.
+  StringSet allStrings;
+  for (auto& [func, strings] : analysis.map) {
+    for (auto& string : strings) {
+      allStrings.insert(string);
+    }
   }
-}
-std::vector<Name> sorted;
-for (auto& string : allStrings) {
-  sorted.push_back(string);
-}
-std::sort(sorted.begin(), sorted.end());
-for (Index i = 0; i < sorted.size(); i++) {
-  stringIndexes[sorted[i]] = i;
-}
+  std::vector<Name> sorted;
+  for (auto& string : allStrings) {
+    sorted.push_back(string);
+  }
+  std::sort(sorted.begin(), sorted.end());
+  for (Index i = 0; i < sorted.size(); i++) {
+    stringIndexes[sorted[i]] = i;
+  }
 
-auto num = sorted.size();
-if (num == 0) {
-  return;
+  auto num = sorted.size();
+  if (num == 0) {
+    return;
+  }
+
+  auto start = startSection(BinaryConsts::Section::Strings);
+
+  // Placeholder for future use in the spec.
+  o << U32LEB(0);
+
+  // The number of strings and then their contents.
+  o << U32LEB(num);
+  for (auto& string : sorted) {
+    writeInlineString(string.str);
+  }
+
+  finishSection(start);
 }
-
-auto start = startSection(BinaryConsts::Section::Strings);
-
-// Placeholder for future use in the spec.
-o << U32LEB(0);
-
-// The number of strings and then their contents.
-o << U32LEB(num);
-for (auto& string : sorted) {
-  writeInlineString(string.str);
-}
-
-finishSection(start);
-} // namespace wasm
 
 void WasmBinaryWriter::writeGlobals() {
   if (importInfo->getNumDefinedGlobals() == 0) {

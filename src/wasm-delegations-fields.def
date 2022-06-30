@@ -721,6 +721,12 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringNew);
     break;
   }
+  case Expression::Id::StringConstId: {
+    DELEGATE_START(StringConst);
+    DELEGATE_FIELD_NAME(StringConst, string);
+    DELEGATE_END(StringConst);
+    break;
+  }
 }
 
 #undef DELEGATE_ID
