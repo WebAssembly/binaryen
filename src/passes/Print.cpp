@@ -2238,8 +2238,9 @@ struct PrintExpressionContents
     }
   }
   void visitStringConst(StringConst* curr) {
-    printMedium(o, "string.const ");
+    printMedium(o, "string.const \"");
     o << curr->string.str;
+    o << '"';
   }
 };
 
