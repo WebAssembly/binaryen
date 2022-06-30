@@ -1562,6 +1562,9 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Element:
         readElementSegments();
         break;
+      case BinaryConsts::Section::Strings:
+        readStrings();
+        break;
       case BinaryConsts::Section::Global:
         readGlobals();
         break;
@@ -2683,6 +2686,18 @@ Expression* WasmBinaryBuilder::readExpression() {
   auto* ret = popExpression();
   assert(depth == 0);
   return ret;
+}
+
+void WasmBinaryBuilder::readStrings() {
+  auto reserved = getU32LEB();
+  if (reserved != 0) {
+    throwError("unexpected reserved value in strings");
+  }
+  size_t num = getU32LEB();
+  for (size_t i = 0; i < num; i++) {
+    auto string = getInlineString();
+    strings.push_back(string);
+  }
 }
 
 void WasmBinaryBuilder::readGlobals() {
@@ -3905,6 +3920,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStringNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
       if (opcode == BinaryConsts::RefIsFunc ||
@@ -7130,6 +7148,18 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   auto* length = popNonVoidExpression();
   auto* ptr = popNonVoidExpression();
   out = Builder(wasm).makeStringNew(op, ptr, length);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::StringConst) {
+    return false;
+  }
+  auto* index = getU32LEB();
+  if (index >= strings.size()) {
+    throwError("bad string index");
+  }
+  out = Builder(wasm).makeStringConst(strings[index]);
   return true;
 }
 

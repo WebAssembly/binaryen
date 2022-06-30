@@ -1541,6 +1541,10 @@ public:
   std::vector<Export*> exportOrder;
   void readExports();
 
+  // The strings in the strings section (which are referred to by StringConst).
+  std::vector<Name> strings;
+  void readStrings();
+
   Expression* readExpression();
   void readGlobals();
 
