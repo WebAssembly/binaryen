@@ -204,12 +204,12 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemories() {
-  if (importInfo->getNumDefinedTags() == 0) {
+  if (wasm->memories.empty()) {
     return;
   }
   BYN_TRACE("== writeMemories\n");
   auto start = startSection(BinaryConsts::Section::Memory);
-  auto num = importInfo->getNumDefinedTables();
+  auto num = importInfo->getNumDefinedMemories();
   o << U32LEB(num);
   ModuleUtils::iterDefinedMemories(*wasm, [&](Memory* memory) {
     writeResizableLimits(memory->initial,
@@ -949,7 +949,7 @@ void WasmBinaryWriter::writeNames() {
     };
     ModuleUtils::iterImportedMemories(*wasm, check);
     ModuleUtils::iterDefinedMemories(*wasm, check);
-    assert(checked == indexes.globalIndexes.size());
+    assert(checked == indexes.memoryIndexes.size());
     if (memoriesWithNames.size() > 0) {
       auto substart =
         startSubsection(BinaryConsts::UserSections::Subsection::NameMemory);
@@ -2187,12 +2187,11 @@ Name WasmBinaryBuilder::getTableName(Index index) {
   return wasm.tables[index]->name;
 }
 
-Name WasmBinaryBuilder::getMemoryNameAtIdx(Index index) {
+Name WasmBinaryBuilder::getMemoryName(Index index) {
   if (index >= wasm.memories.size()) {
     throwError("invalid memory index");
   }
-  auto& memory = wasm.memories[index];
-  return memory.name;
+  return wasm.memories[index]->name;
 }
 
 Name WasmBinaryBuilder::getGlobalName(Index index) {
@@ -2971,7 +2970,7 @@ void WasmBinaryBuilder::processNames() {
         curr->value = getTableName(index);
         break;
       case ExternalKind::Memory:
-        curr->value = getMemoryNameAtIdx(index);
+        curr->value = getMemoryName(index);
         break;
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
@@ -3000,31 +2999,31 @@ void WasmBinaryBuilder::processNames() {
   for (auto& [index, refs] : memoryRefs) {
     for (auto* ref : refs) {
       if (auto* load = ref->dynCast<Load>()) {
-        load->memory = getMemoryNameAtIdx(index);
+        load->memory = getMemoryName(index);
       } else if (auto* store = ref->dynCast<Store>()) {
-        store->memory = getMemoryNameAtIdx(index);
+        store->memory = getMemoryName(index);
       } else if (auto* size = ref->dynCast<MemorySize>()) {
-        size->memory = getMemoryNameAtIdx(index);
+        size->memory = getMemoryName(index);
       } else if (auto* grow = ref->dynCast<MemoryGrow>()) {
-        grow->memory = getMemoryNameAtIdx(index);
+        grow->memory = getMemoryName(index);
       } else if (auto* fill = ref->dynCast<MemoryFill>()) {
-        fill->memory = getMemoryNameAtIdx(index);
+        fill->memory = getMemoryName(index);
       } else if (auto* copy = ref->dynCast<MemoryCopy>()) {
-        copy->memory = getMemoryNameAtIdx(index);
+        copy->memory = getMemoryName(index);
       } else if (auto* init = ref->dynCast<MemoryInit>()) {
-        init->memory = getMemoryNameAtIdx(index);
+        init->memory = getMemoryName(index);
       } else if (auto* rmw = ref->dynCast<AtomicRMW>()) {
-        rmw->memory = getMemoryNameAtIdx(index);
+        rmw->memory = getMemoryName(index);
       } else if (auto* cmpxchg = ref->dynCast<AtomicCmpxchg>()) {
-        cmpxchg->memory = getMemoryNameAtIdx(index);
+        cmpxchg->memory = getMemoryName(index);
       } else if (auto* wait = ref->dynCast<AtomicWait>()) {
-        wait->memory = getMemoryNameAtIdx(index);
+        wait->memory = getMemoryName(index);
       } else if (auto* notify = ref->dynCast<AtomicNotify>()) {
-        notify->memory = getMemoryNameAtIdx(index);
+        notify->memory = getMemoryName(index);
       } else if (auto* simdLoad = ref->dynCast<SIMDLoad>()) {
-        simdLoad->memory = getMemoryNameAtIdx(index);
+        simdLoad->memory = getMemoryName(index);
       } else if (auto* simdLane = ref->dynCast<SIMDLoadStoreLane>()) {
-        simdLane->memory = getMemoryNameAtIdx(index);
+        simdLane->memory = getMemoryName(index);
       } else {
         WASM_UNREACHABLE("Invalid type in memory references");
       }
@@ -3072,7 +3071,7 @@ void WasmBinaryBuilder::readDataSegments() {
       if (!memory) {
         throwError("Memory index out of range while reading data segments.");
       }
-      curr->memory = Name::fromInt(memIdx);
+      curr->memory = memory->name;
     }
     if (!curr->isPassive) {
       curr->offset = readExpression();
@@ -5148,9 +5147,6 @@ bool WasmBinaryBuilder::maybeVisitMemoryInit(Expression*& out, uint32_t code) {
   curr->dest = popNonVoidExpression();
   curr->segment = getU32LEB();
   Index memIdx = getU32LEB();
-  if (memIdx >= memories.size()) {
-    throwError("bad memory index on memory.init");
-  }
   curr->finalize();
   memoryRefs[memIdx].push_back(curr);
   out = curr;
@@ -5177,9 +5173,6 @@ bool WasmBinaryBuilder::maybeVisitMemoryCopy(Expression*& out, uint32_t code) {
   curr->source = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
   Index memIdx = getU32LEB();
-  if (memIdx >= memories.size()) {
-    throwError("bad memory index on memory.copy");
-  }
   curr->finalize();
   memoryRefs[memIdx].push_back(curr);
   out = curr;
@@ -5195,9 +5188,6 @@ bool WasmBinaryBuilder::maybeVisitMemoryFill(Expression*& out, uint32_t code) {
   curr->value = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
   Index memIdx = getU32LEB();
-  if (memIdx >= memories.size()) {
-    throwError("bad memory index on memory.fill");
-  }
   curr->finalize();
   memoryRefs[memIdx].push_back(curr);
   out = curr;
@@ -6537,9 +6527,6 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
 void WasmBinaryBuilder::visitMemorySize(MemorySize* curr) {
   BYN_TRACE("zz node: MemorySize\n");
   Index memIdx = getU32LEB();
-  if (memIdx >= memories.size()) {
-    throwError("bad memory index on memory.size");
-  }
   curr->finalize();
   memoryRefs[memIdx].push_back(curr);
 }
@@ -6548,9 +6535,6 @@ void WasmBinaryBuilder::visitMemoryGrow(MemoryGrow* curr) {
   BYN_TRACE("zz node: MemoryGrow\n");
   curr->delta = popNonVoidExpression();
   Index memIdx = getU32LEB();
-  if (memIdx >= memories.size()) {
-    throwError("bad memory index on memory.grow");
-  }
   curr->finalize();
   memoryRefs[memIdx].push_back(curr);
 }
@@ -7381,7 +7365,6 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   }
   curr->finalize();
 }
-
 void WasmBinaryBuilder::throwError(std::string text) {
   throw ParseException(text, 0, pos);
 }
