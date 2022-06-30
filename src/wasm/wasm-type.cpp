@@ -1165,6 +1165,11 @@ FeatureSet Type::getFeatures() const {
           case HeapType::BasicHeapType::i31:
           case HeapType::BasicHeapType::data:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
+          case HeapType::string:
+          case HeapType::stringview_wtf8:
+          case HeapType::stringview_wtf16:
+          case HeapType::stringview_iter:
+            return FeatureSet::ReferenceTypes | FeatureSet::Strings;
           default: {}
         }
       }

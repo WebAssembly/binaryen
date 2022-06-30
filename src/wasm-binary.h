@@ -437,6 +437,7 @@ extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
 extern const char* RelaxedSIMDFeature;
 extern const char* ExtendedConstFeature;
+extern const char* StringsFeature;
 
 enum Subsection {
   NameModule = 0,

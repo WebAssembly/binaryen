@@ -94,6 +94,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
+      .addFeature(FeatureSet::Strings, "strings")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
