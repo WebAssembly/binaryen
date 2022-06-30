@@ -466,9 +466,7 @@ void WasmBinaryWriter::writeStrings() {
 
     StringWalker(StringSet& strings) : strings(strings) {}
 
-    void visitStringConst(StringConst* curr) {
-      strings.insert(curr->string);
-    }
+    void visitStringConst(StringConst* curr) { strings.insert(curr->string); }
   };
 
   ModuleUtils::ParallelFunctionAnalysis<StringSet> analysis(
