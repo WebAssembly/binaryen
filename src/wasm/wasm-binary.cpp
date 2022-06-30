@@ -466,13 +466,13 @@ void WasmBinaryWriter::writeStrings() {
 
     StringWalker(StringSet& strings) : strings(strings) {}
 
-    void visitStringConst(StringConst * curr) {
-      strings.push_back(curr->string);
+    void visitStringConst(StringConst* curr) {
+      strings.insert(curr->string);
     }
   };
 
-  ModuleUtils::ParallelFunctionAnalysis<StringSet>
-    analysis(wasm, [&](Function* func, StringSet& strings) {
+  ModuleUtils::ParallelFunctionAnalysis<StringSet> analysis(
+    *wasm, [&](Function* func, StringSet& strings) {
       if (!func->imported()) {
         StringWalker(strings).walk(func->body);
       }
@@ -481,7 +481,7 @@ void WasmBinaryWriter::writeStrings() {
   // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalStrings = analysis.map[nullptr];
-  StringWalker(globalStrings).walkModuleCode(&wasm);
+  StringWalker(globalStrings).walkModuleCode(wasm);
 
   // Generate the indexes from the combined set of necessary strings,
   // which we sort for determinism.
@@ -7156,7 +7156,7 @@ bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::StringConst) {
     return false;
   }
-  auto* index = getU32LEB();
+  auto index = getU32LEB();
   if (index >= strings.size()) {
     throwError("bad string index");
   }
