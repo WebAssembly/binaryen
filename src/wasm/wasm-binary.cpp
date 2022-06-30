@@ -54,6 +54,9 @@ void WasmBinaryWriter::write() {
   writeTableDeclarations();
   writeMemory();
   writeTags();
+  if (wasm.features.hasStrings()) {
+    writeStrings();
+  }
   writeGlobals();
   writeExports();
   writeStart();
@@ -451,6 +454,70 @@ void WasmBinaryWriter::writeFunctions() {
   finishSection(sectionStart);
 }
 
+void WasmBinaryWriter::writeStrings() {
+  assert(wasm.features.hasStrings());
+
+  // Scan the entire wasm to find the relevant strings.
+  // To find all the string literals we must scan all the code.
+  using StringSet = std::unordered_set<Name>;
+
+  struct StringWalker : public PostWalker<StringWalker> {
+    StringSet& strings;
+
+    StringWalker(StringSet& strings) : strings(strings) {
+    void visitStringConst(StringConst* curr) {
+      strings.push_back(curr->string);
+    }
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<StringSet> analysis(
+    wasm, [&](Function* func, StringSet& strings) {
+      if (!func->imported()) {
+        StringWalker(strings).walk(func->body);
+      }
+    });
+
+  // Also walk the global module code (for simplicity, also add it to the
+  // function map, using a "function" key of nullptr).
+  auto& globalStrings = analysis.map[nullptr];
+  StringWalker(globalStrings).walkModuleCode(&wasm);
+
+  // Generate the indexes from the combined set of necessary strings,
+  // which we sort for determinism.
+  StringSet allStrings;
+  for (auto& [func, strings] : analysis.map) {
+    for (auto& string : strings) {
+      allStrings.insert(string);
+    }
+  }
+  std::vector<Name> sorted;
+  for (auto& string : allStrings) {
+    sorted.push_back(string);
+  }
+  std::sort(sorted.begin(), sorted.end());
+  for (Index i = 0; i < sorted.size(); i++) {
+    stringIndexes[sorted[i]] = i;
+  }
+
+  auto num = sorted.size();
+  if (num == 0) {
+    return;
+  }
+
+  auto start = startSection(BinaryConsts::Section::Strings);
+
+  // Placeholder for future use in the spec.
+  o << U32LEB(0);
+
+  // The number of strings and then their contents.
+  o << U32LEB(num);
+  for (auto& string : sorted) {
+    writeInlineString(string.str);
+  }
+
+  finishSection(start);
+}
+
 void WasmBinaryWriter::writeGlobals() {
   if (importInfo->getNumDefinedGlobals() == 0) {
     return;
@@ -586,17 +653,10 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getStringIndex(Name string) {
-  // XXX this section must be before the code using it. add pre-pass in
-  //     ::prepare()?
+uint32_t WasmBinaryWriter::getStringIndex(Name string) const {
   auto it = stringIndexes.find(string);
-  if (it != stringIndexes.end()) {
-    return it->second;
-  }
-  auto index = stringIndexes.size();
-  assert(index <= std::numeric_limits<uint32_t>::max());
-  stringIndexes[string] = index;
-  return index;
+  assert(it != stringIndexes.end());
+  return it->second;
 }
 
 void WasmBinaryWriter::writeTableDeclarations() {

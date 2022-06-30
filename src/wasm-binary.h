@@ -326,7 +326,8 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
-  Tag = 13
+  Tag = 13,
+  Strings = 14,
 };
 
 // A passive segment is a segment that will not be automatically copied into a
@@ -1281,6 +1282,7 @@ public:
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
   void writeFunctions();
+  void writeStrings();
   void writeGlobals();
   void writeExports();
   void writeDataCount();
@@ -1292,10 +1294,7 @@ public:
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
-
-  // Returns the index of a string in the string literal section. This lazily
-  // adds strings to the table as we see them.
-  uint32_t getStringIndex(Name string);
+  uint32_t getStringIndex(Name string) const;
 
   void writeTableDeclarations();
   void writeElementSegments();
@@ -1386,7 +1385,7 @@ private:
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
 
-  // Maps strings in StringConst to their indexes in the string literal section.
+  // Indexes in the string literal section of each StringConst in the wasm.
   std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
