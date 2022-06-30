@@ -998,8 +998,7 @@ public:
     ret->finalize();
     return ret;
   }
-  StringConst*
-  makeStringConst(Name string) {
+  StringConst* makeStringConst(Name string) {
     auto* ret = wasm.allocator.alloc<StringConst>();
     ret->string = string;
     ret->finalize();

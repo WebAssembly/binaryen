@@ -2258,8 +2258,7 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
 }
 
 void BinaryInstWriter::visitStringNew(StringNew* curr) {
-  o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringConst)
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConst)
     << U32LEB(parent.getStringIndex(curr->target));
 }
 

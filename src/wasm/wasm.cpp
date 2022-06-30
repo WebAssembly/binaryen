@@ -1182,9 +1182,7 @@ void StringNew::finalize() {
   }
 }
 
-void StringConst::finalize() {
-  type = Type(HeapType::string, NonNullable);
-}
+void StringConst::finalize() { type = Type(HeapType::string, NonNullable); }
 
 size_t Function::getNumParams() { return getParams().size(); }
 
