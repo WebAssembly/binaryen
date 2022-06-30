@@ -108,6 +108,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-strings                     Enable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-strings                    Disable strings
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
 ;; CHECK-NEXT:                                        correct
 ;; CHECK-NEXT:

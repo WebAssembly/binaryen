@@ -50,6 +50,7 @@ const char* Memory64Feature = "memory64";
 const char* TypedFunctionReferencesFeature = "typed-function-references";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
+const char* StringsFeature = "strings";
 } // namespace UserSections
 } // namespace BinaryConsts
 
