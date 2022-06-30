@@ -2,7 +2,7 @@
 
 ;; Check that string types are emitted properly in the binary format.
 
-;; RUN: foreach %s %t wasm-opt -all --roundtrip -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --roundtrip -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (func $foo (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
