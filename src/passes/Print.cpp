@@ -274,6 +274,22 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
     TypeNamePrinter(o, wasm).print(rtt.heapType);
     o << ')';
   } else if (type.isRef() && !type.isBasic()) {
+    auto heapType = type.getHeapType();
+    if (type.isNullable() && heapType.isBasic()) {
+      // Print shorthands for certain nullable basic heap types.
+      switch (heapType.getBasic()) {
+        case HeapType::string:
+          return o << "stringref";
+        case HeapType::stringview_wtf8:
+          return o << "stringview_wtf8";
+        case HeapType::stringview_wtf16:
+          return o << "stringview_wtf16";
+        case HeapType::stringview_iter:
+          return o << "stringview_iter";
+        default:
+          break;
+      }
+    }
     o << "(ref ";
     if (type.isNullable()) {
       o << "null ";
