@@ -350,9 +350,6 @@ def pick_initial_contents():
         #  )
         # )
         '--disable-multivalue',
-        # DWARF is incompatible with multivalue atm; it's more important to
-        # fuzz multivalue since we aren't actually fuzzing DWARF here
-        '--strip-dwarf',
     ]
 
     # the given wasm may not work with the chosen feature opts. for example, if
@@ -823,9 +820,8 @@ class CheckDeterminism(TestCaseHandler):
         b1 = open('b1.wasm', 'rb').read()
         b2 = open('b2.wasm', 'rb').read()
         if (b1 != b2):
-            pure_feature_flags = [flag for flag in FEATURE_OPTS if flag != '--strip-dwarf']
-            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat'] + pure_feature_flags)
-            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'] + pure_feature_flags)
+            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat'] + FEATURE_OPTS)
+            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'] + FEATURE_OPTS)
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
             compare(t1, t2, 'Output must be deterministic.', verbose=False)
