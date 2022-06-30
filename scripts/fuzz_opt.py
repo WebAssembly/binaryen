@@ -263,7 +263,7 @@ INITIAL_CONTENTS_IGNORE = [
     # not all relaxed SIMD instructions are implemented in the interpreter
     'relaxed-simd.wast',
     # TODO fuzzer and interpreter support for strings
-    'strings.wast'
+    'strings.wast',
     # ignore DWARF because it is incompatible with multivalue atm
     'zlib.wasm',
     'cubescript.wasm',
