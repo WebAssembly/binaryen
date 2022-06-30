@@ -208,7 +208,7 @@ protected:
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       trapped = true;
     }
-
+    WASM_UNUSED(trapped);
     assert(trapped);
   }
 
@@ -228,6 +228,7 @@ protected:
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       trapped = true;
     }
+    WASM_UNUSED(trapped);
     assert(!trapped);
     std::cerr << "seen " << actual << ", expected " << expected << '\n';
     if (expected != actual) {

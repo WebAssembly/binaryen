@@ -941,6 +941,7 @@ struct Reducer
     // process things here, we may replace the module, so we should never again
     // refer to curr.
     assert(curr == module.get());
+    WASM_UNUSED(curr);
     curr = nullptr;
 
     // Reduction of entire functions at a time is very effective, and we do it
