@@ -3130,7 +3130,7 @@ switch (op[0]) {
           case 'i': {
             switch (op[7]) {
               case 'c':
-                if (strcmp(op, "string.const") == 0) { return makeStringNew(s); }
+                if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
                 goto parse_error;
               case 'n': {
                 switch (op[14]) {
