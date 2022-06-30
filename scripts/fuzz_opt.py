@@ -264,6 +264,17 @@ INITIAL_CONTENTS_IGNORE = [
     'relaxed-simd.wast',
     # TODO fuzzer and interpreter support for strings
     'strings.wast'
+    # ignore DWARF because it is incompatible with multivalue atm
+    'zlib.wasm',
+    'cubescript.wasm',
+    'class_with_dwarf_noprint.wasm',
+    'fib2_dwarf.wasm',
+    'fib_nonzero-low-pc_dwarf.wasm',
+    'inlined_to_start_dwarf.wasm',
+    'fannkuch3_manyopts_dwarf.wasm',
+    'fib2_emptylocspan_dwarf.wasm',
+    'fannkuch3_dwarf.wasm',
+    'multi_unit_abbrev_noprint.wasm',
 ]
 
 
