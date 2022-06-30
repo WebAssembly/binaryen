@@ -586,6 +586,19 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
   return it->second;
 }
 
+uint32_t WasmBinaryWriter::getStringIndex(Name string) {
+  // XXX this section must be before the code using it. add pre-pass in
+  //     ::prepare()?
+  auto it = stringIndexes.find(string);
+  if (it != stringIndexes.end()) {
+    return it->second;
+  }
+  auto index = stringIndexes.size();
+  assert(index <= std::numeric_limits<uint32_t>::max());
+  stringIndexes[string] = index;
+  return index;
+}
+
 void WasmBinaryWriter::writeTableDeclarations() {
   if (importInfo->getNumDefinedTables() == 0) {
     // std::cerr << std::endl << "(WasmBinaryWriter::writeTableDeclarations) No

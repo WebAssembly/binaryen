@@ -1292,6 +1292,10 @@ public:
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
 
+  // Returns the index of a string in the string literal section. This lazily
+  // adds strings to the table as we see them.
+  uint32_t getStringIndex(Name string);
+
   void writeTableDeclarations();
   void writeElementSegments();
   void writeNames();
@@ -1380,6 +1384,9 @@ private:
   // local names section: we map the locals when writing the function, save that
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
+  // Maps strings in StringConst to their indexes in the string literal section.
+  std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
 };
