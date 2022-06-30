@@ -187,9 +187,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
     calledSignatures.insert(type);
   }
-
-  void visitGlobalGet(GlobalGet* curr) { maybeAddMemory(curr->name); }
-  void visitGlobalSet(GlobalSet* curr) { maybeAddMemory(curr->name); }
+  void visitGlobalGet(GlobalGet* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
+  }
+  void visitGlobalSet(GlobalSet* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
+  }
   void visitLoad(Load* curr) { maybeAddMemory(curr->memory); }
   void visitStore(Store* curr) { maybeAddMemory(curr->memory); }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { maybeAddMemory(curr->memory); }

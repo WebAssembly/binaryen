@@ -1419,7 +1419,7 @@ ElementSegment* Module::getElementSegment(Name name) {
 }
 
 Memory* Module::getMemory(Name name) {
-  return getModuleElement(memoriesMap, name, "getMemories");
+  return getModuleElement(memoriesMap, name, "getMemory");
 }
 
 DataSegment* Module::getDataSegment(Name name) {

@@ -20,7 +20,7 @@
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
-  if (module.memories.size() > 1) {
+  if (wasm.memories.size() > 1) {
     return false;
   }
   // The presence of any MemoryInit instructions is a problem because they care
