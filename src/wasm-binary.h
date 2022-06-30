@@ -1137,6 +1137,7 @@ enum ASTNodes {
   BrOnNonI31 = 0x65,
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
+  StringConst = 0x82,
 };
 
 enum MemoryAccess {
@@ -1709,6 +1710,7 @@ public:
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
+  bool maybeVisitStringConst(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

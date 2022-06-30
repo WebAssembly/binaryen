@@ -1181,6 +1181,10 @@ void StringNew::finalize() {
   }
 }
 
+void StringConst::finalize() {
+  type = Type(HeapType::string, NonNullable);
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

@@ -304,6 +304,7 @@ private:
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
   Expression* makeStringNew(Element& s, StringNewOp op);
+  Expression* makeStringConst(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

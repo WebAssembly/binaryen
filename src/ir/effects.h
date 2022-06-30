@@ -733,6 +733,7 @@ private:
       // cycle may be needed in some cases.
     }
     void visitStringNew(StringNew* curr) {}
+    void visitStringConst(StringConst* curr) {}
   };
 
 public:

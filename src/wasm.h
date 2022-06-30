@@ -686,6 +686,7 @@ public:
     ArrayCopyId,
     RefAsId,
     StringNewId,
+    StringConstId,
     NumExpressionIds
   };
   Id _id;
@@ -1660,6 +1661,18 @@ public:
 
   Expression* ptr;
   Expression* length;
+
+  void finalize();
+};
+
+class StringConst : public SpecificExpression<Expression::StringConstId> {
+public:
+  StringConst(MixedArena& allocator) {}
+
+  // TODO: Use a different type to allow null bytes in the middle -
+  //       ArenaVector<char> perhaps? However, Name has the benefit of being
+  //       interned and immutable (which is appropriate here).
+  Name string;
 
   void finalize();
 };
