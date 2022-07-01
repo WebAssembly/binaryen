@@ -192,6 +192,10 @@ struct GUFAOptimizer
       } else {
         // We can't remove this, but we can at least drop it and put the
         // optimized value right after it.
+        // TODO: Should this only be done when not optimizing for size? In
+        //       general this may increase code size unless later passes can
+        //       remove the dropped |curr|, or unless the propagated constant is
+        //       helpful in other opts.
         replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
       }
       optimized = true;
