@@ -1989,7 +1989,7 @@ void WasmBinaryBuilder::readMemories() {
   BYN_TRACE("num: " << num << std::endl);
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto memory = Builder::makeMemory();
+    auto memory = Builder::makeMemory(Name::fromInt(i));
     getResizableLimits(memory->initial,
                        memory->max,
                        memory->shared,
@@ -3059,20 +3059,21 @@ void WasmBinaryBuilder::readDataSegments() {
     }
     curr->setName(Name::fromInt(i), false);
     curr->isPassive = flags & BinaryConsts::IsPassive;
+    Index memIdx = 0;
     if (flags & BinaryConsts::HasIndex) {
-      auto memIdx = getU32LEB();
-      Memory* memory = nullptr;
-      auto numMemoryImports = memoryImports.size();
-      if (memIdx < numMemoryImports) {
-        memory = memoryImports[memIdx];
-      } else if (memIdx - numMemoryImports < memories.size()) {
-        memory = memories[memIdx - numMemoryImports].get();
-      }
-      if (!memory) {
-        throwError("Memory index out of range while reading data segments.");
-      }
-      curr->memory = memory->name;
+      memIdx = getU32LEB();
     }
+    Memory* memory = nullptr;
+    Index numMemoryImports = memoryImports.size();
+    if (memIdx < numMemoryImports) {
+      memory = memoryImports[memIdx];
+    } else if (memIdx - numMemoryImports < memories.size()) {
+      memory = memories[memIdx - numMemoryImports].get();
+    }
+    if (!memory) {
+      throwError("Memory index out of range while reading data segments.");
+    }
+    curr->memory = memory->name;
     if (!curr->isPassive) {
       curr->offset = readExpression();
     }

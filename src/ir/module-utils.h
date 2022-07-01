@@ -107,8 +107,7 @@ inline Table* copyTable(const Table* table, Module& out) {
 }
 
 inline Memory* copyMemory(const Memory* memory, Module& out) {
-  auto ret = Builder::makeMemory();
-  ret->name = memory->name;
+  auto ret = Builder::makeMemory(memory->name);
   ret->hasExplicitName = memory->hasExplicitName;
   ret->initial = memory->initial;
   ret->max = memory->max;

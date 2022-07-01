@@ -1290,11 +1290,12 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                        BinaryenOp op,
                                        uint32_t offset,
                                        uint32_t align,
-                                       BinaryenExpressionRef ptr) {
+                                       BinaryenExpressionRef ptr,
+                                       const char* name) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeSIMDLoad(
-        SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr));
+        SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr, name));
 }
 BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                                                 BinaryenOp op,
@@ -1302,7 +1303,8 @@ BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                                                 uint32_t align,
                                                 uint8_t index,
                                                 BinaryenExpressionRef ptr,
-                                                BinaryenExpressionRef vec) {
+                                                BinaryenExpressionRef vec,
+                                                const char* name) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp(op),
@@ -1310,7 +1312,8 @@ BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                              Address(align),
                              index,
                              (Expression*)ptr,
-                             (Expression*)vec));
+                             (Expression*)vec,
+                             name));
 }
 BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          uint32_t segment,
@@ -3906,8 +3909,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex numSegments,
                        bool shared) {
   auto* wasm = (Module*)module;
-  auto memory = Builder::makeMemory();
-  memory->name = internalName;
+  auto memory = Builder::makeMemory(internalName);
   memory->initial = initial;
   memory->max = int32_t(maximum); // Make sure -1 extends.
   memory->shared = shared;
