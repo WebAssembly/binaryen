@@ -203,7 +203,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   //void visitAtomicFence(AtomicFence* curr) { maybeAddMemory(curr->name); }
   void visitMemoryInit(MemoryInit* curr) { maybeAddMemory(curr->memory); }
   void visitDataDrop(DataDrop* curr) {
-    auto seg = module->getDataSegment(Name::fromInt(curr->segment));
+    auto& seg = module->dataSegments[curr->segment];
     maybeAddMemory(seg->memory);
   }
   void visitMemoryCopy(MemoryCopy* curr) { maybeAddMemory(curr->memory); }

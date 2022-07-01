@@ -36,7 +36,7 @@ bool flatten(Module& wasm);
 // Ensures that a memory exists (of minimal size).
 inline void ensureExists(Module* wasm) {
   if (wasm->memories.empty()) {
-    auto memory = Builder::makeMemory();
+    auto memory = Builder::makeMemory("memory");
     memory->initial = memory->max = 1;
     wasm->addMemory(std::move(memory));
   }

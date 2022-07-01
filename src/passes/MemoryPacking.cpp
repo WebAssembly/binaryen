@@ -88,7 +88,7 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
     mem->is64() ? GtUInt64 : GtUInt32,
     curr->dest,
     builder.makeBinary(mem->is64() ? ShlInt64 : ShlInt32,
-                       builder.makeMemorySize(),
+                       builder.makeMemorySize(mem->name),
                        builder.makeConstPtr(16, mem->indexType)));
 }
 
@@ -714,11 +714,11 @@ void MemoryPacking::createReplacements(Module* module,
       // Create new memory.init or memory.fill
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
-        appendResult(builder.makeMemoryFill(dest, value, size));
+        appendResult(builder.makeMemoryFill(dest, value, size, module->memories[0]->name));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
-        appendResult(builder.makeMemoryInit(initIndex, dest, offset, size));
+        appendResult(builder.makeMemoryInit(initIndex, dest, offset, size, module->memories[0]->name));
         initIndex++;
       }
     }
