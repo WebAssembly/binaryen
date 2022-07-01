@@ -235,9 +235,13 @@ struct GUFAOptimizer
   }
 
   // TODO: If an instruction would trap on null, like struct.get, we could
-  //       remove it here if it has no possible contents. That information
+  //       remove it here if it has no possible contents and if we are in
+  //       traps-never-happen mode (that is, we'd have proven it can only trap,
+  //       but we assume no traps happen, so it must be dead code). That info
   //       is present in OptimizeInstructions where it removes redundant
-  //       ref.as_non_null, so maybe there is a way to share that.
+  //       ref.as_non_null (it removes them because it knows that the parent
+  //       will trap on null anyhow), so maybe there is a way to share that
+  //       information about parents.
 
   void visitFunction(Function* func) {
     if (!optimized) {
