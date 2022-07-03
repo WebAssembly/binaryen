@@ -340,6 +340,7 @@ struct SafeHeap : public Pass {
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
+    store->memory = mem->name;
     store->ptr = builder.makeLocalGet(3, indexType);
     store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
