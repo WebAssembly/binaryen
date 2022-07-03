@@ -1384,14 +1384,6 @@ void print_trace() {
     }
 }
 
-Memory Module::getMemoryAtIdx(Index idx) {
-  if (idx < memories.size()) {
-    auto& memory = memories[idx];
-    return *memory;
-  }
-  Fatal() << "Tried to access memories at idx > size";
-}
-
 template<typename Map>
 typename Map::mapped_type&
 getModuleElement(Map& m, Name name, const std::string& funcName) {

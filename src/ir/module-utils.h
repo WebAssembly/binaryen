@@ -121,6 +121,7 @@ inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   auto ret = Builder::makeDataSegment();
   ret->name = segment->name;
   ret->hasExplicitName = segment->hasExplicitName;
+  ret->memory = segment->memory;
   ret->isPassive = segment->isPassive;
   if (!segment->isPassive) {
     auto offset = ExpressionManipulator::copy(segment->offset, out);

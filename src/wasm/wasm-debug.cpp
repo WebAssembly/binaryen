@@ -1065,8 +1065,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
 
   updateDebugLines(data, locationUpdater);
 
-  //TODO (nashley): Fix hardcoded memory
-  updateCompileUnits(info, data, locationUpdater, wasm.memories[0]->is64());
+  bool is64 = wasm.memories.size() > 0 ? wasm.memories[0]->is64() : false;
+  updateCompileUnits(info, data, locationUpdater, is64);
 
   updateRanges(data, locationUpdater);
 

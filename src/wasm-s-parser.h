@@ -171,6 +171,7 @@ private:
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
   Name getMemoryName(Element& s);
+  Memory getMemoryAtIdx(Index idx);
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
