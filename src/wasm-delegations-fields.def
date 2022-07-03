@@ -266,6 +266,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(Load, offset);
     DELEGATE_FIELD_ADDRESS(Load, align);
     DELEGATE_FIELD_INT(Load, isAtomic);
+    DELEGATE_FIELD_NAME(Load, memory);
     DELEGATE_END(Load);
     break;
   }
@@ -278,6 +279,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(Store, align);
     DELEGATE_FIELD_INT(Store, isAtomic);
     DELEGATE_FIELD_TYPE(Store, valueType);
+    DELEGATE_FIELD_NAME(Store, memory);
     DELEGATE_END(Store);
     break;
   }
@@ -288,6 +290,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_INT(AtomicRMW, op);
     DELEGATE_FIELD_INT(AtomicRMW, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicRMW, offset);
+    DELEGATE_FIELD_NAME(AtomicRMW, memory);
     DELEGATE_END(AtomicRMW);
     break;
   }
@@ -298,6 +301,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
     DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset);
+    DELEGATE_FIELD_NAME(AtomicCmpxchg, memory);
     DELEGATE_END(AtomicCmpxchg);
     break;
   }
@@ -308,6 +312,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicWait, ptr);
     DELEGATE_FIELD_ADDRESS(AtomicWait, offset);
     DELEGATE_FIELD_TYPE(AtomicWait, expectedType);
+    DELEGATE_FIELD_NAME(AtomicWait, memory);
     DELEGATE_END(AtomicWait);
     break;
   }
@@ -316,6 +321,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
     DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
     DELEGATE_FIELD_ADDRESS(AtomicNotify, offset);
+    DELEGATE_FIELD_NAME(AtomicNotify, memory);
     DELEGATE_END(AtomicNotify);
     break;
   }
@@ -373,6 +379,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_INT(SIMDLoad, op);
     DELEGATE_FIELD_ADDRESS(SIMDLoad, offset);
     DELEGATE_FIELD_ADDRESS(SIMDLoad, align);
+    DELEGATE_FIELD_NAME(SIMDLoad, memory);
     DELEGATE_END(SIMDLoad);
     break;
   }
@@ -384,6 +391,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, offset);
     DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, align);
     DELEGATE_FIELD_INT(SIMDLoadStoreLane, index);
+    DELEGATE_FIELD_NAME(SIMDLoadStoreLane, memory);
     DELEGATE_END(SIMDLoadStoreLane);
     break;
   }
@@ -393,6 +401,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
     DELEGATE_FIELD_INT(MemoryInit, segment);
+    DELEGATE_FIELD_NAME(MemoryInit, memory);
     DELEGATE_END(MemoryInit);
     break;
   }
@@ -407,6 +416,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryCopy, size);
     DELEGATE_FIELD_CHILD(MemoryCopy, source);
     DELEGATE_FIELD_CHILD(MemoryCopy, dest);
+    DELEGATE_FIELD_NAME(MemoryCopy, memory);
     DELEGATE_END(MemoryCopy);
     break;
   }
@@ -415,6 +425,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryFill, size);
     DELEGATE_FIELD_CHILD(MemoryFill, value);
     DELEGATE_FIELD_CHILD(MemoryFill, dest);
+    DELEGATE_FIELD_NAME(MemoryFill, memory);
     DELEGATE_END(MemoryFill);
     break;
   }
@@ -462,6 +473,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::MemorySizeId: {
     DELEGATE_START(MemorySize);
     DELEGATE_FIELD_TYPE(MemorySize, ptrType);
+    DELEGATE_FIELD_NAME(MemorySize, memory);
     DELEGATE_END(MemorySize);
     break;
   }
@@ -469,6 +481,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(MemoryGrow);
     DELEGATE_FIELD_TYPE(MemoryGrow, ptrType);
     DELEGATE_FIELD_CHILD(MemoryGrow, delta);
+    DELEGATE_FIELD_NAME(MemoryGrow, memory);
     DELEGATE_END(MemoryGrow);
     break;
   }
