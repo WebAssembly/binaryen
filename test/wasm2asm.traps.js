@@ -54,8 +54,6 @@ function asmFunc(global, env, buffer) {
       var HEAP32 = new Int32Array(__array_buffer);
       var HEAPF32 = new Float32Array(__array_buffer);
       var HEAPF64 = new Float64Array(__array_buffer);
-      var nan = NaN;
-      var infinity = Infinity;
     ;
 
       function f32Equal(a, b) {

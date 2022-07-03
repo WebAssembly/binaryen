@@ -1,6 +1,4 @@
 
-    var nan = NaN;
-    var infinity = Infinity;
   
     function f32Equal(a, b) {
        var i = new Int32Array(1);
@@ -42,8 +40,6 @@ function asmFunc0(env) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = NaN;
- var infinity = Infinity;
  function $0() {
   
  }
