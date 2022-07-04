@@ -61,7 +61,7 @@ struct Metrics
     counts["[tags]"] = imports.getNumDefinedTags();
     counts["[exports]"] = module->exports.size();
     counts["[tables]"] = imports.getNumDefinedTables();
-    counts["[memories]"] = imports.getNumDefinedMemories();
+//    counts["[memories]"] = imports.getNumDefinedMemories();
 
     // add memory
     for (auto& memory : module->memories) {
@@ -72,7 +72,7 @@ struct Metrics
       walkDataSegment(segment.get());
       size += segment->data.size();
     }
-    if (!module->memories.empty()) {
+    if (!module->dataSegments.empty()) {
       counts["[memory-data]"] = size;
     }
 
