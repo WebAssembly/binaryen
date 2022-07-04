@@ -119,14 +119,10 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   }
 
   void visitDataSegment(DataSegment* segment) {
-    auto& module = *getModule();
-    auto memory = module.getMemory(segment->memory);
-    if (memory->is64()) {
-      if (!segment->isPassive) {
-        auto* c = segment->offset->cast<Const>();
-        c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
-        c->type = Type::i32;
-      }
+    if (!segment->isPassive) {
+      auto* c = segment->offset->cast<Const>();
+      c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
+      c->type = Type::i32;
     }
   }
 };

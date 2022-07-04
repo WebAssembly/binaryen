@@ -205,6 +205,7 @@ struct SafeHeap : public Pass {
         continue;
       }
       load.type = type;
+      load.memory = module->memories[0]->name;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
         if (bytes > type.getByteSize() || (type == Type::f32 && bytes != 4) ||
@@ -243,6 +244,7 @@ struct SafeHeap : public Pass {
       }
       store.valueType = valueType;
       store.type = Type::none;
+      store.memory = module->memories[0]->name;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         store.bytes = bytes;
         if (bytes > valueType.getByteSize() ||
