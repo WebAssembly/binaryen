@@ -67,6 +67,9 @@ std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
     case WasmSplitOptions::Mode::MergeProfiles:
       o << "merge-profiles";
       break;
+    case WasmSplitOptions::Mode::PrintProfile:
+      o << "print-profile";
+      break;
   }
   return o;
 }
@@ -98,13 +101,24 @@ WasmSplitOptions::WasmSplitOptions()
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { mode = Mode::Instrument; })
     .add("--merge-profiles",
-         "",
-         "Merge multiple profiles for the same module into a single profile.",
-         WasmSplitOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) {
-           mode = Mode::MergeProfiles;
-         })
+      "",
+      "Merge multiple profiles for the same module into a single profile.",
+      WasmSplitOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) {
+      mode = Mode::MergeProfiles;
+      })
+    .add(
+      "--print-profile",
+      "",
+      "The profile to use to guide splitting.",
+      WasmSplitOption,
+      {Mode::PrintProfile},
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { 
+        mode = Mode::PrintProfile;
+        profileFile = argument; 
+      })
     .add(
       "--profile",
       "",
@@ -361,6 +375,11 @@ bool WasmSplitOptions::validate() {
       break;
     case Mode::MergeProfiles:
       // Any number >= 1 allowed.
+      break;
+    case Mode::PrintProfile:
+      if (inputFiles.size() != 1) {
+        fail("Input one and only one profile path");
+      }
       break;
   }
 

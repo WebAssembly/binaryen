@@ -385,6 +385,47 @@ void mergeProfiles(const WasmSplitOptions& options) {
   buffer.writeTo(out.getStream());
 }
 
+void printReadableProfile(const WasmSplitOptions& options) {
+  Module wasm;
+  parseInput(wasm, options);
+
+  std::set<Name> keepFuncs;
+  std::set<Name> splitFuncs;
+
+  if (options.profileFile.size()) {
+    // Use the profile to set `keepFuncs`.
+    ProfileData profile = readProfile(options.profileFile);
+    size_t i = 0;
+    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+      if (i >= profile.timestamps.size()) {
+        Fatal() << "Unexpected end of profile data";
+      }
+      if (profile.timestamps[i++] > 0) {
+        keepFuncs.insert(func->name);
+      } else {
+        splitFuncs.insert(func->name);
+      }
+    });
+    if (i != profile.timestamps.size()) {
+      Fatal() << "Unexpected extra profile data";
+    }
+  }
+
+  auto printFnSet = [&](auto funcs) {
+    for (auto it = funcs.begin(); it != funcs.end(); ++it) {
+      std::cout << *it << std::endl;
+    }
+  };
+
+  std::cout << "Keeping functions: " << std::endl;
+  printFnSet(keepFuncs);
+  std::cout << std::endl;
+
+  std::cout << "Splitting out functions: " << std::endl;
+  printFnSet(splitFuncs);
+  std::cout << std::endl;
+}
+
 } // anonymous namespace
 
 int main(int argc, const char* argv[]) {
@@ -404,6 +445,9 @@ int main(int argc, const char* argv[]) {
       break;
     case WasmSplitOptions::Mode::MergeProfiles:
       mergeProfiles(options);
+      break;
+    case WasmSplitOptions::Mode::PrintProfile:
+      printReadableProfile(options);
       break;
   }
 }

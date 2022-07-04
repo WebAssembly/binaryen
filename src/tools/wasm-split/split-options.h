@@ -28,10 +28,11 @@ struct WasmSplitOptions : ToolOptions {
     Split,
     Instrument,
     MergeProfiles,
+    PrintProfile,
   };
   Mode mode = Mode::Split;
   constexpr static size_t NumModes =
-    static_cast<unsigned>(Mode::MergeProfiles) + 1;
+    static_cast<unsigned>(Mode::PrintProfile) + 1;
 
   enum class StorageKind : unsigned {
     InGlobals, // Store profile data in WebAssembly Globals
