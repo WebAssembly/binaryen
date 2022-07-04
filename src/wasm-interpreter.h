@@ -2409,18 +2409,18 @@ public:
       }
       WASM_UNREACHABLE("invalid type");
     }
-    virtual void store(Store* store, Address addr, Literal value, Name memoryName) {
+    virtual void store(Store* store, Address addr, Literal value) {
       switch (store->valueType.getBasic()) {
         case Type::i32: {
           switch (store->bytes) {
             case 1:
-              store8(addr, value.geti32(), memoryName);
+              store8(addr, value.geti32(), store->memory);
               break;
             case 2:
-              store16(addr, value.geti32(), memoryName);
+              store16(addr, value.geti32(), store->memory);
               break;
             case 4:
-              store32(addr, value.geti32(), memoryName);
+              store32(addr, value.geti32(), store->memory);
               break;
             default:
               WASM_UNREACHABLE("invalid store size");
@@ -2430,16 +2430,16 @@ public:
         case Type::i64: {
           switch (store->bytes) {
             case 1:
-              store8(addr, value.geti64(), memoryName);
+              store8(addr, value.geti64(), store->memory);
               break;
             case 2:
-              store16(addr, value.geti64(), memoryName);
+              store16(addr, value.geti64(), store->memory);
               break;
             case 4:
-              store32(addr, value.geti64(), memoryName);
+              store32(addr, value.geti64(), store->memory);
               break;
             case 8:
-              store64(addr, value.geti64(), memoryName);
+              store64(addr, value.geti64(), store->memory);
               break;
             default:
               WASM_UNREACHABLE("invalid store size");
@@ -2448,13 +2448,13 @@ public:
         }
         // write floats carefully, ensuring all bits reach memory
         case Type::f32:
-          store32(addr, value.reinterpreti32(), memoryName);
+          store32(addr, value.reinterpreti32(), store->memory);
           break;
         case Type::f64:
-          store64(addr, value.reinterpreti64(), memoryName);
+          store64(addr, value.reinterpreti64(), store->memory);
           break;
         case Type::v128:
-          store128(addr, value.getv128(), memoryName);
+          store128(addr, value.getv128(), store->memory);
           break;
         case Type::none:
         case Type::unreachable:
@@ -2462,31 +2462,31 @@ public:
       }
     }
 
-    virtual int8_t load8s(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual uint8_t load8u(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual int16_t load16s(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual uint16_t load16u(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual int32_t load32s(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual uint32_t load32u(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual int64_t load64s(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual uint64_t load64u(Address addr, Name memoryName = Name::fromInt(0)) { WASM_UNREACHABLE("unimp"); }
-    virtual std::array<uint8_t, 16> load128(Address addr, Name memoryName = Name::fromInt(0)) {
+    virtual int8_t load8s(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual uint8_t load8u(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual int16_t load16s(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual uint16_t load16u(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual int32_t load32s(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual uint32_t load32u(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual int64_t load64s(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual uint64_t load64u(Address addr, Name memoryName) { WASM_UNREACHABLE("unimp"); }
+    virtual std::array<uint8_t, 16> load128(Address addr, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void store8(Address addr, int8_t value, Name memoryName = Name::fromInt(0)) {
+    virtual void store8(Address addr, int8_t value, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual void store16(Address addr, int16_t value, Name memoryName = Name::fromInt(0)) {
+    virtual void store16(Address addr, int16_t value, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual void store32(Address addr, int32_t value, Name memoryName = Name::fromInt(0)) {
+    virtual void store32(Address addr, int32_t value, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual void store64(Address addr, int64_t value, Name memoryName = Name::fromInt(0)) {
+    virtual void store64(Address addr, int64_t value, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual void store128(Address addr, const std::array<uint8_t, 16>&, Name memoryName = Name::fromInt(0)) {
+    virtual void store128(Address addr, const std::array<uint8_t, 16>&, Name memoryName) {
       WASM_UNREACHABLE("unimp");
     }
 
@@ -2995,7 +2995,7 @@ public:
     }
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
-    info.interface->store(curr, addr, value.getSingleValue(), info.name);
+    info.interface->store(curr, addr, value.getSingleValue());
     return Flow();
   }
 
@@ -3014,7 +3014,7 @@ public:
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
     auto info = getMemoryInterfaceInfo(curr->memory);
-    auto loaded = self()->doAtomicLoad(addr, curr->bytes, curr->type, info.memorySize);
+    auto loaded = self()->doAtomicLoad(addr, curr->bytes, curr->type, curr->memory, info.memorySize);
     NOTE_EVAL1(loaded);
     auto computed = value.getSingleValue();
     switch (curr->op) {
@@ -3060,7 +3060,7 @@ public:
     NOTE_EVAL1(expected);
     NOTE_EVAL1(replacement);
     auto info = getMemoryInterfaceInfo(curr->memory);
-    auto loaded = self()->doAtomicLoad(addr, curr->bytes, curr->type, info.memorySize);
+    auto loaded = self()->doAtomicLoad(addr, curr->bytes, curr->type, curr->memory, info.memorySize);
     NOTE_EVAL1(loaded);
     if (loaded == expected.getSingleValue()) {
       self()->doAtomicStore(addr, curr->bytes, replacement.getSingleValue(), curr->memory, info.memorySize);
@@ -3087,7 +3087,7 @@ public:
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInterfaceInfo(curr->memory);
     auto addr = self()->getFinalAddress(curr, ptr.getSingleValue(), bytes);
-    auto loaded = self()->doAtomicLoad(addr, bytes, curr->expectedType, info.memorySize);
+    auto loaded = self()->doAtomicLoad(addr, bytes, curr->expectedType, curr->memory, info.memorySize);
     NOTE_EVAL1(loaded);
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
@@ -3436,7 +3436,7 @@ public:
       info.interface->store8(
         self()->getFinalAddressWithoutOffset(Literal(destVal + i), 1, info.memorySize),
         info.interface->load8s(
-          self()->getFinalAddressWithoutOffset(Literal(sourceVal + i), 1, info.memorySize)), curr->memory);
+          self()->getFinalAddressWithoutOffset(Literal(sourceVal + i), 1, info.memorySize), curr->memory), curr->memory);
     }
     return {};
   }
@@ -3692,7 +3692,7 @@ protected:
     }
   }
 
-  Literal doAtomicLoad(Address addr, Index bytes, Type type, Address memorySize) {
+  Literal doAtomicLoad(Address addr, Index bytes, Type type, Name memoryName, Address memorySize) {
     checkAtomicAddress(addr, bytes, memorySize);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
@@ -3706,6 +3706,7 @@ protected:
     load.isAtomic = true; // understatement
     load.ptr = &ptr;
     load.type = type;
+    load.memory = memoryName;
     return externalInterface->load(&load, addr);
   }
 
@@ -3724,7 +3725,8 @@ protected:
     store.ptr = &ptr;
     store.value = &value;
     store.valueType = value.type;
-    return externalInterface->store(&store, addr, toStore, memoryName);
+    store.memory = memoryName;
+    return externalInterface->store(&store, addr, toStore);
   }
 
   ExternalInterface* externalInterface;

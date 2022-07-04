@@ -201,7 +201,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
           }
 
           // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0);
+          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
           return {Literal(int32_t(0))};
         }
 
@@ -222,7 +222,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
           }
 
           // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0);
+          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
           return {Literal(int32_t(0))};
         }
 
@@ -333,25 +333,25 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // called during initialization
   void tableStore(Name tableName, Index index, const Literal& value) override {}
 
-  int8_t load8s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int8_t>(addr, memoryName); }
-  uint8_t load8u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint8_t>(addr, memoryName); }
-  int16_t load16s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int16_t>(addr, memoryName); }
-  uint16_t load16u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint16_t>(addr, memoryName); }
-  int32_t load32s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int32_t>(addr, memoryName); }
-  uint32_t load32u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint32_t>(addr, memoryName); }
-  int64_t load64s(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<int64_t>(addr, memoryName); }
-  uint64_t load64u(Address addr, Name memoryName = Name::fromInt(0)) override { return doLoad<uint64_t>(addr, memoryName); }
+  int8_t load8s(Address addr, Name memoryName) override { return doLoad<int8_t>(addr, memoryName); }
+  uint8_t load8u(Address addr, Name memoryName) override { return doLoad<uint8_t>(addr, memoryName); }
+  int16_t load16s(Address addr, Name memoryName) override { return doLoad<int16_t>(addr, memoryName); }
+  uint16_t load16u(Address addr, Name memoryName) override { return doLoad<uint16_t>(addr, memoryName); }
+  int32_t load32s(Address addr, Name memoryName) override { return doLoad<int32_t>(addr, memoryName); }
+  uint32_t load32u(Address addr, Name memoryName) override { return doLoad<uint32_t>(addr, memoryName); }
+  int64_t load64s(Address addr, Name memoryName) override { return doLoad<int64_t>(addr, memoryName); }
+  uint64_t load64u(Address addr, Name memoryName) override { return doLoad<uint64_t>(addr, memoryName); }
 
-  void store8(Address addr, int8_t value, Name memoryName = Name::fromInt(0)) override {
+  void store8(Address addr, int8_t value, Name memoryName) override {
     doStore<int8_t>(addr, value, memoryName);
   }
-  void store16(Address addr, int16_t value, Name memoryName = Name::fromInt(0)) override {
+  void store16(Address addr, int16_t value, Name memoryName) override {
     doStore<int16_t>(addr, value, memoryName);
   }
-  void store32(Address addr, int32_t value, Name memoryName = Name::fromInt(0)) override {
+  void store32(Address addr, int32_t value, Name memoryName) override {
     doStore<int32_t>(addr, value, memoryName);
   }
-  void store64(Address addr, int64_t value, Name memoryName = Name::fromInt(0)) override {
+  void store64(Address addr, int64_t value, Name memoryName) override {
     doStore<int64_t>(addr, value, memoryName);
   }
 
