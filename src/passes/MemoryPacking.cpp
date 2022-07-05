@@ -101,7 +101,7 @@ struct MemoryPacking : public Pass {
                    const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
-  void dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
+  void dropUnusedSegments(Module* module, std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
   bool canSplit(const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
@@ -141,7 +141,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     // like, such as memory.inits not having both zero offset and size.
     optimizeBulkMemoryOps(runner, module);
     getSegmentReferrers(module, referrers);
-    dropUnusedSegments(segments, referrers);
+    dropUnusedSegments(module, segments, referrers);
   }
 
   // The new, split memory segments
@@ -172,6 +172,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 
   segments.swap(packed);
+  module->updateDataSegmentsMap();
 
   if (module->features.hasBulkMemory()) {
     replaceBulkMemoryOps(runner, module, replacements);
@@ -473,6 +474,7 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 }
 
 void MemoryPacking::dropUnusedSegments(
+  Module *module,
   std::vector<std::unique_ptr<DataSegment>>& segments,
   ReferrersMap& referrers) {
   std::vector<std::unique_ptr<DataSegment>> usedSegments;
@@ -509,6 +511,7 @@ void MemoryPacking::dropUnusedSegments(
     }
   }
   std::swap(segments, usedSegments);
+  module->updateDataSegmentsMap();
   std::swap(referrers, usedReferrers);
 }
 
@@ -563,9 +566,8 @@ void MemoryPacking::createSplitSegments(
       }
       segmentCount++;
     }
-    // TODO (nashley): Add a proper name for the memory
     auto curr = Builder::makeDataSegment(name,
-                                         "",
+                                         segment->memory,
                                          segment->isPassive,
                                          offset,
                                          &segment->data[range.start],

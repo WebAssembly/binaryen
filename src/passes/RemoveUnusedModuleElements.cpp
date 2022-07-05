@@ -199,8 +199,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitAtomicRMW(AtomicRMW* curr) { maybeAddMemory(curr->memory); }
   void visitAtomicWait(AtomicWait* curr) { maybeAddMemory(curr->memory); }
   void visitAtomicNotify(AtomicNotify* curr) { maybeAddMemory(curr->memory); }
-  // TODO (nashley): How to get memory name for atomic fence, is it parsed?
-  //void visitAtomicFence(AtomicFence* curr) { maybeAddMemory(curr->name); }
+  // TODO (nashley): How to get memory name for atomic fence?
+  void visitAtomicFence(AtomicFence* curr) { maybeAddMemory(module->memories[0]->name); }
   void visitMemoryInit(MemoryInit* curr) { maybeAddMemory(curr->memory); }
   void visitDataDrop(DataDrop* curr) {
     auto& seg = module->dataSegments[curr->segment];
@@ -378,7 +378,11 @@ struct RemoveUnusedModuleElements : public Pass {
     //       should continue to work. (For example, after removing a reference
     //       to a function from an element segment, we may be able to remove
     //       that function, etc.)
-
+    module->removeDataSegments([&](DataSegment* curr) {
+      return curr->data.empty() ||
+             analyzer.reachable.count(ModuleElement(
+               ModuleElementKind::DataSegment, curr->name)) == 0;
+    });
     // Since we've removed all empty data segments, here we mark all memories
     // that have a segment left.
     std::unordered_set<Name> nonemptyMemories;
