@@ -409,7 +409,14 @@ void printReadableProfile(const WasmSplitOptions& options) {
 
   if (options.profileFile.size()) {
     // Use the profile to set `keepFuncs`.
+    uint64_t hash = hashFile(options.inputFiles[0]);
     ProfileData profile = readProfile(options.profileFile);
+    if (profile.hash != hash) {
+      Fatal() << "error: checksum in profile does not match module checksum. "
+              << "The split module must be the original module that was "
+              << "instrumented to generate the profile.";
+    }
+
     size_t i = 0;
     ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
       if (i >= profile.timestamps.size()) {
