@@ -5174,6 +5174,7 @@ bool WasmBinaryBuilder::maybeVisitMemoryCopy(Expression*& out, uint32_t code) {
   curr->source = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
   Index memIdx = getU32LEB();
+  getInt8();
   curr->finalize();
   memoryRefs[memIdx].push_back(curr);
   out = curr;
