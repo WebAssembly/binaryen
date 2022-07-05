@@ -138,6 +138,7 @@ inline bool ensureLimitedSegments(Module& module) {
     c->type = Type::i32;
 
     auto combined = Builder::makeDataSegment();
+    combined->memory = module.memories[0]->name;
     combined->offset = c;
     for (Index j = i; j < dataSegments.size(); j++) {
       auto& segment = dataSegments[j];
@@ -158,6 +159,7 @@ inline bool ensureLimitedSegments(Module& module) {
   }
 
   dataSegments.swap(mergedSegments);
+  module.updateDataSegmentsMap();
   return true;
 }
 } // namespace wasm::MemoryUtils

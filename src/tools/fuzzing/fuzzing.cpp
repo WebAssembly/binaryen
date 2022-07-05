@@ -202,15 +202,17 @@ void TranslateToFuzzReader::setupMemory() {
       if (!segment->isPassive) {
         segment->offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
+        segment->memory = wasm.memories[0]->name;
       }
-      wasm.dataSegments.push_back(std::move(segment));
+      wasm.addDataSegment(std::move(segment));
     }
   } else {
     // init some data
     auto segment = builder.makeDataSegment();
+    segment->memory = wasm.memories[0]->name;
     segment->offset = builder.makeConst(int32_t(0));
     segment->setName(Name::fromInt(0), false);
-    wasm.dataSegments.push_back(std::move(segment));
+    wasm.addDataSegment(std::move(segment));
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
@@ -251,7 +253,7 @@ void TranslateToFuzzReader::setupMemory() {
     builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   // Export memory so JS fuzzing can use it
   if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
+    wasm.addExport(builder.makeExport("memory", "memory", ExternalKind::Memory));
   }
 }
 

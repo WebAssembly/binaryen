@@ -168,6 +168,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
     wasm = &wasm_;
     instance = &instance_;
+    for (auto& memory: wasm->memories) {
+      if (!memory->imported()) {
+        std::vector<char> data;
+        memories[memory->name] = data;
+      }
+    }
   }
 
   void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
@@ -425,39 +431,22 @@ private:
   }
 
   void applyMemoryToModule() {
-    // One of the memories  must have already had its data segments flattened into the standard form: one
-    // segment at offset 0, or none. Set the memory on the flattened data
-    // segment or create a new one if none exists.
-    auto it = memories.begin();
-    while (it != memories.end()) {
-      size_t segCount = 0;
-      auto memName = it->first;
-      auto base = std::string(memName.c_str());
-      auto segName = Name(base + "_flattened");
-      auto curr = wasm->getDataSegmentOrNull(segName);
-      for (auto& seg : wasm->dataSegments) {
-        if (seg->memory == memName) {
-          segCount++;
-        }
-      }
-      // Preventing making a new segment for a memory that was never flattened
-      if (segCount > 1) {
-        continue;
-      }
-      if (!curr) {
-        Builder builder(*wasm);
-        auto newSeg = builder.makeDataSegment();
-        newSeg->offset = builder.makeConst(int32_t(0));
-        newSeg->setName(Name::fromInt(wasm->dataSegments.size()-1), false);
-        wasm->dataSegments.push_back(std::move(newSeg));
-        curr = &*newSeg;
-      }
-      assert(curr->offset->cast<Const>()->value.getInteger() == 0);
-
-      // Copy the current memory contents after execution into the Module's
-      // memory.
-      curr->data = it->second;
+    // Memory must have already been flattened into the standard form: one
+    // segment at offset 0, or none.
+    if (wasm->dataSegments.empty()) {
+      Builder builder(*wasm);
+      auto curr = builder.makeDataSegment();
+      curr->offset = builder.makeConst(int32_t(0));
+      curr->setName(Name::fromInt(0), false);
+      curr->memory = wasm->memories[0]->name;
+      wasm->addDataSegment(std::move(curr));
     }
+    auto& segment = wasm->dataSegments[0];
+    assert(segment->offset->cast<Const>()->value.getInteger() == 0);
+
+    // Copy the current memory contents after execution into the Module's
+    // memory.
+    segment->data = memories[wasm->memories[0]->name];
   }
 
   // Serializing GC data requires more work than linear memory, because
