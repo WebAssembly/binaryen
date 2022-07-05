@@ -427,19 +427,19 @@ void printReadableProfile(const WasmSplitOptions& options) {
   }
 
   std::string fnName;
-  auto printFnSet = [&](auto funcs) {
+  auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
       removeHexNumbersFrom(it->c_str(), fnName);
-      std::cout << fnName << std::endl;
+      std::cout << prefix << " " << fnName << std::endl;
     }
   };
 
   std::cout << "Keeping functions: " << std::endl;
-  printFnSet(keepFuncs);
+  printFnSet(keepFuncs, "+");
   std::cout << std::endl;
 
   std::cout << "Splitting out functions: " << std::endl;
-  printFnSet(splitFuncs);
+  printFnSet(splitFuncs, "-");
   std::cout << std::endl;
 }
 
