@@ -385,6 +385,21 @@ void mergeProfiles(const WasmSplitOptions& options) {
   buffer.writeTo(out.getStream());
 }
 
+void removeHexNumbersFrom(std::string input, std::string &output) {
+  output.clear();
+  for (size_t i = 0; i < input.length(); i++) {
+    if (input[i] == '\\') {
+      std::string byte = input.substr(i + 1, 2);
+      i += 2;
+      char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
+      output.push_back(chr);
+    } else {
+      char chr = input[i];
+      output.push_back(chr);
+    }
+  }
+}
+
 void printReadableProfile(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
@@ -411,9 +426,11 @@ void printReadableProfile(const WasmSplitOptions& options) {
     }
   }
 
+  std::string fnName;
   auto printFnSet = [&](auto funcs) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
-      std::cout << *it << std::endl;
+      removeHexNumbersFrom(it->c_str(), fnName);
+      std::cout << fnName << std::endl;
     }
   };
 
