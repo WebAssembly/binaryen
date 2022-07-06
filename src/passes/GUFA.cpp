@@ -136,7 +136,7 @@ struct GUFAOptimizer
 
     auto replaceWithUnreachable = [&]() {
       if (canReplaceWithUnreachable(curr)) {
-        replaceCurrent(getDroppedChildrenAndAppend(
+        replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
           curr, wasm, options, builder.makeUnreachable()));
       } else {
         // We can't remove this, but we can at least put an unreachable
@@ -188,7 +188,8 @@ struct GUFAOptimizer
     //       valid here.
     if (Type::isSubType(c->type, curr->type)) {
       if (canRemove(curr)) {
-        replaceCurrent(getDroppedChildrenAndAppend(curr, wasm, options, c));
+        replaceCurrent(
+          getDroppedUnconditionalChildrenAndAppend(curr, wasm, options, c));
       } else {
         // We can't remove this, but we can at least drop it and put the
         // optimized value right after it.
