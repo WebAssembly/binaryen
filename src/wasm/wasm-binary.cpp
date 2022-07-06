@@ -7165,7 +7165,8 @@ bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out, uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
+                                                uint32_t code) {
   StringMeasureOp op;
   if (code == BinaryConsts::StringMeasureWTF8) {
     auto policy = getU32LEB();
