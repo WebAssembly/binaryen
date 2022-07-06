@@ -2339,7 +2339,6 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
   for (auto& localType : localTypes) {
-
     o << U32LEB(numLocalsByType.at(localType));
     parent.writeType(localType);
   }
