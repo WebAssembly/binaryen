@@ -2970,7 +2970,7 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s, StringMeasureO
     }
   }
   return Builder(wasm).makeStringMeasure(
-    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+    op, parseExpression(s[i]));
 }
 
 // converts an s-expression string representing binary data into an output
