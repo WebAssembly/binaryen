@@ -62,6 +62,9 @@ struct GlobalStructInference : public Pass {
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalStructInference requires nominal typing";
     }

@@ -614,6 +614,9 @@ instructions = [
     ("ref.as_func",          "makeRefAs(s, RefAsFunc)"),
     ("ref.as_data",          "makeRefAs(s, RefAsData)"),
     ("ref.as_i31",           "makeRefAs(s, RefAsI31)"),
+    ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8)"),
+    ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
+    ("string.const",         "makeStringConst(s)"),
 ]
 
 

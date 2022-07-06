@@ -2234,6 +2234,34 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringNew(StringNew* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringNewUTF8:
+      o << U32LEB(BinaryConsts::StringNewWTF8)
+        << U32LEB(BinaryConsts::StringNewPolicy::UTF8);
+      break;
+    case StringNewWTF8:
+      o << U32LEB(BinaryConsts::StringNewWTF8)
+        << U32LEB(BinaryConsts::StringNewPolicy::WTF8);
+      break;
+    case StringNewReplace:
+      o << U32LEB(BinaryConsts::StringNewWTF8)
+        << U32LEB(BinaryConsts::StringNewPolicy::Replace);
+      break;
+    case StringNewWTF16:
+      o << U32LEB(BinaryConsts::StringNewWTF16);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.new*");
+  }
+}
+
+void BinaryInstWriter::visitStringConst(StringConst* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConst)
+    << U32LEB(parent.getStringIndex(curr->string));
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

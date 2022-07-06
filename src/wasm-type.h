@@ -109,6 +109,7 @@ public:
     funcref,
     anyref,
     eqref,
+    // From here types are non-nullable.
     i31ref,
     dataref,
   };
@@ -342,8 +343,12 @@ public:
     eq,
     i31,
     data,
+    string,
+    stringview_wtf8,
+    stringview_wtf16,
+    stringview_iter,
   };
-  static constexpr BasicHeapType _last_basic_type = data;
+  static constexpr BasicHeapType _last_basic_type = stringview_iter;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}

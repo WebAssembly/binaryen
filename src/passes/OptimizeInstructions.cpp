@@ -1372,8 +1372,132 @@ struct OptimizeInstructions
     }
   }
 
+  // Note on removing casts (which the following utilities, skipNonNullCast and
+  // skipCast do): removing a cast is potentially dangerous, as it removes
+  // information from the IR. For example:
+  //
+  //  (ref.is_func
+  //    (ref.as_func
+  //      (local.get $anyref)))
+  //
+  // The local has no useful type info here (it is anyref). The cast forces it
+  // to be a function, so we know that if we do not trap then the ref.is will
+  // definitely be 1. But if we removed the ref.as first (which we can do in
+  // traps-never-happen mode) then we'd not have the type info we need to
+  // optimize that way.
+  //
+  // To avoid such risks we should keep in mind the following:
+  //
+  //  * Before removing a cast we should use its type information in the best
+  //    way we can. Only after doing so should a cast be removed. In the exmaple
+  //    above, that means first seeing that the ref.is must return 1, and only
+  //    then possibly removing the ref.as.
+  //  * Do not remove a cast if removing it might remove useful information for
+  //    others. For example,
+  //
+  //      (ref.cast $A
+  //        (ref.as_non_null ..))
+  //
+  //    If we remove the inner cast then the outer cast becomes nullable. That
+  //    means we'd be throwing away useful information, which we should not do,
+  //    even in traps-never-happen mode and even if the wasm would validate
+  //    without the cast. Only if we saw that the parents of the outer cast
+  //    cannot benefit from non-nullability should we remove it.
+  //    Another example:
+  //
+  //      (struct.get $A 0
+  //        (ref.cast $B ..))
+  //
+  //    The cast only changes the type of the reference, which is consumed in
+  //    this expression and so we don't have more parents to consider. But it is
+  //    risky to remove this cast, since e.g. GUFA benefits from such info:
+  //    it tells GUFA that we are reading from a $B here, and not the supertype
+  //    $A. If $B may contain fewer values in field 0 than $A, then GUFA might
+  //    be able to optimize better with this cast. Now, in traps-never-happen
+  //    mode we can assume that only $B can arrive here, which means GUFA might
+  //    be able to infer that even without the cast - but it might not, if we
+  //    hit a limitation of GUFA. Some code patterns simply cannot be expected
+  //    to be always inferred, say if a data structure has a tagged variant:
+  //
+  //      {
+  //        tag: i32,
+  //        ref: anyref
+  //      }
+  //
+  //    Imagine that if tag == 0 then the reference always contains struct $A,
+  //    and if tag == 1 then it always contains a struct $B, and so forth. We
+  //    can't expect GUFA to figure out such invariants in general. But by
+  //    having casts in the right places we can help GUFA optimize:
+  //
+  //      (if
+  //        (tag == 1)
+  //        (struct.get $A 0
+  //          (ref.cast $B ..))
+  //
+  //    We know it must be a $B due to the tag. By keeping the cast there we can
+  //    make sure that optimizations can benefit from that.
+  //
+  //    Given the large amount of potential benefit we can get from a successful
+  //    optimization in GUFA, any reduction there may be a bad idea, so we
+  //    should be very careful and probably *not* remove such casts.
+
+  // If an instruction traps on a null input, there is no need for a
+  // ref.as_non_null on that input: we will trap either way (and the binaryen
+  // optimizer does not differentiate traps).
+  //
+  // See "notes on removing casts", above. However, in most cases removing a
+  // non-null cast is obviously safe to do, since we only remove one if another
+  // check will happen later.
+  void skipNonNullCast(Expression*& input) {
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        if (as->op == RefAsNonNull) {
+          input = as->value;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  // As skipNonNullCast, but skips all casts if we can do so. This is useful in
+  // cases where we don't actually care about the type but just the value, that
+  // is, if casts of the type do not affect our behavior (which is the case in
+  // ref.eq for example).
+  //
+  // |requiredType| is the type we require as the final output here, or a
+  // subtype of it. We will not remove a cast that would leave something that
+  // would break that. If |requiredType| is not provided we will accept any type
+  // there.
+  //
+  // See "notes on removing casts", above, for when this is safe to do.
+  void skipCast(Expression*& input, Type requiredType = Type::anyref) {
+    // Traps-never-happen mode is a requirement for us to optimize here.
+    if (!getPassOptions().trapsNeverHappen) {
+      return;
+    }
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        if (Type::isSubType(as->value->type, requiredType)) {
+          input = as->value;
+          continue;
+        }
+      } else if (auto* cast = input->dynCast<RefCast>()) {
+        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
+          input = cast->ref;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
   void visitRefEq(RefEq* curr) {
     // Equality does not depend on the type, so casts may be removable.
+    //
+    // This is safe to do first because nothing else here cares about the type,
+    // and we consume the two input references, so removing a cast could not
+    // help our parents (see "notes on removing casts").
     skipCast(curr->left, Type::eqref);
     skipCast(curr->right, Type::eqref);
 
@@ -1399,51 +1523,6 @@ struct OptimizeInstructions
     // RefEq of a value to Null can be replaced with RefIsNull.
     if (curr->right->is<RefNull>()) {
       replaceCurrent(Builder(*getModule()).makeRefIs(RefIsNull, curr->left));
-    }
-  }
-
-  // If an instruction traps on a null input, there is no need for a
-  // ref.as_non_null on that input: we will trap either way (and the binaryen
-  // optimizer does not differentiate traps).
-  void skipNonNullCast(Expression*& input) {
-    while (1) {
-      if (auto* as = input->dynCast<RefAs>()) {
-        if (as->op == RefAsNonNull) {
-          input = as->value;
-          continue;
-        }
-      }
-      break;
-    }
-  }
-
-  // As skipNonNullCast, but skips all casts if we can do so. This is useful in
-  // cases where we don't actually care about the type but just the value, that
-  // is, if casts of the type do not affect our behavior (which is the case in
-  // ref.eq for example).
-  //
-  // |requiredType| is the type we require as the final output here, or a
-  // subtype of it. We will not remove a cast that would leave something that
-  // would break that. If |requiredType| is not provided we will accept any type
-  // there.
-  void skipCast(Expression*& input, Type requiredType = Type::anyref) {
-    // Traps-never-happen mode is a requirement for us to optimize here.
-    if (!getPassOptions().trapsNeverHappen) {
-      return;
-    }
-    while (1) {
-      if (auto* as = input->dynCast<RefAs>()) {
-        if (Type::isSubType(as->value->type, requiredType)) {
-          input = as->value;
-          continue;
-        }
-      } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
-          input = cast->ref;
-          continue;
-        }
-      }
-      break;
     }
   }
 
@@ -1878,19 +1957,9 @@ struct OptimizeInstructions
           builder.makeDrop(curr->value),
           builder.makeConst(Literal::makeZero(Type::i32))));
       } else {
-        // What the reference points to does not depend on the type, so casts
-        // may be removable. Do this right before returning because removing a
-        // cast may remove info that we could have used to optimize. For
-        // example:
-        //
-        //  (ref.is_func
-        //    (ref.as_func
-        //      (local.get $anyref)))
-        //
-        // The local has no useful type info. The cast forces it to be a
-        // function, so we can replace the ref.is with 1. But if we removed the
-        // ref.as first then we'd not have the type info we need to optimize
-        // that way.
+        // See the comment on the other call to this lower down. Because of that
+        // other code path we run this optimization at the end (though in this
+        // code path it would be fine either way).
         skipCast(curr->value);
       }
       return;
@@ -1932,7 +2001,10 @@ struct OptimizeInstructions
       }
     }
 
-    // See above comment.
+    // What the reference points to does not depend on the type, so casts
+    // may be removable. Do this right before returning because removing a
+    // cast may remove info that we could have used to optimize, see
+    // "notes on removing casts".
     skipCast(curr->value);
   }
 

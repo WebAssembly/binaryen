@@ -989,6 +989,21 @@ public:
     ret->finalize();
     return ret;
   }
+  StringNew*
+  makeStringNew(StringNewOp op, Expression* ptr, Expression* length) {
+    auto* ret = wasm.allocator.alloc<StringNew>();
+    ret->op = op;
+    ret->ptr = ptr;
+    ret->length = length;
+    ret->finalize();
+    return ret;
+  }
+  StringConst* makeStringConst(Name string) {
+    auto* ret = wasm.allocator.alloc<StringConst>();
+    ret->string = string;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

@@ -679,6 +679,16 @@ struct InfoCollector
     visitArraySet(set);
   }
 
+  void visitStringNew(StringNew* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+  }
+  void visitStringConst(StringConst* curr) {
+    addRoot(curr, PossibleContents::exactType(curr->type));
+  }
+
   // TODO: Model which throws can go to which catches. For now, anything thrown
   //       is sent to the location of that tag, and any catch of that tag can
   //       read them.
@@ -1334,6 +1344,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // parent, and we need to do some special handling because of that child-
     // parent connection.
     auto* child = exprLoc->expr;
+    WASM_UNUSED(child);
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 

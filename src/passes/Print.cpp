@@ -274,6 +274,22 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
     TypeNamePrinter(o, wasm).print(rtt.heapType);
     o << ')';
   } else if (type.isRef() && !type.isBasic()) {
+    auto heapType = type.getHeapType();
+    if (type.isNullable() && heapType.isBasic()) {
+      // Print shorthands for certain nullable basic heap types.
+      switch (heapType.getBasic()) {
+        case HeapType::string:
+          return o << "stringref";
+        case HeapType::stringview_wtf8:
+          return o << "stringview_wtf8";
+        case HeapType::stringview_wtf16:
+          return o << "stringview_wtf16";
+        case HeapType::stringview_iter:
+          return o << "stringview_iter";
+        default:
+          break;
+      }
+    }
     o << "(ref ";
     if (type.isNullable()) {
       o << "null ";
@@ -2202,6 +2218,29 @@ struct PrintExpressionContents
       default:
         WASM_UNREACHABLE("invalid ref.is_*");
     }
+  }
+  void visitStringNew(StringNew* curr) {
+    switch (curr->op) {
+      case StringNewUTF8:
+        printMedium(o, "string.new_wtf8 utf8");
+        break;
+      case StringNewWTF8:
+        printMedium(o, "string.new_wtf8 wtf8");
+        break;
+      case StringNewReplace:
+        printMedium(o, "string.new_wtf8 replace");
+        break;
+      case StringNewWTF16:
+        printMedium(o, "string.new_wtf16");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.new*");
+    }
+  }
+  void visitStringConst(StringConst* curr) {
+    printMedium(o, "string.const \"");
+    o << curr->string.str;
+    o << '"';
   }
 };
 

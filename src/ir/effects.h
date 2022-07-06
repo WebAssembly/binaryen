@@ -732,6 +732,8 @@ private:
       // we keep the code here simpler, but it does mean another optimization
       // cycle may be needed in some cases.
     }
+    void visitStringNew(StringNew* curr) {}
+    void visitStringConst(StringConst* curr) {}
   };
 
 public:

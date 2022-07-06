@@ -1955,6 +1955,12 @@ public:
     }
     return value;
   }
+  Flow visitStringNew(StringNew* curr) {
+    WASM_UNREACHABLE("unimplemented string.new");
+  }
+  Flow visitStringConst(StringConst* curr) {
+    WASM_UNREACHABLE("unimplemented string.new");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

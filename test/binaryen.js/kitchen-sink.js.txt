@@ -44,7 +44,7 @@ Features.Memory64: 2048
 Features.TypedFunctionReferences: 4096
 Features.RelaxedSIMD: 16384
 Features.ExtendedConst: 32768
-Features.All: 57343
+Features.All: 122879
 InvalidId: 0
 BlockId: 1
 IfId: 2

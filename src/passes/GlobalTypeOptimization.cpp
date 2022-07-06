@@ -112,6 +112,9 @@ struct GlobalTypeOptimization : public Pass {
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
     }

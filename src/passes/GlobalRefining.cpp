@@ -32,6 +32,9 @@ namespace {
 
 struct GlobalRefining : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalRefining requires nominal typing";
     }

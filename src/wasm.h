@@ -583,6 +583,13 @@ enum BrOnOp {
   BrOnNonI31,
 };
 
+enum StringNewOp {
+  StringNewUTF8,
+  StringNewWTF8,
+  StringNewReplace,
+  StringNewWTF16
+};
+
 //
 // Expressions
 //
@@ -678,6 +685,8 @@ public:
     ArrayLenId,
     ArrayCopyId,
     RefAsId,
+    StringNewId,
+    StringConstId,
     NumExpressionIds
   };
   Id _id;
@@ -1640,6 +1649,30 @@ public:
   RefAsOp op;
 
   Expression* value;
+
+  void finalize();
+};
+
+class StringNew : public SpecificExpression<Expression::StringNewId> {
+public:
+  StringNew(MixedArena& allocator) {}
+
+  StringNewOp op;
+
+  Expression* ptr;
+  Expression* length;
+
+  void finalize();
+};
+
+class StringConst : public SpecificExpression<Expression::StringConstId> {
+public:
+  StringConst(MixedArena& allocator) {}
+
+  // TODO: Use a different type to allow null bytes in the middle -
+  //       ArenaVector<char> perhaps? However, Name has the benefit of being
+  //       interned and immutable (which is appropriate here).
+  Name string;
 
   void finalize();
 };

@@ -1184,6 +1184,18 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type::dataref;
   }
+  if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
+    return Type(HeapType::string, Nullable);
+  }
+  if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+    return Type(HeapType::stringview_wtf8, Nullable);
+  }
+  if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+    return Type(HeapType::stringview_wtf16, Nullable);
+  }
+  if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+    return Type(HeapType::stringview_iter, Nullable);
+  }
   if (allowError) {
     return Type::none;
   }
@@ -1221,6 +1233,20 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     if (str[1] == 'a' && str[2] == 't' && str[3] == 'a' &&
         (prefix || str[4] == 0)) {
       return HeapType::data;
+    }
+  }
+  if (str[0] == 's') {
+    if (strncmp(str, "string", 6) == 0 && (prefix || str[6] == 0)) {
+      return HeapType::string;
+    }
+    if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+      return HeapType::stringview_wtf8;
+    }
+    if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+      return HeapType::stringview_wtf16;
+    }
+    if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+      return HeapType::stringview_iter;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);
@@ -2907,6 +2933,28 @@ Expression* SExpressionWasmBuilder::makeArrayCopy(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, parseExpression(s[1]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
+  size_t i = 1;
+  if (op == StringNewWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplace;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringNew(
+    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
+  return Builder(wasm).makeStringConst(s[1]->str());
 }
 
 // converts an s-expression string representing binary data into an output

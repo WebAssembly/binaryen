@@ -621,6 +621,10 @@ HeapType getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       }
       return HeapType::any;
     case HeapType::data:
+    case HeapType::string:
+    case HeapType::stringview_wtf8:
+    case HeapType::stringview_wtf16:
+    case HeapType::stringview_iter:
       return HeapType::any;
   }
   WASM_UNREACHABLE("unexpected basic type");
@@ -679,6 +683,10 @@ std::optional<Type> TypeInfo::getCanonical() const {
             return Type::eqref;
           case HeapType::i31:
           case HeapType::data:
+          case HeapType::string:
+          case HeapType::stringview_wtf8:
+          case HeapType::stringview_wtf16:
+          case HeapType::stringview_iter:
             break;
         }
       } else {
@@ -1157,6 +1165,11 @@ FeatureSet Type::getFeatures() const {
           case HeapType::BasicHeapType::i31:
           case HeapType::BasicHeapType::data:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
+          case HeapType::string:
+          case HeapType::stringview_wtf8:
+          case HeapType::stringview_wtf16:
+          case HeapType::stringview_iter:
+            return FeatureSet::ReferenceTypes | FeatureSet::Strings;
           default: {}
         }
       }
@@ -1739,6 +1752,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
         return false;
       case HeapType::data:
         return a.isData();
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        return false;
     }
   }
   if (a.isBasic()) {
@@ -2090,11 +2108,27 @@ std::ostream& TypePrinter::print(Type type) {
   if (type.isTuple()) {
     print(type.getTuple());
   } else if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (type.isNullable() && heapType.isBasic()) {
+      // Print shorthands for certain nullable basic heap types.
+      switch (heapType.getBasic()) {
+        case HeapType::string:
+          return os << "stringref";
+        case HeapType::stringview_wtf8:
+          return os << "stringview_wtf8";
+        case HeapType::stringview_wtf16:
+          return os << "stringview_wtf16";
+        case HeapType::stringview_iter:
+          return os << "stringview_iter";
+        default:
+          break;
+      }
+    }
     os << "(ref ";
     if (type.isNullable()) {
       os << "null ";
     }
-    printHeapTypeName(type.getHeapType());
+    printHeapTypeName(heapType);
     os << ')';
   } else if (type.isRtt()) {
     print(type.getRtt());
@@ -2117,6 +2151,14 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "i31";
       case HeapType::data:
         return os << "data";
+      case HeapType::string:
+        return os << "string";
+      case HeapType::stringview_wtf8:
+        return os << "stringview_wtf8";
+      case HeapType::stringview_wtf16:
+        return os << "stringview_wtf16";
+      case HeapType::stringview_iter:
+        return os << "stringview_iter";
     }
   }
 

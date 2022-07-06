@@ -326,7 +326,8 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
-  Tag = 13
+  Tag = 13,
+  Strings = 14,
 };
 
 // A passive segment is a segment that will not be automatically copied into a
@@ -375,8 +376,13 @@ enum EncodedType {
   // run-time type info type, with depth index n
   rtt_n = -0x17, // 0x69
   // run-time type info type, without depth index n
-  rtt = -0x18,     // 0x68
-  dataref = -0x19, // 0x67
+  rtt = -0x18, // 0x68
+  // gc and string reference types
+  dataref = -0x19,          // 0x67
+  stringref = -0x1c,        // 0x64
+  stringview_wtf8 = -0x1d,  // 0x63
+  stringview_wtf16 = -0x1e, // 0x62
+  stringview_iter = -0x1f,  // 0x61
   // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -393,11 +399,18 @@ enum EncodedType {
 };
 
 enum EncodedHeapType {
-  func = -0x10, // 0x70
-  any = -0x11,  // 0x6f
-  eq = -0x13,   // 0x6d
-  i31 = -0x16,  // 0x6a
-  data = -0x19, // 0x67
+  func = -0x10,   // 0x70
+  any = -0x11,    // 0x6f
+  eq = -0x13,     // 0x6d
+  i31 = -0x16,    // 0x6a
+  data = -0x19,   // 0x67
+  string = -0x1c, // 0x64
+  // stringview/iter constants are identical to type, and cannot be duplicated
+  // here as that would be a compiler error, so add _heap suffixes. See
+  // https://github.com/WebAssembly/stringref/issues/12
+  stringview_wtf8_heap = -0x1d,  // 0x63
+  stringview_wtf16_heap = -0x1e, // 0x62
+  stringview_iter_heap = -0x1f,  // 0x61
 };
 
 namespace UserSections {
@@ -425,6 +438,7 @@ extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
 extern const char* RelaxedSIMDFeature;
 extern const char* ExtendedConstFeature;
+extern const char* StringsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1123,6 +1137,9 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  StringNewWTF8 = 0x80,
+  StringNewWTF16 = 0x81,
+  StringConst = 0x82,
 };
 
 enum MemoryAccess {
@@ -1132,6 +1149,12 @@ enum MemoryAccess {
 };
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
+
+enum StringNewPolicy {
+  UTF8 = 0x00,
+  WTF8 = 0x01,
+  Replace = 0x02,
+};
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -1259,6 +1282,7 @@ public:
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
   void writeFunctions();
+  void writeStrings();
   void writeGlobals();
   void writeExports();
   void writeDataCount();
@@ -1270,6 +1294,7 @@ public:
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
+  uint32_t getStringIndex(Name string) const;
 
   void writeTableDeclarations();
   void writeElementSegments();
@@ -1359,6 +1384,9 @@ private:
   // local names section: we map the locals when writing the function, save that
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
+  // Indexes in the string literal section of each StringConst in the wasm.
+  std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
 };
@@ -1512,6 +1540,10 @@ public:
   std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
   void readExports();
+
+  // The strings in the strings section (which are referred to by StringConst).
+  std::vector<Name> strings;
+  void readStrings();
 
   Expression* readExpression();
   void readGlobals();
@@ -1688,6 +1720,8 @@ public:
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
+  bool maybeVisitStringNew(Expression*& out, uint32_t code);
+  bool maybeVisitStringConst(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
@@ -1709,7 +1743,7 @@ public:
   // Let is lowered into a block.
   void visitLet(Block* curr);
 
-  void throwError(std::string text);
+  [[noreturn]] void throwError(std::string text);
 
   // Struct/Array instructions have an unnecessary heap type that is just for
   // validation (except for the case of unreachability, but that's not a problem

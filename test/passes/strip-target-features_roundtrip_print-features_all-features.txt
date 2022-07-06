@@ -13,6 +13,7 @@
 --enable-typed-function-references
 --enable-relaxed-simd
 --enable-extended-const
+--enable-strings
 (module
  (type $none_=>_v128_anyref (func (result v128 anyref)))
  (func $foo (result v128 anyref)

@@ -50,6 +50,7 @@ const char* Memory64Feature = "memory64";
 const char* TypedFunctionReferencesFeature = "typed-function-references";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
+const char* StringsFeature = "strings";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -1172,6 +1173,16 @@ void RefAs::finalize() {
       WASM_UNREACHABLE("invalid ref.as_*");
   }
 }
+
+void StringNew::finalize() {
+  if (ptr->type == Type::unreachable || length->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type(HeapType::string, NonNullable);
+  }
+}
+
+void StringConst::finalize() { type = Type(HeapType::string, NonNullable); }
 
 size_t Function::getNumParams() { return getParams().size(); }
 
