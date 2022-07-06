@@ -99,4 +99,24 @@
       (string.const "bar")
     )
   )
+
+  (func $string.measure (param $ref stringref)
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.measure_wtf8 wtf8
+          (local.get $ref)
+        )
+      )
+    )
+    (drop
+      (string.measure_wtf8 utf8
+        (local.get $ref)
+      )
+    )
+    (drop
+      (string.measure_wtf16
+        (local.get $ref)
+      )
+    )
+  )
 )

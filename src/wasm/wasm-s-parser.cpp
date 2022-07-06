@@ -2964,7 +2964,7 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s, StringMeasureO
     if (strncmp(str, "utf8", 4) == 0) {
       op = StringMeasureUTF8;
     } else if (strncmp(str, "wtf8", 4) == 0) {
-      op = StringMeasureReplace;
+      op = StringMeasureWTF8;
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }

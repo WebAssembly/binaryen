@@ -2242,6 +2242,21 @@ struct PrintExpressionContents
     o << curr->string.str;
     o << '"';
   }
+  void visitStringMeasure(StringMeasure* curr) {
+    switch (curr->op) {
+      case StringMeasureUTF8:
+        printMedium(o, "string.measure_wtf8 utf8");
+        break;
+      case StringMeasureWTF8:
+        printMedium(o, "string.measure_wtf8 wtf8");
+        break;
+      case StringMeasureWTF16:
+        printMedium(o, "string.measure_wtf16");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.measure*");
+    }
+  }
 };
 
 // Prints an expression in s-expr format, including both the
