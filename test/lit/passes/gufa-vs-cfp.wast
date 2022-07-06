@@ -157,9 +157,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -191,9 +189,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -350,9 +346,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
@@ -402,12 +396,9 @@
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (if (result f32)
-  ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (f32.const 42)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -427,9 +418,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
@@ -521,12 +510,11 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  (type $substruct (struct_subtype i32 $struct))
+
   ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) $struct))
-  (type $substruct (struct_subtype i32 $struct))
 
   ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_with_rtt $struct
@@ -543,19 +531,11 @@
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.cast_static $substruct
-  ;; CHECK-NEXT:          (call $create)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -579,12 +559,11 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
+  (type $substruct (struct_subtype (mut i32) $struct))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $none_=>_ref|$struct| (func_subtype (result (ref $struct)) func))
-
-  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
-  (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_with_rtt $struct
@@ -614,19 +593,11 @@
   ;; CHECK:      (func $get (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.cast_static $substruct
-  ;; CHECK-NEXT:          (call $create)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $create)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -739,12 +710,12 @@
 ;; Subtyping: Create both a subtype and a supertype, with identical constants
 ;;            for the shared field, and get the supertype.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
-  (type $struct (struct i32))
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct i32))
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
@@ -755,19 +726,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (select (result (ref $struct))
-  ;; CHECK-NEXT:       (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:        (i32.const 10)
-  ;; CHECK-NEXT:        (rtt.canon $struct)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (struct.new_with_rtt $substruct
-  ;; CHECK-NEXT:        (i32.const 10)
-  ;; CHECK-NEXT:        (f64.const 3.14159)
-  ;; CHECK-NEXT:        (rtt.canon $substruct)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:     (select (result (ref $struct))
+  ;; CHECK-NEXT:      (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:       (i32.const 10)
+  ;; CHECK-NEXT:       (rtt.canon $struct)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:       (i32.const 10)
+  ;; CHECK-NEXT:       (f64.const 3.14159)
+  ;; CHECK-NEXT:       (rtt.canon $substruct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -872,20 +841,18 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $substruct 0
-  ;; CHECK-NEXT:      (ref.cast_static $substruct
-  ;; CHECK-NEXT:       (select (result (ref $struct))
-  ;; CHECK-NEXT:        (struct.new_with_rtt $struct
-  ;; CHECK-NEXT:         (i32.const 10)
-  ;; CHECK-NEXT:         (rtt.canon $struct)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (struct.new_with_rtt $substruct
-  ;; CHECK-NEXT:         (i32.const 20)
-  ;; CHECK-NEXT:         (f64.const 3.14159)
-  ;; CHECK-NEXT:         (rtt.canon $substruct)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
+  ;; CHECK-NEXT:     (ref.cast_static $substruct
+  ;; CHECK-NEXT:      (select (result (ref $struct))
+  ;; CHECK-NEXT:       (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:        (i32.const 10)
+  ;; CHECK-NEXT:        (rtt.canon $struct)
   ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:        (i32.const 20)
+  ;; CHECK-NEXT:        (f64.const 3.14159)
+  ;; CHECK-NEXT:        (rtt.canon $substruct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1281,9 +1248,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct1 0
-  ;; CHECK-NEXT:      (call $create1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1291,9 +1256,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct1 1
-  ;; CHECK-NEXT:      (call $create1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -1320,9 +1283,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1330,9 +1291,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 1
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 999)
   ;; CHECK-NEXT:   )
@@ -1340,9 +1299,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 2
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 2.71828)
   ;; CHECK-NEXT:   )
@@ -1350,9 +1307,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 3
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 9.9999999)
   ;; CHECK-NEXT:   )
@@ -1388,9 +1343,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1398,9 +1351,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 1
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 999)
   ;; CHECK-NEXT:   )
@@ -1408,9 +1359,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 2
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 2.71828)
   ;; CHECK-NEXT:   )
@@ -1418,9 +1367,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 3
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 9.9999999)
   ;; CHECK-NEXT:   )
@@ -1428,9 +1375,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 4
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
@@ -1482,10 +1427,10 @@
   (type $struct1 (struct (mut i32)))
   ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
@@ -1547,9 +1492,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct1 0
-  ;; CHECK-NEXT:      (call $create1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1557,9 +1500,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct2 0
-  ;; CHECK-NEXT:      (call $create2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 9999)
   ;; CHECK-NEXT:   )
@@ -1567,9 +1508,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1599,12 +1538,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct1 0
-  ;; CHECK-NEXT:      (select (result (ref $struct1))
-  ;; CHECK-NEXT:       (call $create1)
-  ;; CHECK-NEXT:       (call $create1)
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (select (result (ref $struct1))
+  ;; CHECK-NEXT:      (call $create1)
+  ;; CHECK-NEXT:      (call $create1)
+  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -1681,12 +1618,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct2 0
-  ;; CHECK-NEXT:      (select (result (ref $struct2))
-  ;; CHECK-NEXT:       (call $create2)
-  ;; CHECK-NEXT:       (call $create2)
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (select (result (ref $struct2))
+  ;; CHECK-NEXT:      (call $create2)
+  ;; CHECK-NEXT:      (call $create2)
+  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 9999)
@@ -1754,12 +1689,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (select (result (ref $struct3))
-  ;; CHECK-NEXT:       (call $create3)
-  ;; CHECK-NEXT:       (call $create3)
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (select (result (ref $struct3))
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:      (call $create3)
+  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
@@ -1870,9 +1803,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct1 0
-  ;; CHECK-NEXT:      (call $create1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1884,9 +1815,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct2 0
-  ;; CHECK-NEXT:      (call $create2)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 9999)
   ;; CHECK-NEXT:   )
@@ -1894,9 +1823,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -1998,9 +1925,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct1 0
-  ;; CHECK-NEXT:      (call $create1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -2017,9 +1942,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (call $create3)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -2094,9 +2017,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 1
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:   )
@@ -2104,9 +2025,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 2
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -2119,9 +2038,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 4
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
@@ -2129,9 +2046,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 4
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
@@ -2264,9 +2179,7 @@
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -2274,9 +2187,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 0
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -2346,9 +2257,7 @@
   ;; CHECK-NEXT:   (call $create-struct)
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $other 1
-  ;; CHECK-NEXT:      (call $create-other)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create-other)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
@@ -2356,9 +2265,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 1
-  ;; CHECK-NEXT:      (call $create-struct)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create-struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
@@ -2426,9 +2333,7 @@
   ;; CHECK-NEXT:   (call $create-struct)
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $other 1
-  ;; CHECK-NEXT:      (call $create-other)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create-other)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
@@ -2483,9 +2388,7 @@
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $struct 1
-  ;; CHECK-NEXT:      (call $create)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $create)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )

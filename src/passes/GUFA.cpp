@@ -89,7 +89,7 @@ struct GUFAOptimizer
     if (!canRemoveStructurally(curr)) {
       return false;
     }
-    return !EffectAnalyzer(getPassOptions(), *getModule(), curr)
+    return !ShallowEffectAnalyzer(getPassOptions(), *getModule(), curr)
               .hasUnremovableSideEffects();
   }
 
@@ -100,7 +100,7 @@ struct GUFAOptimizer
     if (!canRemoveStructurally(curr)) {
       return false;
     }
-    EffectAnalyzer effects(getPassOptions(), *getModule(), curr);
+    ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
     // Ignore a trap, as the unreachable replacement would trap too.
     effects.trap = false;
     return !effects.hasUnremovableSideEffects();

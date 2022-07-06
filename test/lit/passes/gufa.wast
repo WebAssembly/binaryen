@@ -37,16 +37,15 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (select
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (call $foo)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -103,25 +102,18 @@
   )
 
   ;; CHECK:      (func $return (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (return
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $return (result i32)
     ;; Helper function that returns one result in a return and flows another
-    ;; out. (The block can be optimized to a constant, which is a little
-    ;; redundant in this case as it already ends in a constant, but we don't
-    ;; do extra work to avoid such redundancy, and leave it to vacuum to sort
-    ;; out later.)
+    ;; out. There is nothing to optimize in this function, but see the caller
+    ;; below.
     (if
       (i32.const 0)
       (return
@@ -145,14 +137,9 @@
   )
 
   ;; CHECK:      (func $return-same (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (return
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -160,7 +147,9 @@
   ;; CHECK-NEXT: )
   (func $return-same (result i32)
     ;; Helper function that returns the same result in a return as it flows out.
-    ;; This is the same as above, but now the values are identical.
+    ;; This is the same as above, but now the values are identical, and the
+    ;; function must return 1. There is nothing to optimize in this function,
+    ;; but see the caller below.
     (if
       (i32.const 0)
       (return
@@ -212,14 +201,9 @@
 
   ;; CHECK:      (func $local-yes (result i32)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (local.set $x
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -261,14 +245,9 @@
   )
 
   ;; CHECK:      (func $param-yes (param $param i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.set $param
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $param
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -295,6 +274,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $cycle
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (call $cycle
@@ -305,24 +295,7 @@
   ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (select
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (call $cycle
-  ;; CHECK-NEXT:          (i32.const 42)
-  ;; CHECK-NEXT:          (i32.const 1)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 42)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 42)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 42)
@@ -354,34 +327,28 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $cycle-2
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (call $cycle-2
-  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (select
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (call $cycle-2
-  ;; CHECK-NEXT:          (i32.const 1)
-  ;; CHECK-NEXT:          (i32.const 1)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 42)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 42)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 42)
@@ -411,36 +378,30 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $cycle-3
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (call $cycle-3
-  ;; CHECK-NEXT:        (i32.const 1337)
+  ;; CHECK-NEXT:        (i32.eqz
+  ;; CHECK-NEXT:         (local.get $x)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (select
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (call $cycle-3
-  ;; CHECK-NEXT:          (i32.eqz
-  ;; CHECK-NEXT:           (local.get $x)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:          (i32.const 1)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 42)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 42)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 42)
@@ -513,6 +474,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $cycle-5
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (call $cycle-5
@@ -523,24 +495,7 @@
   ;; CHECK-NEXT:      (i32.const 1337)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (select
-  ;; CHECK-NEXT:       (i32.const 1337)
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (call $cycle-5
-  ;; CHECK-NEXT:          (i32.const 1337)
-  ;; CHECK-NEXT:          (i32.const 1)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 1337)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 1337)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1337)
