@@ -730,7 +730,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::StringMeasureId: {
     DELEGATE_START(StringMeasure);
     DELEGATE_FIELD_INT(StringMeasure, op);
-    DELEGATE_FIELD_NAME(StringMeasure, ref);
+    DELEGATE_FIELD_CHILD(StringMeasure, ref);
     DELEGATE_END(StringMeasure);
     break;
   }

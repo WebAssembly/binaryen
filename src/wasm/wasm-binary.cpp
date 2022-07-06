@@ -7130,13 +7130,13 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::StringNewWTF8) {
     auto policy = getU32LEB();
     switch (policy) {
-      case BinaryConsts::StringNewPolicy::UTF8:
+      case BinaryConsts::StringPolicy::UTF8:
         op = StringNewUTF8;
         break;
-      case BinaryConsts::StringNewPolicy::WTF8:
+      case BinaryConsts::StringPolicy::WTF8:
         op = StringNewWTF8;
         break;
-      case BinaryConsts::StringNewPolicy::Replace:
+      case BinaryConsts::StringPolicy::Replace:
         op = StringNewReplace;
         break;
       default:
@@ -7170,10 +7170,10 @@ bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out, uint32_t code)
   if (code == BinaryConsts::StringMeasureWTF8) {
     auto policy = getU32LEB();
     switch (policy) {
-      case BinaryConsts::StringMeasurePolicy::UTF8:
+      case BinaryConsts::StringPolicy::UTF8:
         op = StringMeasureUTF8;
         break;
-      case BinaryConsts::StringMeasurePolicy::WTF8:
+      case BinaryConsts::StringPolicy::WTF8:
         op = StringMeasureWTF8;
         break;
       default:
