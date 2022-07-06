@@ -52,8 +52,8 @@
   (ref.null $=>eqref)
  )
  (func $type-only-in-tuple-local
+  (local $0 (ref null $=>anyref))
   (local $x i32)
-  (local $1 (ref null $=>anyref))
   (local $2 f64)
   (nop)
  )

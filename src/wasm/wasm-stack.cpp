@@ -2308,6 +2308,18 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     }
   }
   countScratchLocals();
+
+  if (parent.getModule()->features.hasReferenceTypes()) {
+    // Sort local types in a way that keeps all MVP types together and all
+    // reference types together. E.g. it is helpful to avoid a block of i32s in
+    // between blocks of different reference types, since clearing out reference
+    // types may require different work.
+    // See https://github.com/WebAssembly/binaryen/issues/4773
+    std::stable_sort(localTypes.begin(), localTypes.end(), [](Type a, Type b) {
+      return a.isRef() && !b.isRef();
+    });
+  }
+
   std::unordered_map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     Index j = 0;
@@ -2327,6 +2339,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
   for (auto& localType : localTypes) {
+
     o << U32LEB(numLocalsByType.at(localType));
     parent.writeType(localType);
   }

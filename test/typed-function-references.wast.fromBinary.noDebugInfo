@@ -52,8 +52,8 @@
   (ref.null $none_=>_eqref)
  )
  (func $7
-  (local $0 i32)
-  (local $1 (ref null $none_=>_anyref))
+  (local $0 (ref null $none_=>_anyref))
+  (local $1 i32)
   (local $2 f64)
   (nop)
  )
