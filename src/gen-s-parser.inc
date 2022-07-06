@@ -3128,13 +3128,21 @@ switch (op[0]) {
       case 't': {
         switch (op[3]) {
           case 'i': {
-            switch (op[14]) {
-              case '1':
-                if (strcmp(op, "string.new_wtf16") == 0) { return makeStringNew(s, StringNewWTF16); }
+            switch (op[7]) {
+              case 'c':
+                if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
                 goto parse_error;
-              case '8':
-                if (strcmp(op, "string.new_wtf8") == 0) { return makeStringNew(s, StringNewWTF8); }
-                goto parse_error;
+              case 'n': {
+                switch (op[14]) {
+                  case '1':
+                    if (strcmp(op, "string.new_wtf16") == 0) { return makeStringNew(s, StringNewWTF16); }
+                    goto parse_error;
+                  case '8':
+                    if (strcmp(op, "string.new_wtf8") == 0) { return makeStringNew(s, StringNewWTF8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }

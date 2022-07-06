@@ -2237,6 +2237,11 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.new*");
     }
   }
+  void visitStringConst(StringConst* curr) {
+    printMedium(o, "string.const \"");
+    o << curr->string.str;
+    o << '"';
+  }
 };
 
 // Prints an expression in s-expr format, including both the

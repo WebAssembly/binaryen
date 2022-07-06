@@ -2953,6 +2953,10 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     op, parseExpression(s[i]), parseExpression(s[i + 1]));
 }
 
+Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
+  return Builder(wasm).makeStringConst(s[1]->str());
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

@@ -417,7 +417,8 @@ bool isGenerative(Expression* curr, FeatureSet features);
 inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
   if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
       expr->is<RttCanon>() || expr->is<RttSub>() || expr->is<StructNew>() ||
-      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>()) {
+      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>() ||
+      expr->is<StringConst>()) {
     return true;
   }
 

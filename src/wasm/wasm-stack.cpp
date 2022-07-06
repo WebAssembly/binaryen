@@ -2257,6 +2257,11 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringConst(StringConst* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConst)
+    << U32LEB(parent.getStringIndex(curr->string));
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

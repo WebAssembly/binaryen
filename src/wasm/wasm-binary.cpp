@@ -54,6 +54,9 @@ void WasmBinaryWriter::write() {
   writeTableDeclarations();
   writeMemory();
   writeTags();
+  if (wasm->features.hasStrings()) {
+    writeStrings();
+  }
   writeGlobals();
   writeExports();
   writeStart();
@@ -451,6 +454,69 @@ void WasmBinaryWriter::writeFunctions() {
   finishSection(sectionStart);
 }
 
+void WasmBinaryWriter::writeStrings() {
+  assert(wasm->features.hasStrings());
+
+  // Scan the entire wasm to find the relevant strings.
+  // To find all the string literals we must scan all the code.
+  using StringSet = std::unordered_set<Name>;
+
+  struct StringWalker : public PostWalker<StringWalker> {
+    StringSet& strings;
+
+    StringWalker(StringSet& strings) : strings(strings) {}
+
+    void visitStringConst(StringConst* curr) { strings.insert(curr->string); }
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<StringSet> analysis(
+    *wasm, [&](Function* func, StringSet& strings) {
+      if (!func->imported()) {
+        StringWalker(strings).walk(func->body);
+      }
+    });
+
+  // Also walk the global module code (for simplicity, also add it to the
+  // function map, using a "function" key of nullptr).
+  auto& globalStrings = analysis.map[nullptr];
+  StringWalker(globalStrings).walkModuleCode(wasm);
+
+  // Generate the indexes from the combined set of necessary strings,
+  // which we sort for determinism.
+  StringSet allStrings;
+  for (auto& [func, strings] : analysis.map) {
+    for (auto& string : strings) {
+      allStrings.insert(string);
+    }
+  }
+  std::vector<Name> sorted;
+  for (auto& string : allStrings) {
+    sorted.push_back(string);
+  }
+  std::sort(sorted.begin(), sorted.end());
+  for (Index i = 0; i < sorted.size(); i++) {
+    stringIndexes[sorted[i]] = i;
+  }
+
+  auto num = sorted.size();
+  if (num == 0) {
+    return;
+  }
+
+  auto start = startSection(BinaryConsts::Section::Strings);
+
+  // Placeholder for future use in the spec.
+  o << U32LEB(0);
+
+  // The number of strings and then their contents.
+  o << U32LEB(num);
+  for (auto& string : sorted) {
+    writeInlineString(string.str);
+  }
+
+  finishSection(start);
+}
+
 void WasmBinaryWriter::writeGlobals() {
   if (importInfo->getNumDefinedGlobals() == 0) {
     return;
@@ -583,6 +649,12 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
     assert(0);
   }
 #endif
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getStringIndex(Name string) const {
+  auto it = stringIndexes.find(string);
+  assert(it != stringIndexes.end());
   return it->second;
 }
 
@@ -1488,6 +1560,9 @@ void WasmBinaryBuilder::read() {
         break;
       case BinaryConsts::Section::Element:
         readElementSegments();
+        break;
+      case BinaryConsts::Section::Strings:
+        readStrings();
         break;
       case BinaryConsts::Section::Global:
         readGlobals();
@@ -2610,6 +2685,18 @@ Expression* WasmBinaryBuilder::readExpression() {
   auto* ret = popExpression();
   assert(depth == 0);
   return ret;
+}
+
+void WasmBinaryBuilder::readStrings() {
+  auto reserved = getU32LEB();
+  if (reserved != 0) {
+    throwError("unexpected reserved value in strings");
+  }
+  size_t num = getU32LEB();
+  for (size_t i = 0; i < num; i++) {
+    auto string = getInlineString();
+    strings.push_back(string);
+  }
 }
 
 void WasmBinaryBuilder::readGlobals() {
@@ -3832,6 +3919,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStringNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
       if (opcode == BinaryConsts::RefIsFunc ||
@@ -7057,6 +7147,18 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   auto* length = popNonVoidExpression();
   auto* ptr = popNonVoidExpression();
   out = Builder(wasm).makeStringNew(op, ptr, length);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::StringConst) {
+    return false;
+  }
+  auto index = getU32LEB();
+  if (index >= strings.size()) {
+    throwError("bad string index");
+  }
+  out = Builder(wasm).makeStringConst(strings[index]);
   return true;
 }
 
