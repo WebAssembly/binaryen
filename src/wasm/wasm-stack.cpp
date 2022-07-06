@@ -2262,6 +2262,25 @@ void BinaryInstWriter::visitStringConst(StringConst* curr) {
     << U32LEB(parent.getStringIndex(curr->string));
 }
 
+void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringMeasureUTF8:
+      o << U32LEB(BinaryConsts::StringMeasureWTF8)
+        << U32LEB(BinaryConsts::StringMeasurePolicy::UTF8);
+      break;
+    case StringMeasureWTF8:
+      o << U32LEB(BinaryConsts::StringMeasureWTF8)
+        << U32LEB(BinaryConsts::StringMeasurePolicy::WTF8);
+      break;
+    case StringMeasureWTF16:
+      o << U32LEB(BinaryConsts::StringMeasureWTF16);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.new*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

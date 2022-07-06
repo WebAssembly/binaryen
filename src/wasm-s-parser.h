@@ -305,6 +305,7 @@ private:
   Expression* makeRefAs(Element& s, RefAsOp op);
   Expression* makeStringNew(Element& s, StringNewOp op);
   Expression* makeStringConst(Element& s);
+  Expression* makeStringMeasure(Element& s, StringMeasureOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

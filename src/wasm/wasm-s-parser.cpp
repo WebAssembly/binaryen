@@ -2957,6 +2957,22 @@ Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
   return Builder(wasm).makeStringConst(s[1]->str());
 }
 
+Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s, StringMeasureOp op) {
+  size_t i = 1;
+  if (op == StringMeasureWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringMeasureUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringMeasureReplace;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringMeasure(
+    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

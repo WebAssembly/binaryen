@@ -590,6 +590,12 @@ enum StringNewOp {
   StringNewWTF16
 };
 
+enum StringMeasureOp {
+  StringMeasureUTF8,
+  StringMeasureWTF8,
+  StringMeasureWTF16,
+};
+
 //
 // Expressions
 //
@@ -687,6 +693,7 @@ public:
     RefAsId,
     StringNewId,
     StringConstId,
+    StringMeasureId,
     NumExpressionIds
   };
   Id _id;
@@ -1673,6 +1680,17 @@ public:
   //       ArenaVector<char> perhaps? However, Name has the benefit of being
   //       interned and immutable (which is appropriate here).
   Name string;
+
+  void finalize();
+};
+
+class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
+public:
+  StringMeasure(MixedArena& allocator) {}
+
+  StringMeasureOp op;
+
+  Expression* ref;
 
   void finalize();
 };

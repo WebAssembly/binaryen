@@ -3132,6 +3132,17 @@ switch (op[0]) {
               case 'c':
                 if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
                 goto parse_error;
+              case 'm': {
+                switch (op[18]) {
+                  case '1':
+                    if (strcmp(op, "string.measure_wtf16") == 0) { return makeStringMeasure(s, StringMeasureWTF16); }
+                    goto parse_error;
+                  case '8':
+                    if (strcmp(op, "string.measure_wtf8") == 0) { return makeStringMeasure(s, StringMeasureWTF8); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'n': {
                 switch (op[14]) {
                   case '1':

@@ -3924,6 +3924,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringMeasure(curr, opcode)) {
+        break;
+      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7159,6 +7162,30 @@ bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
     throwError("bad string index");
   }
   out = Builder(wasm).makeStringConst(strings[index]);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out, uint32_t code) {
+  StringMeasureOp op;
+  if (code == BinaryConsts::StringMeasureWTF8) {
+    auto policy = getU32LEB();
+    switch (policy) {
+      case BinaryConsts::StringMeasurePolicy::UTF8:
+        op = StringMeasureUTF8;
+        break;
+      case BinaryConsts::StringMeasurePolicy::WTF8:
+        op = StringMeasureWTF8;
+        break;
+      default:
+        throwError("bad policy for string.measure");
+    }
+  } else if (code == BinaryConsts::StringMeasureWTF16) {
+    op = StringMeasureWTF16;
+  } else {
+    return false;
+  }
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringMeasure(op, ref);
   return true;
 }
 

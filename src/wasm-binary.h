@@ -1140,6 +1140,8 @@ enum ASTNodes {
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
+  StringMeasureWTF8 = 0x84,
+  StringMeasureWTF16 = 0x85,
 };
 
 enum MemoryAccess {
@@ -1154,6 +1156,11 @@ enum StringNewPolicy {
   UTF8 = 0x00,
   WTF8 = 0x01,
   Replace = 0x02,
+};
+
+enum StringMeasurePolicy {
+  UTF8 = 0x00,
+  WTF8 = 0x01,
 };
 
 enum FeaturePrefix {
@@ -1722,6 +1729,7 @@ public:
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
   bool maybeVisitStringConst(Expression*& out, uint32_t code);
+  bool maybeVisitStringMeasure(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

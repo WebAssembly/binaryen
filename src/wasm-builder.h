@@ -1004,6 +1004,14 @@ public:
     ret->finalize();
     return ret;
   }
+  StringMeasure*
+  makeStringMeasure(StringMeasureOp op, Expression* ref) {
+    auto* ret = wasm.allocator.alloc<StringMeasure>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 
