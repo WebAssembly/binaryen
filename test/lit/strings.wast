@@ -9,6 +9,8 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $ref?|string|_=>_none (func (param stringref)))
+
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
 
@@ -100,6 +102,25 @@
     )
   )
 
+  ;; CHECK:      (func $string.measure (param $ref stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.measure_wtf8 wtf8
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.measure_wtf8 utf8
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.measure_wtf16
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.measure (param $ref stringref)
     (drop
       (i32.eqz ;; validate the output is i32
