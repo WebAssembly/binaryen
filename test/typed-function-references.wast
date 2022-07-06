@@ -41,4 +41,31 @@
       )
     )
   )
+  (func $more-ref-types
+    ;; 6 reference types and 3 MVP types. The binary format should emit all the
+    ;; reference types first. In addition, types should be emitted in blocks
+    ;; there, that is, locals of identical types should be adjacent.
+    (local $r1 (ref null $mixed_results))
+    (local $r2 (ref null $mixed_results))
+    (local $i1 i32)
+    (local $r3 anyref)
+    (local $i2 i64)
+    (local $r4 anyref)
+    (local $i3 i64)
+    (local $r5 anyref)
+    (local $r6 funcref)
+  )
+  (func $more-mvp-types
+    ;; Reversed from before, now MVP types are more common and they should be
+    ;; first in the binary format.
+    (local $r1 (ref null $mixed_results))
+    (local $r2 (ref null $mixed_results))
+    (local $i1 i32)
+    (local $r3 anyref)
+    (local $i2 f32)
+    (local $r4 anyref)
+    (local $i3 i64)
+    (local $i4 i64)
+    (local $i5 f32)
+  )
 )
