@@ -1493,9 +1493,41 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    // The types may prove that the same reference cannot appear on both sides.
+    auto leftType = curr->left->type;
+    auto rightType = curr->right->type;
+    if (leftType == Type::unreachable || rightType == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+    auto leftIsHeapSubtype = HeapType::isSubType(leftType, rightType);
+    auto rightIsHeapSubtype = HeapType::isSubType(rightType, leftType);
+    if (!leftIsHeapSubtype && !rightIsHeapSubtype) {
+      // The heap types have no intersection, so the only thing that can
+      // possibly appear on both sides is null.
+      if (leftType.isNullable() && rightType.isNullable()) {
+        // A null is in fact possible. Replace a == b with (a == null) &&
+        // (b == null). That is slightly larger, but more optimizable XXX
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeBinary(
+          AndInt32,
+          builder.makeRefIs(RefIsNull, curr->left),
+          builder.makeRefIs(RefIsNull, curr->right)
+        ));
+        return;
+      }
+
+      // A null is not possible, so this comparison will always be 0.
+      auto* result =
+        Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, *getModule(), getPassOptions(), result));
+      return;
+    }
+
     // Equality does not depend on the type, so casts may be removable.
     //
-    // This is safe to do first because nothing else here cares about the type,
+    // This is safe to do first because nothing later down cares about the type,
     // and we consume the two input references, so removing a cast could not
     // help our parents (see "notes on removing casts").
     skipCast(curr->left, Type::eqref);
