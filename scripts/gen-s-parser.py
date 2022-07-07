@@ -621,6 +621,7 @@ instructions = [
     ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),
     ("string.encode_wtf8",   "makeStringEncode(s, StringEncodeWTF8)"),
     ("string.encode_wtf16",  "makeStringEncode(s, StringEncodeWTF16)"),
+    ("string.concat",        "makeStringConcat(s)"),
 ]
 
 

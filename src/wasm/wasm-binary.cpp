@@ -3930,6 +3930,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringEncode(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringConcat(curr, opcode)) {
+        break;
+      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7217,6 +7220,17 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
   auto* ptr = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeStringEncode(op, ref, ptr);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringConcat(Expression*& out,
+                                               uint32_t code) {
+  if (code != BinaryConsts::StringConcat) {
+    return false;
+  }
+  auto* right = popNonVoidExpression();
+  auto* left = popNonVoidExpression();
+  out = Builder(wasm).makeStringConcat(left, right);
   return true;
 }
 

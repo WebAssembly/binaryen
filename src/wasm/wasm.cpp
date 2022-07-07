@@ -1200,6 +1200,14 @@ void StringEncode::finalize() {
   }
 }
 
+void StringConcat::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

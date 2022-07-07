@@ -2272,6 +2272,9 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.encode*");
     }
   }
+  void visitStringConcat(StringConcat* curr) {
+    printMedium(o, "string.concat");
+  }
 };
 
 // Prints an expression in s-expr format, including both the

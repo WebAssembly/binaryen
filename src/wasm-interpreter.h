@@ -1967,6 +1967,9 @@ public:
   Flow visitStringEncode(StringEncode* curr) {
     WASM_UNREACHABLE("unimplemented string.encode");
   }
+  Flow visitStringConcat(StringConcat* curr) {
+    WASM_UNREACHABLE("unimplemented string.concat");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

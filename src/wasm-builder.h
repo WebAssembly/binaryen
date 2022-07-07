@@ -1020,6 +1020,15 @@ public:
     ret->finalize();
     return ret;
   }
+  StringConcat*
+  makeStringConcat(Expression* left, Expression* right) {
+    auto* ret = wasm.allocator.alloc<StringConcat>();
+    ret->op = op;
+    ret->left = left;
+    ret->right = right;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

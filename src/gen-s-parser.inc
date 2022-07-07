@@ -3129,9 +3129,17 @@ switch (op[0]) {
         switch (op[3]) {
           case 'i': {
             switch (op[7]) {
-              case 'c':
-                if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
-                goto parse_error;
+              case 'c': {
+                switch (op[10]) {
+                  case 'c':
+                    if (strcmp(op, "string.concat") == 0) { return makeStringConcat(s); }
+                    goto parse_error;
+                  case 's':
+                    if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'e': {
                 switch (op[17]) {
                   case '1':
