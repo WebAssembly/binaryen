@@ -2239,15 +2239,15 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   switch (curr->op) {
     case StringNewUTF8:
       o << U32LEB(BinaryConsts::StringNewWTF8)
-        << U32LEB(BinaryConsts::StringNewPolicy::UTF8);
+        << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringNewWTF8:
       o << U32LEB(BinaryConsts::StringNewWTF8)
-        << U32LEB(BinaryConsts::StringNewPolicy::WTF8);
+        << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringNewReplace:
       o << U32LEB(BinaryConsts::StringNewWTF8)
-        << U32LEB(BinaryConsts::StringNewPolicy::Replace);
+        << U32LEB(BinaryConsts::StringPolicy::Replace);
       break;
     case StringNewWTF16:
       o << U32LEB(BinaryConsts::StringNewWTF16);
@@ -2260,6 +2260,25 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
 void BinaryInstWriter::visitStringConst(StringConst* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConst)
     << U32LEB(parent.getStringIndex(curr->string));
+}
+
+void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringMeasureUTF8:
+      o << U32LEB(BinaryConsts::StringMeasureWTF8)
+        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      break;
+    case StringMeasureWTF8:
+      o << U32LEB(BinaryConsts::StringMeasureWTF8)
+        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      break;
+    case StringMeasureWTF16:
+      o << U32LEB(BinaryConsts::StringMeasureWTF16);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.new*");
+  }
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {

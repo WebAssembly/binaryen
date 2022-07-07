@@ -734,6 +734,7 @@ private:
     }
     void visitStringNew(StringNew* curr) {}
     void visitStringConst(StringConst* curr) {}
+    void visitStringMeasure(StringMeasure* curr) {}
   };
 
 public:

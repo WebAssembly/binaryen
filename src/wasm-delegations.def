@@ -87,5 +87,6 @@ DELEGATE(ArrayCopy);
 DELEGATE(RefAs);
 DELEGATE(StringNew);
 DELEGATE(StringConst);
+DELEGATE(StringMeasure);
 
 #undef DELEGATE
