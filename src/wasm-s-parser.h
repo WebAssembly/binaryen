@@ -306,6 +306,7 @@ private:
   Expression* makeStringNew(Element& s, StringNewOp op);
   Expression* makeStringConst(Element& s);
   Expression* makeStringMeasure(Element& s, StringMeasureOp op);
+  Expression* makeStringEncode(Element& s, StringEncodeOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

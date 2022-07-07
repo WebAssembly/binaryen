@@ -2281,6 +2281,25 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringEncodeUTF8:
+      o << U32LEB(BinaryConsts::StringEncodeWTF8)
+        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      break;
+    case StringEncodeWTF8:
+      o << U32LEB(BinaryConsts::StringEncodeWTF8)
+        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      break;
+    case StringEncodeWTF16:
+      o << U32LEB(BinaryConsts::StringEncodeWTF16);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.new*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

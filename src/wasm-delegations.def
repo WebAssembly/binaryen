@@ -88,5 +88,6 @@ DELEGATE(RefAs);
 DELEGATE(StringNew);
 DELEGATE(StringConst);
 DELEGATE(StringMeasure);
+DELEGATE(StringEncode);
 
 #undef DELEGATE

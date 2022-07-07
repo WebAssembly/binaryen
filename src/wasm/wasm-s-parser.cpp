@@ -2973,6 +2973,23 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
   return Builder(wasm).makeStringMeasure(op, parseExpression(s[i]));
 }
 
+Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
+                                                     StringEncodeOp op) {
+  size_t i = 1;
+  if (op == StringEncodeWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringEncodeUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringEncodeWTF8;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringEncode(
+    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

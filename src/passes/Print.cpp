@@ -2257,6 +2257,21 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.measure*");
     }
   }
+  void visitStringEncode(StringEncode* curr) {
+    switch (curr->op) {
+      case StringEncodeUTF8:
+        printMedium(o, "string.encode_wtf8 utf8");
+        break;
+      case StringEncodeWTF8:
+        printMedium(o, "string.encode_wtf8 wtf8");
+        break;
+      case StringEncodeWTF16:
+        printMedium(o, "string.encode_wtf16");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.encode*");
+    }
+  }
 };
 
 // Prints an expression in s-expr format, including both the

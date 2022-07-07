@@ -1192,6 +1192,14 @@ void StringMeasure::finalize() {
   }
 }
 
+void StringEncode::finalize() {
+  if (ref->type == Type::unreachable || ptr->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

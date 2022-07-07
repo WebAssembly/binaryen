@@ -596,6 +596,12 @@ enum StringMeasureOp {
   StringMeasureWTF16,
 };
 
+enum StringEncodeOp {
+  StringEncodeUTF8,
+  StringEncodeWTF8,
+  StringEncodeWTF16,
+};
+
 //
 // Expressions
 //
@@ -694,6 +700,7 @@ public:
     StringNewId,
     StringConstId,
     StringMeasureId,
+    StringEncodeId,
     NumExpressionIds
   };
   Id _id;
@@ -1691,6 +1698,18 @@ public:
   StringMeasureOp op;
 
   Expression* ref;
+
+  void finalize();
+};
+
+class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
+public:
+  StringEncode(MixedArena& allocator) {}
+
+  StringEncodeOp op;
+
+  Expression* ref;
+  Expression* ptr;
 
   void finalize();
 };
