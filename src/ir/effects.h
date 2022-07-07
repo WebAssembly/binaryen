@@ -739,7 +739,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitStringEncode(StringEncode* curr) {
-      // traps when ref is null.
+      // traps when ref is null or we write out of bounds.
       parent.implicitTrap = true;
     }
   };

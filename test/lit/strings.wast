@@ -140,4 +140,24 @@
       )
     )
   )
+
+  (func $string.encode (param $ref stringref)
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.encode_wtf8 wtf8
+          (local.get $ref)
+        )
+      )
+    )
+    (drop
+      (string.encode_wtf8 utf8
+        (local.get $ref)
+      )
+    )
+    (drop
+      (string.encode_wtf16
+        (local.get $ref)
+      )
+    )
+  )
 )
