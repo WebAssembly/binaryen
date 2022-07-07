@@ -2986,7 +2986,8 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
       throw ParseException("bad string.new op", s.line, s.col);
     }
   }
-  return Builder(wasm).makeStringEncode(op, parseExpression(s[i]), parseExpression(s[i + 1]));
+  return Builder(wasm).makeStringEncode(
+    op, parseExpression(s[i]), parseExpression(s[i + 1]));
 }
 
 // converts an s-expression string representing binary data into an output

@@ -7194,7 +7194,7 @@ bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
 }
 
 bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
-                                                uint32_t code) {
+                                               uint32_t code) {
   StringEncodeOp op;
   // TODO: share this code with string.measure?
   if (code == BinaryConsts::StringEncodeWTF8) {
