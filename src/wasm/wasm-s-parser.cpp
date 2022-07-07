@@ -2991,8 +2991,8 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
 }
 
 Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
-  return Builder(wasm).makeStringConcat(
-    parseExpression(s[1]), parseExpression(s[2]));
+  return Builder(wasm).makeStringConcat(parseExpression(s[1]),
+                                        parseExpression(s[2]));
 }
 
 // converts an s-expression string representing binary data into an output
