@@ -1196,7 +1196,7 @@ void StringEncode::finalize() {
   if (ref->type == Type::unreachable || ptr->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, NonNullable);
+    type = Type::i32;
   }
 }
 

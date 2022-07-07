@@ -5,11 +5,11 @@
 ;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --roundtrip -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $ref?|string|_=>_none (func (param stringref)))
+
   ;; CHECK:      (type $ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
   ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (type $ref?|string|_=>_none (func (param stringref)))
 
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
@@ -141,22 +141,47 @@
     )
   )
 
+  ;; CHECK:      (func $string.encode (param $ref stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.encode_wtf8 wtf8
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf8 utf8
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf16
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.encode (param $ref stringref)
     (drop
       (i32.eqz ;; validate the output is i32
         (string.encode_wtf8 wtf8
           (local.get $ref)
+          (i32.const 10)
         )
       )
     )
     (drop
       (string.encode_wtf8 utf8
         (local.get $ref)
+        (i32.const 20)
       )
     )
     (drop
       (string.encode_wtf16
         (local.get $ref)
+        (i32.const 30)
       )
     )
   )
