@@ -7215,7 +7215,8 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
     return false;
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringEncode(op, ref);
+  auto* ptr = popNonVoidExpression();
+  out = Builder(wasm).makeStringEncode(op, ref, ptr);
   return true;
 }
 
