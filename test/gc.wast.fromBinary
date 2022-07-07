@@ -14,9 +14,9 @@
   (i32.const 0)
  ))
  (func $test (param $local_i31ref i31ref) (param $local_dataref dataref)
+  (local $local_i32 i32)
   (local $local_anyref anyref)
   (local $local_eqref eqref)
-  (local $local_i32 i32)
   (local.set $local_anyref
    (local.get $local_anyref)
   )

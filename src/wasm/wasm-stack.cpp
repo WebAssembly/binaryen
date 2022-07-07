@@ -2318,17 +2318,10 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     // See https://github.com/WebAssembly/binaryen/issues/4773
     //
     // In order to decide whether to put MVP types or reference types first,
-    // see which of them is more common as a simple heuristic for which should
-    // occupy the lower indexes. However, it's possible a small number of locals
-    // is used a great number of times, so scanning the body might make sense in
-    // theory.
-    Index numRefs = 0;
-    for (auto type : localTypes) {
-      if (type.isRef() || type.isRtt()) {
-        numRefs++;
-      }
-    }
-    bool refsFirst = numRefs > (localTypes.size() / 2);
+    // look at the type of the first local. In an optimized binary we will have
+    // sorted the locals by frequency of uses, so this way we'll keep the most
+    // commonly-used local at the top, which should work well in many cases.
+    bool refsFirst = !localTypes.empty() && localTypes[0].isRef();
     std::stable_sort(localTypes.begin(), localTypes.end(), [&](Type a, Type b) {
       if (refsFirst) {
         return a.isRef() && !b.isRef();

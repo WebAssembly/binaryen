@@ -41,10 +41,11 @@
       )
     )
   )
-  (func $more-ref-types
+  (func $ref-types-first
     ;; 6 reference types and 3 MVP types. The binary format should emit all the
-    ;; reference types first. In addition, types should be emitted in blocks
-    ;; there, that is, locals of identical types should be adjacent.
+    ;; reference types first since a reference type appears first. In addition,
+    ;; types should be emitted in blocks there, that is, locals of identical
+    ;; types should be adjacent.
     (local $r1 (ref null $mixed_results))
     (local $r2 (ref null $mixed_results))
     (local $i1 i32)
@@ -55,17 +56,30 @@
     (local $r5 anyref)
     (local $r6 funcref)
   )
-  (func $more-mvp-types
-    ;; Reversed from before, now MVP types are more common and they should be
-    ;; first in the binary format.
+  (func $mvp-types-first
+    ;; Reversed from before, now an MVP type appears first, so they should all
+    ;; be before reference types in the binary format.
+    (local $i1 i32) ;; only this local was moved up.
     (local $r1 (ref null $mixed_results))
     (local $r2 (ref null $mixed_results))
-    (local $i1 i32)
     (local $r3 anyref)
-    (local $i2 f32)
+    (local $i2 i64)
     (local $r4 anyref)
     (local $i3 i64)
-    (local $i4 i64)
-    (local $i5 f32)
+    (local $r5 anyref)
+    (local $r6 funcref)
+  )
+  (func $mvp-types-first-param (param $r0 (ref null $mixed_results))
+    ;; As before, but now there is a reference type *parameter*. We should
+    ;; ignore that and sort as in the last function.
+    (local $i1 i32) ;; only this local was moved up.
+    (local $r1 (ref null $mixed_results))
+    (local $r2 (ref null $mixed_results))
+    (local $r3 anyref)
+    (local $i2 i64)
+    (local $r4 anyref)
+    (local $i3 i64)
+    (local $r5 anyref)
+    (local $r6 funcref)
   )
 )
