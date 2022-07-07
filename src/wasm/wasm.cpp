@@ -1204,7 +1204,7 @@ void StringConcat::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::i32;
+    type = Type(HeapType::string, NonNullable);
   }
 }
 
