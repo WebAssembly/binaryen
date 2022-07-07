@@ -185,4 +185,13 @@
       )
     )
   )
+
+  (func $string.concat (param $a stringref) (param $b stringref)
+    (local.set $a ;; validate the output is a stringref
+      (string.concat
+        (local.get $a)
+        (local.get $b)
+      )
+    )
+  )
 )
