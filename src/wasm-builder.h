@@ -1011,6 +1011,14 @@ public:
     ret->finalize();
     return ret;
   }
+  StringEncode* makeStringEncode(StringEncodeOp op, Expression* ref, Expression* ptr) {
+    auto* ret = wasm.allocator.alloc<StringEncode>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->ptr = ptr;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

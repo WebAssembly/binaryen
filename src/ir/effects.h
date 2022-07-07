@@ -734,7 +734,14 @@ private:
     }
     void visitStringNew(StringNew* curr) {}
     void visitStringConst(StringConst* curr) {}
-    void visitStringMeasure(StringMeasure* curr) {}
+    void visitStringMeasure(StringMeasure* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringEncode(StringEncode* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
   };
 
 public:

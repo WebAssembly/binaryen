@@ -1964,6 +1964,9 @@ public:
   Flow visitStringMeasure(StringMeasure* curr) {
     WASM_UNREACHABLE("unimplemented string.measure");
   }
+  Flow visitStringEncode(StringEncode* curr) {
+    WASM_UNREACHABLE("unimplemented string.encode");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

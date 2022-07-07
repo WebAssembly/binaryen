@@ -734,6 +734,14 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringMeasure);
     break;
   }
+  case Expression::Id::StringEncodeId: {
+    DELEGATE_START(StringEncode);
+    DELEGATE_FIELD_INT(StringEncode, op);
+    DELEGATE_FIELD_CHILD(StringEncode, ptr);
+    DELEGATE_FIELD_CHILD(StringEncode, ref);
+    DELEGATE_END(StringEncode);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

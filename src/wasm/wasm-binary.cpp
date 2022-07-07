@@ -3927,6 +3927,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringMeasure(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringEncode(curr, opcode)) {
+        break;
+      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7187,6 +7190,32 @@ bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
   }
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeStringMeasure(op, ref);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
+                                                uint32_t code) {
+  StringEncodeOp op;
+  // TODO: share this code with string.measure?
+  if (code == BinaryConsts::StringEncodeWTF8) {
+    auto policy = getU32LEB();
+    switch (policy) {
+      case BinaryConsts::StringPolicy::UTF8:
+        op = StringEncodeUTF8;
+        break;
+      case BinaryConsts::StringPolicy::WTF8:
+        op = StringEncodeWTF8;
+        break;
+      default:
+        throwError("bad policy for string.encode");
+    }
+  } else if (code == BinaryConsts::StringEncodeWTF16) {
+    op = StringEncodeWTF16;
+  } else {
+    return false;
+  }
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringEncode(op, ref);
   return true;
 }
 
