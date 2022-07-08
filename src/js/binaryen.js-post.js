@@ -3266,36 +3266,15 @@ Module['getFunctionInfo'] = function(func) {
   };
 };
 
-Module['global'] = {
-  'name'(global) {
-    return UTF8ToString(Module['_BinaryenGlobalGetName'](global));
-  },
-  'module'(global) {
-    return UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global));
-  },
-  'base'(global) {
-    return UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global));
-  },
-  'type'(global) {
-    return Module['_BinaryenGlobalGetType'](global);
-  },
-  'mutable'(global) {
-    return Boolean(Module['_BinaryenGlobalIsMutable'](global));
-  },
-  'init'(global) {
-    return Module['_BinaryenGlobalGetInitExpr'](global);
-  }
-};
-
 // Obtains information about a 'Global'
 Module['getGlobalInfo'] = function(global) {
   return {
-    'name': Module['global']['name'](global),
-    'module': Module['global']['module'](global),
-    'base': Module['global']['base'](global),
-    'type': Module['global']['type'](global),
-    'mutable': Module['global']['mutable'](global),
-    'init': Module['global']['init'](global)
+    'name': Module['Global']['getName'](global),
+    'module': Module['GlobalImport']['getModule'](global),
+    'base': Module['GlobalImport']['getBase'](global),
+    'type': Module['Global']['getType'](global),
+    'mutable': Module['Global']['isMutable'](global),
+    'init': Module['Global']['getInitExpr'](global)
   };
 };
 
@@ -3343,24 +3322,12 @@ Module['getTagInfo'] = function(tag) {
   };
 };
 
-Module['export'] = {
-  'kind'(export_) {
-    return Module['_BinaryenExportGetKind'](export_);
-  },
-  'name'(export_) {
-    return UTF8ToString(Module['_BinaryenExportGetName'](export_));
-  },
-  'value'(export_) {
-    return UTF8ToString(Module['_BinaryenExportGetValue'](export_));
-  }
-}
-
 // Obtains information about an 'Export'
 Module['getExportInfo'] = function(export_) {
   return {
-    'kind': Module['export']['kind'](export_),
-    'name': Module['export']['name'](export_),
-    'value': Module['export']['value'](export_)
+    'kind': Module['export']['getKind'](export_),
+    'name': Module['export']['getName'](export_),
+    'value': Module['export']['getValue'](export_)
   };
 };
 
@@ -4830,7 +4797,89 @@ Module['I31Get'] = makeExpressionWrapper({
   }
 });
 
-// Function wrapper
+// Export wrapper
+Module['Export'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Function['getKind'] = function(export_) {
+    return Module['_BinaryenExportGetKind'](export_);
+  };
+  Function['getName'] = function(export_) {
+    return UTF8ToString(Module['_BinaryenExportGetName'](export_));
+  };
+  Function['getValue'] = function(export_) {
+    return UTF8ToString(Module['_BinaryenExportGetValue'](export_));
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
+  Function.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Function;
+})();
+
+// GlobalImport wrapper
+Module['GlobalImport'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Function['getModule'] = function(global) {
+    return UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global));
+  };
+  Function['getBase'] = function(global) {
+    return UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global));
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
+  Function.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Function;
+})();
+
+// Global wrapper
+
+Module['Global'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Function['getName'] = function(global) {
+    return UTF8ToString(Module['_BinaryenGlobalGetName'](global));
+  };
+  Function['getType'] = function(global) {
+    return Module['_BinaryenGlobalGetType'](global);
+  };
+  Function['isMutable'] = function(global) {
+    return Boolean(Module['_BinaryenGlobalIsMutable'](global));
+  };
+  Function['getInitExpr'] = function(global) {
+    return Module['_BinaryenGlobalGetInitExpr'](global);
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
+  Function.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Function;
+})();
+
+// FunctionImport wrapper
 
 Module['FunctionImport'] = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
@@ -4854,6 +4903,8 @@ Module['FunctionImport'] = (() => {
   };
   return Function;
 })();
+
+// Function wrapper
 
 Module['Function'] = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
