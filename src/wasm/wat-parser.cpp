@@ -296,6 +296,7 @@ struct ParseDeclsCtx {
   // At this stage we only look at types to find implicit type definitions,
   // which are inserted directly in to the context. We cannot materialize or
   // validate any types because we don't know what types exist yet.
+  using IndexT = Ok;
   using HeapTypeT = Ok;
   using TypeT = Ok;
   using ParamsT = Ok;
@@ -329,6 +330,7 @@ inline constexpr bool parsingDecls = std::is_same_v<Ctx, ParseDeclsCtx>;
 
 // Phase 2: Parse type definitions into a TypeBuilder.
 struct ParseTypeDefsCtx {
+  using IndexT = Index;
   using HeapTypeT = HeapType;
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
@@ -364,6 +366,7 @@ inline constexpr bool parsingTypeDefs = std::is_same_v<Ctx, ParseTypeDefsCtx>;
 struct ParseModuleTypesCtx {
   // In this phase we have constructed all the types, so we can materialize and
   // validate them when they are used.
+  using IndexT = Index;
   using HeapTypeT = HeapType;
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
@@ -420,10 +423,15 @@ MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&, ParseInput&);
 
 // Modules
 template<typename Ctx>
+MaybeResult<typename Ctx::IndexT> maybeTypeidx(Ctx& ctx, ParseInput& in);
+template<typename Ctx>
 Result<typename Ctx::HeapTypeT> typeidx(Ctx&, ParseInput&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
-template<typename Ctx> MaybeResult<> strtype(Ctx&, ParseInput&);
+template<typename Ctx> Result<> strtype(Ctx&, ParseInput&);
+template<typename Ctx>
+MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&, ParseInput&);
+template<typename Ctx> MaybeResult<> deftype(Ctx&, ParseInput&);
 template<typename Ctx> MaybeResult<> global(Ctx&, ParseInput&);
 MaybeResult<> modulefield(ParseDeclsCtx&, ParseInput&);
 Result<> module(ParseDeclsCtx&, ParseInput&);
@@ -811,35 +819,43 @@ Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx, ParseInput& in) {
 // typeidx ::= x:u32 => x
 //           | v:id  => x (if types[x] = v)
 template<typename Ctx>
-Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx, ParseInput& in) {
-  [[maybe_unused]] Index index;
+MaybeResult<typename Ctx::IndexT> maybeTypeidx(Ctx& ctx, ParseInput& in) {
   if (auto x = in.takeU32()) {
-    index = *x;
-  } else if (auto id = in.takeID()) {
-    if constexpr (!parsingDecls<Ctx>) {
+    RETURN_OR_OK(*x);
+  }
+  if (auto id = in.takeID()) {
+    if constexpr (parsingDecls<Ctx>) {
+      return Ok{};
+    } else {
       auto it = ctx.typeIndices.find(*id);
       if (it == ctx.typeIndices.end()) {
         return in.err("unknown type identifier");
       }
-      index = it->second;
+      return it->second;
     }
-  } else {
-    return in.err("expected type index or identifier");
   }
+  return {};
+}
 
-  if constexpr (parsingDecls<Ctx>) {
-    return Ok{};
-  } else if constexpr (parsingTypeDefs<Ctx>) {
-    if (index >= ctx.builder.size()) {
-      return in.err("type index out of bounds");
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx, ParseInput& in) {
+  if (auto index = maybeTypeidx(ctx, in)) {
+    CHECK_ERR(index);
+    if constexpr (parsingDecls<Ctx>) {
+      return Ok{};
+    } else if constexpr (parsingTypeDefs<Ctx>) {
+      if (*index >= ctx.builder.size()) {
+        return in.err("type index out of bounds");
+      }
+      return ctx.builder[*index];
+    } else {
+      if (*index >= ctx.types.size()) {
+        return in.err("type index out of bounds");
+      }
+      return ctx.types[*index];
     }
-    return ctx.builder[index];
-  } else {
-    if (index >= ctx.types.size()) {
-      return in.err("type index out of bounds");
-    }
-    return ctx.types[index];
   }
+  return in.err("expected type index or identifier");
 }
 
 // ('(' 'import' mod:name nm:name ')')?
@@ -877,10 +893,43 @@ Result<std::vector<Name>> inlineExports(ParseInput& in) {
   return exports;
 }
 
-// strtype ::= '(' 'type' id? ft:functype ')'   => ft
-//           | '(' 'type' id? st:structtype ')' => st
-//           | '(' 'type' id? at:arraytype ')'  => at
-template<typename Ctx> MaybeResult<> strtype(Ctx& ctx, ParseInput& in) {
+// strtype ::= ft:functype   => ft
+//           | st:structtype => st
+//           | at:arraytype  => at
+template<typename Ctx> Result<> strtype(Ctx& ctx, ParseInput& in) {
+  if (auto type = functype(ctx, in)) {
+    CHECK_ERR(type);
+    if constexpr (parsingTypeDefs<Ctx>) {
+      ctx.builder[ctx.index] = *type;
+    }
+    return Ok{};
+  }
+  if (auto type = structtype(ctx, in)) {
+    CHECK_ERR(type);
+    if constexpr (parsingTypeDefs<Ctx>) {
+      auto& [fieldNames, str] = *type;
+      ctx.builder[ctx.index] = str;
+      for (Index i = 0; i < fieldNames.size(); ++i) {
+        if (auto name = fieldNames[i]; name.is()) {
+          ctx.names[ctx.index].fieldNames[i] = name;
+        }
+      }
+    }
+    return Ok{};
+  }
+  if (auto type = arraytype(ctx, in)) {
+    CHECK_ERR(type);
+    if constexpr (parsingTypeDefs<Ctx>) {
+      ctx.builder[ctx.index] = *type;
+    }
+    return Ok{};
+  }
+  return in.err("expected type description");
+}
+
+// subtype ::= '(' 'type' id? '(' 'sub' typeidx? strtype ')' ')'
+//           | '(' 'type' id? strtype ')'
+template<typename Ctx> MaybeResult<> subtype(Ctx& ctx, ParseInput& in) {
   [[maybe_unused]] auto start = in.getPos();
 
   if (!in.takeSExprStart("type"sv)) {
@@ -895,29 +944,24 @@ template<typename Ctx> MaybeResult<> strtype(Ctx& ctx, ParseInput& in) {
     }
   }
 
-  if (auto type = functype(ctx, in)) {
-    CHECK_ERR(type);
-    if constexpr (parsingTypeDefs<Ctx>) {
-      ctx.builder[ctx.index] = *type;
-    }
-  } else if (auto type = structtype(ctx, in)) {
-    CHECK_ERR(type);
-    if constexpr (parsingTypeDefs<Ctx>) {
-      auto& [fieldNames, str] = *type;
-      ctx.builder[ctx.index] = str;
-      for (Index i = 0; i < fieldNames.size(); ++i) {
-        if (auto name = fieldNames[i]; name.is()) {
-          ctx.names[ctx.index].fieldNames[i] = name;
+  if (in.takeSExprStart("sub"sv)) {
+    if (auto super = maybeTypeidx(ctx, in)) {
+      CHECK_ERR(super);
+      if constexpr (parsingTypeDefs<Ctx>) {
+        if (*super >= ctx.builder.size()) {
+          return in.err("supertype index out of bounds");
         }
+        ctx.builder[ctx.index].subTypeOf(ctx.builder[*super]);
       }
     }
-  } else if (auto type = arraytype(ctx, in)) {
-    CHECK_ERR(type);
-    if constexpr (parsingTypeDefs<Ctx>) {
-      ctx.builder[ctx.index] = *type;
+
+    CHECK_ERR(strtype(ctx, in));
+
+    if (!in.takeRParen()) {
+      return in.err("expected end of subtype definition");
     }
   } else {
-    return in.err("expected type description");
+    CHECK_ERR(strtype(ctx, in));
   }
 
   if (!in.takeRParen()) {
@@ -927,16 +971,16 @@ template<typename Ctx> MaybeResult<> strtype(Ctx& ctx, ParseInput& in) {
   if constexpr (parsingDecls<Ctx>) {
     ctx.typeDefs.push_back({name, start});
   }
+
   return Ok{};
 }
 
-// subtype ::= '(' 'sub' typeidx? strtype ')'
-//           | strtype
-// TODO
-
 // deftype ::= '(' 'rec' subtype* ')'
 //           | subtype
-// TODO:
+template<typename Ctx> MaybeResult<> deftype(Ctx& ctx, ParseInput& in) {
+  // TODO: rec
+  return subtype(ctx, in);
+}
 
 // global ::= '(' 'global' id? ('(' 'export' name ')')* gt:globaltype e:expr ')'
 //          | '(' 'global' id? '(' 'import' mod:name nm:name ')'
@@ -998,8 +1042,7 @@ MaybeResult<> modulefield(ParseDeclsCtx& ctx, ParseInput& in) {
   if (auto t = in.peek(); !t || t->isRParen()) {
     return {};
   }
-  // TODO: Replace strtype with deftype.
-  if (auto res = strtype(ctx, in)) {
+  if (auto res = deftype(ctx, in)) {
     CHECK_ERR(res);
     return Ok{};
   }
@@ -1140,7 +1183,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
   {
     TypeBuilder builder(decls.typeDefs.size());
     ParseTypeDefsCtx ctx(builder, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, input, decls.typeDefs, strtype));
+    CHECK_ERR(parseDefs(ctx, input, decls.typeDefs, deftype));
     auto built = builder.build();
     if (auto* err = built.getError()) {
       std::stringstream msg;
