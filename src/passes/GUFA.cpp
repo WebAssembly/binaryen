@@ -89,6 +89,15 @@ struct GUFAOptimizer
     if (!canRemoveStructurally(curr)) {
       return false;
     }
+
+    // We check for shallow effects here, since we may be able to remove |curr|
+    // itself but keep its children around - we don't want effects in the
+    // children to stop us from improving the code. Note that there are cases
+    // where the combined curr+children has fewer effects than curr itself,
+    // such as if curr is a block and the child branches to it, but in such
+    // cases we cannot remove curr anyhow (those cases are ruled out by
+    // canRemoveStructurally), so looking at non-shallow effects would never
+    // help us (and would be slower to run).
     return !ShallowEffectAnalyzer(getPassOptions(), *getModule(), curr)
               .hasUnremovableSideEffects();
   }
