@@ -3256,13 +3256,13 @@ Module['expandType'] = function(ty) {
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
-    'name': UTF8ToString(Module['_BinaryenFunctionGetName'](func)),
-    'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func)),
-    'base': UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func)),
-    'params': Module['_BinaryenFunctionGetParams'](func),
-    'results': Module['_BinaryenFunctionGetResults'](func),
-    'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
-    'body': Module['_BinaryenFunctionGetBody'](func)
+    'name': Module['Function']['getName'](func),
+    'module': Module['FunctionImport']['getModule'](func),
+    'base': Module['FunctionImport']['getBase'](func),
+    'params': Module['Function']['getParams'](func),
+    'results': Module['Function']['getResults'](func),
+    'vars': getAllNested(func, Module['Function']['getNumVars'], Module['Function']['getVar']),
+    'body': Module['Function']['getBody'](func)
   };
 };
 
@@ -4831,6 +4831,29 @@ Module['I31Get'] = makeExpressionWrapper({
 });
 
 // Function wrapper
+
+Module['FunctionImport'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Function['getModule'] = function(func) {
+    return UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func));
+  };
+  Function['getBase'] = function(func) {
+    return UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func));
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
+  Function.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Function;
+})();
 
 Module['Function'] = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
