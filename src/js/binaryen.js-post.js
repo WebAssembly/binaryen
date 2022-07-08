@@ -3343,12 +3343,24 @@ Module['getTagInfo'] = function(tag) {
   };
 };
 
+Module['export'] = {
+  'kind'(export_) {
+    return Module['_BinaryenExportGetKind'](export_);
+  },
+  'name'(export_) {
+    return UTF8ToString(Module['_BinaryenExportGetName'](export_));
+  },
+  'value'(export_) {
+    return UTF8ToString(Module['_BinaryenExportGetValue'](export_));
+  }
+}
+
 // Obtains information about an 'Export'
 Module['getExportInfo'] = function(export_) {
   return {
-    'kind': Module['_BinaryenExportGetKind'](export_),
-    'name': UTF8ToString(Module['_BinaryenExportGetName'](export_)),
-    'value': UTF8ToString(Module['_BinaryenExportGetValue'](export_))
+    'kind': Module['export']['kind'](export_),
+    'name': Module['export']['name'](export_),
+    'value': Module['export']['value'](export_)
   };
 };
 
