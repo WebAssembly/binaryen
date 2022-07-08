@@ -1688,13 +1688,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-impossible (param $x eqref) (param $y eqref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $ref-eq-possible (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.cast_static $struct
@@ -1705,6 +1699,35 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-eq-possible (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (ref.cast_static $struct
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.cast_static $array
+  ;; NOMNL-NEXT:     (local.get $y)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-eq-possible (param $x eqref) (param $y eqref)
+    ;; These casts are to types that are incompatible. However, it is possible
+    ;; they are both null, so we cannot optimize here.
+    (drop
+      (ref.eq
+        (ref.cast_static $struct
+          (local.get $x)
+        )
+        (ref.cast_static $array
+          (local.get $y)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-impossible (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1758,52 +1781,8 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast_static $A
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast_static $B
-  ;; CHECK-NEXT:      (local.get $y)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast_static $B
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast_static $A
-  ;; CHECK-NEXT:      (local.get $y)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-eq-impossible (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.eq
-  ;; NOMNL-NEXT:    (local.get $x)
-  ;; NOMNL-NEXT:    (local.get $y)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.eq
-  ;; NOMNL-NEXT:    (ref.cast_static $struct
-  ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.cast_static $array
-  ;; NOMNL-NEXT:     (local.get $y)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
@@ -1857,57 +1836,10 @@
   ;; NOMNL-NEXT:    (i32.const 0)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.eq
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.cast_static $A
-  ;; NOMNL-NEXT:      (local.get $x)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.cast_static $B
-  ;; NOMNL-NEXT:      (local.get $y)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.eq
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.cast_static $B
-  ;; NOMNL-NEXT:      (local.get $x)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.cast_static $A
-  ;; NOMNL-NEXT:      (local.get $y)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-eq-impossible (param $x eqref) (param $y eqref)
-    ;; These could be equal - we can't do anything here.
-    (drop
-      (ref.eq
-        (local.get $x)
-        (local.get $y)
-      )
-    )
-    ;; These casts are to types that are incompatible. However, it is possible
-    ;; they are both null, so we cannot optimize here.
-    (drop
-      (ref.eq
-        (ref.cast_static $struct
-          (local.get $x)
-        )
-        (ref.cast_static $array
-          (local.get $y)
-        )
-      )
-    )
-    ;; Casting one of them to non-null proves they cannot be equal, and the
-    ;; result must be 0.
+    ;; As above but cast one of them to non-null, which proves they cannot be
+    ;; equal, and the result must be 0.
     (drop
       (ref.eq
         (ref.cast_static $struct
@@ -1948,6 +1880,69 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $ref-eq-possible-b (param $x eqref) (param $y eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $A
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-eq-possible-b (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $A
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $y)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $A
+  ;; NOMNL-NEXT:      (local.get $y)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-eq-possible-b (param $x eqref) (param $y eqref)
     ;; As above but the casts are to things that are compatible, since B is a
     ;; subtype of A, so we cannot optimize.
     (drop
