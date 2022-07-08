@@ -225,4 +225,14 @@
       )
     )
   )
+
+  (func $string.is_usv_sequence (param $ref stringref)
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.is_usv_sequence
+          (local.get $ref)
+        )
+      )
+    )
+  )
 )
