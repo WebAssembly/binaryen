@@ -2995,6 +2995,11 @@ Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
                                         parseExpression(s[2]));
 }
 
+Expression* SExpressionWasmBuilder::makeStringEq(Element& s) {
+  return Builder(wasm).makeStringEq(parseExpression(s[1]),
+                                    parseExpression(s[2]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

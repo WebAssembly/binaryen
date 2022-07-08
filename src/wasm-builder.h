@@ -1027,6 +1027,13 @@ public:
     ret->finalize();
     return ret;
   }
+  StringEq* makeStringEq(Expression* left, Expression* right) {
+    auto* ret = wasm.allocator.alloc<StringEq>();
+    ret->left = left;
+    ret->right = right;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

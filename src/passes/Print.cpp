@@ -2275,6 +2275,7 @@ struct PrintExpressionContents
   void visitStringConcat(StringConcat* curr) {
     printMedium(o, "string.concat");
   }
+  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
 };
 
 // Prints an expression in s-expr format, including both the

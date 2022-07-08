@@ -7,11 +7,11 @@
 (module
   ;; CHECK:      (type $ref?|string|_=>_none (func (param stringref)))
 
+  ;; CHECK:      (type $ref?|string|_ref?|string|_=>_none (func (param stringref stringref)))
+
   ;; CHECK:      (type $ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
   ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (type $ref?|string|_ref?|string|_=>_none (func (param stringref stringref)))
 
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
@@ -201,6 +201,27 @@
       (string.concat
         (local.get $a)
         (local.get $b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $string.eq (param $a stringref) (param $b stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.eq
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.eq (param $a stringref) (param $b stringref)
+    (drop
+      (i32.eqz ;; validate the output is an i32
+        (string.eq
+          (local.get $a)
+          (local.get $b)
+        )
       )
     )
   )
