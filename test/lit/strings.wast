@@ -225,4 +225,23 @@
       )
     )
   )
+
+  ;; CHECK:      (func $string.is_usv_sequence (param $ref stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.is_usv_sequence
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.is_usv_sequence (param $ref stringref)
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.is_usv_sequence
+          (local.get $ref)
+        )
+      )
+    )
+  )
 )
