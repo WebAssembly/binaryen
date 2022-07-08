@@ -314,6 +314,7 @@ struct ParseDeclsCtx {
 
   // The module element definitions we are parsing in this phase.
   std::vector<DefPos> typeDefs;
+  std::vector<DefPos> subtypeDefs;
   std::vector<DefPos> globalDefs;
 
   // Counters used for generating names for module elements.
@@ -350,7 +351,7 @@ struct ParseTypeDefsCtx {
   // Parse the names of types and fields as we go.
   std::vector<TypeNames> names;
 
-  // The index of the type definition we are parsing.
+  // The index of the subtype definition we are parsing.
   Index index = 0;
 
   ParseTypeDefsCtx(TypeBuilder& builder, const IndexMap& typeIndices)
@@ -930,7 +931,7 @@ template<typename Ctx> Result<> strtype(Ctx& ctx, ParseInput& in) {
 // subtype ::= '(' 'type' id? '(' 'sub' typeidx? strtype ')' ')'
 //           | '(' 'type' id? strtype ')'
 template<typename Ctx> MaybeResult<> subtype(Ctx& ctx, ParseInput& in) {
-  [[maybe_unused]] auto start = in.getPos();
+  [[maybe_unused]] auto pos = in.getPos();
 
   if (!in.takeSExprStart("type"sv)) {
     return {};
@@ -969,7 +970,10 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx, ParseInput& in) {
   }
 
   if constexpr (parsingDecls<Ctx>) {
-    ctx.typeDefs.push_back({name, start});
+    ctx.subtypeDefs.push_back({name, pos});
+  }
+  if constexpr (parsingTypeDefs<Ctx>) {
+    ++ctx.index;
   }
 
   return Ok{};
@@ -978,8 +982,35 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx, ParseInput& in) {
 // deftype ::= '(' 'rec' subtype* ')'
 //           | subtype
 template<typename Ctx> MaybeResult<> deftype(Ctx& ctx, ParseInput& in) {
-  // TODO: rec
-  return subtype(ctx, in);
+  [[maybe_unused]] auto pos = in.getPos();
+
+  if (in.takeSExprStart("rec"sv)) {
+    [[maybe_unused]] size_t startIndex = 0;
+    if constexpr (parsingTypeDefs<Ctx>) {
+      startIndex = ctx.index;
+    }
+    size_t groupLen = 0;
+    while (auto type = subtype(ctx, in)) {
+      CHECK_ERR(type);
+      ++groupLen;
+    }
+    if (!in.takeRParen()) {
+      return in.err("expected type definition or end of recursion group");
+    }
+    if constexpr (parsingTypeDefs<Ctx>) {
+      ctx.builder.createRecGroup(startIndex, groupLen);
+    }
+  } else if (auto type = subtype(ctx, in)) {
+    CHECK_ERR(type);
+  } else {
+    return {};
+  }
+
+  if constexpr (parsingDecls<Ctx>) {
+    ctx.typeDefs.push_back({{}, pos});
+  }
+
+  return Ok{};
 }
 
 // global ::= '(' 'global' id? ('(' 'export' name ')')* gt:globaltype e:expr ')'
@@ -1175,15 +1206,18 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     }
   }
 
-  auto typeIndices = createIndexMap(input, decls.typeDefs);
+  auto typeIndices = createIndexMap(input, decls.subtypeDefs);
   CHECK_ERR(typeIndices);
 
   // Parse type definitions.
   std::vector<HeapType> types;
   {
-    TypeBuilder builder(decls.typeDefs.size());
+    TypeBuilder builder(decls.subtypeDefs.size());
     ParseTypeDefsCtx ctx(builder, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, input, decls.typeDefs, deftype));
+    for (auto& typeDef : decls.typeDefs) {
+      ParseInput in(input, typeDef.pos);
+      CHECK_ERR(deftype(ctx, in));
+    }
     auto built = builder.build();
     if (auto* err = built.getError()) {
       std::stringstream msg;
