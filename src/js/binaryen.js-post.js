@@ -709,6 +709,23 @@ function wrapModule(module, self = {}) {
       'wait64'(ptr, expected, timeout) {
         return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
       }
+    },
+    'module'() {
+      return UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module));
+    },
+    'base'() {
+      return UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module));
+    },
+    'initial'() {
+      return Module['_BinaryenMemoryGetInitial'](module);
+    },
+    'shared'() {
+      return Boolean(Module['_BinaryenMemoryIsShared'](module));
+    },
+    'max'() {
+      if (Module['_BinaryenMemoryHasMax'](module)) {
+        return Module['_BinaryenMemoryGetMax'](module);
+      }
     }
   }
 
@@ -2505,13 +2522,14 @@ function wrapModule(module, self = {}) {
   };
   self['getMemoryInfo'] = function() {
     var memoryInfo = {
-      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
-      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
-      'initial': Module['_BinaryenMemoryGetInitial'](module),
-      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
+      'module': self['memory']['module'](),
+      'base': self['memory']['base'](),
+      'initial': self['memory']['initial'](),
+      'shared': self['memory']['shared']()
     };
-    if (Module['_BinaryenMemoryHasMax'](module)) {
-      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+    var max = self['memory']['max']();
+    if (max) {
+      memoryInfo['max'] = max;
     }
     return memoryInfo;
   };
