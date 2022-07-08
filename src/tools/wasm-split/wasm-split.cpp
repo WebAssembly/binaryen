@@ -149,6 +149,34 @@ ProfileData readProfile(const std::string& file) {
   return {hash, timestamps};
 }
 
+void getFunctionsToKeepAndSplit(Module& wasm,
+                                const uint64_t& wasmHash,
+                                const std::string& profileFile,
+                                std::set<Name>& keepFuncs,
+                                std::set<Name>& splitFuncs) {
+  ProfileData profile = readProfile(profileFile);
+  if (profile.hash != wasmHash) {
+    Fatal() << "error: checksum in profile does not match module checksum. "
+            << "The split module must be the original module that was "
+            << "instrumented to generate the profile.";
+  }
+
+  size_t i = 0;
+  ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+    if (i >= profile.timestamps.size()) {
+      Fatal() << "Unexpected end of profile data";
+    }
+    if (profile.timestamps[i++] > 0) {
+      keepFuncs.insert(func->name);
+    } else {
+      splitFuncs.insert(func->name);
+    }
+  });
+  if (i != profile.timestamps.size()) {
+    Fatal() << "Unexpected extra profile data";
+  }
+}
+
 void writeSymbolMap(Module& wasm, std::string filename) {
   PassOptions options;
   options.arguments["symbolmap"] = filename;
@@ -175,24 +203,9 @@ void splitModule(const WasmSplitOptions& options) {
   if (options.profileFile.size()) {
     // Use the profile to set `keepFuncs`.
     uint64_t hash = hashFile(options.inputFiles[0]);
-    ProfileData profile = readProfile(options.profileFile);
-    if (profile.hash != hash) {
-      Fatal() << "error: checksum in profile does not match module checksum. "
-              << "The split module must be the original module that was "
-              << "instrumented to generate the profile.";
-    }
-    size_t i = 0;
-    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-      if (i >= profile.timestamps.size()) {
-        Fatal() << "Unexpected end of profile data";
-      }
-      if (profile.timestamps[i++] > 0) {
-        keepFuncs.insert(func->name);
-      }
-    });
-    if (i != profile.timestamps.size()) {
-      Fatal() << "Unexpected extra profile data";
-    }
+    std::set<Name> splitFuncs;
+    getFunctionsToKeepAndSplit(
+      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
   } else if (options.keepFuncs.size()) {
     // Use the explicitly provided `keepFuncs`.
     for (auto& func : options.keepFuncs) {
@@ -385,10 +398,11 @@ void mergeProfiles(const WasmSplitOptions& options) {
   buffer.writeTo(out.getStream());
 }
 
+// todo: replace with better way converting to readable fn name
 std::string replaceHexNumbersWithChar(std::string input) {
   std::string output;
   for (size_t i = 0; i < input.length(); i++) {
-    if (input[i] == '\\') {
+    if ((input[i] == '\\') && (i + 2 < input.length())) {
       std::string byte = input.substr(i + 1, 2);
       i += 2;
       char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
@@ -411,27 +425,8 @@ void printReadableProfile(const WasmSplitOptions& options) {
   if (options.profileFile.size()) {
     // Use the profile to set `keepFuncs`.
     uint64_t hash = hashFile(options.inputFiles[0]);
-    ProfileData profile = readProfile(options.profileFile);
-    if (profile.hash != hash) {
-      Fatal() << "error: checksum in profile does not match module checksum. "
-              << "The split module must be the original module that was "
-              << "instrumented to generate the profile.";
-    }
-
-    size_t i = 0;
-    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-      if (i >= profile.timestamps.size()) {
-        Fatal() << "Unexpected end of profile data";
-      }
-      if (profile.timestamps[i++] > 0) {
-        keepFuncs.insert(func->name);
-      } else {
-        splitFuncs.insert(func->name);
-      }
-    });
-    if (i != profile.timestamps.size()) {
-      Fatal() << "Unexpected extra profile data";
-    }
+    getFunctionsToKeepAndSplit(
+      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
   }
 
   auto printFnSet = [&](auto funcs, std::string prefix) {
