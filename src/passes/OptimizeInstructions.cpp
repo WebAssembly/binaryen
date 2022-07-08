@@ -1519,7 +1519,7 @@ struct OptimizeInstructions
 
     // Equality does not depend on the type, so casts may be removable.
     //
-    // This is safe to do first because nothing later down cares about the type,
+    // This is safe to do first because nothing farther down cares about the type,
     // and we consume the two input references, so removing a cast could not
     // help our parents (see "notes on removing casts").
     skipCast(curr->left, Type::eqref);
