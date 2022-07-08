@@ -746,6 +746,7 @@ private:
       // traps when an input is null.
       parent.implicitTrap = true;
     }
+    void visitStringEq(StringEq* curr) {}
   };
 
 public:

@@ -3141,12 +3141,20 @@ switch (op[0]) {
                 }
               }
               case 'e': {
-                switch (op[17]) {
-                  case '1':
-                    if (strcmp(op, "string.encode_wtf16") == 0) { return makeStringEncode(s, StringEncodeWTF16); }
-                    goto parse_error;
-                  case '8':
-                    if (strcmp(op, "string.encode_wtf8") == 0) { return makeStringEncode(s, StringEncodeWTF8); }
+                switch (op[8]) {
+                  case 'n': {
+                    switch (op[17]) {
+                      case '1':
+                        if (strcmp(op, "string.encode_wtf16") == 0) { return makeStringEncode(s, StringEncodeWTF16); }
+                        goto parse_error;
+                      case '8':
+                        if (strcmp(op, "string.encode_wtf8") == 0) { return makeStringEncode(s, StringEncodeWTF8); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'q':
+                    if (strcmp(op, "string.eq") == 0) { return makeStringEq(s); }
                     goto parse_error;
                   default: goto parse_error;
                 }

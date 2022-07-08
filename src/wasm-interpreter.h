@@ -1970,6 +1970,9 @@ public:
   Flow visitStringConcat(StringConcat* curr) {
     WASM_UNREACHABLE("unimplemented string.concat");
   }
+  Flow visitStringEq(StringEq* curr) {
+    WASM_UNREACHABLE("unimplemented string.eq");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

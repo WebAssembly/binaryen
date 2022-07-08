@@ -749,6 +749,13 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringConcat);
     break;
   }
+  case Expression::Id::StringEqId: {
+    DELEGATE_START(StringEq);
+    DELEGATE_FIELD_CHILD(StringEq, right);
+    DELEGATE_FIELD_CHILD(StringEq, left);
+    DELEGATE_END(StringEq);
+    break;
+  }
 }
 
 #undef DELEGATE_ID
