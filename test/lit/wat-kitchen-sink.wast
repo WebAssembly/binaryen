@@ -8,12 +8,11 @@
 
  ;; CHECK:      (type $void (func_subtype func))
  (type $void (func))
-
  ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
  (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
                    (result anyref (ref func))))
 
- (sub (type $s0 (struct)))
+ (type $s0 (sub (struct)))
  (type $s1 (struct (field)))
  ;; CHECK:      (type $s2 (struct_subtype (field i32) data))
  (type $s2 (struct i32))
@@ -39,8 +38,11 @@
  ;; CHECK:      (type $a3 (array_subtype (mut f64) data))
  (type $a3 (array (field $x (mut f64))))
 
- (sub 0 (type $subvoid (func)))
- (sub $many (type $submany (func (param i32 i64 f32 f64) (result anyref (ref func)))))
+ ;; CHECK:      (type $subvoid (func_subtype $void))
+ (type $subvoid (sub 0 (func)))
+
+ ;; CHECK:      (type $submany (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) $many))
+ (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
  ;; globals
  (global $g1 (export "g1") (export "g1.1") (import "mod" "g1") i32)
@@ -66,10 +68,6 @@
  (global $sub0 (import "mod" "sub0") (mut (ref $subvoid)))
  (global $sub1 (import "mod" "sub1") (mut (ref $submany)))
 )
-;; CHECK:      (type $subvoid (func_subtype $void))
-
-;; CHECK:      (type $submany (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) $many))
-
 ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
 ;; CHECK:      (import "mod" "g2" (global $g2 (mut i64)))
