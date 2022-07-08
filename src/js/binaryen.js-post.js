@@ -3296,17 +3296,16 @@ Module['getTableInfo'] = function(table) {
 };
 
 Module['getElementSegmentInfo'] = function(segment) {
-  var segmentLength = Module['_BinaryenElementSegmentGetLength'](segment);
+  var segmentLength = Module['ElementSegment']['getLength'](segment);
   var names = new Array(segmentLength);
   for (let j = 0; j !== segmentLength; ++j) {
-    var ptr = Module['_BinaryenElementSegmentGetData'](segment, j);
-    names[j] = UTF8ToString(ptr);
+    names[j] = Module['ElementSegment']['getData'](segment, j);
   }
 
   return {
-    'name': UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment)),
-    'table': UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment)),
-    'offset': Module['_BinaryenElementSegmentGetOffset'](segment),
+    'name': Module['ElementSegment']['getName'](segment),
+    'table': Module['ElementSegment']['getTable'](segment),
+    'offset': Module['ElementSegment']['getOffset'](segment),
     'data': names
   }
 }
@@ -4796,6 +4795,39 @@ Module['I31Get'] = makeExpressionWrapper({
     Module['_BinaryenI31GetSetSigned'](expr, isSigned);
   }
 });
+
+// ElementSegment wrapper
+Module['ElementSegment'] = (() => {
+  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  function Function(func) {
+    if (!(this instanceof Function)) {
+      if (!func) return null;
+      return new Function(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Function['getLength'] = function(segment) {
+    Module['_BinaryenElementSegmentGetLength'](segment);
+  };
+  Function['getData'] = function(segment, index) {
+    return UTF8ToString(Module['_BinaryenElementSegmentGetData'](segment, index));
+  };
+  Function['getName'] = function(segment) {
+    return UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment));
+  };
+  Function['getTable'] = function(segment) {
+    return UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment));
+  };
+  Function['getOffset'] = function(segment) {
+    return Module['_BinaryenElementSegmentGetOffset'](segment);
+  };
+  deriveWrapperInstanceMembers(Function.prototype, Function);
+  Function.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Function;
+})();
 
 // Export wrapper
 Module['Export'] = (() => {
