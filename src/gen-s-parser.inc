@@ -3159,6 +3159,9 @@ switch (op[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'i':
+                if (strcmp(op, "string.is_usv_sequence") == 0) { return makeStringMeasure(s, StringMeasureIsUSV); }
+                goto parse_error;
               case 'm': {
                 switch (op[18]) {
                   case '1':

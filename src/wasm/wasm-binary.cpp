@@ -7191,7 +7191,7 @@ bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
     }
   } else if (code == BinaryConsts::StringMeasureWTF16) {
     op = StringMeasureWTF16;
-  } else if (code == BinaryConsts::StringMeasureIsUSV) {
+  } else if (code == BinaryConsts::StringIsUSV) {
     op = StringMeasureIsUSV;
   } else {
     return false;
