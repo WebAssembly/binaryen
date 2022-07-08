@@ -685,8 +685,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 10 + visit(curr->left) + visit(curr->right);
   }
   CostType visitStringEq(StringEq* curr) {
-    // This assumes strings are interned in the engine.
-    return 1 + visit(curr->left) + visit(curr->right);
+    // "3" is chosen since strings might or might not be interned in the engine.
+    return 3 + visit(curr->left) + visit(curr->right);
   }
 
 private:
