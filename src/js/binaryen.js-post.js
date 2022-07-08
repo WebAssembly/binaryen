@@ -4808,7 +4808,7 @@ Module['ElementSegment'] = (() => {
     this[thisPtr] = func;
   }
   Function['getLength'] = function(segment) {
-    Module['_BinaryenElementSegmentGetLength'](segment);
+    return Module['_BinaryenElementSegmentGetLength'](segment);
   };
   Function['getData'] = function(segment, index) {
     return UTF8ToString(Module['_BinaryenElementSegmentGetData'](segment, index));
