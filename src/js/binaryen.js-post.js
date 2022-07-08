@@ -3324,9 +3324,9 @@ Module['getTagInfo'] = function(tag) {
 // Obtains information about an 'Export'
 Module['getExportInfo'] = function(export_) {
   return {
-    'kind': Module['export']['getKind'](export_),
-    'name': Module['export']['getName'](export_),
-    'value': Module['export']['getValue'](export_)
+    'kind': Module['Export']['getKind'](export_),
+    'name': Module['Export']['getName'](export_),
+    'value': Module['Export']['getValue'](export_)
   };
 };
 
