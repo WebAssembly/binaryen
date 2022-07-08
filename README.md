@@ -563,7 +563,7 @@ The `check.py` script supports some options:
    `./check.py` should update those.
    
 Note that we are trying to gradually port the legacy wasm-opt tests to use `lit` and `filecheck` as we modify them.
-For passes tests that output wast, this can be done automatically with scripts/port_passes_tests_to_lit.py and for non-passes tests that output wast, see 
+For `passes` tests that output wast, this can be done automatically with `scripts/port_passes_tests_to_lit.py` and for non-`passes` tests that output wast, see 
 https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a simple manual port.
 
 ### Setting up dependencies
