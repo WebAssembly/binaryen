@@ -1500,24 +1500,16 @@ struct OptimizeInstructions
       // Leave this for DCE.
       return;
     }
-    auto leftIsHeapSubtype = HeapType::isSubType(leftType, rightType);
-    auto rightIsHeapSubtype = HeapType::isSubType(rightType, leftType);
-    if (!leftIsHeapSubtype && !rightIsHeapSubtype) {
+    auto leftHeapType = leftType.getHeapType();
+    auto rightHeapType = rightType.getHeapType();
+    auto leftIsHeapSubtype = HeapType::isSubType(leftHeapType, rightHeapType);
+    auto rightIsHeapSubtype = HeapType::isSubType(rightHeapType, leftHeapType);
+    if (!leftIsHeapSubtype && !rightIsHeapSubtype &&
+        (leftType.isNonNullable() || rightType.isNonNullable())) {
       // The heap types have no intersection, so the only thing that can
-      // possibly appear on both sides is null.
-      if (leftType.isNullable() && rightType.isNullable()) {
-        // A null is in fact possible. Replace a == b with (a == null) &&
-        // (b == null). That is slightly larger, but more optimizable XXX
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeBinary(
-          AndInt32,
-          builder.makeRefIs(RefIsNull, curr->left),
-          builder.makeRefIs(RefIsNull, curr->right)
-        ));
-        return;
-      }
-
-      // A null is not possible, so this comparison will always be 0.
+      // possibly appear on both sides is null, but one of the two is non-
+      // nullable, which rules that out. So there is no way that the same
+      // reference can appear on both sides.
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
       replaceCurrent(getDroppedChildrenAndAppend(
