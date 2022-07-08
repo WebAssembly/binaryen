@@ -3266,15 +3266,36 @@ Module['getFunctionInfo'] = function(func) {
   };
 };
 
+Module['global'] = {
+  'name'(global) {
+    return UTF8ToString(Module['_BinaryenGlobalGetName'](global));
+  },
+  'module'(global) {
+    return UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global));
+  },
+  'base'(global) {
+    return UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global));
+  },
+  'type'(global) {
+    return Module['_BinaryenGlobalGetType'](global);
+  },
+  'mutable'(global) {
+    return Boolean(Module['_BinaryenGlobalIsMutable'](global));
+  },
+  'init'(global) {
+    return Module['_BinaryenGlobalGetInitExpr'](global);
+  }
+};
+
 // Obtains information about a 'Global'
 Module['getGlobalInfo'] = function(global) {
   return {
-    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](global)),
-    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global)),
-    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global)),
-    'type': Module['_BinaryenGlobalGetType'](global),
-    'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](global)),
-    'init': Module['_BinaryenGlobalGetInitExpr'](global)
+    'name': Module['global']['name'](global),
+    'module': Module['global']['module'](global),
+    'base': Module['global']['base'](global),
+    'type': Module['global']['type'](global),
+    'mutable': Module['global']['mutable'](global),
+    'init': Module['global']['init'](global)
   };
 };
 
