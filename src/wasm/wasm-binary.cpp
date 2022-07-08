@@ -7237,8 +7237,7 @@ bool WasmBinaryBuilder::maybeVisitStringConcat(Expression*& out,
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out,
-                                           uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::StringEq) {
     return false;
   }
