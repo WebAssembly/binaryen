@@ -11,6 +11,8 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $ref?|string|_ref?|string|_=>_none (func (param stringref stringref)))
+
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
 
@@ -182,6 +184,23 @@
       (string.encode_wtf16
         (local.get $ref)
         (i32.const 30)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $string.concat (param $a stringref) (param $b stringref)
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (string.concat
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.concat (param $a stringref) (param $b stringref)
+    (local.set $a ;; validate the output is a stringref
+      (string.concat
+        (local.get $a)
+        (local.get $b)
       )
     )
   )

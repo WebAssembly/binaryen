@@ -2300,6 +2300,10 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringConcat(StringConcat* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConcat);
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

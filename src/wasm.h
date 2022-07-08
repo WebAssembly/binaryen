@@ -701,6 +701,7 @@ public:
     StringConstId,
     StringMeasureId,
     StringEncodeId,
+    StringConcatId,
     NumExpressionIds
   };
   Id _id;
@@ -1710,6 +1711,16 @@ public:
 
   Expression* ref;
   Expression* ptr;
+
+  void finalize();
+};
+
+class StringConcat : public SpecificExpression<Expression::StringConcatId> {
+public:
+  StringConcat(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
 
   void finalize();
 };

@@ -689,6 +689,10 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
+  void visitStringConcat(StringConcat* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
 
   // TODO: Model which throws can go to which catches. For now, anything thrown
   //       is sent to the location of that tag, and any catch of that tag can

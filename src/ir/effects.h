@@ -742,6 +742,10 @@ private:
       // traps when ref is null or we write out of bounds.
       parent.implicitTrap = true;
     }
+    void visitStringConcat(StringConcat* curr) {
+      // traps when an input is null.
+      parent.implicitTrap = true;
+    }
   };
 
 public:

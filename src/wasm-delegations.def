@@ -89,5 +89,6 @@ DELEGATE(StringNew);
 DELEGATE(StringConst);
 DELEGATE(StringMeasure);
 DELEGATE(StringEncode);
+DELEGATE(StringConcat);
 
 #undef DELEGATE
