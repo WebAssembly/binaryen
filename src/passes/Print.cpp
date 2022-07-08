@@ -2253,6 +2253,9 @@ struct PrintExpressionContents
       case StringMeasureWTF16:
         printMedium(o, "string.measure_wtf16");
         break;
+      case StringMeasureIsUSV:
+        printMedium(o, "string.is_usv_sequence");
+        break;
       default:
         WASM_UNREACHABLE("invalid string.measure*");
     }

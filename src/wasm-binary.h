@@ -1146,6 +1146,7 @@ enum ASTNodes {
   StringEncodeWTF16 = 0x87,
   StringConcat = 0x88,
   StringEq = 0x89,
+  StringIsUSV = 0x8a,
 };
 
 enum MemoryAccess {
