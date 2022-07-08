@@ -4,16 +4,24 @@
 
 (module $parse
  ;; types
- ;; CHECK:      (type $s0 (struct_subtype  data))
-
- ;; CHECK:      (type $void (func_subtype func))
- (type $void (func))
+ (rec
+   ;; CHECK:      (type $void (func_subtype func))
+   (type $void (func))
+ )
  ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
  (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
                    (result anyref (ref func))))
 
- (type $s0 (sub (struct)))
- (type $s1 (struct (field)))
+ (rec
+  ;; CHECK:      (rec 
+  ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
+  (type $s0 (sub (struct)))
+  ;; CHECK:       (type $s1 (struct_subtype  data))
+  (type $s1 (struct (field)))
+ )
+
+ (rec)
+
  ;; CHECK:      (type $s2 (struct_subtype (field i32) data))
  (type $s2 (struct i32))
  ;; CHECK:      (type $s3 (struct_subtype (field i64) data))
@@ -78,7 +86,7 @@
 
 ;; CHECK:      (import "mod" "s0" (global $s0 (mut (ref $s0))))
 
-;; CHECK:      (import "mod" "s1" (global $s1 (mut (ref $s0))))
+;; CHECK:      (import "mod" "s1" (global $s1 (mut (ref $s1))))
 
 ;; CHECK:      (import "mod" "s2" (global $s2 (mut (ref $s2))))
 
