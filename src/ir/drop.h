@@ -17,6 +17,7 @@
 #ifndef wasm_ir_drop_h
 #define wasm_ir_drop_h
 
+#include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/iteration.h"
 #include "wasm-builder.h"
@@ -99,7 +100,15 @@ getDroppedUnconditionalChildrenAndAppend(Expression* curr,
                                          Module& wasm,
                                          const PassOptions& options,
                                          Expression* last) {
-  if (curr->is<If>() || curr->is<Try>()) {
+  ShallowEffectAnalyzer effects(options, wasm, curr);
+  // Ignore a trap, as the unreachable replacement would trap too.
+  if (last->type == Type::unreachable) {
+    effects.trap = false;
+  }
+
+  if (effects.hasUnremovableSideEffects() || curr->is<If>() ||
+      curr->is<Try>() || curr->is<Pop>() ||
+      BranchUtils::getDefinedName(curr).is()) {
     Builder builder(wasm);
     return builder.makeSequence(builder.makeDrop(curr), last);
   }

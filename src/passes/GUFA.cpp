@@ -69,52 +69,6 @@ struct GUFAOptimizer
 
   bool optimized = false;
 
-  // Check if removing something (but not its children - just the node itself)
-  // would be ok structurally - whether the IR would still validate.
-  bool canRemoveStructurally(Expression* curr) {
-    // We can remove almost anything, but not a branch target, as we still need
-    // the target for the branches to it to validate.
-    if (BranchUtils::getDefinedName(curr).is()) {
-      return false;
-    }
-
-    // Pops are structurally necessary in catch bodies, and removing a try could
-    // leave a pop without a proper parent.
-    return !curr->is<Pop>() && !curr->is<Try>();
-  }
-
-  // Whether we can remove something (but not its children) without changing
-  // observable behavior or breaking validation.
-  bool canRemove(Expression* curr) {
-    if (!canRemoveStructurally(curr)) {
-      return false;
-    }
-
-    // We check for shallow effects here, since we may be able to remove |curr|
-    // itself but keep its children around - we don't want effects in the
-    // children to stop us from improving the code. Note that there are cases
-    // where the combined curr+children has fewer effects than curr itself,
-    // such as if curr is a block and the child branches to it, but in such
-    // cases we cannot remove curr anyhow (those cases are ruled out by
-    // canRemoveStructurally), so looking at non-shallow effects would never
-    // help us (and would be slower to run).
-    return !ShallowEffectAnalyzer(getPassOptions(), *getModule(), curr)
-              .hasUnremovableSideEffects();
-  }
-
-  // Whether we can replace something (but not its children, we can keep them
-  // with drops) with an unreachable without changing observable behavior or
-  // breaking validation.
-  bool canReplaceWithUnreachable(Expression* curr) {
-    if (!canRemoveStructurally(curr)) {
-      return false;
-    }
-    ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
-    // Ignore a trap, as the unreachable replacement would trap too.
-    effects.trap = false;
-    return !effects.hasUnremovableSideEffects();
-  }
-
   void visitExpression(Expression* curr) {
     // Skip things we can't improve in any way.
     auto type = curr->type;
@@ -143,23 +97,11 @@ struct GUFAOptimizer
     auto& wasm = *getModule();
     Builder builder(wasm);
 
-    auto replaceWithUnreachable = [&]() {
-      if (canReplaceWithUnreachable(curr)) {
-        replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
-          curr, wasm, options, builder.makeUnreachable()));
-      } else {
-        // We can't remove this, but we can at least put an unreachable
-        // right after it.
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                            builder.makeUnreachable()));
-      }
-      optimized = true;
-    };
-
     if (contents.getType() == Type::unreachable) {
       // This cannot contain any possible value at all. It must be unreachable
       // code.
-      replaceWithUnreachable();
+      replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
+        curr, wasm, options, builder.makeUnreachable()));
       return;
     }
 
@@ -196,18 +138,8 @@ struct GUFAOptimizer
     //       ref.as etc. Once it does those we could assert on the type being
     //       valid here.
     if (Type::isSubType(c->type, curr->type)) {
-      if (canRemove(curr)) {
-        replaceCurrent(
-          getDroppedUnconditionalChildrenAndAppend(curr, wasm, options, c));
-      } else {
-        // We can't remove this, but we can at least drop it and put the
-        // optimized value right after it.
-        // TODO: Should this only be done when not optimizing for size? In
-        //       general this may increase code size unless later passes can
-        //       remove the dropped |curr|, or unless the propagated constant is
-        //       helpful in other opts.
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr), c));
-      }
+      replaceCurrent(
+        getDroppedUnconditionalChildrenAndAppend(curr, wasm, options, c));
       optimized = true;
     } else {
       // The type is not compatible: we cannot place |c| in this location, even
@@ -216,7 +148,8 @@ struct GUFAOptimizer
         // The type is not compatible and this is a simple constant expression
         // like a ref.func. That means this code must be unreachable. (See below
         // for the case of a non-constant.)
-        replaceWithUnreachable();
+        replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
+          curr, wasm, options, builder.makeUnreachable()));
       } else {
         // This is not a constant expression, but we are certain it is the right
         // value. Atm the only such case we handle is a global.get of an
