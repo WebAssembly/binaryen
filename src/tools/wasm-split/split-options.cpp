@@ -296,9 +296,7 @@ WasmSplitOptions::WasmSplitOptions()
          "Un-escape function names (in print-profile output)",
          WasmSplitOption,
          Options::Arguments::Zero,
-        [&](Options* o, const std::string& argument) {
-            unescape = true;
-        })
+         [&](Options* o, const std::string& argument) { unescape = true; })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "
