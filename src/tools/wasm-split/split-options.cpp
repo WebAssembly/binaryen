@@ -291,6 +291,14 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Instrument, Mode::MergeProfiles},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { output = argument; })
+    .add("--unescape",
+         "-u",
+         "Un-escape function names (in print-profile output)",
+         WasmSplitOption,
+         Options::Arguments::Zero,
+        [&](Options* o, const std::string& argument) {
+            unescape = true;
+        })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "

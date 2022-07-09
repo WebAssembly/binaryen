@@ -152,7 +152,7 @@ ProfileData readProfile(const std::string& file) {
 }
 
 void getFunctionsToKeepAndSplit(Module& wasm,
-                                const uint64_t& wasmHash,
+                                uint64_t wasmHash,
                                 const std::string& profileFile,
                                 std::set<Name>& keepFuncs,
                                 std::set<Name>& splitFuncs) {
@@ -400,18 +400,17 @@ void mergeProfiles(const WasmSplitOptions& options) {
   buffer.writeTo(out.getStream());
 }
 
-// todo: replace with better way converting to readable fn name
-std::string replaceHexNumbersWithChar(std::string input) {
+std::string unescape(std::string input) {
   std::string output;
   for (size_t i = 0; i < input.length(); i++) {
-    if ((input[i] == '\\') && (i + 2 < input.length())) {
+    if ((input[i] == '\\') && (i + 2 < input.length()) &&
+        isxdigit(input[i + 1]) && isxdigit(input[i + 2])) {
       std::string byte = input.substr(i + 1, 2);
       i += 2;
       char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
       output.push_back(chr);
     } else {
-      char chr = input[i];
-      output.push_back(chr);
+      output.push_back(input[i]);
     }
   }
   return output;
@@ -424,8 +423,9 @@ void checkExists(const std::string& path) {
 }
 
 void printReadableProfile(const WasmSplitOptions& options) {
+  const std::string wasmFile(options.inputFiles[0]);
   checkExists(options.profileFile);
-  checkExists(options.inputFiles[0]);
+  checkExists(wasmFile);
 
   Module wasm;
   parseInput(wasm, options);
@@ -433,13 +433,14 @@ void printReadableProfile(const WasmSplitOptions& options) {
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
 
-  uint64_t hash = hashFile(options.inputFiles[0]);
+  uint64_t hash = hashFile(wasmFile);
   getFunctionsToKeepAndSplit(
     wasm, hash, options.profileFile, keepFuncs, splitFuncs);
 
   auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
-      std::cout << prefix << " " << replaceHexNumbersWithChar(it->c_str())
+      std::cout << prefix << " "
+                << (options.unescape ? unescape(it->c_str()) : it->c_str())
                 << std::endl;
     }
   };

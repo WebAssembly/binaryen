@@ -40,6 +40,7 @@ struct WasmSplitOptions : ToolOptions {
   };
   StorageKind storageKind = StorageKind::InGlobals;
 
+  bool unescape = false;
   bool verbose = false;
   bool emitBinary = true;
   bool symbolMap = false;
