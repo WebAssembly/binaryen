@@ -116,13 +116,13 @@ getDroppedUnconditionalChildrenAndAppend(Expression* curr,
     effects.trap = false;
   }
 
-   // We cannot remove
-   // 1. Expressions with unremovable side effects
-   // 2. if: 'if's contains conditional expressions
-   // 3. try: Removing a try could leave a pop without a proper parent
-   // 4. pop: Pops are struturally necessary in catch bodies
-   // 5. Branch targets: We will need the target for the branches to it to
-   //                    validate.
+  // We cannot remove
+  // 1. Expressions with unremovable side effects
+  // 2. if: 'if's contains conditional expressions
+  // 3. try: Removing a try could leave a pop without a proper parent
+  // 4. pop: Pops are struturally necessary in catch bodies
+  // 5. Branch targets: We will need the target for the branches to it to
+  //                    validate.
   if (effects.hasUnremovableSideEffects() || curr->is<If>() ||
       curr->is<Try>() || curr->is<Pop>() ||
       BranchUtils::getDefinedName(curr).is()) {
