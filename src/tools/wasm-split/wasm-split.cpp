@@ -17,6 +17,8 @@
 // wasm-split: Split a module in two or instrument a module to inform future
 // splitting.
 
+#include <filesystem>
+
 #include "ir/module-splitting.h"
 #include "ir/names.h"
 #include "support/file.h"
@@ -415,19 +417,25 @@ std::string replaceHexNumbersWithChar(std::string input) {
   return output;
 }
 
+void checkExists(const std::string& path) {
+  if (!std::filesystem::exists(path)) {
+    Fatal() << "File not found: " << path;
+  }
+}
+
 void printReadableProfile(const WasmSplitOptions& options) {
+  checkExists(options.profileFile);
+  checkExists(options.inputFiles[0]);
+
   Module wasm;
   parseInput(wasm, options);
 
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
 
-  if (options.profileFile.size()) {
-    // Use the profile to set `keepFuncs`.
-    uint64_t hash = hashFile(options.inputFiles[0]);
-    getFunctionsToKeepAndSplit(
-      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
-  }
+  uint64_t hash = hashFile(options.inputFiles[0]);
+  getFunctionsToKeepAndSplit(
+    wasm, hash, options.profileFile, keepFuncs, splitFuncs);
 
   auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
