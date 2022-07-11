@@ -55,8 +55,8 @@
     ;; Both arms of the select have identical values, 1. Inlining +
     ;; OptimizeInstructions could of course discover that in this case, but
     ;; GUFA can do so even without inlining. As a result the select will be
-    ;; dropped (due to the call which may have effects, we keep it), and after
-    ;; the select we emit the constant 1 for the value.
+    ;; dropped (due to the call which may have effects, we keep it), and at the
+    ;; end we emit the constant 1 for the value.
     (drop
       (select
         (call $foo)
