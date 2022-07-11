@@ -347,7 +347,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     }
     auto it = memories.find(memoryName);
     if (it == memories.end()) {
-      trap("store128 on non-existing memory");
+      trap("growMemory on non-existing memory");
     }
     auto& memory = it->second;
     memory.resize(newSize);
