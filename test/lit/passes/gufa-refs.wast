@@ -3362,7 +3362,6 @@
       (struct.new $struct
         (i32.const 10)
       )
-      (i32.const 11)
     )
     ;; Write to that global here. This can only affect $struct, and *not*
     ;; $substruct, thanks to the exact type.
