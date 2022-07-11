@@ -440,6 +440,7 @@ if(EMSCRIPTEN)
   else()
     target_link_libraries(binaryen_js "-s EXPORT_ES6=1")
   endif()
+  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocate")
   target_link_libraries(binaryen_js "--post-js ${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
