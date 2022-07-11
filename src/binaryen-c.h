@@ -121,6 +121,16 @@ WASM_DEPRECATED BinaryenType BinaryenFloat32(void);
 WASM_DEPRECATED BinaryenType BinaryenFloat64(void);
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
 
+// TypeSystem
+
+typedef uint32_t BinaryenTypeSystem;
+
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemNominal();
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemEquirecursive();
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemIsorecursive();
+BINARYEN_API BinaryenTypeSystem BinaryenGetTypeSystem();
+BINARYEN_API void BinaryenSetTypeSystem(BinaryenTypeSystem typeSystem);
+
 // Expression ids (call to get the value of each; you can cache them)
 
 typedef uint32_t BinaryenExpressionId;

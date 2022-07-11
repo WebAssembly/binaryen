@@ -172,6 +172,24 @@ WASM_DEPRECATED BinaryenType BinaryenFloat32(void) { return Type::f32; }
 WASM_DEPRECATED BinaryenType BinaryenFloat64(void) { return Type::f64; }
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
+// TypeSystem
+
+BinaryenTypeSystem BinaryenTypeSystemNominal() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Nominal);
+}
+BinaryenTypeSystem BinaryenTypeSystemEquirecursive() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Equirecursive);
+}
+BinaryenTypeSystem BinaryenTypeSystemIsorecursive() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Isorecursive);
+}
+BinaryenTypeSystem BinaryenGetTypeSystem() {
+  return BinaryenTypeSystem(getTypeSystem());
+}
+void BinaryenSetTypeSystem(BinaryenTypeSystem typeSystem) {
+  setTypeSystem(TypeSystem(typeSystem));
+}
+
 // Expression ids
 
 BinaryenExpressionId BinaryenInvalidId(void) {
