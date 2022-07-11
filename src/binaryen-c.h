@@ -121,6 +121,15 @@ WASM_DEPRECATED BinaryenType BinaryenFloat32(void);
 WASM_DEPRECATED BinaryenType BinaryenFloat64(void);
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
 
+// Heap types
+
+typedef uintptr_t BinaryenHeapType;
+
+BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
+BINARYEN_API int BinaryenTypeIsNullable(BinaryenType type);
+BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
+                                                   int nullable);
+
 // Expression ids (call to get the value of each; you can cache them)
 
 typedef uint32_t BinaryenExpressionId;

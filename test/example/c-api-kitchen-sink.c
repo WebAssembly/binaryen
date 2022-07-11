@@ -280,6 +280,14 @@ void test_types() {
   pair[0] = pair[1] = f32;
   BinaryenType float_pair = BinaryenTypeCreate(pair, 2);
   assert(float_pair != i32_pair);
+
+  BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
+  BinaryenType ref_null_eq = BinaryenTypeFromHeapType(eq, true);
+  assert(BinaryenTypeGetHeapType(ref_null_eq) == eq);
+  assert(BinaryenTypeIsNullable(ref_null_eq));
+  BinaryenType ref_eq = BinaryenTypeFromHeapType(eq, false);
+  assert(BinaryenTypeGetHeapType(ref_eq) == eq);
+  assert(!BinaryenTypeIsNullable(ref_eq));
 }
 
 void test_features() {

@@ -172,6 +172,20 @@ WASM_DEPRECATED BinaryenType BinaryenFloat32(void) { return Type::f32; }
 WASM_DEPRECATED BinaryenType BinaryenFloat64(void) { return Type::f64; }
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
+// Heap types
+
+BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
+  return Type(type).getHeapType().getID();
+}
+int BinaryenTypeIsNullable(BinaryenType type) {
+  return Type(type).isNullable();
+}
+BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType, int nullable) {
+  return Type(HeapType(heapType),
+              nullable ? Nullability::Nullable : Nullability::NonNullable)
+    .getID();
+}
+
 // Expression ids
 
 BinaryenExpressionId BinaryenInvalidId(void) {
