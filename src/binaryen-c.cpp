@@ -177,10 +177,10 @@ WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();
 }
-int BinaryenTypeIsNullable(BinaryenType type) {
+bool BinaryenTypeIsNullable(BinaryenType type) {
   return Type(type).isNullable();
 }
-BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType, int nullable) {
+BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType, bool nullable) {
   return Type(HeapType(heapType),
               nullable ? Nullability::Nullable : Nullability::NonNullable)
     .getID();

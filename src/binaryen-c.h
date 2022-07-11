@@ -126,9 +126,9 @@ WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
 typedef uintptr_t BinaryenHeapType;
 
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
-BINARYEN_API int BinaryenTypeIsNullable(BinaryenType type);
+BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
 BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
-                                                   int nullable);
+                                                   bool nullable);
 
 // Expression ids (call to get the value of each; you can cache them)
 
