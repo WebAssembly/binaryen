@@ -426,7 +426,7 @@ void SExpressionWasmBuilder::preParseImports(Element& curr) {
 
 void SExpressionWasmBuilder::preParseMemory(Element& curr) {
   IString id = curr[0]->str();
-  if (id == MEMORY) {
+  if (id == MEMORY && !isImport(curr)) {
     parseMemory(curr);
   }
 }
@@ -508,7 +508,7 @@ Memory SExpressionWasmBuilder::getMemoryAtIdx(Index idx) {
     auto& memory = wasm.memories[idx];
     return *memory;
   }
-  Fatal() << "Tried to access memories at idx > size";
+  throw ParseException("Tried to access memories at idx > size");
 }
 
 Name SExpressionWasmBuilder::getMemoryName(Element& s) {
@@ -3319,6 +3319,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       parseInnerData(inner, j, seg);
       wasm.addDataSegment(std::move(seg));
       memory->initial = wasm.dataSegments[0]->data.size();
+      wasm.addMemory(std::move(memory));
       return;
     }
   }

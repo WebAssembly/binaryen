@@ -351,7 +351,7 @@ protected:
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
     spectest->addMemory(
-      builder.makeMemory("memory", 1, 2));
+      builder.makeMemory(Name::fromInt(0), 1, 2));
     spectest->addExport(builder.makeExport(
       "memory", Name::fromInt(0), ExternalKind::Memory));
 
