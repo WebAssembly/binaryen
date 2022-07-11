@@ -180,7 +180,8 @@ BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
 bool BinaryenTypeIsNullable(BinaryenType type) {
   return Type(type).isNullable();
 }
-BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType, bool nullable) {
+BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
+                                      bool nullable) {
   return Type(HeapType(heapType),
               nullable ? Nullability::Nullable : Nullability::NonNullable)
     .getID();
