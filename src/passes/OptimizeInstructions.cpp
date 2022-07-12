@@ -1536,7 +1536,7 @@ struct OptimizeInstructions
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(
+      replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));
       return;
     }
