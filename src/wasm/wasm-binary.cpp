@@ -7271,7 +7271,8 @@ bool WasmBinaryBuilder::maybeVisitStringAs(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out, uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out,
+                                                   uint32_t code) {
   StringViewAccessOp op;
   Expression* num = nullptr;
   if (code == BinaryConsts::StringViewAccessWTF8Advance) {

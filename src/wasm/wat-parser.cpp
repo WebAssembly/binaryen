@@ -676,7 +676,8 @@ Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringAs(Ctx&, ParseInput&, StringAsOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringViewAccess(Ctx&, ParseInput&, StringViewAccessOp op);
+Result<typename Ctx::InstrT>
+makeStringViewAccess(Ctx&, ParseInput&, StringViewAccessOp op);
 
 // Modules
 template<typename Ctx>

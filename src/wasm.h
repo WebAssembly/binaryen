@@ -1766,7 +1766,8 @@ public:
   void finalize();
 };
 
-class StringViewAccess : public SpecificExpression<Expression::StringViewAccessId> {
+class StringViewAccess
+  : public SpecificExpression<Expression::StringViewAccessId> {
 public:
   StringViewAccess(MixedArena& allocator) {}
 
