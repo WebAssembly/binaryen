@@ -2279,6 +2279,21 @@ struct PrintExpressionContents
     printMedium(o, "string.concat");
   }
   void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
+  void visitStringAs(StringAs* curr) {
+    switch (curr->op) {
+      case StringAsWTF8:
+        printMedium(o, "string.as_wtf8");
+        break;
+      case StringAsWTF16:
+        printMedium(o, "string.as_wtf16");
+        break;
+      case StringAsIter:
+        printMedium(o, "string.as_iter");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.as*");
+    }
+  }
 };
 
 // Prints an expression in s-expr format, including both the

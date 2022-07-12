@@ -1147,6 +1147,9 @@ enum ASTNodes {
   StringConcat = 0x88,
   StringEq = 0x89,
   StringIsUSV = 0x8a,
+  StringAsWTF8 = 0x90,
+  StringAsWTF16 = 0x98,
+  StringAsIter = 0xa0,
 };
 
 enum MemoryAccess {
@@ -1733,6 +1736,7 @@ public:
   bool maybeVisitStringEncode(Expression*& out, uint32_t code);
   bool maybeVisitStringConcat(Expression*& out, uint32_t code);
   bool maybeVisitStringEq(Expression*& out, uint32_t code);
+  bool maybeVisitStringAs(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

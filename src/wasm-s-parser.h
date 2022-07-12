@@ -309,6 +309,7 @@ private:
   Expression* makeStringEncode(Element& s, StringEncodeOp op);
   Expression* makeStringConcat(Element& s);
   Expression* makeStringEq(Element& s);
+  Expression* makeStringAs(Element& s, StringAsOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

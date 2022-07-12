@@ -172,6 +172,18 @@ WASM_DEPRECATED BinaryenType BinaryenFloat32(void) { return Type::f32; }
 WASM_DEPRECATED BinaryenType BinaryenFloat64(void) { return Type::f64; }
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
+// Packed types
+
+BinaryenPackedType BinaryenPackedTypeNotPacked(void) {
+  return Field::PackedType::not_packed;
+}
+BinaryenPackedType BinaryenPackedTypeInt8(void) {
+  return Field::PackedType::i8;
+}
+BinaryenPackedType BinaryenPackedTypeInt16(void) {
+  return Field::PackedType::i16;
+}
+
 // Heap types
 
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {

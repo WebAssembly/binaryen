@@ -1034,6 +1034,13 @@ public:
     ret->finalize();
     return ret;
   }
+  StringAs* makeStringAs(StringAsOp op, Expression* ref) {
+    auto* ret = wasm.allocator.alloc<StringAs>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

@@ -3000,6 +3000,10 @@ Expression* SExpressionWasmBuilder::makeStringEq(Element& s) {
                                     parseExpression(s[2]));
 }
 
+Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
+  return Builder(wasm).makeStringAs(op, parseExpression(s[1]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.
