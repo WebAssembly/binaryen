@@ -280,7 +280,7 @@ void test_types() {
   pair[0] = pair[1] = f32;
   BinaryenType float_pair = BinaryenTypeCreate(pair, 2);
   assert(float_pair != i32_pair);
-  
+
   BinaryenPackedType notPacked = BinaryenPackedTypeNotPacked();
   printf("  // BinaryenPackedTypeNotPacked: %d\n", notPacked);
   BinaryenPackedType i8 = BinaryenPackedTypeInt8();
