@@ -7279,7 +7279,7 @@ bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out,
     op = StringViewAccessWTF8Advance;
     num = popNonVoidExpression();
   } else if (code == BinaryConsts::StringViewWTF16Get) {
-    op = StringViewAccessWTF16Get;
+    op = StringViewAccessWTF16GetCodeUnit;
     num = popNonVoidExpression();
   } else if (code == BinaryConsts::StringViewIterNext) {
     op = StringViewAccessIterNext;

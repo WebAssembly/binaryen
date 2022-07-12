@@ -613,7 +613,7 @@ enum StringAsOp {
 // cursor while doing so.
 enum StringViewAccessOp {
   StringViewAccessWTF8Advance,
-  StringViewAccessWTF16Get,
+  StringViewAccessWTF16GetCodeUnit,
   StringViewAccessIterNext,
   StringViewAccessIterAdvance,
   StringViewAccessIterRewind,

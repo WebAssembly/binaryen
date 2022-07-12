@@ -2334,7 +2334,7 @@ void BinaryInstWriter::visitStringViewAccess(StringViewAccess* curr) {
     case StringViewAccessWTF8Advance:
       o << U32LEB(BinaryConsts::StringViewWTF8Advance);
       break;
-    case StringViewAccessWTF16Get:
+    case StringViewAccessWTF16GetCodeUnit:
       o << U32LEB(BinaryConsts::StringViewWTF16Get);
       break;
     case StringViewAccessIterNext:
