@@ -590,19 +590,6 @@ enum StringNewOp {
   StringNewWTF16
 };
 
-enum StringMeasureOp {
-  StringMeasureUTF8,
-  StringMeasureWTF8,
-  StringMeasureWTF16,
-  StringMeasureIsUSV,
-};
-
-enum StringEncodeOp {
-  StringEncodeUTF8,
-  StringEncodeWTF8,
-  StringEncodeWTF16,
-};
-
 //
 // Expressions
 //
@@ -700,10 +687,6 @@ public:
     RefAsId,
     StringNewId,
     StringConstId,
-    StringMeasureId,
-    StringEncodeId,
-    StringConcatId,
-    StringEqId,
     NumExpressionIds
   };
   Id _id;
@@ -1690,49 +1673,6 @@ public:
   //       ArenaVector<char> perhaps? However, Name has the benefit of being
   //       interned and immutable (which is appropriate here).
   Name string;
-
-  void finalize();
-};
-
-class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
-public:
-  StringMeasure(MixedArena& allocator) {}
-
-  StringMeasureOp op;
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
-public:
-  StringEncode(MixedArena& allocator) {}
-
-  StringEncodeOp op;
-
-  Expression* ref;
-  Expression* ptr;
-
-  void finalize();
-};
-
-class StringConcat : public SpecificExpression<Expression::StringConcatId> {
-public:
-  StringConcat(MixedArena& allocator) {}
-
-  Expression* left;
-  Expression* right;
-
-  void finalize();
-};
-
-class StringEq : public SpecificExpression<Expression::StringEqId> {
-public:
-  StringEq(MixedArena& allocator) {}
-
-  Expression* left;
-  Expression* right;
 
   void finalize();
 };

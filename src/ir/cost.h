@@ -675,19 +675,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 4 + visit(curr->ptr) + visit(curr->length);
   }
   CostType visitStringConst(StringConst* curr) { return 4; }
-  CostType visitStringMeasure(StringMeasure* curr) {
-    return 6 + visit(curr->ref);
-  }
-  CostType visitStringEncode(StringEncode* curr) {
-    return 6 + visit(curr->ref) + visit(curr->ptr);
-  }
-  CostType visitStringConcat(StringConcat* curr) {
-    return 10 + visit(curr->left) + visit(curr->right);
-  }
-  CostType visitStringEq(StringEq* curr) {
-    // "3" is chosen since strings might or might not be interned in the engine.
-    return 3 + visit(curr->left) + visit(curr->right);
-  }
 
 private:
   CostType nullCheckCost(Expression* ref) {

@@ -1959,19 +1959,7 @@ public:
     WASM_UNREACHABLE("unimplemented string.new");
   }
   Flow visitStringConst(StringConst* curr) {
-    WASM_UNREACHABLE("unimplemented string.const");
-  }
-  Flow visitStringMeasure(StringMeasure* curr) {
-    WASM_UNREACHABLE("unimplemented string.measure");
-  }
-  Flow visitStringEncode(StringEncode* curr) {
-    WASM_UNREACHABLE("unimplemented string.encode");
-  }
-  Flow visitStringConcat(StringConcat* curr) {
-    WASM_UNREACHABLE("unimplemented string.concat");
-  }
-  Flow visitStringEq(StringEq* curr) {
-    WASM_UNREACHABLE("unimplemented string.eq");
+    WASM_UNREACHABLE("unimplemented string.new");
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }

@@ -263,18 +263,7 @@ INITIAL_CONTENTS_IGNORE = [
     # not all relaxed SIMD instructions are implemented in the interpreter
     'relaxed-simd.wast',
     # TODO fuzzer and interpreter support for strings
-    'strings.wast',
-    # ignore DWARF because it is incompatible with multivalue atm
-    'zlib.wasm',
-    'cubescript.wasm',
-    'class_with_dwarf_noprint.wasm',
-    'fib2_dwarf.wasm',
-    'fib_nonzero-low-pc_dwarf.wasm',
-    'inlined_to_start_dwarf.wasm',
-    'fannkuch3_manyopts_dwarf.wasm',
-    'fib2_emptylocspan_dwarf.wasm',
-    'fannkuch3_dwarf.wasm',
-    'multi_unit_abbrev_noprint.wasm',
+    'strings.wast'
 ]
 
 
@@ -361,6 +350,9 @@ def pick_initial_contents():
         #  )
         # )
         '--disable-multivalue',
+        # DWARF is incompatible with multivalue atm; it's more important to
+        # fuzz multivalue since we aren't actually fuzzing DWARF here
+        '--strip-dwarf',
     ]
 
     # the given wasm may not work with the chosen feature opts. for example, if
@@ -831,8 +823,8 @@ class CheckDeterminism(TestCaseHandler):
         b1 = open('b1.wasm', 'rb').read()
         b2 = open('b2.wasm', 'rb').read()
         if (b1 != b2):
-            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat'] + FEATURE_OPTS)
-            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'] + FEATURE_OPTS)
+            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat', FEATURE_OPTS])
+            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat', FEATURE_OPTS])
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
             compare(t1, t2, 'Output must be deterministic.', verbose=False)
