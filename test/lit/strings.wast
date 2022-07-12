@@ -294,11 +294,9 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $b)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $i32
-  ;; CHECK-NEXT:   (stringview_wtf16.get
+  ;; CHECK-NEXT:   (stringview_wtf16.get_codeunit
+  ;; CHECK-NEXT:    (local.get $b)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
