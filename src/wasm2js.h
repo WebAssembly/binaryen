@@ -2331,6 +2331,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitStringViewAccess(StringViewAccess* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitRefAs(RefAs* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

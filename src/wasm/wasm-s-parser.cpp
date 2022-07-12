@@ -3004,6 +3004,10 @@ Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
   return Builder(wasm).makeStringAs(op, parseExpression(s[1]));
 }
 
+Expression* SExpressionWasmBuilder::makeStringViewAccess(Element& s, StringViewAccessOp op) {
+  return Builder(wasm).makeStringViewAccess(op, parseExpression(s[1]), s.size() == 3 ? parseExpression(s[2]) : nullptr);
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.

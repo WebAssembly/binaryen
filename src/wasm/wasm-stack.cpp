@@ -2328,6 +2328,29 @@ void BinaryInstWriter::visitStringAs(StringAs* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringViewAccess(StringViewAccess* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringViewAccessWTF8Advance:
+      o << U32LEB(BinaryConsts::StringViewAccessWTF8Advance);
+      break;
+    case StringViewAccessWTF16Get:
+      o << U32LEB(BinaryConsts::StringViewAccessWTF16Get);
+      break;
+    case StringViewAccessIterNext:
+      o << U32LEB(BinaryConsts::StringViewAccessIterNext);
+      break;
+    case StringViewAccessIterAdvance:
+      o << U32LEB(BinaryConsts::StringViewAccessIterAdvance);
+      break;
+    case StringViewAccessIterRewind:
+      o << U32LEB(BinaryConsts::StringViewAccessIterRewind);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.as*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

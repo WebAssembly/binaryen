@@ -751,6 +751,10 @@ private:
       // traps when ref is null.
       parent.implicitTrap = true;
     }
+    void visitStringViewAccess(StringViewAccess* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
   };
 
 public:

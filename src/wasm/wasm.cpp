@@ -1236,6 +1236,14 @@ void StringAs::finalize() {
   }
 }
 
+void StringViewAccess::finalize() {
+  if (ref->type == Type::unreachable || (num && num->type == Type::unreachable)) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

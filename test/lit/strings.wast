@@ -285,4 +285,34 @@
       )
     )
   )
+
+  (func $stringview.adjust
+    (param $a stringref)
+    (param $b stringview_wtf8)
+    (param $c stringview_wtf16)
+    (param $d stringview_iter)
+    (local $i32 i32)
+    (local.set $i32 ;; validate the output type
+      (stringview_wtf8.advance
+        (local.get $b)
+        (i32.const 1)
+      )
+    )
+    (local.set $i32
+      (stringview_iter.advance
+        (local.get $d)
+        (i32.const 2)
+      )
+    )
+    (local.set $i32
+      (stringview_iter.next
+        (local.get $d)
+      )
+    )
+    (local.set $i32
+      (stringview_iter.get_codeunit
+        (local.get $c)
+      )
+    )
+  )
 )

@@ -675,6 +675,8 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringAs(Ctx&, ParseInput&, StringAsOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringViewAccess(Ctx&, ParseInput&, StringViewAccessOp op);
 
 // Modules
 template<typename Ctx>
@@ -1666,6 +1668,12 @@ Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, ParseInput& in) {
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStringAs(Ctx& ctx, ParseInput& in, StringAsOp op) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringViewAccess(Ctx& ctx, ParseInput& in, StringViewAccessOp op) {
   return in.err("unimplemented instruction");
 }
 

@@ -1976,6 +1976,9 @@ public:
   Flow visitStringAs(StringAs* curr) {
     WASM_UNREACHABLE("unimplemented string.as");
   }
+  Flow visitStringViewAccess(StringViewAccess* curr) {
+    WASM_UNREACHABLE("unimplemented stringview_adjust*");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

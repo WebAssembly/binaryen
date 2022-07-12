@@ -689,6 +689,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 3 + visit(curr->left) + visit(curr->right);
   }
   CostType visitStringAs(StringAs* curr) { return 4 + visit(curr->ref); }
+  CostType visitStringViewAccess(StringViewAccess* curr) { return 2 + visit(curr->ref); }
 
 private:
   CostType nullCheckCost(Expression* ref) {

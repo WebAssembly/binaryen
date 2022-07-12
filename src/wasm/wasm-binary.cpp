@@ -3939,6 +3939,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringAs(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringViewAccess(curr, opcode)) {
+        break;
+      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7265,6 +7268,30 @@ bool WasmBinaryBuilder::maybeVisitStringAs(Expression*& out, uint32_t code) {
   }
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeStringAs(op, ref);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out, uint32_t code) {
+  StringViewAccessOp op;
+  Expression* num = nullptr;
+  if (code == BinaryConsts::StringViewAccessWTF8Advance) {
+    op = StringViewAccessWTF8Advance;
+    num = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringViewAccessWTF16Get) {
+    op = StringViewAccessWTF16Get;
+  } else if (code == BinaryConsts::StringViewAccessIterNext) {
+    op = StringViewAccessIterNext;
+  } else if (code == BinaryConsts::StringViewAccessIterAdvance) {
+    op = StringViewAccessIterAdvance;
+    num = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringViewAccessIterRewind) {
+    op = StringViewAccessIterRewind;
+    num = popNonVoidExpression();
+  } else {
+    return false;
+  }
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringViewAccess(op, ref, num);
   return true;
 }
 

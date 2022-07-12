@@ -1041,6 +1041,14 @@ public:
     ret->finalize();
     return ret;
   }
+  StringViewAccess* makeStringViewAccess(StringViewAccessOp op, Expression* ref, Expression* num = nullptr) {
+    auto* ret = wasm.allocator.alloc<StringViewAccess>();
+    ret->op = op;
+    ret->ref = ref;
+    ref->num = num;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

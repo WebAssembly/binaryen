@@ -92,5 +92,6 @@ DELEGATE(StringEncode);
 DELEGATE(StringConcat);
 DELEGATE(StringEq);
 DELEGATE(StringAs);
+DELEGATE(StringViewAccess);
 
 #undef DELEGATE

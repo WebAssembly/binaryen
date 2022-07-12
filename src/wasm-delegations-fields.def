@@ -763,6 +763,14 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringAs);
     break;
   }
+  case Expression::Id::StringViewAccessId: {
+    DELEGATE_START(StringViewAccess);
+    DELEGATE_FIELD_INT(StringViewAccess, op);
+    DELEGATE_FIELD_OPTIONAL_CHILD(StringViewAccess, num);
+    DELEGATE_FIELD_CHILD(StringViewAccess, ref);
+    DELEGATE_END(StringViewAccess);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

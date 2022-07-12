@@ -609,6 +609,16 @@ enum StringAsOp {
   StringAsIter,
 };
 
+// Operations that access the code points in the view, and possibly move the
+// cursor while doing so.
+enum StringViewAccessOp {
+  StringViewAccessWTF8Advance,
+  StringViewAccessWTF16Get,
+  StringViewAccessIterNext,
+  StringViewAccessIterAdvance,
+  StringViewAccessIterRewind,
+};
+
 //
 // Expressions
 //
@@ -711,6 +721,7 @@ public:
     StringConcatId,
     StringEqId,
     StringAsId,
+    StringViewAccessId,
     NumExpressionIds
   };
   Id _id;
@@ -1751,6 +1762,20 @@ public:
   StringAsOp op;
 
   Expression* ref;
+
+  void finalize();
+};
+
+class StringViewAccess : public SpecificExpression<Expression::StringViewAccessId> {
+public:
+  StringViewAccess(MixedArena& allocator) {}
+
+  StringViewAccessOp op;
+
+  Expression* ref;
+
+  // Advance and Rewind take the number of code points to advance/rewind.
+  Expression* num = nullptr;
 
   void finalize();
 };
