@@ -674,8 +674,7 @@ Result<typename Ctx::InstrT> makeStringConcat(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringAs(Ctx&, ParseInput&, StringAsOp op);
+Result<typename Ctx::InstrT> makeStringAs(Ctx&, ParseInput&, StringAsOp op);
 
 // Modules
 template<typename Ctx>

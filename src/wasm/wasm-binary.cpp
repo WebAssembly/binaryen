@@ -7249,8 +7249,7 @@ bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitStringAs(Expression*& out,
-                                                uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitStringAs(Expression*& out, uint32_t code) {
   StringAsOp op;
   if (code == BinaryConsts::StringAsWTF8) {
     op = StringAsWTF8;
