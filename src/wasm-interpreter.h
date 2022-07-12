@@ -2529,7 +2529,6 @@ public:
 
     initializeTableContents();
     initializeMemoryContents();
-    initializeMemorySizes();
 
     // run start, if present
     if (wasm.start.is()) {
@@ -2643,19 +2642,17 @@ private:
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
     auto* memory = wasm.getMemory(name);
     MemoryInstanceInfo memoryInterfaceInfo;
-    if (memory->imported()) {
-      auto& importedInstance = linkedInstances.at(memory->module);
-      auto* memoryExport = importedInstance->wasm.getExport(memory->base);
-      memoryInterfaceInfo = MemoryInstanceInfo{importedInstance.get(),
-                                memoryExport->value};
-    } else {
-      memoryInterfaceInfo = MemoryInstanceInfo{self(), name};
+    if (!memory->imported()) {
+      return MemoryInstanceInfo{self(), name};
     }
 
-    return memoryInterfaceInfo;
+    auto& importedInstance = linkedInstances.at(memory->module);
+    auto* memoryExport = importedInstance->wasm.getExport(memory->base);
+    return importedInstance->getMemoryInstanceInfo(memoryExport->value);
   }
 
   void initializeMemoryContents() {
+    initializeMemorySizes();
     Const offset;
     offset.value = Literal(uint32_t(0));
     offset.finalize();
@@ -2985,7 +2982,7 @@ public:
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr = info.instance->getFinalAddress(curr, flow.getSingleValue());
+    auto addr = info.instance->getFinalAddress(curr, flow.getSingleValue(), memorySize);
     if (curr->isAtomic) {
       info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
     }
@@ -3006,7 +3003,7 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue());
+    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
     if (curr->isAtomic) {
       info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
     }
@@ -3028,10 +3025,10 @@ public:
     }
     NOTE_EVAL1(ptr);
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue());
+    auto memorySize = info.instance->getMemorySize(info.name);
+    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
-    auto memorySize = info.instance->getMemorySize(info.name);
     auto loaded = info.instance->doAtomicLoad(addr, curr->bytes, curr->type, info.name, memorySize);
     NOTE_EVAL1(loaded);
     auto computed = value.getSingleValue();
@@ -3073,12 +3070,12 @@ public:
       return replacement;
     }
     auto info = getMemoryInstanceInfo(curr->memory);
-    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue());
+    auto memorySize = info.instance->getMemorySize(info.name);
+    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
     expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
     NOTE_EVAL1(addr);
     NOTE_EVAL1(expected);
     NOTE_EVAL1(replacement);
-    auto memorySize = info.instance->getMemorySize(info.name);
     auto loaded = info.instance->doAtomicLoad(addr, curr->bytes, curr->type, info.name, memorySize);
     NOTE_EVAL1(loaded);
     if (loaded == expected.getSingleValue()) {
@@ -3106,7 +3103,7 @@ public:
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), bytes);
+    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), bytes, memorySize);
     auto loaded = info.instance->doAtomicLoad(addr, bytes, curr->expectedType, info.name, memorySize);
     NOTE_EVAL1(loaded);
     if (loaded != expected.getSingleValue()) {
@@ -3130,7 +3127,7 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), 4);
+    auto addr = info.instance->getFinalAddress(curr, ptr.getSingleValue(), 4, memorySize);
     // Just check TODO actual threads support
     info.instance->checkAtomicAddress(addr, 4, memorySize);
     return Literal(int32_t(0)); // none woken up
@@ -3158,6 +3155,7 @@ public:
   }
   Flow visitSIMDLoadSplat(SIMDLoad* curr) {
     Load load;
+    load.memory = curr->memory;
     load.type = Type::i32;
     load.bytes = curr->getMemBytes();
     load.signed_ = false;
@@ -3217,10 +3215,11 @@ public:
       }
       WASM_UNREACHABLE("invalid op");
     };
+    auto memorySize = info.instance->getMemorySize(info.name);
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
         lane = loadLane(
-          info.instance->getFinalAddress(curr, Literal(uint32_t(src)), laneBytes));
+          info.instance->getFinalAddress(curr, Literal(uint32_t(src)), laneBytes, memorySize));
         src = Address(uint32_t(src) + laneBytes);
       }
       return Literal(lanes);
@@ -3253,8 +3252,9 @@ public:
     }
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
+    auto memorySize = info.instance->getMemorySize(info.name);
     Address src =
-      info.instance->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes());
+      info.instance->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes(), memorySize);
     auto zero =
       Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
     if (curr->op == Load32ZeroVec128) {
@@ -3273,8 +3273,9 @@ public:
     }
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
+    auto memorySize = info.instance->getMemorySize(info.name);
     Address addr =
-      info.instance->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes());
+      info.instance->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes(), memorySize);
     flow = self()->visit(curr->vec);
     if (flow.breaking()) {
       return flow;
@@ -3332,7 +3333,7 @@ public:
     NOTE_ENTER("MemorySize");
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto* memory = info.instance->wasm.getMemory(curr->memory);
+    auto* memory = info.instance->wasm.getMemory(info.name);
     return Literal::makeFromInt64(memorySize,
                                   memory->indexType);
   }
@@ -3340,7 +3341,7 @@ public:
     NOTE_ENTER("MemoryGrow");
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    auto* memory = info.instance->wasm.getMemory(curr->memory);
+    auto* memory = info.instance->wasm.getMemory(info.name);
     auto indexType = memory->indexType;
     auto fail = Literal::makeFromInt64(-1, memory->indexType);
     Flow flow = self()->visit(curr->delta);
@@ -3682,9 +3683,7 @@ protected:
   }
 
   template<class LS>
-  Address getFinalAddress(LS* curr, Literal ptr, Index bytes) {
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
+  Address getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySize) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
@@ -3695,8 +3694,8 @@ protected:
     return addr;
   }
 
-  template<class LS> Address getFinalAddress(LS* curr, Literal ptr) {
-    return getFinalAddress(curr, ptr, curr->bytes);
+  template<class LS> Address getFinalAddress(LS* curr, Literal ptr, Address memorySize) {
+    return getFinalAddress(curr, ptr, curr->bytes, memorySize);
   }
 
   Address getFinalAddressWithoutOffset(Literal ptr, Index bytes, Address memorySize) {
