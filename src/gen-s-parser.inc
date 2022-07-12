@@ -3128,78 +3128,113 @@ switch (op[0]) {
       case 't': {
         switch (op[3]) {
           case 'i': {
-            switch (op[7]) {
-              case 'a': {
-                switch (op[10]) {
+            switch (op[6]) {
+              case '.': {
+                switch (op[7]) {
+                  case 'a': {
+                    switch (op[10]) {
+                      case 'i':
+                        if (strcmp(op, "string.as_iter") == 0) { return makeStringAs(s, StringAsIter); }
+                        goto parse_error;
+                      case 'w': {
+                        switch (op[13]) {
+                          case '1':
+                            if (strcmp(op, "string.as_wtf16") == 0) { return makeStringAs(s, StringAsWTF16); }
+                            goto parse_error;
+                          case '8':
+                            if (strcmp(op, "string.as_wtf8") == 0) { return makeStringAs(s, StringAsWTF8); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'c': {
+                    switch (op[10]) {
+                      case 'c':
+                        if (strcmp(op, "string.concat") == 0) { return makeStringConcat(s); }
+                        goto parse_error;
+                      case 's':
+                        if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'e': {
+                    switch (op[8]) {
+                      case 'n': {
+                        switch (op[17]) {
+                          case '1':
+                            if (strcmp(op, "string.encode_wtf16") == 0) { return makeStringEncode(s, StringEncodeWTF16); }
+                            goto parse_error;
+                          case '8':
+                            if (strcmp(op, "string.encode_wtf8") == 0) { return makeStringEncode(s, StringEncodeWTF8); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'q':
+                        if (strcmp(op, "string.eq") == 0) { return makeStringEq(s); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   case 'i':
-                    if (strcmp(op, "string.as_iter") == 0) { return makeStringAs(s, StringAsIter); }
+                    if (strcmp(op, "string.is_usv_sequence") == 0) { return makeStringMeasure(s, StringMeasureIsUSV); }
                     goto parse_error;
-                  case 'w': {
-                    switch (op[13]) {
+                  case 'm': {
+                    switch (op[18]) {
                       case '1':
-                        if (strcmp(op, "string.as_wtf16") == 0) { return makeStringAs(s, StringAsWTF16); }
+                        if (strcmp(op, "string.measure_wtf16") == 0) { return makeStringMeasure(s, StringMeasureWTF16); }
                         goto parse_error;
                       case '8':
-                        if (strcmp(op, "string.as_wtf8") == 0) { return makeStringAs(s, StringAsWTF8); }
+                        if (strcmp(op, "string.measure_wtf8") == 0) { return makeStringMeasure(s, StringMeasureWTF8); }
                         goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  default: goto parse_error;
-                }
-              }
-              case 'c': {
-                switch (op[10]) {
-                  case 'c':
-                    if (strcmp(op, "string.concat") == 0) { return makeStringConcat(s); }
-                    goto parse_error;
-                  case 's':
-                    if (strcmp(op, "string.const") == 0) { return makeStringConst(s); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              case 'e': {
-                switch (op[8]) {
                   case 'n': {
-                    switch (op[17]) {
+                    switch (op[14]) {
                       case '1':
-                        if (strcmp(op, "string.encode_wtf16") == 0) { return makeStringEncode(s, StringEncodeWTF16); }
+                        if (strcmp(op, "string.new_wtf16") == 0) { return makeStringNew(s, StringNewWTF16); }
                         goto parse_error;
                       case '8':
-                        if (strcmp(op, "string.encode_wtf8") == 0) { return makeStringEncode(s, StringEncodeWTF8); }
+                        if (strcmp(op, "string.new_wtf8") == 0) { return makeStringNew(s, StringNewWTF8); }
                         goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'q':
-                    if (strcmp(op, "string.eq") == 0) { return makeStringEq(s); }
-                    goto parse_error;
                   default: goto parse_error;
                 }
               }
-              case 'i':
-                if (strcmp(op, "string.is_usv_sequence") == 0) { return makeStringMeasure(s, StringMeasureIsUSV); }
-                goto parse_error;
-              case 'm': {
-                switch (op[18]) {
-                  case '1':
-                    if (strcmp(op, "string.measure_wtf16") == 0) { return makeStringMeasure(s, StringMeasureWTF16); }
-                    goto parse_error;
-                  case '8':
-                    if (strcmp(op, "string.measure_wtf8") == 0) { return makeStringMeasure(s, StringMeasureWTF8); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              case 'n': {
-                switch (op[14]) {
-                  case '1':
-                    if (strcmp(op, "string.new_wtf16") == 0) { return makeStringNew(s, StringNewWTF16); }
-                    goto parse_error;
-                  case '8':
-                    if (strcmp(op, "string.new_wtf8") == 0) { return makeStringNew(s, StringNewWTF8); }
-                    goto parse_error;
+              case 'v': {
+                switch (op[11]) {
+                  case 'i': {
+                    switch (op[16]) {
+                      case 'a':
+                        if (strcmp(op, "stringview_iter.advance") == 0) { return makeStringViewAccess(s, StringViewIterAdvance); }
+                        goto parse_error;
+                      case 'n':
+                        if (strcmp(op, "stringview_iter.next") == 0) { return makeStringViewAccess(s, StringViewIterNext); }
+                        goto parse_error;
+                      case 'r':
+                        if (strcmp(op, "stringview_iter.rewind") == 0) { return makeStringViewAccess(s, StringViewIterRewind); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'w': {
+                    switch (op[14]) {
+                      case '1':
+                        if (strcmp(op, "stringview_wtf16.get") == 0) { return makeStringViewAccess(s, StringViewWTF16Get); }
+                        goto parse_error;
+                      case '8':
+                        if (strcmp(op, "stringview_wtf8.advance") == 0) { return makeStringViewAccess(s, StringViewWTF8Advance); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -8749,28 +8784,109 @@ switch (op[0]) {
       case 't': {
         switch (op[3]) {
           case 'i': {
-            switch (op[7]) {
-              case 'a': {
-                switch (op[10]) {
+            switch (op[6]) {
+              case '.': {
+                switch (op[7]) {
+                  case 'a': {
+                    switch (op[10]) {
+                      case 'i':
+                        if (op == "string.as_iter"sv) {
+                          auto ret = makeStringAs(ctx, in, StringAsIter);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case 'w': {
+                        switch (op[13]) {
+                          case '1':
+                            if (op == "string.as_wtf16"sv) {
+                              auto ret = makeStringAs(ctx, in, StringAsWTF16);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case '8':
+                            if (op == "string.as_wtf8"sv) {
+                              auto ret = makeStringAs(ctx, in, StringAsWTF8);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'c': {
+                    switch (op[10]) {
+                      case 'c':
+                        if (op == "string.concat"sv) {
+                          auto ret = makeStringConcat(ctx, in);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case 's':
+                        if (op == "string.const"sv) {
+                          auto ret = makeStringConst(ctx, in);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'e': {
+                    switch (op[8]) {
+                      case 'n': {
+                        switch (op[17]) {
+                          case '1':
+                            if (op == "string.encode_wtf16"sv) {
+                              auto ret = makeStringEncode(ctx, in, StringEncodeWTF16);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case '8':
+                            if (op == "string.encode_wtf8"sv) {
+                              auto ret = makeStringEncode(ctx, in, StringEncodeWTF8);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'q':
+                        if (op == "string.eq"sv) {
+                          auto ret = makeStringEq(ctx, in);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   case 'i':
-                    if (op == "string.as_iter"sv) {
-                      auto ret = makeStringAs(ctx, in, StringAsIter);
+                    if (op == "string.is_usv_sequence"sv) {
+                      auto ret = makeStringMeasure(ctx, in, StringMeasureIsUSV);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
-                  case 'w': {
-                    switch (op[13]) {
+                  case 'm': {
+                    switch (op[18]) {
                       case '1':
-                        if (op == "string.as_wtf16"sv) {
-                          auto ret = makeStringAs(ctx, in, StringAsWTF16);
+                        if (op == "string.measure_wtf16"sv) {
+                          auto ret = makeStringMeasure(ctx, in, StringMeasureWTF16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
-                        if (op == "string.as_wtf8"sv) {
-                          auto ret = makeStringAs(ctx, in, StringAsWTF8);
+                        if (op == "string.measure_wtf8"sv) {
+                          auto ret = makeStringMeasure(ctx, in, StringMeasureWTF8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8778,42 +8894,18 @@ switch (op[0]) {
                       default: goto parse_error;
                     }
                   }
-                  default: goto parse_error;
-                }
-              }
-              case 'c': {
-                switch (op[10]) {
-                  case 'c':
-                    if (op == "string.concat"sv) {
-                      auto ret = makeStringConcat(ctx, in);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 's':
-                    if (op == "string.const"sv) {
-                      auto ret = makeStringConst(ctx, in);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              case 'e': {
-                switch (op[8]) {
                   case 'n': {
-                    switch (op[17]) {
+                    switch (op[14]) {
                       case '1':
-                        if (op == "string.encode_wtf16"sv) {
-                          auto ret = makeStringEncode(ctx, in, StringEncodeWTF16);
+                        if (op == "string.new_wtf16"sv) {
+                          auto ret = makeStringNew(ctx, in, StringNewWTF16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
-                        if (op == "string.encode_wtf8"sv) {
-                          auto ret = makeStringEncode(ctx, in, StringEncodeWTF8);
+                        if (op == "string.new_wtf8"sv) {
+                          auto ret = makeStringNew(ctx, in, StringNewWTF8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8821,58 +8913,56 @@ switch (op[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'q':
-                    if (op == "string.eq"sv) {
-                      auto ret = makeStringEq(ctx, in);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
                   default: goto parse_error;
                 }
               }
-              case 'i':
-                if (op == "string.is_usv_sequence"sv) {
-                  auto ret = makeStringMeasure(ctx, in, StringMeasureIsUSV);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'm': {
-                switch (op[18]) {
-                  case '1':
-                    if (op == "string.measure_wtf16"sv) {
-                      auto ret = makeStringMeasure(ctx, in, StringMeasureWTF16);
-                      CHECK_ERR(ret);
-                      return *ret;
+              case 'v': {
+                switch (op[11]) {
+                  case 'i': {
+                    switch (op[16]) {
+                      case 'a':
+                        if (op == "stringview_iter.advance"sv) {
+                          auto ret = makeStringViewAccess(ctx, in, StringViewIterAdvance);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case 'n':
+                        if (op == "stringview_iter.next"sv) {
+                          auto ret = makeStringViewAccess(ctx, in, StringViewIterNext);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case 'r':
+                        if (op == "stringview_iter.rewind"sv) {
+                          auto ret = makeStringViewAccess(ctx, in, StringViewIterRewind);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
-                  case '8':
-                    if (op == "string.measure_wtf8"sv) {
-                      auto ret = makeStringMeasure(ctx, in, StringMeasureWTF8);
-                      CHECK_ERR(ret);
-                      return *ret;
+                  }
+                  case 'w': {
+                    switch (op[14]) {
+                      case '1':
+                        if (op == "stringview_wtf16.get"sv) {
+                          auto ret = makeStringViewAccess(ctx, in, StringViewWTF16Get);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case '8':
+                        if (op == "stringview_wtf8.advance"sv) {
+                          auto ret = makeStringViewAccess(ctx, in, StringViewWTF8Advance);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              case 'n': {
-                switch (op[14]) {
-                  case '1':
-                    if (op == "string.new_wtf16"sv) {
-                      auto ret = makeStringNew(ctx, in, StringNewWTF16);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case '8':
-                    if (op == "string.new_wtf8"sv) {
-                      auto ret = makeStringNew(ctx, in, StringNewWTF8);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
+                  }
                   default: goto parse_error;
                 }
               }
