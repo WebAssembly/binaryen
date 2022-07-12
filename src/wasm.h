@@ -603,6 +603,12 @@ enum StringEncodeOp {
   StringEncodeWTF16,
 };
 
+enum StringAsOp {
+  StringAsWTF8,
+  StringAsWTF16,
+  StringAsIter,
+};
+
 //
 // Expressions
 //
@@ -704,6 +710,7 @@ public:
     StringEncodeId,
     StringConcatId,
     StringEqId,
+    StringAs,
     NumExpressionIds
   };
   Id _id;
@@ -1733,6 +1740,17 @@ public:
 
   Expression* left;
   Expression* right;
+
+  void finalize();
+};
+
+class StringAs : public SpecificExpression<Expression::StringAsId> {
+public:
+  StringAs(MixedArena& allocator) {}
+
+  StringAsOp op;
+
+  Expression* ref;
 
   void finalize();
 };

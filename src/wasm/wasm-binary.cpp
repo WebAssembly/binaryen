@@ -7249,6 +7249,23 @@ bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out, uint32_t code) {
   return true;
 }
 
+bool WasmBinaryBuilder::maybeVisitStringAs(Expression*& out,
+                                                uint32_t code) {
+  StringAsOp op;
+  if (code == BinaryConsts::StringAsWTF8) {
+    op = StringAsWTF8;
+  } else if (code == BinaryConsts::StringAsWTF16) {
+    op = StringAsWTF16;
+  } else if (code == BinaryConsts::StringAsIter) {
+    op = StringAsIter;
+  } else {
+    return false;
+  }
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringAs(op, ref);
+  return true;
+}
+
 void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   BYN_TRACE("zz node: RefAs\n");
   switch (code) {

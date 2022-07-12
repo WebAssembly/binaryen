@@ -1216,6 +1216,23 @@ void StringEq::finalize() {
   }
 }
 
+void StringEq::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    switch (op) {
+      case StringAsWTF8:
+        return Type(HeapType::stringview_wtf8, NonNullable);
+      case StringAsWTF16:
+        return Type(HeapType::stringview_wtf16, NonNullable);
+      case StringAsIter:
+        return Type(HeapType::stringview_iter, NonNullable);
+      default:
+        WASM_UNREACHABLE("bad string.as");
+    }
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
