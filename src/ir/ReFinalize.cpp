@@ -178,6 +178,7 @@ void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
 void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
 void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
 void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
+void ReFinalize::visitStringAs(StringAs* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad

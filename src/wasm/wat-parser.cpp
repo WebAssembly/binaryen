@@ -673,6 +673,8 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConcat(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringAs(Ctx&, ParseInput&, StringAsOp op);
 
 // Modules
 template<typename Ctx>
@@ -1658,6 +1660,12 @@ Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx, ParseInput& in) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, ParseInput& in) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringAs(Ctx& ctx, ParseInput& in, StringAsOp op) {
   return in.err("unimplemented instruction");
 }
 

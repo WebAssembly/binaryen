@@ -3129,6 +3129,25 @@ switch (op[0]) {
         switch (op[3]) {
           case 'i': {
             switch (op[7]) {
+              case 'a': {
+                switch (op[10]) {
+                  case 'i':
+                    if (strcmp(op, "string.as_iter") == 0) { return makeStringAs(s, StringAsIter); }
+                    goto parse_error;
+                  case 'w': {
+                    switch (op[13]) {
+                      case '1':
+                        if (strcmp(op, "string.as_wtf16") == 0) { return makeStringAs(s, StringAsWTF16); }
+                        goto parse_error;
+                      case '8':
+                        if (strcmp(op, "string.as_wtf8") == 0) { return makeStringAs(s, StringAsWTF8); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  default: goto parse_error;
+                }
+              }
               case 'c': {
                 switch (op[10]) {
                   case 'c':
@@ -8731,6 +8750,37 @@ switch (op[0]) {
         switch (op[3]) {
           case 'i': {
             switch (op[7]) {
+              case 'a': {
+                switch (op[10]) {
+                  case 'i':
+                    if (op == "string.as_iter"sv) {
+                      auto ret = makeStringAs(ctx, in, StringAsIter);
+                      CHECK_ERR(ret);
+                      return *ret;
+                    }
+                    goto parse_error;
+                  case 'w': {
+                    switch (op[13]) {
+                      case '1':
+                        if (op == "string.as_wtf16"sv) {
+                          auto ret = makeStringAs(ctx, in, StringAsWTF16);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case '8':
+                        if (op == "string.as_wtf8"sv) {
+                          auto ret = makeStringAs(ctx, in, StringAsWTF8);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  default: goto parse_error;
+                }
+              }
               case 'c': {
                 switch (op[10]) {
                   case 'c':

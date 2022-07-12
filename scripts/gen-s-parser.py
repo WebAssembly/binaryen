@@ -624,6 +624,9 @@ instructions = [
     ("string.encode_wtf16",  "makeStringEncode(s, StringEncodeWTF16)"),
     ("string.concat",        "makeStringConcat(s)"),
     ("string.eq",            "makeStringEq(s)"),
+    ("string.as_wtf8",       "makeStringAs(s, StringAsWTF8)"),
+    ("string.as_wtf16",      "makeStringAs(s, StringAsWTF16)"),
+    ("string.as_iter",       "makeStringAs(s, StringAsIter)"),
 ]
 
 
