@@ -1775,7 +1775,8 @@ public:
 
   Expression* ref;
 
-  // Advance and Rewind take the number of code points to advance/rewind.
+  // Next has no numeric index (it always advances by one). All other ops have a
+  // second parameter.
   Expression* num = nullptr;
 
   void finalize();
