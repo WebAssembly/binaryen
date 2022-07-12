@@ -7275,17 +7275,17 @@ bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out,
                                                    uint32_t code) {
   StringViewAccessOp op;
   Expression* num = nullptr;
-  if (code == BinaryConsts::StringViewAccessWTF8Advance) {
+  if (code == BinaryConsts::StringViewWTF8Advance) {
     op = StringViewAccessWTF8Advance;
     num = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringViewAccessWTF16Get) {
+  } else if (code == BinaryConsts::StringViewWTF16Get) {
     op = StringViewAccessWTF16Get;
-  } else if (code == BinaryConsts::StringViewAccessIterNext) {
+  } else if (code == BinaryConsts::StringViewIterNext) {
     op = StringViewAccessIterNext;
-  } else if (code == BinaryConsts::StringViewAccessIterAdvance) {
+  } else if (code == BinaryConsts::StringViewIterAdvance) {
     op = StringViewAccessIterAdvance;
     num = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringViewAccessIterRewind) {
+  } else if (code == BinaryConsts::StringViewIterRewind) {
     op = StringViewAccessIterRewind;
     num = popNonVoidExpression();
   } else {

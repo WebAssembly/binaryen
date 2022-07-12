@@ -1047,7 +1047,7 @@ public:
     auto* ret = wasm.allocator.alloc<StringViewAccess>();
     ret->op = op;
     ret->ref = ref;
-    ref->num = num;
+    ret->num = num;
     ret->finalize();
     return ret;
   }

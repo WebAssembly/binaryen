@@ -310,7 +310,7 @@ private:
   Expression* makeStringConcat(Element& s);
   Expression* makeStringEq(Element& s);
   Expression* makeStringAs(Element& s, StringAsOp op);
-  Expression* makeStringViewAccess(Element& s, StringViewAccess op);
+  Expression* makeStringViewAccess(Element& s, StringViewAccessOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

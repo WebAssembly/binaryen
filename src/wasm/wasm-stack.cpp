@@ -2332,19 +2332,19 @@ void BinaryInstWriter::visitStringViewAccess(StringViewAccess* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringViewAccessWTF8Advance:
-      o << U32LEB(BinaryConsts::StringViewAccessWTF8Advance);
+      o << U32LEB(BinaryConsts::StringViewWTF8Advance);
       break;
     case StringViewAccessWTF16Get:
-      o << U32LEB(BinaryConsts::StringViewAccessWTF16Get);
+      o << U32LEB(BinaryConsts::StringViewWTF16Get);
       break;
     case StringViewAccessIterNext:
-      o << U32LEB(BinaryConsts::StringViewAccessIterNext);
+      o << U32LEB(BinaryConsts::StringViewIterNext);
       break;
     case StringViewAccessIterAdvance:
-      o << U32LEB(BinaryConsts::StringViewAccessIterAdvance);
+      o << U32LEB(BinaryConsts::StringViewIterAdvance);
       break;
     case StringViewAccessIterRewind:
-      o << U32LEB(BinaryConsts::StringViewAccessIterRewind);
+      o << U32LEB(BinaryConsts::StringViewIterRewind);
       break;
     default:
       WASM_UNREACHABLE("invalid string.as*");
