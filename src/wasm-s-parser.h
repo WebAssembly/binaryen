@@ -305,6 +305,10 @@ private:
   Expression* makeRefAs(Element& s, RefAsOp op);
   Expression* makeStringNew(Element& s, StringNewOp op);
   Expression* makeStringConst(Element& s);
+  Expression* makeStringMeasure(Element& s, StringMeasureOp op);
+  Expression* makeStringEncode(Element& s, StringEncodeOp op);
+  Expression* makeStringConcat(Element& s);
+  Expression* makeStringEq(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

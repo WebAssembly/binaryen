@@ -1140,6 +1140,13 @@ enum ASTNodes {
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
+  StringMeasureWTF8 = 0x84,
+  StringMeasureWTF16 = 0x85,
+  StringEncodeWTF8 = 0x86,
+  StringEncodeWTF16 = 0x87,
+  StringConcat = 0x88,
+  StringEq = 0x89,
+  StringIsUSV = 0x8a,
 };
 
 enum MemoryAccess {
@@ -1150,7 +1157,7 @@ enum MemoryAccess {
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
-enum StringNewPolicy {
+enum StringPolicy {
   UTF8 = 0x00,
   WTF8 = 0x01,
   Replace = 0x02,
@@ -1722,6 +1729,10 @@ public:
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
   bool maybeVisitStringConst(Expression*& out, uint32_t code);
+  bool maybeVisitStringMeasure(Expression*& out, uint32_t code);
+  bool maybeVisitStringEncode(Expression*& out, uint32_t code);
+  bool maybeVisitStringConcat(Expression*& out, uint32_t code);
+  bool maybeVisitStringEq(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

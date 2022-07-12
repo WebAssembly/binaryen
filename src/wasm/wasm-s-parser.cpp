@@ -2957,6 +2957,49 @@ Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
   return Builder(wasm).makeStringConst(s[1]->str());
 }
 
+Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
+                                                      StringMeasureOp op) {
+  size_t i = 1;
+  if (op == StringMeasureWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringMeasureUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringMeasureWTF8;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringMeasure(op, parseExpression(s[i]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
+                                                     StringEncodeOp op) {
+  size_t i = 1;
+  if (op == StringEncodeWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringEncodeUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringEncodeWTF8;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringEncode(
+    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
+  return Builder(wasm).makeStringConcat(parseExpression(s[1]),
+                                        parseExpression(s[2]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringEq(Element& s) {
+  return Builder(wasm).makeStringEq(parseExpression(s[1]),
+                                    parseExpression(s[2]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.
