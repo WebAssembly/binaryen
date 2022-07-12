@@ -48,8 +48,8 @@
 // before we parse instructions because they determine the types of instructions
 // such as global.get and ref.func.
 //
-// The fifth and final phase parses the remaining contents of all module
-// elements, including instructions.
+// In the fifth and final phase, not yet implemented, parses the remaining
+// contents of all module elements, including instructions.
 //
 // Each phase of parsing gets its own context type that is passed to the
 // individual parsing functions. There is a parsing function for each element of
@@ -122,16 +122,6 @@ struct ParseInput {
         ++lexer;
         // See comment on takeName.
         return Name(std::string(*id));
-      }
-    }
-    return {};
-  }
-
-  std::optional<std::string_view> takeKeyword() {
-    if (auto t = peek()) {
-      if (auto keyword = t->getKeyword()) {
-        ++lexer;
-        return *keyword;
       }
     }
     return {};
@@ -318,10 +308,6 @@ struct ParseDeclsCtx {
   using ArrayT = Ok;
   using GlobalTypeT = Ok;
 
-  using InstrT = Ok;
-  using InstrsT = Ok;
-  using ExprT = Ok;
-
   // Declared module elements are inserted into the module, but their bodies are
   // not filled out until later parsing phases.
   Module& wasm;
@@ -356,10 +342,6 @@ struct ParseTypeDefsCtx {
   using StructT = std::pair<std::vector<Name>, Struct>;
   using ArrayT = Array;
 
-  using InstrT = Ok;
-  using InstrsT = Ok;
-  using ExprT = Ok;
-
   // We update slots in this builder as we parse type definitions.
   TypeBuilder& builder;
 
@@ -392,10 +374,6 @@ struct ParseModuleTypesCtx {
   using ResultsT = std::vector<Type>;
   using GlobalTypeT = GlobalType;
 
-  using InstrT = Ok;
-  using InstrsT = Ok;
-  using ExprT = Ok;
-
   Module& wasm;
 
   const std::vector<HeapType>& types;
@@ -416,38 +394,7 @@ template<typename Ctx>
 inline constexpr bool parsingModuleTypes =
   std::is_same_v<Ctx, ParseModuleTypesCtx>;
 
-// Phase 5: Parse module element definitions, including instructions.
-struct ParseDefsCtx {
-  using IndexT = Index;
-  using TypeT = Type;
-  using HeapTypeT = HeapType;
-  // TODO: This could be Ok, but then we wouldn't be able to use RETURN_OR_OK.
-  using GlobalTypeT = GlobalType;
-
-  using InstrT = Expression*;
-  using InstrsT = std::vector<Expression*>;
-  using ExprT = Expression*;
-
-  Module& wasm;
-
-  Builder builder;
-
-  const std::vector<HeapType>& types;
-
-  // Map heap type names to their indices.
-  const IndexMap& typeIndices;
-
-  // The index of the current module element.
-  Index index = 0;
-
-  ParseDefsCtx(Module& wasm,
-               const std::vector<HeapType>& types,
-               const IndexMap& typeIndices)
-    : wasm(wasm), builder(wasm), types(types), typeIndices(typeIndices) {}
-};
-
-template<typename Ctx>
-inline constexpr bool parsingDefs = std::is_same_v<Ctx, ParseDefsCtx>;
+// TODO: Phase 5: ParseDefsCtx
 
 // ================
 // Parser Functions
@@ -474,205 +421,6 @@ template<typename Ctx>
 MaybeResult<typename Ctx::StructT> structtype(Ctx&, ParseInput&);
 template<typename Ctx>
 MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::GlobalTypeT> globaltype(Ctx&, ParseInput&);
-
-// Instructions
-template<typename Ctx>
-MaybeResult<typename Ctx::InstrT> instr(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeUnreachable(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBinary(Ctx&, ParseInput&, BinaryOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeUnary(Ctx&, ParseInput&, UnaryOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSelect(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemorySize(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryGrow(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalGet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalTee(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalGet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBlock(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThenOrElse(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeConst(Ctx&, ParseInput&, Type type);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeLoad(Ctx&, ParseInput&, Type type, bool isAtomic);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStore(Ctx&, ParseInput&, Type type, bool isAtomic);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicRMWOrCmpxchg(Ctx&, ParseInput&, Type type);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicRMW(Ctx&, ParseInput&, Type type, uint8_t bytes, const char* extra);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicCmpxchg(
-  Ctx&, ParseInput&, Type type, uint8_t bytes, const char* extra);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicWait(Ctx&, ParseInput&, Type type);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicNotify(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicFence(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx&, ParseInput&, SIMDExtractOp op, size_t lanes);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDReplace(Ctx&, ParseInput&, SIMDReplaceOp op, size_t lanes);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDTernary(Ctx&, ParseInput&, SIMDTernaryOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShift(Ctx&, ParseInput&, SIMDShiftOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoad(Ctx&, ParseInput&, SIMDLoadOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDLoadStoreLane(Ctx&, ParseInput&, SIMDLoadStoreLaneOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryInit(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeDataDrop(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryFill(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeMaybeBlock(Ctx&, ParseInput&, size_t i, Type type);
-template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCall(Ctx&, ParseInput&, bool isReturn);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallIndirect(Ctx&, ParseInput&, bool isReturn);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreak(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreakTable(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeReturn(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefNull(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx&, ParseInput&, RefIsOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefFunc(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefEq(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSize(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGrow(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeTryOrCatchBody(Ctx&, ParseInput&, Type type, bool isTry);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThrow(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRethrow(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleMake(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleExtract(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallRef(Ctx&, ParseInput&, bool isReturn);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31New(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31Get(Ctx&, ParseInput&, bool signed_);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTest(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCast(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx&, ParseInput&, BrOnOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, ParseInput&, BrOnOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttCanon(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttSub(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttFreshSub(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructNew(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNewStatic(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructGet(Ctx&, ParseInput&, bool signed_ = false);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNew(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewStatic(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInit(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayGet(Ctx&, ParseInput&, bool signed_ = false);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArraySet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayLen(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefAs(Ctx&, ParseInput&, RefAsOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringNew(Ctx&, ParseInput&, StringNewOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConst(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringMeasure(Ctx&, ParseInput&, StringMeasureOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringEncode(Ctx&, ParseInput&, StringEncodeOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConcat(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
 
 // Modules
 template<typename Ctx>
@@ -1065,602 +813,6 @@ Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx, ParseInput& in) {
   RETURN_OR_OK((GlobalType{Immutable, *type}));
 }
 
-// ============
-// Instructions
-// ============
-
-template<typename Ctx>
-MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx, ParseInput& in) {
-  auto keyword = in.takeKeyword();
-  if (!keyword) {
-    return {};
-  }
-
-  auto op = *keyword;
-
-#define NEW_INSTRUCTION_PARSER
-#define NEW_WAT_PARSER
-#include <gen-s-parser.inc>
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrsT> instrs(Ctx& ctx, ParseInput& in) {
-  // TODO: Folded instructions.
-  std::vector<Expression*> insts;
-  while (auto inst = instr(ctx, in)) {
-    CHECK_ERR(inst);
-    if constexpr (parsingDefs<Ctx>) {
-      insts.push_back(*inst);
-    }
-  }
-  if constexpr (parsingDefs<Ctx>) {
-    return insts;
-  } else {
-    return Ok{};
-  }
-}
-
-template<typename Ctx>
-Result<typename Ctx::ExprT> expr(Ctx& ctx, ParseInput& in) {
-  auto insts = instrs(ctx, in);
-  CHECK_ERR(insts);
-  if constexpr (parsingDefs<Ctx>) {
-    switch (insts->size()) {
-      case 0:
-        return ctx.builder.makeNop();
-      case 1:
-        return insts->front();
-      default:
-        return ctx.builder.makeBlock(*insts);
-    }
-  } else {
-    return Ok{};
-  }
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeUnreachable(Ctx& ctx) {
-  if constexpr (parsingDefs<Ctx>) {
-    return ctx.builder.makeUnreachable();
-  } else {
-    return Ok{};
-  }
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx& ctx) {
-  if constexpr (parsingDefs<Ctx>) {
-    return ctx.builder.makeNop();
-  } else {
-    return Ok{};
-  }
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBinary(Ctx& ctx, ParseInput& in, BinaryOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeUnary(Ctx& ctx, ParseInput& in, UnaryOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSelect(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeDrop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemorySize(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalTee(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBlock(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThenOrElse(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeConst(Ctx& ctx, ParseInput& in, Type type) {
-  assert(type.isBasic());
-  switch (type.getBasic()) {
-    case Type::i32:
-      if (auto c = in.takeI32()) {
-        if constexpr (parsingDefs<Ctx>) {
-          return ctx.builder.makeConst(Literal(*c));
-        } else {
-          return Ok{};
-        }
-      }
-      return in.err("expected i32");
-    case Type::i64:
-      if (auto c = in.takeI64()) {
-        if constexpr (parsingDefs<Ctx>) {
-          return ctx.builder.makeConst(Literal(*c));
-        } else {
-          return Ok{};
-        }
-      }
-      return in.err("expected i64");
-    case Type::f32:
-      if (auto f = in.takeF32()) {
-        if constexpr (parsingDefs<Ctx>) {
-          return ctx.builder.makeConst(Literal(*f));
-        } else {
-          return Ok{};
-        }
-      }
-      return in.err("expected f32");
-    case Type::f64:
-      if (auto f = in.takeF64()) {
-        if constexpr (parsingDefs<Ctx>) {
-          return ctx.builder.makeConst(Literal(*f));
-        } else {
-          return Ok{};
-        }
-      }
-      return in.err("expected f64");
-    case Type::v128:
-      return in.err("unimplemented instruction");
-    case Type::none:
-    case Type::unreachable:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
-      break;
-  }
-  WASM_UNREACHABLE("unexpected type");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeLoad(Ctx& ctx, ParseInput& in, Type type, bool isAtomic) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStore(Ctx& ctx, ParseInput& in, Type type, bool isAtomic) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicRMWOrCmpxchg(Ctx& ctx, ParseInput& in, Type type) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicRMW(
-  Ctx& ctx, ParseInput& in, Type type, uint8_t bytes, const char* extra) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicCmpxchg(
-  Ctx& ctx, ParseInput& in, Type type, uint8_t bytes, const char* extra) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicWait(Ctx& ctx, ParseInput& in, Type type) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicNotify(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx& ctx, ParseInput& in, SIMDExtractOp op, size_t lanes) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDReplace(Ctx& ctx, ParseInput& in, SIMDReplaceOp op, size_t lanes) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDTernary(Ctx& ctx, ParseInput& in, SIMDTernaryOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDShift(Ctx& ctx, ParseInput& in, SIMDShiftOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDLoad(Ctx& ctx, ParseInput& in, SIMDLoadOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDLoadStoreLane(Ctx& ctx, ParseInput& in, SIMDLoadStoreLaneOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryInit(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makePush(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makePop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeIf(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeMaybeBlock(Ctx& ctx, ParseInput& in, size_t i, Type type) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLoop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCall(Ctx& ctx, ParseInput& in, bool isReturn) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeCallIndirect(Ctx& ctx, ParseInput& in, bool isReturn) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreak(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreakTable(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeReturn(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, ParseInput& in) {
-  auto t = heaptype(ctx, in);
-  CHECK_ERR(t);
-  if constexpr (parsingDefs<Ctx>) {
-    return ctx.builder.makeRefNull(*t);
-  } else {
-    return Ok{};
-  }
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, ParseInput& in, RefIsOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSize(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTry(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeTryOrCatchBody(Ctx& ctx, ParseInput& in, Type type, bool isTry) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRethrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleMake(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleExtract(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeCallRef(Ctx& ctx, ParseInput& in, bool isReturn) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31New(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeI31Get(Ctx& ctx, ParseInput& in, bool signed_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, ParseInput& in, BrOnOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeBrOnStatic(Ctx& ctx, ParseInput& in, BrOnOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttCanon(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttSub(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttFreshSub(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNew(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNewStatic(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructGet(Ctx& ctx, ParseInput& in, bool signed_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNew(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewStatic(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInit(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayGet(Ctx& ctx, ParseInput& in, bool signed_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArraySet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayLen(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, ParseInput& in, RefAsOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringNew(Ctx& ctx, ParseInput& in, StringNewOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConst(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringMeasure(Ctx& ctx, ParseInput& in, StringMeasureOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringEncode(Ctx& ctx, ParseInput& in, StringEncodeOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
 // =======
 // Modules
 // =======
@@ -1883,37 +1035,28 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx, ParseInput& in) {
   auto type = globaltype(ctx, in);
   CHECK_ERR(type);
 
-  std::optional<typename Ctx::ExprT> exp;
-  if (!import) {
-    auto e = expr(ctx, in);
-    CHECK_ERR(e);
-    *exp = *e;
-  }
-
-  if (!in.takeRParen()) {
-    return in.err("expected end of global");
-  }
-
-  if constexpr (parsingDecls<Ctx>) {
-    if (ctx.hasNonImport) {
-      return in.err("import after non-import");
+  if (import) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of global");
     }
-    auto imp = import ? std::make_optional(*import) : std::nullopt;
-    auto g = addGlobalDecl(ctx, in, name, imp);
-    CHECK_ERR(g);
-    CHECK_ERR(addExports(in, ctx.wasm, *g, *exports, ExternalKind::Global));
-    ctx.globalDefs.push_back({name, pos});
-  } else if constexpr (parsingModuleTypes<Ctx>) {
-    auto& g = ctx.wasm.globals[ctx.index];
-    g->mutable_ = type->mutability;
-    g->type = type->type;
-  } else if constexpr (parsingDefs<Ctx>) {
-    if (!import) {
-      ctx.wasm.globals[ctx.index]->init = *exp;
+
+    if constexpr (parsingDecls<Ctx>) {
+      if (ctx.hasNonImport) {
+        return in.err("import after non-import");
+      }
+      auto g = addGlobalDecl(ctx, in, name, *import);
+      CHECK_ERR(g);
+      CHECK_ERR(addExports(in, ctx.wasm, *g, *exports, ExternalKind::Global));
+      ctx.globalDefs.push_back({name, pos});
+    } else if constexpr (parsingModuleTypes<Ctx>) {
+      auto& g = ctx.wasm.globals[ctx.index];
+      g->mutable_ = type->mutability;
+      g->type = type->type;
     }
+    return Ok{};
   }
 
-  return Ok{};
+  return in.err("TODO: non-imported globals");
 }
 
 // modulefield ::= deftype
@@ -2093,18 +1236,13 @@ Result<> parseModule(Module& wasm, std::string_view input) {
 
   // TODO: Parse implicit type definitions.
 
-  {
-    // Parse module-level types.
-    ParseModuleTypesCtx ctx(wasm, types, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
-    // TODO: Parse types of other module elements.
-  }
-  {
-    // Parse definitions.
-    // TODO: Parallelize this.
-    ParseDefsCtx ctx(wasm, types, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
-  }
+  // Parse module-level types.
+  ParseModuleTypesCtx ctx(wasm, types, *typeIndices);
+  CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
+
+  // TODO: Parse types of other module elements.
+
+  // TODO: Parse definitions.
 
   return Ok{};
 }
