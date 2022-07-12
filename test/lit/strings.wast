@@ -13,6 +13,8 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
+
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
 
@@ -245,6 +247,23 @@
     )
   )
 
+  ;; CHECK:      (func $string.as (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
+  ;; CHECK-NEXT:  (local.set $b
+  ;; CHECK-NEXT:   (string.as_wtf8
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $c
+  ;; CHECK-NEXT:   (string.as_wtf16
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $d
+  ;; CHECK-NEXT:   (string.as_iter
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.as
     (param $a stringref)
     (param $b stringview_wtf8)
