@@ -4800,146 +4800,143 @@ Module['I31Get'] = makeExpressionWrapper({
 
 // ElementSegment wrapper
 Module['ElementSegment'] = (() => {
-  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
-  function Function(func) {
-    if (!(this instanceof Function)) {
+  // Closure compiler doesn't allow multiple `ElementSegment`s at top-level, so:
+  function ElementSegment(func) {
+    if (!(this instanceof ElementSegment)) {
       if (!func) return null;
-      return new Function(func);
+      return new ElementSegment(func);
     }
     if (!func) throw Error("function reference must not be null");
     this[thisPtr] = func;
   }
-  Function['getLength'] = function(segment) {
+  ElementSegment['getLength'] = function(segment) {
     return Module['_BinaryenElementSegmentGetLength'](segment);
   };
-  Function['getData'] = function(segment, index) {
+  ElementSegment['getData'] = function(segment, index) {
     return UTF8ToString(Module['_BinaryenElementSegmentGetData'](segment, index));
   };
-  Function['getName'] = function(segment) {
+  ElementSegment['getName'] = function(segment) {
     return UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment));
   };
-  Function['getTable'] = function(segment) {
+  ElementSegment['getTable'] = function(segment) {
     return UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment));
   };
-  Function['getOffset'] = function(segment) {
+  ElementSegment['getOffset'] = function(segment) {
     return Module['_BinaryenElementSegmentGetOffset'](segment);
   };
-  deriveWrapperInstanceMembers(Function.prototype, Function);
-  Function.prototype['valueOf'] = function() {
+  deriveWrapperInstanceMembers(ElementSegment.prototype, ElementSegment);
+  ElementSegment.prototype['valueOf'] = function() {
     return this[thisPtr];
   };
-  return Function;
+  return ElementSegment;
 })();
 
 // Export wrapper
 Module['Export'] = (() => {
-  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
-  function Function(func) {
-    if (!(this instanceof Function)) {
+  // Closure compiler doesn't allow multiple `Export`s at top-level, so:
+  function Export(func) {
+    if (!(this instanceof Export)) {
       if (!func) return null;
-      return new Function(func);
+      return new Export(func);
     }
     if (!func) throw Error("function reference must not be null");
     this[thisPtr] = func;
   }
-  Function['getKind'] = function(export_) {
+  Export['getKind'] = function(export_) {
     return Module['_BinaryenExportGetKind'](export_);
   };
-  Function['getName'] = function(export_) {
+  Export['getName'] = function(export_) {
     return UTF8ToString(Module['_BinaryenExportGetName'](export_));
   };
-  Function['getValue'] = function(export_) {
+  Export['getValue'] = function(export_) {
     return UTF8ToString(Module['_BinaryenExportGetValue'](export_));
   };
-  deriveWrapperInstanceMembers(Function.prototype, Function);
-  Function.prototype['valueOf'] = function() {
+  deriveWrapperInstanceMembers(Export.prototype, Export);
+  Export.prototype['valueOf'] = function() {
     return this[thisPtr];
   };
-  return Function;
+  return Export;
 })();
 
 // GlobalImport wrapper
 Module['GlobalImport'] = (() => {
-  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
-  function Function(func) {
-    if (!(this instanceof Function)) {
+  // Closure compiler doesn't allow multiple `GlobalImport`s at top-level, so:
+  function GlobalImport(func) {
+    if (!(this instanceof GlobalImport)) {
       if (!func) return null;
-      return new Function(func);
+      return new GlobalImport(func);
     }
     if (!func) throw Error("function reference must not be null");
     this[thisPtr] = func;
   }
-  Function['getModule'] = function(global) {
+  GlobalImport['getModule'] = function(global) {
     return UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global));
   };
-  Function['getBase'] = function(global) {
+  GlobalImport['getBase'] = function(global) {
     return UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global));
   };
-  deriveWrapperInstanceMembers(Function.prototype, Function);
-  Function.prototype['valueOf'] = function() {
+  deriveWrapperInstanceMembers(GlobalImport.prototype, GlobalImport);
+  GlobalImport.prototype['valueOf'] = function() {
     return this[thisPtr];
   };
-  return Function;
+  return GlobalImport;
 })();
 
 // Global wrapper
-
 Module['Global'] = (() => {
-  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
-  function Function(func) {
-    if (!(this instanceof Function)) {
+  // Closure compiler doesn't allow multiple `Global`s at top-level, so:
+  function Global(func) {
+    if (!(this instanceof Global)) {
       if (!func) return null;
-      return new Function(func);
+      return new Global(func);
     }
     if (!func) throw Error("function reference must not be null");
     this[thisPtr] = func;
   }
-  Function['getName'] = function(global) {
+  Global['getName'] = function(global) {
     return UTF8ToString(Module['_BinaryenGlobalGetName'](global));
   };
-  Function['getType'] = function(global) {
+  Global['getType'] = function(global) {
     return Module['_BinaryenGlobalGetType'](global);
   };
-  Function['isMutable'] = function(global) {
+  Global['isMutable'] = function(global) {
     return Boolean(Module['_BinaryenGlobalIsMutable'](global));
   };
-  Function['getInitExpr'] = function(global) {
+  Global['getInitExpr'] = function(global) {
     return Module['_BinaryenGlobalGetInitExpr'](global);
   };
-  deriveWrapperInstanceMembers(Function.prototype, Function);
-  Function.prototype['valueOf'] = function() {
+  deriveWrapperInstanceMembers(Global.prototype, Global);
+  Global.prototype['valueOf'] = function() {
     return this[thisPtr];
   };
-  return Function;
+  return Global;
 })();
 
 // FunctionImport wrapper
-
 Module['FunctionImport'] = (() => {
-  // Closure compiler doesn't allow multiple `Function`s at top-level, so:
-  function Function(func) {
-    if (!(this instanceof Function)) {
+  // Closure compiler doesn't allow multiple `FunctionImport`s at top-level, so:
+  function FunctionImport(func) {
+    if (!(this instanceof FunctionImport)) {
       if (!func) return null;
-      return new Function(func);
+      return new FunctionImport(func);
     }
     if (!func) throw Error("function reference must not be null");
     this[thisPtr] = func;
   }
-  Function['getModule'] = function(func) {
+  FunctionImport['getModule'] = function(func) {
     return UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func));
   };
-  Function['getBase'] = function(func) {
+  FunctionImport['getBase'] = function(func) {
     return UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func));
   };
-  deriveWrapperInstanceMembers(Function.prototype, Function);
-  Function.prototype['valueOf'] = function() {
+  deriveWrapperInstanceMembers(FunctionImport.prototype, FunctionImport);
+  FunctionImport.prototype['valueOf'] = function() {
     return this[thisPtr];
   };
-  return Function;
+  return FunctionImport;
 })();
 
 // Function wrapper
-
 Module['Function'] = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
   function Function(func) {
