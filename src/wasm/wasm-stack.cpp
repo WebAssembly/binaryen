@@ -2311,6 +2311,23 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringEq);
 }
 
+void BinaryInstWriter::visitStringAs(StringAs* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringAsWTF8:
+      o << U32LEB(BinaryConsts::StringAsWTF8);
+      break;
+    case StringAsWTF16:
+      o << U32LEB(BinaryConsts::StringAsWTF16);
+      break;
+    case StringAsIter:
+      o << U32LEB(BinaryConsts::StringAsIter);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.as*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

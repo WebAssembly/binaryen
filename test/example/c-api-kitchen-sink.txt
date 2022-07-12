@@ -12,6 +12,9 @@
   // BinaryenTypeI31ref: 10
   // BinaryenTypeDataref: 11
   // BinaryenTypeAuto: -1
+  // BinaryenPackedTypeNotPacked: 0
+  // BinaryenPackedTypeInt8: 1
+  // BinaryenPackedTypeInt16: 2
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16

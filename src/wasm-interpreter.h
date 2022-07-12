@@ -1973,6 +1973,9 @@ public:
   Flow visitStringEq(StringEq* curr) {
     WASM_UNREACHABLE("unimplemented string.eq");
   }
+  Flow visitStringAs(StringAs* curr) {
+    WASM_UNREACHABLE("unimplemented string.as");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
