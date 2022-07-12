@@ -725,6 +725,8 @@ function wrapModule(module, self = {}) {
     'max'() {
       if (Module['_BinaryenMemoryHasMax'](module)) {
         return Module['_BinaryenMemoryGetMax'](module);
+      } else {
+        return Infinity;
       }
     }
   }
