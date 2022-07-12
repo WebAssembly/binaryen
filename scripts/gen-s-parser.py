@@ -628,7 +628,7 @@ instructions = [
     ("string.as_wtf16",      "makeStringAs(s, StringAsWTF16)"),
     ("string.as_iter",       "makeStringAs(s, StringAsIter)"),
     ("stringview_wtf8.advance",       "makeStringViewAccess(s, StringViewAccessWTF8Advance)"),
-    ("stringview_wtf16.get_codeunit", "makeStringViewAccess(s, StringViewAccessWTF16Get)"),
+    ("stringview_wtf16.get_codeunit", "makeStringViewAccess(s, StringViewAccessWTF16GetCodeUnit)"),
     ("stringview_iter.next",          "makeStringViewAccess(s, StringViewAccessIterNext)"),
     ("stringview_iter.advance",       "makeStringViewAccess(s, StringViewAccessIterAdvance)"),
     ("stringview_iter.rewind",        "makeStringViewAccess(s, StringViewAccessIterRewind)"),
