@@ -296,7 +296,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (stringview_wtf16.get_codeunit
-  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (local.get $c)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -332,7 +332,7 @@
     )
     (local.set $i32
       (stringview_wtf16.get_codeunit
-        (local.get $b)
+        (local.get $c)
         (i32.const 2)
       )
     )
