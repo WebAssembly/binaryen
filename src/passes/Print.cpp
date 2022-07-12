@@ -2300,7 +2300,7 @@ struct PrintExpressionContents
         printMedium(o, "stringview_wtf8.advance");
         break;
       case StringViewAccessWTF16Get:
-        printMedium(o, "stringview_wtf16.get");
+        printMedium(o, "stringview_wtf16.get_codeunit");
         break;
       case StringViewAccessIterNext:
         printMedium(o, "stringview_iter.next");

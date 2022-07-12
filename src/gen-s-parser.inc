@@ -3227,7 +3227,7 @@ switch (op[0]) {
                   case 'w': {
                     switch (op[14]) {
                       case '1':
-                        if (strcmp(op, "stringview_wtf16.get") == 0) { return makeStringViewAccess(s, StringViewAccessWTF16Get); }
+                        if (strcmp(op, "stringview_wtf16.get_codeunit") == 0) { return makeStringViewAccess(s, StringViewAccessWTF16Get); }
                         goto parse_error;
                       case '8':
                         if (strcmp(op, "stringview_wtf8.advance") == 0) { return makeStringViewAccess(s, StringViewAccessWTF8Advance); }
@@ -8947,7 +8947,7 @@ switch (op[0]) {
                   case 'w': {
                     switch (op[14]) {
                       case '1':
-                        if (op == "stringview_wtf16.get"sv) {
+                        if (op == "stringview_wtf16.get_codeunit"sv) {
                           auto ret = makeStringViewAccess(ctx, in, StringViewAccessWTF16Get);
                           CHECK_ERR(ret);
                           return *ret;
