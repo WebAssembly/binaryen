@@ -34,7 +34,7 @@
   ;; CHECK-NEXT:  (ref.is_null
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (loop $loop (result (ref func))
+  ;; CHECK-NEXT:     (loop $loop
   ;; CHECK-NEXT:      (block
   ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:       (unreachable)
@@ -177,7 +177,7 @@
 
   ;; CHECK:      (func $two-inputs (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select (result (ref any))
+  ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
@@ -189,7 +189,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select (result (ref any))
+  ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $get-nothing)
@@ -201,7 +201,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select (result (ref any))
+  ;; CHECK-NEXT:   (select (result (ref $struct))
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:    (call $import)
