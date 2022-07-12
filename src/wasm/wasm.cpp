@@ -1216,17 +1216,20 @@ void StringEq::finalize() {
   }
 }
 
-void StringEq::finalize() {
+void StringAs::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     switch (op) {
       case StringAsWTF8:
-        return Type(HeapType::stringview_wtf8, NonNullable);
+        type = Type(HeapType::stringview_wtf8, NonNullable);
+        break;
       case StringAsWTF16:
-        return Type(HeapType::stringview_wtf16, NonNullable);
+        type = Type(HeapType::stringview_wtf16, NonNullable);
+        break;
       case StringAsIter:
-        return Type(HeapType::stringview_iter, NonNullable);
+        type = Type(HeapType::stringview_iter, NonNullable);
+        break;
       default:
         WASM_UNREACHABLE("bad string.as");
     }

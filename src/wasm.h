@@ -710,7 +710,7 @@ public:
     StringEncodeId,
     StringConcatId,
     StringEqId,
-    StringAs,
+    StringAsId,
     NumExpressionIds
   };
   Id _id;

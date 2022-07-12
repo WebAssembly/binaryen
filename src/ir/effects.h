@@ -747,7 +747,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitStringEq(StringEq* curr) {}
-    void visitStringAs(StringEq* curr) {
+    void visitStringAs(StringAs* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
     }
