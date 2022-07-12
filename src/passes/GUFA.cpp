@@ -102,6 +102,7 @@ struct GUFAOptimizer
       // code.
       replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
         curr, wasm, options, builder.makeUnreachable()));
+      optimized = true;
       return;
     }
 
@@ -150,6 +151,7 @@ struct GUFAOptimizer
         // for the case of a non-constant.)
         replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
           curr, wasm, options, builder.makeUnreachable()));
+        optimized = true;
       } else {
         // This is not a constant expression, but we are certain it is the right
         // value. Atm the only such case we handle is a global.get of an
