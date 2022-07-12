@@ -1004,6 +1004,36 @@ public:
     ret->finalize();
     return ret;
   }
+  StringMeasure* makeStringMeasure(StringMeasureOp op, Expression* ref) {
+    auto* ret = wasm.allocator.alloc<StringMeasure>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
+  StringEncode*
+  makeStringEncode(StringEncodeOp op, Expression* ref, Expression* ptr) {
+    auto* ret = wasm.allocator.alloc<StringEncode>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->ptr = ptr;
+    ret->finalize();
+    return ret;
+  }
+  StringConcat* makeStringConcat(Expression* left, Expression* right) {
+    auto* ret = wasm.allocator.alloc<StringConcat>();
+    ret->left = left;
+    ret->right = right;
+    ret->finalize();
+    return ret;
+  }
+  StringEq* makeStringEq(Expression* left, Expression* right) {
+    auto* ret = wasm.allocator.alloc<StringEq>();
+    ret->left = left;
+    ret->right = right;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

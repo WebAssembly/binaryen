@@ -2242,6 +2242,43 @@ struct PrintExpressionContents
     o << curr->string.str;
     o << '"';
   }
+  void visitStringMeasure(StringMeasure* curr) {
+    switch (curr->op) {
+      case StringMeasureUTF8:
+        printMedium(o, "string.measure_wtf8 utf8");
+        break;
+      case StringMeasureWTF8:
+        printMedium(o, "string.measure_wtf8 wtf8");
+        break;
+      case StringMeasureWTF16:
+        printMedium(o, "string.measure_wtf16");
+        break;
+      case StringMeasureIsUSV:
+        printMedium(o, "string.is_usv_sequence");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.measure*");
+    }
+  }
+  void visitStringEncode(StringEncode* curr) {
+    switch (curr->op) {
+      case StringEncodeUTF8:
+        printMedium(o, "string.encode_wtf8 utf8");
+        break;
+      case StringEncodeWTF8:
+        printMedium(o, "string.encode_wtf8 wtf8");
+        break;
+      case StringEncodeWTF16:
+        printMedium(o, "string.encode_wtf16");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.encode*");
+    }
+  }
+  void visitStringConcat(StringConcat* curr) {
+    printMedium(o, "string.concat");
+  }
+  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
 };
 
 // Prints an expression in s-expr format, including both the
