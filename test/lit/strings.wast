@@ -286,11 +286,12 @@
     )
   )
 
-  ;; CHECK:      (func $stringview.adjust (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
+  ;; CHECK:      (func $stringview-access (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (stringview_wtf8.advance
   ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

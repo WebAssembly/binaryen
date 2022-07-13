@@ -2298,7 +2298,7 @@ struct PrintExpressionContents
     printMedium(o, "stringview_wtf8.advance");
   }
   void visitStringWTF16Get(StringWTF16Get* curr) {
-    printMedium(o, "stringview_wtf16.get");
+    printMedium(o, "stringview_wtf16.get_codeunit");
   }
   void visitStringIterNext(StringIterNext* curr) {
     printMedium(o, "stringview_iter.next");
