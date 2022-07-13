@@ -1150,7 +1150,7 @@ enum ASTNodes {
   StringAsWTF8 = 0x90,
   StringViewWTF8Advance = 0x91,
   StringAsWTF16 = 0x98,
-  StringViewWTF16Get = 0x9a,
+  StringViewWTF16GetCodePoint = 0x9a,
   StringAsIter = 0xa0,
   StringViewIterNext = 0xa1,
   StringViewIterAdvance = 0xa2,
@@ -1742,7 +1742,10 @@ public:
   bool maybeVisitStringConcat(Expression*& out, uint32_t code);
   bool maybeVisitStringEq(Expression*& out, uint32_t code);
   bool maybeVisitStringAs(Expression*& out, uint32_t code);
-  bool maybeVisitStringViewAccess(Expression*& out, uint32_t code);
+  bool maybeVisitStringWTF8Advance(Expression*& out, uint32_t code);
+  bool maybeVisitStringWTF16Get(Expression*& out, uint32_t code);
+  bool maybeVisitStringIterNext(Expression*& out, uint32_t code);
+  bool maybeVisitStringIterMove(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

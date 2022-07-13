@@ -2331,7 +2331,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitStringViewAccess(StringViewAccess* curr) {
+    Ref visitStringWTF8Advance(StringWTF8Advance* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringWTF16Get(StringWTF16Get* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringIterNext(StringIterNext* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringIterMove(StringIterMove* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

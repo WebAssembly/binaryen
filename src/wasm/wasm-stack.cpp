@@ -2328,26 +2328,29 @@ void BinaryInstWriter::visitStringAs(StringAs* curr) {
   }
 }
 
-void BinaryInstWriter::visitStringViewAccess(StringViewAccess* curr) {
+void BinaryInstWriter::visitStringWTF8Advance(StringWTF8Advance* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringWTF8Advance);
+}
+
+void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringWTF16GetCodeUnit);
+}
+
+void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringIterNext);
+}
+
+void BinaryInstWriter::visitStringMove(StringMove* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
-    case StringViewAccessWTF8Advance:
-      o << U32LEB(BinaryConsts::StringViewWTF8Advance);
+    case StringMoveWTF8Advance:
+      o << U32LEB(BinaryConsts::StringIterAdvance);
       break;
-    case StringViewAccessWTF16GetCodeUnit:
-      o << U32LEB(BinaryConsts::StringViewWTF16Get);
-      break;
-    case StringViewAccessIterNext:
-      o << U32LEB(BinaryConsts::StringViewIterNext);
-      break;
-    case StringViewAccessIterAdvance:
-      o << U32LEB(BinaryConsts::StringViewIterAdvance);
-      break;
-    case StringViewAccessIterRewind:
-      o << U32LEB(BinaryConsts::StringViewIterRewind);
+    case StringMoveIterRewind:
+      o << U32LEB(BinaryConsts::StringIterRewind);
       break;
     default:
-      WASM_UNREACHABLE("invalid string.as*");
+      WASM_UNREACHABLE("invalid string.move*");
   }
 }
 

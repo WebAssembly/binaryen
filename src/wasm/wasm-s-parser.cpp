@@ -3005,10 +3005,28 @@ Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
 }
 
 Expression*
-SExpressionWasmBuilder::makeStringViewAccess(Element& s,
-                                             StringViewAccessOp op) {
-  return Builder(wasm).makeStringViewAccess(
-    op, parseExpression(s[1]), s.size() == 3 ? parseExpression(s[2]) : nullptr);
+SExpressionWasmBuilder::makeStringWTF8Advance(Element& s) {
+  return Builder(wasm).makeStringWTF8Advance(
+    parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
+}
+
+Expression*
+SExpressionWasmBuilder::makeStringWTF16Get(Element& s) {
+  return Builder(wasm).makeStringWTF16Get(
+    parseExpression(s[1]), parseExpression(s[2]));
+}
+
+Expression*
+SExpressionWasmBuilder::makeStringIterNext(Element& s) {
+  return Builder(wasm).makeStringIterNext(
+    parseExpression(s[1]));
+}
+
+Expression*
+SExpressionWasmBuilder::makeStringIterMove(Element& s,
+                                             StringIterMoveOp op) {
+  return Builder(wasm).makeStringIterMove(
+    op, parseExpression(s[1]), parseExpression(s[2]));
 }
 
 // converts an s-expression string representing binary data into an output

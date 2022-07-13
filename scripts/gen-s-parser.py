@@ -627,11 +627,11 @@ instructions = [
     ("string.as_wtf8",       "makeStringAs(s, StringAsWTF8)"),
     ("string.as_wtf16",      "makeStringAs(s, StringAsWTF16)"),
     ("string.as_iter",       "makeStringAs(s, StringAsIter)"),
-    ("stringview_wtf8.advance",       "makeStringViewAccess(s, StringViewAccessWTF8Advance)"),
-    ("stringview_wtf16.get_codeunit", "makeStringViewAccess(s, StringViewAccessWTF16GetCodeUnit)"),
-    ("stringview_iter.next",          "makeStringViewAccess(s, StringViewAccessIterNext)"),
-    ("stringview_iter.advance",       "makeStringViewAccess(s, StringViewAccessIterAdvance)"),
-    ("stringview_iter.rewind",        "makeStringViewAccess(s, StringViewAccessIterRewind)"),
+    ("stringview_wtf8.advance",       "makeStringWTF8Advance(s)"),
+    ("stringview_wtf16.get_codeunit", "makeStringWTF16Get(s)"),
+    ("stringview_iter.next",          "makeStringIterNext(s)"),
+    ("stringview_iter.advance",       "makeStringIterMove(s, StringIterMoveAdvance)"),
+    ("stringview_iter.rewind",        "makeStringIterMove(s, StringIterMoveRewind)"),
 ]
 
 

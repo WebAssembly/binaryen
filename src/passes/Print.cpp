@@ -2294,25 +2294,19 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.as*");
     }
   }
-  void visitStringViewAccess(StringViewAccess* curr) {
+  void visitStringWTF8Advance(StringWTF8Advance* curr) { printMedium(o, "stringview_wtf8.advance"); }
+  void visitStringWTF16Get(StringWTF16Get* curr) { printMedium(o, "stringview_wtf16.get"); }
+  void visitStringIterNext(StringIterNext* curr) { printMedium(o, "stringview_iter.next"); }
+  void visitStringIterMove(StringIterMove* curr) {
     switch (curr->op) {
-      case StringViewAccessWTF8Advance:
-        printMedium(o, "stringview_wtf8.advance");
-        break;
-      case StringViewAccessWTF16Get:
-        printMedium(o, "stringview_wtf16.get_codeunit");
-        break;
-      case StringViewAccessIterNext:
-        printMedium(o, "stringview_iter.next");
-        break;
-      case StringViewAccessIterAdvance:
+      case StringIterMoveAdvance:
         printMedium(o, "stringview_iter.advance");
         break;
-      case StringViewAccessIterRewind:
+      case StringIterMoveRewind:
         printMedium(o, "stringview_iter.rewind");
         break;
       default:
-        WASM_UNREACHABLE("invalid string.as*");
+        WASM_UNREACHABLE("invalid string.move*");
     }
   }
 };

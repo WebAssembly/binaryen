@@ -310,7 +310,10 @@ private:
   Expression* makeStringConcat(Element& s);
   Expression* makeStringEq(Element& s);
   Expression* makeStringAs(Element& s, StringAsOp op);
-  Expression* makeStringViewAccess(Element& s, StringViewAccessOp op);
+  Expression* makeStringWTF8Advance(Element& s);
+  Expression* makeStringWTF16Get(Element& s);
+  Expression* makeStringIterNext(Element& s);
+  Expression* makeStringIterMove(Element& s, StringIterMoveOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

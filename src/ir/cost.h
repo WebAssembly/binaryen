@@ -689,8 +689,17 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 3 + visit(curr->left) + visit(curr->right);
   }
   CostType visitStringAs(StringAs* curr) { return 4 + visit(curr->ref); }
-  CostType visitStringViewAccess(StringViewAccess* curr) {
+  CostType visitStringWTF8Advance(StringWTF8Advance* curr) {
+    return 4 + visit(curr->ref) + visit(curr->pos) + visit(curr->bytes);
+  }
+  CostType visitStringWTF16Get(StringWTF16Get* curr) {
+    return 1 + visit(curr->ref) + visit(curr->pos);
+  }
+  CostType visitStringIterNext(StringIterNext* curr) {
     return 2 + visit(curr->ref);
+  }
+  CostType visitStringIterMove(StringIterMove* curr) {
+    return 2 + visit(curr->ref) + visit(curr->num);
   }
 
 private:

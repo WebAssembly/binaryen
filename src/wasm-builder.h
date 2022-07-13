@@ -1041,10 +1041,34 @@ public:
     ret->finalize();
     return ret;
   }
-  StringViewAccess* makeStringViewAccess(StringViewAccessOp op,
+  StringWTF8Advance* makeStringWTF8Advance(Expression* ref,
+                                         Expression* pos,
+                                         Expression* bytes) {
+    auto* ret = wasm.allocator.alloc<StringWTF8Advance>();
+    ret->ref = ref;
+    ret->pos = pos;
+    ret->bytes = bytes;
+    ret->finalize();
+    return ret;
+  }
+  StringWTF16Get* makeStringWTF16Get(Expression* ref,
+                                         Expression* pos) {
+    auto* ret = wasm.allocator.alloc<StringWTF16Get>();
+    ret->ref = ref;
+    ret->pos = pos;
+    ret->finalize();
+    return ret;
+  }
+  StringIterNext* makeStringIterNext(Expression* ref) {
+    auto* ret = wasm.allocator.alloc<StringIterNext>();
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
+  StringIterMove* makeStringIterMove(StringIterMoveOp op,
                                          Expression* ref,
                                          Expression* num = nullptr) {
-    auto* ret = wasm.allocator.alloc<StringViewAccess>();
+    auto* ret = wasm.allocator.alloc<StringIterMove>();
     ret->op = op;
     ret->ref = ref;
     ret->num = num;

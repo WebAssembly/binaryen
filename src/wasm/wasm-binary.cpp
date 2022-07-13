@@ -3939,7 +3939,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringAs(curr, opcode)) {
         break;
       }
-      if (maybeVisitStringViewAccess(curr, opcode)) {
+      if (maybeVisitStringWTF8Advance(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStringWTF16Get(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStringIterNext(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStringIterMove(curr, opcode)) {
         break;
       }
       if (opcode == BinaryConsts::RefIsFunc ||
@@ -7271,29 +7280,52 @@ bool WasmBinaryBuilder::maybeVisitStringAs(Expression*& out, uint32_t code) {
   return true;
 }
 
+bool WasmBinaryBuilder::maybeVisitStringWTF8Advance(Expression*& out,
+                                                   uint32_t code) {
+  if (code != BinaryConsts::StringViewWTF8Advance) {
+    return false;
+  }
+  auto* bytes = popNonVoidExpression();
+  auto* pos = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringWTF8Advance(ref, pos, bytes);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringWTF16Get(Expression*& out,
+                                                   uint32_t code) {
+  if (code != BinaryConsts::StringViewWTF16Get) {
+    return false;
+  }
+  auto* pos = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringWTF16Get(ref, pos);
+  return true;
+}
+
 bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out,
                                                    uint32_t code) {
-  StringViewAccessOp op;
-  Expression* num = nullptr;
-  if (code == BinaryConsts::StringViewWTF8Advance) {
-    op = StringViewAccessWTF8Advance;
-    num = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringViewWTF16Get) {
-    op = StringViewAccessWTF16GetCodeUnit;
-    num = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringViewIterNext) {
-    op = StringViewAccessIterNext;
-  } else if (code == BinaryConsts::StringViewIterAdvance) {
-    op = StringViewAccessIterAdvance;
-    num = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringViewIterRewind) {
-    op = StringViewAccessIterRewind;
-    num = popNonVoidExpression();
-  } else {
+  if (code != BinaryConsts::StringIterNext) {
     return false;
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringViewAccess(op, ref, num);
+  out = Builder(wasm).makeStringIterNext(ref);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringIterMove(Expression*& out,
+                                                   uint32_t code) {
+  StringIterMoveOp op;
+  if (code == BinaryConsts::StringIterAdvance) {
+    op = StringIterAdvance;
+  } else if (code == BinaryConsts::StringIterRewind) {
+    op = StringIterRewind;
+  } else {
+    return false;
+  }
+  auto* num = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringIterMove(op, ref, num);
   return true;
 }
 

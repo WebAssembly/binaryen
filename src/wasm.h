@@ -609,14 +609,9 @@ enum StringAsOp {
   StringAsIter,
 };
 
-// Operations that access the code points in the view, and possibly move the
-// cursor while doing so.
-enum StringViewAccessOp {
-  StringViewAccessWTF8Advance,
-  StringViewAccessWTF16GetCodeUnit,
-  StringViewAccessIterNext,
-  StringViewAccessIterAdvance,
-  StringViewAccessIterRewind,
+enum StringIterMoveOp {
+  StringIterMoveAdvance,
+  StringIterMoveRewind,
 };
 
 //
@@ -721,7 +716,10 @@ public:
     StringConcatId,
     StringEqId,
     StringAsId,
-    StringViewAccessId,
+    StringWTF8AdvanceId,
+    StringWTF16GetId,
+    StringIterNextId,
+    StringIterMoveId,
     NumExpressionIds
   };
   Id _id;
@@ -1766,18 +1764,54 @@ public:
   void finalize();
 };
 
-class StringViewAccess
-  : public SpecificExpression<Expression::StringViewAccessId> {
+class StringWTF8Advance
+  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
 public:
-  StringViewAccess(MixedArena& allocator) {}
+  StringWTF8Advance(MixedArena& allocator) {}
 
-  StringViewAccessOp op;
+  // Whether the movement is to advance or reverse.
+  StringWTF8AdvanceOp op;
+
+  Expression* ref;
+  Expression* pos;
+  Expression* bytes;
+
+  void finalize();
+};
+
+class StringWTF16Get
+  : public SpecificExpression<Expression::StringWTF16GetId> {
+public:
+  StringWTF16Get(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+
+  void finalize();
+};
+
+class StringIterNext
+  : public SpecificExpression<Expression::StringIterNextId> {
+public:
+  StringIterNext(MixedArena& allocator) {}
 
   Expression* ref;
 
-  // Next has no numeric index (it always advances by one). All other ops have a
-  // second parameter.
-  Expression* num = nullptr;
+  void finalize();
+};
+
+class StringIterMove
+  : public SpecificExpression<Expression::StringIterMoveId> {
+public:
+  StringIterMove(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringIterMoveOp op;
+
+  Expression* ref;
+
+  // How many codepoints to advance or reverse.
+  Expression* num;
 
   void finalize();
 };
