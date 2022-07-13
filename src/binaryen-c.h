@@ -129,6 +129,16 @@ BINARYEN_API BinaryenPackedType BinaryenPackedTypeNotPacked(void);
 BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt8(void);
 BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt16(void);
 
+// TypeSystem
+
+typedef uint32_t BinaryenTypeSystem;
+
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemEquirecursive(void);
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemNominal(void);
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemIsorecursive(void);
+BINARYEN_API BinaryenTypeSystem BinaryenGetTypeSystem(void);
+BINARYEN_API void BinaryenSetTypeSystem(BinaryenTypeSystem typeSystem);
+
 // Expression ids (call to get the value of each; you can cache them)
 
 typedef uint32_t BinaryenExpressionId;

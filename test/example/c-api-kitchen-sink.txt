@@ -2703,3 +2703,6 @@ optimized:
   (i32.const 4)
  )
 )
+BinaryenTypeSystemEquirecursive: 0
+BinaryenTypeSystemNominal: 1
+BinaryenTypeSystemIsorecursive: 2

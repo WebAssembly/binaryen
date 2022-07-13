@@ -184,6 +184,24 @@ BinaryenPackedType BinaryenPackedTypeInt16(void) {
   return Field::PackedType::i16;
 }
 
+// TypeSystem
+
+BinaryenTypeSystem BinaryenTypeSystemEquirecursive() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Equirecursive);
+}
+BinaryenTypeSystem BinaryenTypeSystemNominal() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Nominal);
+}
+BinaryenTypeSystem BinaryenTypeSystemIsorecursive() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Isorecursive);
+}
+BinaryenTypeSystem BinaryenGetTypeSystem() {
+  return BinaryenTypeSystem(getTypeSystem());
+}
+void BinaryenSetTypeSystem(BinaryenTypeSystem typeSystem) {
+  setTypeSystem(TypeSystem(typeSystem));
+}
+
 // Expression ids
 
 BinaryenExpressionId BinaryenInvalidId(void) {
