@@ -1,20 +1,20 @@
-  // BinaryenTypeNone: 0
-  // BinaryenTypeUnreachable: 1
-  // BinaryenTypeInt32: 2
-  // BinaryenTypeInt64: 3
-  // BinaryenTypeFloat32: 4
-  // BinaryenTypeFloat64: 5
-  // BinaryenTypeVec128: 6
-  // BinaryenTypeFuncref: 7
-  // BinaryenTypeExternref: 8
-  // BinaryenTypeAnyref: 8
-  // BinaryenTypeEqref: 9
-  // BinaryenTypeI31ref: 10
-  // BinaryenTypeDataref: 11
-  // BinaryenTypeAuto: -1
-  // BinaryenPackedTypeNotPacked: 0
-  // BinaryenPackedTypeInt8: 1
-  // BinaryenPackedTypeInt16: 2
+BinaryenTypeNone: 0
+BinaryenTypeUnreachable: 1
+BinaryenTypeInt32: 2
+BinaryenTypeInt64: 3
+BinaryenTypeFloat32: 4
+BinaryenTypeFloat64: 5
+BinaryenTypeVec128: 6
+BinaryenTypeFuncref: 7
+BinaryenTypeExternref: 8
+BinaryenTypeAnyref: 8
+BinaryenTypeEqref: 9
+BinaryenTypeI31ref: 10
+BinaryenTypeDataref: 11
+BinaryenTypeAuto: -1
+BinaryenPackedTypeNotPacked: 0
+BinaryenPackedTypeInt8: 1
+BinaryenPackedTypeInt16: 2
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
