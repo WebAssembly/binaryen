@@ -7294,7 +7294,7 @@ bool WasmBinaryBuilder::maybeVisitStringWTF8Advance(Expression*& out,
 
 bool WasmBinaryBuilder::maybeVisitStringWTF16Get(Expression*& out,
                                                  uint32_t code) {
-  if (code != BinaryConsts::StringViewWTF16Get) {
+  if (code != BinaryConsts::StringViewWTF16GetCodePoint) {
     return false;
   }
   auto* pos = popNonVoidExpression();
