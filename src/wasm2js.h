@@ -1474,7 +1474,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitStore(Store* curr) {
-      if (module->memories[0]->initial < module->memories[0]->max &&
+      if (!module->memories.empty() && module->memories[0]->initial < module->memories[0]->max &&
           curr->type != Type::unreachable) {
         // In JS, if memory grows then it is dangerous to write
         //  HEAP[f()] = ..
@@ -2389,7 +2389,7 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
                    JsType::JS_INT)));
   ast->push_back(memorySizeFunc);
 
-  if (wasm->memories[0]->max > wasm->memories[0]->initial) {
+  if (!wasm->memories.empty() && wasm->memories[0]->max > wasm->memories[0]->initial) {
     addMemoryGrowFunc(ast, wasm);
   }
 }
@@ -2489,7 +2489,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
                              ValueBuilder::makeName(IString("newBuffer"))));
 
   // apply the changes to the memory import
-  if (wasm->memories[0]->imported()) {
+  if (!wasm->memories.empty() && wasm->memories[0]->imported()) {
     ValueBuilder::appendToBlock(
       block,
       ValueBuilder::makeBinary(
@@ -2716,7 +2716,7 @@ void Wasm2JSGlue::emitMemory() {
 
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
-  if (wasm.memories.empty() || wasm.dataSegments.empty()) {
+  if (wasm.dataSegments.empty()) {
     return;
   }
 
