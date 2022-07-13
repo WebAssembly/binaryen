@@ -1769,9 +1769,6 @@ class StringWTF8Advance
 public:
   StringWTF8Advance(MixedArena& allocator) {}
 
-  // Whether the movement is to advance or reverse.
-  StringWTF8AdvanceOp op;
-
   Expression* ref;
   Expression* pos;
   Expression* bytes;
