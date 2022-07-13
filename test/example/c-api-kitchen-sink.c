@@ -187,84 +187,84 @@ void test_types() {
   BinaryenType valueType = 0xdeadbeef;
 
   BinaryenType none = BinaryenTypeNone();
-  printf("  // BinaryenTypeNone: %d\n", none);
+  printf("BinaryenTypeNone: %d\n", none);
   assert(BinaryenTypeArity(none) == 0);
   BinaryenTypeExpand(none, &valueType);
   assert(valueType == 0xdeadbeef);
 
   BinaryenType unreachable = BinaryenTypeUnreachable();
-  printf("  // BinaryenTypeUnreachable: %d\n", unreachable);
+  printf("BinaryenTypeUnreachable: %d\n", unreachable);
   assert(BinaryenTypeArity(unreachable) == 1);
   BinaryenTypeExpand(unreachable, &valueType);
   assert(valueType == unreachable);
 
   BinaryenType i32 = BinaryenTypeInt32();
-  printf("  // BinaryenTypeInt32: %d\n", i32);
+  printf("BinaryenTypeInt32: %d\n", i32);
   assert(BinaryenTypeArity(i32) == 1);
   BinaryenTypeExpand(i32, &valueType);
   assert(valueType == i32);
 
   BinaryenType i64 = BinaryenTypeInt64();
-  printf("  // BinaryenTypeInt64: %d\n", i64);
+  printf("BinaryenTypeInt64: %d\n", i64);
   assert(BinaryenTypeArity(i64) == 1);
   BinaryenTypeExpand(i64, &valueType);
   assert(valueType == i64);
 
   BinaryenType f32 = BinaryenTypeFloat32();
-  printf("  // BinaryenTypeFloat32: %d\n", f32);
+  printf("BinaryenTypeFloat32: %d\n", f32);
   assert(BinaryenTypeArity(f32) == 1);
   BinaryenTypeExpand(f32, &valueType);
   assert(valueType == f32);
 
   BinaryenType f64 = BinaryenTypeFloat64();
-  printf("  // BinaryenTypeFloat64: %d\n", f64);
+  printf("BinaryenTypeFloat64: %d\n", f64);
   assert(BinaryenTypeArity(f64) == 1);
   BinaryenTypeExpand(f64, &valueType);
   assert(valueType == f64);
 
   BinaryenType v128 = BinaryenTypeVec128();
-  printf("  // BinaryenTypeVec128: %d\n", v128);
+  printf("BinaryenTypeVec128: %d\n", v128);
   assert(BinaryenTypeArity(v128) == 1);
   BinaryenTypeExpand(v128, &valueType);
   assert(valueType == v128);
 
   BinaryenType funcref = BinaryenTypeFuncref();
-  printf("  // BinaryenTypeFuncref: %d\n", funcref);
+  printf("BinaryenTypeFuncref: %d\n", funcref);
   assert(BinaryenTypeArity(funcref) == 1);
   BinaryenTypeExpand(funcref, &valueType);
   assert(valueType == funcref);
 
   BinaryenType externref = BinaryenTypeExternref();
-  printf("  // BinaryenTypeExternref: %d\n", externref);
+  printf("BinaryenTypeExternref: %d\n", externref);
   assert(BinaryenTypeArity(externref) == 1);
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
   BinaryenType anyref = BinaryenTypeAnyref();
-  printf("  // BinaryenTypeAnyref: %d\n", anyref);
+  printf("BinaryenTypeAnyref: %d\n", anyref);
   assert(BinaryenTypeArity(anyref) == 1);
   BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
 
   BinaryenType eqref = BinaryenTypeEqref();
-  printf("  // BinaryenTypeEqref: %d\n", eqref);
+  printf("BinaryenTypeEqref: %d\n", eqref);
   assert(BinaryenTypeArity(eqref) == 1);
   BinaryenTypeExpand(eqref, &valueType);
   assert(valueType == eqref);
 
   BinaryenType i31ref = BinaryenTypeI31ref();
-  printf("  // BinaryenTypeI31ref: %d\n", i31ref);
+  printf("BinaryenTypeI31ref: %d\n", i31ref);
   assert(BinaryenTypeArity(i31ref) == 1);
   BinaryenTypeExpand(i31ref, &valueType);
   assert(valueType == i31ref);
 
   BinaryenType dataref = BinaryenTypeDataref();
-  printf("  // BinaryenTypeDataref: %d\n", dataref);
+  printf("BinaryenTypeDataref: %d\n", dataref);
   assert(BinaryenTypeArity(dataref) == 1);
   BinaryenTypeExpand(dataref, &valueType);
   assert(valueType == dataref);
 
-  printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
+  printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
 
@@ -282,11 +282,11 @@ void test_types() {
   assert(float_pair != i32_pair);
 
   BinaryenPackedType notPacked = BinaryenPackedTypeNotPacked();
-  printf("  // BinaryenPackedTypeNotPacked: %d\n", notPacked);
+  printf("BinaryenPackedTypeNotPacked: %d\n", notPacked);
   BinaryenPackedType i8 = BinaryenPackedTypeInt8();
-  printf("  // BinaryenPackedTypeInt8: %d\n", i8);
+  printf("BinaryenPackedTypeInt8: %d\n", i8);
   BinaryenPackedType i16 = BinaryenPackedTypeInt16();
-  printf("  // BinaryenPackedTypeInt16: %d\n", i16);
+  printf("BinaryenPackedTypeInt16: %d\n", i16);
 
   BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
   BinaryenType ref_null_eq = BinaryenTypeFromHeapType(eq, true);
@@ -1702,6 +1702,21 @@ void test_func_opt() {
   BinaryenModuleDispose(module);
 }
 
+void test_typesystem() {
+  BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
+  assert(defaultTypeSystem == BinaryenTypeSystemEquirecursive());
+  printf("BinaryenTypeSystemEquirecursive: %d\n",
+         BinaryenTypeSystemEquirecursive());
+  BinaryenSetTypeSystem(BinaryenTypeSystemNominal());
+  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemNominal());
+  printf("BinaryenTypeSystemNominal: %d\n", BinaryenTypeSystemNominal());
+  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
+  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemIsorecursive());
+  printf("BinaryenTypeSystemIsorecursive: %d\n",
+         BinaryenTypeSystemIsorecursive());
+  BinaryenSetTypeSystem(defaultTypeSystem);
+}
+
 int main() {
   test_types();
   test_features();
@@ -1714,6 +1729,7 @@ int main() {
   test_color_status();
   test_for_each();
   test_func_opt();
+  test_typesystem();
 
   return 0;
 }
