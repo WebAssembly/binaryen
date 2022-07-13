@@ -827,6 +827,11 @@
     ;; optimize here we should be careful to not emit something with different
     ;; ordering (naively emitting ref.as_non_null on the reference would trap
     ;; before the call, so we must reorder).
+    ;;
+    ;; Note that the output here will use a local unnecessarily. That is a
+    ;; limitation of ChildLocalizer atm (we just need to reorder, but that
+    ;; class also ensures we can remove any of the children, so it replaces them
+    ;; all with local.gets).
     (struct.set ${mut:i8} 0
       (ref.null ${mut:i8})
       (call $helper-i32)
