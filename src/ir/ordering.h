@@ -34,7 +34,7 @@ namespace wasm {
 //
 //   (temp = first, second, temp)
 //
-Expression* getResultOfFirst(Expression* first,
+inline Expression* getResultOfFirst(Expression* first,
                              Expression* second,
                              Function* func,
                              Module* wasm,

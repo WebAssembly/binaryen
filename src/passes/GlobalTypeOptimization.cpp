@@ -24,6 +24,7 @@
 
 #include "ir/effects.h"
 #include "ir/localize.h"
+#include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -397,16 +398,9 @@ struct GlobalTypeOptimization : public Pass {
           // operations here: the trap on a null ref happens after the value,
           // which might have side effects.
           Builder builder(*getModule());
-          auto* block = builder.makeBlock();
-          auto sets =
-            ChildLocalizer(curr, getFunction(), getModule(), getPassOptions())
-              .sets;
-          block->list.set(sets);
-          block->list.push_back(builder.makeDrop(curr->value));
-          block->list.push_back(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
-          block->finalize();
-          replaceCurrent(block);
+          replaceCurrent(builder.makeDrop(builder.makeRefAs(RefAsNonNull, getResultOfFirst(curr->ref,
+                             builder.makeDrop(curr->value),
+                             getFunction(), getModule(), getPassOptions()))));
           addedLocals = true;
         }
       }
