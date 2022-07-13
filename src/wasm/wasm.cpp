@@ -1238,7 +1238,7 @@ void StringAs::finalize() {
 
 void StringWTF8Advance::finalize() {
   if (ref->type == Type::unreachable ||
-      pos->type == Type::unreachable == bytes->type == Type::unreachable) {
+      pos->type == Type::unreachable || bytes->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;

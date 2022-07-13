@@ -2342,13 +2342,13 @@ void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringViewIterNext);
 }
 
-void BinaryInstWriter::visitStringMove(StringMove* curr) {
+void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
-    case StringMoveWTF8Advance:
+    case StringIterMoveAdvance:
       o << U32LEB(BinaryConsts::StringViewIterAdvance);
       break;
-    case StringMoveIterRewind:
+    case StringIterMoveRewind:
       o << U32LEB(BinaryConsts::StringViewIterRewind);
       break;
     default:
