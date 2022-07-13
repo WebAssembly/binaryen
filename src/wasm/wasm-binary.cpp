@@ -7304,7 +7304,7 @@ bool WasmBinaryBuilder::maybeVisitStringWTF16Get(Expression*& out,
 }
 
 bool WasmBinaryBuilder::maybeVisitStringIterNext(Expression*& out,
-                                                   uint32_t code) {
+                                                 uint32_t code) {
   if (code != BinaryConsts::StringViewIterNext) {
     return false;
   }

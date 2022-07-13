@@ -699,7 +699,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + visit(curr->ref);
   }
   CostType visitStringIterMove(StringIterMove* curr) {
-    return 2 + visit(curr->ref) + visit(curr->num);
+    return 4 + visit(curr->ref) + visit(curr->num);
   }
 
 private:

@@ -2339,7 +2339,8 @@ void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
 }
 
 void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringViewIterNext);
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringViewIterNext);
 }
 
 void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {

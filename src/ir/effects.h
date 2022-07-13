@@ -762,11 +762,11 @@ private:
     void visitStringIterNext(StringIterNext* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
-      // modifies state in the iterator. we model that as modifying heap memory
+      // modifies state in the iterator. we model that as accessing heap memory
       // in an array atm TODO consider adding a new effect type for this (we
-      // added one for arrays because struct/array operations often interleave
-      // like with vtable accesses, but it's not clear adding overhead to this
-      // class is worth it for string iters.
+      // added one for arrays because struct/array operations often interleave,
+      // say with vtable accesses, but it's not clear adding overhead to this
+      // class is worth it for string iters)
       parent.readsArray = true;
       parent.writesArray = true;
     }
