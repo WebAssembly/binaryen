@@ -850,9 +850,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachable-set-2
-    ;; As above, but the side effects now are a br. Here we can avoid a local,
-    ;; but must still reorder: the br must happen before the ref.as_non_null
-    ;; (in fact, the br will skip the trap here).
+    ;; As above, but the side effects now are a br. Again, the br must happen
+    ;; before the trap (in fact, the br will skip the trap here).
     (block
       (struct.set ${mut:i8} 0
         (ref.null ${mut:i8})
