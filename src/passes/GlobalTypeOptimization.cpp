@@ -392,12 +392,20 @@ struct GlobalTypeOptimization : public Pass {
           // Map to the new index.
           curr->index = newIndex;
         } else {
-          // This field was removed, so just emit drops of our children (plus a
-          // trap if the input is null).
+          // This field was removed, so just emit drops of our children, plus a
+          // trap if the ref is null. Note that we must preserve the order of
+          // operations here: the trap on a null ref happens after the value,
+          // which might have side effects.
           Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeDrop(curr->value)));
+          auto* block = builder.makeBlock();
+          auto sets =
+            ChildLocalizer(curr, getFunction(), getModule(), getPassOptions()).sets;
+          block->list.set(sets);
+          block->list.push_back(builder.makeDrop(curr->value));
+          block->list.push_back(builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
+          block->finalize();
+          replaceCurrent(block);
+          addedLocals = true;
         }
       }
 
