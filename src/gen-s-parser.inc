@@ -3213,13 +3213,13 @@ switch (op[0]) {
                   case 'i': {
                     switch (op[16]) {
                       case 'a':
-                        if (strcmp(op, "stringview_iter.advance") == 0) { return makeStringViewAccess(s, StringViewAccessIterAdvance); }
+                        if (strcmp(op, "stringview_iter.advance") == 0) { return makeStringIterMove(s, StringIterMoveAdvance); }
                         goto parse_error;
                       case 'n':
-                        if (strcmp(op, "stringview_iter.next") == 0) { return makeStringViewAccess(s, StringViewAccessIterNext); }
+                        if (strcmp(op, "stringview_iter.next") == 0) { return makeStringIterNext(s); }
                         goto parse_error;
                       case 'r':
-                        if (strcmp(op, "stringview_iter.rewind") == 0) { return makeStringViewAccess(s, StringViewAccessIterRewind); }
+                        if (strcmp(op, "stringview_iter.rewind") == 0) { return makeStringIterMove(s, StringIterMoveRewind); }
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -3227,10 +3227,10 @@ switch (op[0]) {
                   case 'w': {
                     switch (op[14]) {
                       case '1':
-                        if (strcmp(op, "stringview_wtf16.get_codeunit") == 0) { return makeStringViewAccess(s, StringViewAccessWTF16GetCodeUnit); }
+                        if (strcmp(op, "stringview_wtf16.get_codeunit") == 0) { return makeStringWTF16Get(s); }
                         goto parse_error;
                       case '8':
-                        if (strcmp(op, "stringview_wtf8.advance") == 0) { return makeStringViewAccess(s, StringViewAccessWTF8Advance); }
+                        if (strcmp(op, "stringview_wtf8.advance") == 0) { return makeStringWTF8Advance(s); }
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -8922,21 +8922,21 @@ switch (op[0]) {
                     switch (op[16]) {
                       case 'a':
                         if (op == "stringview_iter.advance"sv) {
-                          auto ret = makeStringViewAccess(ctx, in, StringViewAccessIterAdvance);
+                          auto ret = makeStringIterMove(ctx, in, StringIterMoveAdvance);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'n':
                         if (op == "stringview_iter.next"sv) {
-                          auto ret = makeStringViewAccess(ctx, in, StringViewAccessIterNext);
+                          auto ret = makeStringIterNext(ctx, in);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'r':
                         if (op == "stringview_iter.rewind"sv) {
-                          auto ret = makeStringViewAccess(ctx, in, StringViewAccessIterRewind);
+                          auto ret = makeStringIterMove(ctx, in, StringIterMoveRewind);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8948,14 +8948,14 @@ switch (op[0]) {
                     switch (op[14]) {
                       case '1':
                         if (op == "stringview_wtf16.get_codeunit"sv) {
-                          auto ret = makeStringViewAccess(ctx, in, StringViewAccessWTF16GetCodeUnit);
+                          auto ret = makeStringWTF16Get(ctx, in);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
                         if (op == "stringview_wtf8.advance"sv) {
-                          auto ret = makeStringViewAccess(ctx, in, StringViewAccessWTF8Advance);
+                          auto ret = makeStringWTF8Advance(ctx, in);
                           CHECK_ERR(ret);
                           return *ret;
                         }
