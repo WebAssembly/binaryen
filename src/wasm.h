@@ -1779,8 +1779,7 @@ public:
   void finalize();
 };
 
-class StringWTF16Get
-  : public SpecificExpression<Expression::StringWTF16GetId> {
+class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
 public:
   StringWTF16Get(MixedArena& allocator) {}
 
@@ -1790,8 +1789,7 @@ public:
   void finalize();
 };
 
-class StringIterNext
-  : public SpecificExpression<Expression::StringIterNextId> {
+class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
 public:
   StringIterNext(MixedArena& allocator) {}
 
@@ -1800,8 +1798,7 @@ public:
   void finalize();
 };
 
-class StringIterMove
-  : public SpecificExpression<Expression::StringIterMoveId> {
+class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
 public:
   StringIterMove(MixedArena& allocator) {}
 

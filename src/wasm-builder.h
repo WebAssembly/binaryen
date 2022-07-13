@@ -1041,9 +1041,8 @@ public:
     ret->finalize();
     return ret;
   }
-  StringWTF8Advance* makeStringWTF8Advance(Expression* ref,
-                                         Expression* pos,
-                                         Expression* bytes) {
+  StringWTF8Advance*
+  makeStringWTF8Advance(Expression* ref, Expression* pos, Expression* bytes) {
     auto* ret = wasm.allocator.alloc<StringWTF8Advance>();
     ret->ref = ref;
     ret->pos = pos;
@@ -1051,8 +1050,7 @@ public:
     ret->finalize();
     return ret;
   }
-  StringWTF16Get* makeStringWTF16Get(Expression* ref,
-                                         Expression* pos) {
+  StringWTF16Get* makeStringWTF16Get(Expression* ref, Expression* pos) {
     auto* ret = wasm.allocator.alloc<StringWTF16Get>();
     ret->ref = ref;
     ret->pos = pos;
@@ -1066,8 +1064,8 @@ public:
     return ret;
   }
   StringIterMove* makeStringIterMove(StringIterMoveOp op,
-                                         Expression* ref,
-                                         Expression* num = nullptr) {
+                                     Expression* ref,
+                                     Expression* num = nullptr) {
     auto* ret = wasm.allocator.alloc<StringIterMove>();
     ret->op = op;
     ret->ref = ref;

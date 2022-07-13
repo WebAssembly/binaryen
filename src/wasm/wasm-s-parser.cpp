@@ -3004,27 +3004,22 @@ Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
   return Builder(wasm).makeStringAs(op, parseExpression(s[1]));
 }
 
-Expression*
-SExpressionWasmBuilder::makeStringWTF8Advance(Element& s) {
+Expression* SExpressionWasmBuilder::makeStringWTF8Advance(Element& s) {
   return Builder(wasm).makeStringWTF8Advance(
     parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
 }
 
-Expression*
-SExpressionWasmBuilder::makeStringWTF16Get(Element& s) {
-  return Builder(wasm).makeStringWTF16Get(
-    parseExpression(s[1]), parseExpression(s[2]));
+Expression* SExpressionWasmBuilder::makeStringWTF16Get(Element& s) {
+  return Builder(wasm).makeStringWTF16Get(parseExpression(s[1]),
+                                          parseExpression(s[2]));
 }
 
-Expression*
-SExpressionWasmBuilder::makeStringIterNext(Element& s) {
-  return Builder(wasm).makeStringIterNext(
-    parseExpression(s[1]));
+Expression* SExpressionWasmBuilder::makeStringIterNext(Element& s) {
+  return Builder(wasm).makeStringIterNext(parseExpression(s[1]));
 }
 
-Expression*
-SExpressionWasmBuilder::makeStringIterMove(Element& s,
-                                             StringIterMoveOp op) {
+Expression* SExpressionWasmBuilder::makeStringIterMove(Element& s,
+                                                       StringIterMoveOp op) {
   return Builder(wasm).makeStringIterMove(
     op, parseExpression(s[1]), parseExpression(s[2]));
 }

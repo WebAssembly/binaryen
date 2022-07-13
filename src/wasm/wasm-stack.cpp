@@ -2329,11 +2329,13 @@ void BinaryInstWriter::visitStringAs(StringAs* curr) {
 }
 
 void BinaryInstWriter::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringWTF8Advance);
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringWTF8Advance);
 }
 
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringWTF16GetCodeUnit);
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringWTF16GetCodeUnit);
 }
 
 void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {

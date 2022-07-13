@@ -182,15 +182,9 @@ void ReFinalize::visitStringAs(StringAs* curr) { curr->finalize(); }
 void ReFinalize::visitStringWTF8Advance(StringWTF8Advance* curr) {
   curr->finalize();
 }
-void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) {
-  curr->finalize();
-}
-void ReFinalize::visitStringIterNext(StringIterNext* curr) {
-  curr->finalize();
-}
-void ReFinalize::visitStringIterMove(StringIterMove* curr) {
-  curr->finalize();
-}
+void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
+void ReFinalize::visitStringIterNext(StringIterNext* curr) { curr->finalize(); }
+void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
