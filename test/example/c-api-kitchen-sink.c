@@ -1696,10 +1696,13 @@ void test_func_opt() {
 void test_typesystem() {
   BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
   assert(defaultTypeSystem == BinaryenTypeSystemEquirecursive());
-  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
-  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemIsorecursive());
+  printf("BinaryenTypeSystemEquirecursive: %d\n", BinaryenTypeSystemEquirecursive());
   BinaryenSetTypeSystem(BinaryenTypeSystemNominal());
   assert(BinaryenGetTypeSystem() == BinaryenTypeSystemNominal());
+  printf("BinaryenTypeSystemNominal: %d\n", BinaryenTypeSystemNominal());
+  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
+  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemIsorecursive());
+  printf("BinaryenTypeSystemIsorecursive: %d\n", BinaryenTypeSystemIsorecursive());
   BinaryenSetTypeSystem(defaultTypeSystem);
 }
 

@@ -186,11 +186,11 @@ BinaryenPackedType BinaryenPackedTypeInt16(void) {
 
 // TypeSystem
 
-BinaryenTypeSystem BinaryenTypeSystemNominal() {
-  return static_cast<BinaryenTypeSystem>(TypeSystem::Nominal);
-}
 BinaryenTypeSystem BinaryenTypeSystemEquirecursive() {
   return static_cast<BinaryenTypeSystem>(TypeSystem::Equirecursive);
+}
+BinaryenTypeSystem BinaryenTypeSystemNominal() {
+  return static_cast<BinaryenTypeSystem>(TypeSystem::Nominal);
 }
 BinaryenTypeSystem BinaryenTypeSystemIsorecursive() {
   return static_cast<BinaryenTypeSystem>(TypeSystem::Isorecursive);
