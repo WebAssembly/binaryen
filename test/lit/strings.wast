@@ -318,7 +318,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $stringview.adjust
+  (func $stringview-access
     (param $a stringref)
     (param $b stringview_wtf8)
     (param $c stringview_wtf16)
@@ -327,6 +327,7 @@
     (local.set $i32 ;; validate the output type
       (stringview_wtf8.advance
         (local.get $b)
+        (i32.const 0)
         (i32.const 1)
       )
     )

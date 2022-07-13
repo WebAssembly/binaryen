@@ -1253,7 +1253,7 @@ void StringWTF16Get::finalize() {
   }
 }
 
-void StringViewAccess::finalize() {
+void StringIterNext::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
@@ -1261,7 +1261,7 @@ void StringViewAccess::finalize() {
   }
 }
 
-void StringViewAccess::finalize() {
+void StringIterMove::finalize() {
   if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {

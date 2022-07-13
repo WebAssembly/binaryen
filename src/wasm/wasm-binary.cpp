@@ -7305,7 +7305,7 @@ bool WasmBinaryBuilder::maybeVisitStringWTF16Get(Expression*& out,
 
 bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out,
                                                    uint32_t code) {
-  if (code != BinaryConsts::StringIterNext) {
+  if (code != BinaryConsts::StringViewIterNext) {
     return false;
   }
   auto* ref = popNonVoidExpression();
@@ -7316,9 +7316,9 @@ bool WasmBinaryBuilder::maybeVisitStringViewAccess(Expression*& out,
 bool WasmBinaryBuilder::maybeVisitStringIterMove(Expression*& out,
                                                  uint32_t code) {
   StringIterMoveOp op;
-  if (code == BinaryConsts::StringIterAdvance) {
+  if (code == BinaryConsts::StringViewIterAdvance) {
     op = StringIterAdvance;
-  } else if (code == BinaryConsts::StringIterRewind) {
+  } else if (code == BinaryConsts::StringViewIterRewind) {
     op = StringIterRewind;
   } else {
     return false;
