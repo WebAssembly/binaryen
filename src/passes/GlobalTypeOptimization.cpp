@@ -398,13 +398,14 @@ struct GlobalTypeOptimization : public Pass {
           // operations here: the trap on a null ref happens after the value,
           // which might have side effects.
           Builder builder(*getModule());
-          replaceCurrent(builder.makeDrop(
-            builder.makeRefAs(RefAsNonNull,
-                              getResultOfFirst(curr->ref,
+          auto flipped = getResultOfFirst(curr->ref,
                                                builder.makeDrop(curr->value),
                                                getFunction(),
                                                getModule(),
-                                               getPassOptions()))));
+                                               getPassOptions());
+          replaceCurrent(builder.makeDrop(
+            builder.makeRefAs(RefAsNonNull, flipped
+                              )));
           addedLocals = true;
         }
       }
