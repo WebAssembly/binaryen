@@ -701,6 +701,22 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
+  void visitStringWTF8Advance(StringWTF8Advance* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringWTF16Get(StringWTF16Get* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringIterNext(StringIterNext* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringIterMove(StringIterMove* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
 
   // TODO: Model which throws can go to which catches. For now, anything thrown
   //       is sent to the location of that tag, and any catch of that tag can

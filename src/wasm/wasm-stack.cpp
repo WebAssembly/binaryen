@@ -2328,6 +2328,35 @@ void BinaryInstWriter::visitStringAs(StringAs* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringWTF8Advance(StringWTF8Advance* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringViewWTF8Advance);
+}
+
+void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringViewWTF16GetCodePoint);
+}
+
+void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringViewIterNext);
+}
+
+void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringIterMoveAdvance:
+      o << U32LEB(BinaryConsts::StringViewIterAdvance);
+      break;
+    case StringIterMoveRewind:
+      o << U32LEB(BinaryConsts::StringViewIterRewind);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.move*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

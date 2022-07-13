@@ -92,5 +92,9 @@ DELEGATE(StringEncode);
 DELEGATE(StringConcat);
 DELEGATE(StringEq);
 DELEGATE(StringAs);
+DELEGATE(StringWTF8Advance);
+DELEGATE(StringWTF16Get);
+DELEGATE(StringIterNext);
+DELEGATE(StringIterMove);
 
 #undef DELEGATE

@@ -1236,6 +1236,39 @@ void StringAs::finalize() {
   }
 }
 
+void StringWTF8Advance::finalize() {
+  if (ref->type == Type::unreachable || pos->type == Type::unreachable ||
+      bytes->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void StringWTF16Get::finalize() {
+  if (ref->type == Type::unreachable || pos->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void StringIterNext::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void StringIterMove::finalize() {
+  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

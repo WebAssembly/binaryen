@@ -2294,6 +2294,27 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.as*");
     }
   }
+  void visitStringWTF8Advance(StringWTF8Advance* curr) {
+    printMedium(o, "stringview_wtf8.advance");
+  }
+  void visitStringWTF16Get(StringWTF16Get* curr) {
+    printMedium(o, "stringview_wtf16.get_codeunit");
+  }
+  void visitStringIterNext(StringIterNext* curr) {
+    printMedium(o, "stringview_iter.next");
+  }
+  void visitStringIterMove(StringIterMove* curr) {
+    switch (curr->op) {
+      case StringIterMoveAdvance:
+        printMedium(o, "stringview_iter.advance");
+        break;
+      case StringIterMoveRewind:
+        printMedium(o, "stringview_iter.rewind");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.move*");
+    }
+  }
 };
 
 // Prints an expression in s-expr format, including both the

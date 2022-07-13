@@ -763,6 +763,35 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringAs);
     break;
   }
+  case Expression::Id::StringWTF8AdvanceId: {
+    DELEGATE_START(StringWTF8Advance);
+    DELEGATE_FIELD_CHILD(StringWTF8Advance, bytes);
+    DELEGATE_FIELD_CHILD(StringWTF8Advance, pos);
+    DELEGATE_FIELD_CHILD(StringWTF8Advance, ref);
+    DELEGATE_END(StringWTF8Advance);
+    break;
+  }
+  case Expression::Id::StringWTF16GetId: {
+    DELEGATE_START(StringWTF16Get);
+    DELEGATE_FIELD_CHILD(StringWTF16Get, pos);
+    DELEGATE_FIELD_CHILD(StringWTF16Get, ref);
+    DELEGATE_END(StringWTF16Get);
+    break;
+  }
+  case Expression::Id::StringIterNextId: {
+    DELEGATE_START(StringIterNext);
+    DELEGATE_FIELD_CHILD(StringIterNext, ref);
+    DELEGATE_END(StringIterNext);
+    break;
+  }
+  case Expression::Id::StringIterMoveId: {
+    DELEGATE_START(StringIterMove);
+    DELEGATE_FIELD_INT(StringIterMove, op);
+    DELEGATE_FIELD_CHILD(StringIterMove, num);
+    DELEGATE_FIELD_CHILD(StringIterMove, ref);
+    DELEGATE_END(StringIterMove);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

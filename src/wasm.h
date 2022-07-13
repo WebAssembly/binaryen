@@ -609,6 +609,11 @@ enum StringAsOp {
   StringAsIter,
 };
 
+enum StringIterMoveOp {
+  StringIterMoveAdvance,
+  StringIterMoveRewind,
+};
+
 //
 // Expressions
 //
@@ -711,6 +716,10 @@ public:
     StringConcatId,
     StringEqId,
     StringAsId,
+    StringWTF8AdvanceId,
+    StringWTF16GetId,
+    StringIterNextId,
+    StringIterMoveId,
     NumExpressionIds
   };
   Id _id;
@@ -1751,6 +1760,52 @@ public:
   StringAsOp op;
 
   Expression* ref;
+
+  void finalize();
+};
+
+class StringWTF8Advance
+  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
+public:
+  StringWTF8Advance(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+  Expression* bytes;
+
+  void finalize();
+};
+
+class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
+public:
+  StringWTF16Get(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+
+  void finalize();
+};
+
+class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
+public:
+  StringIterNext(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
+public:
+  StringIterMove(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringIterMoveOp op;
+
+  Expression* ref;
+
+  // How many codepoints to advance or reverse.
+  Expression* num;
 
   void finalize();
 };

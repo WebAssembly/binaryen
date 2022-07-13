@@ -1018,6 +1018,15 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringAs(Ctx&, ParseInput&, StringAsOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx&, ParseInput&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx&, ParseInput&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringIterNext(Ctx&, ParseInput&);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringIterMove(Ctx&, ParseInput&, StringIterMoveOp op);
 
 // Modules
 template<typename Ctx>
@@ -1891,6 +1900,27 @@ Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, ParseInput& in) {
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStringAs(Ctx& ctx, ParseInput& in, StringAsOp op) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx& ctx, ParseInput& in) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx& ctx, ParseInput& in) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringIterNext(Ctx& ctx, ParseInput& in) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringIterMove(Ctx& ctx, ParseInput& in, StringIterMoveOp op) {
   return in.err("unimplemented instruction");
 }
 
