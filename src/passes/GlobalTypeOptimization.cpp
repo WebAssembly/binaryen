@@ -399,10 +399,12 @@ struct GlobalTypeOptimization : public Pass {
           Builder builder(*getModule());
           auto* block = builder.makeBlock();
           auto sets =
-            ChildLocalizer(curr, getFunction(), getModule(), getPassOptions()).sets;
+            ChildLocalizer(curr, getFunction(), getModule(), getPassOptions())
+              .sets;
           block->list.set(sets);
           block->list.push_back(builder.makeDrop(curr->value));
-          block->list.push_back(builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
+          block->list.push_back(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
           block->finalize();
           replaceCurrent(block);
           addedLocals = true;
