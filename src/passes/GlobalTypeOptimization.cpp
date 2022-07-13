@@ -399,13 +399,12 @@ struct GlobalTypeOptimization : public Pass {
           // which might have side effects.
           Builder builder(*getModule());
           auto flipped = getResultOfFirst(curr->ref,
-                                               builder.makeDrop(curr->value),
-                                               getFunction(),
-                                               getModule(),
-                                               getPassOptions());
-          replaceCurrent(builder.makeDrop(
-            builder.makeRefAs(RefAsNonNull, flipped
-                              )));
+                                          builder.makeDrop(curr->value),
+                                          getFunction(),
+                                          getModule(),
+                                          getPassOptions());
+          replaceCurrent(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
           addedLocals = true;
         }
       }
