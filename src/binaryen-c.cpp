@@ -4725,15 +4725,6 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
 // ========= Type builder =========
 //
 
-// <TODO> remove
-BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
-                                      bool nullable) {
-  return Type(HeapType(heapType),
-              nullable ? Nullability::Nullable : Nullability::NonNullable)
-    .getID();
-}
-// </TODO>
-
 TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype() {
   return static_cast<TypeBuilderErrorReason>(
     TypeBuilder::ErrorReason::SelfSupertype);

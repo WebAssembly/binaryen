@@ -2901,12 +2901,6 @@ typedef struct wasm::TypeBuilder* TypeBuilderRef;
 typedef struct TypeBuilder* TypeBuilderRef;
 #endif
 
-// <TODO> remove
-typedef uintptr_t BinaryenHeapType;
-BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
-                                                   bool nullable);
-// </TODO>
-
 typedef uint32_t TypeBuilderErrorReason;
 
 BINARYEN_API TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype(void);
