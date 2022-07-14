@@ -1754,12 +1754,12 @@ void test_typebuilder() {
       builder, 1, fieldTypes, fieldPackedTypes, fieldMutables, 1);
   }
 
-  // Create a recursive signature with parameter and result of its own type
+  // Create a signature with parameter and result of the above types
   BinaryenHeapType tempSignatureHeapType =
     TypeBuilderGetTempHeapType(builder, 1);
   BinaryenType tempSignatureType =
     TypeBuilderGetTempRefType(builder, tempSignatureHeapType, true);
-  TypeBuilderSetSignatureType(builder, 2, tempSignatureType, tempSignatureType);
+  TypeBuilderSetSignatureType(builder, 2, tempArrayType, tempStructType);
 
   // Create a basic heap type
   TypeBuilderSetBasicHeapType(
@@ -1785,6 +1785,11 @@ void test_typebuilder() {
 
   // Build a simple test module, validate and print it
   BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetTypeName(module, heapTypes[0], "SomeArray");
+  BinaryenModuleSetTypeName(module, heapTypes[1], "SomeStruct");
+  BinaryenModuleSetFieldName(module, heapTypes[1], 0, "SomeField");
+  BinaryenModuleSetTypeName(module, heapTypes[2], "SomeSignature");
+  BinaryenModuleSetTypeName(module, heapTypes[3], "does-nothing");
   BinaryenModuleSetFeatures(
     module, BinaryenFeatureReferenceTypes() | BinaryenFeatureGC());
   {

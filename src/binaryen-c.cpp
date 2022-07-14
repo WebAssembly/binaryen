@@ -4864,6 +4864,18 @@ bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
   return true;
 }
 
+void BinaryenModuleSetTypeName(BinaryenModuleRef module,
+                               BinaryenHeapType heapType,
+                               const char* name) {
+  ((Module*)module)->typeNames[HeapType(heapType)].name = name;
+}
+void BinaryenModuleSetFieldName(BinaryenModuleRef module,
+                                BinaryenHeapType heapType,
+                                BinaryenIndex index,
+                                const char* name) {
+  ((Module*)module)->typeNames[HeapType(heapType)].fieldNames[index] = name;
+}
+
 //
 // ========= Utilities =========
 //

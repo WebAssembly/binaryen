@@ -2712,14 +2712,14 @@ TypeBuilderErrorReasonForwardSupertypeReference: 2
 TypeBuilderErrorReasonForwardChildReference: 3
 module with recursive GC types:
 (module
- (type ${mut:ref?|...0|} (struct_subtype (field (mut (ref null ${mut:ref?|...0|}))) data))
- (type $[mut:ref?|...0|] (array_subtype (mut (ref null $[mut:ref?|...0|])) data))
+ (type $SomeArray (array_subtype (mut (ref null $SomeArray)) data))
+ (type $SomeStruct (struct_subtype (field $SomeField (mut (ref null $SomeStruct))) data))
  (type $none_=>_none (func_subtype func))
- (type $ref?|{mut:ref?|...0|}|_=>_ref?|{mut:ref?|...0|}| (func_subtype (param (ref null ${mut:ref?|...0|})) (result (ref null ${mut:ref?|...0|})) func))
+ (type $SomeSignature (func_subtype (param (ref null $SomeArray)) (result (ref null $SomeStruct)) func))
  (func $test (type $none_=>_none)
-  (local $0 (ref null $[mut:ref?|...0|]))
-  (local $1 (ref null ${mut:ref?|...0|}))
-  (local $2 (ref null $ref?|{mut:ref?|...0|}|_=>_ref?|{mut:ref?|...0|}|))
+  (local $0 (ref null $SomeArray))
+  (local $1 (ref null $SomeStruct))
+  (local $2 (ref null $SomeSignature))
   (local $3 eqref)
   (nop)
  )

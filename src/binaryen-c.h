@@ -2962,6 +2962,14 @@ TypeBuilderBuildAndDispose(TypeBuilderRef builder,
                            BinaryenIndex* errorIndex,
                            TypeBuilderErrorReason* errorReason);
 
+BINARYEN_API void BinaryenModuleSetTypeName(BinaryenModuleRef module,
+                                            BinaryenHeapType heapType,
+                                            const char* name);
+BINARYEN_API void BinaryenModuleSetFieldName(BinaryenModuleRef module,
+                                             BinaryenHeapType heapType,
+                                             BinaryenIndex index,
+                                             const char* name);
+
 //
 // ========= Utilities =========
 //
