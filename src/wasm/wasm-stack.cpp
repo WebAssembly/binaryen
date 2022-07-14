@@ -187,11 +187,6 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -290,11 +285,6 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -742,11 +732,6 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

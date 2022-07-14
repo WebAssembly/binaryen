@@ -44,21 +44,24 @@ void test_canonicalization() {
 void test_basic() {
   std::cout << ";; Test basic\n";
 
+  Type canonAnyref = Type(HeapType::any, Nullable);
+  Type canonI31ref = Type(HeapType::i31, NonNullable);
+
   TypeBuilder builder(6);
 
   Type anyref = builder.getTempRefType(builder[4], Nullable);
   Type i31ref = builder.getTempRefType(builder[5], NonNullable);
 
-  builder[0] = Signature(Type::anyref, Type::i31ref);
-  builder[1] = Signature(anyref, Type::i31ref);
-  builder[2] = Signature(Type::anyref, i31ref);
+  builder[0] = Signature(canonAnyref, canonI31ref);
+  builder[1] = Signature(anyref, canonI31ref);
+  builder[2] = Signature(canonAnyref, i31ref);
   builder[3] = Signature(anyref, i31ref);
   builder[4] = HeapType::any;
   builder[5] = HeapType::i31;
 
   std::vector<HeapType> built = *builder.build();
 
-  assert(built[0] == Signature(Type::anyref, Type::i31ref));
+  assert(built[0] == Signature(canonAnyref, canonI31ref));
   assert(built[1] == built[0]);
   assert(built[2] == built[1]);
   assert(built[3] == built[2]);
@@ -210,8 +213,8 @@ void test_recursive() {
     std::cout << print(built[1]) << "\n\n";
     assert(built[0].getSignature().results.getHeapType() == built[0]);
     assert(built[1].getSignature().results.getHeapType() == built[0]);
-    assert(built[0].getSignature().params == Type::anyref);
-    assert(built[1].getSignature().params == Type::anyref);
+    assert(built[0].getSignature().params == Type(HeapType::any, Nullable));
+    assert(built[1].getSignature().params == Type(HeapType::any, Nullable));
     assert(built[0] == built[1]);
     assert(built[2] == HeapType::any);
   }
@@ -219,6 +222,12 @@ void test_recursive() {
 
 void test_lub() {
   std::cout << ";; Test LUBs\n";
+
+  Type func = Type(HeapType::func, Nullable);
+  Type any = Type(HeapType::any, Nullable);
+  Type eq = Type(HeapType::eq, Nullable);
+  Type i31 = Type(HeapType::i31, Nullable);
+  Type data = Type(HeapType::data, Nullable);
 
   auto LUB = [&](Type a, Type b) {
     Type lubAB = Type::getLeastUpperBound(a, b);
@@ -238,15 +247,11 @@ void test_lub() {
 
   {
     // Basic Types
-    for (auto other : {Type::funcref,
-                       Type::anyref,
-                       Type::eqref,
-                       Type::i31ref,
-                       Type::dataref}) {
-      assert(LUB(Type::anyref, other) == Type::anyref);
+    for (auto other : {func, any, eq, i31, data}) {
+      assert(LUB(any, other) == any);
     }
-    assert(LUB(Type::eqref, Type::funcref) == Type::anyref);
-    assert(LUB(Type::i31ref, Type::dataref) == Type(HeapType::eq, NonNullable));
+    assert(LUB(eq, func) == any);
+    assert(LUB(i31, data) == eq);
   }
 
   {
@@ -260,22 +265,21 @@ void test_lub() {
 
   {
     // Funcref with specific signature
-    assert(LUB(Type::funcref, Type(Signature(), Nullable)) == Type::funcref);
+    assert(LUB(func, Type(Signature(), Nullable)) == func);
   }
 
   {
     // Incompatible signatures
-    Type a(Signature(Type::none, Type::anyref), Nullable);
-    Type b(Signature(Type::anyref, Type::none), Nullable);
-    assert(LUB(a, b) == Type::funcref);
+    Type a(Signature(Type::none, any), Nullable);
+    Type b(Signature(any, Type::none), Nullable);
+    assert(LUB(a, b) == Type(HeapType::func, Nullable));
   }
 
   {
     // Signatures incompatible in tuple size
-    Type a(Signature(Type::none, {Type::anyref, Type::anyref}), Nullable);
-    Type b(Signature(Type::none, {Type::anyref, Type::anyref, Type::anyref}),
-           Nullable);
-    assert(LUB(a, b) == Type::funcref);
+    Type a(Signature(Type::none, {any, any}), Nullable);
+    Type b(Signature(Type::none, {any, any, any}), Nullable);
+    assert(LUB(a, b) == Type(HeapType::func, Nullable));
   }
 
   // {
@@ -303,24 +307,24 @@ void test_lub() {
 
   {
     // Mutable fields are invariant
-    Type a(Array(Field(Type::eqref, Mutable)), Nullable);
-    Type b(Array(Field(Type::funcref, Mutable)), Nullable);
-    assert(LUB(a, b) == Type(HeapType::data, Nullable));
+    Type a(Array(Field(eq, Mutable)), Nullable);
+    Type b(Array(Field(func, Mutable)), Nullable);
+    assert(LUB(a, b) == data);
   }
 
   {
     // Immutable fields are covariant
-    Type a(Array(Field(Type::eqref, Immutable)), Nullable);
-    Type b(Array(Field(Type::funcref, Immutable)), Nullable);
-    Type lub(Array(Field(Type::anyref, Immutable)), Nullable);
+    Type a(Array(Field(eq, Immutable)), Nullable);
+    Type b(Array(Field(func, Immutable)), Nullable);
+    Type lub(Array(Field(any, Immutable)), Nullable);
     assert(LUB(a, b) == lub);
   }
 
   {
     // Depth subtyping
-    Type a(Struct({Field(Type::eqref, Immutable)}), Nullable);
-    Type b(Struct({Field(Type::funcref, Immutable)}), Nullable);
-    Type lub(Struct({Field(Type::anyref, Immutable)}), Nullable);
+    Type a(Struct({Field(eq, Immutable)}), Nullable);
+    Type b(Struct({Field(func, Immutable)}), Nullable);
+    Type lub(Struct({Field(any, Immutable)}), Nullable);
     assert(LUB(a, b) == lub);
   }
 
@@ -344,32 +348,29 @@ void test_lub() {
 
   {
     // Width and depth subtyping with different suffixes
-    Type a(Struct({Field(Type::eqref, Immutable), Field(Type::i64, Immutable)}),
+    Type a(Struct({Field(eq, Immutable), Field(Type::i64, Immutable)}),
            Nullable);
-    Type b(
-      Struct({Field(Type::funcref, Immutable), Field(Type::f32, Immutable)}),
-      Nullable);
-    Type lub(Struct({Field(Type::anyref, Immutable)}), Nullable);
+    Type b(Struct({Field(func, Immutable), Field(Type::f32, Immutable)}),
+           Nullable);
+    Type lub(Struct({Field(any, Immutable)}), Nullable);
     assert(LUB(a, b) == lub);
   }
 
   {
     // No common prefix
-    Type a(
-      Struct({Field(Type::i32, Immutable), Field(Type::anyref, Immutable)}),
-      Nullable);
-    Type b(
-      Struct({Field(Type::f32, Immutable), Field(Type::anyref, Immutable)}),
-      Nullable);
+    Type a(Struct({Field(Type::i32, Immutable), Field(any, Immutable)}),
+           Nullable);
+    Type b(Struct({Field(Type::f32, Immutable), Field(any, Immutable)}),
+           Nullable);
     Type lub(Struct(), Nullable);
     assert(LUB(a, b) == lub);
   }
 
   {
     // Nested structs
-    Type innerA(Struct({Field(Type::eqref, Immutable)}), Nullable);
-    Type innerB(Struct({Field(Type::funcref, Immutable)}), Nullable);
-    Type innerLub(Struct({Field(Type::anyref, Immutable)}), Nullable);
+    Type innerA(Struct({Field(eq, Immutable)}), Nullable);
+    Type innerB(Struct({Field(func, Immutable)}), Nullable);
+    Type innerLub(Struct({Field(any, Immutable)}), Nullable);
     Type a(Struct({Field(innerA, Immutable)}), Nullable);
     Type b(Struct({Field(innerB, Immutable)}), Nullable);
     Type lub(Struct({Field(innerLub, Immutable)}), Nullable);
@@ -381,18 +382,15 @@ void test_lub() {
     TypeBuilder builder(2);
     Type tempA = builder.getTempRefType(builder[0], Nullable);
     Type tempB = builder.getTempRefType(builder[1], Nullable);
-    builder[0] =
-      Struct({Field(tempB, Immutable), Field(Type::eqref, Immutable)});
-    builder[1] =
-      Struct({Field(tempA, Immutable), Field(Type::funcref, Immutable)});
+    builder[0] = Struct({Field(tempB, Immutable), Field(eq, Immutable)});
+    builder[1] = Struct({Field(tempA, Immutable), Field(func, Immutable)});
     auto built = *builder.build();
     Type a(built[0], Nullable);
     Type b(built[1], Nullable);
 
     TypeBuilder lubBuilder(1);
     Type tempLub = builder.getTempRefType(lubBuilder[0], Nullable);
-    lubBuilder[0] =
-      Struct({Field(tempLub, Immutable), Field(Type::anyref, Immutable)});
+    lubBuilder[0] = Struct({Field(tempLub, Immutable), Field(any, Immutable)});
     built = *lubBuilder.build();
     Type lub(built[0], Nullable);
 

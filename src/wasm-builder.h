@@ -82,7 +82,8 @@ public:
   }
 
   static std::unique_ptr<Table> makeTable(Name name,
-                                          Type type = Type::funcref,
+                                          Type type = Type(HeapType::func,
+                                                           Nullable),
                                           Address initial = 0,
                                           Address max = Table::kMaxSize) {
     auto table = std::make_unique<Table>();
@@ -97,7 +98,7 @@ public:
   makeElementSegment(Name name,
                      Name table,
                      Expression* offset = nullptr,
-                     Type type = Type::funcref) {
+                     Type type = Type(HeapType::func, Nullable)) {
     auto seg = std::make_unique<ElementSegment>();
     seg->name = name;
     seg->table = table;
@@ -1114,20 +1115,14 @@ public:
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
+    if (type.isRef() && type.getHeapType() == HeapType::i31) {
+      return makeI31New(makeConst(value.geti31()));
+    }
     if (type.isRtt()) {
       return makeRtt(value.type);
     }
     TODO_SINGLE_COMPOUND(type);
-    switch (type.getBasic()) {
-      case Type::anyref:
-      case Type::eqref:
-        assert(value.isNull() && "unexpected non-null reference type literal");
-        return makeRefNull(type);
-      case Type::i31ref:
-        return makeI31New(makeConst(value.geti31()));
-      default:
-        WASM_UNREACHABLE("invalid constant expression");
-    }
+    WASM_UNREACHABLE("unsupported constant expression");
   }
 
   Expression* makeConstantExpression(Literals values) {
@@ -1273,7 +1268,10 @@ public:
     if (curr->type.isNullable()) {
       return ExpressionManipulator::refNull(curr, curr->type);
     }
-    if (curr->type.isFunction() || !curr->type.isBasic()) {
+    if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {
+      return makeI31New(makeConst(0));
+    }
+    if (!curr->type.isBasic()) {
       // We can't do any better, keep the original.
       return curr;
     }
@@ -1298,15 +1296,6 @@ public:
         value = Literal(bytes.data());
         break;
       }
-      case Type::funcref:
-        WASM_UNREACHABLE("handled above");
-      case Type::anyref:
-      case Type::eqref:
-        return ExpressionManipulator::refNull(curr, curr->type);
-      case Type::i31ref:
-        return makeI31New(makeConst(0));
-      case Type::dataref:
-        return curr;
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

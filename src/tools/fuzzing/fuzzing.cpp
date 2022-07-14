@@ -260,15 +260,15 @@ void TranslateToFuzzReader::setupTables() {
   // Ensure a funcref element segment and table exist. Segments with more
   // specific function types may have a smaller chance of getting functions.
   Table* table = nullptr;
-  auto iter =
-    std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
-      return table->type == Type::funcref;
-    });
+  Type funcref = Type(HeapType::func, Nullable);
+  auto iter = std::find_if(wasm.tables.begin(),
+                           wasm.tables.end(),
+                           [&](auto& table) { return table->type == funcref; });
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
     auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), Type::funcref, 0, 0);
+      Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -277,7 +277,7 @@ void TranslateToFuzzReader::setupTables() {
     std::any_of(wasm.elementSegments.begin(),
                 wasm.elementSegments.end(),
                 [&](auto& segment) {
-                  return segment->table.is() && segment->type == Type::funcref;
+                  return segment->table.is() && segment->type == funcref;
                 });
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
@@ -934,7 +934,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
   }
-  if (type == Type::i31ref) {
+  if (type.isRef() && type.getHeapType() == HeapType::i31) {
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
   }
   // TODO: struct.get and other GC things
@@ -1463,11 +1463,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
       return builder.makeLoad(
         16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
     }
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -1566,11 +1561,6 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
       return builder.makeStore(
         16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
     }
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -1701,11 +1691,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::f64:
           return Literal(getDouble());
         case Type::v128:
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("invalid type");
@@ -1747,11 +1732,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::f64:
           return Literal(double(small));
         case Type::v128:
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1816,11 +1796,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
                                        std::numeric_limits<uint64_t>::max()));
           break;
         case Type::v128:
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1844,11 +1819,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
           value = Literal(double(int64_t(1) << upTo(64)));
           break;
         case Type::v128:
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2115,11 +2085,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                                   AllTrueVecI32x4),
                              make(Type::v128)});
         }
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2255,11 +2220,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
       }
       WASM_UNREACHABLE("invalid value");
     }
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2493,11 +2453,6 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                           make(Type::v128),
                           make(Type::v128)});
     }
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2700,11 +2655,6 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       op = ExtractLaneVecF64x2;
       break;
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2892,7 +2842,7 @@ Expression* TranslateToFuzzReader::makeRefEq(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
-  assert(type == Type::i31ref);
+  assert(type.isRef() && type.getHeapType() == HeapType::i31);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   auto* value = make(Type::i32);
   return builder.makeI31New(value);
@@ -2901,7 +2851,7 @@ Expression* TranslateToFuzzReader::makeI31New(Type type) {
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  auto* i31 = make(Type::i31ref);
+  auto* i31 = make(Type(HeapType::i31, Nullable));
   return builder.makeI31Get(i31, bool(oneIn(2)));
 }
 
@@ -2958,7 +2908,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      WeightedOption{Type::f32, VeryImportant},
                      WeightedOption{Type::f64, VeryImportant})
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
-                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::anyref)
+                .add(FeatureSet::ReferenceTypes,
+                     Type(HeapType::func, Nullable),
+                     Type(HeapType::any, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
                      // Type(HeapType::any, NonNullable),
@@ -2974,7 +2926,7 @@ Type TranslateToFuzzReader::getReferenceType() {
   return pick(FeatureOptions<Type>()
                 // Avoid Type::anyref without GC enabled, see
                 // TranslateToFuzzReader::getSingleConcreteType.
-                .add(FeatureSet::ReferenceTypes, Type::funcref)
+                .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
                      Type(HeapType::any, NonNullable),
