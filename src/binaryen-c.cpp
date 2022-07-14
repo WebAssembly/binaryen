@@ -4741,6 +4741,7 @@ TypeBuilderErrorReason TypeBuilderErrorReasonForwardChildReference() {
   return static_cast<TypeBuilderErrorReason>(
     TypeBuilder::ErrorReason::ForwardChildReference);
 }
+
 TypeBuilderRef TypeBuilderCreate(BinaryenIndex size) {
   return static_cast<TypeBuilderRef>(new TypeBuilder(size));
 }
@@ -4750,29 +4751,17 @@ void TypeBuilderGrow(TypeBuilderRef builder, BinaryenIndex count) {
 BinaryenIndex TypeBuilderGetSize(TypeBuilderRef builder) {
   return ((TypeBuilder*)builder)->size();
 }
-bool TypeBuilderIsBasic(TypeBuilderRef builder, BinaryenIndex index) {
-  return ((TypeBuilder*)builder)->isBasic(index);
+void TypeBuilderSetBasicHeapType(TypeBuilderRef builder,
+                                 BinaryenIndex index,
+                                 BinaryenBasicHeapType basicHeapType) {
+  ((TypeBuilder*)builder)
+    ->setHeapType(index, HeapType::BasicHeapType(basicHeapType));
 }
-BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
-                                            BinaryenIndex index) {
-  return ((TypeBuilder*)builder)->getTempHeapType(index).getID();
-}
-BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
-                                       BinaryenHeapType heapType,
-                                       int nullable) {
-  return ((TypeBuilder*)builder)
-    ->getTempRefType(HeapType(heapType), nullable ? Nullable : NonNullable)
-    .getID();
-}
-void TypeBuilderSetSubType(TypeBuilderRef builder,
-                           BinaryenIndex index,
-                           BinaryenIndex superIndex) {
-  ((TypeBuilder*)builder)->setSubType(index, superIndex);
-}
-void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
-                               BinaryenIndex index,
-                               BinaryenIndex length) {
-  ((TypeBuilder*)builder)->createRecGroup(index, length);
+void TypeBuilderSetSignatureType(TypeBuilderRef builder,
+                                 BinaryenIndex index,
+                                 BinaryenType paramTypes,
+                                 BinaryenType resultTypes) {
+  ((TypeBuilder*)builder)->setHeapType(index, Signature(Type(paramTypes), Type(resultTypes)));
 }
 void TypeBuilderSetStructType(TypeBuilderRef builder,
                               BinaryenIndex index,
@@ -4810,12 +4799,49 @@ void TypeBuilderSetArrayType(TypeBuilderRef builder,
   }
   B->setHeapType(index, Array(element));
 }
-void TypeBuilderSetSignatureType(TypeBuilderRef builder,
-                                 BinaryenIndex index,
-                                 BinaryenType paramTypes,
-                                 BinaryenType resultTypes) {
-  auto* B = (TypeBuilder*)builder;
-  B->setHeapType(index, Signature(Type(paramTypes), Type(resultTypes)));
+bool TypeBuilderIsBasic(TypeBuilderRef builder, BinaryenIndex index) {
+  return ((TypeBuilder*)builder)->isBasic(index);
+}
+BinaryenBasicHeapType TypeBuilderGetBasic(TypeBuilderRef builder,
+                                          BinaryenIndex index) {
+  return BinaryenBasicHeapType(((TypeBuilder*)builder)->getBasic(index));
+}
+BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
+                                            BinaryenIndex index) {
+  return ((TypeBuilder*)builder)->getTempHeapType(index).getID();
+}
+BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
+                                         BinaryenType* types,
+                                         BinaryenIndex numTypes) {
+  TypeList typeList(numTypes);
+  for (BinaryenIndex cur = 0; cur < numTypes; ++cur) {
+    typeList[cur] = Type(types[cur]);
+  }
+  return ((TypeBuilder*)builder)->getTempTupleType(Tuple(typeList)).getID();
+}
+BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
+                                       BinaryenIndex depth,
+                                       BinaryenHeapType heapType) {
+  return ((TypeBuilder*)builder)
+    ->getTempRttType(Rtt(depth, HeapType(heapType)))
+    .getID();
+}
+BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
+                                       BinaryenHeapType heapType,
+                                       int nullable) {
+  return ((TypeBuilder*)builder)
+    ->getTempRefType(HeapType(heapType), nullable ? Nullable : NonNullable)
+    .getID();
+}
+void TypeBuilderSetSubType(TypeBuilderRef builder,
+                           BinaryenIndex index,
+                           BinaryenIndex superIndex) {
+  ((TypeBuilder*)builder)->setSubType(index, superIndex);
+}
+void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
+                               BinaryenIndex index,
+                               BinaryenIndex length) {
+  ((TypeBuilder*)builder)->createRecGroup(index, length);
 }
 bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
                                 BinaryenHeapType* heapTypes,

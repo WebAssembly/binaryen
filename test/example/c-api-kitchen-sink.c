@@ -1721,10 +1721,19 @@ void test_typebuilder() {
   BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
   BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
 
+  printf("TypeBuilderErrorReasonSelfSupertype: %d\n",
+         TypeBuilderErrorReasonSelfSupertype());
+  printf("TypeBuilderErrorReasonInvalidSupertype: %d\n",
+         TypeBuilderErrorReasonInvalidSupertype());
+  printf("TypeBuilderErrorReasonForwardSupertypeReference: %d\n",
+         TypeBuilderErrorReasonForwardSupertypeReference());
+  printf("TypeBuilderErrorReasonForwardChildReference: %d\n",
+         TypeBuilderErrorReasonForwardChildReference());
+
   TypeBuilderRef builder = TypeBuilderCreate(0);
   assert(TypeBuilderGetSize(builder) == 0);
-  TypeBuilderGrow(builder, 3);
-  assert(TypeBuilderGetSize(builder) == 3);
+  TypeBuilderGrow(builder, 4);
+  assert(TypeBuilderGetSize(builder) == 4);
 
   // Create a recursive array of its own type
   BinaryenHeapType tempArrayHeapType = TypeBuilderGetTempHeapType(builder, 0);
@@ -1752,6 +1761,10 @@ void test_typebuilder() {
     TypeBuilderGetTempRefType(builder, tempSignatureHeapType, true);
   TypeBuilderSetSignatureType(builder, 2, tempSignatureType, tempSignatureType);
 
+  // Create a basic heap type
+  TypeBuilderSetBasicHeapType(
+    builder, 3, BinaryenTypeGetHeapType(BinaryenTypeEqref()));
+
   // Build the type hierarchy and dispose the builder
   BinaryenHeapType heapTypes[3];
   BinaryenIndex errorIndex;
@@ -1762,19 +1775,20 @@ void test_typebuilder() {
   BinaryenType arrayType = BinaryenTypeFromHeapType(heapTypes[0], true);
   BinaryenType structType = BinaryenTypeFromHeapType(heapTypes[1], true);
   BinaryenType signatureType = BinaryenTypeFromHeapType(heapTypes[2], true);
+  BinaryenType basicType = BinaryenTypeFromHeapType(heapTypes[3], true);
 
   // Build a simple test module, validate and print it
   BinaryenModuleRef module = BinaryenModuleCreate();
   BinaryenModuleSetFeatures(
     module, BinaryenFeatureReferenceTypes() | BinaryenFeatureGC());
   {
-    BinaryenType varTypes[] = {arrayType, structType, signatureType};
+    BinaryenType varTypes[] = {arrayType, structType, signatureType, basicType};
     BinaryenAddFunction(module,
                         "test",
                         BinaryenNone(),
                         BinaryenNone(),
                         varTypes,
-                        3,
+                        4,
                         BinaryenNop(module));
   }
   ok = BinaryenModuleValidate(module);

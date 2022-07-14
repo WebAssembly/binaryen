@@ -2907,28 +2907,23 @@ BINARYEN_API TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype(void);
 BINARYEN_API TypeBuilderErrorReason
 TypeBuilderErrorReasonInvalidSupertype(void);
 BINARYEN_API TypeBuilderErrorReason
-TypeBuilderErrorReasonInvalidSupertype(void);
-BINARYEN_API TypeBuilderErrorReason
 TypeBuilderErrorReasonForwardSupertypeReference(void);
 BINARYEN_API TypeBuilderErrorReason
 TypeBuilderErrorReasonForwardChildReference(void);
 
+typedef uint32_t BinaryenBasicHeapType;
+
 BINARYEN_API TypeBuilderRef TypeBuilderCreate(BinaryenIndex size);
 BINARYEN_API void TypeBuilderGrow(TypeBuilderRef builder, BinaryenIndex count);
 BINARYEN_API BinaryenIndex TypeBuilderGetSize(TypeBuilderRef builder);
-BINARYEN_API bool TypeBuilderIsBasic(TypeBuilderRef builder,
-                                     BinaryenIndex index);
-BINARYEN_API BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
-                                                         BinaryenIndex index);
-BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
-                                                    BinaryenHeapType heapType,
-                                                    int nullable);
-BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
-                                        BinaryenIndex index,
-                                        BinaryenIndex superIndex);
-BINARYEN_API void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
-                                            BinaryenIndex index,
-                                            BinaryenIndex length);
+BINARYEN_API void
+TypeBuilderSetBasicHeapType(TypeBuilderRef builder,
+                            BinaryenIndex index,
+                            BinaryenBasicHeapType basicHeapType);
+BINARYEN_API void TypeBuilderSetSignatureType(TypeBuilderRef builder,
+                                              BinaryenIndex index,
+                                              BinaryenType paramTypes,
+                                              BinaryenType resultTypes);
 BINARYEN_API void TypeBuilderSetStructType(TypeBuilderRef builder,
                                            BinaryenIndex index,
                                            BinaryenType* fieldTypes,
@@ -2940,10 +2935,27 @@ BINARYEN_API void TypeBuilderSetArrayType(TypeBuilderRef builder,
                                           BinaryenType elementType,
                                           BinaryenPackedType elementPackedType,
                                           int elementMutable);
-BINARYEN_API void TypeBuilderSetSignatureType(TypeBuilderRef builder,
-                                              BinaryenIndex index,
-                                              BinaryenType paramTypes,
-                                              BinaryenType resultTypes);
+BINARYEN_API bool TypeBuilderIsBasic(TypeBuilderRef builder,
+                                     BinaryenIndex index);
+BINARYEN_API BinaryenBasicHeapType TypeBuilderGetBasic(TypeBuilderRef builder,
+                                                       BinaryenIndex index);
+BINARYEN_API BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
+                                                         BinaryenIndex index);
+BINARYEN_API BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
+                                                      BinaryenType* types,
+                                                      BinaryenIndex numTypes);
+BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
+                                                    BinaryenHeapType heapType,
+                                                    int nullable);
+BINARYEN_API BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
+                                                    BinaryenIndex depth,
+                                                    BinaryenHeapType heapType);
+BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
+                                        BinaryenIndex index,
+                                        BinaryenIndex superIndex);
+BINARYEN_API void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
+                                            BinaryenIndex index,
+                                            BinaryenIndex length);
 BINARYEN_API bool
 TypeBuilderBuildAndDispose(TypeBuilderRef builder,
                            BinaryenHeapType* heapTypes,
