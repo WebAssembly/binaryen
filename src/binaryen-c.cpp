@@ -3922,6 +3922,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     memoryExport->kind = ExternalKind::Memory;
     wasm->addExport(memoryExport.release());
   }
+  wasm->removeDataSegments([&](DataSegment* curr) { return true; });
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     auto curr = Builder::makeDataSegment(Name::fromInt(i),
                                          memory->name,
@@ -3932,6 +3933,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     curr->hasExplicitName = false;
     wasm->addDataSegment(std::move(curr));
   }
+  wasm->removeMemories([&](Memory* curr) { return true; });
   wasm->addMemory(std::move(memory));
 }
 

@@ -28,13 +28,14 @@ int main() {
                       segmentOffsets,
                       segmentSizes,
                       0,
-                      0);
+                      0,
+                      "0");
   }
   the_relooper = RelooperCreate(the_module);
   expressions[1] = BinaryenLocalGet(the_module, 0, BinaryenTypeInt32());
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[3] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[2], expressions[1], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[2], expressions[1], BinaryenTypeInt32(), "0");
   expressions[4] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = {expressions[3], expressions[4]};
@@ -44,7 +45,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[5]);
   expressions[6] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[7] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[6]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[6], "0");
   expressions[8] = BinaryenLocalSet(the_module, 0, expressions[7]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[8]);
   RelooperAddBranch(
@@ -67,7 +68,7 @@ int main() {
   expressions[10] = BinaryenLocalGet(the_module, 0, BinaryenTypeInt32());
   expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[12] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[11], expressions[10], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[11], expressions[10], BinaryenTypeInt32(), "0");
   expressions[13] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = {expressions[12], expressions[13]};
@@ -77,7 +78,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[14]);
   expressions[15] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[16] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[15]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[15], "0");
   expressions[17] = BinaryenLocalSet(the_module, 0, expressions[16]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[17]);
   RelooperAddBranch(
@@ -116,7 +117,7 @@ int main() {
     relooperBlocks[1], relooperBlocks[1], expressions[0], expressions[0]);
   expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[22] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[21]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[21], "0");
   expressions[23] = BinaryenLocalSet(the_module, 0, expressions[22]);
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[23]);
   RelooperAddBranch(
@@ -140,7 +141,7 @@ int main() {
   expressions[25] = BinaryenLocalGet(the_module, 0, BinaryenTypeInt32());
   expressions[26] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[27] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[26], expressions[25], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[26], expressions[25], BinaryenTypeInt32(), "0");
   expressions[28] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = {expressions[27], expressions[28]};
@@ -150,7 +151,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[29]);
   expressions[30] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[31] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[30]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[30], "0");
   expressions[32] = BinaryenLocalSet(the_module, 0, expressions[31]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[32]);
   RelooperAddBranch(
@@ -175,7 +176,7 @@ int main() {
   expressions[34] = BinaryenLocalGet(the_module, 0, BinaryenTypeInt32());
   expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[36] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[35], expressions[34], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[35], expressions[34], BinaryenTypeInt32(), "0");
   expressions[37] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = {expressions[36], expressions[37]};
@@ -185,7 +186,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[38]);
   expressions[39] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[40] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[39]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[39], "0");
   expressions[41] = BinaryenLocalSet(the_module, 0, expressions[40]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[41]);
   RelooperAddBranch(
@@ -233,7 +234,7 @@ int main() {
   expressions[50] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
   expressions[51] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[52] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[51], expressions[50], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[51], expressions[50], BinaryenTypeInt32(), "0");
   expressions[53] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = {expressions[52], expressions[53]};
@@ -245,7 +246,7 @@ int main() {
     relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
   expressions[55] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[56] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[55]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[55], "0");
   expressions[57] = BinaryenLocalSet(the_module, 3, expressions[56]);
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[57]);
   RelooperAddBranch(
@@ -288,19 +289,19 @@ int main() {
   expressions[74] = BinaryenUnary(the_module, 24, expressions[73]);
   expressions[75] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[76] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[75]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[75], "0");
   expressions[77] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
   expressions[78] =
     BinaryenBinary(the_module, 1, expressions[76], expressions[77]);
   expressions[79] =
     BinaryenLocalTee(the_module, 3, expressions[78], BinaryenTypeInt32());
   expressions[80] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[75], expressions[79], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[75], expressions[79], BinaryenTypeInt32(), "0");
   expressions[81] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
   expressions[82] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[81], expressions[70], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[81], expressions[70], BinaryenTypeInt32(), "0");
   expressions[83] = BinaryenStore(
-    the_module, 4, 4, 0, expressions[81], expressions[74], BinaryenTypeInt32());
+    the_module, 4, 4, 0, expressions[81], expressions[74], BinaryenTypeInt32(), "0");
   {
     BinaryenExpressionRef children[] = {expressions[60],
                                         expressions[62],
@@ -314,7 +315,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[84]);
   expressions[85] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
   expressions[86] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[85]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[85], "0");
   expressions[87] = BinaryenLocalSet(the_module, 1, expressions[86]);
   expressions[88] = BinaryenLocalGet(the_module, 1, BinaryenTypeInt32());
   expressions[89] = BinaryenLocalSet(the_module, 4, expressions[88]);
@@ -323,7 +324,7 @@ int main() {
   expressions[92] = BinaryenLocalGet(the_module, 6, BinaryenTypeInt32());
   expressions[93] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[94] = BinaryenStore(
-    the_module, 4, 0, 0, expressions[93], expressions[92], BinaryenTypeInt32());
+    the_module, 4, 0, 0, expressions[93], expressions[92], BinaryenTypeInt32(), "0");
   expressions[95] = BinaryenLocalGet(the_module, 5, BinaryenTypeInt32());
   expressions[96] = BinaryenReturn(the_module, expressions[95]);
   {
@@ -338,7 +339,7 @@ int main() {
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[97]);
   expressions[98] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
   expressions[99] =
-    BinaryenLoad(the_module, 4, 0, 8, 0, BinaryenTypeInt32(), expressions[98]);
+    BinaryenLoad(the_module, 4, 0, 8, 0, BinaryenTypeInt32(), expressions[98], "0");
   RelooperAddBranch(
     relooperBlocks[0], relooperBlocks[1], expressions[99], expressions[0]);
   expressions[100] = BinaryenUnreachable(the_module);
@@ -347,7 +348,7 @@ int main() {
     relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
   expressions[101] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[102] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[101]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[101], "0");
   expressions[103] = BinaryenLocalSet(the_module, 6, expressions[102]);
   relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[103]);
   RelooperAddBranch(
@@ -404,7 +405,7 @@ int main() {
   expressions[121] = BinaryenUnary(the_module, 24, expressions[120]);
   expressions[122] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[123] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[122]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[122], "0");
   expressions[124] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
   expressions[125] =
     BinaryenBinary(the_module, 1, expressions[123], expressions[124]);
@@ -416,7 +417,8 @@ int main() {
                                    0,
                                    expressions[122],
                                    expressions[126],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[128] = BinaryenLocalGet(the_module, 5, BinaryenTypeInt32());
   expressions[129] = BinaryenStore(the_module,
                                    4,
@@ -424,14 +426,16 @@ int main() {
                                    0,
                                    expressions[128],
                                    expressions[117],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[130] = BinaryenStore(the_module,
                                    4,
                                    4,
                                    0,
                                    expressions[128],
                                    expressions[121],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   {
     BinaryenExpressionRef children[] = {
       expressions[115], expressions[127], expressions[129], expressions[130]};
@@ -441,7 +445,7 @@ int main() {
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[131]);
   expressions[132] = BinaryenLocalGet(the_module, 5, BinaryenTypeInt32());
   expressions[133] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[132]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[132], "0");
   expressions[134] = BinaryenLocalSet(the_module, 3, expressions[133]);
   expressions[135] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
   expressions[136] = BinaryenLocalSet(the_module, 6, expressions[135]);
@@ -470,7 +474,8 @@ int main() {
                                    0,
                                    expressions[145],
                                    expressions[144],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[147] = BinaryenLocalGet(the_module, 8, BinaryenTypeInt32());
   expressions[148] = BinaryenReturn(the_module, expressions[147]);
   {
@@ -484,7 +489,7 @@ int main() {
     relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
   expressions[150] = BinaryenLocalGet(the_module, 5, BinaryenTypeInt32());
   expressions[151] =
-    BinaryenLoad(the_module, 4, 0, 8, 0, BinaryenTypeInt32(), expressions[150]);
+    BinaryenLoad(the_module, 4, 0, 8, 0, BinaryenTypeInt32(), expressions[150], "0");
   RelooperAddBranch(
     relooperBlocks[1], relooperBlocks[2], expressions[151], expressions[0]);
   expressions[152] = BinaryenUnreachable(the_module);
@@ -495,7 +500,7 @@ int main() {
     relooperBlocks[2], relooperBlocks[3], expressions[0], expressions[0]);
   expressions[153] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[154] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[153]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[153], "0");
   expressions[155] = BinaryenLocalSet(the_module, 9, expressions[154]);
   relooperBlocks[5] = RelooperAddBlock(the_relooper, expressions[155]);
   RelooperAddBranch(
@@ -538,7 +543,8 @@ int main() {
                       segmentOffsets,
                       segmentSizes,
                       0,
-                      0);
+                      0,
+                      "0");
   }
   expressions[157] = BinaryenConst(the_module, BinaryenLiteralInt32(65535));
   expressions[158] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -548,7 +554,8 @@ int main() {
                                    0,
                                    expressions[158],
                                    expressions[157],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[160] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[161] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
@@ -599,7 +606,7 @@ int main() {
   expressions[184] = BinaryenUnary(the_module, 24, expressions[183]);
   expressions[185] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[186] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[185]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[185], "0");
   expressions[187] = BinaryenConst(the_module, BinaryenLiteralInt32(128));
   expressions[188] =
     BinaryenBinary(the_module, 1, expressions[186], expressions[187]);
@@ -611,7 +618,8 @@ int main() {
                                    0,
                                    expressions[185],
                                    expressions[189],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[191] = BinaryenLocalGet(the_module, 6, BinaryenTypeInt32());
   expressions[192] = BinaryenStore(the_module,
                                    4,
@@ -619,14 +627,16 @@ int main() {
                                    0,
                                    expressions[191],
                                    expressions[180],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[193] = BinaryenStore(the_module,
                                    4,
                                    4,
                                    0,
                                    expressions[191],
                                    expressions[184],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   {
     BinaryenExpressionRef children[] = {expressions[166],
                                         expressions[168],
@@ -642,7 +652,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[194]);
   expressions[195] = BinaryenLocalGet(the_module, 6, BinaryenTypeInt32());
   expressions[196] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[195]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[195], "0");
   expressions[197] = BinaryenLocalSet(the_module, 7, expressions[196]);
   expressions[198] = BinaryenLocalGet(the_module, 8, BinaryenTypeInt32());
   expressions[199] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -652,7 +662,8 @@ int main() {
                                    0,
                                    expressions[199],
                                    expressions[198],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[201] = BinaryenLocalGet(the_module, 7, BinaryenTypeInt32());
   expressions[202] = BinaryenReturn(the_module, expressions[201]);
   {
@@ -664,7 +675,7 @@ int main() {
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[203]);
   expressions[204] = BinaryenLocalGet(the_module, 6, BinaryenTypeInt32());
   expressions[205] =
-    BinaryenLoad(the_module, 4, 0, 8, 0, BinaryenTypeInt32(), expressions[204]);
+    BinaryenLoad(the_module, 4, 0, 8, 0, BinaryenTypeInt32(), expressions[204], "0");
   RelooperAddBranch(
     relooperBlocks[0], relooperBlocks[1], expressions[205], expressions[0]);
   expressions[206] = BinaryenUnreachable(the_module);
@@ -673,7 +684,7 @@ int main() {
     relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
   expressions[207] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[208] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[207]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[207], "0");
   expressions[209] = BinaryenLocalSet(the_module, 8, expressions[208]);
   relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[209]);
   RelooperAddBranch(
@@ -719,7 +730,8 @@ int main() {
                                    0,
                                    expressions[219],
                                    expressions[218],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[221] = BinaryenLocalGet(the_module, 3, BinaryenTypeInt32());
   expressions[222] = BinaryenReturn(the_module, expressions[221]);
   {
@@ -734,7 +746,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[223]);
   expressions[224] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[225] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[224]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[224], "0");
   expressions[226] = BinaryenLocalSet(the_module, 4, expressions[225]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[226]);
   RelooperAddBranch(
@@ -780,7 +792,8 @@ int main() {
                                    0,
                                    expressions[241],
                                    expressions[240],
-                                   BinaryenTypeInt32());
+                                   BinaryenTypeInt32(),
+                                   "0");
   expressions[243] = BinaryenLocalGet(the_module, 6, BinaryenTypeInt32());
   expressions[244] = BinaryenReturn(the_module, expressions[243]);
   {
@@ -797,7 +810,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[245]);
   expressions[246] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[247] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[246]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt32(), expressions[246], "0");
   expressions[248] = BinaryenLocalSet(the_module, 7, expressions[247]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[248]);
   RelooperAddBranch(
@@ -848,7 +861,8 @@ int main() {
                                    0,
                                    expressions[263],
                                    expressions[262],
-                                   BinaryenTypeInt64());
+                                   BinaryenTypeInt64(),
+                                   "0");
   expressions[265] = BinaryenLocalGet(the_module, 6, BinaryenTypeInt32());
   expressions[266] = BinaryenReturn(the_module, expressions[265]);
   {
@@ -865,7 +879,7 @@ int main() {
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[267]);
   expressions[268] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[269] =
-    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt64(), expressions[268]);
+    BinaryenLoad(the_module, 4, 0, 0, 0, BinaryenTypeInt64(), expressions[268], "0");
   expressions[270] = BinaryenLocalSet(the_module, 7, expressions[269]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[270]);
   RelooperAddBranch(
