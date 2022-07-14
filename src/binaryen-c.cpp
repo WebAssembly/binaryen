@@ -184,6 +184,21 @@ BinaryenPackedType BinaryenPackedTypeInt16(void) {
   return Field::PackedType::i16;
 }
 
+// Heap types
+
+BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
+  return Type(type).getHeapType().getID();
+}
+bool BinaryenTypeIsNullable(BinaryenType type) {
+  return Type(type).isNullable();
+}
+BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
+                                      bool nullable) {
+  return Type(HeapType(heapType),
+              nullable ? Nullability::Nullable : Nullability::NonNullable)
+    .getID();
+}
+
 // TypeSystem
 
 BinaryenTypeSystem BinaryenTypeSystemEquirecursive() {
