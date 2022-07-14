@@ -540,6 +540,7 @@ public:
     ret->offset = offset;
     ret->align = align;
     ret->ptr = ptr;
+    ret->memory = memory;
     ret->finalize();
     return ret;
   }
@@ -652,20 +653,18 @@ public:
     ret->value = value;
     return ret;
   }
-  MemorySize* makeMemorySize(Name memory) {
+  MemorySize* makeMemorySize(Name memory, bool is64) {
     auto* ret = wasm.allocator.alloc<MemorySize>();
-    auto mem = wasm.getMemory(memory);
-    if (mem->is64()) {
+    if (is64) {
       ret->make64();
     }
     ret->memory = memory;
     ret->finalize();
     return ret;
   }
-  MemoryGrow* makeMemoryGrow(Expression* delta, Name memory) {
+  MemoryGrow* makeMemoryGrow(Expression* delta, Name memory, bool is64) {
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
-    auto mem = wasm.getMemory(memory);
-    if (mem->is64()) {
+    if (is64) {
       ret->make64();
     }
     ret->delta = delta;

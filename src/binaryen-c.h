@@ -778,9 +778,9 @@ BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
 // Return: value can be NULL
 BINARYEN_API BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
-BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module, const char* name);
+BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module, const char* name, bool is64);
 BINARYEN_API BinaryenExpressionRef
-BinaryenMemoryGrow(BinaryenModuleRef module, BinaryenExpressionRef delta, const char* name);
+BinaryenMemoryGrow(BinaryenModuleRef module, BinaryenExpressionRef delta, const char* name, bool is64);
 BINARYEN_API BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
 BinaryenUnreachable(BinaryenModuleRef module);
@@ -2328,7 +2328,6 @@ BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 // Each memory has data in segments, a start offset in segmentOffsets, and a
 // size in segmentSizes. exportName can be NULL
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
-                                    const char* internalName,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
                                     const char* exportName,
@@ -2337,7 +2336,8 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenExpressionRef* segmentOffsets,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
-                                    bool shared);
+                                    bool shared,
+                                    const char* name);
 
 BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
 BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module, const char* name);
