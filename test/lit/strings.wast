@@ -7,9 +7,9 @@
 (module
   ;; CHECK:      (type $ref?|string|_=>_none (func (param stringref)))
 
-  ;; CHECK:      (type $ref?|string|_ref?|string|_=>_none (func (param stringref stringref)))
-
   ;; CHECK:      (type $ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
+
+  ;; CHECK:      (type $ref?|string|_ref?|string|_=>_none (func (param stringref stringref)))
 
   ;; CHECK:      (type $ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
@@ -351,6 +351,54 @@
     )
     (local.set $i32
       (stringview_iter.rewind
+        (local.get $d)
+        (i32.const 4)
+      )
+    )
+  )
+  ;; CHECK:      (func $stringview-slice (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (stringview_wtf8.slice
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (stringview_wtf16.slice
+  ;; CHECK-NEXT:    (local.get $c)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (stringview_iter.slice
+  ;; CHECK-NEXT:    (local.get $d)
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $stringview-slice
+    (param $a stringref)
+    (param $b stringview_wtf8)
+    (param $c stringview_wtf16)
+    (param $d stringview_iter)
+    (local.set $a ;; validate the output type
+      (stringview_wtf8.slice
+        (local.get $b)
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+    (local.set $a
+      (stringview_wtf16.slice
+        (local.get $c)
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+    (local.set $a
+      (stringview_iter.slice
         (local.get $d)
         (i32.const 4)
       )
