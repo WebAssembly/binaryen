@@ -7348,7 +7348,7 @@ bool WasmBinaryBuilder::maybeVisitStringSliceWTF(Expression*& out,
   auto* end = popNonVoidExpression();
   auto* start = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringSliceWTF(op, start, end);
+  out = Builder(wasm).makeStringSliceWTF(op, ref, start, end);
   return true;
 }
 
@@ -7358,8 +7358,8 @@ bool WasmBinaryBuilder::maybeVisitStringSliceIter(Expression*& out,
     return false;
   }
   auto* num = popNonVoidExpression();
-  auto* start = popNonVoidExpression();
-  out = Builder(wasm).makeStringSliceIter(op, num);
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringSliceIter(ref, num);
   return true;
 }
 
