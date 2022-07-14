@@ -287,6 +287,15 @@ void test_types() {
   printf("BinaryenPackedTypeInt8: %d\n", i8);
   BinaryenPackedType i16 = BinaryenPackedTypeInt16();
   printf("BinaryenPackedTypeInt16: %d\n", i16);
+
+  BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
+  BinaryenType ref_null_eq = BinaryenTypeFromHeapType(eq, true);
+  assert(BinaryenTypeGetHeapType(ref_null_eq) == eq);
+  assert(BinaryenTypeIsNullable(ref_null_eq));
+  BinaryenType ref_eq = BinaryenTypeFromHeapType(eq, false);
+  assert(ref_eq != ref_null_eq);
+  assert(BinaryenTypeGetHeapType(ref_eq) == eq);
+  assert(!BinaryenTypeIsNullable(ref_eq));
 }
 
 void test_features() {

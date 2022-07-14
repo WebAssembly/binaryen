@@ -129,6 +129,15 @@ BINARYEN_API BinaryenPackedType BinaryenPackedTypeNotPacked(void);
 BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt8(void);
 BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt16(void);
 
+// Heap types
+
+typedef uintptr_t BinaryenHeapType;
+
+BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
+BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
+BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
+                                                   bool nullable);
+
 // TypeSystem
 
 typedef uint32_t BinaryenTypeSystem;
