@@ -1831,7 +1831,8 @@ public:
   void finalize();
 };
 
-class StringSliceIter : public SpecificExpression<Expression::StringSliceIterId> {
+class StringSliceIter
+  : public SpecificExpression<Expression::StringSliceIterId> {
 public:
   StringSliceIter(MixedArena& allocator) {}
 

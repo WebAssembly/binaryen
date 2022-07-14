@@ -1936,8 +1936,7 @@ makeStringSliceWTF(Ctx& ctx, ParseInput& in, StringSliceWTFOp op) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringSliceIter(Ctx& ctx, ParseInput& in) {
+Result<typename Ctx::InstrT> makeStringSliceIter(Ctx& ctx, ParseInput& in) {
   return in.err("unimplemented instruction");
 }
 

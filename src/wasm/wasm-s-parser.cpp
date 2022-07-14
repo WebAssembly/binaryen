@@ -3031,8 +3031,8 @@ Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s,
 }
 
 Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
-  return Builder(wasm).makeStringSliceIter(
-    parseExpression(s[1]), parseExpression(s[2]));
+  return Builder(wasm).makeStringSliceIter(parseExpression(s[1]),
+                                           parseExpression(s[2]));
 }
 
 // converts an s-expression string representing binary data into an output

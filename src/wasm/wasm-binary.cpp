@@ -7353,7 +7353,7 @@ bool WasmBinaryBuilder::maybeVisitStringSliceWTF(Expression*& out,
 }
 
 bool WasmBinaryBuilder::maybeVisitStringSliceIter(Expression*& out,
-                                                 uint32_t code) {
+                                                  uint32_t code) {
   if (code != BinaryConsts::StringViewIterSlice) {
     return false;
   }

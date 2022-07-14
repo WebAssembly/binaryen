@@ -1063,9 +1063,8 @@ public:
     ret->finalize();
     return ret;
   }
-  StringIterMove* makeStringIterMove(StringIterMoveOp op,
-                                     Expression* ref,
-                                     Expression* num) {
+  StringIterMove*
+  makeStringIterMove(StringIterMoveOp op, Expression* ref, Expression* num) {
     auto* ret = wasm.allocator.alloc<StringIterMove>();
     ret->op = op;
     ret->ref = ref;
