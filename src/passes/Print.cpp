@@ -2324,7 +2324,7 @@ struct PrintExpressionContents
         printMedium(o, "stringview_wtf16.slice");
         break;
       default:
-        WASM_UNREACHABLE("invalid string.move*");
+        WASM_UNREACHABLE("invalid string.slice*");
     }
   }
   void visitStringSliceIter(StringSliceIter* curr) {
