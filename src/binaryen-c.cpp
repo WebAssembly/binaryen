@@ -4761,7 +4761,8 @@ void TypeBuilderSetSignatureType(TypeBuilderRef builder,
                                  BinaryenIndex index,
                                  BinaryenType paramTypes,
                                  BinaryenType resultTypes) {
-  ((TypeBuilder*)builder)->setHeapType(index, Signature(Type(paramTypes), Type(resultTypes)));
+  ((TypeBuilder*)builder)
+    ->setHeapType(index, Signature(Type(paramTypes), Type(resultTypes)));
 }
 void TypeBuilderSetStructType(TypeBuilderRef builder,
                               BinaryenIndex index,
