@@ -1027,6 +1027,11 @@ Result<typename Ctx::InstrT> makeStringIterNext(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStringIterMove(Ctx&, ParseInput&, StringIterMoveOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringSliceWTF(Ctx&, ParseInput&, StringSliceWTFOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, ParseInput&);
 
 // Modules
 template<typename Ctx>
@@ -1921,6 +1926,18 @@ Result<typename Ctx::InstrT> makeStringIterNext(Ctx& ctx, ParseInput& in) {
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStringIterMove(Ctx& ctx, ParseInput& in, StringIterMoveOp op) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringSliceWTF(Ctx& ctx, ParseInput& in, StringSliceWTFOp op) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringSliceIter(Ctx& ctx, ParseInput& in) {
   return in.err("unimplemented instruction");
 }
 

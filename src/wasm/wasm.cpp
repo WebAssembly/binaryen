@@ -1269,6 +1269,23 @@ void StringIterMove::finalize() {
   }
 }
 
+void StringSliceWTF::finalize() {
+  if (ref->type == Type::unreachable || start->type == Type::unreachable ||
+      end->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type(HeapType::string, NonNullable);
+  }
+}
+
+void StringSliceIter::finalize() {
+  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type(HeapType::string, NonNullable);
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

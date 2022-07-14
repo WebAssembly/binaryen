@@ -632,6 +632,9 @@ instructions = [
     ("stringview_iter.next",          "makeStringIterNext(s)"),
     ("stringview_iter.advance",       "makeStringIterMove(s, StringIterMoveAdvance)"),
     ("stringview_iter.rewind",        "makeStringIterMove(s, StringIterMoveRewind)"),
+    ("stringview_wtf8.slice",         "makeStringSliceWTF(s, StringSliceWTF8)"),
+    ("stringview_wtf16.slice",        "makeStringSliceWTF(s, StringSliceWTF16)"),
+    ("stringview_iter.slice",         "makeStringSliceIter(s)"),
 ]
 
 

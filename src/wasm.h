@@ -614,6 +614,11 @@ enum StringIterMoveOp {
   StringIterMoveRewind,
 };
 
+enum StringSliceWTFOp {
+  StringSliceWTF8,
+  StringSliceWTF16,
+};
+
 //
 // Expressions
 //
@@ -720,6 +725,8 @@ public:
     StringWTF16GetId,
     StringIterNextId,
     StringIterMoveId,
+    StringSliceWTFId,
+    StringSliceIterId,
     NumExpressionIds
   };
   Id _id;
@@ -1805,6 +1812,33 @@ public:
   Expression* ref;
 
   // How many codepoints to advance or reverse.
+  Expression* num;
+
+  void finalize();
+};
+
+class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
+public:
+  StringSliceWTF(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringSliceWTFOp op;
+
+  Expression* ref;
+  Expression* start;
+  Expression* end;
+
+  void finalize();
+};
+
+class StringSliceIter : public SpecificExpression<Expression::StringSliceIterId> {
+public:
+  StringSliceIter(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringSliceIterOp op;
+
+  Expression* ref;
   Expression* num;
 
   void finalize();

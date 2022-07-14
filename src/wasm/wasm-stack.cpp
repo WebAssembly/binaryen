@@ -2357,6 +2357,25 @@ void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringSliceWTF8:
+      o << U32LEB(BinaryConsts::StringViewWTF8Slice);
+      break;
+    case StringSliceWTF16:
+      o << U32LEB(BinaryConsts::StringViewWTF16Slice);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.move*");
+  }
+}
+
+void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringViewIterSlice);
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

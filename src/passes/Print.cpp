@@ -2315,6 +2315,21 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.move*");
     }
   }
+  void visitStringSliceWTF(StringSliceWTF* curr) {
+    switch (curr->op) {
+      case StringSliceWTF8:
+        printMedium(o, "stringview_wtf8.slice");
+        break;
+      case StringSliceWTF16:
+        printMedium(o, "stringview_wtf16.slice");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.move*");
+    }
+  }
+  void visitStringSliceIter(StringSliceIter* curr) {
+    printMedium(o, "stringview_iter.slice");
+  }
 };
 
 // Prints an expression in s-expr format, including both the

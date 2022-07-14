@@ -314,6 +314,8 @@ private:
   Expression* makeStringWTF16Get(Element& s);
   Expression* makeStringIterNext(Element& s);
   Expression* makeStringIterMove(Element& s, StringIterMoveOp op);
+  Expression* makeStringSliceWTF(Element& s, StringSliceWTFOp op);
+  Expression* makeStringSliceIter(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
