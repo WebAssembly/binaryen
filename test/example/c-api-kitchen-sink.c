@@ -1806,6 +1806,7 @@ void test_typebuilder() {
   assert(ok);
   printf("module with recursive GC types:\n");
   BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
 
   BinaryenSetTypeSystem(defaultTypeSystem);
 }
