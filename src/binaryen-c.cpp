@@ -1110,14 +1110,16 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
-                                          const char* name) {
-  auto* ret = Builder(*(Module*)module).makeMemorySize(name);
+                                          const char* name,
+                                          bool is64) {
+  auto* ret = Builder(*(Module*)module).makeMemorySize(name, is64);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
-                                          const char* name) {
-  auto* ret = Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name);
+                                          const char* name,
+                                          bool is64) {
+  auto* ret = Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name, is64);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
@@ -3868,7 +3870,6 @@ const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
 // Memory. One per module
 
 void BinaryenSetMemory(BinaryenModuleRef module,
-                       const char* internalName,
                        BinaryenIndex initial,
                        BinaryenIndex maximum,
                        const char* exportName,
@@ -3877,17 +3878,17 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenExpressionRef* segmentOffsets,
                        BinaryenIndex* segmentSizes,
                        BinaryenIndex numSegments,
-                       bool shared) {
+                       bool shared,
+                       const char* name) {
   auto* wasm = (Module*)module;
-  auto memory = Builder::makeMemory(internalName);
+  auto memory = Builder::makeMemory(name);
   memory->initial = initial;
   memory->max = int32_t(maximum); // Make sure -1 extends.
   memory->shared = shared;
-  wasm->addMemory(std::move(memory));
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
-    memoryExport->value = Name::fromInt(0);
+    memoryExport->value = name;
     memoryExport->kind = ExternalKind::Memory;
     wasm->addExport(memoryExport.release());
   }
@@ -3901,6 +3902,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     curr->hasExplicitName = false;
     wasm->addDataSegment(std::move(curr));
   }
+  wasm->addMemory(std::move(memory));
 }
 
 // Memory segments

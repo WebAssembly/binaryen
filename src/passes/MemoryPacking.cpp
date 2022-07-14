@@ -88,7 +88,7 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
     mem->is64() ? GtUInt64 : GtUInt32,
     curr->dest,
     builder.makeBinary(mem->is64() ? ShlInt64 : ShlInt32,
-                       builder.makeMemorySize(mem->name),
+                       builder.makeMemorySize(mem->name, mem->is64()),
                        builder.makeConstPtr(16, mem->indexType)));
 }
 
