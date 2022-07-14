@@ -2706,3 +2706,16 @@ optimized:
 BinaryenTypeSystemEquirecursive: 0
 BinaryenTypeSystemNominal: 1
 BinaryenTypeSystemIsorecursive: 2
+module with recursive GC types:
+(module
+ (type ${mut:ref?|...0|} (struct_subtype (field (mut (ref null ${mut:ref?|...0|}))) data))
+ (type $[mut:ref?|...0|] (array_subtype (mut (ref null $[mut:ref?|...0|])) data))
+ (type $none_=>_none (func_subtype func))
+ (type $ref?|{mut:ref?|...0|}|_=>_ref?|{mut:ref?|...0|}| (func_subtype (param (ref null ${mut:ref?|...0|})) (result (ref null ${mut:ref?|...0|})) func))
+ (func $test (type $none_=>_none)
+  (local $0 (ref null $[mut:ref?|...0|]))
+  (local $1 (ref null ${mut:ref?|...0|}))
+  (local $2 (ref null $ref?|{mut:ref?|...0|}|_=>_ref?|{mut:ref?|...0|}|))
+  (nop)
+ )
+)

@@ -1708,6 +1708,60 @@ void test_typesystem() {
   BinaryenSetTypeSystem(defaultTypeSystem);
 }
 
+void test_typebuilder() {
+  BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
+  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
+
+  TypeBuilderRef builder = TypeBuilderCreate(0);
+  assert(TypeBuilderGetSize(builder) == 0);
+  TypeBuilderGrow(builder, 3);
+  assert(TypeBuilderGetSize(builder) == 3);
+
+  // Create a recursive array of its own type
+  BinaryenHeapType tempArrayHeapType = TypeBuilderGetTempHeapType(builder, 0);
+  BinaryenType tempArrayType = TypeBuilderGetTempRefType(builder, tempArrayHeapType, true);
+  TypeBuilderSetArrayType(builder, 0, tempArrayType, BinaryenPackedTypeNotPacked(), true);
+
+  // Create a recursive struct with a field of its own type
+  BinaryenHeapType tempStructHeapType = TypeBuilderGetTempHeapType(builder, 1);
+  BinaryenType tempStructType = TypeBuilderGetTempRefType(builder, tempStructHeapType, true);
+  {
+    BinaryenType fieldTypes[] = { tempStructType };
+    BinaryenPackedType fieldPackedTypes[] = { BinaryenPackedTypeNotPacked() };
+    bool fieldMutables[] = { true };
+    TypeBuilderSetStructType(builder, 1, fieldTypes, fieldPackedTypes, fieldMutables, 1);
+  }
+
+  // Create a recursive signature with parameter and result of its own type
+  BinaryenHeapType tempSignatureHeapType = TypeBuilderGetTempHeapType(builder, 1);
+  BinaryenType tempSignatureType = TypeBuilderGetTempRefType(builder, tempSignatureHeapType, true);
+  TypeBuilderSetSignatureType(builder, 2, tempSignatureType, tempSignatureType);
+
+  // Build the type hierarchy and dispose the builder
+  BinaryenHeapType heapTypes[3];
+  BinaryenIndex errorIndex;
+  TypeBuilderErrorReason errorReason;
+  bool ok = TypeBuilderBuildAndDispose(builder, (BinaryenHeapType*)&heapTypes, &errorIndex, &errorReason);
+  assert(ok);
+  BinaryenType arrayType = BinaryenTypeFromHeapType(heapTypes[0], true);
+  BinaryenType structType = BinaryenTypeFromHeapType(heapTypes[1], true);
+  BinaryenType signatureType = BinaryenTypeFromHeapType(heapTypes[2], true);
+
+  // Build a simple test module, validate and print it
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureReferenceTypes() | BinaryenFeatureGC());
+  {
+    BinaryenType varTypes[] = { arrayType, structType, signatureType };
+    BinaryenAddFunction(module, "test", BinaryenNone(), BinaryenNone(), varTypes, 3, BinaryenNop(module));
+  }
+  ok = BinaryenModuleValidate(module);
+  assert(ok);
+  printf("module with recursive GC types:\n");
+  BinaryenModulePrint(module);
+
+  BinaryenSetTypeSystem(defaultTypeSystem);
+}
+
 int main() {
   test_types();
   test_features();
@@ -1721,6 +1775,7 @@ int main() {
   test_for_each();
   test_func_opt();
   test_typesystem();
+  test_typebuilder();
 
   return 0;
 }
