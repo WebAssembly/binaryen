@@ -1821,7 +1821,6 @@ class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
 public:
   StringSliceWTF(MixedArena& allocator) {}
 
-  // Whether the movement is to advance or reverse.
   StringSliceWTFOp op;
 
   Expression* ref;
@@ -1835,9 +1834,6 @@ class StringSliceIter
   : public SpecificExpression<Expression::StringSliceIterId> {
 public:
   StringSliceIter(MixedArena& allocator) {}
-
-  // Whether the movement is to advance or reverse.
-  StringSliceIterOp op;
 
   Expression* ref;
   Expression* num;

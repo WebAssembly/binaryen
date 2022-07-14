@@ -1076,7 +1076,7 @@ public:
                                      Expression* ref,
                                      Expression* start,
                                      Expression* end) {
-    auto* ret = wasm.allocator.alloc<StringIterMove>();
+    auto* ret = wasm.allocator.alloc<StringSliceWTF>();
     ret->op = op;
     ret->ref = ref;
     ret->start = start;
