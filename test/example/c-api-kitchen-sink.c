@@ -1772,7 +1772,7 @@ void test_typebuilder() {
   // TODO: Not sure about Tuples and Rtts
 
   // Build the type hierarchy and dispose the builder
-  BinaryenHeapType heapTypes[3];
+  BinaryenHeapType heapTypes[4];
   BinaryenIndex errorIndex;
   TypeBuilderErrorReason errorReason;
   bool ok = TypeBuilderBuildAndDispose(
