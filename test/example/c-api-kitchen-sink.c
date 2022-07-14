@@ -1764,6 +1764,12 @@ void test_typebuilder() {
   // Create a basic heap type
   TypeBuilderSetBasicHeapType(
     builder, 3, BinaryenTypeGetHeapType(BinaryenTypeEqref()));
+  assert(TypeBuilderIsBasic(builder, 3));
+  assert(TypeBuilderGetBasic(builder, 3) ==
+         BinaryenTypeGetHeapType(BinaryenTypeEqref()));
+  assert(!TypeBuilderIsBasic(builder, 2));
+
+  // TODO: Not sure about Tuples and Rtts
 
   // Build the type hierarchy and dispose the builder
   BinaryenHeapType heapTypes[3];
