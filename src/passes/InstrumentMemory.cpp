@@ -248,24 +248,19 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitModule(Module* curr) {
-    for (auto& memory : curr->memories) {
-      auto indexType = memory->indexType;
-      auto underbar = std::string("-");
-      Name loadName = load_ptr.c_str() + underbar + memory->name.c_str();
-      addImport(
-        curr, loadName, {Type::i32, Type::i32, indexType, indexType}, indexType);
-      Name storeName = store_ptr.c_str() + underbar + memory->name.c_str();
-      addImport(
-        curr, storeName, {Type::i32, Type::i32, indexType, indexType}, indexType);
-    }
+    auto indexType = curr->memories.empty() ? Type::i32 : curr->memories[0]->indexType;
 
     // Load.
+    addImport(
+      curr, load_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
     addImport(curr, load_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, load_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, load_val_f32, {Type::i32, Type::f32}, Type::f32);
     addImport(curr, load_val_f64, {Type::i32, Type::f64}, Type::f64);
 
     // Store.
+    addImport(
+      curr, store_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
     addImport(curr, store_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, store_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, store_val_f32, {Type::i32, Type::f32}, Type::f32);

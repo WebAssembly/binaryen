@@ -253,7 +253,7 @@ void TranslateToFuzzReader::setupMemory() {
     builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   // Export memory so JS fuzzing can use it
   if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport("memory", "memory", ExternalKind::Memory));
+    wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
   }
 }
 
