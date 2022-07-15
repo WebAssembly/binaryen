@@ -367,6 +367,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         runner.add("avoid-reinterprets");
       }
       runner.addDefaultOptimizationPasses();
+      runner.add("remove-non-js-ops");
       runner.add("avoid-reinterprets");
     }
     // Finally, get the code into the flat form we need for wasm2js itself, and
