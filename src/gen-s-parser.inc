@@ -3221,17 +3221,36 @@ switch (op[0]) {
                       case 'r':
                         if (strcmp(op, "stringview_iter.rewind") == 0) { return makeStringIterMove(s, StringIterMoveRewind); }
                         goto parse_error;
+                      case 's':
+                        if (strcmp(op, "stringview_iter.slice") == 0) { return makeStringSliceIter(s); }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
                   case 'w': {
                     switch (op[14]) {
-                      case '1':
-                        if (strcmp(op, "stringview_wtf16.get_codeunit") == 0) { return makeStringWTF16Get(s); }
-                        goto parse_error;
-                      case '8':
-                        if (strcmp(op, "stringview_wtf8.advance") == 0) { return makeStringWTF8Advance(s); }
-                        goto parse_error;
+                      case '1': {
+                        switch (op[17]) {
+                          case 'g':
+                            if (strcmp(op, "stringview_wtf16.get_codeunit") == 0) { return makeStringWTF16Get(s); }
+                            goto parse_error;
+                          case 's':
+                            if (strcmp(op, "stringview_wtf16.slice") == 0) { return makeStringSliceWTF(s, StringSliceWTF16); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case '8': {
+                        switch (op[16]) {
+                          case 'a':
+                            if (strcmp(op, "stringview_wtf8.advance") == 0) { return makeStringWTF8Advance(s); }
+                            goto parse_error;
+                          case 's':
+                            if (strcmp(op, "stringview_wtf8.slice") == 0) { return makeStringSliceWTF(s, StringSliceWTF8); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       default: goto parse_error;
                     }
                   }
@@ -8941,25 +8960,56 @@ switch (op[0]) {
                           return *ret;
                         }
                         goto parse_error;
+                      case 's':
+                        if (op == "stringview_iter.slice"sv) {
+                          auto ret = makeStringSliceIter(ctx, in);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
                   case 'w': {
                     switch (op[14]) {
-                      case '1':
-                        if (op == "stringview_wtf16.get_codeunit"sv) {
-                          auto ret = makeStringWTF16Get(ctx, in);
-                          CHECK_ERR(ret);
-                          return *ret;
+                      case '1': {
+                        switch (op[17]) {
+                          case 'g':
+                            if (op == "stringview_wtf16.get_codeunit"sv) {
+                              auto ret = makeStringWTF16Get(ctx, in);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case 's':
+                            if (op == "stringview_wtf16.slice"sv) {
+                              auto ret = makeStringSliceWTF(ctx, in, StringSliceWTF16);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
                         }
-                        goto parse_error;
-                      case '8':
-                        if (op == "stringview_wtf8.advance"sv) {
-                          auto ret = makeStringWTF8Advance(ctx, in);
-                          CHECK_ERR(ret);
-                          return *ret;
+                      }
+                      case '8': {
+                        switch (op[16]) {
+                          case 'a':
+                            if (op == "stringview_wtf8.advance"sv) {
+                              auto ret = makeStringWTF8Advance(ctx, in);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case 's':
+                            if (op == "stringview_wtf8.slice"sv) {
+                              auto ret = makeStringSliceWTF(ctx, in, StringSliceWTF8);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
                         }
-                        goto parse_error;
+                      }
                       default: goto parse_error;
                     }
                   }

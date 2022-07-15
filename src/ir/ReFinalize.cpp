@@ -185,6 +185,10 @@ void ReFinalize::visitStringWTF8Advance(StringWTF8Advance* curr) {
 void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
 void ReFinalize::visitStringIterNext(StringIterNext* curr) { curr->finalize(); }
 void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
+void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
+void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
+  curr->finalize();
+}
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad

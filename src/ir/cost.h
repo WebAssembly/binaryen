@@ -672,7 +672,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {
-    return 4 + visit(curr->ptr) + visit(curr->length);
+    return 8 + visit(curr->ptr) + visit(curr->length);
   }
   CostType visitStringConst(StringConst* curr) { return 4; }
   CostType visitStringMeasure(StringMeasure* curr) {
@@ -700,6 +700,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitStringIterMove(StringIterMove* curr) {
     return 4 + visit(curr->ref) + visit(curr->num);
+  }
+  CostType visitStringSliceWTF(StringSliceWTF* curr) {
+    return 8 + visit(curr->ref) + visit(curr->start) + visit(curr->end);
+  }
+  CostType visitStringSliceIter(StringSliceIter* curr) {
+    return 8 + visit(curr->ref) + visit(curr->num);
   }
 
 private:

@@ -777,6 +777,14 @@ private:
       parent.readsArray = true;
       parent.writesArray = true;
     }
+    void visitStringSliceWTF(StringSliceWTF* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringSliceIter(StringSliceIter* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
   };
 
 public:

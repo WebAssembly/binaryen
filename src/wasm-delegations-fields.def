@@ -792,6 +792,22 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringIterMove);
     break;
   }
+  case Expression::Id::StringSliceWTFId: {
+    DELEGATE_START(StringSliceWTF);
+    DELEGATE_FIELD_INT(StringSliceWTF, op);
+    DELEGATE_FIELD_CHILD(StringSliceWTF, end);
+    DELEGATE_FIELD_CHILD(StringSliceWTF, start);
+    DELEGATE_FIELD_CHILD(StringSliceWTF, ref);
+    DELEGATE_END(StringSliceWTF);
+    break;
+  }
+  case Expression::Id::StringSliceIterId: {
+    DELEGATE_START(StringSliceIter);
+    DELEGATE_FIELD_CHILD(StringSliceIter, num);
+    DELEGATE_FIELD_CHILD(StringSliceIter, ref);
+    DELEGATE_END(StringSliceIter);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

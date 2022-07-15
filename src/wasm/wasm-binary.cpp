@@ -3951,6 +3951,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringIterMove(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringSliceWTF(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitStringSliceIter(curr, opcode)) {
+        break;
+      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7326,6 +7332,34 @@ bool WasmBinaryBuilder::maybeVisitStringIterMove(Expression*& out,
   auto* num = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeStringIterMove(op, ref, num);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringSliceWTF(Expression*& out,
+                                                 uint32_t code) {
+  StringSliceWTFOp op;
+  if (code == BinaryConsts::StringViewWTF8Slice) {
+    op = StringSliceWTF8;
+  } else if (code == BinaryConsts::StringViewWTF16Slice) {
+    op = StringSliceWTF16;
+  } else {
+    return false;
+  }
+  auto* end = popNonVoidExpression();
+  auto* start = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringSliceWTF(op, ref, start, end);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitStringSliceIter(Expression*& out,
+                                                  uint32_t code) {
+  if (code != BinaryConsts::StringViewIterSlice) {
+    return false;
+  }
+  auto* num = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringSliceIter(ref, num);
   return true;
 }
 

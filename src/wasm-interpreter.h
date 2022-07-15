@@ -1988,6 +1988,12 @@ public:
   Flow visitStringIterMove(StringIterMove* curr) {
     WASM_UNREACHABLE("unimplemented stringview_adjust*");
   }
+  Flow visitStringSliceWTF(StringSliceWTF* curr) {
+    WASM_UNREACHABLE("unimplemented stringview_adjust*");
+  }
+  Flow visitStringSliceIter(StringSliceIter* curr) {
+    WASM_UNREACHABLE("unimplemented stringview_adjust*");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

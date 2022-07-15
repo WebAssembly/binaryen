@@ -1063,11 +1063,29 @@ public:
     ret->finalize();
     return ret;
   }
-  StringIterMove* makeStringIterMove(StringIterMoveOp op,
-                                     Expression* ref,
-                                     Expression* num = nullptr) {
+  StringIterMove*
+  makeStringIterMove(StringIterMoveOp op, Expression* ref, Expression* num) {
     auto* ret = wasm.allocator.alloc<StringIterMove>();
     ret->op = op;
+    ret->ref = ref;
+    ret->num = num;
+    ret->finalize();
+    return ret;
+  }
+  StringSliceWTF* makeStringSliceWTF(StringSliceWTFOp op,
+                                     Expression* ref,
+                                     Expression* start,
+                                     Expression* end) {
+    auto* ret = wasm.allocator.alloc<StringSliceWTF>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->start = start;
+    ret->end = end;
+    ret->finalize();
+    return ret;
+  }
+  StringSliceIter* makeStringSliceIter(Expression* ref, Expression* num) {
+    auto* ret = wasm.allocator.alloc<StringSliceIter>();
     ret->ref = ref;
     ret->num = num;
     ret->finalize();

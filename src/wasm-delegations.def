@@ -96,5 +96,7 @@ DELEGATE(StringWTF8Advance);
 DELEGATE(StringWTF16Get);
 DELEGATE(StringIterNext);
 DELEGATE(StringIterMove);
+DELEGATE(StringSliceWTF);
+DELEGATE(StringSliceIter);
 
 #undef DELEGATE
