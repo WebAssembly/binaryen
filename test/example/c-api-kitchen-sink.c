@@ -1761,14 +1761,21 @@ void test_typebuilder() {
       builder, tempStructIndex, fieldTypes, fieldPackedTypes, fieldMutables, 1);
   }
 
-  // Create a recursive signature with parameter and result of its own type
+  // Create a recursive signature with parameter and result including its own
+  // type
   const BinaryenIndex tempSignatureIndex = 2;
   BinaryenHeapType tempSignatureHeapType =
     TypeBuilderGetTempHeapType(builder, tempSignatureIndex);
   BinaryenType tempSignatureType =
     TypeBuilderGetTempRefType(builder, tempSignatureHeapType, true);
-  TypeBuilderSetSignatureType(
-    builder, tempSignatureIndex, tempSignatureType, tempSignatureType);
+  {
+    BinaryenType paramTypes[] = {tempSignatureType, tempArrayType};
+    TypeBuilderSetSignatureType(
+      builder,
+      tempSignatureIndex,
+      TypeBuilderGetTempTupleType(builder, &paramTypes, 2),
+      tempSignatureType);
+  }
 
   // Create a basic heap type
   const BinaryenIndex tempBasicIndex = 3;
@@ -1802,7 +1809,7 @@ void test_typebuilder() {
   }
   TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructIndex);
 
-  // TODO: Not sure about Tuples and Rtts
+  // TODO: Rtts (post-MVP?)
 
   // Build the type hierarchy and dispose the builder
   BinaryenHeapType heapTypes[5];
