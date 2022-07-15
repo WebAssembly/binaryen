@@ -1737,15 +1737,20 @@ void test_typebuilder() {
 
   // Create a recursive array of its own type
   const BinaryenIndex tempArrayIndex = 0;
-  BinaryenHeapType tempArrayHeapType = TypeBuilderGetTempHeapType(builder, tempArrayIndex);
+  BinaryenHeapType tempArrayHeapType =
+    TypeBuilderGetTempHeapType(builder, tempArrayIndex);
   BinaryenType tempArrayType =
     TypeBuilderGetTempRefType(builder, tempArrayHeapType, true);
-  TypeBuilderSetArrayType(
-    builder, tempArrayIndex, tempArrayType, BinaryenPackedTypeNotPacked(), true);
+  TypeBuilderSetArrayType(builder,
+                          tempArrayIndex,
+                          tempArrayType,
+                          BinaryenPackedTypeNotPacked(),
+                          true);
 
   // Create a recursive struct with a field of its own type
   const BinaryenIndex tempStructIndex = 1;
-  BinaryenHeapType tempStructHeapType = TypeBuilderGetTempHeapType(builder, tempStructIndex);
+  BinaryenHeapType tempStructHeapType =
+    TypeBuilderGetTempHeapType(builder, tempStructIndex);
   BinaryenType tempStructType =
     TypeBuilderGetTempRefType(builder, tempStructHeapType, true);
   {
@@ -1762,7 +1767,8 @@ void test_typebuilder() {
     TypeBuilderGetTempHeapType(builder, tempSignatureIndex);
   BinaryenType tempSignatureType =
     TypeBuilderGetTempRefType(builder, tempSignatureHeapType, true);
-  TypeBuilderSetSignatureType(builder, tempSignatureIndex, tempArrayType, tempStructType);
+  TypeBuilderSetSignatureType(
+    builder, tempSignatureIndex, tempArrayType, tempStructType);
 
   // Create a basic heap type
   const BinaryenIndex tempBasicIndex = 3;
@@ -1777,14 +1783,22 @@ void test_typebuilder() {
 
   // Create a subtype (with an additional packed field)
   const BinaryenIndex tempSubStructIndex = 4;
-  BinaryenHeapType tempSubStructHeapType = TypeBuilderGetTempHeapType(builder, tempSubStructIndex);
-  BinaryenType tempSubStructType = TypeBuilderGetTempRefType(builder, tempSubStructHeapType, true);
+  BinaryenHeapType tempSubStructHeapType =
+    TypeBuilderGetTempHeapType(builder, tempSubStructIndex);
+  BinaryenType tempSubStructType =
+    TypeBuilderGetTempRefType(builder, tempSubStructHeapType, true);
   {
-    BinaryenType fieldTypes[] = {tempStructType, BinaryenTypeInt32()}; // must repeat existing fields
-    BinaryenPackedType fieldPackedTypes[] = {BinaryenPackedTypeNotPacked(), BinaryenPackedTypeInt8()};
+    BinaryenType fieldTypes[] = {
+      tempStructType, BinaryenTypeInt32()}; // must repeat existing fields
+    BinaryenPackedType fieldPackedTypes[] = {BinaryenPackedTypeNotPacked(),
+                                             BinaryenPackedTypeInt8()};
     bool fieldMutables[] = {true, true};
-    TypeBuilderSetStructType(
-      builder, tempSubStructIndex, fieldTypes, fieldPackedTypes, fieldMutables, 2);
+    TypeBuilderSetStructType(builder,
+                             tempSubStructIndex,
+                             fieldTypes,
+                             fieldPackedTypes,
+                             fieldMutables,
+                             2);
   }
   TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructIndex);
 
@@ -1797,26 +1811,37 @@ void test_typebuilder() {
   bool didBuildAndDispose = TypeBuilderBuildAndDispose(
     builder, (BinaryenHeapType*)&heapTypes, &errorIndex, &errorReason);
   assert(didBuildAndDispose);
-  BinaryenType arrayType = BinaryenTypeFromHeapType(heapTypes[tempArrayIndex], true);
-  BinaryenType structType = BinaryenTypeFromHeapType(heapTypes[tempStructIndex], true);
-  BinaryenType signatureType = BinaryenTypeFromHeapType(heapTypes[tempSignatureIndex], true);
-  BinaryenType basicType = BinaryenTypeFromHeapType(heapTypes[tempBasicIndex], true);
-  BinaryenType subStructType = BinaryenTypeFromHeapType(heapTypes[tempSubStructIndex], true);
+  BinaryenType arrayType =
+    BinaryenTypeFromHeapType(heapTypes[tempArrayIndex], true);
+  BinaryenType structType =
+    BinaryenTypeFromHeapType(heapTypes[tempStructIndex], true);
+  BinaryenType signatureType =
+    BinaryenTypeFromHeapType(heapTypes[tempSignatureIndex], true);
+  BinaryenType basicType =
+    BinaryenTypeFromHeapType(heapTypes[tempBasicIndex], true);
+  BinaryenType subStructType =
+    BinaryenTypeFromHeapType(heapTypes[tempSubStructIndex], true);
 
   // Build a simple test module, validate and print it
   BinaryenModuleRef module = BinaryenModuleCreate();
   BinaryenModuleSetTypeName(module, heapTypes[tempArrayIndex], "SomeArray");
   BinaryenModuleSetTypeName(module, heapTypes[tempStructIndex], "SomeStruct");
-  BinaryenModuleSetFieldName(module, heapTypes[tempStructIndex], 0, "SomeField");
-  BinaryenModuleSetTypeName(module, heapTypes[tempSignatureIndex], "SomeSignature");
+  BinaryenModuleSetFieldName(
+    module, heapTypes[tempStructIndex], 0, "SomeField");
+  BinaryenModuleSetTypeName(
+    module, heapTypes[tempSignatureIndex], "SomeSignature");
   BinaryenModuleSetTypeName(module, heapTypes[tempBasicIndex], "does-nothing");
-  BinaryenModuleSetTypeName(module, heapTypes[tempSubStructIndex], "SomeSubStruct");
-  BinaryenModuleSetFieldName(module, heapTypes[tempSubStructIndex], 0, "SomeField");
-  BinaryenModuleSetFieldName(module, heapTypes[tempSubStructIndex], 1, "SomePackedField");
+  BinaryenModuleSetTypeName(
+    module, heapTypes[tempSubStructIndex], "SomeSubStruct");
+  BinaryenModuleSetFieldName(
+    module, heapTypes[tempSubStructIndex], 0, "SomeField");
+  BinaryenModuleSetFieldName(
+    module, heapTypes[tempSubStructIndex], 1, "SomePackedField");
   BinaryenModuleSetFeatures(
     module, BinaryenFeatureReferenceTypes() | BinaryenFeatureGC());
   {
-    BinaryenType varTypes[] = {arrayType, structType, signatureType, basicType, subStructType};
+    BinaryenType varTypes[] = {
+      arrayType, structType, signatureType, basicType, subStructType};
     BinaryenAddFunction(module,
                         "test",
                         BinaryenNone(),
