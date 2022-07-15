@@ -186,6 +186,37 @@ BinaryenPackedType BinaryenPackedTypeInt16(void) {
 
 // Heap types
 
+BinaryenHeapType BinaryenHeapTypeFunc() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::func);
+}
+BinaryenHeapType BinaryenHeapTypeAny() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::any);
+}
+BinaryenHeapType BinaryenHeapTypeEq() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::eq);
+}
+BinaryenHeapType BinaryenHeapTypeI31() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::i31);
+}
+BinaryenHeapType BinaryenHeapTypeData() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::data);
+}
+BinaryenHeapType BinaryenHeapTypeString() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::string);
+}
+BinaryenHeapType BinaryenHeapTypeStringviewWtf8() {
+  return static_cast<BinaryenHeapType>(
+    HeapType::BasicHeapType::stringview_wtf8);
+}
+BinaryenHeapType BinaryenHeapTypeStringviewWtf16() {
+  return static_cast<BinaryenHeapType>(
+    HeapType::BasicHeapType::stringview_wtf16);
+}
+BinaryenHeapType BinaryenHeapTypeStringviewIter() {
+  return static_cast<BinaryenHeapType>(
+    HeapType::BasicHeapType::stringview_iter);
+}
+
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();
 }

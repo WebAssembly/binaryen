@@ -288,7 +288,21 @@ void test_types() {
   BinaryenPackedType i16 = BinaryenPackedTypeInt16();
   printf("BinaryenPackedTypeInt16: %d\n", i16);
 
+  printf("BinaryenHeapTypeFunc: %d\n", BinaryenHeapTypeFunc());
+  printf("BinaryenHeapTypeAny: %d\n", BinaryenHeapTypeAny());
+  printf("BinaryenHeapTypeEq: %d\n", BinaryenHeapTypeEq());
+  printf("BinaryenHeapTypeI31: %d\n", BinaryenHeapTypeI31());
+  printf("BinaryenHeapTypeData: %d\n", BinaryenHeapTypeData());
+  printf("BinaryenHeapTypeString: %d\n", BinaryenHeapTypeString());
+  printf("BinaryenHeapTypeStringviewWtf8: %d\n",
+         BinaryenHeapTypeStringviewWtf8());
+  printf("BinaryenHeapTypeStringviewWtf16: %d\n",
+         BinaryenHeapTypeStringviewWtf16());
+  printf("BinaryenHeapTypeStringviewIter: %d\n",
+         BinaryenHeapTypeStringviewIter());
+
   BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
+  assert(eq == BinaryenHeapTypeEq());
   BinaryenType ref_null_eq = BinaryenTypeFromHeapType(eq, true);
   assert(BinaryenTypeGetHeapType(ref_null_eq) == eq);
   assert(BinaryenTypeIsNullable(ref_null_eq));

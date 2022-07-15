@@ -15,6 +15,15 @@ BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
 BinaryenPackedTypeInt16: 2
+BinaryenHeapTypeFunc: 0
+BinaryenHeapTypeAny: 1
+BinaryenHeapTypeEq: 2
+BinaryenHeapTypeI31: 3
+BinaryenHeapTypeData: 4
+BinaryenHeapTypeString: 5
+BinaryenHeapTypeStringviewWtf8: 6
+BinaryenHeapTypeStringviewWtf16: 7
+BinaryenHeapTypeStringviewIter: 8
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
