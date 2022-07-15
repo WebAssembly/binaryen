@@ -721,7 +721,7 @@ struct OptimizeInstructions
           if (auto* leftRight = left->right->dynCast<Const>()) {
             left->op = Abstract::getBinary(left->type, Abstract::Mul);
             // (x << C1) * C2   ->   x * ((1 << C1) * C2)
-            leftRight->value = Literal::makeFromInt32(1, leftRight->type)
+            leftRight->value = Literal::makeOne(leftRight->type)
                                  .shl(leftRight->value)
                                  .mul(right->value);
             return replaceCurrent(left);
@@ -731,7 +731,7 @@ struct OptimizeInstructions
             curr->op == Abstract::getBinary(curr->type, Abstract::Shl)) {
           if (auto* leftRight = left->right->dynCast<Const>()) {
             // (x * C1) << C2   ->   x * (C1 * (1 << C2))
-            leftRight->value = Literal::makeFromInt32(1, right->type)
+            leftRight->value = Literal::makeOne(right->type)
                                  .shl(right->value)
                                  .mul(leftRight->value);
             return replaceCurrent(left);
