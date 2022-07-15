@@ -635,6 +635,7 @@ instructions = [
     ("stringview_wtf8.slice",         "makeStringSliceWTF(s, StringSliceWTF8)"),
     ("stringview_wtf16.slice",        "makeStringSliceWTF(s, StringSliceWTF16)"),
     ("stringview_iter.slice",         "makeStringSliceIter(s)"),
+    ("stringview_wtf16.length",       "makeStringMeasure(s, StringMeasureView)"),
 ]
 
 

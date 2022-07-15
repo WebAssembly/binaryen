@@ -2279,6 +2279,9 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
     case StringMeasureIsUSV:
       o << U32LEB(BinaryConsts::StringIsUSV);
       break;
+    case StringMeasureView:
+      o << U32LEB(BinaryConsts::StringViewWTF16Length);
+      break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
   }

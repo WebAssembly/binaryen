@@ -404,4 +404,14 @@
       )
     )
   )
+
+  (func $string.length (param $ref stringview_wtf16)
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (stringview_wtf16.length
+          (local.get $ref)
+        )
+      )
+    )
+  )
 )
