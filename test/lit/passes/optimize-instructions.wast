@@ -5969,6 +5969,90 @@
     (i32.const -1024)
    )
   )
+  ;; CHECK:      (func $optimizeAddedConstants-mul-lshift-32 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimizeAddedConstants-mul-lshift-32 (param $x i32) (result i32)
+   (i32.add
+    (i32.shl
+     (i32.mul
+      (local.get $x)
+      (i32.const 3)
+     )
+     (i32.const 1)
+    )
+    (i32.const 1)
+   )
+  )
+  ;; CHECK:      (func $optimizeAddedConstants-mul-lshift-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.add
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimizeAddedConstants-mul-lshift-64 (param $x i64) (result i64)
+   (i64.add
+    (i64.shl
+     (i64.mul
+      (local.get $x)
+      (i64.const 3)
+     )
+     (i64.const 1)
+    )
+    (i64.const 1)
+   )
+  )
+  ;; CHECK:      (func $optimizeAddedConstants-lshift-mul-32 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimizeAddedConstants-lshift-mul-32 (param $x i32) (result i32)
+   (i32.add
+    (i32.mul
+     (i32.shl
+      (local.get $x)
+      (i32.const 1)
+     )
+     (i32.const 3)
+    )
+    (i32.const 1)
+   )
+  )
+  ;; CHECK:      (func $optimizeAddedConstants-lshift-mul-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.add
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimizeAddedConstants-lshift-mul-64 (param $x i64) (result i64)
+   (i64.add
+    (i64.mul
+     (i64.shl
+      (local.get $x)
+      (i64.const 1)
+     )
+     (i64.const 3)
+    )
+    (i64.const 1)
+   )
+  )
   ;; CHECK:      (func $return-proper-value-from-shift-left-by-zero (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (i32.add
