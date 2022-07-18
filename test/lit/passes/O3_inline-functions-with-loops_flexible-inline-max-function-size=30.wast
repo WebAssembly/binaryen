@@ -8,6 +8,8 @@
   (type $t0 (func (param i32) (result i32)))
   ;; CHECK:      (memory $memory 0)
 
+  ;; CHECK:      (export "memory" (memory $memory))
+
   ;; CHECK:      (export "fib" (func $fib))
 
   ;; CHECK:      (export "looped" (func $looped))
@@ -19,8 +21,6 @@
   ;; CHECK:      (export "t2" (func $t2))
 
   ;; CHECK:      (export "t3" (func $t3))
-
-  ;; CHECK:      (export "memory" (memory $memory))
 
   ;; CHECK:      (func $fib (; has Stack IR ;) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if
