@@ -57,7 +57,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
       return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
     }
-    Memory(Memory&) = delete;
 
   public:
     Memory() = default;
@@ -93,8 +92,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     }
   };
 
-  std::unordered_map<Name, Memory> memories;
-  std::unordered_map<Name, std::vector<Literal>> tables;
+  std::map<Name, Memory> memories;
+  std::map<Name, std::vector<Literal>> tables;
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(
