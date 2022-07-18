@@ -24,6 +24,15 @@
 
 namespace wasm::Properties {
 
+inline bool emitsBoolean(Expression* curr) {
+  if (auto* unary = curr->dynCast<Unary>()) {
+    return unary->isRelational();
+  } else if (auto* binary = curr->dynCast<Binary>()) {
+    return binary->isRelational();
+  }
+  return false;
+}
+
 inline bool isSymmetric(Binary* binary) {
   switch (binary->op) {
     case AddInt32:

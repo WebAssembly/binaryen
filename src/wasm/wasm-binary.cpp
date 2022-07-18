@@ -3924,18 +3924,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
-      if (maybeVisitStringMeasure(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringEncode(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringConcat(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringEq(curr, opcode)) {
-        break;
-      }
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
@@ -7139,13 +7127,13 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::StringNewWTF8) {
     auto policy = getU32LEB();
     switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
+      case BinaryConsts::StringNewPolicy::UTF8:
         op = StringNewUTF8;
         break;
-      case BinaryConsts::StringPolicy::WTF8:
+      case BinaryConsts::StringNewPolicy::WTF8:
         op = StringNewWTF8;
         break;
-      case BinaryConsts::StringPolicy::Replace:
+      case BinaryConsts::StringNewPolicy::Replace:
         op = StringNewReplace;
         break;
       default:
@@ -7171,81 +7159,6 @@ bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
     throwError("bad string index");
   }
   out = Builder(wasm).makeStringConst(strings[index]);
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
-                                                uint32_t code) {
-  StringMeasureOp op;
-  if (code == BinaryConsts::StringMeasureWTF8) {
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringMeasureUTF8;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringMeasureWTF8;
-        break;
-      default:
-        throwError("bad policy for string.measure");
-    }
-  } else if (code == BinaryConsts::StringMeasureWTF16) {
-    op = StringMeasureWTF16;
-  } else if (code == BinaryConsts::StringIsUSV) {
-    op = StringMeasureIsUSV;
-  } else {
-    return false;
-  }
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringMeasure(op, ref);
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
-                                               uint32_t code) {
-  StringEncodeOp op;
-  // TODO: share this code with string.measure?
-  if (code == BinaryConsts::StringEncodeWTF8) {
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringEncodeUTF8;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringEncodeWTF8;
-        break;
-      default:
-        throwError("bad policy for string.encode");
-    }
-  } else if (code == BinaryConsts::StringEncodeWTF16) {
-    op = StringEncodeWTF16;
-  } else {
-    return false;
-  }
-  auto* ptr = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringEncode(op, ref, ptr);
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitStringConcat(Expression*& out,
-                                               uint32_t code) {
-  if (code != BinaryConsts::StringConcat) {
-    return false;
-  }
-  auto* right = popNonVoidExpression();
-  auto* left = popNonVoidExpression();
-  out = Builder(wasm).makeStringConcat(left, right);
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::StringEq) {
-    return false;
-  }
-  auto* right = popNonVoidExpression();
-  auto* left = popNonVoidExpression();
-  out = Builder(wasm).makeStringEq(left, right);
   return true;
 }
 

@@ -727,35 +727,6 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringConst);
     break;
   }
-  case Expression::Id::StringMeasureId: {
-    DELEGATE_START(StringMeasure);
-    DELEGATE_FIELD_INT(StringMeasure, op);
-    DELEGATE_FIELD_CHILD(StringMeasure, ref);
-    DELEGATE_END(StringMeasure);
-    break;
-  }
-  case Expression::Id::StringEncodeId: {
-    DELEGATE_START(StringEncode);
-    DELEGATE_FIELD_INT(StringEncode, op);
-    DELEGATE_FIELD_CHILD(StringEncode, ptr);
-    DELEGATE_FIELD_CHILD(StringEncode, ref);
-    DELEGATE_END(StringEncode);
-    break;
-  }
-  case Expression::Id::StringConcatId: {
-    DELEGATE_START(StringConcat);
-    DELEGATE_FIELD_CHILD(StringConcat, right);
-    DELEGATE_FIELD_CHILD(StringConcat, left);
-    DELEGATE_END(StringConcat);
-    break;
-  }
-  case Expression::Id::StringEqId: {
-    DELEGATE_START(StringEq);
-    DELEGATE_FIELD_CHILD(StringEq, right);
-    DELEGATE_FIELD_CHILD(StringEq, left);
-    DELEGATE_END(StringEq);
-    break;
-  }
 }
 
 #undef DELEGATE_ID

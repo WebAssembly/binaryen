@@ -734,19 +734,6 @@ private:
     }
     void visitStringNew(StringNew* curr) {}
     void visitStringConst(StringConst* curr) {}
-    void visitStringMeasure(StringMeasure* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
-    void visitStringEncode(StringEncode* curr) {
-      // traps when ref is null or we write out of bounds.
-      parent.implicitTrap = true;
-    }
-    void visitStringConcat(StringConcat* curr) {
-      // traps when an input is null.
-      parent.implicitTrap = true;
-    }
-    void visitStringEq(StringEq* curr) {}
   };
 
 public:
