@@ -83,10 +83,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     }
     Builder builder(*getModule());
     auto mem = getModule()->getMemory(curr->memory);
-    replaceCurrent(
-      builder.makeCall(getLoadName(curr),
-                       {curr->ptr, builder.makeConstPtr(curr->offset.addr, mem->indexType)},
-                       curr->type));
+    replaceCurrent(builder.makeCall(
+      getLoadName(curr),
+      {curr->ptr, builder.makeConstPtr(curr->offset.addr, mem->indexType)},
+      curr->type));
   }
 
   void visitStore(Store* curr) {
@@ -96,10 +96,12 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     }
     Builder builder(*getModule());
     auto mem = getModule()->getMemory(curr->memory);
-    replaceCurrent(builder.makeCall(
-      getStoreName(curr),
-      {curr->ptr, builder.makeConstPtr(curr->offset.addr, mem->indexType), curr->value},
-      Type::none));
+    replaceCurrent(
+      builder.makeCall(getStoreName(curr),
+                       {curr->ptr,
+                        builder.makeConstPtr(curr->offset.addr, mem->indexType),
+                        curr->value},
+                       Type::none));
   }
 };
 
@@ -225,8 +227,9 @@ struct SafeHeap : public Pass {
             }
             for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
-              if (isAtomic && !isPossibleAtomicOperation(
-                                align, bytes, module->memories[0]->shared, type)) {
+              if (isAtomic &&
+                  !isPossibleAtomicOperation(
+                    align, bytes, module->memories[0]->shared, type)) {
                 continue;
               }
               addLoadFunc(load, module);
@@ -260,8 +263,9 @@ struct SafeHeap : public Pass {
           }
           for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
-            if (isAtomic && !isPossibleAtomicOperation(
-                              align, bytes, module->memories[0]->shared, valueType)) {
+            if (isAtomic &&
+                !isPossibleAtomicOperation(
+                  align, bytes, module->memories[0]->shared, valueType)) {
               continue;
             }
             addStoreFunc(store, module);
@@ -290,8 +294,14 @@ struct SafeHeap : public Pass {
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.type, builder, 2, style.bytes, module, mem->indexType, mem->is64(), mem->name));
+    block->list.push_back(makeBoundsCheck(style.type,
+                                          builder,
+                                          2,
+                                          style.bytes,
+                                          module,
+                                          mem->indexType,
+                                          mem->is64(),
+                                          mem->name));
     // check proper alignment
     if (style.align > 1) {
       block->list.push_back(makeAlignCheck(style.align, builder, 2, module));
@@ -333,8 +343,14 @@ struct SafeHeap : public Pass {
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3, style.bytes, module, indexType, is64, mem->name));
+    block->list.push_back(makeBoundsCheck(style.valueType,
+                                          builder,
+                                          3,
+                                          style.bytes,
+                                          module,
+                                          indexType,
+                                          is64,
+                                          mem->name));
     // check proper alignment
     if (style.align > 1) {
       block->list.push_back(makeAlignCheck(style.align, builder, 3, module));
@@ -364,11 +380,17 @@ struct SafeHeap : public Pass {
       builder.makeCall(alignfault, {}, Type::none));
   }
 
-  Expression* makeBoundsCheck(
-    Type type, Builder& builder, Index local, Index bytes, Module* module, Type indexType, bool is64, Name memory) {
-    auto upperOp = is64
-                     ? options.lowMemoryUnused ? LtUInt64 : EqInt64
-                     : options.lowMemoryUnused ? LtUInt32 : EqInt32;
+  Expression* makeBoundsCheck(Type type,
+                              Builder& builder,
+                              Index local,
+                              Index bytes,
+                              Module* module,
+                              Type indexType,
+                              bool is64,
+                              Name memory) {
+    auto upperOp = is64 ? options.lowMemoryUnused ? LtUInt64 : EqInt64
+                   : options.lowMemoryUnused ? LtUInt32
+                                             : EqInt32;
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
@@ -382,7 +404,8 @@ struct SafeHeap : public Pass {
         sbrkPtr = builder.makeCall(getSbrkPtr, {}, indexType);
       }
       auto size = is64 ? 8 : 4;
-      brkLocation = builder.makeLoad(size, false, 0, size, sbrkPtr, indexType, memory);
+      brkLocation =
+        builder.makeLoad(size, false, 0, size, sbrkPtr, indexType, memory);
     }
     auto gtuOp = is64 ? GtUInt64 : GtUInt32;
     auto addOp = is64 ? AddInt64 : AddInt32;

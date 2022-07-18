@@ -1141,17 +1141,17 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
-                                          const char* name,
-                                          bool is64) {
+BinaryenExpressionRef
+BinaryenMemorySize(BinaryenModuleRef module, const char* name, bool is64) {
   auto* ret = Builder(*(Module*)module).makeMemorySize(name, is64);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
-                                          const char* name,
-                                          bool is64) {
-  auto* ret = Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name, is64);
+                                         const char* name,
+                                         bool is64) {
+  auto* ret =
+    Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name, is64);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
@@ -1294,10 +1294,12 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                        uint32_t align,
                                        BinaryenExpressionRef ptr,
                                        const char* name) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeSIMDLoad(
-        SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr, name));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeSIMDLoad(SIMDLoadOp(op),
+                                                  Address(offset),
+                                                  Address(align),
+                                                  (Expression*)ptr,
+                                                  name));
 }
 BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                                                 BinaryenOp op,
@@ -1323,10 +1325,12 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          BinaryenExpressionRef offset,
                                          BinaryenExpressionRef size,
                                          const char* name) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeMemoryInit(
-        segment, (Expression*)dest, (Expression*)offset, (Expression*)size, name));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeMemoryInit(segment,
+                                                    (Expression*)dest,
+                                                    (Expression*)offset,
+                                                    (Expression*)size,
+                                                    name));
 }
 
 BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
@@ -1340,11 +1344,10 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          BinaryenExpressionRef source,
                                          BinaryenExpressionRef size,
                                          const char* name) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeMemoryCopy((Expression*)dest,
-                                                    (Expression*)source,
-                                                    (Expression*)size,
-                                                    name));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeMemoryCopy(
+        (Expression*)dest, (Expression*)source, (Expression*)size, name));
 }
 
 BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
@@ -1352,11 +1355,10 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef value,
                                          BinaryenExpressionRef size,
                                          const char* name) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeMemoryFill((Expression*)dest,
-                                                    (Expression*)value,
-                                                    (Expression*)size,
-                                                    name));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeMemoryFill(
+        (Expression*)dest, (Expression*)value, (Expression*)size, name));
 }
 
 BinaryenExpressionRef BinaryenTupleMake(BinaryenModuleRef module,
@@ -3681,7 +3683,7 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto memory = Builder::makeMemory(internalName); 
+  auto memory = Builder::makeMemory(internalName);
   memory->module = externalModuleName;
   memory->base = externalBaseName;
   memory->shared = shared;
@@ -3977,7 +3979,8 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
 bool BinaryenHasMemory(BinaryenModuleRef module) {
   return !((Module*)module)->memories.empty();
 }
-BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module, const char* name) {
+BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module,
+                                       const char* name) {
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
@@ -3998,7 +4001,8 @@ BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
   }
   return memory->max;
 }
-const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module, const char* name) {
+const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
+                                          const char* name) {
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
@@ -4009,7 +4013,8 @@ const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module, const char* 
     return "";
   }
 }
-const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module, const char* name) {
+const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
+                                        const char* name) {
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";

@@ -452,8 +452,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
         BUFFER,
         ValueBuilder::makeNew(ValueBuilder::makeCall(
           ValueBuilder::makeName("ArrayBuffer"),
-          ValueBuilder::makeInt(Address::address32_t(wasm->memories[0]->initial.addr *
-                                                     Memory::kPageSize)))));
+          ValueBuilder::makeInt(Address::address32_t(
+            wasm->memories[0]->initial.addr * Memory::kPageSize)))));
     }
   }
 
@@ -1474,7 +1474,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitStore(Store* curr) {
-      if (!module->memories.empty() && module->memories[0]->initial < module->memories[0]->max &&
+      if (!module->memories.empty() &&
+          module->memories[0]->initial < module->memories[0]->max &&
           curr->type != Type::unreachable) {
         // In JS, if memory grows then it is dangerous to write
         //  HEAP[f()] = ..
@@ -2006,7 +2007,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitMemoryGrow(MemoryGrow* curr) {
-      if (!module->memories.empty() && module->memories[0]->max > module->memories[0]->initial) {
+      if (!module->memories.empty() &&
+          module->memories[0]->max > module->memories[0]->initial) {
         return ValueBuilder::makeCall(
           WASM_MEMORY_GROW,
           makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
@@ -2381,7 +2383,8 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
                    JsType::JS_INT)));
   ast->push_back(memorySizeFunc);
 
-  if (!wasm->memories.empty() && wasm->memories[0]->max > wasm->memories[0]->initial) {
+  if (!wasm->memories.empty() &&
+      wasm->memories[0]->max > wasm->memories[0]->initial) {
     addMemoryGrowFunc(ast, wasm);
   }
 }

@@ -186,8 +186,9 @@ void Instrumenter::addProfileExport() {
 
   // Write the hash followed by all the time stamps
   Expression* writeData =
-  // TODO (nashley): Fix hardcoded name below
-  builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
+    // TODO (nashley): Fix hardcoded name below
+    builder.makeStore(
+      8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
 
   switch (options.storageKind) {
@@ -250,7 +251,8 @@ void Instrumenter::addProfileExport() {
                   getAddr(),
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
-                builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32, wasm->memories[0]->name),
+                builder.makeAtomicLoad(
+                  1, 0, getFuncIdx(), Type::i32, wasm->memories[0]->name),
                 Type::i32,
                 wasm->memories[0]->name),
               builder.makeLocalSet(
@@ -272,7 +274,6 @@ void Instrumenter::addProfileExport() {
   wasm->addExport(
     Builder::makeExport(options.profileExport, name, ExternalKind::Function));
 
-
   // Export the memory if it is not already exported or imported.
   if (!wasm->memories[0]->imported()) {
     bool memoryExported = false;
@@ -283,10 +284,10 @@ void Instrumenter::addProfileExport() {
       }
     }
     if (!memoryExported) {
-      wasm->addExport(
-        Builder::makeExport("profile-memory",
-                            Names::getValidExportName(*wasm, wasm->memories[0]->name),
-                            ExternalKind::Memory));
+      wasm->addExport(Builder::makeExport(
+        "profile-memory",
+        Names::getValidExportName(*wasm, wasm->memories[0]->name),
+        ExternalKind::Memory));
     }
   }
 }

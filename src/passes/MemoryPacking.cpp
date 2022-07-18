@@ -101,7 +101,8 @@ struct MemoryPacking : public Pass {
                    const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
-  void dropUnusedSegments(Module* module, std::vector<std::unique_ptr<DataSegment>>& segments,
+  void dropUnusedSegments(Module* module,
+                          std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
   bool canSplit(const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
@@ -474,7 +475,7 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 }
 
 void MemoryPacking::dropUnusedSegments(
-  Module *module,
+  Module* module,
   std::vector<std::unique_ptr<DataSegment>>& segments,
   ReferrersMap& referrers) {
   std::vector<std::unique_ptr<DataSegment>> usedSegments;
@@ -716,11 +717,13 @@ void MemoryPacking::createReplacements(Module* module,
       // Create new memory.init or memory.fill
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
-        appendResult(builder.makeMemoryFill(dest, value, size, module->memories[0]->name));
+        appendResult(
+          builder.makeMemoryFill(dest, value, size, module->memories[0]->name));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
-        appendResult(builder.makeMemoryInit(initIndex, dest, offset, size, module->memories[0]->name));
+        appendResult(builder.makeMemoryInit(
+          initIndex, dest, offset, size, module->memories[0]->name));
         initIndex++;
       }
     }

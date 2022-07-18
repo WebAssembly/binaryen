@@ -87,7 +87,9 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     }
   }
 
-  void visitMemoryInit(MemoryInit* curr) { wrapAddress64(curr->dest, curr->memory); }
+  void visitMemoryInit(MemoryInit* curr) {
+    wrapAddress64(curr->dest, curr->memory);
+  }
 
   void visitMemoryFill(MemoryFill* curr) {
     wrapAddress64(curr->dest, curr->memory);
@@ -100,13 +102,21 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     wrapAddress64(curr->size, curr->memory);
   }
 
-  void visitAtomicRMW(AtomicRMW* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    wrapAddress64(curr->ptr, curr->memory);
+  }
 
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    wrapAddress64(curr->ptr, curr->memory);
+  }
 
-  void visitAtomicWait(AtomicWait* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitAtomicWait(AtomicWait* curr) {
+    wrapAddress64(curr->ptr, curr->memory);
+  }
 
-  void visitAtomicNotify(AtomicNotify* curr) { wrapAddress64(curr->ptr, curr->memory); }
+  void visitAtomicNotify(AtomicNotify* curr) {
+    wrapAddress64(curr->ptr, curr->memory);
+  }
 
   void visitMemory(Memory* memory) {
     // This is visited last.

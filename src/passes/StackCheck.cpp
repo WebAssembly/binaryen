@@ -146,7 +146,8 @@ struct StackCheck : public Pass {
     Builder builder(*module);
 
     // Add the globals.
-    Type indexType = module->memories.empty() ? Type::i32 : module->memories[0]->indexType;
+    Type indexType =
+      module->memories.empty() ? Type::i32 : module->memories[0]->indexType;
     auto stackBase =
       module->addGlobal(builder.makeGlobal(stackBaseName,
                                            stackPointer->type,

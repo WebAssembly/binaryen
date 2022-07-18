@@ -107,11 +107,11 @@ public:
     return seg;
   }
 
-  static std::unique_ptr<Memory>makeMemory(Name name,
-                                           Address initial = 0,
-                                           Address max = Memory::kMaxSize32,
-                                           bool shared = false,
-                                           Type indexType = Type::i32) {
+  static std::unique_ptr<Memory> makeMemory(Name name,
+                                            Address initial = 0,
+                                            Address max = Memory::kMaxSize32,
+                                            bool shared = false,
+                                            Type indexType = Type::i32) {
     auto memory = std::make_unique<Memory>();
     memory->name = name;
     memory->initial = initial;
@@ -383,8 +383,8 @@ public:
     ret->memory = memory;
     return ret;
   }
-  Load*
-  makeAtomicLoad(unsigned bytes, uint32_t offset, Expression* ptr, Type type, Name memory) {
+  Load* makeAtomicLoad(
+    unsigned bytes, uint32_t offset, Expression* ptr, Type type, Name memory) {
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
     load->isAtomic = true;
     return load;
@@ -405,8 +405,10 @@ public:
     wait->memory = memory;
     return wait;
   }
-  AtomicNotify*
-  makeAtomicNotify(Expression* ptr, Expression* notifyCount, Address offset, Name memory) {
+  AtomicNotify* makeAtomicNotify(Expression* ptr,
+                                 Expression* notifyCount,
+                                 Address offset,
+                                 Name memory) {
     auto* notify = wasm.allocator.alloc<AtomicNotify>();
     notify->offset = offset;
     notify->ptr = ptr;
@@ -533,8 +535,11 @@ public:
     ret->finalize();
     return ret;
   }
-  SIMDLoad*
-  makeSIMDLoad(SIMDLoadOp op, Address offset, Address align, Expression* ptr, Name memory) {
+  SIMDLoad* makeSIMDLoad(SIMDLoadOp op,
+                         Address offset,
+                         Address align,
+                         Expression* ptr,
+                         Name memory) {
     auto* ret = wasm.allocator.alloc<SIMDLoad>();
     ret->op = op;
     ret->offset = offset;
@@ -582,8 +587,10 @@ public:
     ret->finalize();
     return ret;
   }
-  MemoryCopy*
-  makeMemoryCopy(Expression* dest, Expression* source, Expression* size, Name memory) {
+  MemoryCopy* makeMemoryCopy(Expression* dest,
+                             Expression* source,
+                             Expression* size,
+                             Name memory) {
     auto* ret = wasm.allocator.alloc<MemoryCopy>();
     ret->dest = dest;
     ret->source = source;
@@ -592,8 +599,10 @@ public:
     ret->finalize();
     return ret;
   }
-  MemoryFill*
-  makeMemoryFill(Expression* dest, Expression* value, Expression* size, Name memory) {
+  MemoryFill* makeMemoryFill(Expression* dest,
+                             Expression* value,
+                             Expression* size,
+                             Name memory) {
     auto* ret = wasm.allocator.alloc<MemoryFill>();
     ret->dest = dest;
     ret->value = value;

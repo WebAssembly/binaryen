@@ -778,19 +778,23 @@ BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
 // Return: value can be NULL
 BINARYEN_API BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
-BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module, const char* name, bool is64);
+BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
+                                                      const char* name,
+                                                      bool is64);
 BINARYEN_API BinaryenExpressionRef
-BinaryenMemoryGrow(BinaryenModuleRef module, BinaryenExpressionRef delta, const char* name, bool is64);
+BinaryenMemoryGrow(BinaryenModuleRef module,
+                   BinaryenExpressionRef delta,
+                   const char* name,
+                   bool is64);
 BINARYEN_API BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
 BinaryenUnreachable(BinaryenModuleRef module);
-BINARYEN_API BinaryenExpressionRef
-BinaryenAtomicLoad(BinaryenModuleRef module,
-                   uint32_t bytes,
-                   uint32_t offset,
-                   BinaryenType type,
-                   BinaryenExpressionRef ptr,
-                   const char* name);
+BINARYEN_API BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
+                                                      uint32_t bytes,
+                                                      uint32_t offset,
+                                                      BinaryenType type,
+                                                      BinaryenExpressionRef ptr,
+                                                      const char* name);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicStore(BinaryenModuleRef module,
                     uint32_t bytes,
@@ -2340,13 +2344,18 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     const char* name);
 
 BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
-BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module, const char* name);
-BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name);
-BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name);
-BINARYEN_API const char*
-BinaryenMemoryImportGetModule(BinaryenModuleRef module, const char* name);
-BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module, const char* name);
-BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module,
+                                                    const char* name);
+BINARYEN_API bool BinaryenMemoryHasMax(BinaryenModuleRef module,
+                                       const char* name);
+BINARYEN_API BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module,
+                                                const char* name);
+BINARYEN_API const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
+                                                       const char* name);
+BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
+                                                     const char* name);
+BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module,
+                                         const char* name);
 
 // Memory segments. Query utilities.
 

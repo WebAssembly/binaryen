@@ -236,7 +236,8 @@ template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+template<typename T>
+inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
   for (auto& segment : wasm.dataSegments) {
     if (!segment->isPassive && segment->memory == memory) {
       visitor(segment.get());

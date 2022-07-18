@@ -57,22 +57,21 @@ int main() {
     module,
     BinaryenSubInt32(),
     BinaryenConst(module, BinaryenLiteralInt32(0)),
-    BinaryenLoad(
-      module,
-      4,
-      0,
-      4,
-      0,
-      BinaryenTypeInt32(),
-      BinaryenLoad(module,
-                   4,
-                   0,
-                   0,
-                   0,
-                   BinaryenTypeInt32(),
-                   BinaryenConst(module, BinaryenLiteralInt32(4)),
-                   "0"),
-      "0"))};
+    BinaryenLoad(module,
+                 4,
+                 0,
+                 4,
+                 0,
+                 BinaryenTypeInt32(),
+                 BinaryenLoad(module,
+                              4,
+                              0,
+                              0,
+                              0,
+                              BinaryenTypeInt32(),
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0"))};
   BinaryenExpressionRef debugger;
   if (1)
     debugger = BinaryenCall(module, "print", args, 1, BinaryenTypeNone());

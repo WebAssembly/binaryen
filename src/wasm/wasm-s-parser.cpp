@@ -1937,8 +1937,10 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   ret->signed_ = extra[0] && extra[1] == 's';
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 2 && !s.isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 2 && !s.isList() && strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -1958,8 +1960,11 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   ret->bytes = parseMemBytes(extra, type.getByteSize());
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 3 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 3 && !s[i]->isList() &&
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -2010,8 +2015,11 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   }
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 3 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 3 && !s[i]->isList() &&
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -2037,8 +2045,11 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   Index i = 1;
   Address align;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 4 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 4 && !s[i]->isList() &&
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -2070,8 +2081,11 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   }
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 4 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 4 && !s[i]->isList() &&
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -2093,8 +2107,11 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   ret->type = Type::i32;
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 3 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 3 && !s[i]->isList() &&
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -2211,8 +2228,11 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   }
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 2 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 2 && !s[i]->isList() &&
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
@@ -2256,9 +2276,11 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   }
   Index i = 1;
   Index memIdx = 0;
-  // Check to make sure there are more than the default args & this str isn't the mem attributes
-  if (s.size() > 4 && !s.isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
-      memIdx = atoi(s[i++]->c_str());
+  // Check to make sure there are more than the default args & this str isn't
+  // the mem attributes
+  if (s.size() > 4 && !s.isList() && strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    memIdx = atoi(s[i++]->c_str());
   }
   auto mem = getMemoryAtIdx(memIdx);
   ret->memory = mem.name;
@@ -3122,7 +3144,8 @@ void SExpressionWasmBuilder::stringToBinary(const char* input,
   data.resize(actual);
 }
 
-Index SExpressionWasmBuilder::parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory) {
+Index SExpressionWasmBuilder::parseMemoryIndex(
+  Element& s, Index i, std::unique_ptr<Memory>& memory) {
   if (i < s.size() && s[i]->isStr()) {
     if (s[i]->str() == "i64") {
       i++;
@@ -3135,7 +3158,8 @@ Index SExpressionWasmBuilder::parseMemoryIndex(Element& s, Index i, std::unique_
   return i;
 }
 
-Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory) {
+Index SExpressionWasmBuilder::parseMemoryLimits(
+  Element& s, Index i, std::unique_ptr<Memory>& memory) {
   i = parseMemoryIndex(s, i, memory);
   if (i == s.size()) {
     throw ParseException("missing memory limits", s.line, s.col);
@@ -3203,8 +3227,8 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       } else {
         offset->set(Literal(int32_t(0)));
       }
-      auto seg =
-        Builder::makeDataSegment(Name::fromInt(dataCounter++), memory->name, false, offset);
+      auto seg = Builder::makeDataSegment(
+        Name::fromInt(dataCounter++), memory->name, false, offset);
       parseInnerData(inner, j, seg);
       wasm.addDataSegment(std::move(seg));
       memory->initial = wasm.dataSegments[0]->data.size();
@@ -3242,13 +3266,17 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);
-      auto segment = Builder::makeDataSegment(
-        Name::fromInt(dataCounter++), memory->name, false, offset, data.data(), data.size());
+      auto segment = Builder::makeDataSegment(Name::fromInt(dataCounter++),
+                                              memory->name,
+                                              false,
+                                              offset,
+                                              data.data(),
+                                              data.size());
       segment->hasExplicitName = false;
       wasm.addDataSegment(std::move(segment));
     } else {
-      auto segment =
-        Builder::makeDataSegment(Name::fromInt(dataCounter++), memory->name, false, offset);
+      auto segment = Builder::makeDataSegment(
+        Name::fromInt(dataCounter++), memory->name, false, offset);
       segment->hasExplicitName = false;
       wasm.addDataSegment(std::move(segment));
     }
@@ -3292,8 +3320,7 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     isPassive = false;
   }
 
-  auto seg =
-    Builder::makeDataSegment(name, memory, isPassive, offset);
+  auto seg = Builder::makeDataSegment(name, memory, isPassive, offset);
   seg->hasExplicitName = hasExplicitName;
   parseInnerData(s, i, seg);
   wasm.addDataSegment(std::move(seg));

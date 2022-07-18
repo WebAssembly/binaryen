@@ -1310,24 +1310,34 @@ void Function::clearDebugInfo() {
   epilogLocation.clear();
 }
 #include <stdlib.h>
+#include <sys/prctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <sys/prctl.h>
 
 void print_trace() {
-    char pid_buf[30];
-    sprintf(pid_buf, "%d", getpid());
-    char name_buf[512];
-    name_buf[readlink("/proc/self/exe", name_buf, 511)]=0;
-    prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
-    int child_pid = fork();
-    if (!child_pid) {
-        dup2(2,1); // redirect output to stderr - edit: unnecessary?
-        execl("/usr/bin/gdb", "gdb", "--batch", "-n", "-ex", "thread", "-ex", "bt", name_buf, pid_buf, NULL);
-        abort(); /* If gdb failed to start */
-    } else {
-        waitpid(child_pid,NULL,0);
-    }
+  char pid_buf[30];
+  sprintf(pid_buf, "%d", getpid());
+  char name_buf[512];
+  name_buf[readlink("/proc/self/exe", name_buf, 511)] = 0;
+  prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
+  int child_pid = fork();
+  if (!child_pid) {
+    dup2(2, 1); // redirect output to stderr - edit: unnecessary?
+    execl("/usr/bin/gdb",
+          "gdb",
+          "--batch",
+          "-n",
+          "-ex",
+          "thread",
+          "-ex",
+          "bt",
+          name_buf,
+          pid_buf,
+          NULL);
+    abort(); /* If gdb failed to start */
+  } else {
+    waitpid(child_pid, NULL, 0);
+  }
 }
 
 template<typename Map>
@@ -1481,8 +1491,7 @@ Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
 }
 
 Memory* Module::addMemory(std::unique_ptr<Memory>&& curr) {
-  return addModuleElement(
-    memories, memoriesMap, std::move(curr), "addMemory");
+  return addModuleElement(memories, memoriesMap, std::move(curr), "addMemory");
 }
 
 DataSegment* Module::addDataSegment(std::unique_ptr<DataSegment>&& curr) {

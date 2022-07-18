@@ -4373,7 +4373,8 @@ void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
   curr->finalize();
 }
 
-Index WasmBinaryBuilder::readMemoryAlignment(Address& alignment, Address& offset) {
+Index WasmBinaryBuilder::readMemoryAlignment(Address& alignment,
+                                             Address& offset) {
   auto rawAlignment = getU32LEB();
   if (rawAlignment > 8) {
     throwError("Alignment must be of a reasonable size");
@@ -4382,8 +4383,9 @@ Index WasmBinaryBuilder::readMemoryAlignment(Address& alignment, Address& offset
   bool hasMemIdx = false;
   Index memIdx = 0;
   // Check bit 6 in the alignment to know whether a memory index is present
-  // per https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
- if (rawAlignment >= 6 && (rawAlignment & (1 << (6)))) {
+  // per
+  // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
+  if (rawAlignment >= 6 && (rawAlignment & (1 << (6)))) {
     hasMemIdx = true;
   }
 

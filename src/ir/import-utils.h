@@ -98,7 +98,6 @@ struct ImportInfo {
 
   Index getNumImportedTags() { return importedTags.size(); }
 
-
   Index getNumImports() {
     return getNumImportedGlobals() + getNumImportedFunctions() +
            getNumImportedTags() + getNumImportedMemories() +
