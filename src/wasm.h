@@ -595,7 +595,7 @@ enum StringMeasureOp {
   StringMeasureWTF8,
   StringMeasureWTF16,
   StringMeasureIsUSV,
-  StringMeasureView,
+  StringMeasureWTF16View,
 };
 
 enum StringEncodeOp {
