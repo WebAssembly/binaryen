@@ -2256,7 +2256,7 @@ struct PrintExpressionContents
       case StringMeasureIsUSV:
         printMedium(o, "string.is_usv_sequence");
         break;
-      case StringMeasureView:
+      case StringMeasureWTF16View:
         printMedium(o, "stringview_wtf16.length");
         break;
       default:
