@@ -617,6 +617,13 @@ instructions = [
     ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8)"),
     ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
     ("string.const",         "makeStringConst(s)"),
+    ("string.measure_wtf8",  "makeStringMeasure(s, StringMeasureWTF8)"),
+    ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),
+    ("string.is_usv_sequence", "makeStringMeasure(s, StringMeasureIsUSV)"),
+    ("string.encode_wtf8",   "makeStringEncode(s, StringEncodeWTF8)"),
+    ("string.encode_wtf16",  "makeStringEncode(s, StringEncodeWTF16)"),
+    ("string.concat",        "makeStringConcat(s)"),
+    ("string.eq",            "makeStringEq(s)"),
 ]
 
 
@@ -686,7 +693,7 @@ class Node:
         self.do_insert(inst, inst, expr)
 
 
-def instruction_parser():
+def instruction_parser(new_parser=False):
     """Build a trie out of all the instructions, then emit it as C++ code."""
     trie = Node()
     inst_length = 0
@@ -696,12 +703,23 @@ def instruction_parser():
 
     printer = CodePrinter()
 
-    printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
-    printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
+    if not new_parser:
+        printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
+        printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
     def print_leaf(expr, inst):
-        printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
-                           .format(inst=inst, expr=expr))
+        if new_parser:
+            expr = expr.replace("()", "(ctx)")
+            expr = expr.replace("(s", "(ctx, in")
+            printer.print_line("if (op == \"{inst}\"sv) {{".format(inst=inst))
+            with printer.indent():
+                printer.print_line("auto ret = {expr};".format(expr=expr))
+                printer.print_line("CHECK_ERR(ret);")
+                printer.print_line("return *ret;")
+            printer.print_line("}")
+        else:
+            printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
+                               .format(inst=inst, expr=expr))
         printer.print_line("goto parse_error;")
 
     def emit(node, idx=0):
@@ -730,7 +748,10 @@ def instruction_parser():
     emit(trie)
     printer.print_line("parse_error:")
     with printer.indent():
-        printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
+        if new_parser:
+            printer.print_line("return in.err(\"unrecognized instruction\");")
+        else:
+            printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 
 
 def print_header():
@@ -756,6 +777,8 @@ def main():
         sys.exit(1)
     print_header()
     generate_with_guard(instruction_parser, "INSTRUCTION_PARSER")
+    print()
+    generate_with_guard(lambda: instruction_parser(True), "NEW_INSTRUCTION_PARSER")
     print_footer()
 
 

@@ -24,6 +24,7 @@
 
 #include <ir/abstract.h>
 #include <ir/bits.h>
+#include <ir/boolean.h>
 #include <ir/cost.h>
 #include <ir/drop.h>
 #include <ir/effects.h>

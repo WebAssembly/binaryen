@@ -1184,6 +1184,38 @@ void StringNew::finalize() {
 
 void StringConst::finalize() { type = Type(HeapType::string, NonNullable); }
 
+void StringMeasure::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void StringEncode::finalize() {
+  if (ref->type == Type::unreachable || ptr->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void StringConcat::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type(HeapType::string, NonNullable);
+  }
+}
+
+void StringEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

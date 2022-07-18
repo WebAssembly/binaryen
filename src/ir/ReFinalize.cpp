@@ -174,6 +174,10 @@ void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
 void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }
+void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
+void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
+void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
+void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
