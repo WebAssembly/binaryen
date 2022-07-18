@@ -645,7 +645,7 @@ void PassRunner::run() {
     // for debug logging purposes, run each pass in full before running the
     // other
     auto totalTime = std::chrono::duration<double>(0);
-    WasmValidator::Flags validationFlags = WasmValidator::Globally;
+    WasmValidator::Flags validationFlags = WasmValidator::Minimal;
     if (options.validateGlobally) {
       validationFlags = validationFlags | WasmValidator::Globally;
     }
