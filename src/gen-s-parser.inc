@@ -3234,6 +3234,9 @@ switch (op[0]) {
                           case 'g':
                             if (strcmp(op, "stringview_wtf16.get_codeunit") == 0) { return makeStringWTF16Get(s); }
                             goto parse_error;
+                          case 'l':
+                            if (strcmp(op, "stringview_wtf16.length") == 0) { return makeStringMeasure(s, StringMeasureWTF16View); }
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "stringview_wtf16.slice") == 0) { return makeStringSliceWTF(s, StringSliceWTF16); }
                             goto parse_error;
@@ -8977,6 +8980,13 @@ switch (op[0]) {
                           case 'g':
                             if (op == "stringview_wtf16.get_codeunit"sv) {
                               auto ret = makeStringWTF16Get(ctx, in);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case 'l':
+                            if (op == "stringview_wtf16.length"sv) {
+                              auto ret = makeStringMeasure(ctx, in, StringMeasureWTF16View);
                               CHECK_ERR(ret);
                               return *ret;
                             }

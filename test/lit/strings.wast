@@ -15,6 +15,8 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $ref?|stringview_wtf16|_=>_none (func (param stringview_wtf16)))
+
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
 
@@ -401,6 +403,25 @@
       (stringview_iter.slice
         (local.get $d)
         (i32.const 4)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $string.length (param $ref stringview_wtf16)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (stringview_wtf16.length
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.length (param $ref stringview_wtf16)
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (stringview_wtf16.length
+          (local.get $ref)
+        )
       )
     )
   )
