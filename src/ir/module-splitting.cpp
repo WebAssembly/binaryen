@@ -614,8 +614,7 @@ void ModuleSplitter::shareImportableItems() {
 
   for (auto& memory : primary.memories) {
     auto secondaryMemory = ModuleUtils::copyMemory(memory.get(), secondary);
-    makeImportExport(
-      *memory, *secondaryMemory, "memory", ExternalKind::Memory);
+    makeImportExport(*memory, *secondaryMemory, "memory", ExternalKind::Memory);
   }
 
   for (auto& table : primary.tables) {

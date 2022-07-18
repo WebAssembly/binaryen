@@ -1300,8 +1300,8 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "memory.init size must be an i32");
   if (!shouldBeFalse(getModule()->memories.empty(),
-                    curr,
-                    "Memory operations require a memory")) {
+                     curr,
+                     "Memory operations require a memory")) {
     return;
   }
   shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
@@ -1316,8 +1316,8 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
   if (!shouldBeFalse(getModule()->memories.empty(),
-                    curr,
-                    "Memory operations require a memory")) {
+                     curr,
+                     "Memory operations require a memory")) {
     return;
   }
   shouldBeTrue(curr->segment < getModule()->dataSegments.size(),

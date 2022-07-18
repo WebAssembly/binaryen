@@ -907,8 +907,10 @@ void test_core() {
     BinaryenDrop(
       module,
       BinaryenLocalTee(module, 0, makeInt32(module, 102), BinaryenTypeInt32())),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1), "0"),
-    BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8), "0"),
+    BinaryenLoad(
+      module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1), "0"),
+    BinaryenLoad(
+      module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8), "0"),
     BinaryenLoad(
       module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2), "0"),
     BinaryenLoad(
@@ -998,9 +1000,9 @@ void test_core() {
       BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6, "0"),
       BinaryenTypeInt32(),
       "0"),
-    BinaryenDrop(
-      module,
-      BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
+    BinaryenDrop(module,
+                 BinaryenAtomicWait(
+                   module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
     BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6, "0")),
     BinaryenAtomicFence(module),
     // Tuples

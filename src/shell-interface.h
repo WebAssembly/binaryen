@@ -98,8 +98,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(
-    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {})
-  {
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {}) {
     linkedInstances.swap(linkedInstances_);
   }
   virtual ~ShellExternalInterface() = default;
@@ -114,11 +113,10 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
 
   void init(Module& wasm, ModuleRunner& instance) override {
-    ModuleUtils::iterDefinedMemories(
-        wasm, [&](wasm::Memory* memory) {
-          auto shellMemory = Memory();
-          shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
-          memories[memory->name] = shellMemory;
+    ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
+      auto shellMemory = Memory();
+      shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
+      memories[memory->name] = shellMemory;
     });
     ModuleUtils::iterDefinedTables(
       wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
@@ -303,7 +301,9 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     auto& memory = it->second;
     memory.set<int64_t>(addr, value);
   }
-  void store128(Address addr, const std::array<uint8_t, 16>& value, Name memoryName) override {
+  void store128(Address addr,
+                const std::array<uint8_t, 16>& value,
+                Name memoryName) override {
     auto it = memories.find(memoryName);
     if (it == memories.end()) {
       trap("store128 on non-existing memory");
@@ -339,7 +339,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return table[index];
   }
 
-  bool growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
+  bool
+  growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
     // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
     // interpreter.
     if (newSize > 1024 * 1024 * 1024) {

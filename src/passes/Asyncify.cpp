@@ -1226,8 +1226,13 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
-          builder->makeLoad(
-            4, false, 0, 4, builder->makeGetStackPos(), Type::i32, getModule()->memories[0]->name))));
+          builder->makeLoad(4,
+                            false,
+                            0,
+                            4,
+                            builder->makeGetStackPos(),
+                            Type::i32,
+                            getModule()->memories[0]->name))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,

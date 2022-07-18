@@ -248,7 +248,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitModule(Module* curr) {
-    auto indexType = curr->memories.empty() ? Type::i32 : curr->memories[0]->indexType;
+    auto indexType =
+      curr->memories.empty() ? Type::i32 : curr->memories[0]->indexType;
 
     // Load.
     addImport(

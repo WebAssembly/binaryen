@@ -365,9 +365,7 @@ struct RemoveUnusedModuleElements : public Pass {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the
         // contents.
-        module->removeDataSegments([&](DataSegment* curr) {
-          return true;
-        });
+        module->removeDataSegments([&](DataSegment* curr) { return true; });
       }
       if (module->dataSegments.empty() && !module->memories.empty()) {
         module->removeMemory(module->memories[0]->name);

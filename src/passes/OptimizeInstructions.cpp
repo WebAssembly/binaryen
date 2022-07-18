@@ -3757,7 +3757,8 @@ private:
             0,     // offset
             1,     // align
             memCopy->dest,
-            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i32, memCopy->memory),
+            builder.makeLoad(
+              bytes, false, 0, 1, memCopy->source, Type::i32, memCopy->memory),
             Type::i32,
             memCopy->memory);
         }
@@ -3767,7 +3768,8 @@ private:
             0,     // offset
             1,     // align
             memCopy->dest,
-            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i64, memCopy->memory),
+            builder.makeLoad(
+              bytes, false, 0, 1, memCopy->source, Type::i64, memCopy->memory),
             Type::i64,
             memCopy->memory);
         }
@@ -3776,15 +3778,19 @@ private:
             // This adds an extra 2 bytes so apply it only for
             // minimal shrink level
             if (getModule()->features.hasSIMD()) {
-              return builder.makeStore(
-                bytes, // bytes
-                0,     // offset
-                1,     // align
-                memCopy->dest,
-                builder.makeLoad(
-                  bytes, false, 0, 1, memCopy->source, Type::v128, memCopy->memory),
-                Type::v128,
-                memCopy->memory);
+              return builder.makeStore(bytes, // bytes
+                                       0,     // offset
+                                       1,     // align
+                                       memCopy->dest,
+                                       builder.makeLoad(bytes,
+                                                        false,
+                                                        0,
+                                                        1,
+                                                        memCopy->source,
+                                                        Type::v128,
+                                                        memCopy->memory),
+                                       Type::v128,
+                                       memCopy->memory);
             }
           }
           break;
@@ -3917,8 +3923,13 @@ private:
     }
     // memory.fill(d, v, 1)  ==>  store8(d, v)
     if (bytes == 1LL) {
-      return builder.makeStore(
-        1, offset, align, memFill->dest, memFill->value, Type::i32, memFill->memory);
+      return builder.makeStore(1,
+                               offset,
+                               align,
+                               memFill->dest,
+                               memFill->value,
+                               Type::i32,
+                               memFill->memory);
     }
 
     return nullptr;
