@@ -1151,6 +1151,7 @@ enum ASTNodes {
   StringViewWTF8Advance = 0x91,
   StringViewWTF8Slice = 0x93,
   StringAsWTF16 = 0x98,
+  StringViewWTF16Length = 0x99,
   StringViewWTF16GetCodePoint = 0x9a,
   StringViewWTF16Slice = 0x9c,
   StringAsIter = 0xa0,
