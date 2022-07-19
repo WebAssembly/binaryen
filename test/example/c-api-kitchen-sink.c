@@ -428,6 +428,24 @@ void test_core() {
   BinaryenType f64 = BinaryenTypeFloat64();
   BinaryenType v128 = BinaryenTypeVec128();
 
+  // Memory. Add it before creating any memory-using instructions.
+
+  const char* segments[] = {"hello, world", "I am passive"};
+  bool segmentPassive[] = {false, true};
+  BinaryenExpressionRef segmentOffsets[] = {
+    BinaryenConst(module, BinaryenLiteralInt32(10)), NULL};
+  BinaryenIndex segmentSizes[] = {12, 12};
+  BinaryenSetMemory(module,
+                    1,
+                    256,
+                    "mem",
+                    segments,
+                    segmentPassive,
+                    segmentOffsets,
+                    segmentSizes,
+                    2,
+                    1);
+
   BinaryenExpressionRef valueList[] = {
     // Unary
     makeUnary(module, BinaryenClzInt32(), i32),
@@ -1055,24 +1073,6 @@ void test_core() {
   BinaryenExpressionRef growExpr =
     BinaryenTableGrow(module, "0", valueExpr, sizeExpr);
   BinaryenExpressionPrint(growExpr);
-
-  // Memory. One per module
-
-  const char* segments[] = {"hello, world", "I am passive"};
-  bool segmentPassive[] = {false, true};
-  BinaryenExpressionRef segmentOffsets[] = {
-    BinaryenConst(module, BinaryenLiteralInt32(10)), NULL};
-  BinaryenIndex segmentSizes[] = {12, 12};
-  BinaryenSetMemory(module,
-                    1,
-                    256,
-                    "mem",
-                    segments,
-                    segmentPassive,
-                    segmentOffsets,
-                    segmentSizes,
-                    2,
-                    1);
 
   // Start function. One per module
 
