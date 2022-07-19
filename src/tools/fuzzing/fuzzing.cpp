@@ -2851,7 +2851,9 @@ Expression* TranslateToFuzzReader::makeI31New(Type type) {
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  auto* i31 = make(Type(HeapType::i31, Nullable));
+  // TODO: Maybe this should be nullable?
+  // https://github.com/WebAssembly/gc/issues/312
+  auto* i31 = make(Type(HeapType::i31, NonNullable));
   return builder.makeI31Get(i31, bool(oneIn(2)));
 }
 
