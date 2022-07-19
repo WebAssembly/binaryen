@@ -2233,6 +2233,18 @@ struct PrintExpressionContents
       case StringNewWTF16:
         printMedium(o, "string.new_wtf16");
         break;
+      case StringNewUTF8Array:
+        printMedium(o, "string.new_wtf8_array utf8");
+        break;
+      case StringNewWTF8Array:
+        printMedium(o, "string.new_wtf8_array wtf8");
+        break;
+      case StringNewReplaceArray:
+        printMedium(o, "string.new_wtf8_array replace");
+        break;
+      case StringNewWTF16Array:
+        printMedium(o, "string.new_wtf16_array");
+        break;
       default:
         WASM_UNREACHABLE("invalid string.new*");
     }

@@ -2,7 +2,7 @@
 
 ;; Check that string types are emitted properly in the binary format.
 
-;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --roundtrip -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $ref?|string|_=>_none (func (param stringref)))
@@ -16,6 +16,11 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $ref?|stringview_wtf16|_=>_none (func (param stringview_wtf16)))
+
+  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
+
+  ;; CHECK:      (type $array (array i32))
+  (type $array (array_subtype i32 data))
 
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
@@ -422,6 +427,51 @@
         (stringview_wtf16.length
           (local.get $ref)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $string.new.gc (param $array (ref $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.new_wtf8_array utf8
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.new_wtf8_array replace
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.new_wtf16_array
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.new.gc (param $array (ref $array))
+    (drop
+      (string.new_wtf8_array utf8
+        (local.get $array)
+      )
+    )
+    (drop
+      (string.new_wtf8_array wtf8
+        (local.get $array)
+      )
+    )
+    (drop
+      (string.new_wtf8_array replace
+        (local.get $array)
+      )
+    )
+    (drop
+      (string.new_wtf16_array
+        (local.get $array)
       )
     )
   )

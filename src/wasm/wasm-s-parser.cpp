@@ -2937,6 +2937,7 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
 
 Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
   size_t i = 1;
+  Expression* length = nullptr;
   if (op == StringNewWTF8) {
     const char* str = s[i++]->c_str();
     if (strncmp(str, "utf8", 4) == 0) {
@@ -2948,9 +2949,22 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+    length = parseExpression(s[i + 1]);
+  } else if (op == StringNewWTF16) {
+    length = parseExpression(s[i + 1]);
+  } else if (op == StringNewWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8Array;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplaceArray;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
   }
-  return Builder(wasm).makeStringNew(
-    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+  return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {

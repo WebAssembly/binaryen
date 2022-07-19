@@ -584,10 +584,16 @@ enum BrOnOp {
 };
 
 enum StringNewOp {
+  // Linear memory
   StringNewUTF8,
   StringNewWTF8,
   StringNewReplace,
-  StringNewWTF16
+  StringNewWTF16,
+  // GC
+  StringNewUTF8Array,
+  StringNewWTF8Array,
+  StringNewReplaceArray,
+  StringNewWTF16Array,
 };
 
 enum StringMeasureOp {
@@ -1700,8 +1706,12 @@ public:
 
   StringNewOp op;
 
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
   Expression* ptr;
-  Expression* length;
+
+  // Used only in linear memory variations.
+  Expression* length = nullptr;
 
   void finalize();
 };

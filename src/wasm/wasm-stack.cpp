@@ -2252,6 +2252,21 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
     case StringNewWTF16:
       o << U32LEB(BinaryConsts::StringNewWTF16);
       break;
+    case StringNewUTF8Array:
+      o << U32LEB(BinaryConsts::StringNewWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      break;
+    case StringNewWTF8Array:
+      o << U32LEB(BinaryConsts::StringNewWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      break;
+    case StringNewReplaceArray:
+      o << U32LEB(BinaryConsts::StringNewWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::Replace);
+      break;
+    case StringNewWTF16Array:
+      o << U32LEB(BinaryConsts::StringNewWTF16Array);
+      break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
   }
