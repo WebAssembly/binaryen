@@ -43,5 +43,3 @@ test/lit/lit.site.cfg.py
 # files related to VS Code
 /.history
 /.vscode
-
-/wasi-stub/wasi-stub
