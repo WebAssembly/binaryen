@@ -2964,8 +2964,7 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
       throw ParseException("bad string.new op", s.line, s.col);
     }
   }
-  return Builder(wasm).makeStringNew(
-    op, parseExpression(s[i]), length);
+  return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
