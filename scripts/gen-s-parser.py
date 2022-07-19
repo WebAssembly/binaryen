@@ -616,6 +616,8 @@ instructions = [
     ("ref.as_i31",           "makeRefAs(s, RefAsI31)"),
     ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8)"),
     ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
+    ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array)"),
+    ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array)"),
     ("string.const",         "makeStringConst(s)"),
     ("string.measure_wtf8",  "makeStringMeasure(s, StringMeasureWTF8)"),
     ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),

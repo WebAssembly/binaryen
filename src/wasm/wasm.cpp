@@ -1175,7 +1175,7 @@ void RefAs::finalize() {
 }
 
 void StringNew::finalize() {
-  if (ptr->type == Type::unreachable || length->type == Type::unreachable) {
+  if (ptr->type == Type::unreachable || (length && length->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     type = Type(HeapType::string, NonNullable);

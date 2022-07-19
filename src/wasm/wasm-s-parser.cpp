@@ -2948,6 +2948,17 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+  } else if (op == StringNewWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8Array;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplaceArray;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
   }
   return Builder(wasm).makeStringNew(
     op, parseExpression(s[i]), parseExpression(s[i + 1]));

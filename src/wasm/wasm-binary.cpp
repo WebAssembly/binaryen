@@ -7174,6 +7174,23 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     }
   } else if (code == BinaryConsts::StringNewWTF16) {
     op = StringNewWTF16;
+  } else if (code == BinaryConsts::StringNewWTF8Array) {
+    auto policy = getU32LEB();
+    switch (policy) {
+      case BinaryConsts::StringPolicy::UTF8:
+        op = StringNewUTF8Array;
+        break;
+      case BinaryConsts::StringPolicy::WTF8:
+        op = StringNewWTF8Array;
+        break;
+      case BinaryConsts::StringPolicy::Replace:
+        op = StringNewReplaceArray;
+        break;
+      default:
+        throwError("bad policy for string.new");
+    }
+  } else if (code == BinaryConsts::StringNewWTF16Array) {
+    op = StringNewWTF16Array;
   } else {
     return false;
   }
