@@ -7157,6 +7157,7 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
 
 bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   StringNewOp op;
+  Expression* length = nullptr;
   if (code == BinaryConsts::StringNewWTF8) {
     auto policy = getU32LEB();
     switch (policy) {
@@ -7172,8 +7173,10 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
       default:
         throwError("bad policy for string.new");
     }
+    length = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16) {
     op = StringNewWTF16;
+    length = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF8Array) {
     auto policy = getU32LEB();
     switch (policy) {
@@ -7194,7 +7197,6 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   } else {
     return false;
   }
-  auto* length = popNonVoidExpression();
   auto* ptr = popNonVoidExpression();
   out = Builder(wasm).makeStringNew(op, ptr, length);
   return true;
