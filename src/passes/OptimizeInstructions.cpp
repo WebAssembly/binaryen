@@ -720,20 +720,16 @@ struct OptimizeInstructions
             curr->op == Abstract::getBinary(curr->type, Abstract::Mul)) {
           if (auto* leftRight = left->right->dynCast<Const>()) {
             left->op = Abstract::getBinary(left->type, Abstract::Mul);
-            // (x << C1) * C2   ->   x * ((1 << C1) * C2)
-            leftRight->value = Literal::makeOne(leftRight->type)
-                                 .shl(leftRight->value)
-                                 .mul(right->value);
+            // (x << C1) * C2   ->   x * (C2 << C1)
+            leftRight->value = right->value.shl(leftRight->value);
             return replaceCurrent(left);
           }
         }
         if (left->op == Abstract::getBinary(left->type, Abstract::Mul) &&
             curr->op == Abstract::getBinary(curr->type, Abstract::Shl)) {
           if (auto* leftRight = left->right->dynCast<Const>()) {
-            // (x * C1) << C2   ->   x * (C1 * (1 << C2))
-            leftRight->value = Literal::makeOne(right->type)
-                                 .shl(right->value)
-                                 .mul(leftRight->value);
+            // (x * C1) << C2   ->   x * (C1 << C2)
+            leftRight->value = leftRight->value.shl(right->value);
             return replaceCurrent(left);
           }
         }
