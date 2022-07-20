@@ -125,11 +125,13 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   // gets for it may not validate any more. For example:
   //
   //  (local.set $x ..)
-  //  (unreachable)
+  //  (block
+  //    (local.set $x ..)
+  //  )
   //  (local.get $x)
   //
-  // We can prove the get won't read the set in practice, but the wasm typing
-  // rules do not let $x validate as a non-nullable local.
+  // We will remove the first set, which is dead, but the second set is not
+  // enough to get $x to validate as a non-nullable local.
   if (removedSet) {
     TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
