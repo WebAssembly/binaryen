@@ -151,10 +151,11 @@ struct ExecutionResults {
   bool areEqual(Literal a, Literal b) {
     // We allow nulls to have different types (as they compare equal regardless)
     // but anything else must have an identical type.
-    // We cannot do this in nominal typing, however, as different modules will
+    // We cannot do this in nominal/hybrid, however, as different modules will
     // have different types in general. We could perhaps compare the entire
     // graph structurally TODO
-    if (getTypeSystem() != TypeSystem::Nominal) {
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
       if (a.type != b.type && !(a.isNull() && b.isNull())) {
         std::cout << "types not identical! " << a << " != " << b << '\n';
         return false;
