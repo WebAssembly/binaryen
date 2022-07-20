@@ -55,7 +55,7 @@
   ;; more specific type. A similar thing with a parameter, however, is not a
   ;; thing we can optimize. Also, ignore a local with zero assignments.
   ;; CHECK:      (func $simple-local-but-not-param (param $x anyref)
-  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local $unused anyref)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)
@@ -76,10 +76,10 @@
   )
 
   ;; CHECK:      (func $locals-with-multiple-assignments
-  ;; CHECK-NEXT:  (local $x funcref)
-  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
-  ;; CHECK-NEXT:  (local $z (ref null $none_=>_i64))
-  ;; CHECK-NEXT:  (local $w funcref)
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
+  ;; CHECK-NEXT:  (local $z (ref $none_=>_i64))
+  ;; CHECK-NEXT:  (local $w (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)
   ;; CHECK-NEXT:  )
@@ -143,9 +143,9 @@
   ;; In some cases multiple iterations are necessary, as one inferred new type
   ;; applies to a get which then allows another inference.
   ;; CHECK:      (func $multiple-iterations
-  ;; CHECK-NEXT:  (local $x (ref null $none_=>_i32))
-  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
-  ;; CHECK-NEXT:  (local $z (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $x (ref $none_=>_i32))
+  ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
+  ;; CHECK-NEXT:  (local $z (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)
   ;; CHECK-NEXT:  )
@@ -173,9 +173,9 @@
 
   ;; Sometimes a refinalize is necessary in between the iterations.
   ;; CHECK:      (func $multiple-iterations-refinalize (param $i i32)
-  ;; CHECK-NEXT:  (local $x (ref null $none_=>_i32))
-  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i64))
-  ;; CHECK-NEXT:  (local $z funcref)
+  ;; CHECK-NEXT:  (local $x (ref $none_=>_i32))
+  ;; CHECK-NEXT:  (local $y (ref $none_=>_i64))
+  ;; CHECK-NEXT:  (local $z (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)
   ;; CHECK-NEXT:  )
@@ -183,7 +183,7 @@
   ;; CHECK-NEXT:   (ref.func $i64)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
-  ;; CHECK-NEXT:   (select (result funcref)
+  ;; CHECK-NEXT:   (select (result (ref func))
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (local.get $i)
@@ -257,13 +257,13 @@
   )
 
   ;; CHECK:      (func $unreachables (result funcref)
-  ;; CHECK-NEXT:  (local $temp (ref null $none_=>_funcref))
+  ;; CHECK-NEXT:  (local $temp (ref $none_=>_funcref))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (ref.func $unreachables)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref null $none_=>_funcref))
+  ;; CHECK-NEXT:   (block $block (result (ref $none_=>_funcref))
   ;; CHECK-NEXT:    (local.tee $temp
   ;; CHECK-NEXT:     (ref.func $unreachables)
   ;; CHECK-NEXT:    )
@@ -292,7 +292,7 @@
   )
 
   ;; CHECK:      (func $incompatible-sets (result i32)
-  ;; CHECK-NEXT:  (local $temp (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $temp (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (ref.func $incompatible-sets)
   ;; CHECK-NEXT:  )
@@ -381,5 +381,31 @@
     ;; This null is more specific than the LUB we'll find, and will not change,
     ;; as there is no point to making something less specific in type.
     (local.set $x (ref.null ${i32}))
+  )
+
+  ;; CHECK:      (func $become-non-nullable
+  ;; CHECK-NEXT:  (local $x (ref $none_=>_none))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $become-non-nullable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $become-non-nullable
+    (local $x (ref null func))
+    (local.set $x
+      (ref.func $become-non-nullable)
+    )
+  )
+
+  ;; CHECK:      (func $already-non-nullable
+  ;; CHECK-NEXT:  (local $x (ref $none_=>_none))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $already-non-nullable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $already-non-nullable
+    (local $x (ref func))
+    (local.set $x
+      (ref.func $already-non-nullable)
+    )
   )
 )

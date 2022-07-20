@@ -25,6 +25,7 @@
 #include <ir/find_all.h>
 #include <ir/linear-execution.h>
 #include <ir/local-graph.h>
+#include <ir/local-structural-dominance.h>
 #include <ir/lubs.h>
 #include <ir/utils.h>
 #include <pass.h>
@@ -68,23 +69,29 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       }
     }
 
-    // Find which vars use the default value, if we allow non-nullable locals.
-    //
-    // If that feature is not enabled, then we can safely assume that the
-    // default is never used - the default would be a null value, and the type
-    // of the null does not really matter as all nulls compare equally, so we do
-    // not need to worry.
-    std::unordered_set<Index> usesDefault;
+    // Find which vars can be non-nullable.
+    std::unordered_set<Index> cannotBeNonNullable;
 
     if (getModule()->features.hasGCNNLocals()) {
+      // If the feature enabled then the only constraint is being able to read
+      // the default value - if it is readable, the local cannot become non-
+      // nullable.
       for (auto& [get, sets] : localGraph.getSetses) {
         auto index = get->index;
         if (func->isVar(index) &&
             std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
               return set == nullptr;
             })) {
-          usesDefault.insert(index);
+          cannotBeNonNullable.insert(index);
         }
+      }
+    } else {
+      // Without GCNNLocals, validation rules follow "1a" in the spec: all gets
+      // must be dominated structurally by sets, for the local to be non-
+      // nullable.
+      LocalStructuralDominance info(func);
+      for (auto index : info.nonDominatingIndexes) {
+        cannotBeNonNullable.insert(index);
       }
     }
 
@@ -136,10 +143,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
         // Remove non-nullability if we disallow that in locals.
         if (newType.isNonNullable()) {
-          // As mentioned earlier, even if we allow non-nullability, there may
-          // be a problem if the default value - a null - is used. In that case,
-          // remove non-nullability as well.
-          if (!getModule()->features.hasGCNNLocals() || usesDefault.count(i)) {
+          if (cannotBeNonNullable.count(i)) {
             newType = Type(newType.getHeapType(), Nullable);
           }
         } else if (!newType.isDefaultable()) {
