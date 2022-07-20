@@ -7262,8 +7262,7 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
     }
   } else if (code == BinaryConsts::StringEncodeWTF16) {
     op = StringEncodeWTF16;
-  }
-  if (code == BinaryConsts::StringEncodeWTF8Array) {
+  } else if (code == BinaryConsts::StringEncodeWTF8Array) {
     auto policy = getU32LEB();
     switch (policy) {
       case BinaryConsts::StringPolicy::UTF8:
