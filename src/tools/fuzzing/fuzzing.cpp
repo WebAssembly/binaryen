@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/type-updating.h"
 #include "tools/fuzzing.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
@@ -531,6 +532,10 @@ Function* TranslateToFuzzReader::addFunction() {
     // after.
     fixLabels(func);
   }
+  // We must ensure non-nullable types are used properly. For example, if
+  // we start with initial content and then mutate it, perhaps we'll move
+  // code around so the "1a" validation rules no longer apply.
+  TypeUpdating::handleNonDefaultableLocals(func, wasm);
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
