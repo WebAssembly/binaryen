@@ -77,18 +77,15 @@
  (func $nn-dead
   (local $x (ref func))
   (local.set $x
-   (ref.func $nn-dead) ;; this will be removed
+   (ref.func $nn-dead) ;; this will be removed, as it is not needed.
   )
-  ;; The unreachable means the set is not needed. But after we remove it, we
-  ;; must update $x's type to be nullable so that we still validate in "1a".
-  (unreachable)
   (block $inner
    (local.set $x
-    (ref.func $nn-dead) ;; this should stick around
+    (ref.func $nn-dead) ;; this is not enough for validation of the get.
    )
   )
   (drop
-   (local.get $x) ;; and so should this. but the second set is not enough for us to validate
+   (local.get $x)
   )
  )
 )
