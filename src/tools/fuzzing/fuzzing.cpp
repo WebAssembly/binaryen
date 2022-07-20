@@ -532,9 +532,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // after.
     fixLabels(func);
   }
-  // We must ensure non-nullable types are used properly. For example, if
-  // we start with initial content and then mutate it, perhaps we'll move
-  // code around so the "1a" validation rules no longer apply.
+  // We must ensure non-nullable locals validate.
   TypeUpdating::handleNonDefaultableLocals(func, wasm);
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
@@ -791,6 +789,9 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       recombine(func);
       mutate(func);
       fixLabels(func);
+      // If we make any changes, we must make sure we did not break validation
+      // of non-nullable locals.
+      TypeUpdating::handleNonDefaultableLocals(func, wasm);
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only
