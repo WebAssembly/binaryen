@@ -17,7 +17,7 @@
 // wasm-split: Split a module in two or instrument a module to inform future
 // splitting.
 
-#include <filesystem>
+#include <fstream>
 
 #include "ir/module-splitting.h"
 #include "ir/names.h"
@@ -417,7 +417,8 @@ std::string unescape(std::string input) {
 }
 
 void checkExists(const std::string& path) {
-  if (!std::filesystem::exists(path)) {
+  std::ifstream infile(path);
+  if (!infile.is_open()) {
     Fatal() << "File not found: " << path;
   }
 }
