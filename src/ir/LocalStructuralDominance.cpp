@@ -16,7 +16,7 @@
 
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
-#include "ir/support/small_set.h"
+#include "support/small_set.h"
 
 namespace wasm {
 
@@ -52,13 +52,13 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
 
     Expression* curr;
   };
-  std::vector<Expression*> workStack;
+  std::vector<WorkItem> workStack;
 
   // The stack begins with a new scope for the function, and then we start on
   // the body. (Note that we don't need to exit that scope, that work would not
   // do anything useful.)
-  expressionStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-  expressionStack.push_back(WorkItem{WorkItem::Scan, func->body});
+  workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
+  workStack.push_back(WorkItem{WorkItem::Scan, func->body});
 
   // A special marker for "start or finis/cleanup a scope". When we scan a block
   // we'll add its children to the stack + cleanup at the end. When we get to
@@ -67,17 +67,17 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
   // with anything else.
   Nop scopeStart, scopeEnd;
 
-  while (!expressionStack.empty()) {
-    auto item = expressionStack.back();
-    expressionStack.pop_back();
+  while (!workStack.empty()) {
+    auto item = workStack.back();
+    workStack.pop_back();
 
     if (item.op == WorkItem::Scan) {
-      if (!Properties::isControlFlowStructure(curr)) {
+      if (!Properties::isControlFlowStructure(item.curr)) {
         // Simply scan the children and prepare to visit here afterwards.
         for (auto* child : ChildIterator(item.curr)) {
-          expressionStack.push_back(WorkItem{WorkItem::Scan, child});
+          workStack.push_back(WorkItem{WorkItem::Scan, child});
         }
-        expressionStack.push_back(WorkItem{WorkItem::Visit, item.curr});
+        workStack.push_back(WorkItem{WorkItem::Visit, item.curr});
         continue;
       }
 
@@ -85,26 +85,26 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
       // handle value children, as they are not involved in structuring (like
       // the If condition).
       for (auto* child : ValueChildIterator(item.curr)) {
-        expressionStack.push_back(WorkItem{WorkItem::Scan, child});
+        workStack.push_back(WorkItem{WorkItem::Scan, child});
       }
 
       // Next, go through the structure children. Blocks are special in that all
       // their children go in a single scope.
-      if (item.curr.is<Block>()) {
-        expressionStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-        for (auto* child : StructureChildIterator(item.curr)) {
-          expressionStack.push_back(WorkItem{WorkItem::Scan, child});
+      if (item.curr->is<Block>()) {
+        workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
+        for (auto* child : StructuralChildIterator(item.curr)) {
+          workStack.push_back(WorkItem{WorkItem::Scan, child});
         }
-        expressionStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
+        workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
       } else {
-        for (auto* child : StructureChildIterator(item.curr)) {
-          expressionStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-          expressionStack.push_back(WorkItem{WorkItem::Scan, child});
-          expressionStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
+        for (auto* child : StructuralChildIterator(item.curr)) {
+          workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
+          workStack.push_back(WorkItem{WorkItem::Scan, child});
+          workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
         }
       }
     } else if (item.op == WorkItem::Visit) {
-      if (auto* set = curr->is<LocalSet>()) {
+      if (auto* set = item.curr->dynCast<LocalSet>()) {
         auto index = set->index;
         if (func->getLocalType(index).isRef()) {
           if (!localsSet[index]) {
@@ -113,8 +113,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
             cleanupStack.back().insert(index);
           }
         }
-      } else if (auto* get = curr->is<LocalGet>()) {
-        auto index = set->index;
+      } else if (auto* get = item.curr->dynCast<LocalGet>()) {
+        auto index = get->index;
         if (func->getLocalType(index).isRef()) {
           if (!localsSet[index]) {
             nonDominatingIndexes.insert(index);

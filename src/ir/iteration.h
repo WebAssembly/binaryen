@@ -153,8 +153,8 @@ public:
 class StructuralChildIterator
   : public AbstractChildIterator<StructuralChildIterator> {
 public:
-  ValueChildIterator(Expression* parent)
-    : AbstractChildIterator<ValueChildIterator>(parent) {}
+  StructuralChildIterator(Expression* parent)
+    : AbstractChildIterator<StructuralChildIterator>(parent) {}
 
   void addChild(Expression* parent, Expression** child) {
     if (!Properties::isControlFlowStructure(parent)) {
