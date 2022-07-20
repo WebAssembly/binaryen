@@ -1019,7 +1019,7 @@ public:
     ret->op = op;
     ret->ref = ref;
     ret->ptr = ptr;
-    ref->start = start;
+    ret->start = start;
     ret->finalize();
     return ret;
   }
