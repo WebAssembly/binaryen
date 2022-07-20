@@ -337,8 +337,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
   for (auto index : badIndexes) {
-    func->vars[index] = getValidLocalType(func->getLocalType(func->vars[index]),
-                                          wasm.features);
+    func->vars[index] =
+      getValidLocalType(func->getLocalType(func->vars[index]), wasm.features);
   }
 }
 
