@@ -35,8 +35,9 @@ struct GlobalRefining : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "GlobalRefining requires nominal typing";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Hybrid) {
+      Fatal() << "GlobalRefining requires nominal/hybrid typing";
     }
 
     // First, find all the global.sets.
