@@ -1,8 +1,8 @@
 ;; Test that an invalid supertype results in a useful error message
 
-;; RUN: foreach %s %t not wasm-opt -all -S -o - | filecheck %s
+;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 
-;; CHECK: Fatal: Invalid type: waka
+;; CHECK: non-nullable local's sets must dominate gets
 (module
   (func $inner-to-func
     ;; a set in an inner scope does *not* help a get validate.
@@ -16,5 +16,7 @@
       (local.get $x)
     )
   )
+
+  (func $helper)
 )
 

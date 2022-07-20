@@ -87,6 +87,17 @@
     )
   )
 
+  ;; CHECK:      (func $inner-to-func
+  ;; CHECK-NEXT:  (local $x funcref)
+  ;; CHECK-NEXT:  (block $b
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $helper)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $inner-to-func
     ;; a set in an inner scope does *not* help a get validate, but the type is
     ;; nullable so that's ok.
