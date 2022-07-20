@@ -150,6 +150,27 @@ public:
   }
 };
 
+class StructuralChildIterator : public AbstractChildIterator<StructuralChildIterator> {
+public:
+  ValueChildIterator(Expression* parent)
+    : AbstractChildIterator<ValueChildIterator>(parent) {}
+
+  void addChild(Expression* parent, Expression** child) {
+    if (!Properties::isControlFlowStructure(parent)) {
+      return;
+    }
+
+    // If conditions are the only value children of control flow structures.
+    if (auto* iff = parent->dynCast<If>()) {
+      if (child == &iff->condition) {
+        return;
+      }
+    }
+
+    children.push_back(child);
+  }
+};
+
 // Returns true if the current expression contains a certain kind of expression,
 // within the given depth of BFS. If depth is -1, this searches all children.
 template<typename T> bool containsChild(Expression* parent, int depth = -1) {
