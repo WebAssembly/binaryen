@@ -11,6 +11,7 @@ set(ir_SOURCES
   possible-contents.cpp
   properties.cpp
   LocalGraph.cpp
+  LocalStructuralDominance.cpp
   ReFinalize.cpp
   stack-utils.cpp
   table-utils.cpp
