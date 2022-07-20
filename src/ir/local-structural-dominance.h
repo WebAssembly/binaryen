@@ -51,6 +51,10 @@ namespace wasm {
 // set. That dominance proves the get cannot access the default null value, and,
 // nicely, it can be validated in linear time.
 //
+// This ignores non-reference locals. It does look at both nullable and non-
+// nullable reference locals (as it can be used to validate non-nullable ones,
+// and to check if a nullable one could become non-nullable and still validate).
+//
 struct LocalStructuralDominance {
   LocalStructuralDominance(Function* func);
 

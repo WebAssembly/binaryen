@@ -23,6 +23,17 @@ namespace wasm {
 LocalStructuralDominance::LocalStructuralDominance(Function* func) {
   auto num = func->getNumLocals();
 
+  bool hasRef = false;
+  for (Index i = 0; i < num; i++) {
+    if (func->getLocalType(i).isRef()) {
+      hasRef = true;
+      break;
+    }
+  }
+  if (!hasRef) {
+    return;
+  }
+
   // The locals that have been set, and so at the current time, they
   // structurally dominate.
   std::vector<bool> localsSet(num);
@@ -57,8 +68,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
   // The stack begins with a new scope for the function, and then we start on
   // the body. (Note that we don't need to exit that scope, that work would not
   // do anything useful.)
-  workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
   workStack.push_back(WorkItem{WorkItem::Scan, func->body});
+  workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
 
   // A special marker for "start or finis/cleanup a scope". When we scan a block
   // we'll add its children to the stack + cleanup at the end. When we get to
@@ -74,10 +85,10 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
     if (item.op == WorkItem::Scan) {
       if (!Properties::isControlFlowStructure(item.curr)) {
         // Simply scan the children and prepare to visit here afterwards.
-        for (auto* child : ChildIterator(item.curr)) {
-          workStack.push_back(WorkItem{WorkItem::Scan, child});
-        }
         workStack.push_back(WorkItem{WorkItem::Visit, item.curr});
+        for (auto* child : ChildIterator(item.curr).children) {
+          workStack.push_back(WorkItem{WorkItem::Scan, *child});
+        }
         continue;
       }
 
@@ -91,16 +102,16 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
       // Next, go through the structure children. Blocks are special in that all
       // their children go in a single scope.
       if (item.curr->is<Block>()) {
-        workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-        for (auto* child : StructuralChildIterator(item.curr)) {
-          workStack.push_back(WorkItem{WorkItem::Scan, child});
-        }
         workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
+        for (auto* child : StructuralChildIterator(item.curr).children) {
+          workStack.push_back(WorkItem{WorkItem::Scan, *child});
+        }
+        workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
       } else {
-        for (auto* child : StructuralChildIterator(item.curr)) {
-          workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-          workStack.push_back(WorkItem{WorkItem::Scan, child});
+        for (auto* child : StructuralChildIterator(item.curr).children) {
           workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
+          workStack.push_back(WorkItem{WorkItem::Scan, *child});
+          workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
         }
       }
     } else if (item.op == WorkItem::Visit) {
