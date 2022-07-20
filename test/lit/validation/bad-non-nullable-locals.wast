@@ -35,6 +35,7 @@
 ;; CHECK: non-nullable local's sets must dominate gets
 (module
   (func $get-before-set
+    (local $x (ref func))
     (local.set $x
       (local.get $x)
     )
