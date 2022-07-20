@@ -245,7 +245,8 @@ struct Reducer
           bool debugInfo,
           ToolOptions& toolOptions)
     : command(command), test(test), working(working), binary(binary),
-      deNan(deNan), verbose(verbose), debugInfo(debugInfo), toolOptions(toolOptions) {}
+      deNan(deNan), verbose(verbose), debugInfo(debugInfo),
+      toolOptions(toolOptions) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -1414,7 +1415,8 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, binary, deNan, verbose, debugInfo, options);
+    Reducer reducer(
+      command, test, working, binary, deNan, verbose, debugInfo, options);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
