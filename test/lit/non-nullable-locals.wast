@@ -8,6 +8,8 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
+
   ;; CHECK:      (type $anyref_=>_i32 (func (param anyref) (result i32)))
 
   ;; CHECK:      (elem declare func $helper)
@@ -145,6 +147,19 @@
       (drop
         (local.get $x)
       )
+    )
+  )
+
+  ;; CHECK:      (func $get-without-set-but-param (param $x (ref func))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-without-set-but-param
+    ;; As a parameter, this is ok to get without a set.
+    (param $x (ref func))
+    (drop
+      (local.get $x)
     )
   )
 
