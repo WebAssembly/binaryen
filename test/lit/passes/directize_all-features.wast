@@ -771,21 +771,17 @@
  )
 
  ;; CHECK:      (func $select-non-nullable (param $x i32)
- ;; CHECK-NEXT:  (local $1 (ref null $i32_=>_none))
+ ;; CHECK-NEXT:  (local $1 (ref $i32_=>_none))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (call $foo-ref
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (call $foo-ref
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

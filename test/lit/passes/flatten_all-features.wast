@@ -3514,16 +3514,14 @@
  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
  ;; CHECK:      (func $0 (result funcref)
- ;; CHECK-NEXT:  (local $0 (ref null $none_=>_none))
+ ;; CHECK-NEXT:  (local $0 (ref $none_=>_none))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (ref.null $none_=>_none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0 (result funcref)

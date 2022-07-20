@@ -357,7 +357,7 @@
   )
 
   ;; CHECK:      (func $pop-non-defaultable-type-within-block
-  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $0 (ref $struct.A))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -368,9 +368,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (throw $e-struct.A
   ;; CHECK-NEXT:     (block $block (result (ref $struct.A))
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

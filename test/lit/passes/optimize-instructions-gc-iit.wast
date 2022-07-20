@@ -181,7 +181,7 @@
   )
 
   ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
-  ;; CHECK-NEXT:  (local $2 (ref null $parent))
+  ;; CHECK-NEXT:  (local $2 (ref $parent))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $parent))
   ;; CHECK-NEXT:    (local.set $2
@@ -196,9 +196,7 @@
   ;; CHECK-NEXT:      (local.get $parent-rtt)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -215,7 +213,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-iit-bad (type $ref|$parent|_rtt_$parent_=>_none) (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
-  ;; NOMNL-NEXT:  (local $2 (ref null $parent))
+  ;; NOMNL-NEXT:  (local $2 (ref $parent))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $parent))
   ;; NOMNL-NEXT:    (local.set $2
@@ -230,9 +228,7 @@
   ;; NOMNL-NEXT:      (local.get $parent-rtt)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (local.get $2)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $2)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -249,7 +245,7 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   ;; NOMNL-TNH:      (func $ref-cast-iit-bad (type $ref|$parent|_rtt_$parent_=>_none) (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
-  ;; NOMNL-TNH-NEXT:  (local $2 (ref null $parent))
+  ;; NOMNL-TNH-NEXT:  (local $2 (ref $parent))
   ;; NOMNL-TNH-NEXT:  (drop
   ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
   ;; NOMNL-TNH-NEXT:    (local.set $2
@@ -264,9 +260,7 @@
   ;; NOMNL-TNH-NEXT:      (local.get $parent-rtt)
   ;; NOMNL-TNH-NEXT:     )
   ;; NOMNL-TNH-NEXT:    )
-  ;; NOMNL-TNH-NEXT:    (ref.as_non_null
-  ;; NOMNL-TNH-NEXT:     (local.get $2)
-  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (local.get $2)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
