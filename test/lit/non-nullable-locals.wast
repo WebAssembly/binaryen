@@ -87,6 +87,20 @@
     )
   )
 
+  (func $inner-to-func
+    ;; a set in an inner scope does *not* help a get validate, but the type is
+    ;; nullable so that's ok.
+    (local $x (ref null func))
+    (block $b
+      (local.set $x
+        (ref.func $helper)
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
   ;; CHECK:      (func $helper
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
