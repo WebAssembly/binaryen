@@ -16,6 +16,7 @@
 
 #include "type-updating.h"
 #include "find_all.h"
+#include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
@@ -289,15 +290,28 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     return;
   }
 
+  // Non-nullable locals exist, which we may need to fix up. See if they
+  // validate as they are, that is, if they fall within the "1a" validation
+  // rules of the wasm spec. We do not need to modify such locals.
+  LocalStructuralDominance info(func);
+  std::unordered_set<Index> badIndexes;
+  bool hasWork = false;
+  for (auto index : info.nonDominatingIndexes) {
+    if (func->getLocalType(index).isNonNullable()) {
+      badIndexes.insert(index);
+    }
+  }
+  if (badIndexes.empty()) {
+    return;
+  }
+
   // Rewrite the local.gets.
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
     auto* get = (*getp)->cast<LocalGet>();
-    if (!func->isVar(get->index)) {
-      // We do not need to process params, which can legally be non-nullable.
-      continue;
+    if (badIndexes.count(get->index)) {
+      *getp = fixLocalGet(get, wasm);
     }
-    *getp = fixLocalGet(get, wasm);
   }
 
   // Update tees, whose type must match the local (if the wasm spec changes for
@@ -313,8 +327,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     if (!set->isTee() || set->type == Type::unreachable) {
       continue;
     }
-    auto type = func->getLocalType(set->index);
-    if (type.isNonNullable()) {
+    if (badIndexes.count(set->index)) {
+      auto type = func->getLocalType(set->index);
       set->type = Type(type.getHeapType(), Nullable);
       *setp = builder.makeRefAs(RefAsNonNull, set);
     }
@@ -322,8 +336,9 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
-  for (auto& type : func->vars) {
-    type = getValidLocalType(type, wasm.features);
+  for (auto index : badIndexes) {
+    func->vars[index] = getValidLocalType(func->getLocalType(func->vars[index]),
+                                          wasm.features);
   }
 }
 
