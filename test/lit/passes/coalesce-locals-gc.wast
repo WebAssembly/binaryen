@@ -63,14 +63,18 @@
  )
 
  ;; CHECK:      (func $nn-dead
- ;; CHECK-NEXT:  (local $0 (ref func))
+ ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (block $inner
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (ref.func $nn-dead)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result (ref func))
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
