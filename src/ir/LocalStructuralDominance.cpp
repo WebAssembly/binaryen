@@ -61,10 +61,10 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
   expressionStack.push_back(WorkItem{WorkItem::Scan, func->body});
 
   // A special marker for "start or finis/cleanup a scope". When we scan a block
-  // we'll add its children to the stack + cleanup at the end. When we get to the
-  // marker we'll pop the control flow stack and do any undoing we need to. This
-  // could be anything, so Nop is arbitrary, it just needs to not collide with
-  // anything else.
+  // we'll add its children to the stack + cleanup at the end. When we get to
+  // the marker we'll pop the control flow stack and do any undoing we need to.
+  // This could be anything, so Nop is arbitrary, it just needs to not collide
+  // with anything else.
   Nop scopeStart, scopeEnd;
 
   while (!expressionStack.empty()) {

@@ -2762,7 +2762,7 @@ void FunctionValidator::visitFunction(Function* curr) {
       // Without the special GCNNLocals feature, we implement "1a" semantics,
       // that is, a set allows gets until the end of the block.
       LocalStructuralDominance info(curr);
-      
+
     } else {
       // With the special GCNNLocals feature, we allow gets anywhere, so long as
       // we can prove they cannot read the null value. (TODO: remove this once

@@ -150,7 +150,8 @@ public:
   }
 };
 
-class StructuralChildIterator : public AbstractChildIterator<StructuralChildIterator> {
+class StructuralChildIterator
+  : public AbstractChildIterator<StructuralChildIterator> {
 public:
   ValueChildIterator(Expression* parent)
     : AbstractChildIterator<ValueChildIterator>(parent) {}
