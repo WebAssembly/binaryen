@@ -475,4 +475,30 @@
       )
     )
   )
+
+  (func $string.encode.gc (param $ref stringref) (param $array (ref $array))
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.encode_wtf8_array wtf8
+          (local.get $ref)
+          (local.get $array)
+          (i32.const 10)
+        )
+      )
+    )
+    (drop
+      (string.encode_wtf8_array utf8
+        (local.get $ref)
+        (local.get $array)
+        (i32.const 20)
+      )
+    )
+    (drop
+      (string.encode_wtf16_array
+        (local.get $ref)
+        (local.get $array)
+        (i32.const 30)
+      )
+    )
+  )
 )

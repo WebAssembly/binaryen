@@ -7246,6 +7246,7 @@ bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
 bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
                                                uint32_t code) {
   StringEncodeOp op;
+  Expression* start = nullptr;
   // TODO: share this code with string.measure?
   if (code == BinaryConsts::StringEncodeWTF8) {
     auto policy = getU32LEB();
@@ -7261,12 +7262,28 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
     }
   } else if (code == BinaryConsts::StringEncodeWTF16) {
     op = StringEncodeWTF16;
+  } if (code == BinaryConsts::StringEncodeWTF8Array) {
+    auto policy = getU32LEB();
+    switch (policy) {
+      case BinaryConsts::StringPolicy::UTF8:
+        op = StringEncodeUTF8Array;
+        break;
+      case BinaryConsts::StringPolicy::WTF8:
+        op = StringEncodeWTF8Array;
+        break;
+      default:
+        throwError("bad policy for string.encode");
+    }
+    start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringEncodeWTF16Array) {
+    op = StringEncodeWTF16Array;
+    start = popNonVoidExpression();
   } else {
     return false;
   }
   auto* ptr = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringEncode(op, ref, ptr);
+  out = Builder(wasm).makeStringEncode(op, ref, ptr, start);
   return true;
 }
 

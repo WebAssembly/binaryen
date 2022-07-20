@@ -2316,6 +2316,17 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
     case StringEncodeWTF16:
       o << U32LEB(BinaryConsts::StringEncodeWTF16);
       break;
+    case StringEncodeUTF8Array:
+      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      break;
+    case StringEncodeWTF8Array:
+      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      break;
+    case StringEncodeWTF16Array:
+      o << U32LEB(BinaryConsts::StringEncodeWTF16Array);
+      break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
   }

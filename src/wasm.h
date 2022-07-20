@@ -608,6 +608,9 @@ enum StringEncodeOp {
   StringEncodeUTF8,
   StringEncodeWTF8,
   StringEncodeWTF16,
+  StringEncodeUTF8Array,
+  StringEncodeWTF8Array,
+  StringEncodeWTF16Array,
 };
 
 enum StringAsOp {
@@ -1746,7 +1749,14 @@ public:
   StringEncodeOp op;
 
   Expression* ref;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
   Expression* ptr;
+
+  // Used only in GC variations, where it is the index in |ptr| to start
+  // encoding from.
+  Expression* start = nullptr;
 
   void finalize();
 };

@@ -3165,12 +3165,28 @@ switch (op[0]) {
                     switch (op[8]) {
                       case 'n': {
                         switch (op[17]) {
-                          case '1':
-                            if (strcmp(op, "string.encode_wtf16") == 0) { return makeStringEncode(s, StringEncodeWTF16); }
-                            goto parse_error;
-                          case '8':
-                            if (strcmp(op, "string.encode_wtf8") == 0) { return makeStringEncode(s, StringEncodeWTF8); }
-                            goto parse_error;
+                          case '1': {
+                            switch (op[19]) {
+                              case '\0':
+                                if (strcmp(op, "string.encode_wtf16") == 0) { return makeStringEncode(s, StringEncodeWTF16); }
+                                goto parse_error;
+                              case '_':
+                                if (strcmp(op, "string.encode_wtf16_array") == 0) { return makeStringEncode(s, StringEncodeWTF16Array); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case '8': {
+                            switch (op[18]) {
+                              case '\0':
+                                if (strcmp(op, "string.encode_wtf8") == 0) { return makeStringEncode(s, StringEncodeWTF8); }
+                                goto parse_error;
+                              case '_':
+                                if (strcmp(op, "string.encode_wtf8_array") == 0) { return makeStringEncode(s, StringEncodeWTF8Array); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
                           default: goto parse_error;
                         }
                       }
@@ -8879,20 +8895,44 @@ switch (op[0]) {
                     switch (op[8]) {
                       case 'n': {
                         switch (op[17]) {
-                          case '1':
-                            if (op == "string.encode_wtf16"sv) {
-                              auto ret = makeStringEncode(ctx, in, StringEncodeWTF16);
-                              CHECK_ERR(ret);
-                              return *ret;
+                          case '1': {
+                            switch (op[19]) {
+                              case '\0':
+                                if (op == "string.encode_wtf16"sv) {
+                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF16);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              case '_':
+                                if (op == "string.encode_wtf16_array"sv) {
+                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF16Array);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
-                          case '8':
-                            if (op == "string.encode_wtf8"sv) {
-                              auto ret = makeStringEncode(ctx, in, StringEncodeWTF8);
-                              CHECK_ERR(ret);
-                              return *ret;
+                          }
+                          case '8': {
+                            switch (op[18]) {
+                              case '\0':
+                                if (op == "string.encode_wtf8"sv) {
+                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF8);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              case '_':
+                                if (op == "string.encode_wtf8_array"sv) {
+                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF8Array);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           default: goto parse_error;
                         }
                       }
