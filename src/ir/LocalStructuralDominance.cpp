@@ -92,8 +92,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
         continue;
       }
 
-      // First, go through the structure children. Blocks are special in that all
-      // their children go in a single scope.
+      // First, go through the structure children. Blocks are special in that
+      // all their children go in a single scope.
       if (item.curr->is<Block>()) {
         workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
         for (auto* child : StructuralChildIterator(item.curr).children) {
