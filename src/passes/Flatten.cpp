@@ -370,15 +370,6 @@ struct Flatten
     curr->body = getPreludesWithExpression(originalBody, curr->body);
     // New locals we added may be non-nullable.
     TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
-    // We cannot handle non-nullable tuples currently, see the comment at the
-    // top of the file.
-    for (auto type : curr->vars) {
-      if (!type.isDefaultable()) {
-        Fatal() << "Flatten was forced to add a local of a type it cannot "
-                   "handle yet: "
-                << type;
-      }
-    }
 
     // Flatten can generate blocks within 'catch', making pops invalid. Fix them
     // up.

@@ -295,7 +295,6 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // rules of the wasm spec. We do not need to modify such locals.
   LocalStructuralDominance info(func);
   std::unordered_set<Index> badIndexes;
-  bool hasWork = false;
   for (auto index : info.nonDominatingIndexes) {
     if (func->getLocalType(index).isNonNullable()) {
       badIndexes.insert(index);
@@ -337,8 +336,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
   for (auto index : badIndexes) {
-    func->vars[index] =
-      getValidLocalType(func->getLocalType(func->vars[index]), wasm.features);
+    func->vars[index - func->getNumParams()] =
+      getValidLocalType(func->getLocalType(index), wasm.features);
   }
 }
 
