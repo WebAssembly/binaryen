@@ -20,3 +20,26 @@
   (func $helper)
 )
 
+;; CHECK: non-nullable local's sets must dominate gets
+(module
+  (func $get-without-set
+    (local $x (ref func))
+    (drop
+      (local.get $x)
+    )
+  )
+
+  (func $helper)
+)
+
+;; CHECK: non-nullable local's sets must dominate gets
+(module
+  (func $get-before-set
+    (local.set $x
+      (local.get $x)
+    )
+  )
+
+  (func $helper)
+)
+
