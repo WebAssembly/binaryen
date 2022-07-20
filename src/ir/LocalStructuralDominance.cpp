@@ -92,14 +92,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
         continue;
       }
 
-      // For a control flow instruction, we must handle scoping properly. First,
-      // handle value children, as they are not involved in structuring (like
-      // the If condition).
-      for (auto* child : ValueChildIterator(item.curr)) {
-        workStack.push_back(WorkItem{WorkItem::Scan, child});
-      }
-
-      // Next, go through the structure children. Blocks are special in that all
+      // First, go through the structure children. Blocks are special in that all
       // their children go in a single scope.
       if (item.curr->is<Block>()) {
         workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
@@ -113,6 +106,12 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func) {
           workStack.push_back(WorkItem{WorkItem::Scan, *child});
           workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
         }
+      }
+
+      // Next handle value children, which are not involved in structuring (like
+      // the If condition).
+      for (auto* child : ValueChildIterator(item.curr).children) {
+        workStack.push_back(WorkItem{WorkItem::Scan, *child});
       }
     } else if (item.op == WorkItem::Visit) {
       if (auto* set = item.curr->dynCast<LocalSet>()) {

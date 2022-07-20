@@ -8,6 +8,8 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $anyref_=>_i32 (func (param anyref) (result i32)))
+
   ;; CHECK:      (elem declare func $helper)
 
   ;; CHECK:      (func $no-uses
@@ -112,8 +114,49 @@
     )
   )
 
+  ;; CHECK:      (func $if-condition
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $helper2
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (ref.func $helper)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-condition
+    (local $x (ref func))
+    (if
+      (call $helper2
+        ;; Tee in the condition is good enough for the arms.
+        (local.tee $x
+          (ref.func $helper)
+        )
+      )
+      (drop
+        (local.get $x)
+      )
+      (drop
+        (local.get $x)
+      )
+    )
+  )
+
   ;; CHECK:      (func $helper
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper)
+
+  ;; CHECK:      (func $helper2 (param $0 anyref) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper2 (param anyref) (result i32)
+    (unreachable)
+  )
 )

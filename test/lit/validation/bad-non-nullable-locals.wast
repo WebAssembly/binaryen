@@ -2,6 +2,9 @@
 
 ;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 
+;; Tests for the "1a" form of non-nullable locals. This will likely be the final
+;; form in the spec.
+
 ;; CHECK: non-nullable local's sets must dominate gets
 (module
   (func $inner-to-func
@@ -37,6 +40,23 @@
   (func $get-before-set
     (local $x (ref func))
     (local.set $x
+      (local.get $x)
+    )
+  )
+
+  (func $helper)
+)
+
+;; CHECK: non-nullable local's sets must dominate gets
+(module
+  (func $if-arms
+    (local $x (ref func))
+    (if
+      (i32.const 1)
+      ;; Superficially the order is right, but not really.
+      (local.set $x
+        (ref.func $helper)
+      )
       (local.get $x)
     )
   )
