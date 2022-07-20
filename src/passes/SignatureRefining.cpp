@@ -52,7 +52,7 @@ struct SignatureRefining : public Pass {
       return;
     }
     if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Hybrid) {
+        getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SignatureRefining requires nominal/hybrid typing";
     }
 

@@ -117,7 +117,7 @@ struct GlobalTypeOptimization : public Pass {
       return;
     }
     if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Hybrid) {
+        getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "GTO requires nominal/hybrid typing";
     }
 

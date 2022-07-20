@@ -82,7 +82,7 @@ struct TypeRefining : public Pass {
       return;
     }
     if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Hybrid) {
+        getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "TypeRefining requires nominal/hybrid typing";
     }
 

@@ -180,7 +180,7 @@ struct ConstantFieldPropagation : public Pass {
       return;
     }
     if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Hybrid) {
+        getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "CFP requires nominal/hybrid typing";
     }
 

@@ -52,7 +52,7 @@ struct SignaturePruning : public Pass {
       return;
     }
     if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Hybrid) {
+        getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SignaturePruning requires nominal/hybrid typing";
     }
 
