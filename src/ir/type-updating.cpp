@@ -275,8 +275,12 @@ bool canHandleAsLocal(Type type) {
 }
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
-  // Check if this is an issue.
   if (wasm.features.hasGCNNLocals()) {
+    // We have nothing to fix up: all locals are allowed.
+    return;
+  }
+  if (!wasm.features.hasGC()) {
+    // No non-nullable types exist can exist.
     return;
   }
   bool hasNonNullable = false;
@@ -287,6 +291,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     }
   }
   if (!hasNonNullable) {
+    // No non-nullable types exist in practice.
     return;
   }
 

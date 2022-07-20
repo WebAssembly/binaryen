@@ -31,6 +31,7 @@
 
 #include "cfg/liveness-traversal.h"
 #include "ir/numbering.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/learning.h"
@@ -99,19 +100,39 @@ struct CoalesceLocals
   bool interferes(Index i, Index j) {
     return interferences.get(std::min(i, j), std::max(i, j));
   }
+
+  // Whether we ever removed a set.
+  bool removedSet = false;
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
   super::doWalkFunction(func);
-  // prioritize back edges
+
+  // Prioritize back edges.
   increaseBackEdgePriorities();
-  // use liveness to find interference
+
+  // Use liveness to find interference.
   calculateInterferences();
-  // pick new indices
+
+  // Pick new indices.
   std::vector<Index> indices;
   pickIndices(indices);
-  // apply indices
+
+  // Apply indices.
   applyIndices(indices, func->body);
+
+  // Fix up locals: If we removed a set (because it was not needed) then any
+  // gets for it may not validate any more. For example:
+  //
+  //  (local.set $x ..)
+  //  (unreachable)
+  //  (local.get $x)
+  //
+  // We can prove the get won't read the set in practice, but the wasm typing
+  // rules do not let $x validate as a non-nullable local.
+  if (removedSet) {
+    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
+  }
 }
 
 // A copy on a backedge can be especially costly, forcing us to branch just to
@@ -536,6 +557,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
             Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
             drop->value = *action.origin;
             *action.origin = drop;
+            removedSet = true;
           }
           continue;
         }
