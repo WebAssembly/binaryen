@@ -37,6 +37,7 @@
 #include <ir/literal-utils.h>
 #include <ir/numbering.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
@@ -94,6 +95,9 @@ struct RedundantSetElimination
     flowValues(func);
     // remove redundant sets
     optimize();
+    // removing local.sets may break validation (see CoalesceLocals for similar
+    // code)
+    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 
   // Use a value numbering for the values of expressions.
