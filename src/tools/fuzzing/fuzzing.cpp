@@ -455,6 +455,7 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
 
 std::cout << "clean up context for " << func->name << " and chak nnl\n";
 std::cout << "waka\n" << *func->body << '\n';
+for (auto x : func->vars) std::cout << " var: " << x << '\n';
   // We must ensure non-nullable locals validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
