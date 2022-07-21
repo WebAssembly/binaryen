@@ -143,6 +143,18 @@ BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
 BinaryenType BinaryenTypeDataref(void) { return Type::dataref; }
+BinaryenType BinaryenTypeStringref() {
+  return Type(HeapType::string, Nullable).getID();
+}
+BinaryenType BinaryenTypeStringviewWtf8() {
+  return Type(HeapType::stringview_wtf8, Nullable).getID();
+}
+BinaryenType BinaryenTypeStringviewWtf16() {
+  return Type(HeapType::stringview_wtf16, Nullable).getID();
+}
+BinaryenType BinaryenTypeStringviewIter() {
+  return Type(HeapType::stringview_iter, Nullable).getID();
+}
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 

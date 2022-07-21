@@ -650,6 +650,10 @@ function test_core() {
     module.eqref.pop(),
     module.i31ref.pop(),
     module.dataref.pop(),
+    module.stringref.pop(),
+    module.stringview_wtf8.pop(),
+    module.stringview_wtf16.pop(),
+    module.stringview_iter.pop(),
 
     // Memory
     module.memory.size(),
