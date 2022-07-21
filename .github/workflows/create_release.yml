@@ -55,6 +55,9 @@ jobs:
       run: find out/install/ -type f -perm -u=x -exec strip -x {} +
       if: matrix.os != 'windows-latest'
 
+    - name: Build wasi-stub
+      run: cd wasi-stub && ./build.sh
+
     - name: archive
       id: archive
       run: |
@@ -64,6 +67,8 @@ jobs:
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
         mv out/install binaryen-$VERSION
+        mv wasi-stub/run.sh binaryen-$VERSION/lib
+        mv wasi-stub/wasi-stub binaryen-$VERSION/lib
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
@@ -113,6 +118,9 @@ jobs:
     - name: test
       run: ./alpine.sh python3 ./check.py
 
+    - name: Build wasi-stub
+      run: cd wasi-stub && ./build.sh
+
     - name: archive
       id: archive
       run: |
@@ -122,6 +130,8 @@ jobs:
         SHASUM=$PKGNAME.tar.gz.sha256
         ./alpine.sh find install/ -type f -perm -u=x -exec strip {} +
         mv install binaryen-$VERSION
+        mv wasi-stub/run.sh binaryen-$VERSION/lib
+        mv wasi-stub/wasi-stub binaryen-$VERSION/lib
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "::set-output name=tarball::$TARBALL"
