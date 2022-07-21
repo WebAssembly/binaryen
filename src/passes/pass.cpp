@@ -23,6 +23,7 @@
 
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "passes/passes.h"
 #include "support/colors.h"
@@ -898,16 +899,47 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
 }
 
 void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
-  if (pass->modifiesBinaryenIR()) {
-    // If Binaryen IR is modified, Stack IR must be cleared - it would
-    // be out of sync in a potentially dangerous way.
-    if (func) {
+  if (!pass->modifiesBinaryenIR()) {
+    return;
+  }
+
+  // If Binaryen IR is modified, Stack IR must be cleared - it would
+  // be out of sync in a potentially dangerous way.
+  if (func) {
+    func->stackIR.reset(nullptr);
+  } else {
+    for (auto& func : wasm->functions) {
       func->stackIR.reset(nullptr);
-    } else {
-      for (auto& func : wasm->functions) {
-        func->stackIR.reset(nullptr);
-      }
     }
+  }
+
+  // Fix up non-nullable locals: Passes can make many changes that break the
+  // validation of non-nullable locals, which validate according to the "1a"
+  // rule of each get needing to be structurally dominated by a set - sets allow
+  // gets until the end of the set's block. Any time a pass adds a block, that
+  // can break:
+  //
+  //  (local.set $x ..)
+  //  (local.get $x)
+  //
+  // =>
+  //
+  //  (block
+  //    ..new code..
+  //    (local.set $x ..)
+  //  )
+  //  (local.get $x)
+  //
+  // This example is the common case of adding new code at a location by
+  // wrapping it in a block and appending or prepending the old code. But now
+  // the set does not structurally dominate the get. To avoid each pass needing
+  // to handle this, do it after every function-parallel pass, which is the
+  // vast majority of passes. The few non-function-parallel passes need to add
+  // this handling themselves if they require it (not doing it by default
+  // avoids iterating on all functions in each such pass, which may be
+  // wasteful).
+  if (func) {
+    TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
 }
 
