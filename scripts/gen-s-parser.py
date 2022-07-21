@@ -624,6 +624,8 @@ instructions = [
     ("string.is_usv_sequence", "makeStringMeasure(s, StringMeasureIsUSV)"),
     ("string.encode_wtf8",   "makeStringEncode(s, StringEncodeWTF8)"),
     ("string.encode_wtf16",  "makeStringEncode(s, StringEncodeWTF16)"),
+    ("string.encode_wtf8_array",   "makeStringEncode(s, StringEncodeWTF8Array)"),
+    ("string.encode_wtf16_array",  "makeStringEncode(s, StringEncodeWTF16Array)"),
     ("string.concat",        "makeStringConcat(s)"),
     ("string.eq",            "makeStringEq(s)"),
     ("string.as_wtf8",       "makeStringAs(s, StringAsWTF8)"),

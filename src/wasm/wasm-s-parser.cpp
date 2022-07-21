@@ -2985,6 +2985,7 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
 Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
                                                      StringEncodeOp op) {
   size_t i = 1;
+  Expression* start = nullptr;
   if (op == StringEncodeWTF8) {
     const char* str = s[i++]->c_str();
     if (strncmp(str, "utf8", 4) == 0) {
@@ -2994,9 +2995,21 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+  } else if (op == StringEncodeWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringEncodeUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringEncodeWTF8Array;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+    start = parseExpression(s[i + 2]);
+  } else if (op == StringEncodeWTF16Array) {
+    start = parseExpression(s[i + 2]);
   }
   return Builder(wasm).makeStringEncode(
-    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+    op, parseExpression(s[i]), parseExpression(s[i + 1]), start);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {

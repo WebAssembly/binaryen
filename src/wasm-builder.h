@@ -1012,12 +1012,15 @@ public:
     ret->finalize();
     return ret;
   }
-  StringEncode*
-  makeStringEncode(StringEncodeOp op, Expression* ref, Expression* ptr) {
+  StringEncode* makeStringEncode(StringEncodeOp op,
+                                 Expression* ref,
+                                 Expression* ptr,
+                                 Expression* start = nullptr) {
     auto* ret = wasm.allocator.alloc<StringEncode>();
     ret->op = op;
     ret->ref = ref;
     ret->ptr = ptr;
+    ret->start = start;
     ret->finalize();
     return ret;
   }

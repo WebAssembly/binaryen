@@ -2330,6 +2330,15 @@ struct PrintExpressionContents
       case StringEncodeWTF16:
         printMedium(o, "string.encode_wtf16");
         break;
+      case StringEncodeUTF8Array:
+        printMedium(o, "string.encode_wtf8_array utf8");
+        break;
+      case StringEncodeWTF8Array:
+        printMedium(o, "string.encode_wtf8_array wtf8");
+        break;
+      case StringEncodeWTF16Array:
+        printMedium(o, "string.encode_wtf16_array");
+        break;
       default:
         WASM_UNREACHABLE("invalid string.encode*");
     }

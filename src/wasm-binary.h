@@ -1161,6 +1161,8 @@ enum ASTNodes {
   StringViewIterSlice = 0xa4,
   StringNewWTF8Array = 0xb0,
   StringNewWTF16Array = 0xb1,
+  StringEncodeWTF8Array = 0xb2,
+  StringEncodeWTF16Array = 0xb3,
 };
 
 enum MemoryAccess {
