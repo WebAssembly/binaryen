@@ -10,10 +10,11 @@
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
 
   ;; CHECK:      (type $stringref_stringref_=>_none (func (param stringref stringref)))
+
   ;; CHECK:      (type $array (array i32))
   (type $array (array_subtype i32 data))
 
-  ;; CHECK:      (type $ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref?|string|_ref?|stringview_wtf8|_ref?|stringview_wtf16|_ref?|stringview_iter|_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
+  ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -21,7 +22,7 @@
 
   ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
 
-  ;; CHECK:      (type $ref?|string|_ref|$array|_=>_none (func (param stringref (ref $array))))
+  ;; CHECK:      (type $stringref_ref|$array|_=>_none (func (param stringref (ref $array))))
 
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
