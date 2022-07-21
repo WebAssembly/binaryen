@@ -24,6 +24,7 @@
 
 #include "ir/names.h"
 #include "ir/properties.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -106,6 +107,8 @@ struct DeNaN : public WalkerPass<
       runner.setIsNested(true);
       runner.add("merge-blocks");
       runner.run();
+      // Adding blocks can affect "1a" validation of non-nullable locals.
+      TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     }
   }
 

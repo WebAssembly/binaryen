@@ -269,3 +269,5 @@
 ;; CHECK-NEXT:   (f64.const 0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+
+;; TODO test
