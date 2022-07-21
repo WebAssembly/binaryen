@@ -453,6 +453,8 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   assert(hangStack.empty());
   parent.funcContext = nullptr;
 
+std::cout << "clean up context for " << func->name << " and chak nnl\n";
+
   // We must ensure non-nullable locals validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
@@ -534,6 +536,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // Recombination, mutation, etc. can break validation; fix things up
     // after.
     fixLabels(func);
+    std::cout << "allowOOB so do lots of stuffs\n";
   }
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
