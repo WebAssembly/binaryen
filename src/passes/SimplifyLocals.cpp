@@ -379,7 +379,7 @@ struct SimplifyLocals
     // (For now, do not do this with hasGCNNLocals(), which is mode that does
     // not have any such limitations. We'll remove that option once the final
     // spec form is finalized.)
-    if (Properties::isControlFlowStructure(curr)) &&
+    if (Properties::isControlFlowStructure(curr) &&
         !self->getModule()->features.hasGCNNLocals()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
