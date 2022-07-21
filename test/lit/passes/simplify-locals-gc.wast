@@ -214,4 +214,38 @@
     )
    )
   )
+
+  ;; CHECK:      (func $if-nnl
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $if-nnl (type $none_=>_none)
+  ;; NOMNL-NEXT:  (local $x (ref func))
+  ;; NOMNL-NEXT:  (if
+  ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:   (nop)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $if-nnl
+   (local $x (ref func))
+   ;; We would like to turn this if into an if-else with a set on the outside,
+   ;;  (local.set $x
+   ;;   (if
+   ;;    (i32.const 1)
+   ;;    (ref.func $if-nnl)
+   ;;    (local.get $x)))
+   ;; However, the added local.get will not validate in "1a" - it has no set
+   ;; that dominates it. In this case we should leave the if as it is, but we
+   ;; can at least nop out the set (as no get exists).
+   (if
+    (i32.const 1)
+    (local.set $x
+     (ref.func $if-nnl)
+    )
+   )
+  )
+
 )

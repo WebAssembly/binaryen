@@ -376,6 +376,11 @@ struct SimplifyLocals
     // TODO We could allow a set to move into a block if no get exists in an
     //      outer scope, if we tracked scopes for gets.
     //
+    // Note that we could just do this and then fix it up by making the local
+    // nullable. However, the benefits of turning a set into a tee may be
+    // smaller than the added ref.as_non_null casts we add, so it is better to
+    // just avoid this.
+    //
     // (For now, do not do this with hasGCNNLocals(), which is mode that does
     // not have any such limitations. We'll remove that option once the final
     // spec form is finalized.)
@@ -819,6 +824,17 @@ struct SimplifyLocals
       return;
     }
     Index goodIndex = sinkables.begin()->first;
+    auto localType = this->getFunction()->getLocalType(goodIndex);
+    if (localType.isNonNullable() &&
+        !this->getModule()->features.hasGCNNLocals()) {
+      // This is a non-nullable local that must validate according to "1a"
+      // rules, that is, sets must structurally dominate gets (see comment
+      // above on 1a for more details). We would be adding a local.get in the
+      // if-else arm, and that might not validate if there doesn't happen to be
+      // a proper set for it. TODO check if such a set exists, and optimize in
+      // that case.
+      return;
+    }
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
@@ -836,8 +852,7 @@ struct SimplifyLocals
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(
-      set->index, this->getFunction()->getLocalType(set->index));
+    iff->ifFalse = builder.makeLocalGet(set->index, localType);
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;

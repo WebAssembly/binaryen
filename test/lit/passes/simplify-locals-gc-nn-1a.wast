@@ -13,17 +13,13 @@
   ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $nn)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $inner
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $nn)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $nn)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $nn)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-nn
