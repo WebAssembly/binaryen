@@ -123,7 +123,6 @@ private:
     FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
       : parent(parent), func(func) {
       parent.funcContext = this;
-std::cout << "maek context for " << func->name << "\n";
     }
 
     ~FunctionCreationContext();

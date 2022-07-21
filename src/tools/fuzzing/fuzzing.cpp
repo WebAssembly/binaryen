@@ -175,7 +175,6 @@ void TranslateToFuzzReader::build() {
     auto* func = addFunction();
     addInvocations(func);
   }
-std::cout << "module waka 1\n" << wasm << '\n';
   if (HANG_LIMIT > 0) {
     addHangLimitSupport();
   }
@@ -183,7 +182,6 @@ std::cout << "module waka 1\n" << wasm << '\n';
     finalizeMemory();
   }
   finalizeTable();
-std::cout << "module waka 2\n" << wasm << '\n';
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -455,9 +453,6 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   assert(hangStack.empty());
   parent.funcContext = nullptr;
 
-std::cout << "clean up context for " << func->name << " and chak nnl\n";
-std::cout << "waka\n" << *func->body << '\n';
-for (auto x : func->vars) std::cout << " var: " << x << '\n';
   // We must ensure non-nullable locals validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
@@ -539,7 +534,6 @@ Function* TranslateToFuzzReader::addFunction() {
     // Recombination, mutation, etc. can break validation; fix things up
     // after.
     fixLabels(func);
-    std::cout << "allowOOB so do lots of stuffs\n";
   }
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
