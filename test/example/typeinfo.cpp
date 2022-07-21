@@ -8,7 +8,6 @@ using namespace wasm;
 void test_compound() {
   {
     HeapType func(HeapType::func);
-    assert(Type(func, Nullable).getID() == Type::funcref);
     assert(Type(func, NonNullable).getID() == Type(func, NonNullable).getID());
     assert(Type(func, NonNullable).getID() != Type(func, Nullable).getID());
     HeapType sameFunc(HeapType::func);
@@ -16,7 +15,6 @@ void test_compound() {
            Type(sameFunc, NonNullable).getID());
 
     HeapType any(HeapType::any);
-    assert(Type(any, Nullable).getID() == Type::anyref);
     assert(Type(any, NonNullable).getID() == Type(any, NonNullable).getID());
     assert(Type(any, NonNullable).getID() != Type(any, Nullable).getID());
     HeapType sameAny(HeapType::any);
@@ -24,14 +22,12 @@ void test_compound() {
            Type(sameAny, NonNullable).getID());
 
     HeapType eq(HeapType::eq);
-    // assert(Type(eq, Nullable).getID() == Type::eqref);
     assert(Type(eq, NonNullable).getID() == Type(eq, NonNullable).getID());
     assert(Type(eq, NonNullable).getID() != Type(eq, Nullable).getID());
     HeapType sameEq(HeapType::eq);
     assert(Type(eq, NonNullable).getID() == Type(sameEq, NonNullable).getID());
 
     HeapType i31(HeapType::i31);
-    // assert(Type(i31, NonNullable).getID() == Type::i31ref);
     assert(Type(i31, NonNullable).getID() == Type(i31, NonNullable).getID());
     assert(Type(i31, NonNullable).getID() != Type(i31, Nullable).getID());
     HeapType sameI31(HeapType::i31);
@@ -92,7 +88,7 @@ void test_compound() {
     Tuple sameTuple({Type::i32, Type::f64});
     assert(Type(tuple).getID() == Type(sameTuple).getID());
 
-    Tuple otherTuple({Type::f64, Type::anyref});
+    Tuple otherTuple({Type::f64, Type::i64});
     assert(Type(tuple).getID() != Type(otherTuple).getID());
   }
   {
@@ -165,7 +161,6 @@ void test_printing() {
       {Type::i64, Immutable},
       {Type::f32, Mutable},
       {Type::f64, Mutable},
-      {Type::anyref, Immutable},
     });
     std::cout << struct_ << "\n";
     std::cout << Type(struct_, NonNullable) << "\n";
@@ -177,7 +172,7 @@ void test_printing() {
     std::cout << array << "\n";
     std::cout << Type(array, NonNullable) << "\n";
     std::cout << Type(array, Nullable) << "\n";
-    Array arrayMut({Type::anyref, Mutable});
+    Array arrayMut({Type::i64, Mutable});
     std::cout << arrayMut << "\n";
     std::cout << Type(arrayMut, NonNullable) << "\n";
     std::cout << Type(arrayMut, Nullable) << "\n";
@@ -190,7 +185,6 @@ void test_printing() {
     Tuple tuple({
       Type::i32,
       Type::f64,
-      Type::anyref,
     });
     std::cout << tuple << "\n";
     std::cout << Type(tuple) << "\n";

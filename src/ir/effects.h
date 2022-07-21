@@ -732,7 +732,10 @@ private:
       // we keep the code here simpler, but it does mean another optimization
       // cycle may be needed in some cases.
     }
-    void visitStringNew(StringNew* curr) {}
+    void visitStringNew(StringNew* curr) {
+      // traps when out of bounds in linear memory or ref is null
+      parent.implicitTrap = true;
+    }
     void visitStringConst(StringConst* curr) {}
     void visitStringMeasure(StringMeasure* curr) {
       // traps when ref is null.
@@ -776,6 +779,14 @@ private:
       // see StringIterNext.
       parent.readsArray = true;
       parent.writesArray = true;
+    }
+    void visitStringSliceWTF(StringSliceWTF* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringSliceIter(StringSliceIter* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
     }
   };
 

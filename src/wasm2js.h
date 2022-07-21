@@ -2347,6 +2347,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitStringSliceWTF(StringSliceWTF* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringSliceIter(StringSliceIter* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitRefAs(RefAs* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

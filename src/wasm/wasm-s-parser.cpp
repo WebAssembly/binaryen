@@ -1169,20 +1169,20 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     }
   }
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::funcref;
+    return Type(HeapType::func, Nullable);
   }
   if ((strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) ||
       (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0))) {
-    return Type::anyref;
+    return Type(HeapType::any, Nullable);
   }
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
-    return Type::eqref;
+    return Type(HeapType::eq, Nullable);
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::i31ref;
+    return Type(HeapType::i31, NonNullable);
   }
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::dataref;
+    return Type(HeapType::data, NonNullable);
   }
   if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type(HeapType::string, Nullable);
@@ -1763,11 +1763,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
       WASM_UNREACHABLE("unexpected const type");
     case Type::none:
     case Type::unreachable: {
@@ -2937,6 +2932,7 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
 
 Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
   size_t i = 1;
+  Expression* length = nullptr;
   if (op == StringNewWTF8) {
     const char* str = s[i++]->c_str();
     if (strncmp(str, "utf8", 4) == 0) {
@@ -2948,9 +2944,22 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+    length = parseExpression(s[i + 1]);
+  } else if (op == StringNewWTF16) {
+    length = parseExpression(s[i + 1]);
+  } else if (op == StringNewWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8Array;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplaceArray;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
   }
-  return Builder(wasm).makeStringNew(
-    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+  return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
@@ -3022,6 +3031,17 @@ Expression* SExpressionWasmBuilder::makeStringIterMove(Element& s,
                                                        StringIterMoveOp op) {
   return Builder(wasm).makeStringIterMove(
     op, parseExpression(s[1]), parseExpression(s[2]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s,
+                                                       StringSliceWTFOp op) {
+  return Builder(wasm).makeStringSliceWTF(
+    op, parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
+  return Builder(wasm).makeStringSliceIter(parseExpression(s[1]),
+                                           parseExpression(s[2]));
 }
 
 // converts an s-expression string representing binary data into an output

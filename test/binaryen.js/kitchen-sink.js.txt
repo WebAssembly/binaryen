@@ -12,18 +12,6 @@
   // 5
   // BinaryenTypeVec128: 6
   // 6
-  // BinaryenTypeFuncref: 7
-  // 7
-  // BinaryenTypeExternref: 8
-  // 8
-  // BinaryenTypeAnyref: 8
-  // 8
-  // BinaryenTypeEqref: 9
-  // 9
-  // BinaryenTypeI31ref: 10
-  // 10
-  // BinaryenTypeDataref: 11
-  // 11
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2

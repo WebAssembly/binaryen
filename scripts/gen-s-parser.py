@@ -616,6 +616,8 @@ instructions = [
     ("ref.as_i31",           "makeRefAs(s, RefAsI31)"),
     ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8)"),
     ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
+    ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array)"),
+    ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array)"),
     ("string.const",         "makeStringConst(s)"),
     ("string.measure_wtf8",  "makeStringMeasure(s, StringMeasureWTF8)"),
     ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),
@@ -632,6 +634,10 @@ instructions = [
     ("stringview_iter.next",          "makeStringIterNext(s)"),
     ("stringview_iter.advance",       "makeStringIterMove(s, StringIterMoveAdvance)"),
     ("stringview_iter.rewind",        "makeStringIterMove(s, StringIterMoveRewind)"),
+    ("stringview_wtf8.slice",         "makeStringSliceWTF(s, StringSliceWTF8)"),
+    ("stringview_wtf16.slice",        "makeStringSliceWTF(s, StringSliceWTF16)"),
+    ("stringview_iter.slice",         "makeStringSliceIter(s)"),
+    ("stringview_wtf16.length",       "makeStringMeasure(s, StringMeasureWTF16View)"),
 ]
 
 

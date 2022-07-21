@@ -68,24 +68,6 @@ function test_types() {
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
   console.log("  //", binaryen.expandType(binaryen.v128).join(","));
 
-  console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
-  console.log("  //", binaryen.expandType(binaryen.funcref).join(","));
-
-  console.log("  // BinaryenTypeExternref: " + binaryen.externref);
-  console.log("  //", binaryen.expandType(binaryen.externref).join(","));
-
-  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
-
-  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
-  console.log("  //", binaryen.expandType(binaryen.eqref).join(","));
-
-  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
-  console.log("  //", binaryen.expandType(binaryen.i31ref).join(","));
-
-  console.log("  // BinaryenTypeDataref: " + binaryen.dataref);
-  console.log("  //", binaryen.expandType(binaryen.dataref).join(","));
-
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);

@@ -1399,11 +1399,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case Type::unreachable:
       break;
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -2044,14 +2039,15 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
+  Type eqref = Type(HeapType::eq, Nullable);
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.eq requires gc to be enabled");
   shouldBeSubType(curr->left->type,
-                  Type::eqref,
+                  eqref,
                   curr->left,
                   "ref.eq's left argument should be a subtype of eqref");
   shouldBeSubType(curr->right->type,
-                  Type::eqref,
+                  eqref,
                   curr->right,
                   "ref.eq's right argument should be a subtype of eqref");
 }
@@ -2330,7 +2326,7 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
                curr,
                "i31.get_s/u requires gc to be enabled");
   shouldBeSubType(curr->i31->type,
-                  Type::i31ref,
+                  Type(HeapType::i31, Nullable),
                   curr->i31,
                   "i31.get_s/u's argument should be i31ref");
 }
@@ -2853,11 +2849,6 @@ void FunctionValidator::validateAlignment(
     case Type::v128:
     case Type::unreachable:
       break;
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");
   }
@@ -3130,7 +3121,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
                       "--enable-reference-types)");
     if (!module.tables.empty()) {
       auto& table = module.tables.front();
-      info.shouldBeTrue(table->type == Type::funcref,
+      info.shouldBeTrue(table->type == Type(HeapType::func, Nullable),
                         "table",
                         "Only funcref is valid for table type (when reference "
                         "types are disabled)");
@@ -3150,6 +3141,8 @@ static void validateTables(Module& module, ValidationInfo& info) {
     }
   }
 
+  Type anyref = Type(HeapType::any, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
   for (auto& table : module.tables) {
     info.shouldBeTrue(table->initial <= table->max,
                       "table",
@@ -3159,14 +3152,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "table",
       "Non-nullable reference types are not yet supported for tables");
     if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type.isFunction() || table->type == Type::anyref,
+      info.shouldBeTrue(table->type.isFunction() || table->type == anyref,
                         "table",
-                        "Only function reference types or anyref are valid "
+                        "Only function reference types or externref are valid "
                         "for table type (when GC is disabled)");
     }
     if (!module.features.hasTypedFunctionReferences()) {
-      info.shouldBeTrue(table->type == Type::funcref ||
-                          table->type == Type::anyref,
+      info.shouldBeTrue(table->type == funcref || table->type == anyref,
                         "table",
                         "Only funcref and anyref are valid for table type "
                         "(when typed-function references are disabled)");

@@ -481,11 +481,13 @@ static void testCanonicalizeBasicTypes() {
   Type anyref = builder.getTempRefType(builder[0], Nullable);
   Type anyrefs = builder.getTempTupleType({anyref, anyref});
 
+  Type anyrefCanon = Type(HeapType::any, Nullable);
+
   builder[0] = HeapType::any;
   builder[1] = Struct({Field(anyref, Immutable)});
-  builder[2] = Struct({Field(Type::anyref, Immutable)});
+  builder[2] = Struct({Field(anyrefCanon, Immutable)});
   builder[3] = Signature(anyrefs, Type::none);
-  builder[4] = Signature({Type::anyref, Type::anyref}, Type::none);
+  builder[4] = Signature({anyrefCanon, anyrefCanon}, Type::none);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -504,10 +506,13 @@ TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
 
 // Test SubTypes utility code.
 TEST_F(NominalTest, testSubTypes) {
+  Type anyref = Type(HeapType::any, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
+
   // Build type types, the second of which is a subtype.
   TypeBuilder builder(2);
-  builder[0] = Struct({Field(Type::anyref, Immutable)});
-  builder[1] = Struct({Field(Type::funcref, Immutable)});
+  builder[0] = Struct({Field(anyref, Immutable)});
+  builder[1] = Struct({Field(funcref, Immutable)});
   builder[1].subTypeOf(builder[0]);
   auto built = *builder.build();
 

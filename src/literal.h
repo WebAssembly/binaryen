@@ -251,11 +251,12 @@ public:
   static Literal makeNull(HeapType type) {
     return Literal(Type(type, Nullable));
   }
-  static Literal makeFunc(Name func, Type type = Type::funcref) {
+  static Literal makeFunc(Name func,
+                          Type type = Type(HeapType::func, Nullable)) {
     return Literal(func, type);
   }
   static Literal makeI31(int32_t value) {
-    auto lit = Literal(Type::i31ref);
+    auto lit = Literal(Type(HeapType::i31, NonNullable));
     lit.i32 = value & 0x7fffffff;
     return lit;
   }
@@ -753,20 +754,7 @@ struct RttSupers : std::vector<RttSuper> {};
 namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
-    auto digest = wasm::hash(a.type.getID());
-    auto hashRef = [&]() {
-      assert(a.type.isRef());
-      if (a.isNull()) {
-        return digest;
-      }
-      if (a.type.isFunction()) {
-        wasm::rehash(digest, a.getFunc());
-        return digest;
-      }
-      // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete anyref or eqref other than null.
-      WASM_UNREACHABLE("unexpected type");
-    };
+    auto digest = wasm::hash(a.type);
     if (a.type.isBasic()) {
       switch (a.type.getBasic()) {
         case wasm::Type::i32:
@@ -787,20 +775,25 @@ template<> struct hash<wasm::Literal> {
           wasm::rehash(digest, chunks[0]);
           wasm::rehash(digest, chunks[1]);
           return digest;
-        case wasm::Type::funcref:
-        case wasm::Type::anyref:
-        case wasm::Type::eqref:
-        case wasm::Type::dataref:
-          return hashRef();
-        case wasm::Type::i31ref:
-          wasm::rehash(digest, a.geti31(true));
-          return digest;
         case wasm::Type::none:
         case wasm::Type::unreachable:
           break;
       }
     } else if (a.type.isRef()) {
-      return hashRef();
+      if (a.isNull()) {
+        return digest;
+      }
+      if (a.type.isFunction()) {
+        wasm::rehash(digest, a.getFunc());
+        return digest;
+      }
+      if (a.type.getHeapType() == wasm::HeapType::i31) {
+        wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      // other non-null reference type literals cannot represent concrete
+      // values, i.e. there is no concrete anyref or eqref other than null.
+      WASM_UNREACHABLE("unexpected type");
     } else if (a.type.isRtt()) {
       const auto& supers = a.getRttSupers();
       wasm::rehash(digest, supers.size());
