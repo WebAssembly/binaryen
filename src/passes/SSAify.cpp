@@ -148,7 +148,7 @@ struct SSAify : public Pass {
             // No zero exists here, so this is a nondefaultable type. The
             // default won't be used anyhow, so this value does not really
             // matter; write a null for easy debugging.
-            (*graph.locations[get]) = nullptr; // TODO test
+            (*graph.locations[get]) = nullptr; // TODO test // TODO places like this
           }
         }
         continue;

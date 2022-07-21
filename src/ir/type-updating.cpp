@@ -279,7 +279,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     // We have nothing to fix up: all locals are allowed.
     return;
   }
-  if (!wasm.features.hasGC()) {
+  if (!wasm.features.hasTypedFunctionReferences()) {
     // No non-nullable types exist can exist.
     return;
   }
