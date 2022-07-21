@@ -584,10 +584,16 @@ enum BrOnOp {
 };
 
 enum StringNewOp {
+  // Linear memory
   StringNewUTF8,
   StringNewWTF8,
   StringNewReplace,
-  StringNewWTF16
+  StringNewWTF16,
+  // GC
+  StringNewUTF8Array,
+  StringNewWTF8Array,
+  StringNewReplaceArray,
+  StringNewWTF16Array,
 };
 
 enum StringMeasureOp {
@@ -595,6 +601,7 @@ enum StringMeasureOp {
   StringMeasureWTF8,
   StringMeasureWTF16,
   StringMeasureIsUSV,
+  StringMeasureWTF16View,
 };
 
 enum StringEncodeOp {
@@ -612,6 +619,11 @@ enum StringAsOp {
 enum StringIterMoveOp {
   StringIterMoveAdvance,
   StringIterMoveRewind,
+};
+
+enum StringSliceWTFOp {
+  StringSliceWTF8,
+  StringSliceWTF16,
 };
 
 //
@@ -720,6 +732,8 @@ public:
     StringWTF16GetId,
     StringIterNextId,
     StringIterMoveId,
+    StringSliceWTFId,
+    StringSliceIterId,
     NumExpressionIds
   };
   Id _id;
@@ -1692,8 +1706,12 @@ public:
 
   StringNewOp op;
 
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
   Expression* ptr;
-  Expression* length;
+
+  // Used only in linear memory variations.
+  Expression* length = nullptr;
 
   void finalize();
 };
@@ -1805,6 +1823,30 @@ public:
   Expression* ref;
 
   // How many codepoints to advance or reverse.
+  Expression* num;
+
+  void finalize();
+};
+
+class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
+public:
+  StringSliceWTF(MixedArena& allocator) {}
+
+  StringSliceWTFOp op;
+
+  Expression* ref;
+  Expression* start;
+  Expression* end;
+
+  void finalize();
+};
+
+class StringSliceIter
+  : public SpecificExpression<Expression::StringSliceIterId> {
+public:
+  StringSliceIter(MixedArena& allocator) {}
+
+  Expression* ref;
   Expression* num;
 
   void finalize();
@@ -1994,11 +2036,13 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
-  Type type = Type::funcref;
+  Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
   ElementSegment() = default;
-  ElementSegment(Name table, Expression* offset, Type type = Type::funcref)
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type = Type(HeapType::func, Nullable))
     : table(table), offset(offset), type(type) {}
   ElementSegment(Name table,
                  Expression* offset,
@@ -2018,7 +2062,7 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
-  Type type = Type::funcref;
+  Type type = Type(HeapType::func, Nullable);
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {

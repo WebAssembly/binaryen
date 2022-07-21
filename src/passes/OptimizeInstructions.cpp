@@ -1472,7 +1472,8 @@ struct OptimizeInstructions
   // there.
   //
   // See "notes on removing casts", above, for when this is safe to do.
-  void skipCast(Expression*& input, Type requiredType = Type::anyref) {
+  void skipCast(Expression*& input,
+                Type requiredType = Type(HeapType::any, Nullable)) {
     // Traps-never-happen mode is a requirement for us to optimize here.
     if (!getPassOptions().trapsNeverHappen) {
       return;
@@ -1523,8 +1524,9 @@ struct OptimizeInstructions
     // This is safe to do first because nothing farther down cares about the
     // type, and we consume the two input references, so removing a cast could
     // not help our parents (see "notes on removing casts").
-    skipCast(curr->left, Type::eqref);
-    skipCast(curr->right, Type::eqref);
+    Type nullableEq = Type(HeapType::eq, Nullable);
+    skipCast(curr->left, nullableEq);
+    skipCast(curr->right, nullableEq);
 
     // Identical references compare equal.
     // (Technically we do not need to check if the inputs are also foldable into

@@ -51,6 +51,29 @@ static_assert(sizeof(BinaryenLiteral) == sizeof(Literal),
 BinaryenLiteral toBinaryenLiteral(Literal x) {
   BinaryenLiteral ret;
   ret.type = x.type.getID();
+  if (x.type.isRef()) {
+    auto heapType = x.type.getHeapType();
+    if (heapType.isBasic()) {
+      switch (heapType.getBasic()) {
+        case HeapType::func:
+          ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
+          break;
+        case HeapType::any:
+        case HeapType::eq:
+          assert(x.isNull() && "unexpected non-null reference type literal");
+          break;
+        case HeapType::i31:
+        case HeapType::data:
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: reftypes");
+      }
+      return ret;
+    }
+    WASM_UNREACHABLE("TODO: reftypes");
+  }
   TODO_SINGLE_COMPOUND(x.type);
   switch (x.type.getBasic()) {
     case Type::i32:
@@ -68,16 +91,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::v128:
       memcpy(&ret.v128, x.getv128Ptr(), 16);
       break;
-    case Type::funcref:
-      ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
-      break;
-    case Type::anyref:
-    case Type::eqref:
-      assert(x.isNull() && "unexpected non-null reference type literal");
-      break;
-    case Type::i31ref:
-    case Type::dataref:
-      WASM_UNREACHABLE("TODO: reftypes");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -86,7 +99,30 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
 }
 
 Literal fromBinaryenLiteral(BinaryenLiteral x) {
-  switch (x.type) {
+  auto type = Type(x.type);
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (type.isNullable()) {
+      return Literal::makeNull(heapType);
+    }
+    if (heapType.isBasic()) {
+      switch (heapType.getBasic()) {
+        case HeapType::func:
+          return Literal::makeFunc(x.func);
+        case HeapType::any:
+        case HeapType::eq:
+        case HeapType::i31:
+        case HeapType::data:
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: reftypes");
+      }
+    }
+  }
+  assert(type.isBasic());
+  switch (type.getBasic()) {
     case Type::i32:
       return Literal(x.i32);
     case Type::i64:
@@ -97,14 +133,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal(x.i64).castToF64();
     case Type::v128:
       return Literal(x.v128);
-    case Type::funcref:
-      return Literal::makeFunc(x.func);
-    case Type::anyref:
-    case Type::eqref:
-      return Literal::makeNull(Type(x.type).getHeapType());
-    case Type::i31ref:
-    case Type::dataref:
-      WASM_UNREACHABLE("TODO: reftypes");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -137,12 +165,24 @@ BinaryenType BinaryenTypeInt64(void) { return Type::i64; }
 BinaryenType BinaryenTypeFloat32(void) { return Type::f32; }
 BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
-BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
-BinaryenType BinaryenTypeExternref(void) { return Type::anyref; }
-BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
-BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
-BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
-BinaryenType BinaryenTypeDataref(void) { return Type::dataref; }
+BinaryenType BinaryenTypeFuncref(void) {
+  return Type(HeapType::func, Nullable).getID();
+}
+BinaryenType BinaryenTypeExternref(void) {
+  return Type(HeapType::any, Nullable).getID();
+}
+BinaryenType BinaryenTypeAnyref(void) {
+  return Type(HeapType::any, Nullable).getID();
+}
+BinaryenType BinaryenTypeEqref(void) {
+  return Type(HeapType::eq, Nullable).getID();
+}
+BinaryenType BinaryenTypeI31ref(void) {
+  return Type(HeapType::i31, NonNullable).getID();
+}
+BinaryenType BinaryenTypeDataref(void) {
+  return Type(HeapType::data, NonNullable).getID();
+}
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 

@@ -1988,6 +1988,12 @@ public:
   Flow visitStringIterMove(StringIterMove* curr) {
     WASM_UNREACHABLE("unimplemented stringview_adjust*");
   }
+  Flow visitStringSliceWTF(StringSliceWTF* curr) {
+    WASM_UNREACHABLE("unimplemented stringview_adjust*");
+  }
+  Flow visitStringSliceIter(StringSliceIter* curr) {
+    WASM_UNREACHABLE("unimplemented stringview_adjust*");
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
@@ -2390,11 +2396,6 @@ public:
           return Literal(load64u(addr)).castToF64();
         case Type::v128:
           return Literal(load128(addr).data());
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2448,11 +2449,6 @@ public:
         case Type::v128:
           store128(addr, value.getv128());
           break;
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
