@@ -51,12 +51,12 @@ jobs:
     - name: build
       run: cmake --build out --config Release --target install
 
+    - name: Build wasi-stub
+      run: cd wasi-stub && ./build.sh
+
     - name: strip
       run: find out/install/ -type f -perm -u=x -exec strip -x {} +
       if: matrix.os != 'windows-latest'
-
-    - name: Build wasi-stub
-      run: cd wasi-stub && ./build.sh
 
     - name: archive
       id: archive
@@ -115,11 +115,11 @@ jobs:
       run: |
         ./alpine.sh ninja install
 
-    - name: test
-      run: ./alpine.sh python3 ./check.py
-
     - name: Build wasi-stub
       run: cd wasi-stub && ./build.sh
+
+    - name: test
+      run: ./alpine.sh python3 ./check.py
 
     - name: archive
       id: archive
