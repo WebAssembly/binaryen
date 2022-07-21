@@ -476,9 +476,9 @@ console.log("# GlobalSet");
 console.log("# MemorySize");
 (function testMemorySize() {
   const module = new binaryen.Module();
-
+  module.setMemory(1, 1, null);
   var type = binaryen.i32;
-  const theMemorySize = binaryen.MemorySize(module.memory.size());
+  const theMemorySize = binaryen.MemorySize(module.memory.size("0", false));
   assert(theMemorySize instanceof binaryen.MemorySize);
   assert(theMemorySize instanceof binaryen.Expression);
   assert(theMemorySize.type === type);
@@ -501,6 +501,7 @@ console.log("# MemorySize");
 console.log("# MemoryGrow");
 (function testMemoryGrow() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var type = binaryen.i32;
   var delta = module.i32.const(1);
@@ -530,6 +531,7 @@ console.log("# MemoryGrow");
 console.log("# Load");
 (function testLoad() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var offset = 16;
   var align = 2;
@@ -575,6 +577,7 @@ console.log("# Load");
 console.log("# Store");
 (function testStore() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var offset = 16;
   var align = 2;
@@ -822,6 +825,7 @@ console.log("# Return");
 console.log("# AtomicRMW");
 (function testAtomicRMW() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var op = binaryen.Operations.AtomicRMWAdd;
   var offset = 8;
@@ -864,6 +868,7 @@ console.log("# AtomicRMW");
 console.log("# AtomicCmpxchg");
 (function testAtomicCmpxchg() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var offset = 8;
   var ptr = module.i32.const(2);
@@ -906,6 +911,7 @@ console.log("# AtomicCmpxchg");
 console.log("# AtomicWait");
 (function testAtomicWait() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var ptr = module.i32.const(2);
   var expected = module.i32.const(3);
@@ -944,6 +950,7 @@ console.log("# AtomicWait");
 console.log("# AtomicNotify");
 (function testAtomicNotify() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var ptr = module.i32.const(1);
   var notifyCount = module.i32.const(2);
@@ -1172,6 +1179,7 @@ console.log("# SIMDShift");
 console.log("# SIMDLoad");
 (function testSIMDLoad() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var op = binaryen.Operations.Load8x8SVec128;
   var offset = 16;
@@ -1210,6 +1218,7 @@ console.log("# SIMDLoad");
 console.log("# SIMDLoadStoreLane");
 (function testSIMDLoadStoreLane() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var op = binaryen.Operations.Load8LaneVec128;
   var offset = 16;
@@ -1272,6 +1281,7 @@ console.log("# SIMDLoadStoreLane");
 console.log("# MemoryInit");
 (function testMemoryInit() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var segment = 1;
   var dest = module.i32.const(2);
@@ -1338,6 +1348,7 @@ console.log("# DataDrop");
 console.log("# MemoryCopy");
 (function testMemoryCopy() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var dest = module.i32.const(1);
   var source = module.i32.const(2);
@@ -1373,6 +1384,7 @@ console.log("# MemoryCopy");
 console.log("# MemoryFill");
 (function testMemoryFill() {
   const module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   var dest = module.i32.const(1);
   var value = module.i32.const(2);
