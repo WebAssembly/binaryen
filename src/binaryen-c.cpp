@@ -1071,8 +1071,8 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    BinaryenExpressionRef ptr,
                                    const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-    //add an assert to check that memories[0]
-      name = module->memories[0]->name.c_str();
+    // add an assert to check that memories[0]
+    name = module->memories[0]->name.c_str();
   }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeLoad(bytes,
@@ -1092,7 +1092,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     BinaryenType type,
                                     const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.c_str();
   }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeStore(bytes,
@@ -1148,9 +1148,10 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module, const char* name, bool is64) {
+BinaryenExpressionRef
+BinaryenMemorySize(BinaryenModuleRef module, const char* name, bool is64) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.c_str();
   }
   auto* ret = Builder(*(Module*)module).makeMemorySize(name, is64);
   return static_cast<Expression*>(ret);
@@ -1193,8 +1194,8 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           BinaryenType type,
                                           const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeAtomicStore(
@@ -1209,8 +1210,8 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenType type,
                                         const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeAtomicRMW(AtomicRMWOp(op),
                                                    bytes,
@@ -1229,8 +1230,8 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenType type,
                                             const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeAtomicCmpxchg(bytes,
                                                        offset,
@@ -1247,8 +1248,8 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenType expectedType,
                                          const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeAtomicWait((Expression*)ptr,
                                                     (Expression*)expected,
@@ -1262,8 +1263,8 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            BinaryenExpressionRef notifyCount,
                                            const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeAtomicNotify((Expression*)ptr, (Expression*)notifyCount, 0, name));
@@ -1325,8 +1326,8 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                        BinaryenExpressionRef ptr,
                                        const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeSIMDLoad(SIMDLoadOp(op),
                                                   Address(offset),
@@ -1343,8 +1344,8 @@ BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                                                 BinaryenExpressionRef vec,
                                                 const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp(op),
@@ -1362,8 +1363,8 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          BinaryenExpressionRef size,
                                          const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeMemoryInit(segment,
                                                     (Expression*)dest,
@@ -1384,8 +1385,8 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          BinaryenExpressionRef size,
                                          const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeMemoryCopy(
@@ -1398,8 +1399,8 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef size,
                                          const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-      name = module->memories[0]->name.c_str();
-    }
+    name = module->memories[0]->name.c_str();
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
       .makeMemoryFill(
@@ -3969,7 +3970,9 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     memoryExport->kind = ExternalKind::Memory;
     ((Module*)module)->addExport(memoryExport.release());
   }
-  ((Module*)module)->removeDataSegments([&](DataSegment* curr) { return true; });
+  ((Module*)module)->removeDataSegments([&](DataSegment* curr) {
+    return true;
+  });
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     auto curr = Builder::makeDataSegment(Name::fromInt(i),
                                          memory->name,
@@ -3984,7 +3987,8 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   ((Module*)module)->addMemory(std::move(memory));
 }
 
-BinaryenMemoryRef BinaryenMemoryGet(BinaryenModuleRef module, const char* name) {
+BinaryenMemoryRef BinaryenMemoryGet(BinaryenModuleRef module,
+                                    const char* name) {
   return ((Module*)module)->getMemoryOrNull(name);
 }
 
@@ -4051,8 +4055,8 @@ bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name) {
 }
 BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-        name = module->memories[0]->name.c_str();
-      }
+    name = module->memories[0]->name.c_str();
+  }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
@@ -4062,8 +4066,8 @@ BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
 const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
                                           const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-        name = module->memories[0]->name.c_str();
-      }
+    name = module->memories[0]->name.c_str();
+  }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
@@ -4077,8 +4081,8 @@ const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
 const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
                                         const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-        name = module->memories[0]->name.c_str();
-      }
+    name = module->memories[0]->name.c_str();
+  }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
@@ -4091,8 +4095,8 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
 }
 bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
-        name = module->memories[0]->name.c_str();
-      }
+    name = module->memories[0]->name.c_str();
+  }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";

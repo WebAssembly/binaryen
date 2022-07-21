@@ -2215,7 +2215,8 @@ BINARYEN_API void BinaryenAddTagImport(BinaryenModuleRef module,
 BINARYEN_REF(Memory);
 
 // Gets a memory reference by name. Returns NULL if the function does not exist.
-BINARYEN_API BinaryenMemoryRef BinaryenMemoryGet(BinaryenModuleRef module, const char* name);
+BINARYEN_API BinaryenMemoryRef BinaryenMemoryGet(BinaryenModuleRef module,
+                                                 const char* name);
 
 // Exports
 
