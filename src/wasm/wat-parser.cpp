@@ -1488,11 +1488,6 @@ Result<typename Ctx::InstrT> makeConst(Ctx& ctx, ParseInput& in, Type type) {
       return in.err("unimplemented instruction");
     case Type::none:
     case Type::unreachable:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
       break;
   }
   WASM_UNREACHABLE("unexpected type");

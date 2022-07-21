@@ -16,12 +16,6 @@
 
   ;; CHECK:      (type $i32_i32_anyref_=>_anyref (func (param i32 i32 anyref) (result anyref)))
 
-  ;; CHECK:      (type $i32_i32_eqref_=>_eqref (func (param i32 i32 eqref) (result eqref)))
-
-  ;; CHECK:      (type $i32_i32_i31ref_=>_i31ref (func (param i32 i32 i31ref) (result i31ref)))
-
-  ;; CHECK:      (type $i32_i32_dataref_=>_dataref (func (param i32 i32 dataref) (result dataref)))
-
   ;; CHECK:      (type $i32_i32_v128_=>_v128 (func (param i32 i32 v128) (result v128)))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -49,18 +43,6 @@
   ;; CHECK:      (import "env" "get_anyref" (func $get_anyref (param i32 i32 anyref) (result anyref)))
 
   ;; CHECK:      (import "env" "set_anyref" (func $set_anyref (param i32 i32 anyref) (result anyref)))
-
-  ;; CHECK:      (import "env" "get_eqref" (func $get_eqref (param i32 i32 eqref) (result eqref)))
-
-  ;; CHECK:      (import "env" "set_eqref" (func $set_eqref (param i32 i32 eqref) (result eqref)))
-
-  ;; CHECK:      (import "env" "get_i31ref" (func $get_i31ref (param i32 i32 i31ref) (result i31ref)))
-
-  ;; CHECK:      (import "env" "set_i31ref" (func $set_i31ref (param i32 i32 i31ref) (result i31ref)))
-
-  ;; CHECK:      (import "env" "get_dataref" (func $get_dataref (param i32 i32 dataref) (result dataref)))
-
-  ;; CHECK:      (import "env" "set_dataref" (func $set_dataref (param i32 i32 dataref) (result dataref)))
 
   ;; CHECK:      (import "env" "get_v128" (func $get_v128 (param i32 i32 v128) (result v128)))
 

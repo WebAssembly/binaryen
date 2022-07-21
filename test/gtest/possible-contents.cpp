@@ -59,6 +59,9 @@ protected:
     wasm::setTypeSystem(TypeSystem::Nominal);
   }
 
+  Type anyref = Type(HeapType::any, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
+
   PossibleContents none = PossibleContents::none();
 
   PossibleContents i32Zero = PossibleContents::literal(Literal(int32_t(0)));
@@ -74,15 +77,14 @@ protected:
   PossibleContents i32Global2 =
     PossibleContents::global("i32Global2", Type::i32);
   PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
-  PossibleContents anyGlobal =
-    PossibleContents::global("anyGlobal", Type::anyref);
+  PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
 
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
-  PossibleContents exactAnyref = PossibleContents::exactType(Type::anyref);
-  PossibleContents exactFuncref = PossibleContents::exactType(Type::funcref);
+  PossibleContents exactAnyref = PossibleContents::exactType(anyref);
+  PossibleContents exactFuncref = PossibleContents::exactType(funcref);
   PossibleContents exactNonNullAnyref =
     PossibleContents::exactType(Type(HeapType::any, NonNullable));
   PossibleContents exactNonNullFuncref =

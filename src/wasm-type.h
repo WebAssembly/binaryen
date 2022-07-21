@@ -106,14 +106,8 @@ public:
     f32,
     f64,
     v128,
-    funcref,
-    anyref,
-    eqref,
-    // From here types are non-nullable.
-    i31ref,
-    dataref,
   };
-  static constexpr BasicType _last_basic_type = dataref;
+  static constexpr BasicType _last_basic_type = v128;
 
   Type() : id(none) {}
 

@@ -903,7 +903,7 @@ void I31New::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::i31ref;
+    type = Type(HeapType::i31, NonNullable);
   }
 }
 
@@ -1024,11 +1024,11 @@ Type BrOn::getSentType() {
       }
       return Type(getIntendedType(), NonNullable);
     case BrOnFunc:
-      return Type::funcref;
+      return Type(HeapType::func, NonNullable);
     case BrOnData:
-      return Type::dataref;
+      return Type(HeapType::data, NonNullable);
     case BrOnI31:
-      return Type::i31ref;
+      return Type(HeapType::i31, NonNullable);
     case BrOnCastFail:
     case BrOnNonFunc:
     case BrOnNonData:
@@ -1164,10 +1164,10 @@ void RefAs::finalize() {
       type = Type(HeapType::func, NonNullable);
       break;
     case RefAsData:
-      type = Type::dataref;
+      type = Type(HeapType::data, NonNullable);
       break;
     case RefAsI31:
-      type = Type::i31ref;
+      type = Type(HeapType::i31, NonNullable);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
