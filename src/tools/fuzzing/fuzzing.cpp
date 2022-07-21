@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/type-updating.h"
 #include "tools/fuzzing.h"
+#include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
 
