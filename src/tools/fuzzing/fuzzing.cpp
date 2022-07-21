@@ -452,6 +452,9 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
+
+  // We must ensure non-nullable locals validate.
+  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {
@@ -532,8 +535,6 @@ Function* TranslateToFuzzReader::addFunction() {
     // after.
     fixLabels(func);
   }
-  // We must ensure non-nullable locals validate.
-  TypeUpdating::handleNonDefaultableLocals(func, wasm);
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
@@ -789,9 +790,6 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       recombine(func);
       mutate(func);
       fixLabels(func);
-      // If we make any changes, we must make sure we did not break validation
-      // of non-nullable locals.
-      TypeUpdating::handleNonDefaultableLocals(func, wasm);
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only
