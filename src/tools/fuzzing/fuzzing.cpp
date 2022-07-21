@@ -175,6 +175,7 @@ void TranslateToFuzzReader::build() {
     auto* func = addFunction();
     addInvocations(func);
   }
+std::cout << "module waka 1\n" << wasm << '\n';
   if (HANG_LIMIT > 0) {
     addHangLimitSupport();
   }
@@ -182,6 +183,7 @@ void TranslateToFuzzReader::build() {
     finalizeMemory();
   }
   finalizeTable();
+std::cout << "module waka 2\n" << wasm << '\n';
 }
 
 void TranslateToFuzzReader::setupMemory() {
