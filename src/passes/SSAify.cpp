@@ -140,10 +140,15 @@ struct SSAify : public Pass {
           // no set, assign param or zero
           if (func->isParam(get->index)) {
             // leave it, it's fine
-          } else {
+          } else if (LiteralUtils::canMakeZero(get->type)) {
             // zero it out
             (*graph.locations[get]) =
               LiteralUtils::makeZero(get->type, *module);
+          } else {
+            // No zero exists here, so this is a nondefaultable type. The
+            // default won't be used anyhow, so this value does not really
+            // matter; write a null for easy debugging.
+            (*graph.locations[get]) = nullptr; // TODO test
           }
         }
         continue;
