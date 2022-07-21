@@ -249,7 +249,8 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::funcref) {
+        } else if (singleValue.type.isRef() &&
+                   singleValue.type.getHeapType() == HeapType::func) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();

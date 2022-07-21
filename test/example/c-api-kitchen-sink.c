@@ -229,37 +229,43 @@ void test_types() {
   assert(valueType == v128);
 
   BinaryenType funcref = BinaryenTypeFuncref();
-  printf("BinaryenTypeFuncref: %d\n", funcref);
+  printf("BinaryenTypeFuncref: (ptr)\n", funcref);
+  assert(funcref == BinaryenTypeFuncref());
   assert(BinaryenTypeArity(funcref) == 1);
   BinaryenTypeExpand(funcref, &valueType);
   assert(valueType == funcref);
 
   BinaryenType externref = BinaryenTypeExternref();
-  printf("BinaryenTypeExternref: %d\n", externref);
+  printf("BinaryenTypeExternref: (ptr)\n", externref);
+  assert(externref == BinaryenTypeExternref());
   assert(BinaryenTypeArity(externref) == 1);
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
   BinaryenType anyref = BinaryenTypeAnyref();
-  printf("BinaryenTypeAnyref: %d\n", anyref);
+  printf("BinaryenTypeAnyref: (ptr)\n", anyref);
+  assert(anyref == BinaryenTypeAnyref());
   assert(BinaryenTypeArity(anyref) == 1);
   BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
 
   BinaryenType eqref = BinaryenTypeEqref();
-  printf("BinaryenTypeEqref: %d\n", eqref);
+  printf("BinaryenTypeEqref: (ptr)\n", eqref);
+  assert(eqref == BinaryenTypeEqref());
   assert(BinaryenTypeArity(eqref) == 1);
   BinaryenTypeExpand(eqref, &valueType);
   assert(valueType == eqref);
 
   BinaryenType i31ref = BinaryenTypeI31ref();
-  printf("BinaryenTypeI31ref: %d\n", i31ref);
+  printf("BinaryenTypeI31ref: (ptr)\n", i31ref);
+  assert(i31ref == BinaryenTypeI31ref());
   assert(BinaryenTypeArity(i31ref) == 1);
   BinaryenTypeExpand(i31ref, &valueType);
   assert(valueType == i31ref);
 
   BinaryenType dataref = BinaryenTypeDataref();
-  printf("BinaryenTypeDataref: %d\n", dataref);
+  printf("BinaryenTypeDataref: (ptr)\n", dataref);
+  assert(dataref == BinaryenTypeDataref());
   assert(BinaryenTypeArity(dataref) == 1);
   BinaryenTypeExpand(dataref, &valueType);
   assert(valueType == dataref);

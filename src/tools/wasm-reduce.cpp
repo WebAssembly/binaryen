@@ -626,13 +626,9 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
@@ -653,13 +649,9 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
@@ -680,13 +672,9 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
@@ -707,26 +695,18 @@ struct Reducer
                 break;
               case Type::f64:
                 WASM_UNREACHABLE("unexpected type");
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
+          // not implemented yet
           case Type::v128:
-          case Type::funcref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
-          case Type::dataref:
-            continue; // not implemented yet
+            continue;
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");

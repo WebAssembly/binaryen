@@ -347,8 +347,8 @@ protected:
     spectest->addExport(
       builder.makeExport("global_f64", Name::fromInt(3), ExternalKind::Global));
 
-    spectest->addTable(
-      builder.makeTable(Name::fromInt(0), Type::funcref, 10, 20));
+    spectest->addTable(builder.makeTable(
+      Name::fromInt(0), Type(HeapType::func, Nullable), 10, 20));
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
