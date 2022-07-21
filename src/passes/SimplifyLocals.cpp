@@ -53,6 +53,7 @@
 #include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
+#include <ir/properties.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -352,6 +353,40 @@ struct SimplifyLocals
               invalidated.push_back(index);
               break;
             }
+          }
+        }
+      }
+      for (auto index : invalidated) {
+        self->sinkables.erase(index);
+      }
+    }
+
+    // Do not sink non-nullable locals into blocks, as that may move them into a
+    // nested position that no longer dominates them in the way that the wasm
+    // spec requires. The spec (what was called "1a" during discussions of non-
+    // nullable locals) disallows this:
+    //
+    //  (block
+    //    (local.set $x ..)
+    //  )
+    //  (local.get $x) ;; use in an outer scope.
+    //
+    // That is, the local is considered usable only until the end of the block.
+    //
+    // TODO We could allow a set to move into a block if no get exists in an
+    //      outer scope, if we tracked scopes for gets.
+    //
+    // (For now, do not do this with hasGCNNLocals(), which is mode that does
+    // not have any such limitations. We'll remove that option once the final
+    // spec form is finalized.)
+    if (Properties::isControlFlowStructure(curr)) &&
+        !self->getModule()->features.hasGCNNLocals()) {
+      std::vector<Index> invalidated;
+      for (auto& [index, info] : self->sinkables) {
+        for (auto* set : FindAll<LocalSet>(*info.item).list) {
+          if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
+            invalidated.push_back(index);
+            break;
           }
         }
       }
