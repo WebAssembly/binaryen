@@ -689,8 +689,8 @@ function wrapModule(module, self = {}) {
   }
 
   self['memory'] = {
-    'size'() {
-      return Module['_BinaryenMemorySize'](module);
+    'size'(name, is64) {
+      return Module['_BinaryenMemorySize'](module, strToStack(name), is64);
     },
     'grow'(value) {
       return Module['_BinaryenMemoryGrow'](module, value);
@@ -2503,7 +2503,7 @@ function wrapModule(module, self = {}) {
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
   };
-  self['setMemory'] = function(internalName, initial, maximum, exportName, segments = [], shared = false) {
+  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false, internalName) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     return preserveStack(() => {
       const segmentsLen = segments.length;
@@ -2520,15 +2520,19 @@ function wrapModule(module, self = {}) {
         segmentOffset[i] = offset;
       }
       return Module['_BinaryenSetMemory'](
-        module, strToStack(internalName), initial, maximum, strToStack(exportName),
+        module, initial, maximum, strToStack(exportName),
         i32sToStack(segmentData),
         i8sToStack(segmentPassive),
         i32sToStack(segmentOffset),
         i32sToStack(segmentDataLen),
         segmentsLen,
-        shared
+        shared,
+        strToStack(internalName)
       );
     });
+  };
+  self['getMemory'] = function(name) {
+    return Module['_BinaryenMemoryGet'](module, strToStack(name));
   };
   self['hasMemory'] = function() {
     return Boolean(Module['_BinaryenHasMemory'](module));
