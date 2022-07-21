@@ -132,6 +132,21 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   //
   // We will remove the first set, which is dead, but the second set is not
   // enough to get $x to validate as a non-nullable local.
+  //
+  // This also removes the "workaround" for "1a" by adding dead sets:
+  //
+  //   x = whatever; // dead set for validation
+  //   if (..) {
+  //     x = value1;
+  //   } else {
+  //     x = value2;
+  //   }
+  //
+  // The dead set ensures validation, at the cost of extra code size and slower
+  // speed in some tiers (the optimizing tier, at least, will remove such dead
+  // sets). In theory keeping such a dead set may be worthwhile, as it may save
+  // code size (by keeping the local non-nullable and avoiding ref.as_non_nulls
+  // later). As the tradeoff here isn't clear, do the simple thing for now.
   if (removedSet) {
     TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
