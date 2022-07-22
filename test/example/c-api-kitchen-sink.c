@@ -271,25 +271,25 @@ void test_types() {
   assert(valueType == dataref);
 
   BinaryenType stringref = BinaryenTypeStringref();
-  printf("BinaryenTypeStringref: (ptr)\n", stringref);
+  printf("BinaryenTypeStringref: (ptr)\n");
   assert(BinaryenTypeArity(stringref) == 1);
   BinaryenTypeExpand(stringref, &valueType);
   assert(valueType == stringref);
 
   BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWtf8();
-  printf("BinaryenTypeStringviewWtf8: (ptr)\n", stringview_wtf8_);
+  printf("BinaryenTypeStringviewWtf8: (ptr)\n");
   assert(BinaryenTypeArity(stringview_wtf8_) == 1);
   BinaryenTypeExpand(stringview_wtf8_, &valueType);
   assert(valueType == stringview_wtf8_);
 
   BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWtf16();
-  printf("BinaryenTypeStringviewWtf16: (ptr)\n", stringview_wtf16_);
+  printf("BinaryenTypeStringviewWtf16: (ptr)\n");
   assert(BinaryenTypeArity(stringview_wtf16_) == 1);
   BinaryenTypeExpand(stringview_wtf16_, &valueType);
   assert(valueType == stringview_wtf16_);
 
   BinaryenType stringview_iter_ = BinaryenTypeStringviewIter();
-  printf("BinaryenTypeStringviewIter: (ptr)\n", stringview_iter_);
+  printf("BinaryenTypeStringviewIter: (ptr)\n");
   assert(BinaryenTypeArity(stringview_iter_) == 1);
   BinaryenTypeExpand(stringview_iter_, &valueType);
   assert(valueType == stringview_iter_);
