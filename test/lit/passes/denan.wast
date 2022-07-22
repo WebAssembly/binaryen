@@ -249,7 +249,6 @@
 
 )
 
-;; TODO test
 ;; CHECK:      (func $deNan32_0 (param $0 f32) (result f32)
 ;; CHECK-NEXT:  (if (result f32)
 ;; CHECK-NEXT:   (f32.eq

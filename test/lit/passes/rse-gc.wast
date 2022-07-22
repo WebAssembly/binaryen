@@ -16,6 +16,3 @@
   (local $tuple ((ref any) (ref any)))
  )
 )
-
-;; todo test
-
