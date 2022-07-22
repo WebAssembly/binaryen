@@ -1117,22 +1117,21 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef
-BinaryenMemorySize(BinaryenModuleRef module, const char* name, bool is64) {
+BinaryenMemorySize(BinaryenModuleRef module, const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
-  auto* ret = Builder(*(Module*)module).makeMemorySize(name, is64);
+  auto* ret = Builder(*(Module*)module).makeMemorySize(name);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
-                                         const char* name,
-                                         bool is64) {
+                                         const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
   auto* ret =
-    Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name, is64);
+    Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, name);
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
