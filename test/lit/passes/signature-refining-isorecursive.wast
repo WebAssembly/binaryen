@@ -30,17 +30,17 @@
 (module
  ;; The signatures should be refined to a pair of mutually self-referential types.
 
- (rec
-  ;; CHECK:      (rec 
-  ;; CHECK-NEXT:  (type $refined.1 (func_subtype (param f32 (ref $refined.1)) (result (ref $refined.0)) func))
-  (type $refined.1 (func (param f32 (ref $refined.1)) (result (ref $refined.0))))
-  ;; CHECK:       (type $refined.0 (func_subtype (param i32 (ref $refined.0)) (result (ref $refined.1)) func))
-  (type $refined.0 (func (param i32 (ref $refined.0)) (result (ref $refined.1))))
- )
+ ;; CHECK:      (rec 
+ ;; CHECK-NEXT:  (type $1 (func_subtype (param f32 (ref $1)) (result (ref $0)) func))
+
+ ;; CHECK:       (type $0 (func_subtype (param i32 (ref $0)) (result (ref $1)) func))
+ (type $0 (func (param i32 funcref) (result funcref)))
+ (type $1 (func (param f32 funcref) (result funcref)))
+
 
  ;; CHECK:      (elem declare func $bar $foo)
 
- ;; CHECK:      (func $foo (type $refined.0) (param $0 i32) (param $1 (ref $refined.0)) (result (ref $refined.1))
+ ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (i32.const 0)
@@ -49,7 +49,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.func $bar)
  ;; CHECK-NEXT: )
- (func $foo (param i32 funcref) (result funcref)
+ (func $foo (type $0)
   (drop
    (call $foo
     (i32.const 0)
@@ -59,7 +59,7 @@
   (ref.func $bar)
  )
 
- ;; CHECK:      (func $bar (type $refined.1) (param $0 f32) (param $1 (ref $refined.1)) (result (ref $refined.0))
+ ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref $1)) (result (ref $0))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $bar
  ;; CHECK-NEXT:    (f32.const 0)
@@ -68,7 +68,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.func $foo)
  ;; CHECK-NEXT: )
- (func $bar (param f32 funcref) (result funcref)
+ (func $bar (type $1)
   (drop
    (call $bar
     (f32.const 0)
@@ -80,24 +80,61 @@
 )
 
 (module
- ;; The signatures should be refined to a pair of mutually recursive types and
- ;; another type that refers to them.
+ ;; The signatures start out as separate types, so they must remain separate
+ ;; even though they are refined to the same structure.
 
  (rec
   ;; CHECK:      (rec 
-  ;; CHECK-NEXT:  (type $refined.0.0 (func_subtype (param i32 (ref $refined.0.0)) (result (ref $refined.0.1)) func))
-  (type $refined.0.0 (func (param i32 (ref $refined.0.0)) (result (ref $refined.0.1))))
-  ;; CHECK:       (type $refined.0.1 (func_subtype (param f32 (ref $refined.0.1)) (result (ref $refined.0.0)) func))
-  (type $refined.0.1 (func (param f32 (ref $refined.0.1)) (result (ref $refined.0.0))))
+  ;; CHECK-NEXT:  (type $1 (func_subtype (param (ref $0)) func))
+
+  ;; CHECK:       (type $0 (func_subtype (param (ref $0)) func))
+  (type $0 (func (param funcref)))
+  (type $1 (func (param funcref)))
  )
 
- ;; CHECK:      (type $refined.1 (func_subtype (param (ref $refined.0.0)) (result (ref $refined.0.1)) func))
- (type $refined.1 (func (param (ref $refined.0.0)) (result (ref $refined.0.1))))
+ ;; CHECK:      (elem declare func $foo)
+
+ ;; CHECK:      (func $foo (type $0) (param $0 (ref $0))
+ ;; CHECK-NEXT:  (call $foo
+ ;; CHECK-NEXT:   (ref.func $foo)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $foo (type $0)
+  (call $foo
+   (ref.func $foo)
+  )
+ )
+
+ ;; CHECK:      (func $bar (type $1) (param $0 (ref $0))
+ ;; CHECK-NEXT:  (call $bar
+ ;; CHECK-NEXT:   (ref.func $foo)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $bar (type $1)
+  (call $bar
+   (ref.func $foo)
+  )
+ )
+)
+
+(module
+ ;; The signatures should be refined to a pair of mutually recursive types and
+ ;; another type that refers to them.
+
+ ;; CHECK:      (rec 
+ ;; CHECK-NEXT:  (type $0 (func_subtype (param i32 (ref $0)) (result (ref $1)) func))
+ (type $0 (func (param i32 funcref) (result funcref)))
+
+ ;; CHECK:       (type $1 (func_subtype (param f32 (ref $1)) (result (ref $0)) func))
+ (type $1 (func (param f32 funcref) (result funcref)))
+
+ ;; CHECK:      (type $2 (func_subtype (param (ref $0)) (result (ref $1)) func))
+ (type $2 (func (param funcref) (result funcref)))
 
 
  ;; CHECK:      (elem declare func $bar $foo)
 
- ;; CHECK:      (func $foo (type $refined.0.0) (param $0 i32) (param $1 (ref $refined.0.0)) (result (ref $refined.0.1))
+ ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (i32.const 0)
@@ -116,7 +153,7 @@
   (ref.func $bar)
  )
 
- ;; CHECK:      (func $baz (type $refined.1) (param $0 (ref $refined.0.0)) (result (ref $refined.0.1))
+ ;; CHECK:      (func $baz (type $2) (param $0 (ref $0)) (result (ref $1))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $quux
  ;; CHECK-NEXT:    (ref.func $foo)
@@ -133,7 +170,7 @@
   (ref.func $bar)
  )
 
- ;; CHECK:      (func $bar (type $refined.0.1) (param $0 f32) (param $1 (ref $refined.0.1)) (result (ref $refined.0.0))
+ ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref $1)) (result (ref $0))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $bar
  ;; CHECK-NEXT:    (f32.const 0)
@@ -152,7 +189,7 @@
   (ref.func $foo)
  )
 
- ;; CHECK:      (func $quux (type $refined.1) (param $0 (ref $refined.0.0)) (result (ref $refined.0.1))
+ ;; CHECK:      (func $quux (type $2) (param $0 (ref $0)) (result (ref $1))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $baz
  ;; CHECK-NEXT:    (ref.func $foo)

@@ -3969,9 +3969,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 }
 
 TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
-  assert(impl->recGroups.size() == 0 &&
-         "Cannot use groupAndBuild with explicitly set recursion groups");
-
   // Recursion groups and type ordering only matter for isorecursive types.
   if (getTypeSystem() != TypeSystem::Isorecursive) {
     return build();
@@ -3989,6 +3986,22 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
     typeIndices.insert({impl->entries[i].get(), i});
   }
 
+  // Fill out the recursion groups. This is a hack because
+  // `canonicalizeIsorecursive` currently fills out the recursion groups after
+  // `canonicalizeBasicTypes` has a chance to remove all basic types, so we will
+  // have to clear the recursion groups later before calling `build` to satisfy
+  // the preconditions of `canonicalizeIsorecursive`. TODO: Remove this hack
+  // once we remove equirecursive typing and can prohibit building basic types
+  // in a TypeBuilder and can eagerly fill out recursion groups in
+  // `createRecGroup`.
+  for (auto& entry : impl->entries) {
+    auto& info = entry.info;
+    if (info->recGroup != nullptr) {
+      info->recGroupIndex = info->recGroup->size();
+      info->recGroup->push_back(entry.get());
+    }
+  }
+
   // The metadata used by Tarjan's SCC algorithm.
   struct Node {
     std::vector<size_t> succIndices;
@@ -4002,10 +4015,18 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
 
   // Populate the successor indices for each node by finding the predecessors of
   // each HeapType. Since we are incrementing the successor index that gets
-  // recorded, we can avoid recording duplicate successors by checking just the
-  // last recorded successor for each predecessor.
+  // recorded, successor vectors will be in sorted order and we can avoid
+  // recording duplicate successors by checking just the last recorded successor
+  // for each predecessor. Also add synthetic edges to ensure that each input
+  // rec group is included in a single SCC.
+  auto addSucc = [](auto& succs, auto& succ) {
+    if (succs.empty() || succs.back() != succ) {
+      succs.push_back(succ);
+    }
+  };
   for (size_t succIndex = 0; succIndex < numTypes; ++succIndex) {
     HeapType succ = impl->entries[succIndex].get();
+    // Add edges for each other heap type referenced in the type definition.
     for (auto pred : succ.getReferencedHeapTypes()) {
       auto predIndexIt = typeIndices.find(pred);
       if (predIndexIt == typeIndices.end()) {
@@ -4014,10 +4035,17 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
         continue;
       }
       // Record the successor if we have not already recorded it.
-      auto& succIndices = nodes[predIndexIt->second].succIndices;
-      if (succIndices.empty() || succIndices.back() != succIndex) {
-        succIndices.push_back(succIndex);
+      addSucc(nodes[predIndexIt->second].succIndices, succIndex);
+    }
+    // Add synthetic edges from the first type in each rec group to all others
+    // in the group and vice versa to force them into the same SCC.
+    auto group = succ.getRecGroup();
+    if (group[0] == succ) {
+      for (size_t i = 1; i < group.size(); ++i) {
+        addSucc(nodes[typeIndices[group[i]]].succIndices, succIndex);
       }
+    } else {
+      addSucc(nodes[typeIndices[group[0]]].succIndices, succIndex);
     }
   }
 
@@ -4078,11 +4106,13 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
     if (group.size() == 1) {
       continue;
     }
-    std::unordered_set<size_t> members(group.begin(), group.end());
+    std::set<size_t> members(group.begin(), group.end());
     std::vector<size_t> supertypeStack;
     std::vector<size_t> sortedGroup;
     sortedGroup.reserve(group.size());
-    for (auto i : group) {
+    while (!members.empty()) {
+      size_t i = *members.begin();
+      members.erase(members.begin());
       // Push all supertypes in the current group onto a stack.
       supertypeStack.push_back(i);
       auto curr = impl->entries[i].get();
@@ -4114,6 +4144,13 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
     sortedGroup.clear();
   }
 
+  // Clear the old rec groups; they'll be replaced by the newly computed rec
+  // groups.
+  impl->recGroups.clear();
+  for (auto& entry : impl->entries) {
+    entry.info->recGroup = nullptr;
+  }
+
   // Move the contents of the TypeBuilder to match the computed order of types.
   std::vector<Impl::Entry> orderedEntries;
   orderedEntries.reserve(numTypes);
@@ -4131,6 +4168,12 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
   for (auto& group : sccs) {
     createRecGroup(start, group.size());
     start += group.size();
+  }
+
+  // Clear the rec groups. See the comment above where we first filled the rec
+  // groups.
+  for (auto& group : impl->recGroups) {
+    group->clear();
   }
 
   // Build the ordered types. If there is an error, translate its index back to

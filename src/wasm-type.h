@@ -673,8 +673,8 @@ struct TypeBuilder {
   BuildResult build();
 
   // Like `build`, but first automatically groups types into rec groups and
-  // sorts the groups to create a valid type ordering, if possible. This cannot
-  // be used if recursion groups were explicitly created.
+  // sorts the groups to create a valid type ordering, if possible. Explicitly
+  // set up rec groups will not be split up, but they may be merged.
   BuildResult groupAndBuild();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType

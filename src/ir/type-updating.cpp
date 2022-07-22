@@ -74,6 +74,15 @@ void GlobalTypeRewriter::update() {
     }
   }
 
+  // Set up recursion groups to keep distinct types distinct.
+  if (getTypeSystem() == TypeSystem::Isorecursive) {
+    for (Index start = 0; start < indexedTypes.types.size();) {
+      size_t size = indexedTypes.types[start].getRecGroup().size();
+      typeBuilder.createRecGroup(start, size);
+      start += size;
+    }
+  }
+
   auto buildResults = typeBuilder.groupAndBuild();
 #ifndef NDEBUG
   if (auto* err = buildResults.getError()) {
