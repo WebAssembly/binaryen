@@ -3,13 +3,22 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec -q -o /dev/null 2>&1 | filecheck %s
 
 (module
-  ;; CHECK:      [fuzz-exec] calling null
+  ;; CHECK:      [fuzz-exec] calling null-local
   ;; CHECK-NEXT: waka i31ref(null) : (ref null i31)
-  ;; CHECK-NEXT: [fuzz-exec] note result: null => 1
-  (func "null" (result i32)
+  ;; CHECK-NEXT: [fuzz-exec] note result: null-local => 1
+  (func "null-local" (result i32)
     (local $ref (ref null i31))
     (ref.is_null
-      (local.get $ref)
+      (ref.null i31)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling null-immediate
+  ;; CHECK-NEXT: waka i31ref(null) : (ref null i31)
+  ;; CHECK-NEXT: [fuzz-exec] note result: null-immediate => 1
+  (func "null-immediate" (result i32)
+    (ref.is_null
+      (ref.null i31)
     )
   )
 
@@ -63,10 +72,22 @@
       )
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling trap
+  ;; CHECK-NEXT: [trap null ref]
+  (func "trap" (result i32)
+    (i31.get_u
+      (ref.null i31)
+    )
+  )
 )
-;; CHECK:      [fuzz-exec] calling null
+;; CHECK:      [fuzz-exec] calling null-local
 ;; CHECK-NEXT: waka i31ref(null) : (ref null i31)
-;; CHECK-NEXT: [fuzz-exec] note result: null => 1
+;; CHECK-NEXT: [fuzz-exec] note result: null-local => 1
+
+;; CHECK:      [fuzz-exec] calling null-immediate
+;; CHECK-NEXT: waka i31ref(null) : (ref null i31)
+;; CHECK-NEXT: [fuzz-exec] note result: null-immediate => 1
 
 ;; CHECK:      [fuzz-exec] calling non-null
 ;; CHECK-NEXT: waka i31ref(1234) : i31ref
@@ -81,8 +102,13 @@
 ;; CHECK:      [fuzz-exec] calling zero-is-not-null
 ;; CHECK-NEXT: waka i31ref(0) : i31ref
 ;; CHECK-NEXT: [fuzz-exec] note result: zero-is-not-null => 0
+
+;; CHECK:      [fuzz-exec] calling trap
+;; CHECK-NEXT: [trap null ref]
 ;; CHECK-NEXT: [fuzz-exec] comparing nn-s
 ;; CHECK-NEXT: [fuzz-exec] comparing nn-u
 ;; CHECK-NEXT: [fuzz-exec] comparing non-null
-;; CHECK-NEXT: [fuzz-exec] comparing null
+;; CHECK-NEXT: [fuzz-exec] comparing null-immediate
+;; CHECK-NEXT: [fuzz-exec] comparing null-local
+;; CHECK-NEXT: [fuzz-exec] comparing trap
 ;; CHECK-NEXT: [fuzz-exec] comparing zero-is-not-null
