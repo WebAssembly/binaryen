@@ -74,7 +74,7 @@ void GlobalTypeRewriter::update() {
     }
   }
 
-  auto buildResults = typeBuilder.build();
+  auto buildResults = typeBuilder.groupAndBuild();
 #ifndef NDEBUG
   if (auto* err = buildResults.getError()) {
     Fatal() << "Internal GlobalTypeRewriter build error: " << err->reason

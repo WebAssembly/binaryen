@@ -51,8 +51,8 @@ struct SignatureRefining : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SignatureRefining requires nominal typing";
+    if (getTypeSystem() == TypeSystem::Equirecursive) {
+      Fatal() << "SignatureRefining requires nominal or isorecursive typing";
     }
 
     if (!module->tables.empty()) {

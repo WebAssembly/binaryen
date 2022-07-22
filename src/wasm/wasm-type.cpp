@@ -3968,6 +3968,188 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   return {state.results};
 }
 
+TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
+  assert(impl->recGroups.size() == 0 &&
+         "Cannot use groupAndBuild with explicitly set recursion groups");
+
+  // Recursion groups and type ordering only matter for isorecursive types.
+  if (getTypeSystem() != TypeSystem::Isorecursive) {
+    return build();
+  }
+
+  const size_t numTypes = size();
+
+  // Use Tarjan's strongly connected components algorithm
+  // (https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm)
+  // to organize the types into topologically sorted recursion groups.
+
+  // Map HeapTypes in the builder to indices.
+  std::unordered_map<HeapType, size_t> typeIndices;
+  for (size_t i = 0; i < numTypes; ++i) {
+    typeIndices.insert({impl->entries[i].get(), i});
+  }
+
+  // The metadata used by Tarjan's SCC algorithm.
+  struct Node {
+    std::vector<size_t> succIndices;
+    size_t index = -1u;
+    size_t lowlink = -1u;
+    bool onStack = false;
+  };
+
+  // Allocate metadata for each HeapType in the builder.
+  std::vector<Node> nodes(numTypes);
+
+  // Populate the successor indices for each node by finding the predecessors of
+  // each HeapType. Since we are incrementing the successor index that gets
+  // recorded, we can avoid recording duplicate successors by checking just the
+  // last recorded successor for each predecessor.
+  for (size_t succIndex = 0; succIndex < numTypes; ++succIndex) {
+    HeapType succ = impl->entries[succIndex].get();
+    for (auto pred : succ.getReferencedHeapTypes()) {
+      auto predIndexIt = typeIndices.find(pred);
+      if (predIndexIt == typeIndices.end()) {
+        // This is a basic or canonical child, so it is a predecessor of all the
+        // types we are building and won't affect their ordering or grouping.
+        continue;
+      }
+      // Record the successor if we have not already recorded it.
+      auto& succIndices = nodes[predIndexIt->second].succIndices;
+      if (succIndices.empty() || succIndices.back() != succIndex) {
+        succIndices.push_back(succIndex);
+      }
+    }
+  }
+
+  // Stack of HeapType / metadata indices.
+  std::vector<size_t> stack;
+
+  // The DFS visitation index.
+  size_t index = 0;
+
+  // The resulting strongly connected components.
+  std::vector<std::vector<size_t>> sccs;
+
+  // The recursive main function of Tarjan's SCC algorithm.
+  std::function<void(size_t)> visit = [&](size_t i) {
+    auto& node = nodes[i];
+    node.index = index;
+    node.lowlink = index;
+    ++index;
+    stack.push_back(i);
+    node.onStack = true;
+
+    for (auto j : node.succIndices) {
+      auto& succ = nodes[j];
+      if (succ.index == -1u) {
+        visit(j);
+        node.lowlink = std::min(node.lowlink, succ.lowlink);
+      } else if (succ.onStack) {
+        node.lowlink = std::min(node.lowlink, succ.index);
+      }
+    }
+
+    if (node.lowlink == node.index) {
+      sccs.emplace_back();
+      size_t j;
+      do {
+        j = stack.back();
+        stack.pop_back();
+        nodes[j].onStack = false;
+        sccs.back().push_back(j);
+      } while (i != j);
+    }
+  };
+
+  // Tarjan's SCC algorithm main loop.
+  for (size_t i = 0; i < numTypes; ++i) {
+    if (nodes[i].index == -1u) {
+      visit(i);
+    }
+  }
+
+  // Reverse SCC order to get a forward topological sort.
+  std::reverse(sccs.begin(), sccs.end());
+
+  // Now that we've organized the types into topologically sorted recursion
+  // groups, we need to sort types within each group to make sure that
+  // supertypes are ordered before their subtypes.
+  for (auto& group : sccs) {
+    if (group.size() == 1) {
+      continue;
+    }
+    std::unordered_set<size_t> members(group.begin(), group.end());
+    std::vector<size_t> supertypeStack;
+    std::vector<size_t> sortedGroup;
+    sortedGroup.reserve(group.size());
+    for (auto i : group) {
+      // Push all supertypes in the current group onto a stack.
+      supertypeStack.push_back(i);
+      auto curr = impl->entries[i].get();
+      while (true) {
+        auto super = curr.getSuperType();
+        if (!super) {
+          // No more supertypes.
+          break;
+        }
+        auto superIndexIt = typeIndices.find(*super);
+        if (superIndexIt == typeIndices.end() ||
+            members.erase(superIndexIt->second) == 0) {
+          // This supertype must be canonical or in a previous group, so there
+          // cannot be more members of this group in this supertype chain.
+          break;
+        }
+        supertypeStack.push_back(superIndexIt->second);
+        curr = impl->entries[superIndexIt->second].get();
+      }
+      // Drain the stack so that supertypes are ordered first.
+      while (!supertypeStack.empty()) {
+        sortedGroup.push_back(supertypeStack.back());
+        supertypeStack.pop_back();
+      }
+    }
+
+    // Replace the group with the sorted group.
+    group = std::move(sortedGroup);
+    sortedGroup.clear();
+  }
+
+  // Move the contents of the TypeBuilder to match the computed order of types.
+  std::vector<Impl::Entry> orderedEntries;
+  orderedEntries.reserve(numTypes);
+  std::vector<size_t> originalIndices(numTypes);
+  for (auto& group : sccs) {
+    for (auto i : group) {
+      originalIndices[orderedEntries.size()] = i;
+      orderedEntries.emplace_back(std::move(impl->entries[i]));
+    }
+  }
+  impl->entries = std::move(orderedEntries);
+
+  // Create the computed recursion groups.
+  size_t start = 0;
+  for (auto& group : sccs) {
+    createRecGroup(start, group.size());
+    start += group.size();
+  }
+
+  // Build the ordered types. If there is an error, translate its index back to
+  // the original index of the invalid type.
+  auto built = build();
+  if (auto* err = built.getError()) {
+    return {Error{originalIndices[err->index], err->reason}};
+  }
+
+  // Re-order the types to match the original input order so the caller can
+  // match input with output correctly.
+  std::vector<HeapType> reorderedTypes(numTypes);
+  for (size_t i = 0; i < numTypes; ++i) {
+    reorderedTypes[originalIndices[i]] = (*built)[i];
+  }
+
+  return {reorderedTypes};
+}
+
 } // namespace wasm
 
 namespace std {

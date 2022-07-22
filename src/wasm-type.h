@@ -672,6 +672,11 @@ struct TypeBuilder {
   // relationships are not valid.
   BuildResult build();
 
+  // Like `build`, but first automatically groups types into rec groups and
+  // sorts the groups to create a valid type ordering, if possible. This cannot
+  // be used if recursion groups were explicitly created.
+  BuildResult groupAndBuild();
+
   // Utility for ergonomically using operator[] instead of explicit setHeapType
   // and getTempHeapType methods.
   struct Entry {
