@@ -23,9 +23,14 @@ namespace wasm {
 
 //
 // Finds which local.sets have structural dominance over their gets. This is
-// important for things like non-nullable locals. The property of "structural
-// dominance" means that the set dominates the gets using wasm's structured
-// control flow constructs, like this:
+// important for things like non-nullable locals, and so this class only looks
+// at reference types and not anything else. It does look at both nullable and
+// non-nullable references, though, as it can be used to validate non-nullable
+// ones, and also to check if a nullable one could become non-nullable and still
+// validate.
+//
+// The property of "structural dominance" means that the set dominates the gets
+// using wasm's structured control flow constructs, like this:
 //
 //  (block
 //    (local.set $x ..)
@@ -46,17 +51,18 @@ namespace wasm {
 // This is a little similar to breaks: (br $foo) can only go to a label $foo
 // that is in scope.
 //
+// Note that this properly must hold on the final wasm binary, while we are
+// checking it on Binaryen IR. The propery will carry over, however: when
+// lowering to wasm we may remove some Block nodes, but removing nodes cannot
+// break validation.
+//
 // This concept is useful for the "1a" form of non-nullable locals that is in
 // the wasm spec: a local.get validates if it is structurally dominated by a
 // set. That dominance proves the get cannot access the default null value, and,
 // nicely, it can be validated in linear time.
 //
-// This ignores non-reference locals. It does look at both nullable and non-
-// nullable reference locals (as it can be used to validate non-nullable ones,
-// and to check if a nullable one could become non-nullable and still validate).
-//
 struct LocalStructuralDominance {
-  LocalStructuralDominance(Function* func);
+  LocalStructuralDominance(Function* func, Module& wasm);
 
   // Local indexes for whom a local.get exists that is not structurally
   // dominated.

@@ -20,7 +20,12 @@
 
 namespace wasm {
 
-LocalStructuralDominance::LocalStructuralDominance(Function* func) {
+LocalStructuralDominance::LocalStructuralDominance(Function* func, Module& wasm) {
+  if (!wasm.features.hasReferenceTypes()) {
+    // No references, so nothing to look at.
+    return;
+  }
+
   auto num = func->getNumLocals();
 
   bool hasRef = false;
