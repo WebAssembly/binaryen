@@ -488,7 +488,8 @@ void test_core() {
                     segmentOffsets,
                     segmentSizes,
                     2,
-                    1);
+                    1,
+                    "0");
 
   BinaryenExpressionRef valueList[] = {
     // Unary
@@ -1032,8 +1033,8 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, iIfF),
     // Memory
-    BinaryenMemorySize(module, "0", false),
-    BinaryenMemoryGrow(module, makeInt32(module, 0), "0", false),
+    BinaryenMemorySize(module, "0"),
+    BinaryenMemoryGrow(module, makeInt32(module, 0), "0"),
     // GC
     BinaryenI31New(module, makeInt32(module, 0)),
     BinaryenI31Get(module, i31refExpr, 1),

@@ -662,18 +662,20 @@ public:
     ret->value = value;
     return ret;
   }
-  MemorySize* makeMemorySize(Name memory, bool is64) {
+  MemorySize* makeMemorySize(Name memory) {
+    auto mem = wasm.getMemory(memory);
     auto* ret = wasm.allocator.alloc<MemorySize>();
-    if (is64) {
+    if (mem->is64()) {
       ret->make64();
     }
     ret->memory = memory;
     ret->finalize();
     return ret;
   }
-  MemoryGrow* makeMemoryGrow(Expression* delta, Name memory, bool is64) {
+  MemoryGrow* makeMemoryGrow(Expression* delta, Name memory) {
+    auto mem = wasm.getMemory(memory);
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
-    if (is64) {
+    if (mem->is64()) {
       ret->make64();
     }
     ret->delta = delta;
