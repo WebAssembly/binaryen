@@ -170,9 +170,17 @@ void PassRegistry::registerPasses() {
   registerPass(
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
-    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
-  registerPass(
     "gsi", "globally optimize struct values", createGlobalStructInferencePass);
+  registerPass(
+    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("gufa",
+               "Grand Unified Flow Analysis: optimize the entire program using "
+               "information about what content can actually appear in each "
+               "location",
+               createGUFAPass);
+  registerPass("gufa-optimizing",
+               "GUFA plus local optimizations in functions we modified",
+               createGUFAOptimizingPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
