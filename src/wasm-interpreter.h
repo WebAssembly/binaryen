@@ -1347,6 +1347,7 @@ public:
     NOTE_EVAL1(value);
     switch (curr->op) {
       case RefIsNull:
+std::cout << "waka " << value << " : " << value.type << '\n';
         return Literal(value.isNull());
       case RefIsFunc:
         return Literal(!value.isNull() && value.type.isFunction());

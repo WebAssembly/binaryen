@@ -3,38 +3,51 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec -q -o /dev/null 2>&1 | filecheck %s
 
 (module
-  (func $null (export "null") (result i32)
+  ;; CHECK:      [fuzz-exec] calling null
+  ;; CHECK-NEXT: waka i31ref(null) : (ref null i31)
+  ;; CHECK-NEXT: [fuzz-exec] note result: null => 1
+  (func "null" (result i32)
     (local $ref (ref null i31))
     (ref.is_null
       (local.get $ref)
     )
   )
 
-  (func $nn-u (export "nn-u") (result i32)
-    (local $ref (ref null i31))
-    (local.set $ref
+  ;; CHECK:      [fuzz-exec] calling non-null
+  ;; CHECK-NEXT: waka i31ref(1234) : i31ref
+  ;; CHECK-NEXT: [fuzz-exec] note result: non-null => 0
+  (func "non-null" (result i32)
+    (ref.is_null
       (i31.new
-        (i32.const 0xffffffff)
+        (i32.const 1234)
       )
     )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling nn-u
+  ;; CHECK-NEXT: [fuzz-exec] note result: nn-u => 2147483647
+  (func "nn-u" (result i32)
     (i31.get_u
-      (local.get $ref)
-    )
-  )
-
-  (func $nn-s (export "nn-s") (result i32)
-    (local $ref (ref null i31))
-    (local.set $ref
       (i31.new
         (i32.const 0xffffffff)
       )
     )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling nn-s
+  ;; CHECK-NEXT: [fuzz-exec] note result: nn-s => -1
+  (func "nn-s" (result i32)
     (i31.get_s
-      (local.get $ref)
+      (i31.new
+        (i32.const 0xffffffff)
+      )
     )
   )
 
-  (func $zero-is-not-null (export "zero-is-not-null") (result i32)
+  ;; CHECK:      [fuzz-exec] calling zero-is-not-null
+  ;; CHECK-NEXT: waka i31ref(0) : i31ref
+  ;; CHECK-NEXT: [fuzz-exec] note result: zero-is-not-null => 0
+  (func "zero-is-not-null" (result i32)
     (local $ref (ref null i31))
     (local.set $ref
       (i31.new
@@ -51,4 +64,25 @@
     )
   )
 )
+;; CHECK:      [fuzz-exec] calling null
+;; CHECK-NEXT: waka i31ref(null) : (ref null i31)
+;; CHECK-NEXT: [fuzz-exec] note result: null => 1
 
+;; CHECK:      [fuzz-exec] calling non-null
+;; CHECK-NEXT: waka i31ref(1234) : i31ref
+;; CHECK-NEXT: [fuzz-exec] note result: non-null => 0
+
+;; CHECK:      [fuzz-exec] calling nn-u
+;; CHECK-NEXT: [fuzz-exec] note result: nn-u => 2147483647
+
+;; CHECK:      [fuzz-exec] calling nn-s
+;; CHECK-NEXT: [fuzz-exec] note result: nn-s => -1
+
+;; CHECK:      [fuzz-exec] calling zero-is-not-null
+;; CHECK-NEXT: waka i31ref(0) : i31ref
+;; CHECK-NEXT: [fuzz-exec] note result: zero-is-not-null => 0
+;; CHECK-NEXT: [fuzz-exec] comparing nn-s
+;; CHECK-NEXT: [fuzz-exec] comparing nn-u
+;; CHECK-NEXT: [fuzz-exec] comparing non-null
+;; CHECK-NEXT: [fuzz-exec] comparing null
+;; CHECK-NEXT: [fuzz-exec] comparing zero-is-not-null
