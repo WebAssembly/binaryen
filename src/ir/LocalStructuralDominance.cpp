@@ -20,7 +20,8 @@
 
 namespace wasm {
 
-LocalStructuralDominance::LocalStructuralDominance(Function* func, Module& wasm) {
+LocalStructuralDominance::LocalStructuralDominance(Function* func,
+                                                   Module& wasm) {
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so nothing to look at.
     return;
