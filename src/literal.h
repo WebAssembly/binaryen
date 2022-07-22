@@ -38,6 +38,9 @@ class Literal {
   // store only integers, whose bits are deterministic. floats
   // can have their signalling bit set, for example.
   union {
+    // Note: i31 is stored in the |i32| field, with the lower 31 bits containing
+    // the value if there is one, and the highest bit containing whether there
+    // is a value. Thus, a null is |i32 === 0|.
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
@@ -110,6 +113,9 @@ public:
       }
       if (isData()) {
         return !gcData;
+      }
+      if (type.getHeapType() == HeapType::i31) {
+        return i32 == 0;
       }
       return true;
     }
@@ -257,7 +263,7 @@ public:
   }
   static Literal makeI31(int32_t value) {
     auto lit = Literal(Type(HeapType::i31, NonNullable));
-    lit.i32 = value & 0x7fffffff;
+    lit.i32 = value | 0x80000000;
     return lit;
   }
 
@@ -276,7 +282,7 @@ public:
   }
   int32_t geti31(bool signed_ = true) const {
     assert(type.getHeapType() == HeapType::i31);
-    return signed_ ? (i32 << 1) >> 1 : i32;
+    return signed_ ? (i32 << 1) >> 1 : (i32 & 0x7fffffff);
   }
   int64_t geti64() const {
     assert(type == Type::i64);
