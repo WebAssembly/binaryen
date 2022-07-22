@@ -2758,7 +2758,7 @@ void FunctionValidator::visitFunction(Function* curr) {
     if (!getModule()->features.hasGCNNLocals()) {
       // Without the special GCNNLocals feature, we implement "1a" semantics,
       // that is, a set allows gets until the end of the block.
-      LocalStructuralDominance info(curr);
+      LocalStructuralDominance info(curr, *getModule());
       for (auto index : info.nonDominatingIndexes) {
         shouldBeTrue(!curr->getLocalType(index).isNonNullable(),
                      index,

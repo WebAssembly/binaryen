@@ -89,7 +89,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // Without GCNNLocals, validation rules follow "1a" in the spec: all gets
       // must be dominated structurally by sets, for the local to be non-
       // nullable.
-      LocalStructuralDominance info(func);
+      LocalStructuralDominance info(func, *getModule());
       for (auto index : info.nonDominatingIndexes) {
         cannotBeNonNullable.insert(index);
       }
