@@ -31,7 +31,6 @@
 
 #include "cfg/liveness-traversal.h"
 #include "ir/numbering.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/learning.h"
@@ -100,56 +99,19 @@ struct CoalesceLocals
   bool interferes(Index i, Index j) {
     return interferences.get(std::min(i, j), std::max(i, j));
   }
-
-  // Whether we ever removed a set.
-  bool removedSet = false;
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
   super::doWalkFunction(func);
-
-  // Prioritize back edges.
+  // prioritize back edges
   increaseBackEdgePriorities();
-
-  // Use liveness to find interference.
+  // use liveness to find interference
   calculateInterferences();
-
-  // Pick new indices.
+  // pick new indices
   std::vector<Index> indices;
   pickIndices(indices);
-
-  // Apply indices.
+  // apply indices
   applyIndices(indices, func->body);
-
-  // Fix up locals: If we removed a set (because it was not needed) then any
-  // gets for it may not validate any more. For example:
-  //
-  //  (local.set $x ..)
-  //  (block
-  //    (local.set $x ..)
-  //  )
-  //  (local.get $x)
-  //
-  // We will remove the first set, which is dead, but the second set is not
-  // enough to get $x to validate as a non-nullable local.
-  //
-  // This also removes the "workaround" for "1a" by adding dead sets:
-  //
-  //   x = whatever; // dead set for validation
-  //   if (..) {
-  //     x = value1;
-  //   } else {
-  //     x = value2;
-  //   }
-  //
-  // The dead set ensures validation, at the cost of extra code size and slower
-  // speed in some tiers (the optimizing tier, at least, will remove such dead
-  // sets). In theory keeping such a dead set may be worthwhile, as it may save
-  // code size (by keeping the local non-nullable and avoiding ref.as_non_nulls
-  // later). As the tradeoff here isn't clear, do the simple thing for now.
-  if (removedSet) {
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
-  }
 }
 
 // A copy on a backedge can be especially costly, forcing us to branch just to
@@ -574,7 +536,6 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
             Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
             drop->value = *action.origin;
             *action.origin = drop;
-            removedSet = true;
           }
           continue;
         }
