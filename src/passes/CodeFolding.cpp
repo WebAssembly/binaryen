@@ -61,7 +61,6 @@
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/label-utils.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -283,12 +282,6 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
         ReFinalize().walkFunctionInModule(func, getModule());
       }
     }
-    // Moving code out of blocks to the outside can affect "1a" validation of
-    // non-nullable locals.
-    // TODO: do this in pass runner in general? but we want to first see all the
-    //       fails and fix them in better ways like SimplifyLocals does where
-    //       possible.
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 
 private:
