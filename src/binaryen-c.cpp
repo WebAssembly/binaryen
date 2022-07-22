@@ -1116,8 +1116,8 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef
-BinaryenMemorySize(BinaryenModuleRef module, const char* name) {
+BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
+                                         const char* name) {
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
