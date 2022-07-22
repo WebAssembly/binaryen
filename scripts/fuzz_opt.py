@@ -1170,6 +1170,8 @@ opt_choices = [
     ["--global-refining"],
     ["--gsi"],
     ["--gto"],
+    ["--gufa"],
+    ["--gufa-optimizing"],
     ["--local-cse"],
     ["--heap2local"],
     ["--remove-unused-names", "--heap2local"],

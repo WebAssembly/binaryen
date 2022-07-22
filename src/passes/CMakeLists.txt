@@ -40,6 +40,7 @@ set(passes_SOURCES
   GlobalRefining.cpp
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
+  GUFA.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
