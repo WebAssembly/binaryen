@@ -4144,11 +4144,17 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
     sortedGroup.clear();
   }
 
-  // Clear the old rec groups; they'll be replaced by the newly computed rec
-  // groups.
+  // Clear the old rec groups from the infos; they'll be replaced by the newly
+  // computed rec groups.
   impl->recGroups.clear();
   for (auto& entry : impl->entries) {
     entry.info->recGroup = nullptr;
+  }
+
+  // Clear the rec group contents. See the comment above where we first filled
+  // the rec groups.
+  for (auto& group : impl->recGroups) {
+    group->clear();
   }
 
   // Move the contents of the TypeBuilder to match the computed order of types.
@@ -4168,12 +4174,6 @@ TypeBuilder::BuildResult TypeBuilder::groupAndBuild() {
   for (auto& group : sccs) {
     createRecGroup(start, group.size());
     start += group.size();
-  }
-
-  // Clear the rec groups. See the comment above where we first filled the rec
-  // groups.
-  for (auto& group : impl->recGroups) {
-    group->clear();
   }
 
   // Build the ordered types. If there is an error, translate its index back to
