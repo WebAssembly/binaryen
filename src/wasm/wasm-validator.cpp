@@ -487,9 +487,9 @@ private:
     }
   }
 
-  Type indexType(Name memory) {
-    auto mem = getModule()->getMemory(memory);
-    return mem->indexType;
+  Type indexType(Name memoryName) {
+    auto memory = getModule()->getMemory(memoryName);
+    return memory->indexType;
   }
 };
 
@@ -2997,7 +2997,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
                         name,
                         "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
-      info.shouldBeTrue(name == Name("0") || name == module.memories[0]->name,
+      info.shouldBeTrue(module.getMemoryOrNull(name),
                         name,
                         "module memory exports must be found");
     } else if (exp->kind == ExternalKind::Tag) {

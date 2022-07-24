@@ -180,7 +180,7 @@ function test_core() {
   // Module creation
 
   module = new binaryen.Module();
-  // Memory. One per module
+  // Memory
   module.setMemory(1, 256, "mem", [
     {
       passive: false,

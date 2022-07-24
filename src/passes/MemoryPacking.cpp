@@ -125,6 +125,7 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
+  // Does not have multi-memories support
   if (!canOptimize(module->memories, module->dataSegments, runner->options)) {
     return;
   }
@@ -184,7 +185,7 @@ bool MemoryPacking::canOptimize(
   std::vector<std::unique_ptr<Memory>>& memories,
   std::vector<std::unique_ptr<DataSegment>>& dataSegments,
   const PassOptions& passOptions) {
-  if (memories.empty()) {
+  if (memories.empty() || memories.size() > 1) {
     return false;
   }
   auto& memory = memories[0];
@@ -718,12 +719,12 @@ void MemoryPacking::createReplacements(Module* module,
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
         appendResult(
-          builder.makeMemoryFill(dest, value, size, module->memories[0]->name));
+          builder.makeMemoryFill(dest, value, size, init->memory));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
         appendResult(builder.makeMemoryInit(
-          initIndex, dest, offset, size, module->memories[0]->name));
+          initIndex, dest, offset, size, init->memory));
         initIndex++;
       }
     }

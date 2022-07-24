@@ -1038,8 +1038,8 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    BinaryenType type,
                                    BinaryenExpressionRef ptr,
                                    const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    // add an assert to check that memories[0]
     name = module->memories[0]->name.c_str();
   }
   return static_cast<Expression*>(Builder(*(Module*)module)
@@ -1059,6 +1059,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     BinaryenExpressionRef value,
                                     BinaryenType type,
                                     const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1118,6 +1119,7 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1127,6 +1129,7 @@ BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1146,6 +1149,7 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          BinaryenType type,
                                          BinaryenExpressionRef ptr,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1160,6 +1164,7 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           BinaryenExpressionRef value,
                                           BinaryenType type,
                                           const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1176,6 +1181,7 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenExpressionRef value,
                                         BinaryenType type,
                                         const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1196,6 +1202,7 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenExpressionRef replacement,
                                             BinaryenType type,
                                             const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1214,6 +1221,7 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef timeout,
                                          BinaryenType expectedType,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1229,6 +1237,7 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            BinaryenExpressionRef ptr,
                                            BinaryenExpressionRef notifyCount,
                                            const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1292,6 +1301,7 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                        uint32_t align,
                                        BinaryenExpressionRef ptr,
                                        const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1310,6 +1320,7 @@ BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                                                 BinaryenExpressionRef ptr,
                                                 BinaryenExpressionRef vec,
                                                 const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1329,6 +1340,7 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          BinaryenExpressionRef offset,
                                          BinaryenExpressionRef size,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1351,6 +1363,7 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          BinaryenExpressionRef source,
                                          BinaryenExpressionRef size,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -1365,6 +1378,7 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          BinaryenExpressionRef value,
                                          BinaryenExpressionRef size,
                                          const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -3914,7 +3928,7 @@ const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
   }
 }
 
-// Memory. One per module
+// Memory.
 
 void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex initial,
@@ -3954,11 +3968,6 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   }
   ((Module*)module)->removeMemories([&](Memory* curr) { return true; });
   ((Module*)module)->addMemory(std::move(memory));
-}
-
-BinaryenMemoryRef BinaryenMemoryGet(BinaryenModuleRef module,
-                                    const char* name) {
-  return ((Module*)module)->getMemoryOrNull(name);
 }
 
 // Memory segments
@@ -4003,6 +4012,7 @@ bool BinaryenHasMemory(BinaryenModuleRef module) {
 }
 BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module,
                                        const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -4013,6 +4023,7 @@ BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module,
   return memory->initial;
 }
 bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -4023,6 +4034,7 @@ bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name) {
   return memory->hasMax();
 }
 BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -4034,6 +4046,7 @@ BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
 }
 const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
                                           const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -4049,6 +4062,7 @@ const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
 }
 const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
                                         const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }
@@ -4063,6 +4077,7 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
   }
 }
 bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name) {
+  // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
     name = module->memories[0]->name.c_str();
   }

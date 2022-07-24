@@ -2531,9 +2531,6 @@ function wrapModule(module, self = {}) {
       );
     });
   };
-  self['getMemory'] = function(name) {
-    return Module['_BinaryenMemoryGet'](module, strToStack(name));
-  };
   self['hasMemory'] = function() {
     return Boolean(Module['_BinaryenHasMemory'](module));
   };

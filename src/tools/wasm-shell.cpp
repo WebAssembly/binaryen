@@ -350,9 +350,9 @@ protected:
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
-    spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
+    Memory *memory = spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
     spectest->addExport(
-      builder.makeExport("memory", Name::fromInt(0), ExternalKind::Memory));
+      builder.makeExport("memory", memory->name, ExternalKind::Memory));
 
     modules["spectest"].swap(spectest);
     modules["spectest"]->features = FeatureSet::All;

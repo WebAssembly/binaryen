@@ -80,8 +80,8 @@
  (global $global$6 i32 (i32.const 100))
  ;; CHECK:      (elem (i32.const 0) $null)
 
- ;; CHECK:      (export "memory" (memory $0))
- (export "memory" (memory $0))
+ ;; CHECK:      (export "memory" (memory $1))
+ (export "memory" (memory $1))
  ;; CHECK:      (export "table" (table $0))
  (export "table" (table $0))
  ;; CHECK:      (export "init" (func $assembly/index/init))
