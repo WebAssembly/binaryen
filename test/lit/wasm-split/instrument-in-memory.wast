@@ -5,6 +5,7 @@
 ;; RUN: wasm-opt -all %t.wasm -S -o -
 
 (module
+  (memory $0 1 1)
   (import "env" "foo" (func $foo))
   (export "bar" (func $bar))
   (func $bar

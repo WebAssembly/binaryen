@@ -108,16 +108,15 @@ void Instrumenter::instrumentFuncs() {
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
+      assert(!wasm->memories.empty());
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
                                   funcIdx,
-                                  // TODO (nashley): Fix hardcoded type below
                                   builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
                                   Type::i32,
-                                  // TODO (nashley): Fix hardcoded name below
-                                  Name::fromInt(0)),
+                                  wasm->memories[0]->name),
           func->body,
           func->body->type);
         ++funcIdx;
@@ -186,7 +185,6 @@ void Instrumenter::addProfileExport() {
 
   // Write the hash followed by all the time stamps
   Expression* writeData =
-    // TODO (nashley): Fix hardcoded name below
     builder.makeStore(
       8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;

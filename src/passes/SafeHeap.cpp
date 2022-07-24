@@ -82,10 +82,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
       return;
     }
     Builder builder(*getModule());
-    auto mem = getModule()->getMemory(curr->memory);
+    auto memory = getModule()->getMemory(curr->memory);
     replaceCurrent(builder.makeCall(
       getLoadName(curr),
-      {curr->ptr, builder.makeConstPtr(curr->offset.addr, mem->indexType)},
+      {curr->ptr, builder.makeConstPtr(curr->offset.addr, memory->indexType)},
       curr->type));
   }
 
@@ -95,11 +95,11 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
       return;
     }
     Builder builder(*getModule());
-    auto mem = getModule()->getMemory(curr->memory);
+    auto memory = getModule()->getMemory(curr->memory);
     replaceCurrent(
       builder.makeCall(getStoreName(curr),
                        {curr->ptr,
-                        builder.makeConstPtr(curr->offset.addr, mem->indexType),
+                        builder.makeConstPtr(curr->offset.addr, memory->indexType),
                         curr->value},
                        Type::none));
   }
@@ -135,6 +135,7 @@ struct SafeHeap : public Pass {
 
   void run(PassRunner* runner, Module* module) override {
     options = runner->options;
+    assert(!module->memories.empty());
     // add imports
     addImports(module);
     // instrument loads and stores
@@ -155,7 +156,6 @@ struct SafeHeap : public Pass {
 
   void addImports(Module* module) {
     ImportInfo info(*module);
-    assert(!module->memories.empty());
     auto indexType = module->memories[0]->indexType;
     if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
@@ -282,15 +282,15 @@ struct SafeHeap : public Pass {
       return;
     }
     // pointer, offset
-    auto mem = module->getMemory(style.memory);
-    auto indexType = mem->indexType;
+    auto memory = module->getMemory(style.memory);
+    auto indexType = memory->indexType;
     auto funcSig = Signature({indexType, indexType}, style.type);
     auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       2,
-      builder.makeBinary(mem->is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(memory->is64() ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
@@ -299,12 +299,12 @@ struct SafeHeap : public Pass {
                                           2,
                                           style.bytes,
                                           module,
-                                          mem->indexType,
-                                          mem->is64(),
-                                          mem->name));
+                                          memory->indexType,
+                                          memory->is64(),
+                                          memory->name));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 2, module));
+      block->list.push_back(makeAlignCheck(style.align, builder, 2, module, memory->name));
     }
     // do the load
     auto* load = module->allocator.alloc<Load>();
@@ -328,9 +328,9 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto mem = module->getMemory(style.memory);
-    auto indexType = mem->indexType;
-    bool is64 = mem->is64();
+    auto memory = module->getMemory(style.memory);
+    auto indexType = memory->indexType;
+    bool is64 = memory->is64();
     // pointer, offset, value
     auto funcSig =
       Signature({indexType, indexType, style.valueType}, Type::none);
@@ -350,15 +350,15 @@ struct SafeHeap : public Pass {
                                           module,
                                           indexType,
                                           is64,
-                                          mem->name));
+                                          memory->name));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 3, module));
+      block->list.push_back(makeAlignCheck(style.align, builder, 3, module, memory->name));
     }
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
-    store->memory = mem->name;
+    store->memory = memory->name;
     store->ptr = builder.makeLocalGet(3, indexType);
     store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
@@ -368,10 +368,11 @@ struct SafeHeap : public Pass {
   }
 
   Expression*
-  makeAlignCheck(Address align, Builder& builder, Index local, Module* module) {
-    auto indexType = module->memories[0]->indexType;
+  makeAlignCheck(Address align, Builder& builder, Index local, Module* module, Name memoryName) {
+    auto memory = module->getMemory(memoryName);
+    auto indexType = memory->indexType;
     Expression* ptrBits = builder.makeLocalGet(local, indexType);
-    if (module->memories[0]->is64()) {
+    if (memory->is64()) {
       ptrBits = builder.makeUnary(WrapInt64, ptrBits);
     }
     return builder.makeIf(

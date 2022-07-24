@@ -1037,7 +1037,7 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // TODO: label names
+  // TODO: label, type, and element names
   // see: https://github.com/WebAssembly/extended-name-section
 
   // GC field names

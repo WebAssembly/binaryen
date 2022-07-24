@@ -478,7 +478,7 @@ console.log("# MemorySize");
   const module = new binaryen.Module();
   module.setMemory(1, 1, null);
   var type = binaryen.i32;
-  const theMemorySize = binaryen.MemorySize(module.memory.size("0", false));
+  const theMemorySize = binaryen.MemorySize(module.memory.size("0"));
   assert(theMemorySize instanceof binaryen.MemorySize);
   assert(theMemorySize instanceof binaryen.Expression);
   assert(theMemorySize.type === type);

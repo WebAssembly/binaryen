@@ -93,7 +93,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   };
 
   std::map<Name, Memory> memories;
-  std::map<Name, std::vector<Literal>> tables;
+  std::unordered_map<Name, std::vector<Literal>> tables;
   std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(

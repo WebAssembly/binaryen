@@ -2210,10 +2210,6 @@ BINARYEN_API void BinaryenAddTagImport(BinaryenModuleRef module,
 // Memory
 BINARYEN_REF(Memory);
 
-// Gets a memory reference by name. Returns NULL if the function does not exist.
-BINARYEN_API BinaryenMemoryRef BinaryenMemoryGet(BinaryenModuleRef module,
-                                                 const char* name);
-
 // Exports
 
 BINARYEN_REF(Export);
@@ -2330,8 +2326,7 @@ BinaryenGetElementSegment(BinaryenModuleRef module, const char* name);
 BINARYEN_API BinaryenElementSegmentRef
 BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
-// Memory. One per module
-
+// This will create a memory, overwriting any existing memory
 // Each memory has data in segments, a start offset in segmentOffsets, and a
 // size in segmentSizes. exportName can be NULL
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
