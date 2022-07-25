@@ -3,6 +3,7 @@ total
  [funcs]        : 6       
  [globals]      : 1       
  [imports]      : 3       
+ [memories]     : 0       
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
@@ -229,6 +230,7 @@ total
  [funcs]        : 6       
  [globals]      : 0             -1
  [imports]      : 3       
+ [memories]     : 0       
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
@@ -448,6 +450,7 @@ total
  [funcs]        : 6       
  [globals]      : 0       
  [imports]      : 3       
+ [memories]     : 0       
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
