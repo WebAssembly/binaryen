@@ -667,12 +667,14 @@ private:
       if (curr->isReturn) {
         parent.branchesOut = true;
       }
-      // traps when the arg is null
-      parent.implicitTrap = true;
+      // traps when the call target is null
+      if (curr->target->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
     void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
-      // Traps if the ref is not null and it has an invalid rtt.
+      // Traps if the ref is not null and the cast fails.
       parent.implicitTrap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
