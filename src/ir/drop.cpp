@@ -27,40 +27,14 @@ namespace wasm {
 
 // Given an expression, returns a new expression that drops the given
 // expression's children that cannot be removed outright due to their side
-// effects.
-static Expression* getDroppedChildrenAndAppend(Expression* curr,
-                                               Module& wasm,
-                                               const PassOptions& options,
-                                               Expression* last) {
-  Builder builder(wasm);
-  std::vector<Expression*> contents;
-  for (auto* child : ChildIterator(curr)) {
-    if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
-      continue;
-    }
-    if (child->type.isConcrete()) {
-      contents.push_back(builder.makeDrop(child));
-    } else {
-      // The child is unreachable, or none (none is possible as a child of a
-      // block or loop, etc.); in both cases we do not need a drop.
-      contents.push_back(child);
-    }
-  }
-  contents.push_back(last);
-  if (contents.size() == 1) {
-    return contents[0];
-  }
-  return builder.makeBlock(contents);
-}
-
-// As the above, but only operates on children that execute unconditionally.
-// That is the case in almost all expressions, except for those with conditional
-// execution, like if, which unconditionally executes the condition but then
-// conditionally executes one of the two arms.
-Expression* getDroppedUnconditionalChildrenAndAppend(Expression* curr,
-                                                     Module& wasm,
-                                                     const PassOptions& options,
-                                                     Expression* last) {
+// effects. Note that this only operates on children that execute
+// unconditionally. That is the case in almost all expressions, except for those
+// with conditional execution, like if, which unconditionally executes the
+// condition but then conditionally executes one of the two arms.
+Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                        Module& wasm,
+                                        const PassOptions& options,
+                                        Expression* last) {
   // We check for shallow effects here, since we may be able to remove |curr|
   // itself but keep its children around - we don't want effects in the children
   // to stop us from improving the code. Note that there are cases where the
@@ -81,13 +55,31 @@ Expression* getDroppedUnconditionalChildrenAndAppend(Expression* curr,
   // 4. pop: Pops are struturally necessary in catch bodies
   // 5. Branch targets: We will need the target for the branches to it to
   //                    validate.
+  Builder builder(wasm);
   if (effects.hasUnremovableSideEffects() || curr->is<If>() ||
       curr->is<Try>() || curr->is<Pop>() ||
       BranchUtils::getDefinedName(curr).is()) {
-    Builder builder(wasm);
     return builder.makeSequence(builder.makeDrop(curr), last);
   }
-  return getDroppedChildrenAndAppend(curr, wasm, options, last);
+
+  std::vector<Expression*> contents;
+  for (auto* child : ChildIterator(curr)) {
+    if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
+      continue;
+    }
+    if (child->type.isConcrete()) {
+      contents.push_back(builder.makeDrop(child));
+    } else {
+      // The child is unreachable, or none (none is possible as a child of a
+      // block or loop, etc.); in both cases we do not need a drop.
+      contents.push_back(child);
+    }
+  }
+  contents.push_back(last);
+  if (contents.size() == 1) {
+    return contents[0];
+  }
+  return builder.makeBlock(contents);
 }
 
 } // namespace wasm

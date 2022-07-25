@@ -72,10 +72,10 @@ struct PassOptions;
 //
 //  Also this function preserves other unremovable expressions like trys, pops,
 //  and named blocks.
-Expression* getDroppedUnconditionalChildrenAndAppend(Expression* curr,
-                                                     Module& wasm,
-                                                     const PassOptions& options,
-                                                     Expression* last);
+Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                        Module& wasm,
+                                        const PassOptions& options,
+                                        Expression* last);
 
 } // namespace wasm
 

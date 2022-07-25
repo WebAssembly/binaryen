@@ -1514,7 +1514,7 @@ struct OptimizeInstructions
       // reference can appear on both sides.
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
+      replaceCurrent(getDroppedChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));
       return;
     }
@@ -1536,7 +1536,7 @@ struct OptimizeInstructions
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
+      replaceCurrent(getDroppedChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));
       return;
     }

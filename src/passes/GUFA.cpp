@@ -100,7 +100,7 @@ struct GUFAOptimizer
     if (contents.getType() == Type::unreachable) {
       // This cannot contain any possible value at all. It must be unreachable
       // code.
-      replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
+      replaceCurrent(getDroppedChildrenAndAppend(
         curr, wasm, options, builder.makeUnreachable()));
       optimized = true;
       return;
@@ -140,7 +140,7 @@ struct GUFAOptimizer
     //       valid here.
     if (Type::isSubType(c->type, curr->type)) {
       replaceCurrent(
-        getDroppedUnconditionalChildrenAndAppend(curr, wasm, options, c));
+        getDroppedChildrenAndAppend(curr, wasm, options, c));
       optimized = true;
     } else {
       // The type is not compatible: we cannot place |c| in this location, even
@@ -149,7 +149,7 @@ struct GUFAOptimizer
         // The type is not compatible and this is a simple constant expression
         // like a ref.func. That means this code must be unreachable. (See below
         // for the case of a non-constant.)
-        replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
+        replaceCurrent(getDroppedChildrenAndAppend(
           curr, wasm, options, builder.makeUnreachable()));
         optimized = true;
       } else {
