@@ -1397,14 +1397,17 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          const char* destMemory,
                                          const char* sourceMemory) {
   // Maintaining compatibility for instructions with a single memory
-  if ((destMemory == nullptr || sourceMemory == nullptr) && module->memories.size() == 1) {
+  if ((destMemory == nullptr || sourceMemory == nullptr) &&
+      module->memories.size() == 1) {
     destMemory = module->memories[0]->name.c_str();
     sourceMemory = module->memories[0]->name.c_str();
   }
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeMemoryCopy(
-        (Expression*)dest, (Expression*)source, (Expression*)size, destMemory, sourceMemory));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeMemoryCopy((Expression*)dest,
+                                                    (Expression*)source,
+                                                    (Expression*)size,
+                                                    destMemory,
+                                                    sourceMemory));
 }
 
 BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,

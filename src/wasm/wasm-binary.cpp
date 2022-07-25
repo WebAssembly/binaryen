@@ -3030,7 +3030,7 @@ void WasmBinaryBuilder::processNames() {
 
   for (auto& [index, refs] : memoryCopyRefs) {
     for (auto ref : refs) {
-        *ref = getMemoryName(index);
+      *ref = getMemoryName(index);
     }
   }
 
