@@ -1514,7 +1514,7 @@ struct OptimizeInstructions
       // reference can appear on both sides.
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(
+      replaceCurrent(getDroppedUnconditionalChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));
       return;
     }
