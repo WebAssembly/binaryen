@@ -653,7 +653,12 @@ private:
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
     void visitI31New(I31New* curr) {}
-    void visitI31Get(I31Get* curr) {}
+    void visitI31Get(I31Get* curr) {
+      // traps when the ref is null
+      if (curr->i31->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
     void visitCallRef(CallRef* curr) {
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {

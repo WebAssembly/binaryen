@@ -75,4 +75,25 @@
       )
     )
   )
+
+  ;; CHECK:      (func $drop-i31.get (param $ref (ref null i31)) (param $ref-nn i31ref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i31.get_s
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $drop-i31.get (param $ref (ref null i31)) (param $ref-nn (ref i31))
+    ;; A nullable get might trap, so only the second item can be removed.
+    (drop
+      (i31.get_s
+        (local.get $ref)
+      )
+    )
+    (drop
+      (i31.get_s
+        (local.get $ref-nn)
+      )
+    )
+  )
 )
