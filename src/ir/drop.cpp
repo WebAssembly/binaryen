@@ -57,11 +57,10 @@ static Expression* getDroppedChildrenAndAppend(Expression* curr,
 // That is the case in almost all expressions, except for those with conditional
 // execution, like if, which unconditionally executes the condition but then
 // conditionally executes one of the two arms.
-Expression*
-getDroppedUnconditionalChildrenAndAppend(Expression* curr,
-                                         Module& wasm,
-                                         const PassOptions& options,
-                                         Expression* last) {
+Expression* getDroppedUnconditionalChildrenAndAppend(Expression* curr,
+                                                     Module& wasm,
+                                                     const PassOptions& options,
+                                                     Expression* last) {
   // We check for shallow effects here, since we may be able to remove |curr|
   // itself but keep its children around - we don't want effects in the children
   // to stop us from improving the code. Note that there are cases where the
