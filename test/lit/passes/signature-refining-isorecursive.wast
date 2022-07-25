@@ -48,7 +48,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.func $bar)
  ;; CHECK-NEXT: )
- (func $foo (type $0)
+ (func $foo (type $0) (param i32 funcref) (result funcref)
   (drop
    (call $foo
     (i32.const 0)
@@ -67,7 +67,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.func $foo)
  ;; CHECK-NEXT: )
- (func $bar (type $1)
+ (func $bar (type $1) (param f32 funcref) (result funcref)
   (drop
    (call $bar
     (f32.const 0)
@@ -97,7 +97,7 @@
  ;; CHECK-NEXT:   (ref.func $foo)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $foo (type $0)
+ (func $foo (type $0) (param funcref)
   (call $foo
    (ref.func $foo)
   )
@@ -108,7 +108,7 @@
  ;; CHECK-NEXT:   (ref.func $foo)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $bar (type $1)
+ (func $bar (type $1) (param funcref)
   (call $bar
    (ref.func $foo)
   )
