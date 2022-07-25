@@ -229,11 +229,7 @@ Literals Literal::makeNegOnes(Type type) {
 Literal Literal::makeZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    if (type.getHeapType() == HeapType::i31) {
-      return makeI31(0);
-    } else {
-      return makeNull(type.getHeapType());
-    }
+    return makeNull(type.getHeapType());
   } else if (type.isRtt()) {
     return Literal(type);
   } else {
@@ -515,7 +511,11 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           o << "eqref(null)";
           break;
         case HeapType::i31:
-          o << "i31ref(" << literal.geti31() << ")";
+          if (literal.isNull()) {
+            o << "i31ref(null)";
+          } else {
+            o << "i31ref(" << literal.geti31() << ")";
+          }
           break;
         case HeapType::func:
         case HeapType::data:
