@@ -139,8 +139,7 @@ struct GUFAOptimizer
     //       ref.as etc. Once it does those we could assert on the type being
     //       valid here.
     if (Type::isSubType(c->type, curr->type)) {
-      replaceCurrent(
-        getDroppedChildrenAndAppend(curr, wasm, options, c));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, wasm, options, c));
       optimized = true;
     } else {
       // The type is not compatible: we cannot place |c| in this location, even
