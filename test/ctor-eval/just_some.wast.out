@@ -8,7 +8,7 @@
   (unreachable)
  )
  (func $test3
-  (i32.store8
+  (i32.store8 $0
    (i32.const 13)
    (i32.const 113)
   )

@@ -21,14 +21,14 @@
   (call $__wasm_apply_data_relocs)
  )
  (func $__wasm_apply_data_relocs
-  (i32.store
+  (i32.store $mimport$0
    (i32.add
     (global.get $__memory_base)
     (i32.const 16)
    )
    (global.get $puts)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.add
     (global.get $__memory_base)
     (i32.const 20)
@@ -45,7 +45,7 @@
     )
    )
   )
-  (i32.load
+  (i32.load $mimport$0
    (global.get $external_var)
   )
  )

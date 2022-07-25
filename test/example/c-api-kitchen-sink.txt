@@ -1683,102 +1683,102 @@ BinaryenFeatureAll: 122879
        )
       )
       (drop
-       (v128.load8_splat
+       (v128.load8_splat $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load16_splat offset=16 align=1
+       (v128.load16_splat $0 offset=16 align=1
         (i32.const 128)
        )
       )
       (drop
-       (v128.load32_splat offset=16
+       (v128.load32_splat $0 offset=16
         (i32.const 128)
        )
       )
       (drop
-       (v128.load64_splat align=4
+       (v128.load64_splat $0 align=4
         (i32.const 128)
        )
       )
       (drop
-       (v128.load8x8_s
+       (v128.load8x8_s $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load8x8_u
+       (v128.load8x8_u $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load16x4_s
+       (v128.load16x4_s $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load16x4_u
+       (v128.load16x4_u $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load32x2_s
+       (v128.load32x2_s $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load32x2_u
+       (v128.load32x2_u $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load32_zero
+       (v128.load32_zero $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load64_zero
+       (v128.load64_zero $0
         (i32.const 128)
        )
       )
       (drop
-       (v128.load8_lane 0
+       (v128.load8_lane $0 0
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (v128.load16_lane 0
+       (v128.load16_lane $0 0
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (v128.load32_lane 0
+       (v128.load32_lane $0 0
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (v128.load64_lane 0
+       (v128.load64_lane $0 0
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
-      (v128.store8_lane 0
+      (v128.store8_lane $0 0
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
-      (v128.store16_lane 0
+      (v128.store16_lane $0 0
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
-      (v128.store32_lane 0
+      (v128.store32_lane $0 0
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
-      (v128.store64_lane 0
+      (v128.store64_lane $0 0
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
@@ -1795,18 +1795,18 @@ BinaryenFeatureAll: 122879
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
-      (memory.init 0
+      (memory.init $0 0
        (i32.const 1024)
        (i32.const 0)
        (i32.const 12)
       )
       (data.drop 0)
-      (memory.copy
+      (memory.copy $0 $0
        (i32.const 2048)
        (i32.const 1024)
        (i32.const 12)
       )
-      (memory.fill
+      (memory.fill $0
        (i32.const 0)
        (i32.const 42)
        (i32.const 1024)
@@ -1901,30 +1901,30 @@ BinaryenFeatureAll: 122879
        )
       )
       (drop
-       (i32.load
+       (i32.load $0
         (i32.const 1)
        )
       )
       (drop
-       (i64.load16_s offset=2 align=1
+       (i64.load16_s $0 offset=2 align=1
         (i32.const 8)
        )
       )
       (drop
-       (f32.load
+       (f32.load $0
         (i32.const 2)
        )
       )
       (drop
-       (f64.load offset=2
+       (f64.load $0 offset=2
         (i32.const 9)
        )
       )
-      (i32.store
+      (i32.store $0
        (i32.const 10)
        (i32.const 11)
       )
-      (i64.store offset=2 align=4
+      (i64.store $0 offset=2 align=4
        (i32.const 110)
        (i64.const 111)
       )
@@ -2039,21 +2039,21 @@ BinaryenFeatureAll: 122879
         (nop)
        )
       )
-      (i32.atomic.store
+      (i32.atomic.store $0
        (i32.const 0)
-       (i32.atomic.load
+       (i32.atomic.load $0
         (i32.const 0)
        )
       )
       (drop
-       (memory.atomic.wait32
+       (memory.atomic.wait32 $0
         (i32.const 0)
         (i32.const 0)
         (i64.const 111)
        )
       )
       (drop
-       (memory.atomic.notify
+       (memory.atomic.notify $0
         (i32.const 0)
         (i32.const 0)
        )
@@ -2099,10 +2099,10 @@ BinaryenFeatureAll: 122879
        (pop i32 i64 f32 f64)
       )
       (drop
-       (memory.size)
+       (memory.size $0)
       )
       (drop
-       (memory.grow
+       (memory.grow $0
         (i32.const 0)
        )
       )

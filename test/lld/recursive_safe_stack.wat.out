@@ -54,11 +54,11 @@
     (local.get $3)
    )
   )
-  (i32.store offset=4
+  (i32.store $0 offset=4
    (local.get $2)
    (local.get $1)
   )
-  (i32.store
+  (i32.store $0
    (local.get $2)
    (local.get $0)
   )
@@ -129,7 +129,7 @@
     (local.get $1)
    )
   )
-  (i32.store
+  (i32.store $0
    (local.get $0)
    (call $foo
     (i32.const 1)

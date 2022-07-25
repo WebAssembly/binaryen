@@ -421,7 +421,7 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:    (i32.load $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -442,11 +442,11 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:    (i32.load $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.store
+  ;; CHECK-NEXT:   (i32.store $0
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:   )
@@ -471,12 +471,12 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:    (i32.load $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (i32.store
+  ;; CHECK-NEXT:   (i32.store $0
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:   )
@@ -504,7 +504,7 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:    (i32.load $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

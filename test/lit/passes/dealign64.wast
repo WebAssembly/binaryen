@@ -10,29 +10,29 @@
  (memory $0 i64 1 1)
  ;; CHECK:      (func $test
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.load align=1
+ ;; CHECK-NEXT:   (i32.load $0 align=1
  ;; CHECK-NEXT:    (i64.const 4)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.load align=1
+ ;; CHECK-NEXT:   (i32.load $0 align=1
  ;; CHECK-NEXT:    (i64.const 8)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.load align=1
+ ;; CHECK-NEXT:   (i32.load $0 align=1
  ;; CHECK-NEXT:    (i64.const 12)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.store align=1
+ ;; CHECK-NEXT:  (i32.store $0 align=1
  ;; CHECK-NEXT:   (i64.const 16)
  ;; CHECK-NEXT:   (i32.const 28)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.store align=1
+ ;; CHECK-NEXT:  (i32.store $0 align=1
  ;; CHECK-NEXT:   (i64.const 20)
  ;; CHECK-NEXT:   (i32.const 32)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.store align=1
+ ;; CHECK-NEXT:  (i32.store $0 align=1
  ;; CHECK-NEXT:   (i64.const 24)
  ;; CHECK-NEXT:   (i32.const 36)
  ;; CHECK-NEXT:  )

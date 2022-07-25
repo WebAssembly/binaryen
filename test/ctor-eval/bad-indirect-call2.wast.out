@@ -10,13 +10,13 @@
   (call_indirect $0 (type $v)
    (i32.const 0)
   )
-  (i32.store8
+  (i32.store8 $0
    (i32.const 20)
    (i32.const 120)
   )
  )
  (func $call-indirect
-  (i32.store8
+  (i32.store8 $0
    (i32.const 40)
    (i32.const 67)
   )

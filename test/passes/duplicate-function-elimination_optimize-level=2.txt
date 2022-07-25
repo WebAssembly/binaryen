@@ -492,30 +492,12 @@
  (memory $0 10)
  (func $erase
   (drop
-   (i32.load
+   (i32.load $0
     (i32.const 0)
    )
   )
   (drop
-   (i32.load16_s offset=3
-    (i32.const 0)
-   )
-  )
- )
-)
-(module
- (type $0 (func))
- (memory $0 10)
- (func $keep2
-  (drop
-   (i32.load offset=3
-    (i32.const 0)
-   )
-  )
- )
- (func $other
-  (drop
-   (i32.load16_s offset=3
+   (i32.load16_s $0 offset=3
     (i32.const 0)
    )
   )
@@ -526,14 +508,14 @@
  (memory $0 10)
  (func $keep2
   (drop
-   (i32.load16_s offset=3
+   (i32.load $0 offset=3
     (i32.const 0)
    )
   )
  )
  (func $other
   (drop
-   (i32.load16_s offset=3 align=1
+   (i32.load16_s $0 offset=3
     (i32.const 0)
    )
   )
@@ -544,14 +526,14 @@
  (memory $0 10)
  (func $keep2
   (drop
-   (i32.load16_s
+   (i32.load16_s $0 offset=3
     (i32.const 0)
    )
   )
  )
  (func $other
   (drop
-   (i32.load16_s offset=3
+   (i32.load16_s $0 offset=3 align=1
     (i32.const 0)
    )
   )
@@ -562,14 +544,32 @@
  (memory $0 10)
  (func $keep2
   (drop
-   (i32.load16_s offset=3
+   (i32.load16_s $0
     (i32.const 0)
    )
   )
  )
  (func $other
   (drop
-   (i32.load16_s offset=3
+   (i32.load16_s $0 offset=3
+    (i32.const 0)
+   )
+  )
+ )
+)
+(module
+ (type $0 (func))
+ (memory $0 10)
+ (func $keep2
+  (drop
+   (i32.load16_s $0 offset=3
+    (i32.const 0)
+   )
+  )
+ )
+ (func $other
+  (drop
+   (i32.load16_s $0 offset=3
     (i32.const 1)
    )
   )
@@ -580,14 +580,14 @@
  (memory $0 10)
  (func $keep2
   (drop
-   (i32.load16_u offset=3
+   (i32.load16_u $0 offset=3
     (i32.const 0)
    )
   )
  )
  (func $other
   (drop
-   (i32.load16_s offset=3
+   (i32.load16_s $0 offset=3
     (i32.const 0)
    )
   )
@@ -597,27 +597,11 @@
  (type $0 (func))
  (memory $0 10)
  (func $erase
-  (i32.store
+  (i32.store $0
    (i32.const 0)
    (i32.const 100)
   )
-  (i32.store16 offset=3
-   (i32.const 0)
-   (i32.const 100)
-  )
- )
-)
-(module
- (type $0 (func))
- (memory $0 10)
- (func $keep2
-  (i32.store offset=3
-   (i32.const 0)
-   (i32.const 100)
-  )
- )
- (func $other
-  (i32.store16 offset=3
+  (i32.store16 $0 offset=3
    (i32.const 0)
    (i32.const 100)
   )
@@ -627,13 +611,13 @@
  (type $0 (func))
  (memory $0 10)
  (func $keep2
-  (i32.store16 offset=3
+  (i32.store $0 offset=3
    (i32.const 0)
    (i32.const 100)
   )
  )
  (func $other
-  (i32.store16 offset=3 align=1
+  (i32.store16 $0 offset=3
    (i32.const 0)
    (i32.const 100)
   )
@@ -643,13 +627,13 @@
  (type $0 (func))
  (memory $0 10)
  (func $keep2
-  (i32.store16
+  (i32.store16 $0 offset=3
    (i32.const 0)
    (i32.const 100)
   )
  )
  (func $other
-  (i32.store16 offset=3
+  (i32.store16 $0 offset=3 align=1
    (i32.const 0)
    (i32.const 100)
   )
@@ -659,13 +643,29 @@
  (type $0 (func))
  (memory $0 10)
  (func $keep2
-  (i32.store16 offset=3
+  (i32.store16 $0
    (i32.const 0)
    (i32.const 100)
   )
  )
  (func $other
-  (i32.store16 offset=3
+  (i32.store16 $0 offset=3
+   (i32.const 0)
+   (i32.const 100)
+  )
+ )
+)
+(module
+ (type $0 (func))
+ (memory $0 10)
+ (func $keep2
+  (i32.store16 $0 offset=3
+   (i32.const 0)
+   (i32.const 100)
+  )
+ )
+ (func $other
+  (i32.store16 $0 offset=3
    (i32.const 1)
    (i32.const 100)
   )
@@ -675,13 +675,13 @@
  (type $0 (func))
  (memory $0 10)
  (func $keep2
-  (i32.store16 offset=3
+  (i32.store16 $0 offset=3
    (i32.const 0)
    (i32.const 100)
   )
  )
  (func $other
-  (i32.store16 offset=3
+  (i32.store16 $0 offset=3
    (i32.const 0)
    (i32.const 101)
   )
@@ -1004,7 +1004,7 @@
  (memory $0 0)
  (func $erase
   (drop
-   (memory.size)
+   (memory.size $0)
   )
  )
 )
@@ -1013,7 +1013,7 @@
  (memory $0 0)
  (func $erase
   (drop
-   (memory.grow
+   (memory.grow $0
     (i32.const 10)
    )
   )
@@ -1024,14 +1024,14 @@
  (memory $0 0)
  (func $keep
   (drop
-   (memory.grow
+   (memory.grow $0
     (i32.const 10)
    )
   )
  )
  (func $other
   (drop
-   (memory.grow
+   (memory.grow $0
     (i32.const 11)
    )
   )
@@ -1042,12 +1042,12 @@
  (memory $0 0)
  (func $keep
   (drop
-   (memory.size)
+   (memory.size $0)
   )
  )
  (func $other
   (drop
-   (memory.grow
+   (memory.grow $0
     (i32.const 10)
    )
   )

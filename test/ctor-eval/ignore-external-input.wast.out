@@ -9,7 +9,7 @@
   (drop
    (call $wasi_something_else)
   )
-  (i32.store
+  (i32.store $0
    (i32.const 28)
    (i32.const 100)
   )

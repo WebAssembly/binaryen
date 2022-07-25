@@ -118,7 +118,7 @@
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
   ;; code offset: 0x56
-  (memory.grow
+  (memory.grow $mimport$0
    ;; code offset: 0x54
    (local.get $0)
   )
@@ -248,7 +248,7 @@
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
   ;; code offset: 0x56
-  (memory.grow
+  (memory.grow $mimport$0
    ;; code offset: 0x54
    (local.get $0)
   )

@@ -60,7 +60,7 @@ total
   )
   (loop $label$3
    (br_if $label$3
-    (i32.load8_s
+    (i32.load8_s $mimport$0
      (local.tee $0
       (i32.add
        (local.get $0)
@@ -71,11 +71,11 @@ total
    )
   )
   (local.set $1
-   (i32.load offset=24
+   (i32.load $mimport$0 offset=24
     (i32.add
-     (i32.load
+     (i32.load $mimport$0
       (i32.sub
-       (i32.load
+       (i32.load $mimport$0
         (i32.const 18100)
        )
        (i32.const 12)
@@ -99,8 +99,8 @@ total
       (i32.const 10888)
       (local.get $0)
       (i32.add
-       (i32.load offset=48
-        (i32.load
+       (i32.load $mimport$0 offset=48
+        (i32.load $mimport$0
          (local.get $1)
         )
        )
@@ -113,14 +113,14 @@ total
   (block $label$1
    (br_if $label$1
     (if (result i32)
-     (i32.load
+     (i32.load $mimport$0
       (i32.add
        (local.tee $0
-        (i32.load
+        (i32.load $mimport$0
          (i32.add
-          (i32.load
+          (i32.load $mimport$0
            (i32.sub
-            (i32.load
+            (i32.load $mimport$0
              (i32.const 18100)
             )
             (i32.const 12)
@@ -138,8 +138,8 @@ total
       (local.get $0)
       (i32.const 10)
       (i32.add
-       (i32.load offset=52
-        (i32.load
+       (i32.load $mimport$0 offset=52
+        (i32.load $mimport$0
          (local.get $0)
         )
        )
@@ -155,21 +155,21 @@ total
   (global.set $global$0
    (i32.const 32)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 8)
    (local.get $1)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 12)
    (local.get $2)
   )
-  (i32.store
+  (i32.store $mimport$0
    (local.tee $0
     (i32.const 32)
    )
    (i32.const 1)
   )
-  (i32.store offset=8
+  (i32.store $mimport$0 offset=8
    (local.get $0)
    (i32.const 2)
   )
@@ -182,7 +182,7 @@ total
   (i32.const 1)
  )
  (func $__ZNSt3__211__stdoutbufIcE8overflowEi (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  (i32.store8
+  (i32.store8 $mimport$0
    (i32.const 0)
    (local.get $1)
   )
@@ -192,8 +192,8 @@ total
     (i32.const 0)
     (i32.const 1)
     (i32.add
-     (i32.load offset=36
-      (i32.load
+     (i32.load $mimport$0 offset=36
+      (i32.load $mimport$0
        (i32.add
         (local.get $0)
         (i32.const 32)
@@ -213,8 +213,8 @@ total
     (local.get $1)
     (local.get $2)
     (i32.add
-     (i32.load offset=36
-      (i32.load offset=32
+     (i32.load $mimport$0 offset=36
+      (i32.load $mimport$0 offset=32
        (local.get $0)
       )
      )
@@ -285,7 +285,7 @@ total
   )
   (loop $label$3
    (br_if $label$3
-    (i32.load8_s
+    (i32.load8_s $mimport$0
      (local.tee $0
       (i32.add
        (local.get $0)
@@ -296,11 +296,11 @@ total
    )
   )
   (local.set $1
-   (i32.load offset=24
+   (i32.load $mimport$0 offset=24
     (i32.add
-     (i32.load
+     (i32.load $mimport$0
       (i32.sub
-       (i32.load
+       (i32.load $mimport$0
         (i32.const 18100)
        )
        (i32.const 12)
@@ -324,8 +324,8 @@ total
       (i32.const 10888)
       (local.get $0)
       (i32.add
-       (i32.load offset=48
-        (i32.load
+       (i32.load $mimport$0 offset=48
+        (i32.load $mimport$0
          (local.get $1)
         )
        )
@@ -338,14 +338,14 @@ total
   (block $label$1
    (br_if $label$1
     (if (result i32)
-     (i32.load
+     (i32.load $mimport$0
       (i32.add
        (local.tee $0
-        (i32.load
+        (i32.load $mimport$0
          (i32.add
-          (i32.load
+          (i32.load $mimport$0
            (i32.sub
-            (i32.load
+            (i32.load $mimport$0
              (i32.const 18100)
             )
             (i32.const 12)
@@ -363,8 +363,8 @@ total
       (local.get $0)
       (i32.const 10)
       (i32.add
-       (i32.load offset=52
-        (i32.load
+       (i32.load $mimport$0 offset=52
+        (i32.load $mimport$0
          (local.get $0)
         )
        )
@@ -377,19 +377,19 @@ total
   (i32.const 0)
  )
  (func $___stdout_write (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 8)
    (local.get $1)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 12)
    (local.get $2)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 32)
    (i32.const 1)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 40)
    (i32.const 2)
   )
@@ -402,7 +402,7 @@ total
   (i32.const 1)
  )
  (func $__ZNSt3__211__stdoutbufIcE8overflowEi (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  (i32.store8
+  (i32.store8 $mimport$0
    (i32.const 0)
    (local.get $1)
   )
@@ -412,8 +412,8 @@ total
     (i32.const 0)
     (i32.const 1)
     (i32.add
-     (i32.load offset=36
-      (i32.load
+     (i32.load $mimport$0 offset=36
+      (i32.load $mimport$0
        (i32.add
         (local.get $0)
         (i32.const 32)
@@ -433,8 +433,8 @@ total
     (local.get $1)
     (local.get $2)
     (i32.add
-     (i32.load offset=36
-      (i32.load offset=32
+     (i32.load $mimport$0 offset=36
+      (i32.load $mimport$0 offset=32
        (local.get $0)
       )
      )
@@ -505,7 +505,7 @@ total
   )
   (loop $label$3
    (br_if $label$3
-    (i32.load8_s
+    (i32.load8_s $mimport$0
      (local.tee $0
       (i32.add
        (local.get $0)
@@ -516,11 +516,11 @@ total
    )
   )
   (local.set $1
-   (i32.load offset=24
+   (i32.load $mimport$0 offset=24
     (i32.add
-     (i32.load
+     (i32.load $mimport$0
       (i32.sub
-       (i32.load
+       (i32.load $mimport$0
         (i32.const 18100)
        )
        (i32.const 12)
@@ -544,8 +544,8 @@ total
       (i32.const 10888)
       (local.get $0)
       (i32.add
-       (i32.load offset=48
-        (i32.load
+       (i32.load $mimport$0 offset=48
+        (i32.load $mimport$0
          (local.get $1)
         )
        )
@@ -558,14 +558,14 @@ total
   (block $label$1
    (br_if $label$1
     (if (result i32)
-     (i32.load
+     (i32.load $mimport$0
       (i32.add
        (local.tee $0
-        (i32.load
+        (i32.load $mimport$0
          (i32.add
-          (i32.load
+          (i32.load $mimport$0
            (i32.sub
-            (i32.load
+            (i32.load $mimport$0
              (i32.const 18100)
             )
             (i32.const 12)
@@ -583,8 +583,8 @@ total
       (local.get $0)
       (i32.const 10)
       (i32.add
-       (i32.load offset=52
-        (i32.load
+       (i32.load $mimport$0 offset=52
+        (i32.load $mimport$0
          (local.get $0)
         )
        )
@@ -597,19 +597,19 @@ total
   (i32.const 0)
  )
  (func $___stdout_write (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 8)
    (local.get $1)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 12)
    (local.get $2)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 32)
    (i32.const 1)
   )
-  (i32.store
+  (i32.store $mimport$0
    (i32.const 40)
    (i32.const 2)
   )
@@ -622,7 +622,7 @@ total
   (i32.const 1)
  )
  (func $__ZNSt3__211__stdoutbufIcE8overflowEi (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  (i32.store8
+  (i32.store8 $mimport$0
    (i32.const 0)
    (local.get $1)
   )
@@ -632,8 +632,8 @@ total
     (i32.const 0)
     (i32.const 1)
     (i32.add
-     (i32.load offset=36
-      (i32.load
+     (i32.load $mimport$0 offset=36
+      (i32.load $mimport$0
        (i32.add
         (local.get $0)
         (i32.const 32)
@@ -653,8 +653,8 @@ total
     (local.get $1)
     (local.get $2)
     (i32.add
-     (i32.load offset=36
-      (i32.load offset=32
+     (i32.load $mimport$0 offset=36
+      (i32.load $mimport$0 offset=32
        (local.get $0)
       )
      )

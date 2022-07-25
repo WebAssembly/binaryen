@@ -60,15 +60,15 @@
 ;; CHECK-NEXT:       (i32.const 16)
 ;; CHECK-NEXT:     )
 ;; CHECK-NEXT:     (block
-;; CHECK-NEXT:       (i64.store align=1
+;; CHECK-NEXT:       (i64.store $0 align=1
 ;; CHECK-NEXT:         (local.get $addr)
 ;; CHECK-NEXT:         (i64.const {{.*}})
 ;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (i32.store offset=8 align=1
+;; CHECK-NEXT:       (i32.store $0 offset=8 align=1
 ;; CHECK-NEXT:         (local.get $addr)
 ;; CHECK-NEXT:         (global.get $bar_timestamp)
 ;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (i32.store offset=12 align=1
+;; CHECK-NEXT:       (i32.store $0 offset=12 align=1
 ;; CHECK-NEXT:         (local.get $addr)
 ;; CHECK-NEXT:         (global.get $baz_timestamp)
 ;; CHECK-NEXT:       )

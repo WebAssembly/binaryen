@@ -33,7 +33,7 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK-NEXT: (func $baz (param $0 i32) (result i32)
-;; CHECK-NEXT:  (i32.atomic.store8 offset=1
+;; CHECK-NEXT:  (i32.atomic.store8 $0 offset=1
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
@@ -50,7 +50,7 @@
 ;; CHECK-NEXT:    (i32.const 16)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (block
-;; CHECK-NEXT:    (i64.store align=1
+;; CHECK-NEXT:    (i64.store $0 align=1
 ;; CHECK-NEXT:     (local.get $addr)
 ;; CHECK-NEXT:     (i64.const {{.*}})
 ;; CHECK-NEXT:    )
@@ -62,7 +62,7 @@
 ;; CHECK-NEXT:        (i32.const 2)
 ;; CHECK-NEXT:       )
 ;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (i32.store offset=8
+;; CHECK-NEXT:      (i32.store $0 offset=8
 ;; CHECK-NEXT:       (i32.add
 ;; CHECK-NEXT:        (local.get $addr)
 ;; CHECK-NEXT:        (i32.mul
@@ -70,7 +70,7 @@
 ;; CHECK-NEXT:         (i32.const 4)
 ;; CHECK-NEXT:        )
 ;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (i32.atomic.load8_u
+;; CHECK-NEXT:       (i32.atomic.load8_u $0
 ;; CHECK-NEXT:        (local.get $funcIdx)
 ;; CHECK-NEXT:       )
 ;; CHECK-NEXT:      )

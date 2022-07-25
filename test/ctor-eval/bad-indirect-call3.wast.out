@@ -8,7 +8,7 @@
  (elem (i32.const 0) $callee)
  (export "sig_mismatch" (func $sig_mismatch))
  (func $callee (param $0 anyref)
-  (i32.store8
+  (i32.store8 $0
    (i32.const 40)
    (i32.const 67)
   )

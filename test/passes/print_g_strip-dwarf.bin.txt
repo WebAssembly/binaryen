@@ -80,7 +80,7 @@
   )
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
-  (memory.grow
+  (memory.grow $mimport$0
    (local.get $0)
   )
  )
@@ -171,7 +171,7 @@
   )
  )
  (func $__growWasmMemory (param $0 i32) (result i32)
-  (memory.grow
+  (memory.grow $mimport$0
    (local.get $0)
   )
  )
