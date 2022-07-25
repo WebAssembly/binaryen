@@ -31,10 +31,9 @@
  ;; The signatures should be refined to a pair of mutually self-referential types.
 
  ;; CHECK:      (rec 
- ;; CHECK-NEXT:  (type $1 (func_subtype (param f32 (ref $1)) (result (ref $0)) func))
-
- ;; CHECK:       (type $0 (func_subtype (param i32 (ref $0)) (result (ref $1)) func))
+ ;; CHECK-NEXT:  (type $0 (func_subtype (param i32 (ref $0)) (result (ref $1)) func))
  (type $0 (func (param i32 funcref) (result funcref)))
+ ;; CHECK:       (type $1 (func_subtype (param f32 (ref $1)) (result (ref $0)) func))
  (type $1 (func (param f32 funcref) (result funcref)))
 
 
@@ -85,10 +84,9 @@
 
  (rec
   ;; CHECK:      (rec 
-  ;; CHECK-NEXT:  (type $1 (func_subtype (param (ref $0)) func))
-
-  ;; CHECK:       (type $0 (func_subtype (param (ref $0)) func))
+  ;; CHECK-NEXT:  (type $0 (func_subtype (param (ref $0)) func))
   (type $0 (func (param funcref)))
+  ;; CHECK:       (type $1 (func_subtype (param (ref $0)) func))
   (type $1 (func (param funcref)))
  )
 
@@ -122,10 +120,11 @@
  ;; another type that refers to them.
 
  ;; CHECK:      (rec 
- ;; CHECK-NEXT:  (type $0 (func_subtype (param i32 (ref $0)) (result (ref $1)) func))
+ ;; CHECK-NEXT:  (type $1 (func_subtype (param f32 (ref $1)) (result (ref $0)) func))
+
+ ;; CHECK:       (type $0 (func_subtype (param i32 (ref $0)) (result (ref $1)) func))
  (type $0 (func (param i32 funcref) (result funcref)))
 
- ;; CHECK:       (type $1 (func_subtype (param f32 (ref $1)) (result (ref $0)) func))
  (type $1 (func (param f32 funcref) (result funcref)))
 
  ;; CHECK:      (type $2 (func_subtype (param (ref $0)) (result (ref $1)) func))
