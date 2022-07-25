@@ -96,12 +96,12 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
     }
     Builder builder(*getModule());
     auto memory = getModule()->getMemory(curr->memory);
-    replaceCurrent(
-      builder.makeCall(getStoreName(curr),
-                       {curr->ptr,
-                        builder.makeConstPtr(curr->offset.addr, memory->indexType),
-                        curr->value},
-                       Type::none));
+    replaceCurrent(builder.makeCall(
+      getStoreName(curr),
+      {curr->ptr,
+       builder.makeConstPtr(curr->offset.addr, memory->indexType),
+       curr->value},
+      Type::none));
   }
 };
 
@@ -304,7 +304,8 @@ struct SafeHeap : public Pass {
                                           memory->name));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 2, module, memory->name));
+      block->list.push_back(
+        makeAlignCheck(style.align, builder, 2, module, memory->name));
     }
     // do the load
     auto* load = module->allocator.alloc<Load>();
@@ -353,7 +354,8 @@ struct SafeHeap : public Pass {
                                           memory->name));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 3, module, memory->name));
+      block->list.push_back(
+        makeAlignCheck(style.align, builder, 3, module, memory->name));
     }
     // do the store
     auto* store = module->allocator.alloc<Store>();
@@ -367,8 +369,11 @@ struct SafeHeap : public Pass {
     module->addFunction(std::move(func));
   }
 
-  Expression*
-  makeAlignCheck(Address align, Builder& builder, Index local, Module* module, Name memoryName) {
+  Expression* makeAlignCheck(Address align,
+                             Builder& builder,
+                             Index local,
+                             Module* module,
+                             Name memoryName) {
     auto memory = module->getMemory(memoryName);
     auto indexType = memory->indexType;
     Expression* ptrBits = builder.makeLocalGet(local, indexType);

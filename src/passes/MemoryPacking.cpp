@@ -718,13 +718,12 @@ void MemoryPacking::createReplacements(Module* module,
       // Create new memory.init or memory.fill
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
-        appendResult(
-          builder.makeMemoryFill(dest, value, size, init->memory));
+        appendResult(builder.makeMemoryFill(dest, value, size, init->memory));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
-        appendResult(builder.makeMemoryInit(
-          initIndex, dest, offset, size, init->memory));
+        appendResult(
+          builder.makeMemoryInit(initIndex, dest, offset, size, init->memory));
         initIndex++;
       }
     }
