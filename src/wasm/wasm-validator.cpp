@@ -1331,23 +1331,30 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
                "Bulk memory operation (bulk memory is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
+  auto* destMemory = getModule()->getMemoryOrNull(curr->destMemory);
+  shouldBeTrue(!!destMemory, curr, "memory.copy destMemory must exist");
+  auto* sourceMemory = getModule()->getMemoryOrNull(curr->sourceMemory);
+  shouldBeTrue(!!sourceMemory, curr, "memory.copy sourceMemory must exist");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(curr->memory),
+    indexType(curr->destMemory),
     curr,
-    "memory.copy dest must match memory index type");
+    "memory.copy dest must match destMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->source->type,
-    indexType(curr->memory),
+    indexType(curr->sourceMemory),
     curr,
-    "memory.copy source must match memory index type");
+    "memory.copy source must match sourceMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    indexType(curr->memory),
+    indexType(curr->destMemory),
     curr,
-    "memory.copy size must match memory index type");
-  shouldBeFalse(
-    getModule()->memories.empty(), curr, "Memory operations require a memory");
+    "memory.copy size must match destMemory index type");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type,
+    indexType(curr->sourceMemory),
+    curr,
+    "memory.copy size must match destMemory index type");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {

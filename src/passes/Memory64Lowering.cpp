@@ -33,12 +33,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     super::run(runner, module);
   }
 
-  void wrapAddress64(Expression*& ptr, Name memName) {
+  void wrapAddress64(Expression*& ptr, Name memoryName) {
     if (ptr->type == Type::unreachable) {
       return;
     }
     auto& module = *getModule();
-    auto memory = module.getMemory(memName);
+    auto memory = module.getMemory(memoryName);
     if (memory->is64()) {
       assert(ptr->type == Type::i64);
       Builder builder(module);
@@ -46,12 +46,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     }
   }
 
-  void extendAddress64(Expression*& ptr, Name memName) {
+  void extendAddress64(Expression*& ptr, Name memoryName) {
     if (ptr->type == Type::unreachable) {
       return;
     }
     auto& module = *getModule();
-    auto memory = module.getMemory(memName);
+    auto memory = module.getMemory(memoryName);
     if (memory->is64()) {
       assert(ptr->type == Type::i64);
       ptr->type = Type::i32;
@@ -97,9 +97,9 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    wrapAddress64(curr->dest, curr->memory);
-    wrapAddress64(curr->source, curr->memory);
-    wrapAddress64(curr->size, curr->memory);
+    wrapAddress64(curr->dest, curr->destMemory);
+    wrapAddress64(curr->source, curr->sourceMemory);
+    wrapAddress64(curr->size, curr->destMemory);
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {

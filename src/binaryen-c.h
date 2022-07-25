@@ -876,7 +876,8 @@ BinaryenMemoryCopy(BinaryenModuleRef module,
                    BinaryenExpressionRef dest,
                    BinaryenExpressionRef source,
                    BinaryenExpressionRef size,
-                   const char* name);
+                   const char* destMemory,
+                   const char* sourceMemory);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryFill(BinaryenModuleRef module,
                    BinaryenExpressionRef dest,

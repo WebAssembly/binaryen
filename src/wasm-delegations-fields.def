@@ -416,7 +416,8 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryCopy, size);
     DELEGATE_FIELD_CHILD(MemoryCopy, source);
     DELEGATE_FIELD_CHILD(MemoryCopy, dest);
-    DELEGATE_FIELD_NAME(MemoryCopy, memory);
+    DELEGATE_FIELD_NAME(MemoryCopy, sourceMemory);
+    DELEGATE_FIELD_NAME(MemoryCopy, destMemory);
     DELEGATE_END(MemoryCopy);
     break;
   }

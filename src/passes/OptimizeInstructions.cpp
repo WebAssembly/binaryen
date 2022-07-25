@@ -3758,9 +3758,9 @@ private:
             1,     // align
             memCopy->dest,
             builder.makeLoad(
-              bytes, false, 0, 1, memCopy->source, Type::i32, memCopy->memory),
+              bytes, false, 0, 1, memCopy->source, Type::i32, memCopy->sourceMemory),
             Type::i32,
-            memCopy->memory);
+            memCopy->destMemory);
         }
         case 8: {
           return builder.makeStore(
@@ -3769,9 +3769,9 @@ private:
             1,     // align
             memCopy->dest,
             builder.makeLoad(
-              bytes, false, 0, 1, memCopy->source, Type::i64, memCopy->memory),
+              bytes, false, 0, 1, memCopy->source, Type::i64, memCopy->sourceMemory),
             Type::i64,
-            memCopy->memory);
+            memCopy->destMemory);
         }
         case 16: {
           if (options.shrinkLevel == 0) {
@@ -3788,9 +3788,9 @@ private:
                                                         1,
                                                         memCopy->source,
                                                         Type::v128,
-                                                        memCopy->memory),
+                                                        memCopy->sourceMemory),
                                        Type::v128,
-                                       memCopy->memory);
+                                       memCopy->destMemory);
             }
           }
           break;

@@ -3487,10 +3487,12 @@ public:
     Address sourceVal(source.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    auto info = getMemoryInstanceInfo(curr->memory);
-    auto memorySize = info.instance->getMemorySize(info.name);
-    if (sourceVal + sizeVal > memorySize * Memory::kPageSize ||
-        destVal + sizeVal > memorySize * Memory::kPageSize ||
+    auto destInfo = getMemoryInstanceInfo(curr->destMemory);
+    auto sourceInfo = getMemoryInstanceInfo(curr->sourceMemory);
+    auto destMemorySize = destInfo.instance->getMemorySize(destInfo.name);
+    auto sourceMemorySize = sourceInfo.instance->getMemorySize(sourceInfo.name);
+    if (sourceVal + sizeVal > sourceMemorySize * Memory::kPageSize ||
+        destVal + sizeVal > destMemorySize * Memory::kPageSize ||
         // FIXME: better/cheaper way to detect wrapping?
         sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
         destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
@@ -3507,14 +3509,14 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      info.instance->externalInterface->store8(
-        info.instance->getFinalAddressWithoutOffset(
-          Literal(destVal + i), 1, memorySize),
-        info.instance->externalInterface->load8s(
-          info.instance->getFinalAddressWithoutOffset(
-            Literal(sourceVal + i), 1, memorySize),
-          info.name),
-        info.name);
+      destInfo.instance->externalInterface->store8(
+        destInfo.instance->getFinalAddressWithoutOffset(
+          Literal(destVal + i), 1, destMemorySize),
+        sourceInfo.instance->externalInterface->load8s(
+          sourceInfo.instance->getFinalAddressWithoutOffset(
+            Literal(sourceVal + i), 1, sourceMemorySize),
+          sourceInfo.name),
+        destInfo.name);
     }
     return {};
   }
