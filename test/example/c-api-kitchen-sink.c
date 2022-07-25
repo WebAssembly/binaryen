@@ -171,7 +171,7 @@ BinaryenExpressionRef makeMemoryCopy(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 2048);
   BinaryenExpressionRef source = makeInt32(module, 1024);
   BinaryenExpressionRef size = makeInt32(module, 12);
-  return BinaryenMemoryCopy(module, dest, source, size, "0");
+  return BinaryenMemoryCopy(module, dest, source, size, "0", "0");
 };
 
 BinaryenExpressionRef makeMemoryFill(BinaryenModuleRef module) {

@@ -1193,7 +1193,8 @@ public:
   Expression* dest;
   Expression* source;
   Expression* size;
-  Name memory;
+  Name destMemory;
+  Name sourceMemory;
 
   void finalize();
 };

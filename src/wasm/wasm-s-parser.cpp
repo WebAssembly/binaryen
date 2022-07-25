@@ -2319,12 +2319,16 @@ Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
 Expression* SExpressionWasmBuilder::makeMemoryCopy(Element& s) {
   auto ret = allocator.alloc<MemoryCopy>();
   Index i = 1;
-  Index memIdx = 0;
+  Index destIdx = 0;
+  Index sourceIdx = 0;
   if (s.size() > 4) {
-    memIdx = atoi(s[i++]->c_str());
+    destIdx = atoi(s[i++]->c_str());
+    sourceIdx = atoi(s[i++]->c_str());
   }
-  auto memory = getMemoryAtIdx(memIdx);
-  ret->memory = memory.name;
+  auto destMemory = getMemoryAtIdx(destIdx);
+  auto sourceMemory = getMemoryAtIdx(sourceIdx);
+  ret->destMemory = destMemory.name;
+  ret->sourceMemory = sourceMemory.name;
   ret->dest = parseExpression(s[i++]);
   ret->source = parseExpression(s[i++]);
   ret->size = parseExpression(s[i]);

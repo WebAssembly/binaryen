@@ -696,8 +696,8 @@ function wrapModule(module, self = {}) {
     'init'(segment, dest, offset, size, name) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size, strToStack(name));
     },
-    'copy'(dest, source, size, name) {
-      return Module['_BinaryenMemoryCopy'](module, dest, source, size, strToStack(name));
+    'copy'(dest, source, size, destMemory, sourceMemory) {
+      return Module['_BinaryenMemoryCopy'](module, dest, source, size, strToStack(destMemory), strToStack(sourceMemory));
     },
     'fill'(dest, value, size, name) {
       return Module['_BinaryenMemoryFill'](module, dest, value, size, strToStack(name));

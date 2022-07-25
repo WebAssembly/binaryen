@@ -590,12 +590,14 @@ public:
   MemoryCopy* makeMemoryCopy(Expression* dest,
                              Expression* source,
                              Expression* size,
-                             Name memory) {
+                             Name destMemory,
+                             Name sourceMemory) {
     auto* ret = wasm.allocator.alloc<MemoryCopy>();
     ret->dest = dest;
     ret->source = source;
     ret->size = size;
-    ret->memory = memory;
+    ret->destMemory = destMemory;
+    ret->sourceMemory = sourceMemory;
     ret->finalize();
     return ret;
   }

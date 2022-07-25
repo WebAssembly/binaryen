@@ -2948,7 +2948,7 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   Expression* dest = makePointer();
   Expression* source = makePointer();
   Expression* size = make(wasm.memories[0]->indexType);
-  return builder.makeMemoryCopy(dest, source, size, wasm.memories[0]->name);
+  return builder.makeMemoryCopy(dest, source, size, wasm.memories[0]->name, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryFill() {

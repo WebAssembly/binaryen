@@ -3008,8 +3008,6 @@ void WasmBinaryBuilder::processNames() {
         grow->memory = getMemoryName(index);
       } else if (auto* fill = ref->dynCast<MemoryFill>()) {
         fill->memory = getMemoryName(index);
-      } else if (auto* copy = ref->dynCast<MemoryCopy>()) {
-        copy->memory = getMemoryName(index);
       } else if (auto* init = ref->dynCast<MemoryInit>()) {
         init->memory = getMemoryName(index);
       } else if (auto* rmw = ref->dynCast<AtomicRMW>()) {
@@ -3027,6 +3025,12 @@ void WasmBinaryBuilder::processNames() {
       } else {
         WASM_UNREACHABLE("Invalid type in memory references");
       }
+    }
+  }
+
+  for (auto& [index, refs] : memoryCopyRefs) {
+    for (auto ref : refs) {
+        *ref = getMemoryName(index);
     }
   }
 
@@ -5175,10 +5179,11 @@ bool WasmBinaryBuilder::maybeVisitMemoryCopy(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->source = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  Index memIdx = getU32LEB();
-  getInt8();
+  Index destIdx = getU32LEB();
+  Index sourceIdx = getU32LEB();
   curr->finalize();
-  memoryRefs[memIdx].push_back(curr);
+  memoryCopyRefs[destIdx].push_back(&curr->destMemory);
+  memoryCopyRefs[sourceIdx].push_back(&curr->sourceMemory);
   out = curr;
   return true;
 }
