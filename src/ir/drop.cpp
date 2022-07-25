@@ -64,7 +64,12 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
 
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(curr)) {
-    if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
+    EffectAnalyzer effects(options, wasm, child);
+    // Ignore a trap, as the unreachable replacement would trap too.
+    if (last->type == Type::unreachable) {
+      effects.trap = false;
+    }
+    if (!effects.hasUnremovableSideEffects()) {
       continue;
     }
     if (child->type.isConcrete()) {

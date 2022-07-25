@@ -35,10 +35,6 @@
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (loop $loop
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1184,19 +1180,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.get $child 0
-  ;; CHECK-NEXT:        (local.get $child)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
@@ -1482,15 +1466,16 @@
 (module
   (type $nothing (array_subtype (mut (ref null any)) data))
 
+  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $null (array_subtype (mut anyref) data))
   (type $null (array_subtype (mut (ref null any)) data))
 
-  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
   (type $something (array_subtype (mut (ref null any)) data))
 
   (type $something-child (array_subtype (mut (ref null any)) $something))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
@@ -1507,22 +1492,7 @@
   ;; CHECK-NEXT:   (ref.null any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result anyref)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (array.get $null
-  ;; CHECK-NEXT:        (array.new_default $null
-  ;; CHECK-NEXT:         (i32.const 10)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null any)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.set $something
   ;; CHECK-NEXT:   (array.new_default $something
@@ -1542,13 +1512,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func

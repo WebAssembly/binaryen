@@ -623,7 +623,6 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
-  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
   (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -641,19 +640,7 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $substruct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.cast_static $substruct
-  ;; CHECK-NEXT:        (local.get $ref)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $substruct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
