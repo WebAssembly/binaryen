@@ -184,9 +184,8 @@ void Instrumenter::addProfileExport() {
   }
 
   // Write the hash followed by all the time stamps
-  Expression* writeData =
-    builder.makeStore(
-      8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
+  Expression* writeData = builder.makeStore(
+    8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
 
   switch (options.storageKind) {
