@@ -282,7 +282,8 @@ public:
   }
   int32_t geti31(bool signed_ = true) const {
     assert(type.getHeapType() == HeapType::i31);
-    return signed_ ? (i32 << 1) >> 1 : (i32 & 0x7fffffff);
+    // Cast to unsigned for the left shift to avoid undefined behavior.
+    return signed_ ? (uint32_t(i32) << 1) >> 1 : (i32 & 0x7fffffff);
   }
   int64_t geti64() const {
     assert(type == Type::i64);
