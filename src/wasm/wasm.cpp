@@ -1194,7 +1194,8 @@ void StringMeasure::finalize() {
 }
 
 void StringEncode::finalize() {
-  if (ref->type == Type::unreachable || ptr->type == Type::unreachable) {
+  if (ref->type == Type::unreachable || ptr->type == Type::unreachable ||
+      (start && start->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     type = Type::i32;

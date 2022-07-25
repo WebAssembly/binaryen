@@ -22,6 +22,9 @@
 ;; CHECK-NEXT:   --merge-profiles                     Merge multiple profiles for the same
 ;; CHECK-NEXT:                                        module into a single profile.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-profile                      [print-profile] Print profile contents in
+;; CHECK-NEXT:                                        a human-readable format.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --profile                            [split] The profile to use to guide
 ;; CHECK-NEXT:                                        splitting.
 ;; CHECK-NEXT:
@@ -104,6 +107,9 @@
 ;; CHECK-NEXT:                                        wasm binary (or full debuginfo in wast)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles] Output file.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --unescape,-u                        Un-escape function names (in
+;; CHECK-NEXT:                                        print-profile output)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --verbose,-v                         Verbose output mode. Prints the functions
 ;; CHECK-NEXT:                                        that will be kept and split out when
