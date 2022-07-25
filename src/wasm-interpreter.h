@@ -1419,6 +1419,9 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
+    if (value.isNull()) {
+      trap("null ref");
+    }
     return Literal(value.geti31(curr->signed_));
   }
 
