@@ -655,7 +655,9 @@ private:
     void visitI31New(I31New* curr) {}
     void visitI31Get(I31Get* curr) {
       // traps when the ref is null
-      parent.implicitTrap = true;
+      if (curr->i31->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
     void visitCallRef(CallRef* curr) {
       parent.calls = true;
