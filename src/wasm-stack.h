@@ -122,7 +122,10 @@ public:
   MappedLocals mappedLocals;
 
 private:
-  void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset, Name memory);
+  void emitMemoryAccess(size_t alignment,
+                        size_t bytes,
+                        uint32_t offset,
+                        Name memory);
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;

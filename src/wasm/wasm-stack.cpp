@@ -646,7 +646,8 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
       break;
   }
   assert(curr->align);
-  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
+  emitMemoryAccess(
+    curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
@@ -678,7 +679,8 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       break;
   }
   assert(curr->align);
-  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
+  emitMemoryAccess(
+    curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
   o << curr->index;
 }
 
@@ -697,7 +699,8 @@ void BinaryInstWriter::visitDataDrop(DataDrop* curr) {
 void BinaryInstWriter::visitMemoryCopy(MemoryCopy* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryCopy);
-  o << int8_t(parent.getMemoryIndex(curr->destMemory)) << int8_t(parent.getMemoryIndex(curr->sourceMemory));
+  o << int8_t(parent.getMemoryIndex(curr->destMemory))
+    << int8_t(parent.getMemoryIndex(curr->sourceMemory));
 }
 
 void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {

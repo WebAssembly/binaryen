@@ -3752,26 +3752,34 @@ private:
         case 1:
         case 2:
         case 4: {
-          return builder.makeStore(
-            bytes, // bytes
-            0,     // offset
-            1,     // align
-            memCopy->dest,
-            builder.makeLoad(
-              bytes, false, 0, 1, memCopy->source, Type::i32, memCopy->sourceMemory),
-            Type::i32,
-            memCopy->destMemory);
+          return builder.makeStore(bytes, // bytes
+                                   0,     // offset
+                                   1,     // align
+                                   memCopy->dest,
+                                   builder.makeLoad(bytes,
+                                                    false,
+                                                    0,
+                                                    1,
+                                                    memCopy->source,
+                                                    Type::i32,
+                                                    memCopy->sourceMemory),
+                                   Type::i32,
+                                   memCopy->destMemory);
         }
         case 8: {
-          return builder.makeStore(
-            bytes, // bytes
-            0,     // offset
-            1,     // align
-            memCopy->dest,
-            builder.makeLoad(
-              bytes, false, 0, 1, memCopy->source, Type::i64, memCopy->sourceMemory),
-            Type::i64,
-            memCopy->destMemory);
+          return builder.makeStore(bytes, // bytes
+                                   0,     // offset
+                                   1,     // align
+                                   memCopy->dest,
+                                   builder.makeLoad(bytes,
+                                                    false,
+                                                    0,
+                                                    1,
+                                                    memCopy->source,
+                                                    Type::i64,
+                                                    memCopy->sourceMemory),
+                                   Type::i64,
+                                   memCopy->destMemory);
         }
         case 16: {
           if (options.shrinkLevel == 0) {

@@ -1555,7 +1555,8 @@ public:
   std::vector<Memory*> memoryImports;
   // at index i we have all references to the memory i
   std::map<Index, std::vector<Expression*>> memoryRefs;
-  //std::map<Index, std::vector<std::tuple<const char*, MemoryCopy*>>> memoryCopyRefs;
+  // std::map<Index, std::vector<std::tuple<const char*, MemoryCopy*>>>
+  // memoryCopyRefs;
   std::map<Index, std::vector<wasm::Name*>> memoryCopyRefs;
 
   // we store data here after being read from binary, before we know their names
