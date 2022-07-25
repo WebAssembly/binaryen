@@ -1939,8 +1939,7 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   Index memIdx = 0;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 2 && !s.isList() && strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (s.size() > 2 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 && strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }
   auto memory = getMemoryAtIdx(memIdx);
@@ -2278,7 +2277,7 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   Index memIdx = 0;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 4 && !s.isList() && strncmp(s[i]->c_str(), "align", 5) != 0 &&
+  if (s.size() > 4 && !s[i]->isList() && strncmp(s[i]->c_str(), "align", 5) != 0 &&
       strncmp(s[i]->c_str(), "offset", 6) != 0) {
     memIdx = atoi(s[i++]->c_str());
   }

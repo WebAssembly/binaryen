@@ -163,7 +163,7 @@
   (i32.const 1)
  )
  ;; CHECK:      (func $1 (result i64)
- ;; CHECK-NEXT:  (i32.atomic.store16
+ ;; CHECK-NEXT:  (i32.atomic.store16 $0
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -252,17 +252,17 @@
   (unreachable)
  )
  ;; CHECK:      (func $1
- ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:  (i32.store $0
  ;; CHECK-NEXT:   (i32.const 4)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:  (i32.store $0
  ;; CHECK-NEXT:   (i32.const 56)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i64.store
+ ;; CHECK-NEXT:  (i64.store $0
  ;; CHECK-NEXT:   (i32.const 49)
- ;; CHECK-NEXT:   (i64.load
+ ;; CHECK-NEXT:   (i64.load $0
  ;; CHECK-NEXT:    (i32.const 24)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

@@ -162,7 +162,7 @@
    (i32.const 10)
   )
   (drop
-   (i32.load
+   (i32.load $0
     (i32.const 20)
    )
   )
@@ -277,14 +277,14 @@
   (drop
    (i32.const 20)
   )
-  (i32.store
+  (i32.store $0
    (i32.const 10)
    (i32.const 30)
   )
   (drop
    (i32.const 10)
   )
-  (i32.store
+  (i32.store $0
    (i32.const 20)
    (i32.const 30)
   )
@@ -728,7 +728,7 @@
    (i32.const 50)
   )
   (drop
-   (i32.atomic.rmw.cmpxchg
+   (i32.atomic.rmw.cmpxchg $0
     (i32.const 20)
     (i32.const 40)
     (i32.const 60)
@@ -738,7 +738,7 @@
    (i32.const 10)
   )
   (drop
-   (i32.atomic.rmw.add
+   (i32.atomic.rmw.add $0
     (i32.const 20)
     (i32.const 30)
    )

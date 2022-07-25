@@ -5,7 +5,7 @@
  (data "Hello, datacount section!")
  (export "wasm_func_a" (func $a_wasm_func))
  (func $a_wasm_func
-  (memory.init 0
+  (memory.init $0 0
    (i32.const 0)
    (i32.const 0)
    (i32.const 25)

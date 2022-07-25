@@ -48,7 +48,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.eqz
- ;; CHECK-NEXT:    (i32.load16_u
+ ;; CHECK-NEXT:    (i32.load16_u $0
  ;; CHECK-NEXT:     (i32.const 3)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

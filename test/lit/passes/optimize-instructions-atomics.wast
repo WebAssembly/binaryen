@@ -9,7 +9,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.shr_s
  ;; CHECK-NEXT:    (i32.shl
- ;; CHECK-NEXT:     (i32.atomic.load8_u
+ ;; CHECK-NEXT:     (i32.atomic.load8_u $0
  ;; CHECK-NEXT:      (i32.const 100)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (i32.const 24)
@@ -35,12 +35,12 @@
  ;; CHECK:      (func $dont_simplify_reinterpret_atomic_load_store (param $x i32) (param $y f32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (f64.reinterpret_i64
- ;; CHECK-NEXT:    (i64.atomic.load
+ ;; CHECK-NEXT:    (i64.atomic.load $0
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.atomic.store
+ ;; CHECK-NEXT:  (i32.atomic.store $0
  ;; CHECK-NEXT:   (i32.const 8)
  ;; CHECK-NEXT:   (i32.reinterpret_f32
  ;; CHECK-NEXT:    (local.get $y)
@@ -54,33 +54,33 @@
 
  ;; CHECK:      (func $combine_atomic_load_and_extends (param $x i32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.atomic.load8_u
+ ;; CHECK-NEXT:   (i64.atomic.load8_u $0
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.atomic.load16_u
+ ;; CHECK-NEXT:   (i64.atomic.load16_u $0
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.atomic.load32_u
+ ;; CHECK-NEXT:   (i64.atomic.load32_u $0
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.atomic.load8_u
+ ;; CHECK-NEXT:   (i64.atomic.load8_u $0
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.atomic.load16_u
+ ;; CHECK-NEXT:   (i64.atomic.load16_u $0
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i64.extend_i32_s
- ;; CHECK-NEXT:    (i32.atomic.load
+ ;; CHECK-NEXT:    (i32.atomic.load $0
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

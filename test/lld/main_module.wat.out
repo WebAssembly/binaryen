@@ -24,14 +24,14 @@
   (call $__wasm_apply_relocs)
  )
  (func $__wasm_apply_relocs
-  (i32.store
+  (i32.store $0
    (i32.add
     (global.get $gimport$2)
     (i32.const 16)
    )
    (global.get $gimport$6)
   )
-  (i32.store
+  (i32.store $0
    (i32.add
     (global.get $gimport$2)
     (i32.const 20)
@@ -48,7 +48,7 @@
     )
    )
   )
-  (i32.load
+  (i32.load $0
    (global.get $gimport$5)
   )
  )

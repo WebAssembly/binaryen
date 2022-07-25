@@ -5,15 +5,15 @@
  (export "test1" (func $test1))
  (func $test1
   (call $unsafe-to-call)
-  (i32.store
+  (i32.store $0
    (i32.const 12)
    (i32.const 115)
   )
-  (i32.store16
+  (i32.store16 $0
    (i32.const 20)
    (i32.const 31353)
   )
-  (i32.store8
+  (i32.store8 $0
    (i32.const 23)
    (i32.const 120)
   )

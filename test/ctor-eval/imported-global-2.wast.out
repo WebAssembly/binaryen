@@ -9,7 +9,7 @@
   (local.set $temp
    (global.get $imported)
   )
-  (i32.store8
+  (i32.store8 $0
    (i32.const 13)
    (i32.const 115)
   )
@@ -17,7 +17,7 @@
  )
  (func $1 (result i32)
   (drop
-   (i32.load
+   (i32.load $0
     (i32.const 13)
    )
   )

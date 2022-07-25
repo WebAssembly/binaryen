@@ -269,7 +269,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:    (i32.load $0
   ;; CHECK-NEXT:     (i32.const 10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

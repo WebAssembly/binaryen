@@ -99,7 +99,7 @@
   (loop $label$0
    (loop $label$1
     (br_if $label$0
-     (i32.load8_s
+     (i32.load8_s $0
       (i32.const 201460482)
      )
     )

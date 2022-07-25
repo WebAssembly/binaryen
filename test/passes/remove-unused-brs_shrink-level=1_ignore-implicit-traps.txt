@@ -16,7 +16,7 @@
   )
   (drop
    (select
-    (i32.load
+    (i32.load $0
      (i32.const 10)
     )
     (i32.const 27)

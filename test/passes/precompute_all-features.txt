@@ -140,7 +140,7 @@
  )
  (func $reuse-br-value (result f64)
   (block $label$0 (result f64)
-   (i32.store8
+   (i32.store8 $0
     (i32.const 1919623207)
     (if (result i32)
      (i32.const 1)
@@ -157,7 +157,7 @@
        (f64.const 6.134856208230095e-154)
       )
      )
-     (i32.load offset=3 align=2
+     (i32.load $0 offset=3 align=2
       (i32.const 169901344)
      )
     )
@@ -221,7 +221,7 @@
   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
  )
  (func $no-memory-init-precompute
-  (memory.init 0
+  (memory.init $0 0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
@@ -231,14 +231,14 @@
   (data.drop 0)
  )
  (func $no-memory-copy-precompute
-  (memory.copy
+  (memory.copy $0 $0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
  (func $no-memory-fill-precompute
-  (memory.fill
+  (memory.fill $0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)

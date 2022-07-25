@@ -36,10 +36,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load
+;; CHECK-NEXT:    (i32.load $0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load offset=4
+;; CHECK-NEXT:    (i32.load $0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -53,10 +53,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load
+;; CHECK-NEXT:    (i32.load $0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load offset=4
+;; CHECK-NEXT:    (i32.load $0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -73,10 +73,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load
+;; CHECK-NEXT:    (i32.load $0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load offset=4
+;; CHECK-NEXT:    (i32.load $0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -90,10 +90,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load
+;; CHECK-NEXT:    (i32.load $0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load offset=4
+;; CHECK-NEXT:    (i32.load $0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
