@@ -44,7 +44,7 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
   // effects would never help us (and would be slower to run).
   ShallowEffectAnalyzer effects(options, wasm, curr);
   // Ignore a trap, as the unreachable replacement would trap too.
-  if (last->type == Type::unreachable) {
+  if (last->is<Unreachable>()) {
     effects.trap = false;
   }
 
