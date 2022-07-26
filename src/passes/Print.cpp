@@ -3627,7 +3627,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       default:
         WASM_UNREACHABLE("unexpeted op");
     }
-    std::cout << '\n';
+    o << '\n';
   }
   assert(controlFlowDepth == 0);
   return o;
