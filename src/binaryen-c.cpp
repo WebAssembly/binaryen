@@ -4224,8 +4224,9 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   char* sourceMap = nullptr;
   if (sourceMapUrl) {
     auto str = os.str();
-    sourceMap = (char*)malloc(str.length() + 1);
-    std::copy_n(str.c_str(), str.length() + 1, sourceMap);
+    const size_t len = str.length() + 1;
+    sourceMap = (char*)malloc(len);
+    std::copy_n(str.c_str(), len, sourceMap);
   }
   return {binary, buffer.size(), sourceMap};
 }
@@ -4238,11 +4239,11 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   os << *(Module*)module;
   Colors::setEnabled(colors); // restore colors state
 
-  const std::string out = os.str();
-  const int len = out.length() + 1;
-  char* cout = (char*)malloc(len);
-  strncpy(cout, out.c_str(), len);
-  return cout;
+  auto str = os.str();
+  const size_t len = str.length() + 1;
+  char* output = (char*)malloc(len);
+  std::copy_n(str.c_str(), len, output);
+  return output;
 }
 
 char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
@@ -4254,11 +4255,11 @@ char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
   wasm::printStackIR(os, (Module*)module, optimize);
   Colors::setEnabled(colors); // restore colors state
 
-  const std::string out = os.str();
-  const int len = out.length() + 1;
-  char* cout = (char*)malloc(len);
-  strncpy(cout, out.c_str(), len);
-  return cout;
+  auto str = os.str();
+  const int len = str.length() + 1;
+  char* output = (char*)malloc(len);
+  std::copy_n(str.c_str(), len, output);
+  return output;
 }
 
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
