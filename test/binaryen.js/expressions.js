@@ -478,7 +478,7 @@ console.log("# MemorySize");
   const module = new binaryen.Module();
   module.setMemory(1, 1, null);
   var type = binaryen.i32;
-  const theMemorySize = binaryen.MemorySize(module.memory.size("0"));
+  const theMemorySize = binaryen.MemorySize(module.memory.size());
   assert(theMemorySize instanceof binaryen.MemorySize);
   assert(theMemorySize instanceof binaryen.Expression);
   assert(theMemorySize.type === type);
@@ -492,7 +492,7 @@ console.log("# MemorySize");
   assert(
     theMemorySize.toText()
     ==
-    "(memory.size)\n"
+    "(memory.size $0)\n"
   );
 
   module.dispose();
@@ -522,7 +522,7 @@ console.log("# MemoryGrow");
   assert(
     theMemoryGrow.toText()
     ==
-    "(memory.grow\n (i32.const 2)\n)\n"
+    "(memory.grow $0\n (i32.const 2)\n)\n"
   );
 
   module.dispose();
@@ -568,7 +568,7 @@ console.log("# Load");
   assert(
     theLoad.toText()
     ==
-    "(i64.atomic.load offset=32 align=4\n (i32.const 128)\n)\n"
+    "(i64.atomic.load $0 offset=32 align=4\n (i32.const 128)\n)\n"
   );
 
   module.dispose();
@@ -618,7 +618,7 @@ console.log("# Store");
   assert(
     theStore.toText()
     ==
-    "(i64.atomic.store offset=32 align=4\n (i32.const 128)\n (i32.const 2)\n)\n"
+    "(i64.atomic.store $0 offset=32 align=4\n (i32.const 128)\n (i32.const 2)\n)\n"
   );
 
   module.dispose();
@@ -859,7 +859,7 @@ console.log("# AtomicRMW");
   assert(
     theAtomicRMW.toText()
     ==
-    "(i64.atomic.rmw16.sub_u offset=16\n (i32.const 4)\n (i64.const 5)\n)\n"
+    "(i64.atomic.rmw16.sub_u $0 offset=16\n (i32.const 4)\n (i64.const 5)\n)\n"
   );
 
   module.dispose();
@@ -902,7 +902,7 @@ console.log("# AtomicCmpxchg");
   assert(
     theAtomicCmpxchg.toText()
     ==
-    "(i64.atomic.rmw16.cmpxchg_u offset=16\n (i32.const 5)\n (i64.const 6)\n (i64.const 7)\n)\n"
+    "(i64.atomic.rmw16.cmpxchg_u $0 offset=16\n (i32.const 5)\n (i64.const 6)\n (i64.const 7)\n)\n"
   );
 
   module.dispose();
@@ -941,7 +941,7 @@ console.log("# AtomicWait");
   assert(
     theAtomicWait.toText()
     ==
-    "(memory.atomic.wait64\n (i32.const 5)\n (i32.const 6)\n (i64.const 7)\n)\n"
+    "(memory.atomic.wait64 $0\n (i32.const 5)\n (i32.const 6)\n (i64.const 7)\n)\n"
   );
 
   module.dispose();
@@ -973,7 +973,7 @@ console.log("# AtomicNotify");
   assert(
     theAtomicNotify.toText()
     ==
-    "(memory.atomic.notify\n (i32.const 3)\n (i32.const 4)\n)\n"
+    "(memory.atomic.notify $0\n (i32.const 3)\n (i32.const 4)\n)\n"
   );
 
   module.dispose();
@@ -1209,7 +1209,7 @@ console.log("# SIMDLoad");
   assert(
     theSIMDLoad.toText()
     ==
-    "(v128.load8_splat offset=32 align=4\n (i32.const 2)\n)\n"
+    "(v128.load8_splat $0 offset=32 align=4\n (i32.const 2)\n)\n"
   );
 
   module.dispose();
@@ -1258,7 +1258,7 @@ console.log("# SIMDLoadStoreLane");
   assert(
     theSIMDLoadStoreLane.toText()
     ==
-    "(v128.load16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+    "(v128.load16_lane $0 offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
   );
 
   theSIMDLoadStoreLane.op = op = binaryen.Operations.Store16LaneVec128;
@@ -1272,7 +1272,7 @@ console.log("# SIMDLoadStoreLane");
   assert(
     theSIMDLoadStoreLane.toText()
     ==
-    "(v128.store16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+    "(v128.store16_lane $0 offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
   );
 
   module.dispose();
@@ -1312,7 +1312,7 @@ console.log("# MemoryInit");
   assert(
     theMemoryInit.toText()
     ==
-    "(memory.init 5\n (i32.const 6)\n (i32.const 7)\n (i32.const 8)\n)\n"
+    "(memory.init $0 5\n (i32.const 6)\n (i32.const 7)\n (i32.const 8)\n)\n"
   );
 
   module.dispose();
@@ -1375,7 +1375,7 @@ console.log("# MemoryCopy");
   assert(
     theMemoryCopy.toText()
     ==
-    "(memory.copy\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
+    "(memory.copy $0 $0\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
   );
 
   module.dispose();
@@ -1411,7 +1411,7 @@ console.log("# MemoryFill");
   assert(
     theMemoryFill.toText()
     ==
-    "(memory.fill\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
+    "(memory.fill $0\n (i32.const 4)\n (i32.const 5)\n (i32.const 6)\n)\n"
   );
 
   module.dispose();
