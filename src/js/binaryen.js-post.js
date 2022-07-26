@@ -150,6 +150,7 @@ function initializeConstants() {
     'TypedFunctionReferences',
     'RelaxedSIMD',
     'ExtendedConst',
+    'Strings',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
