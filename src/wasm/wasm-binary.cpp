@@ -4284,7 +4284,8 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = sig.results;
-  functionRefs[index].push_back(&curr->target); // we don't know function names yet
+  functionRefs[index].push_back(
+    &curr->target); // we don't know function names yet
   curr->finalize();
 }
 
