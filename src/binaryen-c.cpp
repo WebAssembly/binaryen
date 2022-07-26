@@ -4237,6 +4237,7 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   Colors::setEnabled(false); // do not use colors for writing
   ss << *(Module*)module;
   Colors::setEnabled(colors); // restore colors state
+  ss.flush();
 
   const std::string out = ss.str();
   const int len = out.length() + 1;
@@ -4253,6 +4254,7 @@ char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
   Colors::setEnabled(false); // do not use colors for writing
   wasm::printStackIR(ss, (Module*)module, optimize);
   Colors::setEnabled(colors); // restore colors state
+  ss.flush();
 
   const std::string out = ss.str();
   const int len = out.length() + 1;
