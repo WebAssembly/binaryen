@@ -4231,15 +4231,14 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 }
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
-  std::stringstream ss;
+  std::ostringstream os;
   bool colors = Colors::isEnabled();
 
   Colors::setEnabled(false); // do not use colors for writing
-  ss << *(Module*)module;
+  os << *(Module*)module;
   Colors::setEnabled(colors); // restore colors state
-  ss.flush();
 
-  const std::string out = ss.str();
+  const std::string out = os.str();
   const int len = out.length() + 1;
   char* cout = (char*)malloc(len);
   strncpy(cout, out.c_str(), len);
@@ -4248,15 +4247,14 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
 
 char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
                                             bool optimize) {
-  std::stringstream ss;
+  std::ostringstream os;
   bool colors = Colors::isEnabled();
 
   Colors::setEnabled(false); // do not use colors for writing
-  wasm::printStackIR(ss, (Module*)module, optimize);
+  wasm::printStackIR(os, (Module*)module, optimize);
   Colors::setEnabled(colors); // restore colors state
-  ss.flush();
 
-  const std::string out = ss.str();
+  const std::string out = os.str();
   const int len = out.length() + 1;
   char* cout = (char*)malloc(len);
   strncpy(cout, out.c_str(), len);
