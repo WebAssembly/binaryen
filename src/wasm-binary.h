@@ -1523,7 +1523,7 @@ public:
   // their names
   std::vector<Function*> functionImports;
   // at index i we have all refs to the function i
-  std::map<Index, std::vector<Expression*>> functionRefs;
+  std::map<Index, std::vector<Name*>> functionRefs;
   Function* currFunction = nullptr;
   // before we see a function (like global init expressions), there is no end of
   // function to check
@@ -1535,7 +1535,7 @@ public:
   // their names
   std::vector<Table*> tableImports;
   // at index i we have all references to the table i
-  std::map<Index, std::vector<Expression*>> tableRefs;
+  std::map<Index, std::vector<Name*>> tableRefs;
 
   std::map<Index, Name> elemTables;
 
@@ -1552,7 +1552,7 @@ public:
   // their names
   std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
-  std::map<Index, std::vector<Expression*>> globalRefs;
+  std::map<Index, std::vector<Name*>> globalRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
