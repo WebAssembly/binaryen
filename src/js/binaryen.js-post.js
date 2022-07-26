@@ -2593,9 +2593,7 @@ function wrapModule(module, self = {}) {
     return text;
   };
   self['emitStackIR'] = function(optimize) {
-    self['runPasses'](['generate-stack-ir']);
-    if (optimize) self['runPasses'](['optimize-stack-ir']);
-    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module);
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module, optimize);
     let text = UTF8ToString(textPtr);
     if (textPtr) _free(textPtr);
     return text;
