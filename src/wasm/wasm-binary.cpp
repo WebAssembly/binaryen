@@ -1342,32 +1342,37 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (heapType.isBasic()) {
-      if (type.isNullable()) {
-        switch (heapType.getBasic()) {
-          case HeapType::any:
-            o << S32LEB(BinaryConsts::EncodedType::anyref);
-            return;
-          case HeapType::func:
-            o << S32LEB(BinaryConsts::EncodedType::funcref);
-            return;
-          case HeapType::eq:
-            o << S32LEB(BinaryConsts::EncodedType::eqref);
-            return;
-          default:
-            break;
-        }
-      } else {
-        switch (heapType.getBasic()) {
-          case HeapType::i31:
-            o << S32LEB(BinaryConsts::EncodedType::i31ref);
-            return;
-          case HeapType::data:
-            o << S32LEB(BinaryConsts::EncodedType::dataref);
-            return;
-          default:
-            break;
-        }
+    if (heapType.isBasic() && type.isNullable()) {
+      switch (heapType.getBasic()) {
+        case HeapType::any:
+          o << S32LEB(BinaryConsts::EncodedType::anyref);
+          return;
+        case HeapType::func:
+          o << S32LEB(BinaryConsts::EncodedType::funcref);
+          return;
+        case HeapType::eq:
+          o << S32LEB(BinaryConsts::EncodedType::eqref);
+          return;
+        case HeapType::i31:
+          // TODO: Emit i31ref once V8 (and Binaryen itself) treats it as
+          // nullable.
+          break;
+        case HeapType::data:
+          // TODO: Emit dataref once V8 (and Binaryen itself) treats it as
+          // nullable.
+          break;
+        case HeapType::string:
+          o << S32LEB(BinaryConsts::EncodedType::stringref);
+          return;
+        case HeapType::stringview_wtf8:
+          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf8);
+          return;
+        case HeapType::stringview_wtf16:
+          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf16);
+          return;
+        case HeapType::stringview_iter:
+          o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
+          return;
       }
     }
     if (type.isNullable()) {
