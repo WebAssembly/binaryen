@@ -2,64 +2,64 @@
  (type $none_=>_none (func))
  (memory $0 (shared 1 1))
  (func $main
-  (i32.atomic.store
+  (i32.atomic.store $0
    (i32.const 0)
-   (i32.atomic.load
+   (i32.atomic.load $0
     (i32.const 0)
    )
   )
-  (i32.atomic.store8
+  (i32.atomic.store8 $0
    (i32.const 0)
-   (i32.atomic.load8_u
+   (i32.atomic.load8_u $0
     (i32.const 0)
    )
   )
-  (i32.atomic.store16
+  (i32.atomic.store16 $0
    (i32.const 0)
-   (i32.atomic.load16_u
+   (i32.atomic.load16_u $0
     (i32.const 0)
    )
   )
-  (i64.atomic.store
+  (i64.atomic.store $0
    (i32.const 0)
-   (i64.atomic.load
+   (i64.atomic.load $0
     (i32.const 0)
    )
   )
-  (i64.atomic.store8
+  (i64.atomic.store8 $0
    (i32.const 0)
-   (i64.atomic.load8_u
+   (i64.atomic.load8_u $0
     (i32.const 0)
    )
   )
-  (i64.atomic.store16
+  (i64.atomic.store16 $0
    (i32.const 0)
-   (i64.atomic.load16_u
+   (i64.atomic.load16_u $0
     (i32.const 0)
    )
   )
-  (i64.atomic.store32
+  (i64.atomic.store32 $0
    (i32.const 0)
-   (i64.atomic.load32_u
+   (i64.atomic.load32_u $0
     (i32.const 0)
    )
   )
   (drop
-   (memory.atomic.wait32
+   (memory.atomic.wait32 $0
     (i32.const 0)
     (i32.const 0)
     (i64.const 0)
    )
   )
   (drop
-   (memory.atomic.wait64
+   (memory.atomic.wait64 $0
     (i32.const 0)
     (i64.const 0)
     (i64.const 0)
    )
   )
   (drop
-   (memory.atomic.notify
+   (memory.atomic.notify $0
     (i32.const 0)
     (i32.const 0)
    )
