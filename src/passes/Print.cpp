@@ -3539,9 +3539,7 @@ static std::ostream&
 printStackIR(StackIR* ir, std::ostream& o, Function* func) {
   size_t indent = func ? 2 : 0;
   auto doIndent = [&indent, &o]() {
-    for (size_t j = 0; j < indent; j++) {
-      o << ' ';
-    }
+    o << std::string(indent, ' ');
   };
 
   int controlFlowDepth = 0;
