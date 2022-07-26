@@ -32,6 +32,15 @@ void GlobalTypeRewriter::update() {
   }
   typeBuilder.grow(indexedTypes.types.size());
 
+  // All the input types are distinct, so we need to make sure the output types
+  // are distinct as well. Further, the new types may have more recursions than
+  // the original types, so the old recursion groups may not be sufficient any
+  // more. Both of these problems are solved by putting all the new types into a
+  // single large recursion group.
+  // TODO: When we properly analyze which types are external and which are
+  // internal to the module, only optimize internal types.
+  typeBuilder.createRecGroup(0, typeBuilder.size());
+
   // Create the temporary heap types.
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
     auto type = indexedTypes.types[i];

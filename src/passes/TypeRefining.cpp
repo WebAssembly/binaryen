@@ -81,8 +81,9 @@ struct TypeRefining : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "TypeRefining requires nominal typing";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "TypeRefining requires nominal/hybrid typing";
     }
 
     // Find and analyze struct operations inside each function.
