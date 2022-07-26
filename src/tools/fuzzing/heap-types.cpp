@@ -163,13 +163,7 @@ struct HeapTypeGeneratorImpl {
     return rand.pick(
       Random::FeatureOptions<Type::BasicType>{}
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-             Type::funcref,
-             Type::anyref,
-             Type::eqref,
-             Type::i31ref,
-             Type::dataref));
+        .add(FeatureSet::SIMD, Type::v128));
   }
 
   HeapType generateHeapType() {

@@ -27,7 +27,7 @@ i31ref
 (struct)
 (ref $struct.0)
 (ref null $struct.0)
-(struct (field i32 i64 (mut f32) (mut f64) anyref))
+(struct (field i32 i64 (mut f32) (mut f64)))
 (ref $struct.0)
 (ref null $struct.0)
 
@@ -35,15 +35,15 @@ i31ref
 (array i32)
 (ref $array.0)
 (ref null $array.0)
-(array (mut anyref))
+(array (mut i64))
 (ref $array.0)
 (ref null $array.0)
 
 ;; Tuple
 ()
 none
-(i32 f64 anyref)
-(i32 f64 anyref)
+(i32 f64)
+(i32 f64)
 
 ;; Rtt
 (rtt 0 func)

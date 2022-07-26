@@ -187,11 +187,6 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         // the pointer is unreachable, so we are never reached; just don't emit
         // a load
         return;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -290,11 +285,6 @@ void BinaryInstWriter::visitStore(Store* curr) {
         o << int8_t(BinaryConsts::SIMDPrefix)
           << U32LEB(BinaryConsts::V128Store);
         break;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -742,11 +732,6 @@ void BinaryInstWriter::visitConst(Const* curr) {
       }
       break;
     }
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2315,6 +2300,17 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
       break;
     case StringEncodeWTF16:
       o << U32LEB(BinaryConsts::StringEncodeWTF16);
+      break;
+    case StringEncodeUTF8Array:
+      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      break;
+    case StringEncodeWTF8Array:
+      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
+        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      break;
+    case StringEncodeWTF16Array:
+      o << U32LEB(BinaryConsts::StringEncodeWTF16Array);
       break;
     default:
       WASM_UNREACHABLE("invalid string.new*");

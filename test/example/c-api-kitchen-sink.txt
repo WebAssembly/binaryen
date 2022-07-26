@@ -5,12 +5,12 @@ BinaryenTypeInt64: 3
 BinaryenTypeFloat32: 4
 BinaryenTypeFloat64: 5
 BinaryenTypeVec128: 6
-BinaryenTypeFuncref: 7
-BinaryenTypeExternref: 8
-BinaryenTypeAnyref: 8
-BinaryenTypeEqref: 9
-BinaryenTypeI31ref: 10
-BinaryenTypeDataref: 11
+BinaryenTypeFuncref: (ptr)
+BinaryenTypeExternref: (ptr)
+BinaryenTypeAnyref: (ptr)
+BinaryenTypeEqref: (ptr)
+BinaryenTypeI31ref: (ptr)
+BinaryenTypeDataref: (ptr)
 BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
@@ -63,8 +63,8 @@ BinaryenFeatureAll: 122879
  (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")
  (elem $passive func "$kitchen()sinker")
  (tag $a-tag (param i32))
- (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)

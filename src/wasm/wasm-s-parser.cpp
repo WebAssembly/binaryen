@@ -1169,20 +1169,20 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     }
   }
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::funcref;
+    return Type(HeapType::func, Nullable);
   }
   if ((strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) ||
       (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0))) {
-    return Type::anyref;
+    return Type(HeapType::any, Nullable);
   }
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
-    return Type::eqref;
+    return Type(HeapType::eq, Nullable);
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::i31ref;
+    return Type(HeapType::i31, NonNullable);
   }
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::dataref;
+    return Type(HeapType::data, NonNullable);
   }
   if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type(HeapType::string, Nullable);
@@ -1763,11 +1763,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
       WASM_UNREACHABLE("unexpected const type");
     case Type::none:
     case Type::unreachable: {
@@ -2990,6 +2985,7 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
 Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
                                                      StringEncodeOp op) {
   size_t i = 1;
+  Expression* start = nullptr;
   if (op == StringEncodeWTF8) {
     const char* str = s[i++]->c_str();
     if (strncmp(str, "utf8", 4) == 0) {
@@ -2999,9 +2995,21 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+  } else if (op == StringEncodeWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringEncodeUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringEncodeWTF8Array;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+    start = parseExpression(s[i + 2]);
+  } else if (op == StringEncodeWTF16Array) {
+    start = parseExpression(s[i + 2]);
   }
   return Builder(wasm).makeStringEncode(
-    op, parseExpression(s[i]), parseExpression(s[i + 1]));
+    op, parseExpression(s[i]), parseExpression(s[i + 1]), start);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {

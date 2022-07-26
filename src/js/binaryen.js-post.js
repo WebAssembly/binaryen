@@ -9,7 +9,7 @@ function preserveStack(func) {
 }
 
 function strToStack(str) {
-  return str ? allocate(intArrayFromString(str), ALLOC_STACK) : 0;
+  return str ? allocateUTF8OnStack(str) : 0;
 }
 
 function i32sToStack(i32s) {
@@ -150,6 +150,7 @@ function initializeConstants() {
     'TypedFunctionReferences',
     'RelaxedSIMD',
     'ExtendedConst',
+    'Strings',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2484,7 +2485,8 @@ function wrapModule(module, self = {}) {
       const segmentOffset = new Array(segmentsLen);
       for (let i = 0; i < segmentsLen; i++) {
         const { data, offset, passive } = segments[i];
-        segmentData[i] = allocate(data, ALLOC_STACK);
+        segmentData[i] = stackAlloc(data.length);
+        HEAP8.set(data, segmentData[i]);
         segmentDataLen[i] = data.length;
         segmentPassive[i] = passive;
         segmentOffset[i] = offset;
@@ -3323,7 +3325,8 @@ Module['emitText'] = function(expr) {
 Object.defineProperty(Module, 'readBinary', { writable: true });
 
 Module['readBinary'] = function(data) {
-  const buffer = allocate(data, ALLOC_NORMAL);
+  const buffer = _malloc(data.length);
+  HEAP8.set(data, buffer);
   const ptr = Module['_BinaryenModuleRead'](buffer, data.length);
   _free(buffer);
   return wrapModule(ptr);

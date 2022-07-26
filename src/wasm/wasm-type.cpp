@@ -567,19 +567,6 @@ Type asCanonical(Type type) {
   }
 }
 
-// Given a HeapType that may or may not be backed by the simplest possible
-// representation, return the equivalent type that is definitely backed by the
-// simplest possible representation.
-HeapType asCanonical(HeapType type) {
-  if (type.isBasic()) {
-    return type;
-  } else if (auto canon = getHeapTypeInfo(type)->getCanonical()) {
-    return *canon;
-  } else {
-    return type;
-  }
-}
-
 HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
   if (type.isBasic()) {
     return type.getBasic();
@@ -668,35 +655,6 @@ std::optional<Type> TypeInfo::getCanonical() const {
     }
     if (tuple.types.size() == 1) {
       return tuple.types[0];
-    }
-  }
-  if (isRef()) {
-    HeapType basic = asCanonical(ref.heapType);
-    if (basic.isBasic()) {
-      if (ref.nullable) {
-        switch (basic.getBasic()) {
-          case HeapType::func:
-            return Type::funcref;
-          case HeapType::any:
-            return Type::anyref;
-          case HeapType::eq:
-            return Type::eqref;
-          case HeapType::i31:
-          case HeapType::data:
-          case HeapType::string:
-          case HeapType::stringview_wtf8:
-          case HeapType::stringview_wtf16:
-          case HeapType::stringview_iter:
-            break;
-        }
-      } else {
-        if (basic == HeapType::i31) {
-          return Type::i31ref;
-        }
-        if (basic == HeapType::data) {
-          return Type::dataref;
-        }
-      }
     }
   }
   return {};
@@ -1004,7 +962,7 @@ bool Type::isTuple() const {
 
 bool Type::isRef() const {
   if (isBasic()) {
-    return id >= funcref && id <= _last_basic_type;
+    return false;
   } else {
     return getTypeInfo(*this)->isRef();
   }
@@ -1012,7 +970,7 @@ bool Type::isRef() const {
 
 bool Type::isFunction() const {
   if (isBasic()) {
-    return id == funcref;
+    return false;
   } else {
     auto* info = getTypeInfo(*this);
     return info->isRef() && info->ref.heapType.isFunction();
@@ -1021,7 +979,7 @@ bool Type::isFunction() const {
 
 bool Type::isData() const {
   if (isBasic()) {
-    return id == dataref;
+    return false;
   } else {
     auto* info = getTypeInfo(*this);
     return info->isRef() && info->ref.heapType.isData();
@@ -1030,7 +988,7 @@ bool Type::isData() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= eqref; // except i31ref and dataref
+    return false;
   } else {
     return getTypeInfo(*this)->isNullable();
   }
@@ -1099,11 +1057,6 @@ unsigned Type::getByteSize() const {
         return 8;
       case Type::v128:
         return 16;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -1217,16 +1170,6 @@ HeapType Type::getHeapType() const {
       case Type::f64:
       case Type::v128:
         break;
-      case Type::funcref:
-        return HeapType::func;
-      case Type::anyref:
-        return HeapType::any;
-      case Type::eqref:
-        return HeapType::eq;
-      case Type::i31ref:
-        return HeapType::i31;
-      case Type::dataref:
-        return HeapType::data;
     }
     WASM_UNREACHABLE("Unexpected type");
   } else {
@@ -2086,16 +2029,6 @@ std::ostream& TypePrinter::print(Type type) {
         return os << "f64";
       case Type::v128:
         return os << "v128";
-      case Type::funcref:
-        return os << "funcref";
-      case Type::anyref:
-        return os << "anyref";
-      case Type::eqref:
-        return os << "eqref";
-      case Type::i31ref:
-        return os << "i31ref";
-      case Type::dataref:
-        return os << "dataref";
     }
   }
 
@@ -2109,19 +2042,36 @@ std::ostream& TypePrinter::print(Type type) {
     print(type.getTuple());
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable() && heapType.isBasic()) {
-      // Print shorthands for certain nullable basic heap types.
-      switch (heapType.getBasic()) {
-        case HeapType::string:
-          return os << "stringref";
-        case HeapType::stringview_wtf8:
-          return os << "stringview_wtf8";
-        case HeapType::stringview_wtf16:
-          return os << "stringview_wtf16";
-        case HeapType::stringview_iter:
-          return os << "stringview_iter";
-        default:
-          break;
+    if (heapType.isBasic()) {
+      // Print shorthands for certain basic heap types.
+      if (type.isNullable()) {
+        switch (heapType.getBasic()) {
+          case HeapType::func:
+            return os << "funcref";
+          case HeapType::any:
+            return os << "anyref";
+          case HeapType::eq:
+            return os << "eqref";
+          case HeapType::string:
+            return os << "stringref";
+          case HeapType::stringview_wtf8:
+            return os << "stringview_wtf8";
+          case HeapType::stringview_wtf16:
+            return os << "stringview_wtf16";
+          case HeapType::stringview_iter:
+            return os << "stringview_iter";
+          default:
+            break;
+        }
+      } else {
+        switch (heapType.getBasic()) {
+          case HeapType::i31:
+            return os << "i31ref";
+          case HeapType::data:
+            return os << "dataref";
+          default:
+            break;
+        }
       }
     }
     os << "(ref ";
