@@ -4245,7 +4245,8 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   return cout;
 }
 
-char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module, bool optimize) {
+char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
+                                            bool optimize) {
   std::stringstream ss;
   bool colors = Colors::isEnabled();
 
