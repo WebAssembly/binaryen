@@ -21,8 +21,8 @@ BinaryenHeapTypeEq: 2
 BinaryenHeapTypeI31: 3
 BinaryenHeapTypeData: 4
 BinaryenHeapTypeString: 5
-BinaryenHeapTypeStringviewWtf8: 6
-BinaryenHeapTypeStringviewWtf16: 7
+BinaryenHeapTypeStringviewWTF8: 6
+BinaryenHeapTypeStringviewWTF16: 7
 BinaryenHeapTypeStringviewIter: 8
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1

@@ -139,8 +139,8 @@ BINARYEN_API BinaryenHeapType BinaryenHeapTypeEq(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeI31(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeData(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeString(void);
-BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWtf8(void);
-BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWtf16(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF8(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF16(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewIter(void);
 
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);

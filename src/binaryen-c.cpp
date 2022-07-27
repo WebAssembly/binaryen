@@ -244,11 +244,11 @@ BinaryenHeapType BinaryenHeapTypeData() {
 BinaryenHeapType BinaryenHeapTypeString() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::string);
 }
-BinaryenHeapType BinaryenHeapTypeStringviewWtf8() {
+BinaryenHeapType BinaryenHeapTypeStringviewWTF8() {
   return static_cast<BinaryenHeapType>(
     HeapType::BasicHeapType::stringview_wtf8);
 }
-BinaryenHeapType BinaryenHeapTypeStringviewWtf16() {
+BinaryenHeapType BinaryenHeapTypeStringviewWTF16() {
   return static_cast<BinaryenHeapType>(
     HeapType::BasicHeapType::stringview_wtf16);
 }

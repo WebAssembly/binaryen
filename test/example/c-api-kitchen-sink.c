@@ -300,10 +300,10 @@ void test_types() {
   printf("BinaryenHeapTypeI31: %d\n", BinaryenHeapTypeI31());
   printf("BinaryenHeapTypeData: %d\n", BinaryenHeapTypeData());
   printf("BinaryenHeapTypeString: %d\n", BinaryenHeapTypeString());
-  printf("BinaryenHeapTypeStringviewWtf8: %d\n",
-         BinaryenHeapTypeStringviewWtf8());
-  printf("BinaryenHeapTypeStringviewWtf16: %d\n",
-         BinaryenHeapTypeStringviewWtf16());
+  printf("BinaryenHeapTypeStringviewWTF8: %d\n",
+         BinaryenHeapTypeStringviewWTF8());
+  printf("BinaryenHeapTypeStringviewWTF16: %d\n",
+         BinaryenHeapTypeStringviewWTF16());
   printf("BinaryenHeapTypeStringviewIter: %d\n",
          BinaryenHeapTypeStringviewIter());
 
