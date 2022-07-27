@@ -183,6 +183,18 @@ BinaryenType BinaryenTypeI31ref(void) {
 BinaryenType BinaryenTypeDataref(void) {
   return Type(HeapType::data, NonNullable).getID();
 }
+BinaryenType BinaryenTypeStringref() {
+  return Type(HeapType::string, Nullable).getID();
+}
+BinaryenType BinaryenTypeStringviewWTF8() {
+  return Type(HeapType::stringview_wtf8, Nullable).getID();
+}
+BinaryenType BinaryenTypeStringviewWTF16() {
+  return Type(HeapType::stringview_wtf16, Nullable).getID();
+}
+BinaryenType BinaryenTypeStringviewIter() {
+  return Type(HeapType::stringview_iter, Nullable).getID();
+}
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
 
