@@ -502,42 +502,10 @@ struct InfoCollector
 
   // Calls send values to params in their possible targets, and receive
   // results.
-  void visitCall(Call* curr) {
-    auto& wasm = *getModule();
-    Name targetName;
-    if (!Intrinsics(wasm).isCallWithoutEffects(curr)) {
-      // This is just a normal call.
-      targetName = curr->target;
-    } else {
-      // A call-without-effects receives a function reference and calls it, the
-      // same as a CallRef. When we have a flag for non-closed-world, we should
-      // handle this automatically by the reference flowing out to an import,
-      // which is what binaryen intrinsics look like. For now, to support use
-      // cases of a closed world but that also use this intrinsic, handle the
-      // intrinsic specifically here.
-      auto* target = curr->operands.back();
-      if (auto* refFunc = target->dynCast<RefFunc>()) {
-        // We can see exactly where this goes.
-        targetName = refFunc->func;
-      } else {
-        // We can't see where this goes. We must be pessimistic and assume it
-        // can call anything of the proper type, the same as a CallRef. Do that
-        // by reusing the CallRef code.
-        CallRef callRef(wasm.allocator); // TODO helper code?
-        for (auto* operand : curr->operands) {
-          callRef.operands.push_back(operand);
-        }
-        callRef.target = target;
-        callRef.isReturn = curr->isReturn;
-        callRef.type = curr->type;
-        visitCallRef(&callRef);
-        return;
-      }
-    }
 
-    // We have a direct call target.
-    assert(targetName.is());
-    auto* target = wasm.getFunction(targetName);
+  template<typename T>
+  void handleDirectCall(T* curr, Name targetName) {
+    auto* target = getModule()->getFunction(targetName);
     handleCall(
       curr,
       [&](Index i) {
@@ -547,10 +515,8 @@ struct InfoCollector
         return ResultLocation{target, i};
       });
   }
-  void visitCallIndirect(CallIndirect* curr) {
-    // TODO: the table identity could also be used here
-    // TODO: optimize the call target like CallRef
-    auto targetType = curr->heapType;
+  template<typename T>
+  void handleIndirectCall(T* curr, HeapType targetType) {
     handleCall(
       curr,
       [&](Index i) {
@@ -560,22 +526,49 @@ struct InfoCollector
         return SignatureResultLocation{targetType, i};
       });
   }
+  template<typename T>
+  void handleIndirectCall(T* curr, Type targetType) {
+    // If the type is unreachable, nothing can be called (and there is no heap
+    // type to get).
+    if (targetType != Type::unreachable) {
+      handleIndirectCall(curr, targetType.getHeapType());
+    }
+  }
+
+  void visitCall(Call* curr) {
+    Name targetName;
+    if (!Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+      // This is just a normal call.
+      handleDirectCall(curr, curr->target);
+      return;
+    }
+    // A call-without-effects receives a function reference and calls it, the
+    // same as a CallRef. When we have a flag for non-closed-world, we should
+    // handle this automatically by the reference flowing out to an import,
+    // which is what binaryen intrinsics look like. For now, to support use
+    // cases of a closed world but that also use this intrinsic, handle the
+    // intrinsic specifically here.
+    auto* target = curr->operands.back();
+    if (auto* refFunc = target->dynCast<RefFunc>()) {
+      // We can see exactly where this goes.
+      handleDirectCall(curr, refFunc->func);
+    } else {
+      // We can't see where this goes. We must be pessimistic and assume it
+      // can call anything of the proper type, the same as a CallRef. Do that
+      // by reusing the CallRef code.
+      handleIndirectCall(curr, target->type);
+    }
+  }
+  void visitCallIndirect(CallIndirect* curr) {
+    // TODO: the table identity could also be used here
+    // TODO: optimize the call target like CallRef
+    handleIndirectCall(curr, curr->heapType);
+  }
   void visitCallRef(CallRef* curr) {
     // TODO: Optimize like RefCast etc.: the values reaching us depend on the
     //       possible values of |target| (which might be nothing, or might be a
     //       constant function).
-    auto targetType = curr->target->type;
-    if (targetType != Type::unreachable) {
-      auto heapType = targetType.getHeapType();
-      handleCall(
-        curr,
-        [&](Index i) {
-          return SignatureParamLocation{heapType, i};
-        },
-        [&](Index i) {
-          return SignatureResultLocation{heapType, i};
-        });
-    }
+    handleIndirectCall(curr, curr->target->type);
   }
 
   // Creates a location for a null of a particular type and adds a root for it.
