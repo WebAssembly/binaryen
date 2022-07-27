@@ -294,17 +294,17 @@ void test_types() {
   BinaryenPackedType i16 = BinaryenPackedTypeInt16();
   printf("BinaryenPackedTypeInt16: %d\n", i16);
 
-  printf("BinaryenHeapTypeFunc: %d\n", BinaryenHeapTypeFunc());
-  printf("BinaryenHeapTypeAny: %d\n", BinaryenHeapTypeAny());
-  printf("BinaryenHeapTypeEq: %d\n", BinaryenHeapTypeEq());
-  printf("BinaryenHeapTypeI31: %d\n", BinaryenHeapTypeI31());
-  printf("BinaryenHeapTypeData: %d\n", BinaryenHeapTypeData());
-  printf("BinaryenHeapTypeString: %d\n", BinaryenHeapTypeString());
-  printf("BinaryenHeapTypeStringviewWTF8: %d\n",
+  printf("BinaryenHeapTypeFunc: %zd\n", BinaryenHeapTypeFunc());
+  printf("BinaryenHeapTypeAny: %zd\n", BinaryenHeapTypeAny());
+  printf("BinaryenHeapTypeEq: %zd\n", BinaryenHeapTypeEq());
+  printf("BinaryenHeapTypeI31: %zd\n", BinaryenHeapTypeI31());
+  printf("BinaryenHeapTypeData: %zd\n", BinaryenHeapTypeData());
+  printf("BinaryenHeapTypeString: %zd\n", BinaryenHeapTypeString());
+  printf("BinaryenHeapTypeStringviewWTF8: %zd\n",
          BinaryenHeapTypeStringviewWTF8());
-  printf("BinaryenHeapTypeStringviewWTF16: %d\n",
+  printf("BinaryenHeapTypeStringviewWTF16: %zd\n",
          BinaryenHeapTypeStringviewWTF16());
-  printf("BinaryenHeapTypeStringviewIter: %d\n",
+  printf("BinaryenHeapTypeStringviewIter: %zd\n",
          BinaryenHeapTypeStringviewIter());
 
   BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
