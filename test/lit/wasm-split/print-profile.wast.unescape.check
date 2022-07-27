@@ -1,0 +1,1 @@
+CHECK: - tt_text::process_text(wchar_t const*, double*, int, bool, TextParams const*, Charset, DrawingMode, bool, void (*)(wchar_t*, int, double*, TextParams const*, DrawingMode, double (&) [5][3], float*, bool))

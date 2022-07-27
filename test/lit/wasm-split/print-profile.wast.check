@@ -1,0 +1,7 @@
+CHECK: Keeping functions:
+CHECK: + foo
+
+CHECK: Splitting out functions:
+CHECK: - bar
+CHECK: - baz
+CHECK: - tt_text::process_text\28wchar_t\20const*\2c\20double*\2c\20int\2c\20bool\2c\20TextParams\20const*\2c\20Charset\2c\20DrawingMode\2c\20bool\2c\20void\20\28*\29\28wchar_t*\2c\20int\2c\20double*\2c\20TextParams\20const*\2c\20DrawingMode\2c\20double\20\28&\29\20\5b5\5d\5b3\5d\2c\20float*\2c\20bool\29\29
