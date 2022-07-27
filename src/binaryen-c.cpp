@@ -4224,7 +4224,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
   char* sourceMap = nullptr;
   if (sourceMapUrl) {
     auto str = os.str();
-    const size_t len = str.length();
+    const size_t len = str.length() + 1;
     sourceMap = (char*)malloc(len);
     std::copy_n(str.c_str(), len, sourceMap);
   }
@@ -4240,7 +4240,7 @@ char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   Colors::setEnabled(colors); // restore colors state
 
   auto str = os.str();
-  const size_t len = str.length();
+  const size_t len = str.length() + 1;
   char* output = (char*)malloc(len);
   std::copy_n(str.c_str(), len, output);
   return output;
@@ -4256,7 +4256,7 @@ char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
   Colors::setEnabled(colors); // restore colors state
 
   auto str = os.str();
-  const int len = str.length();
+  const int len = str.length() + 1;
   char* output = (char*)malloc(len);
   std::copy_n(str.c_str(), len, output);
   return output;
