@@ -920,3 +920,147 @@
     )
   )
 )
+
+;; The call.without.effects intrinsic does a call to the reference given to it,
+;; but for now other imports do not (until we add a flag for closed-world).
+(module
+  ;; CHECK:      (type $A (func (param i32)))
+  (type $A (func (param i32)))
+
+  ;; CHECK:      (type $i32_funcref_=>_none (func (param i32 funcref)))
+
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param i32 funcref)))
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $call-without-effects (param i32 funcref)))
+
+  ;; CHECK:      (import "other" "import" (func $other-import (param funcref)))
+  (import "other" "import"
+    (func $other-import (param funcref)))
+
+  ;; CHECK:      (elem declare func $target-drop $target-keep)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (call $call-without-effects
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.func $target-keep)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $other-import
+  ;; CHECK-NEXT:   (ref.func $target-drop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (export "foo")
+    ;; Calling the intrinsic with a reference is considered a call of the
+    ;; reference, so $target-keep's code is reachable.
+    (call $call-without-effects
+     (i32.const 1)
+     (ref.func $target-keep)
+    )
+    ;; The other import is not enough to keep $target-drop alive.
+    (call $other-import
+      (ref.func $target-drop)
+    )
+  )
+
+  ;; CHECK:      (func $target-keep (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-keep (type $A) (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $target-drop (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-drop (type $A) (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+)
+
+;; As above, but now the call to the intrinsic does not let us see the exact
+;; function being called.
+(module
+  ;; CHECK:      (type $A (func (param i32)))
+  (type $A (func (param i32)))
+
+  ;; CHECK:      (type $i32_funcref_=>_none (func (param i32 funcref)))
+
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param i32 funcref)))
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $call-without-effects (param i32 funcref)))
+
+  ;; CHECK:      (import "other" "import" (func $other-import (param funcref)))
+  (import "other" "import"
+    (func $other-import (param funcref)))
+
+  ;; CHECK:      (elem declare func $target-keep $target-keep-2)
+
+  ;; CHECK:      (export "foo" (func $foo))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (call $call-without-effects
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-keep)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $other-import
+  ;; CHECK-NEXT:   (ref.func $target-keep-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (export "foo")
+    ;; Call the intrinsic without a RefFunc. All we infer here is the type,
+    ;; which means we must assume anything with type $A (and a reference) can be
+    ;; called, which will keep alive both $target-keep and $target-keep-2
+    (call $call-without-effects
+      (i32.const 1)
+      (ref.null $A)
+    )
+    (drop
+      (ref.func $target-keep)
+    )
+    (call $other-import
+      (ref.func $target-keep-2)
+    )
+  )
+
+  ;; CHECK:      (func $target-keep (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-keep (type $A) (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $target-keep-2 (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target-keep-2 (type $A) (param $x i32)
+    (drop
+      (local.get $x)
+    )
+  )
+)

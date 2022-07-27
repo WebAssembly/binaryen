@@ -515,6 +515,7 @@ struct InfoCollector
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: the table identity could also be used here
+    // TODO: optimize the call target like CallRef
     auto targetType = curr->heapType;
     handleCall(
       curr,
@@ -526,6 +527,9 @@ struct InfoCollector
       });
   }
   void visitCallRef(CallRef* curr) {
+    // TODO: Optimize like RefCast etc.: the values reaching us depend on the
+    //       possible values of |target| (which might be nothing, or might be a
+    //       constant function).
     auto targetType = curr->target->type;
     if (targetType != Type::unreachable) {
       auto heapType = targetType.getHeapType();
