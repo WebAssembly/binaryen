@@ -503,8 +503,7 @@ struct InfoCollector
   // Calls send values to params in their possible targets, and receive
   // results.
 
-  template<typename T>
-  void handleDirectCall(T* curr, Name targetName) {
+  template<typename T> void handleDirectCall(T* curr, Name targetName) {
     auto* target = getModule()->getFunction(targetName);
     handleCall(
       curr,
@@ -515,8 +514,7 @@ struct InfoCollector
         return ResultLocation{target, i};
       });
   }
-  template<typename T>
-  void handleIndirectCall(T* curr, HeapType targetType) {
+  template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
     handleCall(
       curr,
       [&](Index i) {
@@ -526,8 +524,7 @@ struct InfoCollector
         return SignatureResultLocation{targetType, i};
       });
   }
-  template<typename T>
-  void handleIndirectCall(T* curr, Type targetType) {
+  template<typename T> void handleIndirectCall(T* curr, Type targetType) {
     // If the type is unreachable, nothing can be called (and there is no heap
     // type to get).
     if (targetType != Type::unreachable) {
