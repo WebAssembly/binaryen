@@ -35,7 +35,8 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
-TYPE_SYSTEM_FLAG = '--hybrid'
+# TODO: switch to --hybrid when that becomes the most common mode for users
+TYPE_SYSTEM_FLAG = '--nominal'
 
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = ['--all-features']
