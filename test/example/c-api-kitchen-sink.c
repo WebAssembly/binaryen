@@ -276,14 +276,14 @@ void test_types() {
   BinaryenTypeExpand(stringref, &valueType);
   assert(valueType == stringref);
 
-  BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWtf8();
-  printf("BinaryenTypeStringviewWtf8: (ptr)\n");
+  BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWTF8();
+  printf("BinaryenTypeStringviewWTF8: (ptr)\n");
   assert(BinaryenTypeArity(stringview_wtf8_) == 1);
   BinaryenTypeExpand(stringview_wtf8_, &valueType);
   assert(valueType == stringview_wtf8_);
 
-  BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWtf16();
-  printf("BinaryenTypeStringviewWtf16: (ptr)\n");
+  BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWTF16();
+  printf("BinaryenTypeStringviewWTF16: (ptr)\n");
   assert(BinaryenTypeArity(stringview_wtf16_) == 1);
   BinaryenTypeExpand(stringview_wtf16_, &valueType);
   assert(valueType == stringview_wtf16_);

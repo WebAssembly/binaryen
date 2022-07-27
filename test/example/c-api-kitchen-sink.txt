@@ -12,8 +12,8 @@ BinaryenTypeEqref: (ptr)
 BinaryenTypeI31ref: (ptr)
 BinaryenTypeDataref: (ptr)
 BinaryenTypeStringref: (ptr)
-BinaryenTypeStringviewWtf8: (ptr)
-BinaryenTypeStringviewWtf16: (ptr)
+BinaryenTypeStringviewWTF8: (ptr)
+BinaryenTypeStringviewWTF16: (ptr)
 BinaryenTypeStringviewIter: (ptr)
 BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0

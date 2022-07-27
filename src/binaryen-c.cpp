@@ -186,10 +186,10 @@ BinaryenType BinaryenTypeDataref(void) {
 BinaryenType BinaryenTypeStringref() {
   return Type(HeapType::string, Nullable).getID();
 }
-BinaryenType BinaryenTypeStringviewWtf8() {
+BinaryenType BinaryenTypeStringviewWTF8() {
   return Type(HeapType::stringview_wtf8, Nullable).getID();
 }
-BinaryenType BinaryenTypeStringviewWtf16() {
+BinaryenType BinaryenTypeStringviewWTF16() {
   return Type(HeapType::stringview_wtf16, Nullable).getID();
 }
 BinaryenType BinaryenTypeStringviewIter() {

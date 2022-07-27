@@ -40,8 +40,8 @@ function initializeConstants() {
     ['i31ref', 'I31ref'],
     ['dataref', 'Dataref'],
     ['stringref', 'Stringref'],
-    ['stringview_wtf8', 'StringviewWtf8'],
-    ['stringview_wtf16', 'StringviewWtf16'],
+    ['stringview_wtf8', 'StringviewWTF8'],
+    ['stringview_wtf16', 'StringviewWTF16'],
     ['stringview_iter', 'StringviewIter'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
