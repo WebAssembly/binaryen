@@ -554,8 +554,11 @@ struct InfoCollector
       handleDirectCall(curr, refFunc->func);
     } else {
       // We can't see where this goes. We must be pessimistic and assume it
-      // can call anything of the proper type, the same as a CallRef. Do that
-      // by reusing the CallRef code.
+      // can call anything of the proper type, the same as a CallRef. (We could
+      // look at the possible contents of |target| during the flow, but that
+      // would require special logic like we have for RefCast etc., and the
+      // intrinsics will be lowered away anyhow, so just running after that is
+      // a workaround.)
       handleIndirectCall(curr, target->type);
     }
   }
