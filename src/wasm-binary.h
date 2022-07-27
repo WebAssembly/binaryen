@@ -1537,9 +1537,7 @@ public:
   // their names
   std::vector<Memory*> memoryImports;
   // at index i we have all references to the memory i
-  std::map<Index, std::vector<Expression*>> memoryRefs;
-  // special case for memoryCopy having two pointers to memory
-  std::map<Index, std::vector<wasm::Name*>> memoryCopyRefs;
+  std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
   // we store data here after being read from binary, before we know their names
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
