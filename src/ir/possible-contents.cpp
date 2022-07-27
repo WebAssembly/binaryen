@@ -503,7 +503,41 @@ struct InfoCollector
   // Calls send values to params in their possible targets, and receive
   // results.
   void visitCall(Call* curr) {
-    auto* target = getModule()->getFunction(curr->target);
+    auto& wasm = *getModule();
+    Name targetName;
+    if (!Intrinsics(wasm).isCallWithoutEffects(curr)) {
+      // This is just a normal call.
+      targetName = curr->target;
+    } else {
+      // A call-without-effects receives a function reference and calls it, the
+      // same as a CallRef. When we have a flag for non-closed-world, we should
+      // handle this automatically by the reference flowing out to an import,
+      // which is what binaryen intrinsics look like. For now, to support use
+      // cases of a closed world but that also use this intrinsic, handle the
+      // intrinsic specifically here.
+      auto* target = curr->operands.back();
+      if (auto* refFunc = target->dynCast<RefFunc>()) {
+        // We can see exactly where this goes.
+        targetName = refFunc->func;
+      } else {
+        // We can't see where this goes. We must be pessimistic and assume it
+        // can call anything of the proper type, the same as a CallRef. Do that
+        // by reusing the CallRef code.
+        CallRef callRef(wasm.allocator); // TODO helper code?
+        for (auto* operand : curr->operands) {
+          callRef.operands.push_back(operand);
+        }
+        callRef.target = target;
+        callRef.isReturn = curr->isReturn;
+        callRef.type = curr->type;
+        visitCallRef(&callRef);
+        return;
+      }
+    }
+
+    // We have a direct call target.
+    assert(targetName.is());
+    auto* target = wasm.getFunction(targetName);
     handleCall(
       curr,
       [&](Index i) {

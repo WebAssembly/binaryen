@@ -956,7 +956,8 @@
   ;; CHECK-NEXT: )
   (func $foo (export "foo")
     ;; Calling the intrinsic with a reference is considered a call of the
-    ;; reference, so $target-keep's code is reachable.
+    ;; reference, so $target-keep's code is reachable. We should leave it alone,
+    ;; but we can put an unreachable in $target-drop.
     (call $call-without-effects
      (i32.const 1)
      (ref.func $target-keep)
@@ -969,7 +970,7 @@
 
   ;; CHECK:      (func $target-keep (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep (type $A) (param $x i32)
@@ -1029,7 +1030,8 @@
   (func $foo (export "foo")
     ;; Call the intrinsic without a RefFunc. All we infer here is the type,
     ;; which means we must assume anything with type $A (and a reference) can be
-    ;; called, which will keep alive both $target-keep and $target-keep-2
+    ;; called, which will keep alive the bodies of both $target-keep and
+    ;; $target-keep-2 - no unreachables will be placed in either one.
     (call $call-without-effects
       (i32.const 1)
       (ref.null $A)
@@ -1044,7 +1046,7 @@
 
   ;; CHECK:      (func $target-keep (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep (type $A) (param $x i32)
@@ -1055,7 +1057,7 @@
 
   ;; CHECK:      (func $target-keep-2 (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep-2 (type $A) (param $x i32)
