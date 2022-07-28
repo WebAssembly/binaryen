@@ -3440,11 +3440,13 @@ private:
             // no overflow, we can do this
             c1->value = Literal::makeFromInt32(total, c1->type);
             return inner;
-          } else if (hasAnyRotateShift(op)) {
-            // overflow always accepted in rotation shifts
-            c1->value = Literal::makeFromInt32(effectiveTotal, c1->type);
-            return inner;
           } else {
+            // owerflow. Handle different scenarious
+            if (hasAnyRotateShift(op)) {
+              // overflow always accepted in rotation shifts
+              c1->value = Literal::makeFromInt32(effectiveTotal, c1->type);
+              return inner;
+            }
             // handle overflows for general shifts
             //   x << C1 << C2    =>   0
             //   x >>> C1 >>> C2  =>   0
