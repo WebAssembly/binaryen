@@ -3425,10 +3425,10 @@ private:
         if (op == getBinary(type, Mul)) {
           c1->value = c1->value.mul(c2->value);
           return x;
-
-          // TODO:
-          // handle signed / unsigned divisions. They are more complex
         }
+        // TODO:
+        // handle signed / unsigned divisions. They are more complex
+
         // (x <<>> C1) <<>> C2   =>   x <<>> (C1 + C2)
         // iff C1 + C2 doesn't overflow
         if (hasAnyShift(op)) {
@@ -3451,8 +3451,8 @@ private:
       }
     }
     {
-      Const *c1, *c2;
       Binary* x;
+      Const *c1, *c2;
       // (x << C1) * C2   =>   x * (C2 << C1)
       if (matches(curr,
                   binary(Mul, binary(&x, Shl, any(), ival(&c1)), ival(&c2)))) {
@@ -3462,8 +3462,8 @@ private:
       }
     }
     {
-      Const *c1, *c2;
       Binary* x;
+      Const *c1, *c2;
       // (x * C1) << C2   =>   x * (C1 << C2)
       if (matches(curr,
                   binary(Shl, binary(&x, Mul, any(), ival(&c1)), ival(&c2)))) {
