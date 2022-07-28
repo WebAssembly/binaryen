@@ -3441,7 +3441,7 @@ private:
             c1->value = Literal::makeFromInt32(total, c1->type);
             return inner;
           } else {
-            // owerflow. Handle different scenarious
+            // overflow. Handle different scenarious
             if (hasAnyRotateShift(op)) {
               // overflow always accepted in rotation shifts
               c1->value = Literal::makeFromInt32(effectiveTotal, c1->type);
@@ -3450,14 +3450,16 @@ private:
             // handle overflows for general shifts
             //   x << C1 << C2    =>   0
             //   x >>> C1 >>> C2  =>   0
-            // iff C1 + C2 -> overflows
-            if (op == getBinary(type, Shl) || op == getBinary(type, ShrU)) {
+            // iff `C1 + C2` -> overflows
+            // and `x` has no side effects
+            if ((op == getBinary(type, Shl) || op == getBinary(type, ShrU)) &&
+                !effects(inner->left).hasSideEffects()) {
               c1->value = Literal::makeZero(c1->type);
               return c1;
             }
             //   i32(x) >> C1 >> C2   =>   x >> 31
             //   i64(x) >> C1 >> C2   =>   x >> 63
-            // iff C1 + C2 -> overflows
+            // iff `C1 + C2` -> overflows
             if (op == getBinary(type, ShrS)) {
               c1->value = Literal::makeFromInt32(c1->type.getByteSize() * 8 - 1,
                                                  c1->type);

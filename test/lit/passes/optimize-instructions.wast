@@ -5725,6 +5725,18 @@
     (i32.const 1)
    )
   )
+  ;; CHECK:      (func $left-shifts-square-overflow-2 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow-2 (param $x i32) (result i32)
+   (i32.shl
+    (i32.shl
+     (local.get $x)
+     (i32.const 5)
+    )
+    (i32.const -5)
+   )
+  )
   ;; CHECK:      (func $right-shifts-square-overflow-unsigned (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
