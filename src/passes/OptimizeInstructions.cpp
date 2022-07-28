@@ -3400,31 +3400,31 @@ private:
     using namespace Match;
     using namespace Abstract;
     {
-      Binary* x;
+      Binary* inner;
       Const *c1, *c2 = curr->right->cast<Const>();
-      if (matches(curr->left, binary(&x, any(), ival(&c1))) &&
-          x->op == curr->op) {
-        Type type = x->type;
-        BinaryOp op = x->op;
+      if (matches(curr->left, binary(&inner, any(), ival(&c1))) &&
+          inner->op == curr->op) {
+        Type type = inner->type;
+        BinaryOp op = inner->op;
         // (x & C1) & C2   =>   x & (C1 & C2)
         if (op == getBinary(type, And)) {
           c1->value = c1->value.and_(c2->value);
-          return x;
+          return inner;
         }
         // (x | C1) | C2   =>   x | (C1 | C2)
         if (op == getBinary(type, Or)) {
           c1->value = c1->value.or_(c2->value);
-          return x;
+          return inner;
         }
         // (x ^ C1) ^ C2   =>   x ^ (C1 ^ C2)
         if (op == getBinary(type, Xor)) {
           c1->value = c1->value.xor_(c2->value);
-          return x;
+          return inner;
         }
         // (x * C1) * C2   =>   x * (C1 * C2)
         if (op == getBinary(type, Mul)) {
           c1->value = c1->value.mul(c2->value);
-          return x;
+          return inner;
         }
         // TODO:
         // handle signed / unsigned divisions. They are more complex
@@ -3440,35 +3440,54 @@ private:
           if (total == effectiveTotal) {
             // no overflow, we can do this
             c1->value = Literal::makeFromInt32(total, c2->type);
-            return x;
+            return inner;
           } else if (hasAnyRotateShift(op)) {
             // overflow accepted in rotation shifts
             c1->value = Literal::makeFromInt32(effectiveTotal, c2->type);
-            return x;
+            return inner;
           }
           // TODO: handle overflows
         }
       }
     }
     {
-      Binary* x;
-      Const *c1, *c2;
       // (x << C1) * C2   =>   x * (C2 << C1)
-      if (matches(curr,
-                  binary(Mul, binary(&x, Shl, any(), ival(&c1)), ival(&c2)))) {
-        x->op = getBinary(x->type, Mul);
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(Mul, binary(&inner, Shl, any(), ival(&c1)), ival(&c2)))) {
+        inner->op = getBinary(inner->type, Mul);
         c1->value = c2->value.shl(c1->value);
-        return x;
+        return inner;
       }
     }
     {
-      Binary* x;
-      Const *c1, *c2;
       // (x * C1) << C2   =>   x * (C1 << C2)
-      if (matches(curr,
-                  binary(Shl, binary(&x, Mul, any(), ival(&c1)), ival(&c2)))) {
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(Shl, binary(&inner, Mul, any(), ival(&c1)), ival(&c2)))) {
         c1->value = c1->value.shl(c2->value);
-        return x;
+        return inner;
+      }
+    }
+    {
+      // rotl(rotr(x, C1), C2)   =>   rotr(x, C1 - C2)
+      // rotr(rotl(x, C1), C2)   =>   rotl(x, C1 - C2)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(RotL, binary(&inner, RotR, any(), ival(&c1)), ival(&c2))) ||
+          matches(
+            curr,
+            binary(RotR, binary(&inner, RotL, any(), ival(&c1)), ival(&c2)))) {
+        auto diff = Bits::getEffectiveShifts(c1) - Bits::getEffectiveShifts(c2);
+        c1->value = Literal::makeFromInt32(
+          Bits::getEffectiveShifts(diff, c2->type), c2->type);
+        return inner;
       }
     }
     return nullptr;
