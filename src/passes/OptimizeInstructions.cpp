@@ -682,7 +682,7 @@ struct OptimizeInstructions
       if (auto* ret = optimizeWithConstantOnRight(curr)) {
         return replaceCurrent(ret);
       }
-      if (auto* ret = foldRepeatedWithConstantsOnRight(curr)) {
+      if (auto* ret = foldSimilarWithConstantsOnRight(curr)) {
         return replaceCurrent(ret);
       }
       if (right->type == Type::i32) {
@@ -3394,7 +3394,9 @@ private:
     return nullptr;
   }
 
-  Expression* foldRepeatedWithConstantsOnRight(Binary* curr) {
+  // Folding two expressions into one with similar operations and
+  // constants on RHSs
+  Expression* foldSimilarWithConstantsOnRight(Binary* curr) {
     using namespace Match;
     using namespace Abstract;
     {
