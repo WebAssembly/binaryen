@@ -175,8 +175,10 @@ private:
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
+
   Name getMemoryNameAtIdx(Index i);
   bool isMemory64(Name memoryName);
+  bool hasMemoryIdx(Element& s, Index defaultSize, Index i);
 
   // returns the next index in s
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
