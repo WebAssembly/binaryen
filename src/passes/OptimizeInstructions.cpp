@@ -2905,8 +2905,9 @@ private:
                   binary(&op,
                          binary(&bx, any(&x), any(&z1)),
                          binary(&by, any(&y), any(&z2)))) &&
-          bx->op == by->op && hasAnyBitwise(op) && canReorder(z1, y) &&
-          areConsecutiveInputsEqualAndFoldable(z1, z2) && preserveShift(bx)) {
+          bx->op == by->op && bx->type == curr->type && hasAnyBitwise(op) &&
+          preserveShift(bx) && canReorder(z1, y) &&
+          areConsecutiveInputsEqualAndFoldable(z1, z2)) {
         bx->right = y;
         curr->right = z1;
         std::swap(curr->op, bx->op);
