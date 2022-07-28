@@ -296,10 +296,16 @@ else()
 endif()
 
 if(EMSCRIPTEN)
-  # link with -O3 for metadce and other powerful optimizations. note that we
-  # must use add_link_options so that this appears after CMake's default -O2
-  add_link_options("-O3")
-  add_link_flag("-sSINGLE_FILE")
+  if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+    add_link_flag("-sERROR_ON_WASM_CHANGES_AFTER_LINK")
+    add_link_flag("-sWASM_BIGINT")
+  else()
+    # link with -O3 for metadce and other powerful optimizations. note that we
+    # must use add_link_options so that this appears after CMake's default -O2
+    add_link_options("-O3")
+    add_link_flag("-sSINGLE_FILE")
+  endif()
+
   add_link_flag("-sALLOW_MEMORY_GROWTH")
   add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
   add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
