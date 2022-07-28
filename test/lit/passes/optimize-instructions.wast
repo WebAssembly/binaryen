@@ -5713,18 +5713,39 @@
     (i32.const 255)
    )
   )
-  ;; CHECK:      (func $shifts-square-overflow (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.shr_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 31)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $left-shifts-square-overflow (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow (param $x i32) (result i32)
+   (i32.shl
+    (i32.shl
+     (local.get $x)
+     (i32.const 31)
+    )
+    (i32.const 1)
+   )
+  )
+  ;; CHECK:      (func $right-shifts-square-overflow-unsigned (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $right-shifts-square-overflow-unsigned (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (local.get $x)
+     (i32.const 65535) ;; 31 bits effectively
+    )
+    (i32.const 32767) ;; also 31 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  ;; CHECK:      (func $shifts-square-overflow-signed (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shr_s
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $shifts-square-overflow (param $x i32) (result i32)
-   (i32.shr_u
-    (i32.shr_u
+  (func $shifts-square-overflow-signed (param $x i32) (result i32)
+   (i32.shr_s
+    (i32.shr_s
      (local.get $x)
      (i32.const 65535) ;; 31 bits effectively
     )
@@ -5746,18 +5767,39 @@
     (i32.const 4098) ;; 2 bits effectively
    )
   )
-  ;; CHECK:      (func $shifts-square-overflow-64 (param $x i64) (result i64)
-  ;; CHECK-NEXT:  (i64.shr_u
-  ;; CHECK-NEXT:   (i64.shr_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i64.const 63)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $left-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+   (i64.shl
+    (i64.shl
+     (local.get $x)
+     (i64.const 2)
+    )
+    (i64.const 63)
+   )
+  )
+  ;; CHECK:      (func $right-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.const 0)
+  ;; CHECK-NEXT: )
+  (func $right-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+   (i64.shr_u
+    (i64.shr_u
+     (local.get $x)
+     (i64.const 65535) ;; 63 bits effectively
+    )
+    (i64.const 64767) ;; also 63 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  ;; CHECK:      (func $right-shifts-square-overflow-signed-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.shr_s
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i64.const 63)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $shifts-square-overflow-64 (param $x i64) (result i64)
-   (i64.shr_u
-    (i64.shr_u
+  (func $right-shifts-square-overflow-signed-64 (param $x i64) (result i64)
+   (i64.shr_s
+    (i64.shr_s
      (local.get $x)
      (i64.const 65535) ;; 63 bits effectively
     )

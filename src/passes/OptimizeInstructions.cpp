@@ -3430,23 +3430,38 @@ private:
         // handle signed / unsigned divisions. They are more complex
 
         // (x <<>> C1) <<>> C2   =>   x <<>> (C1 + C2)
-        // iff C1 + C2 doesn't overflow
         if (hasAnyShift(op)) {
           // shifts only use an effective amount from the constant, so
           // adding must be done carefully
           auto total =
             Bits::getEffectiveShifts(c1) + Bits::getEffectiveShifts(c2);
-          auto effectiveTotal = Bits::getEffectiveShifts(total, c2->type);
+          auto effectiveTotal = Bits::getEffectiveShifts(total, c1->type);
           if (total == effectiveTotal) {
             // no overflow, we can do this
-            c1->value = Literal::makeFromInt32(total, c2->type);
+            c1->value = Literal::makeFromInt32(total, c1->type);
             return inner;
           } else if (hasAnyRotateShift(op)) {
-            // overflow accepted in rotation shifts
-            c1->value = Literal::makeFromInt32(effectiveTotal, c2->type);
+            // overflow always accepted in rotation shifts
+            c1->value = Literal::makeFromInt32(effectiveTotal, c1->type);
             return inner;
+          } else {
+            // handle overflows for general shifts
+            //   x << C1 << C2    =>   0
+            //   x >>> C1 >>> C2  =>   0
+            // iff C1 + C2 -> overflows
+            if (op == getBinary(type, Shl) || op == getBinary(type, ShrU)) {
+              c1->value = Literal::makeZero(c1->type);
+              return c1;
+            }
+            //   i32(x) >> C1 >> C2   =>   x >> 31
+            //   i64(x) >> C1 >> C2   =>   x >> 63
+            // iff C1 + C2 -> overflows
+            if (op == getBinary(type, ShrS)) {
+              c1->value = Literal::makeFromInt32(c1->type.getByteSize() * 8 - 1,
+                                                 c1->type);
+              return inner;
+            }
           }
-          // TODO: handle overflows
         }
       }
     }
