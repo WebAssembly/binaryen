@@ -168,7 +168,6 @@ private:
 
   UniqueNameMapper nameMapper;
 
-  Memory getMemoryAtIdx(Index idx);
 
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
@@ -176,6 +175,8 @@ private:
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
+  Name getMemoryNameAtIdx(Index i);
+  bool isMemory64(Name memoryName);
 
   // returns the next index in s
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
@@ -318,6 +319,7 @@ private:
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory);
   Index parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory);
+  Index parseMemoryForInstruction(const std::string& instrName, Memory& memory, Element& s, Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
