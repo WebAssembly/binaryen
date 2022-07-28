@@ -72,6 +72,62 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 
 namespace {
 
+static bool maybePrintRefShorthand(std::ostream& o, Type type) {
+  if (!type.isRef()) {
+    return false;
+  }
+  auto heapType = type.getHeapType();
+  if (heapType.isBasic()) {
+    if (type.isNullable()) {
+      switch (heapType.getBasic()) {
+        case HeapType::func:
+          o << "funcref";
+          return true;
+        case HeapType::any:
+          o << "anyref";
+          return true;
+        case HeapType::eq:
+          o << "eqref";
+          return true;
+        case HeapType::i31:
+        case HeapType::data:
+          break;
+        case HeapType::string:
+          o << "stringref";
+          return true;
+        case HeapType::stringview_wtf8:
+          o << "stringview_wtf8";
+          return true;
+        case HeapType::stringview_wtf16:
+          o << "stringview_wtf16";
+          return true;
+        case HeapType::stringview_iter:
+          o << "stringview_iter";
+          return true;
+      }
+    } else {
+      switch (heapType.getBasic()) {
+        case HeapType::func:
+        case HeapType::any:
+        case HeapType::eq:
+          break;
+        case HeapType::i31:
+          o << "i31ref";
+          return true;
+        case HeapType::data:
+          o << "dataref";
+          return true;
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          break;
+      }
+    }
+  }
+  return false;
+}
+
 // Helper for printing the name of a type. This output is guaranteed to not
 // contain spaces.
 struct TypeNamePrinter {
@@ -126,13 +182,15 @@ void TypeNamePrinter::print(Type type) {
   } else if (type.isRtt()) {
     print(type.getRtt());
   } else if (type.isRef()) {
-    os << "ref";
-    if (type.isNullable()) {
-      os << "?";
+    if (!maybePrintRefShorthand(os, type)) {
+      os << "ref";
+      if (type.isNullable()) {
+        os << "?";
+      }
+      os << '|';
+      print(type.getHeapType());
+      os << '|';
     }
-    os << '|';
-    print(type.getHeapType());
-    os << '|';
   } else {
     WASM_UNREACHABLE("unexpected type");
   }
@@ -273,13 +331,15 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
     }
     TypeNamePrinter(o, wasm).print(rtt.heapType);
     o << ')';
-  } else if (type.isRef() && !type.isBasic()) {
-    o << "(ref ";
-    if (type.isNullable()) {
-      o << "null ";
+  } else if (type.isRef()) {
+    if (!maybePrintRefShorthand(o, type)) {
+      o << "(ref ";
+      if (type.isNullable()) {
+        o << "null ";
+      }
+      TypeNamePrinter(o, wasm).print(type.getHeapType());
+      o << ')';
     }
-    TypeNamePrinter(o, wasm).print(type.getHeapType());
-    o << ')';
   } else {
     WASM_UNREACHABLE("unexpected type");
   }
@@ -2203,6 +2263,141 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid ref.is_*");
     }
   }
+  void visitStringNew(StringNew* curr) {
+    switch (curr->op) {
+      case StringNewUTF8:
+        printMedium(o, "string.new_wtf8 utf8");
+        break;
+      case StringNewWTF8:
+        printMedium(o, "string.new_wtf8 wtf8");
+        break;
+      case StringNewReplace:
+        printMedium(o, "string.new_wtf8 replace");
+        break;
+      case StringNewWTF16:
+        printMedium(o, "string.new_wtf16");
+        break;
+      case StringNewUTF8Array:
+        printMedium(o, "string.new_wtf8_array utf8");
+        break;
+      case StringNewWTF8Array:
+        printMedium(o, "string.new_wtf8_array wtf8");
+        break;
+      case StringNewReplaceArray:
+        printMedium(o, "string.new_wtf8_array replace");
+        break;
+      case StringNewWTF16Array:
+        printMedium(o, "string.new_wtf16_array");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.new*");
+    }
+  }
+  void visitStringConst(StringConst* curr) {
+    printMedium(o, "string.const \"");
+    o << curr->string.str;
+    o << '"';
+  }
+  void visitStringMeasure(StringMeasure* curr) {
+    switch (curr->op) {
+      case StringMeasureUTF8:
+        printMedium(o, "string.measure_wtf8 utf8");
+        break;
+      case StringMeasureWTF8:
+        printMedium(o, "string.measure_wtf8 wtf8");
+        break;
+      case StringMeasureWTF16:
+        printMedium(o, "string.measure_wtf16");
+        break;
+      case StringMeasureIsUSV:
+        printMedium(o, "string.is_usv_sequence");
+        break;
+      case StringMeasureWTF16View:
+        printMedium(o, "stringview_wtf16.length");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.measure*");
+    }
+  }
+  void visitStringEncode(StringEncode* curr) {
+    switch (curr->op) {
+      case StringEncodeUTF8:
+        printMedium(o, "string.encode_wtf8 utf8");
+        break;
+      case StringEncodeWTF8:
+        printMedium(o, "string.encode_wtf8 wtf8");
+        break;
+      case StringEncodeWTF16:
+        printMedium(o, "string.encode_wtf16");
+        break;
+      case StringEncodeUTF8Array:
+        printMedium(o, "string.encode_wtf8_array utf8");
+        break;
+      case StringEncodeWTF8Array:
+        printMedium(o, "string.encode_wtf8_array wtf8");
+        break;
+      case StringEncodeWTF16Array:
+        printMedium(o, "string.encode_wtf16_array");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.encode*");
+    }
+  }
+  void visitStringConcat(StringConcat* curr) {
+    printMedium(o, "string.concat");
+  }
+  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
+  void visitStringAs(StringAs* curr) {
+    switch (curr->op) {
+      case StringAsWTF8:
+        printMedium(o, "string.as_wtf8");
+        break;
+      case StringAsWTF16:
+        printMedium(o, "string.as_wtf16");
+        break;
+      case StringAsIter:
+        printMedium(o, "string.as_iter");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.as*");
+    }
+  }
+  void visitStringWTF8Advance(StringWTF8Advance* curr) {
+    printMedium(o, "stringview_wtf8.advance");
+  }
+  void visitStringWTF16Get(StringWTF16Get* curr) {
+    printMedium(o, "stringview_wtf16.get_codeunit");
+  }
+  void visitStringIterNext(StringIterNext* curr) {
+    printMedium(o, "stringview_iter.next");
+  }
+  void visitStringIterMove(StringIterMove* curr) {
+    switch (curr->op) {
+      case StringIterMoveAdvance:
+        printMedium(o, "stringview_iter.advance");
+        break;
+      case StringIterMoveRewind:
+        printMedium(o, "stringview_iter.rewind");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.move*");
+    }
+  }
+  void visitStringSliceWTF(StringSliceWTF* curr) {
+    switch (curr->op) {
+      case StringSliceWTF8:
+        printMedium(o, "stringview_wtf8.slice");
+        break;
+      case StringSliceWTF16:
+        printMedium(o, "stringview_wtf16.slice");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.slice*");
+    }
+  }
+  void visitStringSliceIter(StringSliceIter* curr) {
+    printMedium(o, "stringview_iter.slice");
+  }
 };
 
 // Prints an expression in s-expr format, including both the
@@ -2390,7 +2585,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
     }
 
-    int startControlFlowDepth = controlFlowDepth;
     controlFlowDepth += stack.size();
     auto* top = stack.back();
     while (stack.size() > 0) {
@@ -2413,6 +2607,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         }
         printFullLine(list[i]);
       }
+      controlFlowDepth--;
     }
     decIndent();
     if (full) {
@@ -2421,7 +2616,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         o << ' ' << curr->name;
       }
     }
-    controlFlowDepth = startControlFlowDepth;
   }
   void visitIf(If* curr) {
     controlFlowDepth++;

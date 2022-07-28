@@ -583,6 +583,52 @@ enum BrOnOp {
   BrOnNonI31,
 };
 
+enum StringNewOp {
+  // Linear memory
+  StringNewUTF8,
+  StringNewWTF8,
+  StringNewReplace,
+  StringNewWTF16,
+  // GC
+  StringNewUTF8Array,
+  StringNewWTF8Array,
+  StringNewReplaceArray,
+  StringNewWTF16Array,
+};
+
+enum StringMeasureOp {
+  StringMeasureUTF8,
+  StringMeasureWTF8,
+  StringMeasureWTF16,
+  StringMeasureIsUSV,
+  StringMeasureWTF16View,
+};
+
+enum StringEncodeOp {
+  StringEncodeUTF8,
+  StringEncodeWTF8,
+  StringEncodeWTF16,
+  StringEncodeUTF8Array,
+  StringEncodeWTF8Array,
+  StringEncodeWTF16Array,
+};
+
+enum StringAsOp {
+  StringAsWTF8,
+  StringAsWTF16,
+  StringAsIter,
+};
+
+enum StringIterMoveOp {
+  StringIterMoveAdvance,
+  StringIterMoveRewind,
+};
+
+enum StringSliceWTFOp {
+  StringSliceWTF8,
+  StringSliceWTF16,
+};
+
 //
 // Expressions
 //
@@ -678,6 +724,19 @@ public:
     ArrayLenId,
     ArrayCopyId,
     RefAsId,
+    StringNewId,
+    StringConstId,
+    StringMeasureId,
+    StringEncodeId,
+    StringConcatId,
+    StringEqId,
+    StringAsId,
+    StringWTF8AdvanceId,
+    StringWTF16GetId,
+    StringIterNextId,
+    StringIterMoveId,
+    StringSliceWTFId,
+    StringSliceIterId,
     NumExpressionIds
   };
   Id _id;
@@ -1644,6 +1703,165 @@ public:
   void finalize();
 };
 
+class StringNew : public SpecificExpression<Expression::StringNewId> {
+public:
+  StringNew(MixedArena& allocator) {}
+
+  StringNewOp op;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
+  Expression* ptr;
+
+  // Used only in linear memory variations.
+  Expression* length = nullptr;
+
+  void finalize();
+};
+
+class StringConst : public SpecificExpression<Expression::StringConstId> {
+public:
+  StringConst(MixedArena& allocator) {}
+
+  // TODO: Use a different type to allow null bytes in the middle -
+  //       ArenaVector<char> perhaps? However, Name has the benefit of being
+  //       interned and immutable (which is appropriate here).
+  Name string;
+
+  void finalize();
+};
+
+class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
+public:
+  StringMeasure(MixedArena& allocator) {}
+
+  StringMeasureOp op;
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
+public:
+  StringEncode(MixedArena& allocator) {}
+
+  StringEncodeOp op;
+
+  Expression* ref;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
+  Expression* ptr;
+
+  // Used only in GC variations, where it is the index in |ptr| to start
+  // encoding from.
+  Expression* start = nullptr;
+
+  void finalize();
+};
+
+class StringConcat : public SpecificExpression<Expression::StringConcatId> {
+public:
+  StringConcat(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class StringEq : public SpecificExpression<Expression::StringEqId> {
+public:
+  StringEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class StringAs : public SpecificExpression<Expression::StringAsId> {
+public:
+  StringAs(MixedArena& allocator) {}
+
+  StringAsOp op;
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringWTF8Advance
+  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
+public:
+  StringWTF8Advance(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+  Expression* bytes;
+
+  void finalize();
+};
+
+class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
+public:
+  StringWTF16Get(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+
+  void finalize();
+};
+
+class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
+public:
+  StringIterNext(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
+public:
+  StringIterMove(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringIterMoveOp op;
+
+  Expression* ref;
+
+  // How many codepoints to advance or reverse.
+  Expression* num;
+
+  void finalize();
+};
+
+class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
+public:
+  StringSliceWTF(MixedArena& allocator) {}
+
+  StringSliceWTFOp op;
+
+  Expression* ref;
+  Expression* start;
+  Expression* end;
+
+  void finalize();
+};
+
+class StringSliceIter
+  : public SpecificExpression<Expression::StringSliceIterId> {
+public:
+  StringSliceIter(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* num;
+
+  void finalize();
+};
+
 // Globals
 
 struct Named {
@@ -1828,11 +2046,13 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
-  Type type = Type::funcref;
+  Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
   ElementSegment() = default;
-  ElementSegment(Name table, Expression* offset, Type type = Type::funcref)
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type = Type(HeapType::func, Nullable))
     : table(table), offset(offset), type(type) {}
   ElementSegment(Name table,
                  Expression* offset,
@@ -1852,7 +2072,7 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
-  Type type = Type::funcref;
+  Type type = Type(HeapType::func, Nullable);
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {

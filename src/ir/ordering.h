@@ -34,11 +34,11 @@ namespace wasm {
 //
 //   (temp = first, second, temp)
 //
-Expression* getResultOfFirst(Expression* first,
-                             Expression* second,
-                             Function* func,
-                             Module* wasm,
-                             const PassOptions& passOptions) {
+inline Expression* getResultOfFirst(Expression* first,
+                                    Expression* second,
+                                    Function* func,
+                                    Module* wasm,
+                                    const PassOptions& passOptions) {
   assert(first->type.isConcrete());
 
   Builder builder(*wasm);

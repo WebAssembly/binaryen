@@ -713,6 +713,102 @@ switch (DELEGATE_ID) {
     DELEGATE_END(RefAs);
     break;
   }
+  case Expression::Id::StringNewId: {
+    DELEGATE_START(StringNew);
+    DELEGATE_FIELD_INT(StringNew, op);
+    DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, length);
+    DELEGATE_FIELD_CHILD(StringNew, ptr);
+    DELEGATE_END(StringNew);
+    break;
+  }
+  case Expression::Id::StringConstId: {
+    DELEGATE_START(StringConst);
+    DELEGATE_FIELD_NAME(StringConst, string);
+    DELEGATE_END(StringConst);
+    break;
+  }
+  case Expression::Id::StringMeasureId: {
+    DELEGATE_START(StringMeasure);
+    DELEGATE_FIELD_INT(StringMeasure, op);
+    DELEGATE_FIELD_CHILD(StringMeasure, ref);
+    DELEGATE_END(StringMeasure);
+    break;
+  }
+  case Expression::Id::StringEncodeId: {
+    DELEGATE_START(StringEncode);
+    DELEGATE_FIELD_INT(StringEncode, op);
+    DELEGATE_FIELD_OPTIONAL_CHILD(StringEncode, start);
+    DELEGATE_FIELD_CHILD(StringEncode, ptr);
+    DELEGATE_FIELD_CHILD(StringEncode, ref);
+    DELEGATE_END(StringEncode);
+    break;
+  }
+  case Expression::Id::StringConcatId: {
+    DELEGATE_START(StringConcat);
+    DELEGATE_FIELD_CHILD(StringConcat, right);
+    DELEGATE_FIELD_CHILD(StringConcat, left);
+    DELEGATE_END(StringConcat);
+    break;
+  }
+  case Expression::Id::StringEqId: {
+    DELEGATE_START(StringEq);
+    DELEGATE_FIELD_CHILD(StringEq, right);
+    DELEGATE_FIELD_CHILD(StringEq, left);
+    DELEGATE_END(StringEq);
+    break;
+  }
+  case Expression::Id::StringAsId: {
+    DELEGATE_START(StringAs);
+    DELEGATE_FIELD_INT(StringAs, op);
+    DELEGATE_FIELD_CHILD(StringAs, ref);
+    DELEGATE_END(StringAs);
+    break;
+  }
+  case Expression::Id::StringWTF8AdvanceId: {
+    DELEGATE_START(StringWTF8Advance);
+    DELEGATE_FIELD_CHILD(StringWTF8Advance, bytes);
+    DELEGATE_FIELD_CHILD(StringWTF8Advance, pos);
+    DELEGATE_FIELD_CHILD(StringWTF8Advance, ref);
+    DELEGATE_END(StringWTF8Advance);
+    break;
+  }
+  case Expression::Id::StringWTF16GetId: {
+    DELEGATE_START(StringWTF16Get);
+    DELEGATE_FIELD_CHILD(StringWTF16Get, pos);
+    DELEGATE_FIELD_CHILD(StringWTF16Get, ref);
+    DELEGATE_END(StringWTF16Get);
+    break;
+  }
+  case Expression::Id::StringIterNextId: {
+    DELEGATE_START(StringIterNext);
+    DELEGATE_FIELD_CHILD(StringIterNext, ref);
+    DELEGATE_END(StringIterNext);
+    break;
+  }
+  case Expression::Id::StringIterMoveId: {
+    DELEGATE_START(StringIterMove);
+    DELEGATE_FIELD_INT(StringIterMove, op);
+    DELEGATE_FIELD_CHILD(StringIterMove, num);
+    DELEGATE_FIELD_CHILD(StringIterMove, ref);
+    DELEGATE_END(StringIterMove);
+    break;
+  }
+  case Expression::Id::StringSliceWTFId: {
+    DELEGATE_START(StringSliceWTF);
+    DELEGATE_FIELD_INT(StringSliceWTF, op);
+    DELEGATE_FIELD_CHILD(StringSliceWTF, end);
+    DELEGATE_FIELD_CHILD(StringSliceWTF, start);
+    DELEGATE_FIELD_CHILD(StringSliceWTF, ref);
+    DELEGATE_END(StringSliceWTF);
+    break;
+  }
+  case Expression::Id::StringSliceIterId: {
+    DELEGATE_START(StringSliceIter);
+    DELEGATE_FIELD_CHILD(StringSliceIter, num);
+    DELEGATE_FIELD_CHILD(StringSliceIter, ref);
+    DELEGATE_END(StringSliceIter);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

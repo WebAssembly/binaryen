@@ -671,6 +671,42 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
+  CostType visitStringNew(StringNew* curr) {
+    return 8 + visit(curr->ptr) + maybeVisit(curr->length);
+  }
+  CostType visitStringConst(StringConst* curr) { return 4; }
+  CostType visitStringMeasure(StringMeasure* curr) {
+    return 6 + visit(curr->ref);
+  }
+  CostType visitStringEncode(StringEncode* curr) {
+    return 6 + visit(curr->ref) + visit(curr->ptr);
+  }
+  CostType visitStringConcat(StringConcat* curr) {
+    return 10 + visit(curr->left) + visit(curr->right);
+  }
+  CostType visitStringEq(StringEq* curr) {
+    // "3" is chosen since strings might or might not be interned in the engine.
+    return 3 + visit(curr->left) + visit(curr->right);
+  }
+  CostType visitStringAs(StringAs* curr) { return 4 + visit(curr->ref); }
+  CostType visitStringWTF8Advance(StringWTF8Advance* curr) {
+    return 4 + visit(curr->ref) + visit(curr->pos) + visit(curr->bytes);
+  }
+  CostType visitStringWTF16Get(StringWTF16Get* curr) {
+    return 1 + visit(curr->ref) + visit(curr->pos);
+  }
+  CostType visitStringIterNext(StringIterNext* curr) {
+    return 2 + visit(curr->ref);
+  }
+  CostType visitStringIterMove(StringIterMove* curr) {
+    return 4 + visit(curr->ref) + visit(curr->num);
+  }
+  CostType visitStringSliceWTF(StringSliceWTF* curr) {
+    return 8 + visit(curr->ref) + visit(curr->start) + visit(curr->end);
+  }
+  CostType visitStringSliceIter(StringSliceIter* curr) {
+    return 8 + visit(curr->ref) + visit(curr->num);
+  }
 
 private:
   CostType nullCheckCost(Expression* ref) {

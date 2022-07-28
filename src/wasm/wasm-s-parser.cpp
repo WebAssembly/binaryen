@@ -1169,20 +1169,32 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     }
   }
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::funcref;
+    return Type(HeapType::func, Nullable);
   }
   if ((strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) ||
       (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0))) {
-    return Type::anyref;
+    return Type(HeapType::any, Nullable);
   }
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
-    return Type::eqref;
+    return Type(HeapType::eq, Nullable);
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::i31ref;
+    return Type(HeapType::i31, NonNullable);
   }
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::dataref;
+    return Type(HeapType::data, NonNullable);
+  }
+  if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
+    return Type(HeapType::string, Nullable);
+  }
+  if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+    return Type(HeapType::stringview_wtf8, Nullable);
+  }
+  if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+    return Type(HeapType::stringview_wtf16, Nullable);
+  }
+  if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+    return Type(HeapType::stringview_iter, Nullable);
   }
   if (allowError) {
     return Type::none;
@@ -1221,6 +1233,20 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     if (str[1] == 'a' && str[2] == 't' && str[3] == 'a' &&
         (prefix || str[4] == 0)) {
       return HeapType::data;
+    }
+  }
+  if (str[0] == 's') {
+    if (strncmp(str, "string", 6) == 0 && (prefix || str[6] == 0)) {
+      return HeapType::string;
+    }
+    if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+      return HeapType::stringview_wtf8;
+    }
+    if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+      return HeapType::stringview_wtf16;
+    }
+    if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+      return HeapType::stringview_iter;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);
@@ -1737,11 +1763,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
       WASM_UNREACHABLE("unexpected const type");
     case Type::none:
     case Type::unreachable: {
@@ -2907,6 +2928,133 @@ Expression* SExpressionWasmBuilder::makeArrayCopy(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, parseExpression(s[1]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
+  size_t i = 1;
+  Expression* length = nullptr;
+  if (op == StringNewWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplace;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+    length = parseExpression(s[i + 1]);
+  } else if (op == StringNewWTF16) {
+    length = parseExpression(s[i + 1]);
+  } else if (op == StringNewWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringNewUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringNewWTF8Array;
+    } else if (strncmp(str, "replace", 7) == 0) {
+      op = StringNewReplaceArray;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
+}
+
+Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
+  return Builder(wasm).makeStringConst(s[1]->str());
+}
+
+Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
+                                                      StringMeasureOp op) {
+  size_t i = 1;
+  if (op == StringMeasureWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringMeasureUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringMeasureWTF8;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeStringMeasure(op, parseExpression(s[i]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
+                                                     StringEncodeOp op) {
+  size_t i = 1;
+  Expression* start = nullptr;
+  if (op == StringEncodeWTF8) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringEncodeUTF8;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringEncodeWTF8;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+  } else if (op == StringEncodeWTF8Array) {
+    const char* str = s[i++]->c_str();
+    if (strncmp(str, "utf8", 4) == 0) {
+      op = StringEncodeUTF8Array;
+    } else if (strncmp(str, "wtf8", 4) == 0) {
+      op = StringEncodeWTF8Array;
+    } else {
+      throw ParseException("bad string.new op", s.line, s.col);
+    }
+    start = parseExpression(s[i + 2]);
+  } else if (op == StringEncodeWTF16Array) {
+    start = parseExpression(s[i + 2]);
+  }
+  return Builder(wasm).makeStringEncode(
+    op, parseExpression(s[i]), parseExpression(s[i + 1]), start);
+}
+
+Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
+  return Builder(wasm).makeStringConcat(parseExpression(s[1]),
+                                        parseExpression(s[2]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringEq(Element& s) {
+  return Builder(wasm).makeStringEq(parseExpression(s[1]),
+                                    parseExpression(s[2]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
+  return Builder(wasm).makeStringAs(op, parseExpression(s[1]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringWTF8Advance(Element& s) {
+  return Builder(wasm).makeStringWTF8Advance(
+    parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringWTF16Get(Element& s) {
+  return Builder(wasm).makeStringWTF16Get(parseExpression(s[1]),
+                                          parseExpression(s[2]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringIterNext(Element& s) {
+  return Builder(wasm).makeStringIterNext(parseExpression(s[1]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringIterMove(Element& s,
+                                                       StringIterMoveOp op) {
+  return Builder(wasm).makeStringIterMove(
+    op, parseExpression(s[1]), parseExpression(s[2]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s,
+                                                       StringSliceWTFOp op) {
+  return Builder(wasm).makeStringSliceWTF(
+    op, parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
+}
+
+Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
+  return Builder(wasm).makeStringSliceIter(parseExpression(s[1]),
+                                           parseExpression(s[2]));
 }
 
 // converts an s-expression string representing binary data into an output

@@ -303,6 +303,19 @@ private:
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
+  Expression* makeStringNew(Element& s, StringNewOp op);
+  Expression* makeStringConst(Element& s);
+  Expression* makeStringMeasure(Element& s, StringMeasureOp op);
+  Expression* makeStringEncode(Element& s, StringEncodeOp op);
+  Expression* makeStringConcat(Element& s);
+  Expression* makeStringEq(Element& s);
+  Expression* makeStringAs(Element& s, StringAsOp op);
+  Expression* makeStringWTF8Advance(Element& s);
+  Expression* makeStringWTF16Get(Element& s);
+  Expression* makeStringIterNext(Element& s);
+  Expression* makeStringIterMove(Element& s, StringIterMoveOp op);
+  Expression* makeStringSliceWTF(Element& s, StringSliceWTFOp op);
+  Expression* makeStringSliceIter(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

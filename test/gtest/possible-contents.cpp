@@ -27,10 +27,14 @@ void assertCombination(const T& a, const T& b, const T& c) {
   T temp1 = a;
   temp1.combine(b);
   assertEqualSymmetric(temp1, c);
+  // Also check the type, as nulls will compare equal even if their types
+  // differ. We want to make sure even the types are identical.
+  assertEqualSymmetric(temp1.getType(), c.getType());
 
   T temp2 = b;
   temp2.combine(a);
   assertEqualSymmetric(temp2, c);
+  assertEqualSymmetric(temp2.getType(), c.getType());
 }
 
 // Parse a module from text and return it.
@@ -59,6 +63,9 @@ protected:
     wasm::setTypeSystem(TypeSystem::Nominal);
   }
 
+  Type anyref = Type(HeapType::any, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
+
   PossibleContents none = PossibleContents::none();
 
   PossibleContents i32Zero = PossibleContents::literal(Literal(int32_t(0)));
@@ -74,15 +81,14 @@ protected:
   PossibleContents i32Global2 =
     PossibleContents::global("i32Global2", Type::i32);
   PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
-  PossibleContents anyGlobal =
-    PossibleContents::global("anyGlobal", Type::anyref);
+  PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
 
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
-  PossibleContents exactAnyref = PossibleContents::exactType(Type::anyref);
-  PossibleContents exactFuncref = PossibleContents::exactType(Type::funcref);
+  PossibleContents exactAnyref = PossibleContents::exactType(anyref);
+  PossibleContents exactFuncref = PossibleContents::exactType(funcref);
   PossibleContents exactNonNullAnyref =
     PossibleContents::exactType(Type(HeapType::any, NonNullable));
   PossibleContents exactNonNullFuncref =

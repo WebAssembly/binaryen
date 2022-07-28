@@ -24,6 +24,7 @@
 
 #include "ir/effects.h"
 #include "ir/localize.h"
+#include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -112,6 +113,9 @@ struct GlobalTypeOptimization : public Pass {
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
     }
@@ -389,12 +393,19 @@ struct GlobalTypeOptimization : public Pass {
           // Map to the new index.
           curr->index = newIndex;
         } else {
-          // This field was removed, so just emit drops of our children (plus a
-          // trap if the input is null).
+          // This field was removed, so just emit drops of our children, plus a
+          // trap if the ref is null. Note that we must preserve the order of
+          // operations here: the trap on a null ref happens after the value,
+          // which might have side effects.
           Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeDrop(curr->value)));
+          auto flipped = getResultOfFirst(curr->ref,
+                                          builder.makeDrop(curr->value),
+                                          getFunction(),
+                                          getModule(),
+                                          getPassOptions());
+          replaceCurrent(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
+          addedLocals = true;
         }
       }
 

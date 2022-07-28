@@ -173,6 +173,15 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gto                                         globally optimize GC types
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gufa                                        Grand Unified Flow Analysis:
+;; CHECK-NEXT:                                                 optimize the entire program
+;; CHECK-NEXT:                                                 using information about what
+;; CHECK-NEXT:                                                 content can actually appear in
+;; CHECK-NEXT:                                                 each location
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --gufa-optimizing                             GUFA plus local optimizations in
+;; CHECK-NEXT:                                                 functions we modified
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:
@@ -609,6 +618,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-extended-const                      Disable extended const
 ;; CHECK-NEXT:                                                 expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-strings                              Enable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-strings                             Disable strings
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct

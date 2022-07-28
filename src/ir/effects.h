@@ -653,7 +653,12 @@ private:
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
     void visitI31New(I31New* curr) {}
-    void visitI31Get(I31Get* curr) {}
+    void visitI31Get(I31Get* curr) {
+      // traps when the ref is null
+      if (curr->i31->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
     void visitCallRef(CallRef* curr) {
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
@@ -662,12 +667,14 @@ private:
       if (curr->isReturn) {
         parent.branchesOut = true;
       }
-      // traps when the arg is null
-      parent.implicitTrap = true;
+      // traps when the call target is null
+      if (curr->target->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
     void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
-      // Traps if the ref is not null and it has an invalid rtt.
+      // Traps if the ref is not null and the cast fails.
       parent.implicitTrap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
@@ -731,6 +738,62 @@ private:
       // only help until the next time those optimizations run. As a tradeoff,
       // we keep the code here simpler, but it does mean another optimization
       // cycle may be needed in some cases.
+    }
+    void visitStringNew(StringNew* curr) {
+      // traps when out of bounds in linear memory or ref is null
+      parent.implicitTrap = true;
+    }
+    void visitStringConst(StringConst* curr) {}
+    void visitStringMeasure(StringMeasure* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringEncode(StringEncode* curr) {
+      // traps when ref is null or we write out of bounds.
+      parent.implicitTrap = true;
+    }
+    void visitStringConcat(StringConcat* curr) {
+      // traps when an input is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringEq(StringEq* curr) {}
+    void visitStringAs(StringAs* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringWTF8Advance(StringWTF8Advance* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringWTF16Get(StringWTF16Get* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringIterNext(StringIterNext* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+      // modifies state in the iterator. we model that as accessing heap memory
+      // in an array atm TODO consider adding a new effect type for this (we
+      // added one for arrays because struct/array operations often interleave,
+      // say with vtable accesses, but it's not clear adding overhead to this
+      // class is worth it for string iters)
+      parent.readsArray = true;
+      parent.writesArray = true;
+    }
+    void visitStringIterMove(StringIterMove* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+      // see StringIterNext.
+      parent.readsArray = true;
+      parent.writesArray = true;
+    }
+    void visitStringSliceWTF(StringSliceWTF* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
+    }
+    void visitStringSliceIter(StringSliceIter* curr) {
+      // traps when ref is null.
+      parent.implicitTrap = true;
     }
   };
 

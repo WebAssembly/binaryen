@@ -105,6 +105,10 @@ BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
 BINARYEN_API BinaryenType BinaryenTypeEqref(void);
 BINARYEN_API BinaryenType BinaryenTypeI31ref(void);
 BINARYEN_API BinaryenType BinaryenTypeDataref(void);
+BINARYEN_API BinaryenType BinaryenTypeStringref(void);
+BINARYEN_API BinaryenType BinaryenTypeStringviewWTF8(void);
+BINARYEN_API BinaryenType BinaryenTypeStringviewWTF16(void);
+BINARYEN_API BinaryenType BinaryenTypeStringviewIter(void);
 BINARYEN_API BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
@@ -120,6 +124,33 @@ WASM_DEPRECATED BinaryenType BinaryenInt64(void);
 WASM_DEPRECATED BinaryenType BinaryenFloat32(void);
 WASM_DEPRECATED BinaryenType BinaryenFloat64(void);
 WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
+
+// Packed types (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenPackedType;
+
+BINARYEN_API BinaryenPackedType BinaryenPackedTypeNotPacked(void);
+BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt8(void);
+BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt16(void);
+
+// Heap types
+
+typedef uintptr_t BinaryenHeapType;
+
+BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
+BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
+BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
+                                                   bool nullable);
+
+// TypeSystem
+
+typedef uint32_t BinaryenTypeSystem;
+
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemEquirecursive(void);
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemNominal(void);
+BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemIsorecursive(void);
+BINARYEN_API BinaryenTypeSystem BinaryenGetTypeSystem(void);
+BINARYEN_API void BinaryenSetTypeSystem(BinaryenTypeSystem typeSystem);
 
 // Expression ids (call to get the value of each; you can cache them)
 
@@ -163,6 +194,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedSIMD(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureExtendedConst(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureStrings(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules

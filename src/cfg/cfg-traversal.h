@@ -277,6 +277,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
             break;
           }
         }
+        WASM_UNUSED(found);
         assert(found);
         continue;
       }

@@ -106,13 +106,8 @@ public:
     f32,
     f64,
     v128,
-    funcref,
-    anyref,
-    eqref,
-    i31ref,
-    dataref,
   };
-  static constexpr BasicType _last_basic_type = dataref;
+  static constexpr BasicType _last_basic_type = v128;
 
   Type() : id(none) {}
 
@@ -342,8 +337,12 @@ public:
     eq,
     i31,
     data,
+    string,
+    stringview_wtf8,
+    stringview_wtf16,
+    stringview_iter,
   };
-  static constexpr BasicHeapType _last_basic_type = data;
+  static constexpr BasicHeapType _last_basic_type = stringview_iter;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}

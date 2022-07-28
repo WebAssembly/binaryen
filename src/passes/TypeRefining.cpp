@@ -78,8 +78,12 @@ struct TypeRefining : public Pass {
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "TypeRefining requires nominal typing";
+    if (!module->features.hasGC()) {
+      return;
+    }
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "TypeRefining requires nominal/hybrid typing";
     }
 
     // Find and analyze struct operations inside each function.

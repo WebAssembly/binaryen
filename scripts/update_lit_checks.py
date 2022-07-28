@@ -40,7 +40,7 @@ MODULE_RE = re.compile(r'^\(module.*$', re.MULTILINE)
 ALL_ITEMS = '|'.join(['type', 'import', 'global', 'memory', 'data', 'table',
                       'elem', 'tag', 'export', 'start', 'func'])
 ITEM_NAME = r'\$?[^\s()]*|"[^\s()]*"'
-ITEM_RE = re.compile(r'(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
+ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
                      re.MULTILINE)
 
 FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] calling (?P<name>\S*)$')

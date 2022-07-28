@@ -163,13 +163,7 @@ struct HeapTypeGeneratorImpl {
     return rand.pick(
       Random::FeatureOptions<Type::BasicType>{}
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-             Type::funcref,
-             Type::anyref,
-             Type::eqref,
-             Type::i31ref,
-             Type::dataref));
+        .add(FeatureSet::SIMD, Type::v128));
   }
 
   HeapType generateHeapType() {
@@ -303,6 +297,11 @@ struct HeapTypeGeneratorImpl {
           return generateSubEq();
         case HeapType::data:
           return generateSubData();
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected index");
     }
@@ -390,6 +389,11 @@ struct HeapTypeGeneratorImpl {
           return HeapType::i31;
         case HeapType::data:
           return pickSubData();
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected kind");
     }
@@ -503,6 +507,11 @@ struct HeapTypeGeneratorImpl {
           }
         case HeapType::data:
           return DataKind{};
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected kind");
     } else {

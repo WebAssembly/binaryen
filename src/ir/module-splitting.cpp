@@ -143,11 +143,11 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // TODO: Reject or handle passive element segments
-  auto it = std::find_if(module.tables.begin(),
-                         module.tables.end(),
-                         [&](std::unique_ptr<Table>& table) {
-                           return table->type == Type::funcref;
-                         });
+  auto funcref = Type(HeapType::func, Nullable);
+  auto it = std::find_if(
+    module.tables.begin(),
+    module.tables.end(),
+    [&](std::unique_ptr<Table>& table) { return table->type == funcref; });
   if (it == module.tables.end()) {
     return;
   }
@@ -163,7 +163,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // append new items at constant offsets after all existing items at constant
   // offsets.
   if (activeTableSegments.size() == 1 &&
-      activeTableSegments[0]->type == Type::funcref &&
+      activeTableSegments[0]->type == funcref &&
       !activeTableSegments[0]->offset->is<Const>()) {
     assert(activeTableSegments[0]->offset->is<GlobalGet>() &&
            "Unexpected initializer instruction");

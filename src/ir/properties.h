@@ -24,15 +24,6 @@
 
 namespace wasm::Properties {
 
-inline bool emitsBoolean(Expression* curr) {
-  if (auto* unary = curr->dynCast<Unary>()) {
-    return unary->isRelational();
-  } else if (auto* binary = curr->dynCast<Binary>()) {
-    return binary->isRelational();
-  }
-  return false;
-}
-
 inline bool isSymmetric(Binary* binary) {
   switch (binary->op) {
     case AddInt32:
@@ -417,7 +408,8 @@ bool isGenerative(Expression* curr, FeatureSet features);
 inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
   if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
       expr->is<RttCanon>() || expr->is<RttSub>() || expr->is<StructNew>() ||
-      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>()) {
+      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>() ||
+      expr->is<StringConst>()) {
     return true;
   }
 

@@ -42,9 +42,22 @@ std::ostream& operator<<(std::ostream& stream,
 namespace wasm {
 
 void PossibleContents::combine(const PossibleContents& other) {
+  auto type = getType();
+  auto otherType = other.getType();
   // First handle the trivial cases of them being equal, or one of them is
   // None or Many.
   if (*this == other) {
+    // Nulls are a special case, since they compare equal even if their type is
+    // different. We would like to make this function symmetric, that is, that
+    // combine(a, b) == combine(b, a) (otherwise, things can be odd and we could
+    // get nondeterminism in the flow analysis which does not have a
+    // determinstic order). To fix that, pick the LUB.
+    if (isNull()) {
+      assert(other.isNull());
+      auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
+                                              otherType.getHeapType());
+      value = Literal::makeNull(lub);
+    }
     return;
   }
   if (other.isNone()) {
@@ -61,9 +74,6 @@ void PossibleContents::combine(const PossibleContents& other) {
     value = Many();
     return;
   }
-
-  auto type = getType();
-  auto otherType = other.getType();
 
   if (!type.isRef() || !otherType.isRef()) {
     // At least one is not a reference. The only possibility left for a useful
@@ -83,6 +93,9 @@ void PossibleContents::combine(const PossibleContents& other) {
 
   // Nulls are always equal to each other, even if their types differ.
   if (isNull() || other.isNull()) {
+    // Only one of them can be null here, since we already checked if *this ==
+    // other, which would have been true had both been null.
+    assert(!isNull() || !other.isNull());
     // If only one is a null, but the other's type is known exactly, then the
     // combination is to add nullability (if the type is *not* known exactly,
     // like for a global, then we cannot do anything useful here).
@@ -91,12 +104,6 @@ void PossibleContents::combine(const PossibleContents& other) {
       return;
     } else if (!other.isNull() && other.hasExactType()) {
       value = ExactType(Type(otherType.getHeapType(), Nullable));
-      return;
-    } else if (isNull() && other.isNull()) {
-      // Both are null. The result is a null, of the LUB.
-      auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
-                                              otherType.getHeapType());
-      value = Literal::makeNull(lub);
       return;
     }
   }
@@ -670,6 +677,60 @@ struct InfoCollector
     visitArrayGet(get);
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);
+  }
+
+  void visitStringNew(StringNew* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+  }
+  void visitStringConst(StringConst* curr) {
+    addRoot(curr, PossibleContents::exactType(curr->type));
+  }
+  void visitStringMeasure(StringMeasure* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringEncode(StringEncode* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringConcat(StringConcat* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringEq(StringEq* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringAs(StringAs* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringWTF8Advance(StringWTF8Advance* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringWTF16Get(StringWTF16Get* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringIterNext(StringIterNext* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringIterMove(StringIterMove* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringSliceWTF(StringSliceWTF* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringSliceIter(StringSliceIter* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
   }
 
   // TODO: Model which throws can go to which catches. For now, anything thrown
@@ -1258,7 +1319,13 @@ bool Flower::updateContents(LocationIndex locationIndex,
     worthSendingMore = false;
   }
 
-  if (contents == oldContents) {
+  // Check if anything changed. Note that we check not just the content but
+  // also its type. That handles the case of nulls, that compare equal even if
+  // their type differs. We want to keep flowing if the type can change, so that
+  // we always end up with a deterministic result no matter in what order the
+  // flow happens (the final result will be the LUB of all the types of nulls
+  // that can arrive).
+  if (contents == oldContents && contents.getType() == oldContents.getType()) {
     // Nothing actually changed, so just return.
     return worthSendingMore;
   }
@@ -1268,7 +1335,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   if (auto* globalLoc =
         std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
     filterGlobalContents(contents, *globalLoc);
-    if (contents == oldContents) {
+    if (contents == oldContents &&
+        contents.getType() == oldContents.getType()) {
       // Nothing actually changed after filtering, so just return.
       return worthSendingMore;
     }
@@ -1320,6 +1388,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // parent, and we need to do some special handling because of that child-
     // parent connection.
     auto* child = exprLoc->expr;
+    WASM_UNUSED(child);
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
