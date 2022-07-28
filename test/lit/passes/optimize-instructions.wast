@@ -5842,6 +5842,60 @@
       )
     )
   )
+  ;; CHECK:      (func $rotate-left-square-no-overflow-small (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotl
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-left-square-no-overflow-small (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotl
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.const 4)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-square-no-overflow-small (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotr
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-right-square-no-overflow-small (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotr
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.const 4)
+    )
+  )
+  ;; CHECK:      (func $rotate-left-square-no-shifts (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $rotate-left-square-no-shifts (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotl
+        (local.get $x)
+        (i32.const 12)
+      )
+      (i32.const 20)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-square-no-shifts (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $rotate-right-square-no-shifts (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotr
+        (local.get $x)
+        (i32.const 30)
+      )
+      (i32.const 2)
+    )
+  )
   ;; CHECK:      (func $and-popcount32 (result i32)
   ;; CHECK-NEXT:  (i32.and
   ;; CHECK-NEXT:   (i32.popcnt
