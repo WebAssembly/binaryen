@@ -3422,7 +3422,7 @@ private:
           return x;
         }
         // (x * C1) * C2   =>   x * (C1 * C2)
-        if (op == MulInt32 || op == MulInt64) {
+        if (op == getBinary(type, Mul)) {
           c1->value = c1->value.mul(c2->value);
           return x;
 
@@ -3431,7 +3431,7 @@ private:
         }
         // (x <<>> C1) <<>> C2   =>   x <<>> (C1 + C2)
         // iff C1 + C2 doesn't overflow
-        if (Abstract::hasAnyShift(op)) {
+        if (hasAnyShift(op)) {
           // shifts only use an effective amount from the constant, so
           // adding must be done carefully
           auto total =
