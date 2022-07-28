@@ -1933,6 +1933,15 @@ static const char* findMemExtra(const Element& s, size_t skip, bool isAtomic) {
   return ret;
 }
 
+bool SExpressionWasmBuilder::hasMemoryIdx(Element& s, Index defaultSize, Index i) {
+  if (s.size() > defaultSize && !s[i]->isList() &&
+        strncmp(s[i]->c_str(), "align", 5) != 0 &&
+        strncmp(s[i]->c_str(), "offset", 6) != 0) {
+    return true;
+  }
+  return false;
+}
+
 Expression*
 SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   const char* extra = findMemExtra(*s[0], 5 /* after "type.load" */, isAtomic);
@@ -1945,9 +1954,7 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 2 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 2, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -1970,9 +1977,7 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 3 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 3, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -2026,9 +2031,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 3 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 3, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -2057,9 +2060,7 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 4 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 4, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -2094,9 +2095,7 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 4 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 4, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -2121,9 +2120,7 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 3 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 3, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -2243,9 +2240,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 2 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 2, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
@@ -2292,9 +2287,7 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
-  if (s.size() > 4 && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+  if (hasMemoryIdx(s, 4, i)) {
     memory = getMemoryName(*s[i++]);
   } else {
     memory = getMemoryNameAtIdx(0);
