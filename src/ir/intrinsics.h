@@ -35,7 +35,7 @@ class Intrinsics {
   Module& module;
 
 public:
-  static Name BinaryenIntrinsics;
+  static Name BinaryenIntrinsicsModule;
   static Name CallWithoutEffects;
 
   Intrinsics(Module& module) : module(module) {}

@@ -78,7 +78,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
       } else if (import->base == "getTempRet0") {
         return {Literal(state.tempRet0)};
       }
-    } else if (import->module == Intrinsics::BinaryenIntrinsics) {
+    } else if (import->module == Intrinsics::BinaryenIntrinsicsModule) {
       if (import->base == Intrinsics::CallWithoutEffects) {
         auto newArguments = arguments;
         auto target = newArguments.back();
