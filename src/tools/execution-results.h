@@ -39,8 +39,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
-  Literals callImport(Function* import,
-                      Literals& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == "fuzzing-support") {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls

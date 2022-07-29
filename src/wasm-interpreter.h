@@ -2346,8 +2346,7 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Literals
-    callImport(Function* import, Literals& arguments) = 0;
+    virtual Literals callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
                                HeapType sig,
