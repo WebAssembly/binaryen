@@ -2167,7 +2167,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop dataref)
       )
       (drop
-<<<<<<< HEAD
        (pop stringref)
       )
       (drop
@@ -2180,10 +2179,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop stringview_iter)
       )
       (drop
-       (memory.size)
-=======
        (memory.size $0)
->>>>>>> b9160423d (updating binaryenjs test output)
       )
       (drop
        (memory.grow $0
