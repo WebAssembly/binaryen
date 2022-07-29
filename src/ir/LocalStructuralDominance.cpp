@@ -78,7 +78,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       // When we first see an expression we scan it and add work items for it
       // and its children.
       Scan,
-      // Visit a specific instruction.
+      // Visit a specific instruction. This is only ever called on a LocalSet
+      // due to the optimizations below.
       Visit,
       // Enter or exit a scope
       EnterScope,
@@ -156,13 +157,12 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         workStack.push_back(WorkItem{WorkItem::Scan, *child});
       }
     } else if (item.op == WorkItem::Visit) {
-      if (auto* set = item.curr->dynCast<LocalSet>()) {
-        auto index = set->index;
-        if (!localsSet[index]) {
-          // This local is now set until the end of this scope.
-          localsSet[index] = true;
-          cleanupStack.back().insert(index);
-        }
+      auto* set = item.curr->cast<LocalSet>();
+      auto index = set->index;
+      if (!localsSet[index]) {
+        // This local is now set until the end of this scope.
+        localsSet[index] = true;
+        cleanupStack.back().insert(index);
       }
     } else if (item.op == WorkItem::EnterScope) {
       cleanupStack.emplace_back();
