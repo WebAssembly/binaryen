@@ -2,13 +2,12 @@
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func))
  (type $2 (func (result i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 587))
  (global $__stack_base (mut i32) (i32.const 0))
- (global $__stack_limit (mut i32) (i32.const 0))
+ (global $__stack_end (mut i32) (i32.const 0))
  (memory $0 2)
  (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
  (table $0 1 1 funcref)
@@ -17,7 +16,6 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
- (export "__set_stack_limits" (func $__set_stack_limits))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -41,7 +39,7 @@
      )
      (i32.lt_u
       (local.get $3)
-      (global.get $__stack_limit)
+      (global.get $__stack_end)
      )
     )
     (unreachable)
@@ -78,7 +76,7 @@
      )
      (i32.lt_u
       (local.get $4)
-      (global.get $__stack_limit)
+      (global.get $__stack_end)
      )
     )
     (unreachable)
@@ -112,7 +110,7 @@
      )
      (i32.lt_u
       (local.get $1)
-      (global.get $__stack_limit)
+      (global.get $__stack_end)
      )
     )
     (unreachable)
@@ -148,7 +146,7 @@
      )
      (i32.lt_u
       (local.get $2)
-      (global.get $__stack_limit)
+      (global.get $__stack_end)
      )
     )
     (unreachable)
@@ -162,14 +160,6 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__set_stack_limits (param $0 i32) (param $1 i32)
-  (global.set $__stack_base
-   (local.get $0)
-  )
-  (global.set $__stack_limit
-   (local.get $1)
-  )
- )
 )
 (;
 --BEGIN METADATA --
@@ -181,8 +171,7 @@
   ],
   "exports": [
     "__wasm_call_ctors",
-    "main",
-    "__set_stack_limits"
+    "main"
   ],
   "namedGlobals": {
     "__heap_base" : "66128",
