@@ -193,8 +193,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   Literals callImport(Function* import,
-                      Literals& arguments,
-                      EvallingModuleRunner& instance) override {
+                      Literals& arguments) override {
     Name WASI("wasi_snapshot_preview1");
 
     if (ignoreExternalInput) {
