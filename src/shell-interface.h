@@ -134,8 +134,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
 
   Literals callImport(Function* import,
-                      Literals& arguments,
-                      ModuleRunner& instance) override {
+                      Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -191,7 +190,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       trap("callIndirect: bad result type");
     }
     if (func->imported()) {
-      return callImport(func, arguments, instance);
+      return callImport(func, arguments);
     } else {
       return instance.callFunctionInternal(func->name, arguments);
     }

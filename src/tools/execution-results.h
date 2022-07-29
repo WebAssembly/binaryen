@@ -40,8 +40,7 @@ struct LoggingExternalInterface : public ShellExternalInterface {
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
   Literals callImport(Function* import,
-                      Literals& arguments,
-                      ModuleRunner& instance) override {
+                      Literals& arguments) override {
     if (import->module == "fuzzing-support") {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
@@ -76,11 +75,8 @@ struct LoggingExternalInterface : public ShellExternalInterface {
         return {};
       } else if (import->base == "getTempRet0") {
         return {Literal(state.tempRet0)};
-      } else {
-        WASM_UNREACHABLE("unsupported intrinsic");
       }
     }
-    // TODO: add intrinsics support here!
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
               << import->module << " . " << import->base << '\n';
     return {};

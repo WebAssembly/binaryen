@@ -2347,7 +2347,7 @@ public:
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literals
-    callImport(Function* import, Literals& arguments, SubType& instance) = 0;
+    callImport(Function* import, Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
                                HeapType sig,
@@ -2767,7 +2767,7 @@ public:
         newArguments.pop_back();
         ret.values = callFunctionInternal(target.getFunc(), newArguments);
       } else {
-        ret.values = externalInterface->callImport(func, arguments, *self());
+        ret.values = externalInterface->callImport(func, arguments);
       }
     } else {
       ret.values = callFunctionInternal(curr->target, arguments);
@@ -2825,7 +2825,7 @@ public:
     auto* func = wasm.getFunction(funcName);
     Flow ret;
     if (func->imported()) {
-      ret.values = externalInterface->callImport(func, arguments, *self());
+      ret.values = externalInterface->callImport(func, arguments);
     } else {
       ret.values = callFunctionInternal(funcName, arguments);
     }
