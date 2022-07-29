@@ -232,6 +232,7 @@ struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
   bool binary, deNan, verbose, debugInfo;
+  ToolOptions& toolOptions;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
@@ -241,9 +242,11 @@ struct Reducer
           bool binary,
           bool deNan,
           bool verbose,
-          bool debugInfo)
+          bool debugInfo,
+          ToolOptions& toolOptions)
     : command(command), test(test), working(working), binary(binary),
-      deNan(deNan), verbose(verbose), debugInfo(debugInfo) {}
+      deNan(deNan), verbose(verbose), debugInfo(debugInfo),
+      toolOptions(toolOptions) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -358,12 +361,16 @@ struct Reducer
       std::cerr << '\n';
       Fatal() << "error in parsing working wasm binary";
     }
+
     // If there is no features section, assume we may need them all (without
     // this, a module with no features section but that uses e.g. atomics and
     // bulk memory would not work).
     if (!module->hasFeaturesSection) {
       module->features = FeatureSet::All;
     }
+    // Apply features the user passed on the commandline.
+    toolOptions.applyFeatures(*module);
+
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
@@ -583,6 +590,13 @@ struct Reducer
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do
+    } else if (curr->is<Drop>()) {
+      if (curr->type == Type::none) {
+        // We can't improve this: the child has a different type than us. Return
+        // here to avoid reaching the code below that tries to add a drop on
+        // children (which would recreate the current state).
+        return;
+      }
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
@@ -1388,7 +1402,8 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, binary, deNan, verbose, debugInfo);
+    Reducer reducer(
+      command, test, working, binary, deNan, verbose, debugInfo, options);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed

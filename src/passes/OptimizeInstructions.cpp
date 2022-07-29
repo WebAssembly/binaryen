@@ -716,6 +716,23 @@ struct OptimizeInstructions
             }
           }
         }
+        if (left->op == Abstract::getBinary(left->type, Abstract::Shl) &&
+            curr->op == Abstract::getBinary(curr->type, Abstract::Mul)) {
+          if (auto* leftRight = left->right->dynCast<Const>()) {
+            left->op = Abstract::getBinary(left->type, Abstract::Mul);
+            // (x << C1) * C2   ->   x * (C2 << C1)
+            leftRight->value = right->value.shl(leftRight->value);
+            return replaceCurrent(left);
+          }
+        }
+        if (left->op == Abstract::getBinary(left->type, Abstract::Mul) &&
+            curr->op == Abstract::getBinary(curr->type, Abstract::Shl)) {
+          if (auto* leftRight = left->right->dynCast<Const>()) {
+            // (x * C1) << C2   ->   x * (C1 << C2)
+            leftRight->value = leftRight->value.shl(right->value);
+            return replaceCurrent(left);
+          }
+        }
       }
       if (right->type == Type::i32) {
         BinaryOp op;

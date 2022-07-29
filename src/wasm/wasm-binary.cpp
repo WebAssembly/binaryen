@@ -1342,32 +1342,37 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (heapType.isBasic()) {
-      if (type.isNullable()) {
-        switch (heapType.getBasic()) {
-          case HeapType::any:
-            o << S32LEB(BinaryConsts::EncodedType::anyref);
-            return;
-          case HeapType::func:
-            o << S32LEB(BinaryConsts::EncodedType::funcref);
-            return;
-          case HeapType::eq:
-            o << S32LEB(BinaryConsts::EncodedType::eqref);
-            return;
-          default:
-            break;
-        }
-      } else {
-        switch (heapType.getBasic()) {
-          case HeapType::i31:
-            o << S32LEB(BinaryConsts::EncodedType::i31ref);
-            return;
-          case HeapType::data:
-            o << S32LEB(BinaryConsts::EncodedType::dataref);
-            return;
-          default:
-            break;
-        }
+    if (heapType.isBasic() && type.isNullable()) {
+      switch (heapType.getBasic()) {
+        case HeapType::any:
+          o << S32LEB(BinaryConsts::EncodedType::anyref);
+          return;
+        case HeapType::func:
+          o << S32LEB(BinaryConsts::EncodedType::funcref);
+          return;
+        case HeapType::eq:
+          o << S32LEB(BinaryConsts::EncodedType::eqref);
+          return;
+        case HeapType::i31:
+          // TODO: Emit i31ref once V8 (and Binaryen itself) treats it as
+          // nullable.
+          break;
+        case HeapType::data:
+          // TODO: Emit dataref once V8 (and Binaryen itself) treats it as
+          // nullable.
+          break;
+        case HeapType::string:
+          o << S32LEB(BinaryConsts::EncodedType::stringref);
+          return;
+        case HeapType::stringview_wtf8:
+          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf8);
+          return;
+        case HeapType::stringview_wtf16:
+          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf16);
+          return;
+        case HeapType::stringview_iter:
+          o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
+          return;
       }
     }
     if (type.isNullable()) {
@@ -2985,43 +2990,19 @@ void WasmBinaryBuilder::processNames() {
 
   for (auto& [index, refs] : functionRefs) {
     for (auto* ref : refs) {
-      if (auto* call = ref->dynCast<Call>()) {
-        call->target = getFunctionName(index);
-      } else if (auto* refFunc = ref->dynCast<RefFunc>()) {
-        refFunc->func = getFunctionName(index);
-      } else {
-        WASM_UNREACHABLE("Invalid type in function references");
-      }
+      *ref = getFunctionName(index);
     }
   }
 
   for (auto& [index, refs] : tableRefs) {
     for (auto* ref : refs) {
-      if (auto* callIndirect = ref->dynCast<CallIndirect>()) {
-        callIndirect->table = getTableName(index);
-      } else if (auto* get = ref->dynCast<TableGet>()) {
-        get->table = getTableName(index);
-      } else if (auto* set = ref->dynCast<TableSet>()) {
-        set->table = getTableName(index);
-      } else if (auto* size = ref->dynCast<TableSize>()) {
-        size->table = getTableName(index);
-      } else if (auto* grow = ref->dynCast<TableGrow>()) {
-        grow->table = getTableName(index);
-      } else {
-        WASM_UNREACHABLE("Invalid type in table references");
-      }
+      *ref = getTableName(index);
     }
   }
 
   for (auto& [index, refs] : globalRefs) {
     for (auto* ref : refs) {
-      if (auto* get = ref->dynCast<GlobalGet>()) {
-        get->name = getGlobalName(index);
-      } else if (auto* set = ref->dynCast<GlobalSet>()) {
-        set->name = getGlobalName(index);
-      } else {
-        WASM_UNREACHABLE("Invalid type in global references");
-      }
+      *ref = getGlobalName(index);
     }
   }
 
@@ -3165,7 +3146,7 @@ void WasmBinaryBuilder::readElementSegments() {
         auto sig = getTypeByFunctionIndex(index);
         // Use a placeholder name for now
         auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
-        functionRefs[index].push_back(refFunc);
+        functionRefs[index].push_back(&refFunc->func);
         segmentData.push_back(refFunc);
       }
     }
@@ -4308,7 +4289,8 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = sig.results;
-  functionRefs[index].push_back(curr); // we don't know function names yet
+  // We don't know function names yet.
+  functionRefs[index].push_back(&curr->target);
   curr->finalize();
 }
 
@@ -4325,7 +4307,7 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(curr);
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
 }
 
@@ -4372,7 +4354,7 @@ void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
     curr->name = glob->name;
     curr->type = glob->type;
   }
-  globalRefs[index].push_back(curr); // we don't know the final name yet
+  globalRefs[index].push_back(&curr->name); // we don't know the final name yet
 }
 
 void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
@@ -4389,7 +4371,7 @@ void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
     curr->name = globals[adjustedIndex]->name;
   }
   curr->value = popNonVoidExpression();
-  globalRefs[index].push_back(curr); // we don't know the final name yet
+  globalRefs[index].push_back(&curr->name); // we don't know the final name yet
   curr->finalize();
 }
 
@@ -5199,7 +5181,7 @@ bool WasmBinaryBuilder::maybeVisitTableSize(Expression*& out, uint32_t code) {
   auto* curr = allocator.alloc<TableSize>();
   curr->finalize();
   // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(curr);
+  tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
   return true;
 }
@@ -5217,7 +5199,7 @@ bool WasmBinaryBuilder::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   curr->value = popNonVoidExpression();
   curr->finalize();
   // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(curr);
+  tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
   return true;
 }
@@ -6580,7 +6562,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // be verified in the next line. (Also, note that functionRefs[index] may
   // write to an odd place in the functionRefs map if index is invalid, but that
   // is harmless.)
-  functionRefs[index].push_back(curr);
+  functionRefs[index].push_back(&curr->func);
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   curr->finalize(Type(getTypeByFunctionIndex(index), NonNullable));
@@ -6603,7 +6585,7 @@ void WasmBinaryBuilder::visitTableGet(TableGet* curr) {
   curr->type = tables[tableIdx]->type;
   curr->finalize();
   // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(curr);
+  tableRefs[tableIdx].push_back(&curr->table);
 }
 
 void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
@@ -6616,7 +6598,7 @@ void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
   curr->index = popNonVoidExpression();
   curr->finalize();
   // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(curr);
+  tableRefs[tableIdx].push_back(&curr->table);
 }
 
 void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {

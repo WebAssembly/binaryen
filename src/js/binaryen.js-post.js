@@ -39,6 +39,10 @@ function initializeConstants() {
     ['eqref', 'Eqref'],
     ['i31ref', 'I31ref'],
     ['dataref', 'Dataref'],
+    ['stringref', 'Stringref'],
+    ['stringview_wtf8', 'StringviewWTF8'],
+    ['stringview_wtf16', 'StringviewWTF16'],
+    ['stringview_iter', 'StringviewIter'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -150,6 +154,7 @@ function initializeConstants() {
     'TypedFunctionReferences',
     'RelaxedSIMD',
     'ExtendedConst',
+    'Strings',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2264,6 +2269,30 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  self['stringref'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['stringref']);
+    }
+  };
+
+  self['stringview_wtf8'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['stringview_wtf8']);
+    }
+  };
+
+  self['stringview_wtf16'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['stringview_wtf16']);
+    }
+  };
+
+  self['stringview_iter'] = {
+    'pop'() {
+      return Module['_BinaryenPop'](module, Module['stringview_iter']);
+    }
+  };
+
   self['ref'] = {
     'null'(type) {
       return Module['_BinaryenRefNull'](module, type);
@@ -2587,22 +2616,16 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetElementSegmentByIndex'](module, index);
   };
   self['emitText'] = function() {
-    const old = out;
-    let ret = '';
-    out = x => { ret += x + '\n' };
-    Module['_BinaryenModulePrint'](module);
-    out = old;
-    return ret;
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteText'](module);
+    let text = UTF8ToString(textPtr);
+    if (textPtr) _free(textPtr);
+    return text;
   };
   self['emitStackIR'] = function(optimize) {
-    self['runPasses'](['generate-stack-ir']);
-    if (optimize) self['runPasses'](['optimize-stack-ir']);
-    const old = out;
-    let ret = '';
-    out = x => { ret += x + '\n' };
-    self['runPasses'](['print-stack-ir']);
-    out = old;
-    return ret;
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module, optimize);
+    let text = UTF8ToString(textPtr);
+    if (textPtr) _free(textPtr);
+    return text;
   };
   self['emitAsmjs'] = function() {
     const old = out;
