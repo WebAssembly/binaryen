@@ -22,7 +22,8 @@
 namespace wasm {
 
 LocalStructuralDominance::LocalStructuralDominance(Function* func,
-                                                   Module& wasm) {
+                                                   Module& wasm,
+                                                   Mode mode) {
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so nothing to look at.
     return;
@@ -44,6 +45,22 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   // The locals that have been set, and so at the current time, they
   // structurally dominate.
   std::vector<bool> localsSet(num);
+
+  // Mark locals we don't need to care about as "set". We never do any work for
+  // such a local.
+  bool hasNonNullableVar = false;
+  for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
+    auto type = func->getLocalType(i);
+    if (!type.isRef() || (mode == IgnoreNullable && type.isNullable())) {
+      localsSet[i] = true;
+    }
+    if (type.isNonNullable()) {
+      hasNonNullableVar = true;
+    }
+  }
+  if (mode == IgnoreNullable && !hasNonNullableVar) {
+    return;
+  }
 
   // Parameters always dominate.
   for (Index i = 0; i < func->getNumParams(); i++) {
@@ -78,13 +95,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   workStack.push_back(WorkItem{WorkItem::Scan, func->body});
   workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
 
-  // A special marker for "start or finis/cleanup a scope". When we scan a block
-  // we'll add its children to the stack + cleanup at the end. When we get to
-  // the marker we'll pop the control flow stack and do any undoing we need to.
-  // This could be anything, so Nop is arbitrary, it just needs to not collide
-  // with anything else.
-  Nop scopeStart, scopeEnd;
-
   while (!workStack.empty()) {
     auto item = workStack.back();
     workStack.pop_back();
@@ -96,13 +106,11 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         if (children.empty()) {
           // No children, so just visit here right now.
           //
-          // The only such instruction we care about is a local.get.
+          // The only such instruction we care about is a (relevant) local.get.
           if (auto* get = item.curr->dynCast<LocalGet>()) {
             auto index = get->index;
-            if (func->getLocalType(index).isRef()) {
-              if (!localsSet[index]) {
-                nonDominatingIndexes.insert(index);
-              }
+            if (!localsSet[index]) {
+              nonDominatingIndexes.insert(index);
             }
           }
 
@@ -114,7 +122,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         // The only such instruction we need to visit is a (relevant) local.set.
         if (auto* set = item.curr->dynCast<LocalSet>()) {
           auto index = set->index;
-          if (func->getLocalType(index).isRef()) {
+          if (!localsSet[index]) {
             workStack.push_back(WorkItem{WorkItem::Visit, set});
           }
         }
@@ -150,7 +158,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     } else if (item.op == WorkItem::Visit) {
       if (auto* set = item.curr->dynCast<LocalSet>()) {
         auto index = set->index;
-        assert(func->getLocalType(index).isRef());
         if (!localsSet[index]) {
           // This local is now set until the end of this scope.
           localsSet[index] = true;

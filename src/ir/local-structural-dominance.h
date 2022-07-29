@@ -24,7 +24,7 @@ namespace wasm {
 //
 // Finds which local.sets have structural dominance over their gets. This is
 // important for things like non-nullable locals, and so this class only looks
-// at reference types and not anything else. It does look at both nullable and
+// at reference types and not anything else. It can look at both nullable and
 // non-nullable references, though, as it can be used to validate non-nullable
 // ones, and also to check if a nullable one could become non-nullable and still
 // validate.
@@ -62,7 +62,16 @@ namespace wasm {
 // nicely, it can be validated in linear time.
 //
 struct LocalStructuralDominance {
-  LocalStructuralDominance(Function* func, Module& wasm);
+  // We always look at non-nullable locals, but can be configured to ignore
+  // or process nullable ones.
+  enum Mode {
+    ProcessNullable,
+    IgnoreNullable,
+  };
+
+  LocalStructuralDominance(Function* func,
+                           Module& wasm,
+                           Mode mode = ProcessNullable);
 
   // Local indexes for whom a local.get exists that is not structurally
   // dominated.
