@@ -17,6 +17,7 @@
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
 #include "support/small_set.h"
+#include "support/small_vector.h"
 
 namespace wasm {
 
@@ -29,14 +30,14 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
   auto num = func->getNumLocals();
 
-  bool hasRef = false;
-  for (Index i = 0; i < num; i++) {
+  bool hasRefVar = false;
+  for (Index i = func->getNumParams(); i < num; i++) {
     if (func->getLocalType(i).isRef()) {
-      hasRef = true;
+      hasRefVar = true;
       break;
     }
   }
-  if (!hasRef) {
+  if (!hasRefVar) {
     return;
   }
 
@@ -49,7 +50,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     localsSet[i] = true;
   }
 
-  using Locals = SmallUnorderedSet<Index, 10>;
+  using Locals = SmallUnorderedSet<Index, 5>;
 
   // When we exit a control flow structure, we must undo the locals that it set.
   std::vector<Locals> cleanupStack;
@@ -69,7 +70,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
     Expression* curr;
   };
-  std::vector<WorkItem> workStack;
+  SmallVector<WorkItem, 5> workStack;
 
   // The stack begins with a new scope for the function, and then we start on
   // the body. (Note that we don't need to exit that scope, that work would not
@@ -90,13 +91,33 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
     if (item.op == WorkItem::Scan) {
       if (!Properties::isControlFlowStructure(item.curr)) {
-        // Simply scan the children and prepare to visit here afterwards.
+        auto childIterator = ChildIterator(item.curr);
+        auto& children = childIterator.children;
+        if (children.empty()) {
+          // No children, so just visit here right now.
+          //
+          // The only such instruction we care about is a local.get.
+          if (auto* get = item.curr->dynCast<LocalGet>()) {
+            auto index = get->index;
+            if (func->getLocalType(index).isRef()) {
+              if (!localsSet[index]) {
+                nonDominatingIndexes.insert(index);
+              }
+            }
+          }
+
+          continue;
+        }
+
+        // Otherwise, prepare to visit here after our children.
         workStack.push_back(WorkItem{WorkItem::Visit, item.curr});
-        for (auto* child : ChildIterator(item.curr).children) {
+        for (auto* child : children) {
           workStack.push_back(WorkItem{WorkItem::Scan, *child});
         }
+
         continue;
       }
+
 
       // First, go through the structure children. Blocks are special in that
       // all their children go in a single scope.
@@ -127,13 +148,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
             // This local is now set until the end of this scope.
             localsSet[index] = true;
             cleanupStack.back().insert(index);
-          }
-        }
-      } else if (auto* get = item.curr->dynCast<LocalGet>()) {
-        auto index = get->index;
-        if (func->getLocalType(index).isRef()) {
-          if (!localsSet[index]) {
-            nonDominatingIndexes.insert(index);
           }
         }
       }
