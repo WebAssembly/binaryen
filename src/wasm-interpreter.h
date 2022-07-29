@@ -28,6 +28,7 @@
 #include <sstream>
 #include <variant>
 
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
@@ -2759,7 +2760,15 @@ public:
     auto* func = wasm.getFunction(curr->target);
     Flow ret;
     if (func->imported()) {
-      ret.values = externalInterface->callImport(func, arguments, *self());
+      if (func->module == Intrinsics::BinaryenIntrinsicsModule &&
+          func->base == Intrinsics::CallWithoutEffects) {
+        auto newArguments = arguments;
+        auto target = newArguments.back();
+        newArguments.pop_back();
+        ret.values = callFunctionInternal(target.getFunc(), newArguments);
+      } else {
+        ret.values = externalInterface->callImport(func, arguments, *self());
+      }
     } else {
       ret.values = callFunctionInternal(curr->target, arguments);
     }
