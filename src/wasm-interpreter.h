@@ -2759,6 +2759,8 @@ public:
     auto* func = wasm.getFunction(curr->target);
     Flow ret;
     if (func->imported()) {
+      // The call.without.effects intrinsic is a call to an import that actually
+      // calls the given function reference that is the final argument.
       if (func->module == Intrinsics::BinaryenIntrinsicsModule &&
           func->base == Intrinsics::CallWithoutEffects) {
         auto newArguments = arguments;
