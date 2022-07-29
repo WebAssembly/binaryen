@@ -3538,7 +3538,11 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
 static std::ostream&
 printStackIR(StackIR* ir, std::ostream& o, Function* func) {
   size_t indent = func ? 2 : 0;
-  auto doIndent = [&]() { o << std::string(indent, ' '); };
+  auto doIndent = [&indent, &o]() {
+    for (size_t j = 0; j < indent; j++) {
+      o << ' ';
+    }
+  };
 
   int controlFlowDepth = 0;
   // Stack to track indices of catches within a try
