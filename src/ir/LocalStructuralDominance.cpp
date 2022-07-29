@@ -110,7 +110,14 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         }
 
         // Otherwise, prepare to visit here after our children.
-        workStack.push_back(WorkItem{WorkItem::Visit, item.curr});
+        //
+        // The only such instruction we need to visit is a (relevant) local.set.
+        if (auto* set = item.curr->dynCast<LocalSet>()) {
+          auto index = set->index;
+          if (func->getLocalType(index).isRef()) {
+            workStack.push_back(WorkItem{WorkItem::Visit, set});
+          }
+        }
         for (auto* child : children) {
           workStack.push_back(WorkItem{WorkItem::Scan, *child});
         }
@@ -143,12 +150,11 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     } else if (item.op == WorkItem::Visit) {
       if (auto* set = item.curr->dynCast<LocalSet>()) {
         auto index = set->index;
-        if (func->getLocalType(index).isRef()) {
-          if (!localsSet[index]) {
-            // This local is now set until the end of this scope.
-            localsSet[index] = true;
-            cleanupStack.back().insert(index);
-          }
+        assert(func->getLocalType(index).isRef());
+        if (!localsSet[index]) {
+          // This local is now set until the end of this scope.
+          localsSet[index] = true;
+          cleanupStack.back().insert(index);
         }
       }
     } else if (item.op == WorkItem::EnterScope) {
