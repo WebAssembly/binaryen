@@ -1385,13 +1385,11 @@ void WasmBinaryWriter::writeType(Type type) {
           o << S32LEB(BinaryConsts::EncodedType::eqref);
           return;
         case HeapType::i31:
-          // TODO: Emit i31ref once V8 (and Binaryen itself) treats it as
-          // nullable.
-          break;
+          o << S32LEB(BinaryConsts::EncodedType::i31ref);
+          return;
         case HeapType::data:
-          // TODO: Emit dataref once V8 (and Binaryen itself) treats it as
-          // nullable.
-          break;
+          o << S32LEB(BinaryConsts::EncodedType::dataref);
+          return;
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
