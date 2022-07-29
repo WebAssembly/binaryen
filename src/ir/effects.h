@@ -678,8 +678,6 @@ private:
       parent.implicitTrap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
-    void visitRttCanon(RttCanon* curr) {}
-    void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
       if (curr->ref->type == Type::unreachable) {

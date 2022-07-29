@@ -29,30 +29,8 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
   return ret;
 }
 
-inline bool canMakeZero(Type type) {
-  if (type.isNonNullable()) {
-    return false;
-  }
-  if (type.isRtt() && type.getRtt().hasDepth()) {
-    // An rtt with depth cannot be constructed as a simple zero: we'd need to
-    // create not just a zero (an rtt.canon) but also some rtt.subs that add to
-    // the depth, so disallow that. Also, there is no practical way to create a
-    // zero Literal for such a type, as we'd need to supply the list of super
-    // types somehow, and creating a zero Literal is how makeZero works.
-    return false;
-  }
-  if (type.isTuple()) {
-    for (auto t : type) {
-      if (!canMakeZero(t)) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 inline Expression* makeZero(Type type, Module& wasm) {
-  assert(canMakeZero(type));
+  assert(!type.isNonNullable());
   // TODO: Remove this function once V8 supports v128.const
   // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)
   Builder builder(wasm);

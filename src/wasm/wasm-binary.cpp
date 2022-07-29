@@ -1383,17 +1383,6 @@ void WasmBinaryWriter::writeType(Type type) {
     writeHeapType(type.getHeapType());
     return;
   }
-  if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    if (rtt.hasDepth()) {
-      o << S32LEB(BinaryConsts::EncodedType::rtt_n);
-      o << U32LEB(rtt.depth);
-    } else {
-      o << S32LEB(BinaryConsts::EncodedType::rtt);
-    }
-    writeIndexedHeapType(rtt.heapType);
-    return;
-  }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
@@ -1877,14 +1866,6 @@ Type WasmBinaryBuilder::getType(int initial) {
       return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::nonnullable:
       return Type(getHeapType(), NonNullable);
-    case BinaryConsts::EncodedType::rtt_n: {
-      auto depth = getU32LEB();
-      auto heapType = getIndexedHeapType();
-      return Type(Rtt(depth, heapType));
-    }
-    case BinaryConsts::EncodedType::rtt: {
-      return Type(Rtt(getIndexedHeapType()));
-    }
     default:
       throwError("invalid wasm type: " + std::to_string(initial));
   }
@@ -2028,16 +2009,6 @@ void WasmBinaryBuilder::readTypes() {
           throwError("invalid type index: " + std::to_string(htCode));
         }
         return builder.getTempRefType(builder[size_t(htCode)], nullability);
-      }
-      case BinaryConsts::EncodedType::rtt_n:
-      case BinaryConsts::EncodedType::rtt: {
-        auto depth = typeCode == BinaryConsts::EncodedType::rtt ? Rtt::NoDepth
-                                                                : getU32LEB();
-        auto htCode = getU32LEB();
-        if (size_t(htCode) >= builder.size()) {
-          throwError("invalid type index: " + std::to_string(htCode));
-        }
-        return builder.getTempRttType(Rtt(depth, builder[htCode]));
       }
       default:
         throwError("unexpected type index: " + std::to_string(typeCode));
@@ -3873,12 +3844,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitBrOn(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitRttCanon(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitRttSub(curr, opcode)) {
         break;
       }
       if (maybeVisitStructNew(curr, opcode)) {
@@ -6793,12 +6758,7 @@ bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefTest) {
-    auto* rtt = popNonVoidExpression();
-    auto* ref = popNonVoidExpression();
-    out = Builder(wasm).makeRefTest(ref, rtt);
-    return true;
-  } else if (code == BinaryConsts::RefTestStatic) {
+  if (code == BinaryConsts::RefTestStatic) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
     out = Builder(wasm).makeRefTest(ref, intendedType);
@@ -6808,13 +6768,8 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefCast) {
-    auto* rtt = popNonVoidExpression();
-    auto* ref = popNonVoidExpression();
-    out = Builder(wasm).makeRefCast(ref, rtt);
-    return true;
-  } else if (code == BinaryConsts::RefCastStatic ||
-             code == BinaryConsts::RefCastNopStatic) {
+  if (code == BinaryConsts::RefCastStatic ||
+      code == BinaryConsts::RefCastNopStatic) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
     auto safety =
@@ -6834,11 +6789,9 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     case BinaryConsts::BrOnNonNull:
       op = BrOnNonNull;
       break;
-    case BinaryConsts::BrOnCast:
     case BinaryConsts::BrOnCastStatic:
       op = BrOnCast;
       break;
-    case BinaryConsts::BrOnCastFail:
     case BinaryConsts::BrOnCastStaticFail:
       op = BrOnCastFail;
       break;
@@ -6871,35 +6824,8 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     out = Builder(wasm).makeBrOn(op, name, ref, intendedType);
     return true;
   }
-  Expression* rtt = nullptr;
-  if (op == BrOnCast || op == BrOnCastFail) {
-    rtt = popNonVoidExpression();
-  }
   auto* ref = popNonVoidExpression();
-  out = ValidatingBuilder(wasm, pos).validateAndMakeBrOn(op, name, ref, rtt);
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::RttCanon) {
-    return false;
-  }
-  auto heapType = getIndexedHeapType();
-  out = Builder(wasm).makeRttCanon(heapType);
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::RttSub && code != BinaryConsts::RttFreshSub) {
-    return false;
-  }
-  auto targetHeapType = getIndexedHeapType();
-  auto* parent = popNonVoidExpression();
-  if (code == BinaryConsts::RttSub) {
-    out = Builder(wasm).makeRttSub(targetHeapType, parent);
-  } else {
-    out = Builder(wasm).makeRttFreshSub(targetHeapType, parent);
-  }
+  out = ValidatingBuilder(wasm, pos).validateAndMakeBrOn(op, name, ref);
   return true;
 }
 
@@ -6916,21 +6842,6 @@ bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
       }
     }
     out = Builder(wasm).makeStructNew(heapType, operands);
-    return true;
-  } else if (code == BinaryConsts::StructNewWithRtt ||
-             code == BinaryConsts::StructNewDefaultWithRtt) {
-    auto heapType = getIndexedHeapType();
-    auto* rtt = popNonVoidExpression();
-    validateHeapTypeUsingChild(rtt, heapType);
-    std::vector<Expression*> operands;
-    if (code == BinaryConsts::StructNewWithRtt) {
-      auto numOperands = heapType.getStruct().fields.size();
-      operands.resize(numOperands);
-      for (Index i = 0; i < numOperands; i++) {
-        operands[numOperands - i - 1] = popNonVoidExpression();
-      }
-    }
-    out = Builder(wasm).makeStructNew(rtt, operands);
     return true;
   }
   return false;
@@ -6987,18 +6898,6 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
     }
     out = Builder(wasm).makeArrayNew(heapType, size, init);
     return true;
-  } else if (code == BinaryConsts::ArrayNewWithRtt ||
-             code == BinaryConsts::ArrayNewDefaultWithRtt) {
-    auto heapType = getIndexedHeapType();
-    auto* rtt = popNonVoidExpression();
-    validateHeapTypeUsingChild(rtt, heapType);
-    auto* size = popNonVoidExpression();
-    Expression* init = nullptr;
-    if (code == BinaryConsts::ArrayNewWithRtt) {
-      init = popNonVoidExpression();
-    }
-    out = Builder(wasm).makeArrayNew(rtt, size, init);
-    return true;
   }
   return false;
 }
@@ -7012,17 +6911,6 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
       values[size - i - 1] = popNonVoidExpression();
     }
     out = Builder(wasm).makeArrayInit(heapType, values);
-    return true;
-  } else if (code == BinaryConsts::ArrayInit) {
-    auto heapType = getIndexedHeapType();
-    auto size = getU32LEB();
-    auto* rtt = popNonVoidExpression();
-    validateHeapTypeUsingChild(rtt, heapType);
-    std::vector<Expression*> values(size);
-    for (size_t i = 0; i < size; i++) {
-      values[size - i - 1] = popNonVoidExpression();
-    }
-    out = Builder(wasm).makeArrayInit(rtt, values);
     return true;
   }
   return false;
@@ -7370,7 +7258,7 @@ void WasmBinaryBuilder::validateHeapTypeUsingChild(Expression* child,
   if (child->type == Type::unreachable) {
     return;
   }
-  if ((!child->type.isRef() && !child->type.isRtt()) ||
+  if (!child->type.isRef() ||
       !HeapType::isSubType(child->type.getHeapType(), heapType)) {
     throwError("bad heap type: expected " + heapType.toString() +
                " but found " + child->type.toString());

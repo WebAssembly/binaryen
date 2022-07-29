@@ -558,7 +558,6 @@ public:
 
       Expression* init;
       auto heapType = type.getHeapType();
-      // TODO: handle rtts if we need them
       if (heapType.isStruct()) {
         init = builder.makeStructNew(heapType, args);
       } else if (heapType.isArray()) {
@@ -633,7 +632,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   Literals params;
   for (Index i = 0; i < func->getNumParams(); i++) {
     auto type = func->getLocalType(i);
-    if (!LiteralUtils::canMakeZero(type)) {
+    if (type.isNonNullable()) {
       std::cout << "  ...stopping due to non-zeroable param\n";
       return EvalCtorOutcome();
     }

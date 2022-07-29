@@ -33,17 +33,9 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
-          case 'i': {
-            switch (op[10]) {
-              case '\0':
-                if (strcmp(op, "array.init") == 0) { return makeArrayInit(s); }
-                goto parse_error;
-              case '_':
-                if (strcmp(op, "array.init_static") == 0) { return makeArrayInitStatic(s); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
+          case 'i':
+            if (strcmp(op, "array.init_static") == 0) { return makeArrayInitStatic(s); }
+            goto parse_error;
           case 'l':
             if (strcmp(op, "array.len") == 0) { return makeArrayLen(s); }
             goto parse_error;
@@ -52,25 +44,9 @@ switch (op[0]) {
               case '\0':
                 if (strcmp(op, "array.new") == 0) { return makeArrayNewStatic(s, false); }
                 goto parse_error;
-              case '_': {
-                switch (op[10]) {
-                  case 'd': {
-                    switch (op[17]) {
-                      case '\0':
-                        if (strcmp(op, "array.new_default") == 0) { return makeArrayNewStatic(s, true); }
-                        goto parse_error;
-                      case '_':
-                        if (strcmp(op, "array.new_default_with_rtt") == 0) { return makeArrayNew(s, true); }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 'w':
-                    if (strcmp(op, "array.new_with_rtt") == 0) { return makeArrayNew(s, false); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case '_':
+                if (strcmp(op, "array.new_default") == 0) { return makeArrayNewStatic(s, true); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -2984,136 +2960,101 @@ switch (op[0]) {
     if (strcmp(op, "pop") == 0) { return makePop(s); }
     goto parse_error;
   case 'r': {
-    switch (op[1]) {
-      case 'e': {
-        switch (op[2]) {
-          case 'f': {
-            switch (op[4]) {
-              case 'a': {
-                switch (op[7]) {
-                  case 'd':
-                    if (strcmp(op, "ref.as_data") == 0) { return makeRefAs(s, RefAsData); }
-                    goto parse_error;
-                  case 'f':
-                    if (strcmp(op, "ref.as_func") == 0) { return makeRefAs(s, RefAsFunc); }
-                    goto parse_error;
-                  case 'i':
-                    if (strcmp(op, "ref.as_i31") == 0) { return makeRefAs(s, RefAsI31); }
-                    goto parse_error;
-                  case 'n':
-                    if (strcmp(op, "ref.as_non_null") == 0) { return makeRefAs(s, RefAsNonNull); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              case 'c': {
-                switch (op[8]) {
-                  case '\0':
-                    if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
-                    goto parse_error;
-                  case '_': {
-                    switch (op[9]) {
-                      case 'n':
-                        if (strcmp(op, "ref.cast_nop_static") == 0) { return makeRefCastNopStatic(s); }
-                        goto parse_error;
-                      case 's':
-                        if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  default: goto parse_error;
-                }
-              }
-              case 'e':
-                if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
+    switch (op[2]) {
+      case 'f': {
+        switch (op[4]) {
+          case 'a': {
+            switch (op[7]) {
+              case 'd':
+                if (strcmp(op, "ref.as_data") == 0) { return makeRefAs(s, RefAsData); }
                 goto parse_error;
               case 'f':
-                if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
+                if (strcmp(op, "ref.as_func") == 0) { return makeRefAs(s, RefAsFunc); }
                 goto parse_error;
-              case 'i': {
-                switch (op[7]) {
-                  case 'd':
-                    if (strcmp(op, "ref.is_data") == 0) { return makeRefIs(s, RefIsData); }
-                    goto parse_error;
-                  case 'f':
-                    if (strcmp(op, "ref.is_func") == 0) { return makeRefIs(s, RefIsFunc); }
-                    goto parse_error;
-                  case 'i':
-                    if (strcmp(op, "ref.is_i31") == 0) { return makeRefIs(s, RefIsI31); }
-                    goto parse_error;
-                  case 'n':
-                    if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s, RefIsNull); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'i':
+                if (strcmp(op, "ref.as_i31") == 0) { return makeRefAs(s, RefAsI31); }
+                goto parse_error;
               case 'n':
-                if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
+                if (strcmp(op, "ref.as_non_null") == 0) { return makeRefAs(s, RefAsNonNull); }
                 goto parse_error;
-              case 't': {
-                switch (op[8]) {
-                  case '\0':
-                    if (strcmp(op, "ref.test") == 0) { return makeRefTest(s); }
-                    goto parse_error;
-                  case '_':
-                    if (strcmp(op, "ref.test_static") == 0) { return makeRefTestStatic(s); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
               default: goto parse_error;
             }
           }
-          case 't': {
-            switch (op[3]) {
-              case 'h':
-                if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
+          case 'c': {
+            switch (op[9]) {
+              case 'n':
+                if (strcmp(op, "ref.cast_nop_static") == 0) { return makeRefCastNopStatic(s); }
                 goto parse_error;
-              case 'u': {
-                switch (op[6]) {
-                  case '\0':
-                    if (strcmp(op, "return") == 0) { return makeReturn(s); }
-                    goto parse_error;
-                  case '_': {
-                    switch (op[11]) {
-                      case '\0':
-                        if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
-                        goto parse_error;
-                      case '_': {
-                        switch (op[12]) {
-                          case 'i':
-                            if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
-                            goto parse_error;
-                          case 'r':
-                            if (strcmp(op, "return_call_ref") == 0) { return makeCallRef(s, /*isReturn=*/true); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      default: goto parse_error;
-                    }
-                  }
-                  default: goto parse_error;
-                }
-              }
+              case 's':
+                if (strcmp(op, "ref.cast_static") == 0) { return makeRefCastStatic(s); }
+                goto parse_error;
               default: goto parse_error;
             }
           }
+          case 'e':
+            if (strcmp(op, "ref.eq") == 0) { return makeRefEq(s); }
+            goto parse_error;
+          case 'f':
+            if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
+            goto parse_error;
+          case 'i': {
+            switch (op[7]) {
+              case 'd':
+                if (strcmp(op, "ref.is_data") == 0) { return makeRefIs(s, RefIsData); }
+                goto parse_error;
+              case 'f':
+                if (strcmp(op, "ref.is_func") == 0) { return makeRefIs(s, RefIsFunc); }
+                goto parse_error;
+              case 'i':
+                if (strcmp(op, "ref.is_i31") == 0) { return makeRefIs(s, RefIsI31); }
+                goto parse_error;
+              case 'n':
+                if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s, RefIsNull); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'n':
+            if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
+            goto parse_error;
+          case 't':
+            if (strcmp(op, "ref.test_static") == 0) { return makeRefTestStatic(s); }
+            goto parse_error;
           default: goto parse_error;
         }
       }
       case 't': {
-        switch (op[4]) {
-          case 'c':
-            if (strcmp(op, "rtt.canon") == 0) { return makeRttCanon(s); }
+        switch (op[3]) {
+          case 'h':
+            if (strcmp(op, "rethrow") == 0) { return makeRethrow(s); }
             goto parse_error;
-          case 'f':
-            if (strcmp(op, "rtt.fresh_sub") == 0) { return makeRttFreshSub(s); }
-            goto parse_error;
-          case 's':
-            if (strcmp(op, "rtt.sub") == 0) { return makeRttSub(s); }
-            goto parse_error;
+          case 'u': {
+            switch (op[6]) {
+              case '\0':
+                if (strcmp(op, "return") == 0) { return makeReturn(s); }
+                goto parse_error;
+              case '_': {
+                switch (op[11]) {
+                  case '\0':
+                    if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
+                    goto parse_error;
+                  case '_': {
+                    switch (op[12]) {
+                      case 'i':
+                        if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+                        goto parse_error;
+                      case 'r':
+                        if (strcmp(op, "return_call_ref") == 0) { return makeCallRef(s, /*isReturn=*/true); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  default: goto parse_error;
+                }
+              }
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }
@@ -3321,25 +3262,9 @@ switch (op[0]) {
                   case '\0':
                     if (strcmp(op, "struct.new") == 0) { return makeStructNewStatic(s, false); }
                     goto parse_error;
-                  case '_': {
-                    switch (op[11]) {
-                      case 'd': {
-                        switch (op[18]) {
-                          case '\0':
-                            if (strcmp(op, "struct.new_default") == 0) { return makeStructNewStatic(s, true); }
-                            goto parse_error;
-                          case '_':
-                            if (strcmp(op, "struct.new_default_with_rtt") == 0) { return makeStructNew(s, true); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      case 'w':
-                        if (strcmp(op, "struct.new_with_rtt") == 0) { return makeStructNew(s, false); }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
+                  case '_':
+                    if (strcmp(op, "struct.new_default") == 0) { return makeStructNewStatic(s, true); }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }
@@ -3631,25 +3556,13 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
-          case 'i': {
-            switch (op[10]) {
-              case '\0':
-                if (op == "array.init"sv) {
-                  auto ret = makeArrayInit(ctx, in);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case '_':
-                if (op == "array.init_static"sv) {
-                  auto ret = makeArrayInitStatic(ctx, in);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              default: goto parse_error;
+          case 'i':
+            if (op == "array.init_static"sv) {
+              auto ret = makeArrayInitStatic(ctx, in);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
+            goto parse_error;
           case 'l':
             if (op == "array.len"sv) {
               auto ret = makeArrayLen(ctx, in);
@@ -3666,37 +3579,13 @@ switch (op[0]) {
                   return *ret;
                 }
                 goto parse_error;
-              case '_': {
-                switch (op[10]) {
-                  case 'd': {
-                    switch (op[17]) {
-                      case '\0':
-                        if (op == "array.new_default"sv) {
-                          auto ret = makeArrayNewStatic(ctx, in, true);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      case '_':
-                        if (op == "array.new_default_with_rtt"sv) {
-                          auto ret = makeArrayNew(ctx, in, true);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 'w':
-                    if (op == "array.new_with_rtt"sv) {
-                      auto ret = makeArrayNew(ctx, in, false);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
+              case '_':
+                if (op == "array.new_default"sv) {
+                  auto ret = makeArrayNewStatic(ctx, in, true);
+                  CHECK_ERR(ret);
+                  return *ret;
                 }
-              }
+                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -8594,197 +8483,168 @@ switch (op[0]) {
     }
     goto parse_error;
   case 'r': {
-    switch (op[1]) {
-      case 'e': {
-        switch (op[2]) {
-          case 'f': {
-            switch (op[4]) {
-              case 'a': {
-                switch (op[7]) {
-                  case 'd':
-                    if (op == "ref.as_data"sv) {
-                      auto ret = makeRefAs(ctx, in, RefAsData);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'f':
-                    if (op == "ref.as_func"sv) {
-                      auto ret = makeRefAs(ctx, in, RefAsFunc);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "ref.as_i31"sv) {
-                      auto ret = makeRefAs(ctx, in, RefAsI31);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'n':
-                    if (op == "ref.as_non_null"sv) {
-                      auto ret = makeRefAs(ctx, in, RefAsNonNull);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              case 'c': {
-                switch (op[8]) {
-                  case '\0':
-                    if (op == "ref.cast"sv) {
-                      auto ret = makeRefCast(ctx, in);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case '_': {
-                    switch (op[9]) {
-                      case 'n':
-                        if (op == "ref.cast_nop_static"sv) {
-                          auto ret = makeRefCastNopStatic(ctx, in);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      case 's':
-                        if (op == "ref.cast_static"sv) {
-                          auto ret = makeRefCastStatic(ctx, in);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  default: goto parse_error;
-                }
-              }
-              case 'e':
-                if (op == "ref.eq"sv) {
-                  auto ret = makeRefEq(ctx, in);
+    switch (op[2]) {
+      case 'f': {
+        switch (op[4]) {
+          case 'a': {
+            switch (op[7]) {
+              case 'd':
+                if (op == "ref.as_data"sv) {
+                  auto ret = makeRefAs(ctx, in, RefAsData);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
-                if (op == "ref.func"sv) {
-                  auto ret = makeRefFunc(ctx, in);
+                if (op == "ref.as_func"sv) {
+                  auto ret = makeRefAs(ctx, in, RefAsFunc);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
-              case 'i': {
-                switch (op[7]) {
-                  case 'd':
-                    if (op == "ref.is_data"sv) {
-                      auto ret = makeRefIs(ctx, in, RefIsData);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'f':
-                    if (op == "ref.is_func"sv) {
-                      auto ret = makeRefIs(ctx, in, RefIsFunc);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "ref.is_i31"sv) {
-                      auto ret = makeRefIs(ctx, in, RefIsI31);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'n':
-                    if (op == "ref.is_null"sv) {
-                      auto ret = makeRefIs(ctx, in, RefIsNull);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
+              case 'i':
+                if (op == "ref.as_i31"sv) {
+                  auto ret = makeRefAs(ctx, in, RefAsI31);
+                  CHECK_ERR(ret);
+                  return *ret;
                 }
-              }
+                goto parse_error;
               case 'n':
-                if (op == "ref.null"sv) {
-                  auto ret = makeRefNull(ctx, in);
+                if (op == "ref.as_non_null"sv) {
+                  auto ret = makeRefAs(ctx, in, RefAsNonNull);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
-              case 't': {
-                switch (op[8]) {
-                  case '\0':
-                    if (op == "ref.test"sv) {
-                      auto ret = makeRefTest(ctx, in);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case '_':
-                    if (op == "ref.test_static"sv) {
-                      auto ret = makeRefTestStatic(ctx, in);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
               default: goto parse_error;
             }
           }
-          case 't': {
-            switch (op[3]) {
-              case 'h':
-                if (op == "rethrow"sv) {
-                  auto ret = makeRethrow(ctx, in);
+          case 'c': {
+            switch (op[9]) {
+              case 'n':
+                if (op == "ref.cast_nop_static"sv) {
+                  auto ret = makeRefCastNopStatic(ctx, in);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
-              case 'u': {
-                switch (op[6]) {
+              case 's':
+                if (op == "ref.cast_static"sv) {
+                  auto ret = makeRefCastStatic(ctx, in);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'e':
+            if (op == "ref.eq"sv) {
+              auto ret = makeRefEq(ctx, in);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          case 'f':
+            if (op == "ref.func"sv) {
+              auto ret = makeRefFunc(ctx, in);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          case 'i': {
+            switch (op[7]) {
+              case 'd':
+                if (op == "ref.is_data"sv) {
+                  auto ret = makeRefIs(ctx, in, RefIsData);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 'f':
+                if (op == "ref.is_func"sv) {
+                  auto ret = makeRefIs(ctx, in, RefIsFunc);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 'i':
+                if (op == "ref.is_i31"sv) {
+                  auto ret = makeRefIs(ctx, in, RefIsI31);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 'n':
+                if (op == "ref.is_null"sv) {
+                  auto ret = makeRefIs(ctx, in, RefIsNull);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'n':
+            if (op == "ref.null"sv) {
+              auto ret = makeRefNull(ctx, in);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          case 't':
+            if (op == "ref.test_static"sv) {
+              auto ret = makeRefTestStatic(ctx, in);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      case 't': {
+        switch (op[3]) {
+          case 'h':
+            if (op == "rethrow"sv) {
+              auto ret = makeRethrow(ctx, in);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          case 'u': {
+            switch (op[6]) {
+              case '\0':
+                if (op == "return"sv) {
+                  auto ret = makeReturn(ctx, in);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case '_': {
+                switch (op[11]) {
                   case '\0':
-                    if (op == "return"sv) {
-                      auto ret = makeReturn(ctx, in);
+                    if (op == "return_call"sv) {
+                      auto ret = makeCall(ctx, in, /*isReturn=*/true);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case '_': {
-                    switch (op[11]) {
-                      case '\0':
-                        if (op == "return_call"sv) {
-                          auto ret = makeCall(ctx, in, /*isReturn=*/true);
+                    switch (op[12]) {
+                      case 'i':
+                        if (op == "return_call_indirect"sv) {
+                          auto ret = makeCallIndirect(ctx, in, /*isReturn=*/true);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
-                      case '_': {
-                        switch (op[12]) {
-                          case 'i':
-                            if (op == "return_call_indirect"sv) {
-                              auto ret = makeCallIndirect(ctx, in, /*isReturn=*/true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 'r':
-                            if (op == "return_call_ref"sv) {
-                              auto ret = makeCallRef(ctx, in, /*isReturn=*/true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
+                      case 'r':
+                        if (op == "return_call_ref"sv) {
+                          auto ret = makeCallRef(ctx, in, /*isReturn=*/true);
+                          CHECK_ERR(ret);
+                          return *ret;
                         }
-                      }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -8794,32 +8654,6 @@ switch (op[0]) {
               default: goto parse_error;
             }
           }
-          default: goto parse_error;
-        }
-      }
-      case 't': {
-        switch (op[4]) {
-          case 'c':
-            if (op == "rtt.canon"sv) {
-              auto ret = makeRttCanon(ctx, in);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
-          case 'f':
-            if (op == "rtt.fresh_sub"sv) {
-              auto ret = makeRttFreshSub(ctx, in);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
-          case 's':
-            if (op == "rtt.sub"sv) {
-              auto ret = makeRttSub(ctx, in);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
           default: goto parse_error;
         }
       }
@@ -9151,37 +8985,13 @@ switch (op[0]) {
                       return *ret;
                     }
                     goto parse_error;
-                  case '_': {
-                    switch (op[11]) {
-                      case 'd': {
-                        switch (op[18]) {
-                          case '\0':
-                            if (op == "struct.new_default"sv) {
-                              auto ret = makeStructNewStatic(ctx, in, true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case '_':
-                            if (op == "struct.new_default_with_rtt"sv) {
-                              auto ret = makeStructNew(ctx, in, true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      case 'w':
-                        if (op == "struct.new_with_rtt"sv) {
-                          auto ret = makeStructNew(ctx, in, false);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
+                  case '_':
+                    if (op == "struct.new_default"sv) {
+                      auto ret = makeStructNewStatic(ctx, in, true);
+                      CHECK_ERR(ret);
+                      return *ret;
                     }
-                  }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }

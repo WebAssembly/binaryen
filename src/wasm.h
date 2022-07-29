@@ -712,8 +712,6 @@ public:
     RefTestId,
     RefCastId,
     BrOnId,
-    RttCanonId,
-    RttSubId,
     StructNewId,
     StructGetId,
     StructSetId,
@@ -1492,16 +1490,9 @@ public:
 
   Expression* ref;
 
-  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
-  // this is a static cast and intendedType is set, and it contains the type we
-  // intend to cast to.
-  Expression* rtt = nullptr;
   HeapType intendedType;
 
   void finalize();
-
-  // Returns the type we intend to cast to.
-  HeapType getIntendedType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1510,8 +1501,6 @@ public:
 
   Expression* ref;
 
-  // See above with RefTest.
-  Expression* rtt = nullptr;
   HeapType intendedType;
 
   // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
@@ -1520,9 +1509,6 @@ public:
   Safety safety = Safe;
 
   void finalize();
-
-  // Returns the type we intend to cast to.
-  HeapType getIntendedType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1533,54 +1519,17 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
-  // type.
-  Expression* rtt = nullptr;
   HeapType intendedType;
 
-  // TODO: BrOnNull also has an optional extra value in the spec, which we do
-  //       not support. See also the discussion on
-  //       https://github.com/WebAssembly/function-references/issues/45
-  //       - depending on the decision there, we may want to move BrOnNull into
-  //       Break or a new class of its own.
-
   void finalize();
-
-  // Returns the type we intend to cast to. Relevant only for the cast variants.
-  HeapType getIntendedType();
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
 };
 
-class RttCanon : public SpecificExpression<Expression::RttCanonId> {
-public:
-  RttCanon(MixedArena& allocator) {}
-
-  void finalize();
-};
-
-class RttSub : public SpecificExpression<Expression::RttSubId> {
-public:
-  RttSub(MixedArena& allocator) {}
-
-  Expression* parent;
-
-  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
-  // it always returns a fresh RTT, non-identical to any other RTT in the
-  // system).
-  bool fresh = false;
-
-  void finalize();
-};
-
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) : operands(allocator) {}
-
-  // A dynamic StructNew has an rtt, while a static one declares the type using
-  // the type field.
-  Expression* rtt = nullptr;
 
   // A struct.new_with_default has empty operands. This does leave the case of a
   // struct with no fields ambiguous, but it doesn't make a difference in that
@@ -1625,10 +1574,6 @@ public:
   Expression* init = nullptr;
   Expression* size;
 
-  // A dynamic ArrayNew has an rtt, while a static one declares the type using
-  // the type field.
-  Expression* rtt = nullptr;
-
   bool isWithDefault() { return !init; }
 
   void finalize();
@@ -1639,10 +1584,6 @@ public:
   ArrayInit(MixedArena& allocator) : values(allocator) {}
 
   ExpressionList values;
-
-  // A dynamic ArrayInit has an rtt, while a static one declares the type using
-  // the type field.
-  Expression* rtt = nullptr;
 
   void finalize();
 };

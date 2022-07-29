@@ -32,7 +32,6 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -51,21 +50,6 @@ class Literal {
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type.
     std::shared_ptr<GCData> gcData;
-    // RTT values are "structural" in that the MVP doc says that multiple
-    // invocations of ref.canon return things that are observably identical, and
-    // the same is true for ref.sub. That is, what matters is the types; there
-    // is no unique identifier created in each ref.canon/sub. To track the
-    // types, we maintain a simple vector of the supertypes. Thus, an rtt.canon
-    // of type A will have an empty vector; an rtt.sub of type B of that initial
-    // canon would have a vector of size 1 containing A; a subsequent rtt.sub
-    // would have A, B, and so forth.
-    // (This encoding is very inefficient and not at all what a production VM
-    // would do, but it is simple.)
-    // The unique_ptr here is to avoid increasing the size of the union as well
-    // as the Literal class itself.
-    // To support the experimental RttFreshSub instruction, we not only store
-    // the type, but also a reference to an allocation.
-    std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `anyref` can only be `null` currently but we
     // will need to represent external values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
@@ -97,7 +81,6 @@ public:
   explicit Literal(Name func, HeapType type)
     : func(func), type(type, NonNullable) {}
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
-  explicit Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
@@ -267,10 +250,6 @@ public:
     return lit;
   }
 
-  // Get the canonical RTT value for a given HeapType. For nominal types, the
-  // canonical RTT reflects the static supertype chain.
-  static Literal makeCanonicalRtt(HeapType type);
-
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
@@ -303,7 +282,6 @@ public:
     return func;
   }
   std::shared_ptr<GCData> getGCData() const;
-  const RttSupers& getRttSupers() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -666,11 +644,6 @@ public:
   Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
   Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
-  // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
-  // with this object's RTT can be successfuly cast using the other RTT
-  // according to the wasm rules for that.
-  bool isSubRtt(const Literal& other) const;
-
 private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
@@ -721,40 +694,17 @@ public:
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
-// A GC Struct or Array is a set of values with a run-time type saying what it
-// is. In the case of static (rtt-free) typing, the rtt is not present and
-// instead we have a static type.
+// A GC Struct or Array is a set of values with a type saying how it should be
+// interpreted.
 struct GCData {
-  // The runtime type info for this struct or array.
-  Literal rtt;
+  // The of this struct or array.
+  HeapType type;
 
   // The element or field values.
   Literals values;
 
-  GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
+  GCData(HeapType type, Literals values) : type(type), values(values) {}
 };
-
-struct RttSuper {
-  // The type of the super.
-  HeapType type;
-  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
-  // normal sub, and for a fresh one we allocate a value here, which can then be
-  // used to differentiate rtts. (The allocation is shared so that when copying
-  // an rtt we remain equal.)
-  // TODO: Remove or optimize this when the spec stabilizes.
-  std::shared_ptr<size_t> freshPtr;
-
-  RttSuper(HeapType type) : type(type) {}
-
-  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
-
-  bool operator==(const RttSuper& other) const {
-    return type == other.type && freshPtr == other.freshPtr;
-  }
-  bool operator!=(const RttSuper& other) const { return !(*this == other); }
-};
-
-struct RttSupers : std::vector<RttSuper> {};
 
 } // namespace wasm
 
@@ -801,14 +751,6 @@ template<> struct hash<wasm::Literal> {
       // other non-null reference type literals cannot represent concrete
       // values, i.e. there is no concrete anyref or eqref other than null.
       WASM_UNREACHABLE("unexpected type");
-    } else if (a.type.isRtt()) {
-      const auto& supers = a.getRttSupers();
-      wasm::rehash(digest, supers.size());
-      for (auto super : supers) {
-        wasm::rehash(digest, super.type.getID());
-        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
-      }
-      return digest;
     }
     WASM_UNREACHABLE("unexpected type");
   }

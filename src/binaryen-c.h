@@ -943,8 +943,6 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
 // TODO (gc): ref.test
 // TODO (gc): ref.cast
 // TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
 // TODO (gc): struct.new
 // TODO (gc): struct.get
 // TODO (gc): struct.set

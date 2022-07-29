@@ -1434,10 +1434,9 @@ struct OptimizeInstructions
   // is, if casts of the type do not affect our behavior (which is the case in
   // ref.eq for example).
   //
-  // |requiredType| is the type we require as the final output here, or a
-  // subtype of it. We will not remove a cast that would leave something that
-  // would break that. If |requiredType| is not provided we will accept any type
-  // there.
+  // |requiredType| is the required supertype of the final output. We will not
+  // remove a cast that would leave something that would break that. If
+  // |requiredType| is not provided we will accept any type there.
   //
   // See "notes on removing casts", above, for when this is safe to do.
   void skipCast(Expression*& input,
@@ -1453,7 +1452,7 @@ struct OptimizeInstructions
           continue;
         }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
+        if (Type::isSubType(cast->ref->type, requiredType)) {
           input = cast->ref;
           continue;
         }
@@ -1705,7 +1704,7 @@ struct OptimizeInstructions
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
-    auto intendedType = curr->getIntendedType();
+    auto intendedType = curr->intendedType;
 
     // If the value is a null, it will just flow through, and we do not need
     // the cast. However, if that would change the type, then things are less
@@ -1718,9 +1717,6 @@ struct OptimizeInstructions
       // the type received by our parent.
       std::vector<Expression*> items;
       items.push_back(builder.makeDrop(curr->ref));
-      if (curr->rtt) {
-        items.push_back(builder.makeDrop(curr->rtt));
-      }
       items.push_back(builder.makeRefNull(intendedType));
       Expression* rep = builder.makeBlock(items);
       if (curr->ref->type.isNonNullable()) {
@@ -1737,9 +1733,8 @@ struct OptimizeInstructions
     }
 
     // For the cast to be able to succeed, the value being cast must be a
-    // subtype of the desired type, as RTT subtyping is a subset of static
-    // subtyping. For example, trying to cast an array to a struct would be
-    // incompatible.
+    // subtype of the desired type. For example, trying to cast an array to a
+    // struct would be incompatible.
     if (!canBeCastTo(curr->ref->type.getHeapType(), intendedType)) {
       // This cast cannot succeed. If the input is not a null, it will
       // definitely trap.
@@ -1748,9 +1743,6 @@ struct OptimizeInstructions
         // types for other passes.
         std::vector<Expression*> items;
         items.push_back(builder.makeDrop(curr->ref));
-        if (curr->rtt) {
-          items.push_back(builder.makeDrop(curr->rtt));
-        }
         items.push_back(builder.makeUnreachable());
         replaceCurrent(builder.makeBlock(items, curr->type));
         return;
@@ -1760,46 +1752,29 @@ struct OptimizeInstructions
       // we can see the value is definitely a null at compile time, earlier.)
     }
 
-    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen ||
-        !curr->rtt) {
-      // Aside from the issue of type incompatibility as mentioned above, the
-      // cast can trap if the types *are* compatible but it happens to be the
-      // case at runtime that the value is not of the desired subtype. If we
-      // do not consider such traps possible, we can ignore that. (Note,
-      // though, that we cannot do this if we cannot replace the current type
-      // with the reference's type.) We can also do this if this is a static
-      // cast: in that case, all we need to know about are the types.
-      if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
-        if (curr->rtt) {
-          replaceCurrent(getResultOfFirst(curr->ref,
-                                          builder.makeDrop(curr->rtt),
-                                          getFunction(),
-                                          getModule(),
-                                          passOptions));
-        } else {
-          replaceCurrent(curr->ref);
+    // Check whether the cast will definitely succeed.
+    if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+      replaceCurrent(curr->ref);
 
-          // We must refinalize here, as we may be returning a more specific
-          // type, which can alter the parent. For example:
-          //
-          //  (struct.get $parent 0
-          //   (ref.cast_static $parent
-          //    (local.get $child)
-          //   )
-          //  )
-          //
-          // Try to cast a $child to its parent, $parent. That always works,
-          // so the cast can be removed.
-          // Then once the cast is removed, the outer struct.get
-          // will have a reference with a different type, making it a
-          // (struct.get $child ..) instead of $parent.
-          // But if $parent and $child have different types on field 0 (the
-          // child may have a more refined one) then the struct.get must be
-          // refinalized so the IR node has the expected type.
-          refinalize = true;
-        }
-        return;
-      }
+      // We must refinalize here, as we may be returning a more specific
+      // type, which can alter the parent. For example:
+      //
+      //  (struct.get $parent 0
+      //   (ref.cast_static $parent
+      //    (local.get $child)
+      //   )
+      //  )
+      //
+      // Try to cast a $child to its parent, $parent. That always works,
+      // so the cast can be removed.
+      // Then once the cast is removed, the outer struct.get
+      // will have a reference with a different type, making it a
+      // (struct.get $child ..) instead of $parent.
+      // But if $parent and $child have different types on field 0 (the
+      // child may have a more refined one) then the struct.get must be
+      // refinalized so the IR node has the expected type.
+      refinalize = true;
+      return;
     }
 
     // Repeated identical ref.cast operations are unnecessary. First, find the
@@ -1818,51 +1793,41 @@ struct OptimizeInstructions
       }
     }
     if (auto* child = ref->dynCast<RefCast>()) {
-      if (curr->rtt && child->rtt) {
-        // Check if the casts are identical.
-        if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-            !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
-               .hasSideEffects()) {
-          replaceCurrent(curr->ref);
+      // Repeated casts can be removed, leaving just the most demanding of
+      // them.
+      auto childIntendedType = child->intendedType;
+      if (HeapType::isSubType(intendedType, childIntendedType)) {
+        // Skip the child.
+        if (curr->ref == child) {
+          curr->ref = child->ref;
           return;
+        } else {
+          // The child is not the direct child of the parent, but it is a
+          // fallthrough value, for example,
+          //
+          //  (ref.cast parent
+          //   (block
+          //    .. other code ..
+          //    (ref.cast child)))
+          //
+          // In this case it isn't obvious that we can remove the child, as
+          // doing so might require updating the types of the things in the
+          // middle - and in fact the sole purpose of the child may be to get
+          // a proper type for validation to work. Do nothing in this case,
+          // and hope that other opts will help here (for example,
+          // trapsNeverHappen will help if the code validates without the
+          // child).
         }
-      } else if (!curr->rtt && !child->rtt) {
-        // Repeated static casts can be removed, leaving just the most demanding
-        // of them.
-        auto childIntendedType = child->getIntendedType();
-        if (HeapType::isSubType(intendedType, childIntendedType)) {
-          // Skip the child.
-          if (curr->ref == child) {
-            curr->ref = child->ref;
-            return;
-          } else {
-            // The child is not the direct child of the parent, but it is a
-            // fallthrough value, for example,
-            //
-            //  (ref.cast parent
-            //   (block
-            //    .. other code ..
-            //    (ref.cast child)))
-            //
-            // In this case it isn't obvious that we can remove the child, as
-            // doing so might require updating the types of the things in the
-            // middle - and in fact the sole purpose of the child may be to get
-            // a proper type for validation to work. Do nothing in this case,
-            // and hope that other opts will help here (for example,
-            // trapsNeverHappen will help if the code validates without the
-            // child).
-          }
-        } else if (!canBeCastTo(intendedType, childIntendedType)) {
-          // The types are not compatible, so if the input is not null, this
-          // will trap.
-          if (!curr->type.isNullable()) {
-            // Make sure to emit a block with the same type as us; leave
-            // updating types for other passes.
-            replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-              curr->type));
-            return;
-          }
+      } else if (!canBeCastTo(intendedType, childIntendedType)) {
+        // The types are not compatible, so if the input is not null, this
+        // will trap.
+        if (!curr->type.isNullable()) {
+          // Make sure to emit a block with the same type as us; leave
+          // updating types for other passes.
+          replaceCurrent(builder.makeBlock(
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            curr->type));
+          return;
         }
       }
     }
@@ -1905,22 +1870,19 @@ struct OptimizeInstructions
     Builder builder(*getModule());
 
     auto refType = curr->ref->type.getHeapType();
-    auto intendedType = curr->getIntendedType();
+    auto intendedType = curr->intendedType;
 
     // See above in RefCast.
     if (!canBeCastTo(refType, intendedType)) {
       // This test cannot succeed, and will definitely return 0.
       std::vector<Expression*> items;
       items.push_back(builder.makeDrop(curr->ref));
-      if (curr->rtt) {
-        items.push_back(builder.makeDrop(curr->rtt));
-      }
       items.push_back(builder.makeConst(int32_t(0)));
       replaceCurrent(builder.makeBlock(items));
       return;
     }
 
-    if (!curr->rtt && curr->ref->type.isNonNullable() &&
+    if (curr->ref->type.isNonNullable() &&
         HeapType::isSubType(refType, intendedType)) {
       // This static test will definitely succeed.
       replaceCurrent(builder.makeBlock(

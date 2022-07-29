@@ -120,7 +120,7 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 
 TEST_F(EquirecursiveTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
-  // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
+  // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
   TypeBuilder builder(3);
   ASSERT_EQ(builder.size(), size_t{3});
@@ -129,11 +129,10 @@ TEST_F(EquirecursiveTest, Basics) {
   Type refStruct = builder.getTempRefType(builder[1], NonNullable);
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
-  Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
   Type refNullAny(HeapType::any, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
-  Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
+  Struct struct_({Field(refNullArray, Immutable)});
   Array array(Field(refNullAny, Mutable));
 
   builder[0] = sig;
@@ -155,13 +154,10 @@ TEST_F(EquirecursiveTest, Basics) {
   Type newRefStruct = Type(built[1], NonNullable);
   Type newRefArray = Type(built[2], NonNullable);
   Type newRefNullArray = Type(built[2], Nullable);
-  Type newRttArray = Type(Rtt(0, built[2]));
 
   EXPECT_EQ(built[0].getSignature(),
             Signature(newRefStruct, {newRefArray, Type::i32}));
-  EXPECT_EQ(
-    built[1].getStruct(),
-    Struct({Field(newRefNullArray, Immutable), Field(newRttArray, Mutable)}));
+  EXPECT_EQ(built[1].getStruct(), Struct({Field(newRefNullArray, Immutable)}));
   EXPECT_EQ(built[2].getArray(), Array(Field(refNullAny, Mutable)));
 
   // The built types should be different from the temporary types.
@@ -169,7 +165,6 @@ TEST_F(EquirecursiveTest, Basics) {
   EXPECT_NE(newRefStruct, refStruct);
   EXPECT_NE(newRefArray, refArray);
   EXPECT_NE(newRefNullArray, refNullArray);
-  EXPECT_NE(newRttArray, rttArray);
 }
 
 static void testDirectSelfSupertype() {

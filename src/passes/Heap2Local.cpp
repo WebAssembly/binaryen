@@ -43,9 +43,8 @@
 //
 //     ;; Allocate a boxed integer of 42 and save the reference to it.
 //     (local.set $ref
-//      (struct.new_with_rtt $boxed-int
+//      (struct.new $boxed-int
 //       (i32.const 42)
-//       (rtt.canon $boxed-int)
 //      )
 //     )
 //
@@ -407,10 +406,6 @@ struct Heap2LocalOptimizer {
         }
       }
 
-      // Drop the RTT (as it may have side effects; leave it to other passes).
-      if (allocation->rtt) {
-        contents.push_back(builder.makeDrop(allocation->rtt));
-      }
       // Replace the allocation with a null reference. This changes the type
       // from non-nullable to nullable, but as we optimize away the code that
       // the allocation reaches, we will handle that.

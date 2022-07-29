@@ -160,8 +160,6 @@ void ReFinalize::visitBrOn(BrOn* curr) {
     updateBreakValueType(curr->name, curr->getSentType());
   }
 }
-void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
-void ReFinalize::visitRttSub(RttSub* curr) { curr->finalize(); }
 void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }

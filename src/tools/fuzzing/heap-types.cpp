@@ -181,20 +181,12 @@ struct HeapTypeGeneratorImpl {
     return builder.getTempRefType(heapType, nullability);
   }
 
-  Type generateRttType() {
-    auto heapType = generateHeapType();
-    auto depth = rand.oneIn(2) ? Rtt::NoDepth : rand.upTo(MAX_RTT_DEPTH);
-    return builder.getTempRttType(Rtt(depth, heapType));
-  }
-
   Type generateSingleType() {
-    switch (rand.upTo(3)) {
+    switch (rand.upTo(2)) {
       case 0:
         return generateBasicType();
       case 1:
         return generateRefType();
-      case 2:
-        return generateRttType();
     }
     WASM_UNREACHABLE("unexpected");
   }
@@ -412,20 +404,10 @@ struct HeapTypeGeneratorImpl {
     return {pickSubHeapType(super.type), nullability};
   }
 
-  Rtt generateSubRtt(Rtt super) {
-    auto depth = super.hasDepth()
-                   ? super.depth
-                   : rand.oneIn(2) ? Rtt::NoDepth : rand.upTo(MAX_RTT_DEPTH);
-    return {depth, super.heapType};
-  }
-
   Type generateSubtype(Type type) {
     if (type.isRef()) {
       auto ref = generateSubRef({type.getHeapType(), type.getNullability()});
       return builder.getTempRefType(ref.type, ref.nullability);
-    } else if (type.isRtt()) {
-      auto rtt = generateSubRtt(type.getRtt());
-      return builder.getTempRttType(rtt);
     } else if (type.isBasic()) {
       // Non-reference basic types do not have subtypes.
       return type;
