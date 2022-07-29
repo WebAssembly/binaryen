@@ -19,8 +19,8 @@
 
 namespace wasm {
 
-static Name BinaryenIntrinsics("binaryen-intrinsics"),
-  CallWithoutEffects("call.without.effects");
+Name Intrinsics::BinaryenIntrinsics = "binaryen-intrinsics";
+Name Intrinsics::CallWithoutEffects = "call.without.effects";
 
 bool Intrinsics::isCallWithoutEffects(Function* func) {
   return func->module == BinaryenIntrinsics && func->base == CallWithoutEffects;

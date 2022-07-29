@@ -18,6 +18,7 @@
 // Shared execution result checking code
 //
 
+#include "ir/intrinsics.h"
 #include "shell-interface.h"
 #include "wasm.h"
 
@@ -75,7 +76,17 @@ struct LoggingExternalInterface : public ShellExternalInterface {
       } else if (import->base == "getTempRet0") {
         return {Literal(state.tempRet0)};
       }
+    } else if (import->module == Intrinsics::BinaryenIntrinsics) {
+      if (import->base == Intrinsics::CallWithoutEffects) {
+        auto newArguments = arguments;
+        auto target = newArguments.back();
+        newArguments.pop_back();
+        return instance.callFunction(target, newArguments);
+      } else {
+        WASM_UNREACHABLE("unsupported intrinsic");
+      }
     }
+    // TODO: add intrinsics support here!
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
               << import->module << " . " << import->base << '\n';
     return {};
