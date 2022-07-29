@@ -2482,10 +2482,11 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         uint32_t offset,
                                         Name memory) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
+  // Set bit 6 in the alignment to indicate a memory index is present per:
+  // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
+  alignmentBits = alignmentBits | 1 << 6;
   o << U32LEB(alignmentBits);
-  if (alignmentBits >= 6 && (alignmentBits & (1 << (6)))) {
-    o << U32LEB(parent.getMemoryIndex(memory));
-  }
+  o << U32LEB(parent.getMemoryIndex(memory));
   o << U32LEB(offset);
 }
 
