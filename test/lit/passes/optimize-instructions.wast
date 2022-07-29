@@ -5941,29 +5941,29 @@
   ;; CHECK:      (func $rotate-right-left-pos (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.rotl
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:   (i32.const 23)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $rotate-right-left-pos (param $x i32) (result i32)
     (i32.rotr
       (i32.rotl
         (local.get $x)
-        (i32.const 10)
+        (i32.const 27)
       )
-      (i32.const 5)
+      (i32.const 4)
     )
   )
   ;; CHECK:      (func $rotate-left-right-pos (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.rotr
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $rotate-left-right-pos (param $x i32) (result i32)
     (i32.rotl
       (i32.rotr
         (local.get $x)
-        (i32.const 10)
+        (i32.const 12)
       )
       (i32.const 5)
     )

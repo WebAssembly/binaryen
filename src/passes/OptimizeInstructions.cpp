@@ -3493,6 +3493,7 @@ private:
       }
     }
     {
+      // TODO: Add canonicalization rotr to rotl and remove these rules.
       // rotl(rotr(x, C1), C2)   =>   rotr(x, C1 - C2)
       // rotr(rotl(x, C1), C2)   =>   rotl(x, C1 - C2)
       Binary* inner;
