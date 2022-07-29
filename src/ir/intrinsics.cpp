@@ -23,7 +23,8 @@ Name Intrinsics::BinaryenIntrinsicsModule = "binaryen-intrinsics";
 Name Intrinsics::CallWithoutEffects = "call.without.effects";
 
 bool Intrinsics::isCallWithoutEffects(Function* func) {
-  return func->module == BinaryenIntrinsicsModule && func->base == CallWithoutEffects;
+  return func->module == BinaryenIntrinsicsModule &&
+         func->base == CallWithoutEffects;
 }
 
 Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
