@@ -4345,8 +4345,7 @@ void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
   curr->finalize();
 }
 
-Index WasmBinaryBuilder::readMemoryAccess(Address& alignment,
-                                             Address& offset) {
+Index WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   auto rawAlignment = getU32LEB();
   bool hasMemIdx = false;
   Index memIdx = 0;
