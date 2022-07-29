@@ -234,154 +234,154 @@
    ;; code offset: 0x51
    (local.get $5)
   )
-  ;; code offset: 0x5b
+  ;; code offset: 0x5a
   (f32.store $0 offset=8
-   ;; code offset: 0x57
+   ;; code offset: 0x56
    (local.get $2)
-   ;; code offset: 0x59
+   ;; code offset: 0x58
    (local.get $4)
   )
-  ;; code offset: 0x63
+  ;; code offset: 0x61
   (i32.store $0 offset=4
-   ;; code offset: 0x5f
+   ;; code offset: 0x5d
    (local.get $2)
-   ;; code offset: 0x61
+   ;; code offset: 0x5f
    (local.get $3)
   )
-  ;; code offset: 0x6d
+  ;; code offset: 0x69
   (local.set $6
-   ;; code offset: 0x69
+   ;; code offset: 0x66
    (i32.load $0 offset=12
-    ;; code offset: 0x67
+    ;; code offset: 0x64
     (local.get $2)
    )
   )
-  ;; code offset: 0x72
+  ;; code offset: 0x6e
   (local.set $7
-   ;; code offset: 0x71
+   ;; code offset: 0x6d
    (f32.convert_i32_s
-    ;; code offset: 0x6f
+    ;; code offset: 0x6b
     (local.get $6)
    )
   )
-  ;; code offset: 0x7a
+  ;; code offset: 0x75
   (local.set $8
-   ;; code offset: 0x76
+   ;; code offset: 0x72
    (f32.load $0 offset=8
-    ;; code offset: 0x74
+    ;; code offset: 0x70
     (local.get $2)
    )
   )
-  ;; code offset: 0x81
+  ;; code offset: 0x7c
   (local.set $9
-   ;; code offset: 0x80
+   ;; code offset: 0x7b
    (f32.add
-    ;; code offset: 0x7c
+    ;; code offset: 0x77
     (local.get $7)
-    ;; code offset: 0x7e
+    ;; code offset: 0x79
     (local.get $8)
    )
   )
-  ;; code offset: 0x89
+  ;; code offset: 0x83
   (local.set $10
-   ;; code offset: 0x85
+   ;; code offset: 0x80
    (i32.load $0 offset=4
-    ;; code offset: 0x83
+    ;; code offset: 0x7e
     (local.get $2)
    )
   )
-  ;; code offset: 0x8e
+  ;; code offset: 0x88
   (local.set $11
-   ;; code offset: 0x8d
+   ;; code offset: 0x87
    (f32.convert_i32_s
-    ;; code offset: 0x8b
+    ;; code offset: 0x85
     (local.get $10)
    )
   )
-  ;; code offset: 0x95
+  ;; code offset: 0x8f
   (local.set $12
-   ;; code offset: 0x94
+   ;; code offset: 0x8e
    (f32.add
-    ;; code offset: 0x90
+    ;; code offset: 0x8a
     (local.get $9)
-    ;; code offset: 0x92
+    ;; code offset: 0x8c
     (local.get $11)
    )
   )
-  ;; code offset: 0x9a
+  ;; code offset: 0x94
   (local.set $13
-   ;; code offset: 0x99
+   ;; code offset: 0x93
    (f32.abs
-    ;; code offset: 0x97
+    ;; code offset: 0x91
     (local.get $12)
    )
   )
-  ;; code offset: 0xa1
+  ;; code offset: 0x9b
   (local.set $14
-   ;; code offset: 0x9c
+   ;; code offset: 0x96
    (f32.const 2147483648)
   )
-  ;; code offset: 0xa8
+  ;; code offset: 0xa2
   (local.set $15
-   ;; code offset: 0xa7
+   ;; code offset: 0xa1
    (f32.lt
-    ;; code offset: 0xa3
+    ;; code offset: 0x9d
     (local.get $13)
-    ;; code offset: 0xa5
+    ;; code offset: 0x9f
     (local.get $14)
    )
   )
-  ;; code offset: 0xad
+  ;; code offset: 0xa7
   (local.set $16
-   ;; code offset: 0xac
+   ;; code offset: 0xa6
    (i32.eqz
-    ;; code offset: 0xaa
+    ;; code offset: 0xa4
     (local.get $15)
    )
   )
-  ;; code offset: 0xaf
+  ;; code offset: 0xa9
   (block $label$1
    (block $label$2
-    ;; code offset: 0xb5
+    ;; code offset: 0xaf
     (br_if $label$2
-     ;; code offset: 0xb3
+     ;; code offset: 0xad
      (local.get $16)
     )
-    ;; code offset: 0xba
+    ;; code offset: 0xb4
     (local.set $17
-     ;; code offset: 0xb9
+     ;; code offset: 0xb3
      (i32.trunc_f32_s
-      ;; code offset: 0xb7
+      ;; code offset: 0xb1
       (local.get $12)
      )
     )
-    ;; code offset: 0xbe
+    ;; code offset: 0xb8
     (local.set $18
-     ;; code offset: 0xbc
+     ;; code offset: 0xb6
      (local.get $17)
     )
-    ;; code offset: 0xc0
+    ;; code offset: 0xba
     (br $label$1)
    )
-   ;; code offset: 0xc9
+   ;; code offset: 0xc3
    (local.set $19
-    ;; code offset: 0xc3
+    ;; code offset: 0xbd
     (i32.const -2147483648)
    )
-   ;; code offset: 0xcd
+   ;; code offset: 0xc7
    (local.set $18
-    ;; code offset: 0xcb
+    ;; code offset: 0xc5
     (local.get $19)
    )
   )
-  ;; code offset: 0xd2
+  ;; code offset: 0xcc
   (local.set $20
-   ;; code offset: 0xd0
+   ;; code offset: 0xca
    (local.get $18)
   )
-  ;; code offset: 0xd6
+  ;; code offset: 0xd0
   (return
-   ;; code offset: 0xd4
+   ;; code offset: 0xce
    (local.get $20)
   )
  )
