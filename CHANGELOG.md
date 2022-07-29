@@ -21,7 +21,7 @@ Current Trunk
 - Change constant values of some reference types in the C and JS APIs. This is
   only observable if you hardcode specific values instead of calling the
   relevant methods (like `BinaryenTypeDataref()`). (#4755)
-- `i31ref` and `dataref` are now nullable. (#4843)
+- `i31ref` and `dataref` are now nullable to match the latest GC spec. (#4843)
 
 v109
 ----
