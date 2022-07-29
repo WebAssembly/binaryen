@@ -270,6 +270,30 @@ void test_types() {
   BinaryenTypeExpand(dataref, &valueType);
   assert(valueType == dataref);
 
+  BinaryenType stringref = BinaryenTypeStringref();
+  printf("BinaryenTypeStringref: (ptr)\n");
+  assert(BinaryenTypeArity(stringref) == 1);
+  BinaryenTypeExpand(stringref, &valueType);
+  assert(valueType == stringref);
+
+  BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWTF8();
+  printf("BinaryenTypeStringviewWTF8: (ptr)\n");
+  assert(BinaryenTypeArity(stringview_wtf8_) == 1);
+  BinaryenTypeExpand(stringview_wtf8_, &valueType);
+  assert(valueType == stringview_wtf8_);
+
+  BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWTF16();
+  printf("BinaryenTypeStringviewWTF16: (ptr)\n");
+  assert(BinaryenTypeArity(stringview_wtf16_) == 1);
+  BinaryenTypeExpand(stringview_wtf16_, &valueType);
+  assert(valueType == stringview_wtf16_);
+
+  BinaryenType stringview_iter_ = BinaryenTypeStringviewIter();
+  printf("BinaryenTypeStringviewIter: (ptr)\n");
+  assert(BinaryenTypeArity(stringview_iter_) == 1);
+  BinaryenTypeExpand(stringview_iter_, &valueType);
+  assert(valueType == stringview_iter_);
+
   printf("BinaryenTypeAuto: %zd\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};

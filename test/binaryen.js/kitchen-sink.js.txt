@@ -32,6 +32,7 @@ Features.Memory64: 2048
 Features.TypedFunctionReferences: 4096
 Features.RelaxedSIMD: 16384
 Features.ExtendedConst: 32768
+Features.Strings: 65536
 Features.All: 122879
 InvalidId: 0
 BlockId: 1
@@ -2168,6 +2169,18 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop dataref)
       )
       (drop
+       (pop stringref)
+      )
+      (drop
+       (pop stringview_wtf8)
+      )
+      (drop
+       (pop stringview_wtf16)
+      )
+      (drop
+       (pop stringview_iter)
+      )
+      (drop
        (memory.size)
       )
       (drop
@@ -4258,6 +4271,18 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop dataref)
+      )
+      (drop
+       (pop stringref)
+      )
+      (drop
+       (pop stringview_wtf8)
+      )
+      (drop
+       (pop stringview_wtf16)
+      )
+      (drop
+       (pop stringview_iter)
       )
       (drop
        (memory.size)

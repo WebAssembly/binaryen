@@ -99,6 +99,7 @@ function test_features() {
   console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
+  console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -632,6 +633,10 @@ function test_core() {
     module.eqref.pop(),
     module.i31ref.pop(),
     module.dataref.pop(),
+    module.stringref.pop(),
+    module.stringview_wtf8.pop(),
+    module.stringview_wtf16.pop(),
+    module.stringview_iter.pop(),
 
     // Memory
     module.memory.size(),
