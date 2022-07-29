@@ -3448,14 +3448,20 @@ private:
               return inner;
             }
             // handle overflows for general shifts
-            //   x << C1 << C2    =>   0
-            //   x >>> C1 >>> C2  =>   0
+            //   x << C1 << C2    =>   0 or { drop(x), 0 }
+            //   x >>> C1 >>> C2  =>   0 or { drop(x), 0 }
             // iff `C1 + C2` -> overflows
-            // and `x` has no side effects
-            if ((op == getBinary(type, Shl) || op == getBinary(type, ShrU)) &&
-                !effects(inner->left).hasSideEffects()) {
+            if ((op == getBinary(type, Shl) || op == getBinary(type, ShrU))) {
+              auto* x = inner->left;
               c1->value = Literal::makeZero(c1->type);
-              return c1;
+              if (!effects(x).hasSideEffects()) {
+                //  =>  0
+                return c1;
+              } else {
+                //  =>  { drop(x), 0 }
+                Builder builder(*getModule());
+                return builder.makeBlock({builder.makeDrop(x), c1});
+              }
             }
             //   i32(x) >> C1 >> C2   =>   x >> 31
             //   i64(x) >> C1 >> C2   =>   x >> 63

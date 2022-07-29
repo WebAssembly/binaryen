@@ -5725,6 +5725,21 @@
     (i32.const 1)
    )
   )
+  ;; CHECK:      (func $left-shifts-square-overflow-with-side-effect (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $ne0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow-with-side-effect (param $x i32) (result i32)
+   (i32.shl
+    (i32.shl
+     (call $ne0) ;; side effect
+     (i32.const 31)
+    )
+    (i32.const 5)
+   )
+  )
   ;; CHECK:      (func $right-shifts-square-overflow-unsigned (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
