@@ -102,6 +102,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
     if (item.op == WorkItem::Scan) {
       if (!Properties::isControlFlowStructure(item.curr)) {
+#if 0
         auto childIterator = ChildIterator(item.curr);
         auto& children = childIterator.children;
         if (children.empty()) {
@@ -130,6 +131,48 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         for (auto* child : children) {
           workStack.push_back(WorkItem{WorkItem::Scan, *child});
         }
+
+#else
+
+        auto* curr = item.curr; // TODO move up
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast); \
+  if (DELEGATE_ID == Expression::LocalSetId) { /* type check here? */ \
+    if (auto* set = cast->dynCast<LocalSet>()) { \
+      auto index = set->index; \
+      if (!localsSet[index]) { \
+        workStack.push_back(WorkItem{WorkItem::Visit, set}); \
+      } \
+    } \
+  }
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  workStack.push_back(WorkItem{WorkItem::Scan, cast->field});
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  if (cast->field) { workStack.push_back(WorkItem{WorkItem::Scan, cast->field}); }
+
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+
+#endif
 
         continue;
       }
