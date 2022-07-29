@@ -590,6 +590,13 @@ struct Reducer
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do
+    } else if (curr->is<Drop>()) {
+      if (curr->type == Type::none) {
+        // We can't improve this: the child has a different type than us. Return
+        // here to avoid reaching the code below that tries to add a drop on
+        // children (which would recreate the current state).
+        return;
+      }
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
