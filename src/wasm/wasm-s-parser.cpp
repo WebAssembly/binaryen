@@ -1980,10 +1980,12 @@ static const char* findMemExtra(const Element& s, size_t skip, bool isAtomic) {
   return ret;
 }
 
-bool SExpressionWasmBuilder::hasMemoryIdx(Element& s, Index defaultSize, Index i) {
+bool SExpressionWasmBuilder::hasMemoryIdx(Element& s,
+                                          Index defaultSize,
+                                          Index i) {
   if (s.size() > defaultSize && !s[i]->isList() &&
-        strncmp(s[i]->c_str(), "align", 5) != 0 &&
-        strncmp(s[i]->c_str(), "offset", 6) != 0) {
+      strncmp(s[i]->c_str(), "align", 5) != 0 &&
+      strncmp(s[i]->c_str(), "offset", 6) != 0) {
     return true;
   }
   return false;

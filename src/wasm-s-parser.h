@@ -168,7 +168,6 @@ private:
 
   UniqueNameMapper nameMapper;
 
-
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
   Name getMemoryName(Element& s);
@@ -329,7 +328,10 @@ private:
   Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory);
   Index parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory);
-  Index parseMemoryForInstruction(const std::string& instrName, Memory& memory, Element& s, Index i);
+  Index parseMemoryForInstruction(const std::string& instrName,
+                                  Memory& memory,
+                                  Element& s,
+                                  Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
