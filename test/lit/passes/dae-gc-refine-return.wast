@@ -80,17 +80,17 @@
  )
 
  ;; Refine the return type based on the value flowing out.
- ;; CHECK:      (func $refine-return-flow (result (ref null i31))
+ ;; CHECK:      (func $refine-return-flow (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local $i31 (ref null i31))
+ ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-flow)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $i31)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-flow (type $none_=>_ref?|i31|) (result (ref null i31))
+ ;; NOMNL:      (func $refine-return-flow (type $none_=>_i31ref) (result i31ref)
  ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local $i31 (ref null i31))
+ ;; NOMNL-NEXT:  (local $i31 i31ref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-flow)
  ;; NOMNL-NEXT:  )
@@ -104,23 +104,23 @@
 
   (local.get $i31)
  )
- ;; CHECK:      (func $call-refine-return-flow (result (ref null i31))
+ ;; CHECK:      (func $call-refine-return-flow (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $call-refine-return-flow)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (if (result (ref null i31))
+ ;; CHECK-NEXT:  (if (result i31ref)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (call $refine-return-flow)
  ;; CHECK-NEXT:   (call $refine-return-flow)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $call-refine-return-flow (type $none_=>_ref?|i31|) (result (ref null i31))
+ ;; NOMNL:      (func $call-refine-return-flow (type $none_=>_i31ref) (result i31ref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $call-refine-return-flow)
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (if (result (ref null i31))
+ ;; NOMNL-NEXT:  (if (result i31ref)
  ;; NOMNL-NEXT:   (i32.const 1)
  ;; NOMNL-NEXT:   (call $refine-return-flow)
  ;; NOMNL-NEXT:   (call $refine-return-flow)
@@ -141,9 +141,9 @@
  )
 
  ;; Refine the return type based on a return.
- ;; CHECK:      (func $refine-return-return (result (ref null i31))
+ ;; CHECK:      (func $refine-return-return (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local $i31 (ref null i31))
+ ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-return)
  ;; CHECK-NEXT:  )
@@ -151,9 +151,9 @@
  ;; CHECK-NEXT:   (local.get $i31)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-return (type $none_=>_ref?|i31|) (result (ref null i31))
+ ;; NOMNL:      (func $refine-return-return (type $none_=>_i31ref) (result i31ref)
  ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local $i31 (ref null i31))
+ ;; NOMNL-NEXT:  (local $i31 i31ref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-return)
  ;; NOMNL-NEXT:  )
@@ -171,9 +171,9 @@
  )
 
  ;; Refine the return type based on multiple values.
- ;; CHECK:      (func $refine-return-many (result (ref null i31))
+ ;; CHECK:      (func $refine-return-many (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local $i31 (ref null i31))
+ ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many)
  ;; CHECK-NEXT:  )
@@ -191,9 +191,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $i31)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-many (type $none_=>_ref?|i31|) (result (ref null i31))
+ ;; NOMNL:      (func $refine-return-many (type $none_=>_i31ref) (result i31ref)
  ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local $i31 (ref null i31))
+ ;; NOMNL-NEXT:  (local $i31 i31ref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many)
  ;; NOMNL-NEXT:  )
@@ -230,8 +230,8 @@
 
  ;; CHECK:      (func $refine-return-many-lub (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local $i31 (ref null i31))
- ;; CHECK-NEXT:  (local $data (ref null data))
+ ;; CHECK-NEXT:  (local $i31 i31ref)
+ ;; CHECK-NEXT:  (local $data dataref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-lub)
  ;; CHECK-NEXT:  )
@@ -251,8 +251,8 @@
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $refine-return-many-lub (type $none_=>_eqref) (result eqref)
  ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local $i31 (ref null i31))
- ;; NOMNL-NEXT:  (local $data (ref null data))
+ ;; NOMNL-NEXT:  (local $i31 i31ref)
+ ;; NOMNL-NEXT:  (local $data dataref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-lub)
  ;; NOMNL-NEXT:  )
@@ -291,8 +291,8 @@
 
  ;; CHECK:      (func $refine-return-many-lub-2 (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local $i31 (ref null i31))
- ;; CHECK-NEXT:  (local $data (ref null data))
+ ;; CHECK-NEXT:  (local $i31 i31ref)
+ ;; CHECK-NEXT:  (local $data dataref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-lub-2)
  ;; CHECK-NEXT:  )
@@ -312,8 +312,8 @@
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $refine-return-many-lub-2 (type $none_=>_eqref) (result eqref)
  ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local $i31 (ref null i31))
- ;; NOMNL-NEXT:  (local $data (ref null data))
+ ;; NOMNL-NEXT:  (local $i31 i31ref)
+ ;; NOMNL-NEXT:  (local $data dataref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-lub-2)
  ;; NOMNL-NEXT:  )
@@ -351,9 +351,9 @@
  )
 
  ;; We can refine the return types of tuples.
- ;; CHECK:      (func $refine-return-tuple (result (ref null i31) i32)
+ ;; CHECK:      (func $refine-return-tuple (result i31ref i32)
  ;; CHECK-NEXT:  (local $temp anyref)
- ;; CHECK-NEXT:  (local $i31 (ref null i31))
+ ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (tuple.extract 0
  ;; CHECK-NEXT:    (call $refine-return-tuple)
@@ -364,9 +364,9 @@
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $refine-return-tuple (type $none_=>_ref?|i31|_i32) (result (ref null i31) i32)
+ ;; NOMNL:      (func $refine-return-tuple (type $none_=>_i31ref_i32) (result i31ref i32)
  ;; NOMNL-NEXT:  (local $temp anyref)
- ;; NOMNL-NEXT:  (local $i31 (ref null i31))
+ ;; NOMNL-NEXT:  (local $i31 i31ref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (tuple.extract 0
  ;; NOMNL-NEXT:    (call $refine-return-tuple)

@@ -1094,10 +1094,10 @@ MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx, ParseInput& in) {
     return ctx.makeRefType(ctx.makeEq(), Nullable);
   }
   if (in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31(), NonNullable);
+    return ctx.makeRefType(ctx.makeI31(), Nullable);
   }
   if (in.takeKeyword("dataref"sv)) {
-    return ctx.makeRefType(ctx.makeData(), NonNullable);
+    return ctx.makeRefType(ctx.makeData(), Nullable);
   }
   if (in.takeKeyword("arrayref"sv)) {
     return in.err("arrayref not yet supported");

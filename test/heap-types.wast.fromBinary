@@ -219,8 +219,8 @@
   (local $y anyref)
   (local $z anyref)
   (local $temp-func funcref)
-  (local $temp-data (ref null data))
-  (local $temp-i31 (ref null i31))
+  (local $temp-data dataref)
+  (local $temp-i31 i31ref)
   (block $label$1
    (local.set $z
     (br_on_null $label$1
@@ -239,7 +239,7 @@
    )
   )
   (drop
-   (block $label$3 (result (ref null data))
+   (block $label$3 (result dataref)
     (local.set $y
      (br_on_data $label$3
       (local.get $x)
@@ -249,7 +249,7 @@
    )
   )
   (drop
-   (block $label$4 (result (ref null i31))
+   (block $label$4 (result i31ref)
     (local.set $y
      (br_on_i31 $label$4
       (local.get $x)

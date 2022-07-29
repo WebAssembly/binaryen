@@ -143,8 +143,8 @@ public:
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
   // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
-  // │ i31ref      ║ x │   │ x │ x │       │ │
-  // │ dataref     ║ x │   │ x │ x │       │ │
+  // │ i31ref      ║ x │   │ x │ x │    n  │ │
+  // │ dataref     ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │

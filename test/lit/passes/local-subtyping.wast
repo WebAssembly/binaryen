@@ -20,7 +20,7 @@
   ;; not the optimal LUB.
   ;; CHECK:      (func $refinalize (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result i31ref)
+  ;; CHECK-NEXT:   (if (result (ref i31))
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
@@ -31,7 +31,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result i31ref)
+  ;; CHECK-NEXT:   (block $block (result (ref i31))
   ;; CHECK-NEXT:    (br $block
   ;; CHECK-NEXT:     (i31.new
   ;; CHECK-NEXT:      (i32.const 0)
@@ -85,10 +85,10 @@
     )
   )
 
-  ;; CHECK:      (func $locals-with-multiple-assignments (param $data (ref null data))
+  ;; CHECK:      (func $locals-with-multiple-assignments (param $data dataref)
   ;; CHECK-NEXT:  (local $x eqref)
-  ;; CHECK-NEXT:  (local $y (ref null i31))
-  ;; CHECK-NEXT:  (local $z (ref null data))
+  ;; CHECK-NEXT:  (local $y i31ref)
+  ;; CHECK-NEXT:  (local $z dataref)
   ;; CHECK-NEXT:  (local $w funcref)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i31.new
