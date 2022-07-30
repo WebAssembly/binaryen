@@ -947,6 +947,9 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
   // avoids iterating on all functions in each such pass, which may be
   // wasteful).
   if (func) {
+    // TODO alongside modifiesBinaryenIR() add needsNNLFixups() or such, so we
+    //      can opt out in relevant passes. That includes: SimplifyLocals,
+    //      LocalSubtyping, though maybe not many more.
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
 }

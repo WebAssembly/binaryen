@@ -142,11 +142,17 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   auto* cast = curr->cast<id>();                                               \
   WASM_UNUSED(cast); \
   if (DELEGATE_ID == Expression::LocalSetId) { /* type check here? */ \
-    if (auto* set = cast->dynCast<LocalSet>()) { \
-      auto index = set->index; \
-      if (!localsSet[index]) { \
-        workStack.push_back(WorkItem{WorkItem::Visit, set}); \
-      } \
+    auto* set = cast->cast<LocalSet>(); \
+    auto index = set->index; \
+    if (!localsSet[index]) { \
+      workStack.push_back(WorkItem{WorkItem::Visit, set}); \
+    } \
+  } else if (DELEGATE_ID == Expression::LocalGetId) { /* type check here? */ \
+    /* no children, so just visit it right now */ \
+    auto* get = cast->cast<LocalGet>(); \
+    auto index = get->index; \
+    if (!localsSet[index]) { \
+      nonDominatingIndexes.insert(index); \
     } \
   }
 
