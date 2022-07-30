@@ -42,6 +42,14 @@ inline void ensureExists(Module* wasm) {
   }
 }
 
+inline void newOne(Module* wasm) {
+  auto memoriesSize = wasm->memories.size();
+  auto memory = Builder::makeMemory(wasm::Name::fromInt(memoriesSize));
+  memory->initial = memory->max = 1;
+  
+  wasm->addMemory(std::move(memory));
+}
+
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
 // Does not yet support multi-memories
