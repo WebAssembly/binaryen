@@ -59,6 +59,11 @@ enum Op {
   GeU
 };
 
+inline bool hasAnyBitwise(BinaryOp op) {
+  return op == OrInt32 || op == AndInt32 || op == XorInt32 || op == OrInt64 ||
+         op == AndInt64 || op == XorInt64;
+}
+
 inline bool hasAnyShift(BinaryOp op) {
   return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
          op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||

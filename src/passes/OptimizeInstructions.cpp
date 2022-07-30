@@ -820,6 +820,9 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    if (auto* ret = combineAnyBitwise(curr)) {
+      return replaceCurrent(ret);
+    }
     if (curr->op == AndInt32 || curr->op == OrInt32) {
       if (curr->op == AndInt32) {
         if (auto* ret = combineAnd(curr)) {
@@ -2887,6 +2890,33 @@ private:
     return nullptr;
   }
 
+  // We can combine `and`, `or`, `xor` operations, e.g.
+  //   (X op Z) ^ (Y op Z)  ==>   (x ^ y) op Z
+  //   (X op Z) | (Y op Z)  ==>   (x | y) op Z
+  //   (X op Z) & (Y op Z)  ==>   (x & y) op Z
+  Expression* combineAnyBitwise(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      BinaryOp op;
+      Binary *bx, *by;
+      Expression *x, *y, *z1, *z2;
+      if (matches(curr,
+                  binary(&op,
+                         binary(&bx, any(&x), any(&z1)),
+                         binary(&by, any(&y), any(&z2)))) &&
+          bx->op == by->op && bx->type == curr->type && hasAnyBitwise(op) &&
+          preserveShift(bx) && canReorder(z1, y) &&
+          areConsecutiveInputsEqualAndFoldable(z1, z2)) {
+        bx->right = y;
+        curr->right = z1;
+        std::swap(curr->op, bx->op);
+        return curr;
+      }
+    }
+    return nullptr;
+  }
+
   // Check whether an operation preserves the Or operation through it, that is,
   //
   //   F(x | y) = F(x) | F(y)
@@ -2984,6 +3014,31 @@ private:
 
     // (x >= 0) & (y >= 0)   ==>   (x | y) >= 0
     if (matches(curr, binary(GeS, any(), ival(0)))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // (x << z) op (y << z)    ==>   (x op y) << z,   op = `|`, `&`, `^`
+  // (x >> z) op (y >> z)    ==>   (x op y) >> z,   op = `|`, `&`, `^`
+  // (x >>> z) op (y >>> z)  ==>   (x op y) >>> z,  op = `|`, `&`, `^`
+  bool preserveShift(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    // (x << z) op (y << z)    ==>   (x op y) << z
+    if (matches(curr, binary(Shl, any(), any()))) {
+      return true;
+    }
+
+    // (x >> z) op (y >> z)    ==>   (x op y) >> z
+    if (matches(curr, binary(ShrS, any(), any()))) {
+      return true;
+    }
+
+    // (x >>> z) op (y >>> z)    ==>   (x op y) >>> z
+    if (matches(curr, binary(ShrU, any(), any()))) {
       return true;
     }
 
