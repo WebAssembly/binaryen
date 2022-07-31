@@ -929,6 +929,21 @@ struct OptimizeInstructions
         }
       }
       {
+        // i32.eqz(i32.eqz(x))  =>  i32(x) != 0
+        // i32.eqz(i64.eqz(x))  =>  i64(x) != 0
+        //   iff shinkLevel == 0
+        if (getPassRunner()->options.shrinkLevel == 0) {
+          Expression* x;
+          if (matches(curr, unary(EqZInt32, unary(EqZ, any(&x))))) {
+            Builder builder(*getModule());
+            return replaceCurrent(builder.makeBinary(
+              getBinary(x->type, Ne),
+              x,
+              builder.makeConst(Literal::makeZero(x->type))));
+          }
+        }
+      }
+      {
         // i64.extend_i32_s(i32.wrap_i64(x))  =>  x
         //   where maxBits(x) <= 31
         //

@@ -8647,10 +8647,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9386,6 +9385,26 @@
       (i32.const 1)
       (i32.const 0)
     ))
+  )
+  ;; CHECK:      (func $fold-eqz-eqz (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $fold-eqz-eqz (param $x i32) (param $y i64)
+    ;; i32.eqz(i32.eqz(x))  ->  x != 0
+    (drop (i32.eqz (i32.eqz (local.get $x))))
+    ;; i32.eqz(i64.eqz(y))  ->  y != 0
+    (drop (i32.eqz (i64.eqz (local.get $y))))
   )
   ;; CHECK:      (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
   ;; CHECK-NEXT:  (drop
@@ -12026,10 +12045,9 @@
   ;; CHECK-NEXT:   (local.get $w)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
