@@ -1,11 +1,8 @@
 
-FROM csighub.tencentyun.com/admin/tlinux2.2-bridge-base-tcloud:latest
+FROM centos:centos7.9.2009
 
-# install git git-lfs
-RUN rpm --rebuilddb && yum -y install zlib zlib-devel curl perl-ExtUtils-CBuilder perl-ExtUtils-MakeMaker gcc curl-devel expect make wget msgfmt gettext zip unzip \
-    && yum -y remove git \
-    && yum -y --enablerepo=tlinux-testing install git git-lfs \
-    && git lfs install
+# yum
+RUN yum -y install which zlib zlib-devel curl perl-ExtUtils-CBuilder perl-ExtUtils-MakeMaker gcc gcc-c++ curl-devel expat-devel gettext-devel openssl-devel expect make wget gettext zip unzip scl-utils
 
 # cmake
 RUN mkdir -p /data/App \
@@ -14,11 +11,20 @@ RUN mkdir -p /data/App \
     && tar zxvf cmake-3.24.0-rc4-linux-x86_64.tar.gz \
     && mv cmake-3.24.0-rc4-linux-x86_64 cmake
 
-# # gcc
+# gcc
 RUN yum -y install centos-release-scl scl-utils \
-    && yum -y install devtoolset-7-gcc* \
+    && yum -y install devtoolset-7-gcc* 
+
+# git
+RUN cd /data/App \
+    && wget https://github.com/git/git/archive/refs/tags/v2.37.1.tar.gz \
+    && tar -zxvf v2.37.1.tar.gz \
+    && rm *.tar.gz \
+    && cd git-2.37.1 \
     && source /opt/rh/devtoolset-7/enable \
-    && gcc --version
+    && gcc --version \
+    && make prefix=/usr/local/git all \
+    && make prefix=/usr/local/git install
 
 # ENV
 ENV LANG=en_US.UTF-8 \
@@ -27,7 +33,7 @@ ENV LANG=en_US.UTF-8 \
     CC=/opt/rh/devtoolset-7/root/usr/bin/gcc \
     CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ \
     LD_LIBRARY_PATH=/opt/rh/devtoolset-7/root/usr/lib64:$LD_LIBRARY_PATH \
-    PATH=/opt/rh/devtoolset-7/root/usr/bin:/data/App/cmake/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    PATH=/usr/local/git/bin:/opt/rh/devtoolset-7/root/usr/bin:/data/App/cmake/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Test
 # docker build -f $(pwd)/.devcontainer/Dockerfile -t vsc-test $(pwd)/.devcontainer
