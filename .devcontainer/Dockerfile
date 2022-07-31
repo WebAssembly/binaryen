@@ -34,8 +34,3 @@ ENV LANG=en_US.UTF-8 \
     CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ \
     LD_LIBRARY_PATH=/opt/rh/devtoolset-7/root/usr/lib64:$LD_LIBRARY_PATH \
     PATH=/usr/local/git/bin:/opt/rh/devtoolset-7/root/usr/bin:/data/App/cmake/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-# Test
-# docker build -f $(pwd)/.devcontainer/Dockerfile -t vsc-test $(pwd)/.devcontainer
-# docker run --rm -it -v $(pwd):/workspace/ vsc-test /bin/bash
-
