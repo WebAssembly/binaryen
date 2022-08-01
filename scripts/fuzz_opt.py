@@ -1223,6 +1223,7 @@ def randomize_opt_flags():
                 continue
             if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
+                print('TODO: Resolving https://github.com/WebAssembly/binaryen/issues/4824 may fix this')
                 continue
             if '--gc' not in FEATURE_OPTS:
                 print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')

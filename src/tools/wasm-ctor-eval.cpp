@@ -632,7 +632,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   Literals params;
   for (Index i = 0; i < func->getNumParams(); i++) {
     auto type = func->getLocalType(i);
-    if (type.isNonNullable()) {
+    if (LiteralUtils::canMakeZero(type)) {
       std::cout << "  ...stopping due to non-zeroable param\n";
       return EvalCtorOutcome();
     }
