@@ -75,10 +75,10 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
       contents.push_back(child);
     }
   }
-  contents.push_back(last);
-  if (contents.size() == 1) {
-    return contents[0];
+  if (contents.empty()) {
+    return last;
   }
+  contents.push_back(last);
   return builder.makeBlock(contents);
 }
 
