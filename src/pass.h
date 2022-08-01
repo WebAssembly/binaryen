@@ -415,7 +415,7 @@ public:
 protected:
   Pass() = default;
   Pass(Pass&) = default;
-  Pass& operator=(const Pass&) = delete;  
+  Pass& operator=(const Pass&) = delete;
 };
 
 //

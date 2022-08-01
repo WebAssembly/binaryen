@@ -140,20 +140,20 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
 #define DELEGATE_START(id)                                                     \
   auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast); \
-  if (DELEGATE_ID == Expression::LocalSetId) { /* type check here? */ \
-    auto* set = cast->cast<LocalSet>(); \
-    auto index = set->index; \
-    if (!localsSet[index]) { \
-      workStack.push_back(WorkItem{WorkItem::Visit, set}); \
-    } \
-  } else if (DELEGATE_ID == Expression::LocalGetId) { /* type check here? */ \
-    /* no children, so just visit it right now */ \
-    auto* get = cast->cast<LocalGet>(); \
-    auto index = get->index; \
-    if (!localsSet[index]) { \
-      nonDominatingIndexes.insert(index); \
-    } \
+  WASM_UNUSED(cast);                                                           \
+  if (DELEGATE_ID == Expression::LocalSetId) { /* type check here? */          \
+    auto* set = cast->cast<LocalSet>();                                        \
+    auto index = set->index;                                                   \
+    if (!localsSet[index]) {                                                   \
+      workStack.push_back(WorkItem{WorkItem::Visit, set});                     \
+    }                                                                          \
+  } else if (DELEGATE_ID == Expression::LocalGetId) { /* type check here? */   \
+    /* no children, so just visit it right now */                              \
+    auto* get = cast->cast<LocalGet>();                                        \
+    auto index = get->index;                                                   \
+    if (!localsSet[index]) {                                                   \
+      nonDominatingIndexes.insert(index);                                      \
+    }                                                                          \
   }
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
@@ -162,7 +162,9 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   workStack.push_back(WorkItem{WorkItem::Scan, cast->field});
 
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  if (cast->field) { workStack.push_back(WorkItem{WorkItem::Scan, cast->field}); }
+  if (cast->field) {                                                           \
+    workStack.push_back(WorkItem{WorkItem::Scan, cast->field});                \
+  }
 
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
@@ -182,7 +184,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
         continue;
       }
-
 
       // First, go through the structure children. Blocks are special in that
       // all their children go in a single scope.

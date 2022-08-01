@@ -307,9 +307,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Non-nullable locals exist, which we may need to fix up. See if they
   // validate as they are, that is, if they fall within the "1a" validation
   // rules of the wasm spec. We do not need to modify such locals.
-  LocalStructuralDominance info(func,
-                                wasm,
-                                LocalStructuralDominance::IgnoreNullable);
+  LocalStructuralDominance info(
+    func, wasm, LocalStructuralDominance::IgnoreNullable);
   std::unordered_set<Index> badIndexes;
   for (auto index : info.nonDominatingIndexes) {
     if (func->getLocalType(index).isNonNullable()) {
