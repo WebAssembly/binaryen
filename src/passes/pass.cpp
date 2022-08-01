@@ -525,6 +525,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     // Coalescing may prevent subtyping (as a coalesced local must have the
     // supertype of all those combined into it), so subtype first.
     // TODO: when optimizing for size, maybe the order should reverse?
+    addIfNoDWARFIssues("merge-blocks"); // makes local-subtyping more effective
     addIfNoDWARFIssues("local-subtyping");
   }
   addIfNoDWARFIssues("coalesce-locals");
