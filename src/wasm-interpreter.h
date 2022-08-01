@@ -1362,7 +1362,7 @@ public:
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
     NOTE_NAME(curr->func);
-    return Literal::makeFunc(curr->func, curr->type);
+    return Literal::makeFunc(curr->func, curr->type.getHeapType());
   }
   Flow visitRefEq(RefEq* curr) {
     NOTE_ENTER("RefEq");
@@ -1505,7 +1505,7 @@ public:
     };
     // We have the actual and intended RTTs, so perform the cast.
     if (actualRtt.isSubRtt(intendedRtt)) {
-      Type resultType(intendedRtt.type.getHeapType(), NonNullable);
+      HeapType resultType = intendedRtt.type.getHeapType();
       if (original.isFunction()) {
         return typename Cast::Success{Literal{original.getFunc(), resultType}};
       } else {
@@ -1683,7 +1683,8 @@ public:
     if (!curr->rtt) {
       rttVal = Literal::makeCanonicalRtt(heapType);
     }
-    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+    return Literal(std::make_shared<GCData>(rttVal, data),
+                   curr->type.getHeapType());
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1770,7 +1771,8 @@ public:
     if (!curr->rtt) {
       rttVal = Literal::makeCanonicalRtt(heapType);
     }
-    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+    return Literal(std::make_shared<GCData>(rttVal, data),
+                   curr->type.getHeapType());
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
@@ -1810,7 +1812,8 @@ public:
     if (!curr->rtt) {
       rttVal = Literal::makeCanonicalRtt(heapType);
     }
-    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+    return Literal(std::make_shared<GCData>(rttVal, data),
+                   curr->type.getHeapType());
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");

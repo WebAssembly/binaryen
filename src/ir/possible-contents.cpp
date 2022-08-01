@@ -360,7 +360,9 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(curr, PossibleContents::literal(Literal(curr->func, curr->type)));
+    addRoot(
+      curr,
+      PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
   }
   void visitRefEq(RefEq* curr) {
     // TODO: optimize when possible (e.g. when both sides must contain the same

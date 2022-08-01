@@ -108,7 +108,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     if (heapType.isBasic()) {
       switch (heapType.getBasic()) {
         case HeapType::func:
-          return Literal::makeFunc(x.func);
         case HeapType::any:
         case HeapType::eq:
         case HeapType::i31:

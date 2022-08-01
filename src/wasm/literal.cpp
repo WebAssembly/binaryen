@@ -65,10 +65,8 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
-  : gcData(gcData), type(type) {
-  // Null data is only allowed if nullable.
-  assert(gcData || type.isNullable());
+Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
+  : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
   // The type must be a proper type for GC data.
   assert(isData());
 }
