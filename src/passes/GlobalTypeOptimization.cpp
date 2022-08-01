@@ -26,6 +26,7 @@
 #include "ir/localize.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
+#include "ir/type-updating.h"
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
