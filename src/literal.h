@@ -94,8 +94,9 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func, Type type) : func(func), type(type) {}
-  explicit Literal(std::shared_ptr<GCData> gcData, Type type);
+  explicit Literal(Name func, HeapType type)
+    : func(func), type(type, NonNullable) {}
+  explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   explicit Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -257,8 +258,7 @@ public:
   static Literal makeNull(HeapType type) {
     return Literal(Type(type, Nullable));
   }
-  static Literal makeFunc(Name func,
-                          Type type = Type(HeapType::func, Nullable)) {
+  static Literal makeFunc(Name func, HeapType type) {
     return Literal(func, type);
   }
   static Literal makeI31(int32_t value) {
