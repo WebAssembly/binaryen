@@ -544,7 +544,9 @@ struct InfoCollector
     // handle this automatically by the reference flowing out to an import,
     // which is what binaryen intrinsics look like. For now, to support use
     // cases of a closed world but that also use this intrinsic, handle the
-    // intrinsic specifically here.
+    // intrinsic specifically here. (Without that, the closed world assumption
+    // makes us ignore the function ref that flows to an import, so we are not
+    // aware that it is actually called.)
     auto* target = curr->operands.back();
     if (auto* refFunc = target->dynCast<RefFunc>()) {
       // We can see exactly where this goes.
