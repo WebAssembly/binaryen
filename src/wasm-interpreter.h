@@ -28,6 +28,7 @@
 #include <sstream>
 #include <variant>
 
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
@@ -2757,7 +2758,14 @@ public:
     }
     auto* func = wasm.getFunction(curr->target);
     Flow ret;
-    if (func->imported()) {
+    if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
+      // The call.without.effects intrinsic is a call to an import that actually
+      // calls the given function reference that is the final argument.
+      auto newArguments = arguments;
+      auto target = newArguments.back();
+      newArguments.pop_back();
+      ret.values = callFunctionInternal(target.getFunc(), newArguments);
+    } else if (func->imported()) {
       ret.values = externalInterface->callImport(func, arguments);
     } else {
       ret.values = callFunctionInternal(curr->target, arguments);
