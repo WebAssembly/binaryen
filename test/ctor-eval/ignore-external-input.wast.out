@@ -1,10 +1,18 @@
 (module
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
  (type $none_=>_none (func))
  (import "wasi_snapshot_preview1" "something_else" (func $wasi_something_else (result i32)))
  (memory $0 256 256)
- (data (i32.const 28) "aaaa")
+ (data (i32.const 24) "aaaaaaaa")
+ (export "test2b" (func $2))
  (export "test3" (func $3))
+ (func $2 (param $x i32)
+  (i32.store
+   (i32.const 24)
+   (local.get $x)
+  )
+ )
  (func $3
   (drop
    (call $wasi_something_else)
