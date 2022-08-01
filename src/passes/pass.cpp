@@ -916,7 +916,10 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
   // Binaryen IR is modified, so we may have work here.
 
   if (!func) {
-    // If no function is provided, run on all the functions.
+    // If no function is provided, then this is not a function-parallel pass,
+    // and it may have operated on any of the functions in theory, so run on
+    // them all.
+    assert(!pass->isFunctionParallel());
     for (auto& func : wasm->functions) {
       handleAfterEffects(pass, func.get());
     }
