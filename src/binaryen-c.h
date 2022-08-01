@@ -2244,6 +2244,9 @@ BINARYEN_API BinaryenIndex BinaryenGetNumGlobals(BinaryenModuleRef module);
 // Gets the global at the specified index.
 BINARYEN_API BinaryenGlobalRef
 BinaryenGetGlobalByIndex(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the index of a global by its name.
+BINARYEN_API BinaryenIndex
+BinaryenGetGlobalIndexByName(BinaryenModuleRef module, const char* name);
 
 // Tags
 

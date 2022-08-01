@@ -3574,6 +3574,17 @@ BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
   }
   return globals[index].get();
 }
+BinaryenIndex BinaryenGetGlobalIndexByName(BinaryenModuleRef module,
+                                           const char* name) {
+  const auto& globals = ((Module*)module)->globals;
+  for (BinaryenIndex i = 0, k = globals.size(); i < k; ++i) {
+    if (globals[i]->name == name) {
+      return i;
+    }
+  }
+  Fatal() << "invalid global name.";
+  return -1;
+}
 
 // Tags
 
