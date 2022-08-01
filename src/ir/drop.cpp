@@ -62,10 +62,8 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
     return builder.makeSequence(builder.makeDrop(curr), last);
   }
 
-  auto childIter = ChildIterator(curr);
   std::vector<Expression*> contents;
-  contents.reserve(childIter.getNumChildren() + 1);
-  for (auto* child : childIter) {
+  for (auto* child : ChildIterator(curr)) {
     if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
       continue;
     }
