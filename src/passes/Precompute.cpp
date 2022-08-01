@@ -190,7 +190,7 @@ public:
     } else {
       *canonical = *newGCData;
     }
-    return Literal(canonical, curr->type);
+    return Literal(canonical, curr->type.getHeapType());
   }
 };
 
