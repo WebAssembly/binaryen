@@ -760,7 +760,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // TODO Consider running multiple iterations here, and running vacuum in
     //      between them.
     optimized =
-        Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized;
+      Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized;
   }
 };
 
