@@ -918,7 +918,7 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
   if (!func) {
     // If no function is provided, run on all the functions.
     for (auto& func : wasm->functions) {
-      handleAfterEffects(pass, func);
+      handleAfterEffects(pass, func.get());
     }
     return;
   }
