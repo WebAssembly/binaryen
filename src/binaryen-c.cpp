@@ -110,8 +110,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
         case HeapType::func:
         case HeapType::any:
         case HeapType::eq:
-        case HeapType::i31:
         case HeapType::data:
+          assert(false && "Literals must have concrete types");
+        case HeapType::i31:
         case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
