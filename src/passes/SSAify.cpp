@@ -53,7 +53,6 @@
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
-#include "ir/type-updating.h"
 #include "pass.h"
 #include "support/permutations.h"
 #include "wasm-builder.h"
@@ -99,8 +98,6 @@ struct SSAify : public Pass {
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
-    // Handle non-nullability in new locals we added.
-    TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
 
   void createNewIndexes(LocalGraph& graph) {

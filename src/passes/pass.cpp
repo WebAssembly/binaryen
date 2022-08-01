@@ -460,6 +460,7 @@ void PassRunner::addDefaultOptimizationPasses() {
 
 // TODO: go over each pass one by one and set requiresNonNullableLocalFixups()
 //       or not
+// TODO: remove handleNonDefaultableLocals() from passes
 void PassRunner::addDefaultFunctionOptimizationPasses() {
   // All the additions here are optional if DWARF must be preserved. That is,
   // when DWARF is relevant we run fewer optimizations.

@@ -27,7 +27,6 @@
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -366,7 +365,6 @@ struct GlobalTypeOptimization : public Pass {
           block->list.push_back(curr);
           block->finalize(curr->type);
           replaceCurrent(block);
-          addedLocals = true;
         }
 
         // Remove the unneeded operands.
@@ -405,7 +403,6 @@ struct GlobalTypeOptimization : public Pass {
                                           getPassOptions());
           replaceCurrent(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
-          addedLocals = true;
         }
       }
 
@@ -420,15 +417,7 @@ struct GlobalTypeOptimization : public Pass {
         curr->index = newIndex;
       }
 
-      void visitFunction(Function* curr) {
-        if (addedLocals) {
-          TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
-        }
-      }
-
     private:
-      bool addedLocals = false;
-
       Index getNewIndex(HeapType type, Index index) {
         auto iter = parent.indexesAfterRemovals.find(type);
         if (iter == parent.indexesAfterRemovals.end()) {

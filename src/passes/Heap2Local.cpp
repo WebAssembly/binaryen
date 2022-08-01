@@ -743,7 +743,11 @@ struct Heap2LocalOptimizer {
 struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
   bool isFunctionParallel() override { return true; }
 
+  bool requiresNonNullableLocalFixups() override { return optimized; }
+
   Pass* create() override { return new Heap2Local(); }
+
+  bool optimized = false;
 
   void doWalkFunction(Function* func) {
     // Multiple rounds of optimization may work in theory, as once we turn one
@@ -755,9 +759,8 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // vacuum, in particular, to optimize such nested allocations.
     // TODO Consider running multiple iterations here, and running vacuum in
     //      between them.
-    if (Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized) {
-      TypeUpdating::handleNonDefaultableLocals(func, *getModule());
-    }
+    optimized =
+        Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized;
   }
 };
 

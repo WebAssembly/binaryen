@@ -238,9 +238,6 @@ struct OptimizeInstructions
       optimizer.walkFunction(func);
     }
 
-    // Some patterns create locals (like when we use getResultOfFirst), which we
-    // may need to fix up.
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
     // the 'pop' into a block making it invalid.
     EHUtils::handleBlockNestedPops(func, *getModule());
