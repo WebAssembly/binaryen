@@ -75,7 +75,7 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
       contents.push_back(child);
     }
   }
-  if (contents.size() == 0) {
+  if (contents.empty()) {
     return last;
   }
   contents.push_back(last);
