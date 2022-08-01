@@ -2758,18 +2758,13 @@ public:
     }
     auto* func = wasm.getFunction(curr->target);
     Flow ret;
-    if (func->module == Intrinsics::BinaryenIntrinsicsModule) {
-      if (func->base == Intrinsics::CallWithoutEffects) {
-        // The call.without.effects intrinsic is a call to an import that
-        // actually calls the given function reference that is the final
-        // argument.
-        auto newArguments = arguments;
-        auto target = newArguments.back();
-        newArguments.pop_back();
-        ret.values = callFunctionInternal(target.getFunc(), newArguments);
-      } else {
-        WASM_UNREACHABLE("unhandled intrinsic");
-      }
+    if (Intrinsics::isCallWithoutEffects(func)) {
+      // The call.without.effects intrinsic is a call to an import that actually
+      // calls the given function reference that is the final argument.
+      auto newArguments = arguments;
+      auto target = newArguments.back();
+      newArguments.pop_back();
+      ret.values = callFunctionInternal(target.getFunc(), newArguments);
     } else if (func->imported()) {
       ret.values = externalInterface->callImport(func, arguments);
     } else {

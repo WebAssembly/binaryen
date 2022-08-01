@@ -19,12 +19,17 @@
 
 namespace wasm {
 
-Name Intrinsics::BinaryenIntrinsicsModule = "binaryen-intrinsics";
-Name Intrinsics::CallWithoutEffects = "call.without.effects";
+static Name Intrinsics::BinaryenIntrinsicsModule = "binaryen-intrinsics";
+static Name Intrinsics::CallWithoutEffects = "call.without.effects";
 
 bool Intrinsics::isCallWithoutEffects(Function* func) {
-  return func->module == BinaryenIntrinsicsModule &&
-         func->base == CallWithoutEffects;
+  if (func->module != BinaryenIntrinsicsModule) {
+    return false;
+  }
+  if (func->base == CallWithoutEffects) {
+    return true;
+  }
+  Fatal() << "Unrecognized intrinsic";
 }
 
 Call* Intrinsics::isCallWithoutEffects(Expression* curr) {
