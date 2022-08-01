@@ -458,6 +458,8 @@ void PassRunner::addDefaultOptimizationPasses() {
   addDefaultGlobalOptimizationPostPasses();
 }
 
+// TODO: go over each pass one by one and set requiresNonNullableLocalFixups()
+//       or not
 void PassRunner::addDefaultFunctionOptimizationPasses() {
   // All the additions here are optional if DWARF must be preserved. That is,
   // when DWARF is relevant we run fewer optimizations.
@@ -911,45 +913,21 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
     return;
   }
 
-  // If Binaryen IR is modified, Stack IR must be cleared - it would
-  // be out of sync in a potentially dangerous way.
-  if (func) {
-    func->stackIR.reset(nullptr);
-  } else {
+  // Binaryen IR is modified, so we may have work here.
+
+  if (!func) {
+    // If no function is provided, run on all the functions.
     for (auto& func : wasm->functions) {
-      func->stackIR.reset(nullptr);
+      handleAfterEffects(pass, func);
     }
+    return;
   }
 
-  // Fix up non-nullable locals: Passes can make many changes that break the
-  // validation of non-nullable locals, which validate according to the "1a"
-  // rule of each get needing to be structurally dominated by a set - sets allow
-  // gets until the end of the set's block. Any time a pass adds a block, that
-  // can break:
-  //
-  //  (local.set $x ..)
-  //  (local.get $x)
-  //
-  // =>
-  //
-  //  (block
-  //    ..new code..
-  //    (local.set $x ..)
-  //  )
-  //  (local.get $x)
-  //
-  // This example is the common case of adding new code at a location by
-  // wrapping it in a block and appending or prepending the old code. But now
-  // the set does not structurally dominate the get. To avoid each pass needing
-  // to handle this, do it after every function-parallel pass, which is the
-  // vast majority of passes. The few non-function-parallel passes need to add
-  // this handling themselves if they require it (not doing it by default
-  // avoids iterating on all functions in each such pass, which may be
-  // wasteful).
-  if (func) {
-    // TODO alongside modifiesBinaryenIR() add needsNNLFixups() or such, so we
-    //      can opt out in relevant passes. That includes: SimplifyLocals,
-    //      LocalSubtyping, though maybe not many more.
+  // If Binaryen IR is modified, Stack IR must be cleared - it would
+  // be out of sync in a potentially dangerous way.
+  func->stackIR.reset(nullptr);
+
+  if (pass->requiresNonNullableLocalFixups()) {
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
 }

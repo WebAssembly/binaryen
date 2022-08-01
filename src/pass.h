@@ -386,12 +386,36 @@ public:
   // for. This is used to issue a proper warning about that.
   virtual bool invalidatesDWARF() { return false; }
 
+  // Whether this pass modifies Binaryen IR in ways that may require fixups for
+  // the "1a" form of non-nullable locals which is in the wasm spec. If the pass
+  // adds locals not in that form, or moves code around in ways that might break
+  // that validation, this must return true. In that case the pass runner will
+  // automatically run the necessary fixups afterwards.
+  //
+  // "1a" form requires that each get be structurally dominated by a set - sets
+  // allow gets until the end of the set's block. Any time a pass adds a block,
+  // that can break, like here:
+  //
+  //  (local.set $x ..)
+  //  (local.get $x)
+  //
+  // =>
+  //
+  //  (block
+  //    ..new code..
+  //    (local.set $x ..)
+  //  )
+  //  (local.get $x)
+  //
+  // Most passes will require such fixups.
+  virtual bool requiresNonNullableLocalFixups() { return true; }
+
   std::string name;
 
 protected:
   Pass() = default;
   Pass(Pass&) = default;
-  Pass& operator=(const Pass&) = delete;
+  Pass& operator=(const Pass&) = delete;  
 };
 
 //

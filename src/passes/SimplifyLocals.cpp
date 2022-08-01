@@ -71,6 +71,10 @@ struct SimplifyLocals
       SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass avoids relevant optimizations on non-nullable locals, since the
+  // benefits are not worth the risk of the fixups.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override {
     return new SimplifyLocals<allowTee, allowStructure, allowNesting>();
   }
