@@ -20,7 +20,7 @@
 #include "ir/bits.h"
 #include "ir/effects.h"
 #include "ir/match.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::Properties {
 

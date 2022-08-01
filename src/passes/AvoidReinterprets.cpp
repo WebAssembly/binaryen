@@ -20,11 +20,11 @@
 // beneficial, unless reinterprets are very costly (which is the case
 // with wasm2js).
 
-#include <ir/local-graph.h>
-#include <ir/properties.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/local-graph.h"
+#include "ir/properties.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "wasm.h"
+#include "../wasm.h"
 #include "ir/branch-utils.h"
 #include "wasm-traversal.h"
 

@@ -25,7 +25,7 @@
 #define wasm_ir_match_h
 
 #include "ir/abstract.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::Match {
 

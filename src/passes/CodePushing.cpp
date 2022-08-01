@@ -19,10 +19,10 @@
 // a location behind a condition, where it might not always execute.
 //
 
-#include <ir/effects.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/effects.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

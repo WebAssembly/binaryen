@@ -24,8 +24,8 @@
 
 #include <memory>
 
-#include <pass.h>
-#include <wasm.h>
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

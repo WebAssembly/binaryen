@@ -21,7 +21,7 @@
 #include "support/hash.h"
 #include "support/small_vector.h"
 #include "wasm-traversal.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

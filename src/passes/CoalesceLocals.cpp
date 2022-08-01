@@ -36,7 +36,7 @@
 #include "support/learning.h"
 #include "support/permutations.h"
 #include "support/sparse_square_matrix.h"
-#include "wasm.h"
+#include "../wasm.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
 #endif

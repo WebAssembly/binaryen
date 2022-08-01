@@ -16,7 +16,7 @@
 
 #include "asm_v_wasm.h"
 #include "support/utilities.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -18,7 +18,7 @@
 #define wasm_ir_function_h
 
 #include "ir/utils.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::FunctionUtils {
 

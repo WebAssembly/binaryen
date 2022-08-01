@@ -23,7 +23,7 @@
 #include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::ModuleUtils {
 

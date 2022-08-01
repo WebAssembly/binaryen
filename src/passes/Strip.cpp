@@ -23,7 +23,7 @@
 
 #include "pass.h"
 #include "wasm-binary.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

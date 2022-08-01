@@ -16,7 +16,7 @@
 
 #include "ir/memory-utils.h"
 #include "pass.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

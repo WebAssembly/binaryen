@@ -19,7 +19,7 @@
 #ifndef wasm_support_permutations_h
 #define wasm_support_permutations_h
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

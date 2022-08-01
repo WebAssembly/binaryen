@@ -19,7 +19,7 @@
 
 #include "ir/iteration.h"
 #include "wasm-traversal.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::BranchUtils {
 

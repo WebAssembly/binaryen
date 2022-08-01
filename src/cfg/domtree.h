@@ -27,7 +27,7 @@
 #define domtree_h
 
 #include "cfg-traversal.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

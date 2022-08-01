@@ -16,11 +16,12 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <ir/module-utils.h>
-#include <pass.h>
-#include <support/colors.h>
-#include <wasm-binary.h>
-#include <wasm.h>
+
+#include "ir/module-utils.h"
+#include "pass.h"
+#include "support/colors.h"
+#include "wasm-binary.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -29,7 +29,7 @@
 #include "ir/utils.h"
 #include "support/colors.h"
 #include "wasm-validator.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

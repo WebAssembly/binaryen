@@ -18,7 +18,7 @@
 #define wasm_ir_element_h
 
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::ElementUtils {
 

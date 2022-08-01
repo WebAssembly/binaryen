@@ -18,7 +18,7 @@
 #define wasm_ir_eh_h
 
 #include "support/small_vector.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

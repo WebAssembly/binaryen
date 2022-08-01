@@ -39,16 +39,16 @@
 // today. For now, error on this; eventually changes in the spec regarding
 // null-nullability may make this easier.
 
-#include <ir/branch-utils.h>
-#include <ir/effects.h>
-#include <ir/eh-utils.h>
-#include <ir/flat.h>
-#include <ir/properties.h>
-#include <ir/type-updating.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/branch-utils.h"
+#include "ir/effects.h"
+#include "ir/eh-utils.h"
+#include "ir/flat.h"
+#include "ir/properties.h"
+#include "ir/type-updating.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

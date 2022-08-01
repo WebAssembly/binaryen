@@ -22,9 +22,9 @@
 // more effective.
 //
 
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

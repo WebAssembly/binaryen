@@ -23,7 +23,7 @@
 #include "shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -35,13 +35,13 @@
 #include <string>
 #include <unordered_set>
 
-#include <asmjs/shared-constants.h>
-#include <ir/import-utils.h>
-#include <ir/module-utils.h>
-#include <ir/names.h>
-#include <pass.h>
-#include <shared-constants.h>
-#include <wasm.h>
+#include "asmjs/shared-constants.h"
+#include "ir/import-utils.h"
+#include "ir/module-utils.h"
+#include "ir/names.h"
+#include "pass.h"
+#include "shared-constants.h"
+#include "../wasm.h"
 
 namespace wasm {
 

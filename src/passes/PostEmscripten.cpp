@@ -19,17 +19,17 @@
 // emscripten output.
 //
 
-#include <asmjs/shared-constants.h>
-#include <ir/import-utils.h>
-#include <ir/localize.h>
-#include <ir/memory-utils.h>
-#include <ir/module-utils.h>
-#include <ir/table-utils.h>
-#include <pass.h>
-#include <shared-constants.h>
-#include <wasm-builder.h>
-#include <wasm-emscripten.h>
-#include <wasm.h>
+#include "asmjs/shared-constants.h"
+#include "ir/import-utils.h"
+#include "ir/localize.h"
+#include "ir/memory-utils.h"
+#include "ir/module-utils.h"
+#include "ir/table-utils.h"
+#include "pass.h"
+#include "shared-constants.h"
+#include "wasm-builder.h"
+#include "wasm-emscripten.h"
+#include "../wasm.h"
 
 #define DEBUG_TYPE "post-emscripten"
 

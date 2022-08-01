@@ -19,10 +19,10 @@
 // merge names when possible (by merging their blocks)
 //
 
-#include <ir/branch-utils.h>
-#include <pass.h>
-#include <shared-constants.h>
-#include <wasm.h>
+#include "ir/branch-utils.h"
+#include "pass.h"
+#include "shared-constants.h"
+#include "../wasm.h"
 
 namespace wasm {
 

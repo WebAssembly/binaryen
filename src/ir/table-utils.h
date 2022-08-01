@@ -21,7 +21,7 @@
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "wasm-traversal.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::TableUtils {
 

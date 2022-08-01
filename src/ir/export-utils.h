@@ -17,7 +17,7 @@
 #ifndef wasm_ir_export_h
 #define wasm_ir_export_h
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::ExportUtils {
 

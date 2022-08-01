@@ -18,13 +18,13 @@
 // Print out text in s-expression format
 //
 
-#include <ir/iteration.h>
-#include <ir/module-utils.h>
-#include <ir/table-utils.h>
-#include <pass.h>
-#include <pretty_printing.h>
-#include <wasm-stack.h>
-#include <wasm.h>
+#include "ir/iteration.h"
+#include "ir/module-utils.h"
+#include "ir/table-utils.h"
+#include "pass.h"
+#include "pretty_printing.h"
+#include "wasm-stack.h"
+#include "../wasm.h"
 
 namespace wasm {
 

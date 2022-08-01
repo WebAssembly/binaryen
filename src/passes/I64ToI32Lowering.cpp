@@ -21,6 +21,8 @@
 // global.
 //
 
+#include <algorithm>
+
 #include "abi/js.h"
 #include "emscripten-optimizer/istring.h"
 #include "ir/flat.h"
@@ -31,8 +33,7 @@
 #include "pass.h"
 #include "support/name.h"
 #include "wasm-builder.h"
-#include "wasm.h"
-#include <algorithm>
+#include "../wasm.h"
 
 namespace wasm {
 

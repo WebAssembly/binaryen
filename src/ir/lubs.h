@@ -18,7 +18,7 @@
 #define wasm_ir_lubs_h
 
 #include "ir/module-utils.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

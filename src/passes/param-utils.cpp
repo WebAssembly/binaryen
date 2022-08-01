@@ -19,7 +19,7 @@
 #include "ir/possible-constant.h"
 #include "ir/type-updating.h"
 #include "support/sorted_vector.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::ParamUtils {
 

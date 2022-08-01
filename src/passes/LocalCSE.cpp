@@ -116,17 +116,17 @@
 #include <algorithm>
 #include <memory>
 
-#include <ir/cost.h>
-#include <ir/effects.h>
-#include <ir/iteration.h>
-#include <ir/linear-execution.h>
-#include <ir/properties.h>
-#include <ir/type-updating.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm-traversal.h>
-#include <wasm.h>
+#include "ir/cost.h"
+#include "ir/effects.h"
+#include "ir/iteration.h"
+#include "ir/linear-execution.h"
+#include "ir/properties.h"
+#include "ir/type-updating.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -17,9 +17,9 @@
 #ifndef wasm_ir_linear_execution_h
 #define wasm_ir_linear_execution_h
 
-#include <ir/properties.h>
-#include <wasm-traversal.h>
-#include <wasm.h>
+#include "ir/properties.h"
+#include "wasm-traversal.h"
+#include "../wasm.h"
 
 namespace wasm {
 

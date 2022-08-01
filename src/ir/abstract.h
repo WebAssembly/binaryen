@@ -19,7 +19,7 @@
 #ifndef wasm_ir_abstract_h
 #define wasm_ir_abstract_h
 
-#include <wasm.h>
+#include "../wasm.h"
 
 namespace wasm::Abstract {
 

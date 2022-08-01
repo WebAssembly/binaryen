@@ -29,9 +29,9 @@
 
 #include <memory>
 
-#include <ir/element-utils.h>
-#include <pass.h>
-#include <wasm.h>
+#include "ir/element-utils.h"
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

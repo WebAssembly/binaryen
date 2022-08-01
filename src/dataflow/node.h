@@ -26,7 +26,7 @@
 #define wasm_dataflow_node_h
 
 #include "ir/utils.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::DataFlow {
 

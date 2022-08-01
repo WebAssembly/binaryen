@@ -19,7 +19,7 @@
 //
 
 #include "shell-interface.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -22,14 +22,14 @@
 // size in theory, if we end up declaring more types - TODO investigate.)
 //
 
-#include <ir/find_all.h>
-#include <ir/linear-execution.h>
-#include <ir/local-graph.h>
-#include <ir/lubs.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/find_all.h"
+#include "ir/linear-execution.h"
+#include "ir/local-graph.h"
+#include "ir/lubs.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

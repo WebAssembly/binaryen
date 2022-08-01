@@ -57,7 +57,7 @@
 #include "pass.h"
 #include "support/permutations.h"
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -75,16 +75,6 @@
 // replacing uses of params with local.get, and create thunks for $big-const-42
 // and $big-const-43.
 
-#include "ir/hashed.h"
-#include "ir/manipulation.h"
-#include "ir/module-utils.h"
-#include "ir/names.h"
-#include "ir/utils.h"
-#include "opt-utils.h"
-#include "pass.h"
-#include "support/hash.h"
-#include "support/utilities.h"
-#include "wasm.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -94,6 +84,17 @@
 #include <ostream>
 #include <variant>
 #include <vector>
+
+#include "ir/hashed.h"
+#include "ir/manipulation.h"
+#include "ir/module-utils.h"
+#include "ir/names.h"
+#include "ir/utils.h"
+#include "opt-utils.h"
+#include "pass.h"
+#include "support/hash.h"
+#include "support/utilities.h"
+#include "../wasm.h"
 
 namespace wasm {
 

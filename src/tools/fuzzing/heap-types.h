@@ -19,7 +19,7 @@
 
 #include "tools/fuzzing/random.h"
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../../wasm.h"
 #include <optional>
 #include <vector>
 

@@ -30,6 +30,8 @@
 // tables even to a signature that is not legal.
 //
 
+#include <utility>
+
 #include "asmjs/shared-constants.h"
 #include "ir/element-utils.h"
 #include "ir/import-utils.h"
@@ -38,8 +40,7 @@
 #include "pass.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
-#include "wasm.h"
-#include <utility>
+#include "../wasm.h"
 
 namespace wasm {
 

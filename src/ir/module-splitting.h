@@ -40,7 +40,7 @@
 #ifndef wasm_ir_module_splitting_h
 #define wasm_ir_module_splitting_h
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::ModuleSplitting {
 

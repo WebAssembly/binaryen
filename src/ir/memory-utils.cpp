@@ -15,7 +15,7 @@
  */
 
 #include "ir/memory-utils.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::MemoryUtils {
 

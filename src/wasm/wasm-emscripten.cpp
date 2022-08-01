@@ -27,7 +27,7 @@
 #include "support/debug.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 #define DEBUG_TYPE "emscripten"
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <ir/properties.h>
-#include <pass.h>
-#include <wasm.h>
+#include "ir/properties.h"
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

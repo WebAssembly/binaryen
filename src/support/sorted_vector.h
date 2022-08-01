@@ -21,7 +21,7 @@
 #ifndef wasm_support_sorted_vector_h
 #define wasm_support_sorted_vector_h
 
-#include "wasm.h"
+#include "../wasm.h"
 #include <vector>
 
 namespace wasm {

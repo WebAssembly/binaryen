@@ -17,8 +17,8 @@
 #ifndef wasm_ir_cost_h
 #define wasm_ir_cost_h
 
-#include <wasm-traversal.h>
-#include <wasm.h>
+#include "wasm-traversal.h"
+#include "../wasm.h"
 
 namespace wasm {
 

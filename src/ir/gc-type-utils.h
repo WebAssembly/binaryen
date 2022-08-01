@@ -17,7 +17,7 @@
 #ifndef wasm_ir_gc_type_utils_h
 #define wasm_ir_gc_type_utils_h
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::GCTypeUtils {
 

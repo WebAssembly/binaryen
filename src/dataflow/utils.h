@@ -27,7 +27,7 @@
 
 #include "dataflow/graph.h"
 #include "dataflow/node.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::DataFlow {
 

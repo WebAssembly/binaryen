@@ -27,7 +27,7 @@
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/file.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

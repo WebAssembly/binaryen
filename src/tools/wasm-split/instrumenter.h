@@ -19,7 +19,7 @@
 
 #include "pass.h"
 #include "split-options.h"
-#include "wasm.h"
+#include "../../wasm.h"
 
 namespace wasm {
 

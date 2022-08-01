@@ -28,13 +28,13 @@
 // have no side effects.
 //
 
-#include <ir/iteration.h>
-#include <ir/properties.h>
-#include <ir/type-updating.h>
-#include <pass.h>
-#include <vector>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/iteration.h"
+#include "ir/properties.h"
+#include "ir/type-updating.h"
+#include "pass.h"
+#include "vector"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -18,7 +18,7 @@
 #define wasm_ir_local_graph_h
 
 #include "support/small_set.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

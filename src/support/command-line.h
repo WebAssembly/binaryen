@@ -27,7 +27,7 @@
 #include <utility>
 #include <vector>
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

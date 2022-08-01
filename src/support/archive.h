@@ -27,7 +27,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "wasm.h"
+#include "../wasm.h"
 
 class ArchiveMemberHeader;
 

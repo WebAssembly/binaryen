@@ -29,7 +29,7 @@
 #include "ir/abstract.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::DataFlow {
 

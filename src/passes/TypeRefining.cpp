@@ -26,7 +26,7 @@
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

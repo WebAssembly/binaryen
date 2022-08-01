@@ -45,9 +45,9 @@
 
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

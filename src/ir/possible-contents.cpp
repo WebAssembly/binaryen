@@ -21,7 +21,7 @@
 #include "ir/eh-utils.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
 // Use an insert-ordered set for easier debugging with deterministic queue

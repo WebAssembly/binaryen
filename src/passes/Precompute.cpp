@@ -27,16 +27,16 @@
 // looked at.
 //
 
-#include <ir/literal-utils.h>
-#include <ir/local-graph.h>
-#include <ir/manipulation.h>
-#include <ir/properties.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <support/unique_deferring_queue.h>
-#include <wasm-builder.h>
-#include <wasm-interpreter.h>
-#include <wasm.h>
+#include "ir/literal-utils.h"
+#include "ir/local-graph.h"
+#include "ir/manipulation.h"
+#include "ir/properties.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm-builder.h"
+#include "wasm-interpreter.h"
+#include "../wasm.h"
 
 namespace wasm {
 

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+#include "wasm-binary.h"
 #include "wasm-debug.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 #ifdef BUILD_LLVM_DWARF
 #include "llvm/ObjectYAML/DWARFEmitter.h"
@@ -24,10 +25,6 @@
 
 std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #endif
-
-#include "wasm-binary.h"
-#include "wasm-debug.h"
-#include "wasm.h"
 
 namespace wasm::Debug {
 

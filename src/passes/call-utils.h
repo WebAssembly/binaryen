@@ -20,7 +20,7 @@
 #include <variant>
 
 #include "ir/type-updating.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::CallUtils {
 

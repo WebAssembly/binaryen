@@ -19,7 +19,7 @@
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../wasm.h"
 #include "wat-lexer.h"
 
 // The WebAssembly text format is recursive in the sense that elements may be

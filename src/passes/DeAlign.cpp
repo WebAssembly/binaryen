@@ -20,7 +20,7 @@
 //
 
 #include "pass.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

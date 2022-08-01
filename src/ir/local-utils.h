@@ -17,8 +17,8 @@
 #ifndef wasm_ir_local_utils_h
 #define wasm_ir_local_utils_h
 
-#include <ir/effects.h>
-#include <ir/manipulation.h>
+#include "ir/effects.h"
+#include "ir/manipulation.h"
 
 namespace wasm {
 

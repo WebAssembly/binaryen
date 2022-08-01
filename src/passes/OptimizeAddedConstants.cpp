@@ -30,12 +30,12 @@
 // speed, and may lead to code size reductions elsewhere by using fewer locals.
 //
 
-#include <ir/local-graph.h>
-#include <ir/local-utils.h>
-#include <ir/parents.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/local-graph.h"
+#include "ir/local-utils.h"
+#include "ir/parents.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

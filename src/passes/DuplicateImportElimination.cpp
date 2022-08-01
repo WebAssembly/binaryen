@@ -23,7 +23,7 @@
 #include "ir/import-utils.h"
 #include "opt-utils.h"
 #include "pass.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

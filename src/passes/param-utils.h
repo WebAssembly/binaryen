@@ -19,7 +19,7 @@
 
 #include "pass.h"
 #include "support/sorted_vector.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 // Helper code for passes that manipulate function parameters, specifically
 // checking if they are used and removing them if so. This is closely tied to

@@ -46,10 +46,10 @@
 // TODO: investigate more
 //
 
-#include <ir/local-graph.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/local-graph.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

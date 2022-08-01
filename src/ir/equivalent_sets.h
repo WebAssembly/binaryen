@@ -17,7 +17,7 @@
 #ifndef wasm_ir_equivalent_sets_h
 #define wasm_ir_equivalent_sets_h
 
-#include <wasm.h>
+#include "../wasm.h"
 
 namespace wasm {
 

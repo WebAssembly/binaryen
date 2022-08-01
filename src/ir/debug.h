@@ -17,7 +17,7 @@
 #ifndef wasm_ir_debug_h
 #define wasm_ir_debug_h
 
-#include <wasm-traversal.h>
+#include "wasm-traversal.h"
 
 namespace wasm::debug {
 

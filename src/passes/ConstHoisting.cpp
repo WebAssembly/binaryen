@@ -34,7 +34,7 @@
 #include "support/insert_ordered.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

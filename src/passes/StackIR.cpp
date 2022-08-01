@@ -22,7 +22,7 @@
 #include "ir/local-graph.h"
 #include "pass.h"
 #include "wasm-stack.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

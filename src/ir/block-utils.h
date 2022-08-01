@@ -22,7 +22,7 @@
 #include "ir/manipulation.h"
 #include "literal.h"
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::BlockUtils {
 

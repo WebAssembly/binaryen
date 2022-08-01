@@ -16,7 +16,7 @@
 #ifndef wasm_ir_names_h
 #define wasm_ir_names_h
 
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm::Names {
 

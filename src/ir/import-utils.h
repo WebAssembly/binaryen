@@ -18,7 +18,7 @@
 #define wasm_ir_import_h
 
 #include "literal.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

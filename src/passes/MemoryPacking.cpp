@@ -36,7 +36,7 @@
 #include "support/space.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

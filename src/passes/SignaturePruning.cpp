@@ -35,7 +35,7 @@
 #include "pass.h"
 #include "support/sorted_vector.h"
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

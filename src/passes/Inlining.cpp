@@ -43,7 +43,7 @@
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

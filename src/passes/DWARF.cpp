@@ -25,7 +25,7 @@
 
 #include "pass.h"
 #include "wasm-debug.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

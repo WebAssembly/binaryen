@@ -31,15 +31,15 @@ high chance for set at start of loop
 #include "ir/memory-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
-#include <ir/eh-utils.h>
-#include <ir/find_all.h>
-#include <ir/literal-utils.h>
-#include <ir/manipulation.h>
-#include <ir/names.h>
-#include <ir/utils.h>
-#include <support/file.h>
-#include <tools/optimization-options.h>
-#include <wasm-builder.h>
+#include "ir/eh-utils.h"
+#include "ir/find_all.h"
+#include "ir/literal-utils.h"
+#include "ir/manipulation.h"
+#include "ir/names.h"
+#include "ir/utils.h"
+#include "support/file.h"
+#include "tools/optimization-options.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 

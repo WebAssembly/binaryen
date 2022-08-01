@@ -19,7 +19,7 @@
 #ifndef wasm_tools_fuzzing_parameters_h
 #define wasm_tools_fuzzing_parameters_h
 
-#include "wasm.h"
+#include "../../wasm.h"
 
 namespace wasm {
 

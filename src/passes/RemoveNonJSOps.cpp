@@ -33,9 +33,6 @@
 // really useful for fuzzing as it changes the behavior of the program.
 //
 
-#include <pass.h>
-#include <wasm.h>
-
 #include "abi/js.h"
 #include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
@@ -46,6 +43,8 @@
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

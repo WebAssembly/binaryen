@@ -18,16 +18,16 @@
 // Removes branches for which we go to where they go anyhow
 //
 
-#include <ir/branch-utils.h>
-#include <ir/cost.h>
-#include <ir/effects.h>
-#include <ir/gc-type-utils.h>
-#include <ir/literal-utils.h>
-#include <ir/utils.h>
-#include <parsing.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/branch-utils.h"
+#include "ir/cost.h"
+#include "ir/effects.h"
+#include "ir/gc-type-utils.h"
+#include "ir/literal-utils.h"
+#include "ir/utils.h"
+#include "parsing.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

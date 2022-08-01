@@ -72,13 +72,13 @@
 // single outside block.
 //
 
-#include <ir/branch-utils.h>
-#include <ir/effects.h>
-#include <ir/iteration.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/branch-utils.h"
+#include "ir/effects.h"
+#include "ir/iteration.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "../wasm.h"
 
 namespace wasm {
 

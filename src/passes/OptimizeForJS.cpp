@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#include <pass.h>
-#include <wasm.h>
-
 #include "wasm-builder.h"
-#include <ir/abstract.h>
-#include <ir/literal-utils.h>
-#include <ir/localize.h>
-#include <ir/match.h>
+#include "ir/abstract.h"
+#include "ir/literal-utils.h"
+#include "ir/localize.h"
+#include "ir/match.h"
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

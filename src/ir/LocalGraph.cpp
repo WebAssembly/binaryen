@@ -16,10 +16,10 @@
 
 #include <iterator>
 
-#include <cfg/cfg-traversal.h>
-#include <ir/find_all.h>
-#include <ir/local-graph.h>
-#include <wasm-builder.h>
+#include "cfg/cfg-traversal.h"
+#include "ir/find_all.h"
+#include "ir/local-graph.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 

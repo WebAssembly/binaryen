@@ -19,7 +19,7 @@
 
 #include "ir/utils.h"
 #include "support/hash.h"
-#include "wasm.h"
+#include "../wasm.h"
 #include <functional>
 
 namespace wasm {

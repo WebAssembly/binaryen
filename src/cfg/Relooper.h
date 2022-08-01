@@ -39,7 +39,7 @@ http://doi.acm.org/10.1145/2048147.2048224
 
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace CFG {
 

@@ -18,8 +18,8 @@
 // Removeds memory segments, leaving only code in the module.
 //
 
-#include <pass.h>
-#include <wasm.h>
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

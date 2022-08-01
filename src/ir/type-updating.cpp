@@ -19,7 +19,7 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 

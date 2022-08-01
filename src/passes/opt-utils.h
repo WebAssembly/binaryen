@@ -20,10 +20,10 @@
 #include <functional>
 #include <unordered_set>
 
-#include <ir/element-utils.h>
-#include <ir/module-utils.h>
-#include <pass.h>
-#include <wasm.h>
+#include "ir/element-utils.h"
+#include "ir/module-utils.h"
+#include "pass.h"
+#include "../wasm.h"
 
 namespace wasm {
 

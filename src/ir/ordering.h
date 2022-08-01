@@ -17,8 +17,8 @@
 #ifndef wasm_ir_reorderer_h
 #define wasm_ir_reorderer_h
 
-#include <ir/effects.h>
-#include <wasm-builder.h>
+#include "ir/effects.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 

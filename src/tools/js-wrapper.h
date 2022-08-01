@@ -20,7 +20,7 @@
 //
 
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../wasm.h"
 #include <string>
 
 namespace wasm {

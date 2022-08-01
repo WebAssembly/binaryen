@@ -24,7 +24,7 @@
 
 #include "ir/properties.h"
 #include "wasm-type.h"
-#include "wasm.h"
+#include "../wasm.h"
 
 namespace wasm {
 
