@@ -98,32 +98,3 @@
   (call $__original_main)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "asmConsts": {
-    "568": "{ Module.print(\"Hello world\"); }",
-    "601": "{ return $0 + $1; }",
-    "621": "{ Module.print(\"Got \" + $0); }"
-  },
-  "declares": [
-    "emscripten_asm_const_int"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "main"
-  ],
-  "namedGlobals": {
-    "__start_em_asm" : "568",
-    "__stop_em_asm" : "652"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

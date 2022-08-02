@@ -20,28 +20,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "emJsFuncs": {
-    "noarg": "(void)<::>{ out(\"no args works\"); }"
-  },
-  "declares": [
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__em_js__noarg"
-  ],
-  "namedGlobals": {
-    "__heap_base" : "5250112",
-    "__data_end" : "7232"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

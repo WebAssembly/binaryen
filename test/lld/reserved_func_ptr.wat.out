@@ -118,26 +118,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "declares": [
-    "_Z4atoiPKc"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "__main_argc_argv",
-    "dynCall_viii"
-  ],
-  "namedGlobals": {
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 1,
-  "features": [
-  ]
-}
--- END METADATA --
-;)
