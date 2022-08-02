@@ -714,6 +714,25 @@ function wrapModule(module, self = {}) {
       'wait64'(ptr, expected, timeout) {
         return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
       }
+    },
+    'module'() {
+      return UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module));
+    },
+    'base'() {
+      return UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module));
+    },
+    'initial'() {
+      return Module['_BinaryenMemoryGetInitial'](module);
+    },
+    'shared'() {
+      return Boolean(Module['_BinaryenMemoryIsShared'](module));
+    },
+    'max'() {
+      if (Module['_BinaryenMemoryHasMax'](module)) {
+        return Module['_BinaryenMemoryGetMax'](module);
+      } else {
+        return Infinity;
+      }
     }
   }
 
@@ -2535,36 +2554,48 @@ function wrapModule(module, self = {}) {
   };
   self['getMemoryInfo'] = function() {
     var memoryInfo = {
-      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
-      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
-      'initial': Module['_BinaryenMemoryGetInitial'](module),
-      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
+      'module': self['memory']['module'](),
+      'base': self['memory']['base'](),
+      'initial': self['memory']['initial'](),
+      'shared': self['memory']['shared']()
     };
-    if (Module['_BinaryenMemoryHasMax'](module)) {
-      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+    var max = self['memory']['max']();
+    if (max) {
+      memoryInfo['max'] = max;
     }
     return memoryInfo;
   };
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
+
+  self['memorySegment'] = {
+    'offset'(id) {
+      return Module['_BinaryenGetMemorySegmentByteOffset'](module, id);
+    },
+    'data'(id) {
+      const size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
+      const ptr = _malloc(size);
+      Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
+      const res = new Uint8Array(size);
+      res.set(new Uint8Array(buffer, ptr, size));
+      _free(ptr);
+      return res.buffer;
+    },
+    'passive'(id) {
+      return Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id));
+    }
+  }
+
   self['getMemorySegmentInfoByIndex'] = function(id) {
-    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id));
+    const passive = self['memorySegment']['passive'](id);
     let offset = null;
     if (!passive) {
-      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, id);
+      offset = self['memorySegment']['offset'](id)
     }
     return {
       'offset': offset,
-      'data': (function(){
-        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
-        const ptr = _malloc(size);
-        Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
-        const res = new Uint8Array(size);
-        res.set(new Uint8Array(buffer, ptr, size));
-        _free(ptr);
-        return res.buffer;
-      })(),
+      'data': self['memorySegment']['data'](id),
       'passive': passive
     };
   };
@@ -3251,25 +3282,25 @@ Module['expandType'] = function(ty) {
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
-    'name': UTF8ToString(Module['_BinaryenFunctionGetName'](func)),
-    'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func)),
-    'base': UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func)),
-    'params': Module['_BinaryenFunctionGetParams'](func),
-    'results': Module['_BinaryenFunctionGetResults'](func),
-    'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
-    'body': Module['_BinaryenFunctionGetBody'](func)
+    'name': Module['Function']['getName'](func),
+    'module': Module['FunctionImport']['getModule'](func),
+    'base': Module['FunctionImport']['getBase'](func),
+    'params': Module['Function']['getParams'](func),
+    'results': Module['Function']['getResults'](func),
+    'vars': getAllNested(func, Module['Function']['getNumVars'], Module['Function']['getVar']),
+    'body': Module['Function']['getBody'](func)
   };
 };
 
 // Obtains information about a 'Global'
 Module['getGlobalInfo'] = function(global) {
   return {
-    'name': UTF8ToString(Module['_BinaryenGlobalGetName'](global)),
-    'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global)),
-    'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global)),
-    'type': Module['_BinaryenGlobalGetType'](global),
-    'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](global)),
-    'init': Module['_BinaryenGlobalGetInitExpr'](global)
+    'name': Module['Global']['getName'](global),
+    'module': Module['GlobalImport']['getModule'](global),
+    'base': Module['GlobalImport']['getBase'](global),
+    'type': Module['Global']['getType'](global),
+    'mutable': Module['Global']['isMutable'](global),
+    'init': Module['Global']['getInitExpr'](global)
   };
 };
 
@@ -3291,17 +3322,16 @@ Module['getTableInfo'] = function(table) {
 };
 
 Module['getElementSegmentInfo'] = function(segment) {
-  var segmentLength = Module['_BinaryenElementSegmentGetLength'](segment);
+  var segmentLength = Module['ElementSegment']['getLength'](segment);
   var names = new Array(segmentLength);
   for (let j = 0; j !== segmentLength; ++j) {
-    var ptr = Module['_BinaryenElementSegmentGetData'](segment, j);
-    names[j] = UTF8ToString(ptr);
+    names[j] = Module['ElementSegment']['getData'](segment, j);
   }
 
   return {
-    'name': UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment)),
-    'table': UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment)),
-    'offset': Module['_BinaryenElementSegmentGetOffset'](segment),
+    'name': Module['ElementSegment']['getName'](segment),
+    'table': Module['ElementSegment']['getTable'](segment),
+    'offset': Module['ElementSegment']['getOffset'](segment),
     'data': names
   }
 }
@@ -3320,9 +3350,9 @@ Module['getTagInfo'] = function(tag) {
 // Obtains information about an 'Export'
 Module['getExportInfo'] = function(export_) {
   return {
-    'kind': Module['_BinaryenExportGetKind'](export_),
-    'name': UTF8ToString(Module['_BinaryenExportGetName'](export_)),
-    'value': UTF8ToString(Module['_BinaryenExportGetValue'](export_))
+    'kind': Module['Export']['getKind'](export_),
+    'name': Module['Export']['getName'](export_),
+    'value': Module['Export']['getValue'](export_)
   };
 };
 
@@ -4793,8 +4823,145 @@ Module['I31Get'] = makeExpressionWrapper({
   }
 });
 
-// Function wrapper
+// ElementSegment wrapper
+Module['ElementSegment'] = (() => {
+  // Closure compiler doesn't allow multiple `ElementSegment`s at top-level, so:
+  function ElementSegment(func) {
+    if (!(this instanceof ElementSegment)) {
+      if (!func) return null;
+      return new ElementSegment(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  ElementSegment['getLength'] = function(segment) {
+    return Module['_BinaryenElementSegmentGetLength'](segment);
+  };
+  ElementSegment['getData'] = function(segment, index) {
+    return UTF8ToString(Module['_BinaryenElementSegmentGetData'](segment, index));
+  };
+  ElementSegment['getName'] = function(segment) {
+    return UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment));
+  };
+  ElementSegment['getTable'] = function(segment) {
+    return UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment));
+  };
+  ElementSegment['getOffset'] = function(segment) {
+    return Module['_BinaryenElementSegmentGetOffset'](segment);
+  };
+  deriveWrapperInstanceMembers(ElementSegment.prototype, ElementSegment);
+  ElementSegment.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return ElementSegment;
+})();
 
+// Export wrapper
+Module['Export'] = (() => {
+  // Closure compiler doesn't allow multiple `Export`s at top-level, so:
+  function Export(func) {
+    if (!(this instanceof Export)) {
+      if (!func) return null;
+      return new Export(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Export['getKind'] = function(export_) {
+    return Module['_BinaryenExportGetKind'](export_);
+  };
+  Export['getName'] = function(export_) {
+    return UTF8ToString(Module['_BinaryenExportGetName'](export_));
+  };
+  Export['getValue'] = function(export_) {
+    return UTF8ToString(Module['_BinaryenExportGetValue'](export_));
+  };
+  deriveWrapperInstanceMembers(Export.prototype, Export);
+  Export.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Export;
+})();
+
+// GlobalImport wrapper
+Module['GlobalImport'] = (() => {
+  // Closure compiler doesn't allow multiple `GlobalImport`s at top-level, so:
+  function GlobalImport(func) {
+    if (!(this instanceof GlobalImport)) {
+      if (!func) return null;
+      return new GlobalImport(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  GlobalImport['getModule'] = function(global) {
+    return UTF8ToString(Module['_BinaryenGlobalImportGetModule'](global));
+  };
+  GlobalImport['getBase'] = function(global) {
+    return UTF8ToString(Module['_BinaryenGlobalImportGetBase'](global));
+  };
+  deriveWrapperInstanceMembers(GlobalImport.prototype, GlobalImport);
+  GlobalImport.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return GlobalImport;
+})();
+
+// Global wrapper
+Module['Global'] = (() => {
+  // Closure compiler doesn't allow multiple `Global`s at top-level, so:
+  function Global(func) {
+    if (!(this instanceof Global)) {
+      if (!func) return null;
+      return new Global(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  Global['getName'] = function(global) {
+    return UTF8ToString(Module['_BinaryenGlobalGetName'](global));
+  };
+  Global['getType'] = function(global) {
+    return Module['_BinaryenGlobalGetType'](global);
+  };
+  Global['isMutable'] = function(global) {
+    return Boolean(Module['_BinaryenGlobalIsMutable'](global));
+  };
+  Global['getInitExpr'] = function(global) {
+    return Module['_BinaryenGlobalGetInitExpr'](global);
+  };
+  deriveWrapperInstanceMembers(Global.prototype, Global);
+  Global.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return Global;
+})();
+
+// FunctionImport wrapper
+Module['FunctionImport'] = (() => {
+  // Closure compiler doesn't allow multiple `FunctionImport`s at top-level, so:
+  function FunctionImport(func) {
+    if (!(this instanceof FunctionImport)) {
+      if (!func) return null;
+      return new FunctionImport(func);
+    }
+    if (!func) throw Error("function reference must not be null");
+    this[thisPtr] = func;
+  }
+  FunctionImport['getModule'] = function(func) {
+    return UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func));
+  };
+  FunctionImport['getBase'] = function(func) {
+    return UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func));
+  };
+  deriveWrapperInstanceMembers(FunctionImport.prototype, FunctionImport);
+  FunctionImport.prototype['valueOf'] = function() {
+    return this[thisPtr];
+  };
+  return FunctionImport;
+})();
+
+// Function wrapper
 Module['Function'] = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
   function Function(func) {
