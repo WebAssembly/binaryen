@@ -31,6 +31,9 @@ struct RemoveUnusedNames
                                  UnifiedExpressionVisitor<RemoveUnusedNames>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass only removes names.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override { return new RemoveUnusedNames; }
 
   // We maintain a list of branches that we saw in children, then when we reach
