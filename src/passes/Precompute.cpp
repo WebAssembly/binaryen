@@ -199,6 +199,10 @@ struct Precompute
       PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass replaces code with the results of executing that code. This can
+  // replace a local.get with a constant, which can only help 1a validation.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override { return new Precompute(propagate); }
 
   bool propagate = false;

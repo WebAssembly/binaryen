@@ -94,6 +94,9 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 } // anonymous namespace
 
 struct MemoryPacking : public Pass {
+  // This pass operates on linear memory, and does not affect reference locals.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override;
   bool canOptimize(const Memory& memory,
                    std::vector<std::unique_ptr<DataSegment>>& dataSegments,
