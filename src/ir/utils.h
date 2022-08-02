@@ -119,6 +119,10 @@ struct ReFinalize
   : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Re-running finalize() does not change the types of locals, so 1a validation
+  // is preserved.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override { return new ReFinalize; }
 
   ReFinalize() { name = "refinalize"; }
