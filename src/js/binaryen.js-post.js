@@ -1,3 +1,7 @@
+/**
+ * @externs
+ */
+
 // export friendly API methods
 function preserveStack(func) {
   try {
@@ -27,7 +31,8 @@ function i8sToStack(i8s) {
 function initializeConstants() {
 
   // Types
-  [ ['none', 'None'],
+  [
+    ['none', 'None'],
     ['i32', 'Int32'],
     ['i64', 'Int64'],
     ['f32', 'Float32'],
@@ -45,13 +50,13 @@ function initializeConstants() {
     ['stringview_iter', 'StringviewIter'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
-  ].forEach(entry => {
-    Module[entry[0]] = Module['_BinaryenType' + entry[1]]();
-  });
+  ].reduce((out, entry) => (
+    out[entry[0]] = Module['_BinaryenType' + entry[1]](), out
+  ), Module);
 
   // Expression ids
-  Module['ExpressionIds'] = {};
-  [ 'Invalid',
+  Module.ExpressionIds = [
+    'Invalid',
     'Block',
     'If',
     'Loop',
@@ -121,24 +126,24 @@ function initializeConstants() {
     'ArrayGet',
     'ArraySet',
     'ArrayLen'
-  ].forEach(name => {
-    Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
-  });
+  ].reduce((out, name) => (
+    out[name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id'](), out
+  ), {});
 
   // External kinds
-  Module['ExternalKinds'] = {};
-  [ 'Function',
+  Module.ExternalKinds = [
+    'Function',
     'Table',
     'Memory',
     'Global',
     'Tag'
-  ].forEach(name => {
-    Module['ExternalKinds'][name] = Module['External' + name] = Module['_BinaryenExternal' + name]();
-  });
+  ].reduce((out, name) => (
+    out[name] = Module['External' + name] = Module['_BinaryenExternal' + name](), out
+  ), {});
 
   // Features
-  Module['Features'] = {};
-  [ 'MVP',
+  Module.Features = [
+    'MVP',
     'Atomics',
     'BulkMemory',
     'MutableGlobals',
@@ -156,13 +161,13 @@ function initializeConstants() {
     'ExtendedConst',
     'Strings',
     'All'
-  ].forEach(name => {
-    Module['Features'][name] = Module['_BinaryenFeature' + name]();
-  });
+  ].reduce((out, name) => (
+    out[name] = Module['_BinaryenFeature' + name](), out
+  ), {});
 
   // Operations
-  Module['Operations'] = {};
-  [ 'ClzInt32',
+  Module.Operations = [
+    'ClzInt32',
     'CtzInt32',
     'PopcntInt32',
     'NegFloat32',
@@ -544,13 +549,13 @@ function initializeConstants() {
     'RefAsFunc',
     'RefAsData',
     'RefAsI31',
-  ].forEach(name => {
-    Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
-  });
+  ].reduce((out, name) => (
+    out[name] = Module[name] = Module['_Binaryen' + name](), out
+  ), {});
 
   // Expression side effects
-  Module['SideEffects'] = {};
-  [ 'None',
+  Module.SideEffects = [
+    'None',
     'Branches',
     'Calls',
     'ReadsLocal',
@@ -567,22 +572,24 @@ function initializeConstants() {
     'DanglingPop',
     'TrapsNeverHappen',
     'Any'
-  ].forEach(name => {
-    Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();
-  });
+  ].reduce((out, name) => (
+    out[name] = Module['_BinaryenSideEffect' + name](), out
+  ), {});
 
   // ExpressionRunner flags
-  Module['ExpressionRunner']['Flags'] = {
-    'Default': Module['_ExpressionRunnerFlagsDefault'](),
-    'PreserveSideeffects': Module['_ExpressionRunnerFlagsPreserveSideeffects'](),
-    'TraverseCalls': Module['_ExpressionRunnerFlagsTraverseCalls']()
-  };
+  Module.ExpressionRunner.Flags = [
+    'Default',
+    'PreserveSideeffects',
+    'TraverseCalls'
+  ].reduce((out, name) => (
+    out[name] = Module['_ExpressionRunnerFlags' + name](), out
+  ), {});
 }
 
 // 'Module' interface
-Module['Module'] = function(module) {
+Module.Module = function(module) {
   assert(!module); // guard against incorrect old API usage
-  wrapModule(Module['_BinaryenModuleCreate'](), this);
+  wrapModule(Module._BinaryenModuleCreate(), this);
 };
 
 // Receives a C pointer to a C Module and a JS object, and creates
@@ -593,7 +600,7 @@ Module['Module'] = function(module) {
 function wrapModule(module, self = {}) {
   assert(module); // guard against incorrect old API usage
 
-  self['ptr'] = module;
+  self.ptr = module;
 
   // The size of a single literal in memory as used in Const creation,
   // which is a little different: we don't want users to need to make
@@ -603,73 +610,77 @@ function wrapModule(module, self = {}) {
   const sizeOfLiteral = _BinaryenSizeofLiteral();
 
   // 'Expression' creation
-  self['block'] = function(name, children, type) {
+  self.block = function(name, children, type) {
     return preserveStack(() =>
-      Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
-                               i32sToStack(children), children.length,
-                               typeof type !== 'undefined' ? type : Module['none'])
+      Module._BinaryenBlock(module, name ? strToStack(name) : 0,
+                            i32sToStack(children), children.length,
+                            typeof type !== 'undefined' ? type : Module.none)
     );
   };
-  self['if'] = function(condition, ifTrue, ifFalse) {
-    return Module['_BinaryenIf'](module, condition, ifTrue, ifFalse);
+  self.if = function(condition, ifTrue, ifFalse) {
+    return Module._BinaryenIf(module, condition, ifTrue, ifFalse);
   };
-  self['loop'] = function(label, body) {
-    return preserveStack(() => Module['_BinaryenLoop'](module, strToStack(label), body));
+  self.loop = function(label, body) {
+    return preserveStack(() => Module._BinaryenLoop(module, strToStack(label), body));
   };
-  self['break'] = self['br'] = function(label, condition, value) {
-    return preserveStack(() => Module['_BinaryenBreak'](module, strToStack(label), condition, value));
+  self.break =
+  self.br = function(label, condition, value) {
+    return preserveStack(() => Module._BinaryenBreak(module, strToStack(label), condition, value));
   };
-  self['br_if'] = function(label, condition, value) {
-    return self['br'](label, condition, value);
+  self.br_if = function(label, condition, value) {
+    return self.br(label, condition, value);
   };
-  self['switch'] = function(names, defaultName, condition, value) {
+  self.switch = function(names, defaultName, condition, value) {
     return preserveStack(() =>
-      Module['_BinaryenSwitch'](module, i32sToStack(names.map(strToStack)), names.length, strToStack(defaultName), condition, value)
+      Module._BinaryenSwitch(module, i32sToStack(names.map(strToStack)), names.length, strToStack(defaultName), condition, value)
     );
   };
-  self['call'] = function(name, operands, type) {
-    return preserveStack(() => Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type));
+  self.call = function(name, operands, type) {
+    return preserveStack(() => Module._BinaryenCall(module, strToStack(name), i32sToStack(operands), operands.length, type));
   };
   // 'callIndirect', 'returnCall', 'returnCallIndirect' are deprecated and may
   // be removed in a future release. Please use the the snake_case names
   // instead.
-  self['callIndirect'] = self['call_indirect'] = function(table, target, operands, params, results) {
+  self.callIndirect =
+  self.call_indirect = function(table, target, operands, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenCallIndirect'](module, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
+      Module._BinaryenCallIndirect(module, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
     );
   };
-  self['returnCall'] = self['return_call'] = function(name, operands, type) {
+  self.returnCall =
+  self.return_call = function(name, operands, type) {
     return preserveStack(() =>
-      Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type)
+      Module._BinaryenReturnCall(module, strToStack(name), i32sToStack(operands), operands.length, type)
     );
   };
-  self['returnCallIndirect'] = self['return_call_indirect'] = function(table, target, operands, params, results) {
+  self.returnCallIndirect =
+  self.return_call_indirect = function(table, target, operands, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenReturnCallIndirect'](module, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
+      Module._BinaryenReturnCallIndirect(module, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
     );
   };
 
-  self['local'] = {
-    'get'(index, type) {
-      return Module['_BinaryenLocalGet'](module, index, type);
+  self.local = {
+    get(index, type) {
+      return Module._BinaryenLocalGet(module, index, type);
     },
-    'set'(index, value) {
-      return Module['_BinaryenLocalSet'](module, index, value);
+    set(index, value) {
+      return Module._BinaryenLocalSet(module, index, value);
     },
-    'tee'(index, value, type) {
+    tee(index, value, type) {
       if (typeof type === 'undefined') {
         throw new Error("local.tee's type should be defined");
       }
-      return Module['_BinaryenLocalTee'](module, index, value, type);
+      return Module._BinaryenLocalTee(module, index, value, type);
     }
   }
 
-  self['global'] = {
-    'get'(name, type) {
-      return Module['_BinaryenGlobalGet'](module, strToStack(name), type);
+  self.global = {
+    get(name, type) {
+      return Module._BinaryenGlobalGet(module, strToStack(name), type);
     },
-    'set'(name, value) {
-      return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
+    set(name, value) {
+      return Module._BinaryenGlobalSet(module, strToStack(name), value);
     }
   }
 
@@ -4834,14 +4845,14 @@ Module['Function'] = (() => {
       Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
     });
   };
-  Function['getBody'] = function(func) {
-    return Module['_BinaryenFunctionGetBody'](func);
+  Function.getBody = function(func) {
+    return Module._BinaryenFunctionGetBody(func);
   };
-  Function['setBody'] = function(func, bodyExpr) {
-    Module['_BinaryenFunctionSetBody'](func, bodyExpr);
+  Function.setBody = function(func, bodyExpr) {
+    Module._BinaryenFunctionSetBody(func, bodyExpr);
   };
   deriveWrapperInstanceMembers(Function.prototype, Function);
-  Function.prototype['valueOf'] = function() {
+  Function.prototype.valueOf = function() {
     return this[thisPtr];
   };
   return Function;
@@ -4849,7 +4860,7 @@ Module['Function'] = (() => {
 
 // Additional customizations
 
-Module['exit'] = function(status) {
+Module.exit = function(status) {
   // Instead of exiting silently on errors, always show an error with
   // a stack trace, for debuggability.
   if (status != 0) throw new Error('exiting due to error: ' + status);
@@ -4859,8 +4870,8 @@ Module['exit'] = function(status) {
 if (runtimeInitialized) {
   initializeConstants();
 } else {
-  Module['onRuntimeInitialized'] = (super_ => () => {
+  Module.onRuntimeInitialized = (super_ => () => {
     initializeConstants();
     if (super_) super_();
-  })(Module['onRuntimeInitialized']);
+  })(Module.onRuntimeInitialized);
 }
