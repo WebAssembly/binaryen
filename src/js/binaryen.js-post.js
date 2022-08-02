@@ -590,6 +590,8 @@ function initializeConstants() {
 
 // 'Module' interface
 /** @const */
+/** @interface */
+/** @modifies {this} */
 Module.Module = function(module) {
   assert(!module); // guard against incorrect old API usage
   wrapModule(Module._BinaryenModuleCreate(), this);
@@ -600,8 +602,6 @@ Module.Module = function(module) {
 // This is meant for internal use only, and is necessary as we
 // want to access Module from JS that were perhaps not created
 // from JS.
-/** @const */
-/** @interface */
 function wrapModule(module, self = {}) {
   assert(module); // guard against incorrect old API usage
 

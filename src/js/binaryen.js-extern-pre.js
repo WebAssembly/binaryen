@@ -1,4 +1,5 @@
 /**
+ * @fileoverview This is an externs binaryen.js file.
  * @externs
  */
 
