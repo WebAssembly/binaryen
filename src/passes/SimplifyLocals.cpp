@@ -311,8 +311,6 @@ struct SimplifyLocals
           invalidated.push_back(index);
           continue;
         }
-
-        // TODO: test for the removed code here, try-catch dominance.
       }
       for (auto index : invalidated) {
         self->sinkables.erase(index);

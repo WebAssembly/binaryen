@@ -2,29 +2,28 @@
 ;; RUN: wasm-opt %s --simplify-locals -all -S -o - | filecheck %s
 
 ;; Tests for the "1a" form of non-nullable locals. In this form a local.set
-;; allows a local.get until the end of the current block, so we must not move
-;; sets in ways that break that.
+;; allows a local.get until the end of the current block.
 
 (module
   ;; CHECK:      (func $test-nn
   ;; CHECK-NEXT:  (local $nn (ref any))
-  ;; CHECK-NEXT:  (local.set $nn
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block $inner
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block $inner
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $nn)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $nn)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-nn
     (local $nn (ref any))
-    ;; We should not sink this set into the block.
+    ;; We can sink this set into the block, but we should then update things so
+    ;; that we still validate. We'll end up removing the set, and the first
+    ;; local.get. All that remains is the final local.get with the original
+    ;; value. Note that we don't need to change the local type to be nullable
+    ;; since we manage to optimize out all the local.gets and sets.
     (local.set $nn
       (ref.as_non_null
         (ref.null any)
@@ -35,7 +34,6 @@
         (local.get $nn)
       )
     )
-    ;; Without this get, we could sink the set. TODO: optimize in that case.
     (drop
       (local.get $nn)
     )
