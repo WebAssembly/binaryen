@@ -27,7 +27,7 @@ function i8sToStack(i8s) {
 function initializeConstants() {
 
   // Types
-  [
+  /** @const */[
     ['none', 'None'],
     ['i32', 'Int32'],
     ['i64', 'Int64'],
@@ -51,6 +51,7 @@ function initializeConstants() {
   ), Module);
 
   // Expression ids
+  /** @const */
   Module.ExpressionIds = [
     'Invalid',
     'Block',
@@ -127,6 +128,7 @@ function initializeConstants() {
   ), {});
 
   // External kinds
+  /** @const */
   Module.ExternalKinds = [
     'Function',
     'Table',
@@ -138,6 +140,7 @@ function initializeConstants() {
   ), {});
 
   // Features
+  /** @const */
   Module.Features = [
     'MVP',
     'Atomics',
@@ -162,6 +165,7 @@ function initializeConstants() {
   ), {});
 
   // Operations
+  /** @const */
   Module.Operations = [
     'ClzInt32',
     'CtzInt32',
@@ -550,6 +554,7 @@ function initializeConstants() {
   ), {});
 
   // Expression side effects
+  /** @const */
   Module.SideEffects = [
     'None',
     'Branches',
@@ -573,6 +578,7 @@ function initializeConstants() {
   ), {});
 
   // ExpressionRunner flags
+  /** @const */
   Module.ExpressionRunner.Flags = [
     'Default',
     'PreserveSideeffects',
@@ -583,6 +589,7 @@ function initializeConstants() {
 }
 
 // 'Module' interface
+/** @const */
 Module.Module = function(module) {
   assert(!module); // guard against incorrect old API usage
   wrapModule(Module._BinaryenModuleCreate(), this);
@@ -593,6 +600,8 @@ Module.Module = function(module) {
 // This is meant for internal use only, and is necessary as we
 // want to access Module from JS that were perhaps not created
 // from JS.
+/** @const */
+/** @interface */
 function wrapModule(module, self = {}) {
   assert(module); // guard against incorrect old API usage
 
@@ -656,6 +665,7 @@ function wrapModule(module, self = {}) {
     );
   };
 
+  /** @const */
   self.local = {
     get(index, type) {
       return Module._BinaryenLocalGet(module, index, type);
@@ -671,6 +681,7 @@ function wrapModule(module, self = {}) {
     }
   }
 
+  /** @const */
   self.global = {
     get(name, type) {
       return Module._BinaryenGlobalGet(module, strToStack(name), type);
@@ -680,6 +691,7 @@ function wrapModule(module, self = {}) {
     }
   }
 
+  /** @const */
   self.table = {
     get(name, index, type) {
       return Module._BinaryenTableGet(module, strToStack(name), index, type);
@@ -695,6 +707,7 @@ function wrapModule(module, self = {}) {
     }
   }
 
+  /** @const */
   self.memory = {
     size() {
       return Module._BinaryenMemorySize(module);
@@ -724,12 +737,14 @@ function wrapModule(module, self = {}) {
     }
   }
 
+  /** @const */
   self.data = {
     drop(segment) {
       return Module._BinaryenDataDrop(module, segment);
     }
   }
 
+  /** @const */
   self.i32 = {
     load(offset, align, ptr) {
       return Module._BinaryenLoad(module, 4, true, offset, align, Module.i32, ptr);
@@ -1396,6 +1411,7 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  /** @const */
   self.f64 = {
     load(offset, align, ptr) {
       return Module._BinaryenLoad(module, 8, true, offset, align, Module.f64, ptr);
@@ -1504,7 +1520,8 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['v128'] = {
+  /** @const */
+  self.v128 = {
     load(offset, align, ptr) {
       return Module._BinaryenLoad(module, 16, false, offset, align, Module.v128, ptr);
     },
@@ -1604,6 +1621,7 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  /** @const */
   self.i8x16 = {
     shuffle(left, right, mask) {
       return preserveStack(() => Module._BinaryenSIMDShuffle(module, left, right, i8sToStack(mask)));
@@ -1718,6 +1736,7 @@ function wrapModule(module, self = {}) {
     },
   };
 
+  /** @const */
   self.i16x8 = {
     splat(value) {
       return Module._BinaryenUnary(module, Module.SplatVecI16x8, value);
@@ -1859,7 +1878,8 @@ function wrapModule(module, self = {}) {
     },
   };
 
-  self['i32x4'] = {
+  /** @const */
+  self.i32x4 = {
     splat(value) {
       return Module._BinaryenUnary(module, Module['SplatVecI32x4'], value);
     },
@@ -1988,6 +2008,7 @@ function wrapModule(module, self = {}) {
     },
   };
 
+  /** @const */
   self.i64x2 = {
     splat(value) {
       return Module._BinaryenUnary(module, Module['SplatVecI64x2'], value);
@@ -2072,7 +2093,8 @@ function wrapModule(module, self = {}) {
     },
   };
 
-  self['f32x4'] = {
+  /** @const */
+  self.f32x4 = {
     splat(value) {
       return Module._BinaryenUnary(module, Module['SplatVecF32x4'], value);
     },
@@ -2156,6 +2178,7 @@ function wrapModule(module, self = {}) {
     },
   };
 
+  /** @const */
   self.f64x2 = {
     splat(value) {
       return Module._BinaryenUnary(module, Module.SplatVecF64x2, value);
@@ -2240,67 +2263,78 @@ function wrapModule(module, self = {}) {
     },
   };
 
-  self['funcref'] = {
+  /** @const */
+  self.funcref = {
     pop() {
       return Module._BinaryenPop(module, Module['funcref']);
     }
   };
 
-  self['externref'] = {
+  /** @const */
+  self.externref = {
     pop() {
       return Module._BinaryenPop(module, Module['externref']);
     }
   };
 
-  self['anyref'] = {
+  /** @const */
+  self.anyref = {
     pop() {
       return Module._BinaryenPop(module, Module['anyref']);
     }
   };
 
-  self['eqref'] = {
+  /** @const */
+  self.eqref = {
     pop() {
       return Module._BinaryenPop(module, Module['eqref']);
     }
   };
 
-  self['i31ref'] = {
+  /** @const */
+  self.i31ref = {
     pop() {
       return Module._BinaryenPop(module, Module['i31ref']);
     }
   };
 
-  self['dataref'] = {
+  /** @const */
+  self.dataref = {
     pop() {
       return Module._BinaryenPop(module, Module['dataref']);
     }
   };
 
-  self['stringref'] = {
+  /** @const */
+  self.stringref = {
     pop() {
       return Module._BinaryenPop(module, Module['stringref']);
     }
   };
 
-  self['stringview_wtf8'] = {
+  /** @const */
+  self.stringview_wtf8 = {
     pop() {
       return Module._BinaryenPop(module, Module['stringview_wtf8']);
     }
   };
 
-  self['stringview_wtf16'] = {
+  /** @const */
+  self.stringview_wtf16 = {
     pop() {
       return Module._BinaryenPop(module, Module['stringview_wtf16']);
     }
   };
 
-  self['stringview_iter'] = {
+  /** @const */
+  self.stringview_iter = {
     pop() {
       return Module._BinaryenPop(module, Module['stringview_iter']);
     }
   };
 
-  self['ref'] = {
+  /** @const */
+  self.ref = {
     'null'(type) {
       return Module['_BinaryenRefNull'](module, type);
     },
@@ -2352,9 +2386,10 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenUnreachable'](module);
   };
 
-  self['atomic'] = {
-    'fence'() {
-      return Module['_BinaryenAtomicFence'](module);
+  /** @const */
+  self.atomic = {
+    fence() {
+      return Module._BinaryenAtomicFence(module);
     }
   };
 
@@ -2369,16 +2404,18 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenRethrow'](module, strToStack(target));
   };
 
-  self['tuple'] = {
-    'make'(elements) {
-      return preserveStack(() => Module['_BinaryenTupleMake'](module, i32sToStack(elements), elements.length));
+  /** @const */
+  self.tuple = {
+    make(elements) {
+      return preserveStack(() => Module._BinaryenTupleMake(module, i32sToStack(elements), elements.length));
     },
-    'extract'(tuple, index) {
-      return Module['_BinaryenTupleExtract'](module, tuple, index);
+    extract(tuple, index) {
+      return Module._BinaryenTupleExtract(module, tuple, index);
     }
   };
 
-  self['i31'] = {
+  /** @const */
+  self.i31 = {
     'new'(value) {
       return Module['_BinaryenI31New'](module, value);
     },
@@ -2706,44 +2743,48 @@ function wrapModule(module, self = {}) {
 
   return self;
 }
-Module['wrapModule'] = wrapModule;
+/** @const */Module.wrapModule = wrapModule;
 
 // 'Relooper' interface
-Module['Relooper'] = function(module) {
+/** @const */
+/** @interface */
+Module.Relooper = function(module) {
   assert(module && typeof module === 'object' && module['ptr'] && module['block'] && module['if']); // guard against incorrect old API usage
   const relooper = Module['_RelooperCreate'](module['ptr']);
-  this['ptr'] = relooper;
+  this.ptr = relooper;
 
-  this['addBlock'] = function(code) {
+  this.addBlock = function(code) {
     return Module['_RelooperAddBlock'](relooper, code);
   };
-  this['addBranch'] = function(from, to, condition, code) {
+  this.addBranch = function(from, to, condition, code) {
     return Module['_RelooperAddBranch'](from, to, condition, code);
   };
-  this['addBlockWithSwitch'] = function(code, condition) {
+  this.addBlockWithSwitch = function(code, condition) {
     return Module['_RelooperAddBlockWithSwitch'](relooper, code, condition);
   };
-  this['addBranchForSwitch'] = function(from, to, indexes, code) {
+  this.addBranchForSwitch = function(from, to, indexes, code) {
     return preserveStack(() => Module['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code));
   };
-  this['renderAndDispose'] = function(entry, labelHelper) {
+  this.renderAndDispose = function(entry, labelHelper) {
     return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper);
   };
 };
 
 // 'ExpressionRunner' interface
-Module['ExpressionRunner'] = function(module, flags, maxDepth, maxLoopIterations) {
-  const runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth, maxLoopIterations);
-  this['ptr'] = runner;
+/** @const */
+/** @interface */
+Module.ExpressionRunner = function(module, flags, maxDepth, maxLoopIterations) {
+  const runner = Module._ExpressionRunnerCreate(module.ptr, flags, maxDepth, maxLoopIterations);
+  this.ptr = runner;
 
-  this['setLocalValue'] = function(index, valueExpr) {
-    return Boolean(Module['_ExpressionRunnerSetLocalValue'](runner, index, valueExpr));
+  this.setLocalValue = function(index, valueExpr) {
+    return Boolean(Module._ExpressionRunnerSetLocalValue(runner, index, valueExpr));
   };
-  this['setGlobalValue'] = function(name, valueExpr) {
-    return preserveStack(() => Boolean(Module['_ExpressionRunnerSetGlobalValue'](runner, strToStack(name), valueExpr)));
+  this.setGlobalValue = function(name, valueExpr) {
+    return preserveStack(() => Boolean(Module._ExpressionRunnerSetGlobalValue(runner, strToStack(name), valueExpr)));
   };
-  this['runAndDispose'] = function(expr) {
-    return Module['_ExpressionRunnerRunAndDispose'](runner, expr);
+  this.runAndDispose = function(expr) {
+    return Module._ExpressionRunnerRunAndDispose(runner, expr);
   };
 };
 
@@ -4327,7 +4368,8 @@ Module['SIMDReplace'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDShuffle'] = makeExpressionWrapper({
+/** @const */
+Module.SIMDShuffle = makeExpressionWrapper({
   'getLeft'(expr) {
     return Module['_BinaryenSIMDShuffleGetLeft'](expr);
   },
@@ -4363,7 +4405,8 @@ Module['SIMDShuffle'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDTernary'] = makeExpressionWrapper({
+/** @const */
+Module.SIMDTernary = makeExpressionWrapper({
   'getOp'(expr) {
     return Module['_BinaryenSIMDTernaryGetOp'](expr);
   },
@@ -4390,7 +4433,8 @@ Module['SIMDTernary'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDShift'] = makeExpressionWrapper({
+/** @const */
+Module.SIMDShift = makeExpressionWrapper({
   'getOp'(expr) {
     return Module['_BinaryenSIMDShiftGetOp'](expr);
   },
@@ -4411,7 +4455,8 @@ Module['SIMDShift'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDLoad'] = makeExpressionWrapper({
+/** @const */
+Module.SIMDLoad = makeExpressionWrapper({
   'getOp'(expr) {
     return Module['_BinaryenSIMDLoadGetOp'](expr);
   },
@@ -4438,7 +4483,8 @@ Module['SIMDLoad'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
+/** @const */
+Module.SIMDLoadStoreLane = makeExpressionWrapper({
   'getOp'(expr) {
     return Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr);
   },
@@ -4480,7 +4526,8 @@ Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
   }
 });
 
-Module['MemoryInit'] = makeExpressionWrapper({
+/** @const */
+Module.MemoryInit = makeExpressionWrapper({
   'getSegment'(expr) {
     return Module['_BinaryenMemoryInitGetSegment'](expr);
   },
@@ -4507,7 +4554,8 @@ Module['MemoryInit'] = makeExpressionWrapper({
   }
 });
 
-Module['DataDrop'] = makeExpressionWrapper({
+/** @const */
+Module.DataDrop = makeExpressionWrapper({
   'getSegment'(expr) {
     return Module['_BinaryenDataDropGetSegment'](expr);
   },
@@ -4516,7 +4564,8 @@ Module['DataDrop'] = makeExpressionWrapper({
   }
 });
 
-Module['MemoryCopy'] = makeExpressionWrapper({
+/** @const */
+Module.MemoryCopy = makeExpressionWrapper({
   'getDest'(expr) {
     return Module['_BinaryenMemoryCopyGetDest'](expr);
   },
@@ -4537,7 +4586,8 @@ Module['MemoryCopy'] = makeExpressionWrapper({
   }
 });
 
-Module['MemoryFill'] = makeExpressionWrapper({
+/** @const */
+Module.MemoryFill = makeExpressionWrapper({
   'getDest'(expr) {
     return Module['_BinaryenMemoryFillGetDest'](expr);
   },
@@ -4558,7 +4608,8 @@ Module['MemoryFill'] = makeExpressionWrapper({
   }
 });
 
-Module['RefIs'] = makeExpressionWrapper({
+/** @const */
+Module.RefIs. = makeExpressionWrapper({
   'getOp'(expr) {
     return Module['_BinaryenRefIsGetOp'](expr);
   },
@@ -4573,7 +4624,8 @@ Module['RefIs'] = makeExpressionWrapper({
   }
 });
 
-Module['RefAs'] = makeExpressionWrapper({
+/** @const */
+Module.RefAs = makeExpressionWrapper({
   'getOp'(expr) {
     return Module['_BinaryenRefAsGetOp'](expr);
   },
@@ -4588,7 +4640,8 @@ Module['RefAs'] = makeExpressionWrapper({
   }
 });
 
-Module['RefFunc'] = makeExpressionWrapper({
+/** @const */
+Module.RefFunc = makeExpressionWrapper({
   'getFunc'(expr) {
     return UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr));
   },
@@ -4597,7 +4650,8 @@ Module['RefFunc'] = makeExpressionWrapper({
   }
 });
 
-Module['RefEq'] = makeExpressionWrapper({
+/** @const */
+Module.RefEq = makeExpressionWrapper({
   'getLeft'(expr) {
     return Module['_BinaryenRefEqGetLeft'](expr);
   },
@@ -4612,7 +4666,8 @@ Module['RefEq'] = makeExpressionWrapper({
   }
 });
 
-Module['Try'] = makeExpressionWrapper({
+/** @const */
+Module.Try = makeExpressionWrapper({
   'getName'(expr) {
     const name = Module['_BinaryenTryGetName'](expr);
     return name ? UTF8ToString(name) : null;
@@ -4691,7 +4746,8 @@ Module['Try'] = makeExpressionWrapper({
   }
 });
 
-Module['Throw'] = makeExpressionWrapper({
+/** @const */
+Module.Throw = makeExpressionWrapper({
   'getTag'(expr) {
     return UTF8ToString(Module['_BinaryenThrowGetTag'](expr));
   },
@@ -4724,7 +4780,8 @@ Module['Throw'] = makeExpressionWrapper({
   },
 });
 
-Module['Rethrow'] = makeExpressionWrapper({
+/** @const */
+Module.Rethrow = makeExpressionWrapper({
   'getTarget'(expr) {
     const target = Module['_BinaryenRethrowGetTarget'](expr);
     return target ? UTF8ToString(target) : null;
@@ -4734,7 +4791,8 @@ Module['Rethrow'] = makeExpressionWrapper({
   }
 });
 
-Module['TupleMake'] = makeExpressionWrapper({
+/** @const */
+Module.TupleMake = makeExpressionWrapper({
   'getNumOperands'(expr) {
     return Module['_BinaryenTupleMakeGetNumOperands'](expr);
   },
@@ -4761,7 +4819,8 @@ Module['TupleMake'] = makeExpressionWrapper({
   }
 });
 
-Module['TupleExtract'] = makeExpressionWrapper({
+/** @const */
+Module.TupleExtract = makeExpressionWrapper({
   'getTuple'(expr) {
     return Module['_BinaryenTupleExtractGetTuple'](expr);
   },
@@ -4776,7 +4835,8 @@ Module['TupleExtract'] = makeExpressionWrapper({
   }
 });
 
-Module['I31New'] = makeExpressionWrapper({
+/** @const */
+Module.I31New = makeExpressionWrapper({
   'getValue'(expr) {
     return Module['_BinaryenI31NewGetValue'](expr);
   },
@@ -4785,7 +4845,8 @@ Module['I31New'] = makeExpressionWrapper({
   }
 });
 
-Module['I31Get'] = makeExpressionWrapper({
+/** @const */
+Module.I31Get = makeExpressionWrapper({
   'getI31'(expr) {
     return Module['_BinaryenI31GetGetI31'](expr);
   },
@@ -4802,7 +4863,8 @@ Module['I31Get'] = makeExpressionWrapper({
 
 // Function wrapper
 
-Module['Function'] = (() => {
+/** @const */
+Module.Function = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
   function Function(func) {
     if (!(this instanceof Function)) {
@@ -4866,7 +4928,7 @@ Module.exit = function(status) {
 if (runtimeInitialized) {
   initializeConstants();
 } else {
-  Module.onRuntimeInitialized = (super_ => () => {
+  /** @const */Module.onRuntimeInitialized = (super_ => () => {
     initializeConstants();
     if (super_) super_();
   })(Module.onRuntimeInitialized);
