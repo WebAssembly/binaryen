@@ -724,6 +724,7 @@ function wrapModule(module, self = {}) {
     fill(dest, value, size) {
       return Module._BinaryenMemoryFill(module, dest, value, size);
     },
+    /** @const */
     atomic: {
       notify(ptr, notifyCount) {
         return Module._BinaryenAtomicNotify(module, ptr, notifyCount);
@@ -908,6 +909,7 @@ function wrapModule(module, self = {}) {
     ge_u(left, right) {
       return Module._BinaryenBinary(module, Module.GeUInt32, left, right);
     },
+    /** @const */
     atomic: {
       load(offset, ptr) {
         return Module._BinaryenAtomicLoad(module, 4, offset, Module.i32, ptr);
@@ -1180,6 +1182,7 @@ function wrapModule(module, self = {}) {
     ge_u(left, right) {
       return Module._BinaryenBinary(module, Module['GeUInt64'], left, right);
     },
+    /** @const */
     atomic: {
       load(offset, ptr) {
         return Module._BinaryenAtomicLoad(module, 8, offset, Module.i64, ptr);
