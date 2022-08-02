@@ -10,7 +10,7 @@
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling br_on_cast
-[LoggingExternalInterface logging -1]
+[LoggingExternalInterface logging 3]
 [fuzz-exec] calling br_on_failed_cast-1
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_failed_cast-2
@@ -101,7 +101,7 @@
  (export "array.init" (func $24))
  (export "array.init-packed" (func $25))
  (export "static-casts" (func $26))
- (export "static-br_on_cast" (func $27))
+ (export "static-br_on_cast" (func $2))
  (export "static-br_on_cast_fail" (func $28))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
@@ -163,15 +163,8 @@
   )
  )
  (func $2 (; has Stack IR ;)
-  (drop
-   (drop
-    (block
-     (call $log
-      (i32.const -1)
-     )
-     (return)
-    )
-   )
+  (call $log
+   (i32.const 3)
   )
  )
  (func $3 (; has Stack IR ;)
@@ -378,11 +371,6 @@
    (i32.const 1)
   )
  )
- (func $27 (; has Stack IR ;)
-  (call $log
-   (i32.const 3)
-  )
- )
  (func $28 (; has Stack IR ;)
   (call $log
    (i32.const -2)
@@ -401,7 +389,7 @@
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling br_on_cast
-[LoggingExternalInterface logging -1]
+[LoggingExternalInterface logging 3]
 [fuzz-exec] calling br_on_failed_cast-1
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_failed_cast-2

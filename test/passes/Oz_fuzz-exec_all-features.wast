@@ -84,7 +84,7 @@
      (block $extendedblock (result (ref $extendedstruct))
       (drop
        ;; second, try to cast our simple $struct to what it is, which will work
-       (br_on_cast_static $block $extendedstruct
+       (br_on_cast_static $block $struct
         ;; first, try to cast our simple $struct to an extended, which will fail
         (br_on_cast_static $extendedblock $extendedstruct
          (local.get $any)

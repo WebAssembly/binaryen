@@ -202,8 +202,7 @@
   )
 
   (func $nondefaultable-param (param $x i32) (param $y (ref $struct))
-    ;; The non-nullable param here prevents us from even being inlined, even with
-    ;; splitting.
+    ;; We can inline despite the non-initial, non-defaultable param.
     (if
       (local.get $x)
       (return)

@@ -1741,10 +1741,9 @@ struct OptimizeInstructions
       if (fallthrough->type.isNonNullable()) {
         // Make sure to emit a block with the same type as us; leave updating
         // types for other passes.
-        std::vector<Expression*> items;
-        items.push_back(builder.makeDrop(curr->ref));
-        items.push_back(builder.makeUnreachable());
-        replaceCurrent(builder.makeBlock(items, curr->type));
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+          curr->type));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime

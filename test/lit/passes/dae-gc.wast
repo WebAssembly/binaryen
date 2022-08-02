@@ -69,7 +69,7 @@
    (unreachable)
   )
  )
- ;; a function that gets an non-nullable reference that is never used. we cannot create a local for
+ ;; a function that gets a non-nullable reference that is never used. we cannot create a local for
  ;; that parameter, as it is not defaultable, so do not remove the parameter.
  ;; TODO: We should be able to create a local for it after #4824 is resolved.
  ;; CHECK:      (func $get-nonnull

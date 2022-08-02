@@ -697,7 +697,7 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 // A GC Struct or Array is a set of values with a type saying how it should be
 // interpreted.
 struct GCData {
-  // The of this struct or array.
+  // The type of this struct or array.
   HeapType type;
 
   // The element or field values.
