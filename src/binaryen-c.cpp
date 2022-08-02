@@ -112,6 +112,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
         case HeapType::eq:
         case HeapType::data:
           assert(false && "Literals must have concrete types");
+          WASM_UNREACHABLE("no fallthrough here");
         case HeapType::i31:
         case HeapType::string:
         case HeapType::stringview_wtf8:
