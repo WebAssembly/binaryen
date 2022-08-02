@@ -403,6 +403,9 @@ struct MergeBlocks
       PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass only removes blocks, which can only help 1a validation.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override { return new MergeBlocks; }
 
   BranchUtils::BranchSeekerCache branchInfo;
