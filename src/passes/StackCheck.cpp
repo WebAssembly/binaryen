@@ -120,17 +120,15 @@ struct StackCheck : public Pass {
     }
 
     // __stack_base and __stack_end are created by the toolchain (emscripten)
-    // If we don't find these globals, skip this pass.
+    // If we don't find these globals, error out.
     auto stackBase = module->getGlobalOrNull("__stack_base");
     if (!stackBase) {
-      BYN_DEBUG(std::cerr << "no stack base found\n");
-      return;
+      Fatal() << "cannot do stack checking without __stack_base variable\n";
     }
 
     auto stackEnd = module->getGlobalOrNull("__stack_end");
     if (!stackEnd) {
-      BYN_DEBUG(std::cerr << "no stack end found\n");
-      return;
+      Fatal() << "cannot do stack checking without __stack_end variable\n";
     }
 
     Name handler;
