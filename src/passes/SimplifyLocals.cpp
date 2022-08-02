@@ -71,10 +71,6 @@ struct SimplifyLocals
       SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
 
-  // This pass avoids relevant optimizations on non-nullable locals, since the
-  // benefits are not worth the risk of the fixups.
-  bool requiresNonNullableLocalFixups() override { return false; }
-
   Pass* create() override {
     return new SimplifyLocals<allowTee, allowStructure, allowNesting>();
   }
@@ -316,88 +312,7 @@ struct SimplifyLocals
           continue;
         }
 
-        // Non-nullable local.sets cannot be moved into a try, as that may
-        // change dominance from the perspective of the spec
-        //
-        //  (local.set $x X)
-        //  (try
-        //    ..
-        //    (Y
-        //      (local.get $x))
-        //  (catch
-        //    (Z
-        //      (local.get $x)))
-        //
-        // =>
-        //
-        //  (try
-        //    ..
-        //    (Y
-        //      (local.tee $x X))
-        //  (catch
-        //    (Z
-        //      (local.get $x)))
-        //
-        // After sinking the set, the tee does not dominate the get in the
-        // catch, at least not in the simple way the spec defines it, see
-        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
-        // We have more refined information about control flow and dominance
-        // than the spec, and so we would see if ".." can throw or not (only if
-        // it can throw is there a branch to the catch, which can change
-        // dominance). To stay compliant with the spec, however, we must not
-        // move code regardless of whether ".." can throw - we must simply keep
-        // the set outside of the try.
-        //
-        // The problem described can also occur on the *value* and not the set
-        // itself. For example, |X| above could be a local.set of a non-nullable
-        // local. For that reason we must scan it all.
-        if (self->getModule()->features.hasGCNNLocals()) {
-          for (auto* set : FindAll<LocalSet>(*info.item).list) {
-            if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
-              invalidated.push_back(index);
-              break;
-            }
-          }
-        }
-      }
-      for (auto index : invalidated) {
-        self->sinkables.erase(index);
-      }
-    }
-
-    // Do not sink non-nullable locals into blocks, as that may move them into a
-    // nested position that no longer dominates them in the way that the wasm
-    // spec requires. The spec (what was called "1a" during discussions of non-
-    // nullable locals) disallows this:
-    //
-    //  (block
-    //    (local.set $x ..)
-    //  )
-    //  (local.get $x) ;; use in an outer scope.
-    //
-    // That is, the local is considered usable only until the end of the block.
-    //
-    // TODO We could allow a set to move into a block if no get exists in an
-    //      outer scope, if we tracked scopes for gets.
-    //
-    // Note that we could just do this and then fix it up by making the local
-    // nullable. However, the benefits of turning a set into a tee may be
-    // smaller than the added ref.as_non_null casts we add, so it is better to
-    // just avoid this.
-    //
-    // (For now, do not do this with hasGCNNLocals(), which is mode that does
-    // not have any such limitations. We'll remove that option once the final
-    // spec form is finalized.)
-    if (Properties::isControlFlowStructure(curr) &&
-        !self->getModule()->features.hasGCNNLocals()) {
-      std::vector<Index> invalidated;
-      for (auto& [index, info] : self->sinkables) {
-        for (auto* set : FindAll<LocalSet>(*info.item).list) {
-          if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
-            invalidated.push_back(index);
-            break;
-          }
-        }
+        // TODO: test for the removed code here, try-catch dominance.
       }
       for (auto index : invalidated) {
         self->sinkables.erase(index);
