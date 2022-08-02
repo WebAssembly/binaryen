@@ -102,6 +102,9 @@ struct GlobalRefining : public Pass {
     struct GetUpdater : public WalkerPass<PostWalker<GetUpdater>> {
       bool isFunctionParallel() override { return true; }
 
+      // Only modifies global.get operations.
+      bool requiresNonNullableLocalFixups() override { return false; }
+
       GlobalRefining& parent;
       Module& wasm;
 

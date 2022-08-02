@@ -67,6 +67,9 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
 
   bool isFunctionParallel() override { return true; }
 
+  // Only affects linear memory operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override {
     return new EnforceStackLimits(
       stackPointer, stackBase, stackLimit, builder, handler);

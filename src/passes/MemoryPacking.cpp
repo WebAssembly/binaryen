@@ -376,6 +376,10 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
 void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
   struct Optimizer : WalkerPass<PostWalker<Optimizer>> {
     bool isFunctionParallel() override { return true; }
+
+    // This operates on linear memory, and does not affect reference locals.
+    bool requiresNonNullableLocalFixups() override { return false; }
+
     Pass* create() override { return new Optimizer; }
 
     bool needsRefinalizing;
@@ -771,6 +775,9 @@ void MemoryPacking::replaceBulkMemoryOps(PassRunner* runner,
                                          Replacements& replacements) {
   struct Replacer : WalkerPass<PostWalker<Replacer>> {
     bool isFunctionParallel() override { return true; }
+
+    // This operates on linear memory, and does not affect reference locals.
+    bool requiresNonNullableLocalFixups() override { return false; }
 
     Replacements& replacements;
 

@@ -52,6 +52,9 @@ using PCVFunctionStructValuesMap =
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override { return new FunctionOptimizer(infos); }
 
   FunctionOptimizer(PCVStructValuesMap& infos) : infos(infos) {}
