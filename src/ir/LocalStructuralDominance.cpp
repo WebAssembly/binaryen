@@ -46,14 +46,16 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   // structurally dominate.
   std::vector<bool> localsSet(num);
 
-  // Mark locals we don't need to care about as "set". We never do any work for
-  // such a local.
   bool hasNonNullableVar = false;
   for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
     auto type = func->getLocalType(i);
+    // Mark locals we don't need to care about as "set". We never do any work
+    // for such a local.
     if (!type.isRef() || (mode == IgnoreNullable && type.isNullable())) {
       localsSet[i] = true;
     }
+
+    // Check if we have any non-nullable vars at all.
     if (type.isNonNullable()) {
       hasNonNullableVar = true;
     }
@@ -67,7 +69,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     localsSet[i] = true;
   }
 
-  using Locals = SmallUnorderedSet<Index, 5>;
+  using Locals = SmallVector<Index, 5>;
 
   // When we exit a control flow structure, we must undo the locals that it set.
   std::vector<Locals> cleanupStack;
@@ -185,6 +187,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         continue;
       }
 
+      // This is a control flow structure.
+
       // First, go through the structure children. Blocks are special in that
       // all their children go in a single scope.
       if (item.curr->is<Block>()) {
@@ -212,7 +216,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       if (!localsSet[index]) {
         // This local is now set until the end of this scope.
         localsSet[index] = true;
-        cleanupStack.back().insert(index);
+        cleanupStack.back().push_back(index);
       }
     } else if (item.op == WorkItem::EnterScope) {
       cleanupStack.emplace_back();
