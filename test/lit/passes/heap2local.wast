@@ -3174,4 +3174,59 @@
       )
     )
   )
+
+  ;; CHECK:      (func $non-nullable-local (result anyref)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-nullable-local (type $none_=>_anyref) (result anyref)
+  ;; NOMNL-NEXT:  (local $0 (ref null $struct.A))
+  ;; NOMNL-NEXT:  (local $1 i32)
+  ;; NOMNL-NEXT:  (local $2 f64)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:    (local.set $1
+  ;; NOMNL-NEXT:     (i32.const 0)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.set $2
+  ;; NOMNL-NEXT:     (f64.const 0)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT:  (ref.as_non_null
+  ;; NOMNL-NEXT:   (local.get $0)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $non-nullable-local (result anyref)
+   (local $0 (ref $struct.A))
+   ;; The local.get here is in unreachable code, which means we won't do
+   ;; anything to it. But when we remove the local.set during optimization (we
+   ;; can replace it with new locals for the fields of $struct.A), we must make
+   ;; sure that validation of 1a still passes, that is, since the local.get is
+   ;; around we must have a local.set for it, or it must become nullable (which
+   ;; is what the fixup will do).
+   (local.set $0
+    (struct.new_default $struct.A)
+   )
+   (unreachable)
+   (local.get $0)
+  )
 )
