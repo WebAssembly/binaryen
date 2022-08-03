@@ -9,7 +9,7 @@
  (export "foo" (func $foo))
  ;; CHECK:      (func $foo (result funcref)
  ;; CHECK-NEXT:  (local $0 funcref)
- ;; CHECK-NEXT:  (local $1 (ref null $none_=>_funcref))
+ ;; CHECK-NEXT:  (local $1 (ref $none_=>_funcref))
  ;; CHECK-NEXT:  (local $2 (ref $none_=>_funcref))
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (block
@@ -23,9 +23,7 @@
  ;; CHECK-NEXT:    (ref.func $foo)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $2
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (return
  ;; CHECK-NEXT:    (local.get $2)
