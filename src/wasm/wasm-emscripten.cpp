@@ -339,6 +339,9 @@ EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
     wasm.removeExport(exp.name);
   }
 
+  wasm.removeExport("__start_em_js");
+  wasm.removeExport("__stop_em_js");
+
   // With newer versions of emscripten/llvm we pack all EM_JS strings into
   // single segment.
   // We can detect this by checking for segments that contain only JS strings.
