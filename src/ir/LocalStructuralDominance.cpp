@@ -110,12 +110,12 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       self->cleanupStack.pop_back();
     }
 
-    void visitLocalSet(LocalSet* curr) {
-      auto index = curr->index;
-      if (!localsSet[index]) {
+    static void doLocalSet(Scanner* self, Expression** currp) {
+      auto index = (*currp)->cast<LocalSet>()->index;
+      if (!self->localsSet[index]) {
         // This local is now set until the end of this scope.
-        localsSet[index] = true;
-        cleanupStack.back().push_back(index);
+        self->localsSet[index] = true;
+        self->cleanupStack.back().push_back(index);
       }
     }
 
@@ -132,6 +132,14 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
           if (!self->localsSet[index]) {
             self->nonDominatingIndexes.insert(index);
           }
+          break;
+        }
+        case Expression::Id::LocalSetId: {
+          auto* set = curr->cast<LocalSet>();
+          if (!self->localsSet[set->index]) {
+            self->pushTask(doLocalSet, currp);
+          }
+          self->pushTask(Scanner::scan, &set->value);
           break;
         }
 
@@ -182,6 +190,21 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
           assert(!Properties::isControlFlowStructure(curr));
           PostWalker<Scanner>::scan(self, currp);
         }
+      }
+    }
+
+    // Only local.set needs to be visited.
+    void pushTask(TaskFunc func, Expression** currp) {
+      // Visits to anything but a set can be ignored, so only very specific
+      // tasks need to actually be pushed here.
+      if (func == scan || func == doLocalSet || func == doBeginScope ||
+          func == doEndScope) {
+        PostWalker<Scanner>::pushTask(func, currp);
+      }
+    }
+    void maybePushTask(TaskFunc func, Expression** currp) {
+      if (*currp) {
+        pushTask(func, currp);
       }
     }
   };
