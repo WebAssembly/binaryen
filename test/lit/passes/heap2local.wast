@@ -1634,7 +1634,7 @@
   )
 
   ;; CHECK:      (func $non-nullable (param $a (ref $struct.A))
-  ;; CHECK-NEXT:  (local $1 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 (ref $struct.A))
   ;; CHECK-NEXT:  (local $2 (ref $struct.A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct.A))
@@ -1652,14 +1652,12 @@
   ;; CHECK-NEXT:      (ref.null $struct.nonnullable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $non-nullable (type $ref|$struct.A|_=>_none) (param $a (ref $struct.A))
-  ;; NOMNL-NEXT:  (local $1 (ref null $struct.A))
+  ;; NOMNL-NEXT:  (local $1 (ref $struct.A))
   ;; NOMNL-NEXT:  (local $2 (ref $struct.A))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $struct.A))
@@ -1677,9 +1675,7 @@
   ;; NOMNL-NEXT:      (ref.null $struct.nonnullable)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (local.get $1)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $1)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )

@@ -150,12 +150,19 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
         // Control flow structures.
         case Expression::Id::BlockId: {
-          self->pushTask(Scanner::doEndScope, currp);
+          auto* block = (*currp)->cast<Block>();
+          // Blocks with no name are never emitted in the binary format, so do
+          // not create a scope for them. TODO document in readme
+          if (block->name.is()) {
+            self->pushTask(Scanner::doEndScope, currp);
+          }
           auto& list = curr->cast<Block>()->list;
           for (int i = int(list.size()) - 1; i >= 0; i--) {
             self->pushTask(Scanner::scan, &list[i]);
           }
-          self->pushTask(Scanner::doBeginScope, currp);
+          if (block->name.is()) {
+            self->pushTask(Scanner::doBeginScope, currp);
+          }
           break;
         }
         case Expression::Id::IfId: {
