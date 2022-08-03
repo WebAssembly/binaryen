@@ -965,7 +965,9 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
-    frequency = 0.6
+    # run this at low frequency for now, as there is at least one known long-
+    # standing issue, https://github.com/WebAssembly/binaryen/issues/4865
+    frequency = 0.06
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
