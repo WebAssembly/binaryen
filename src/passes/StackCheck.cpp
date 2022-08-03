@@ -157,9 +157,8 @@ struct StackCheck : public Pass {
       {});
     limitsFunc->body = builder.makeBlock({});
     module->addFunction(std::move(limitsFunc));
-    module->addExport(Builder::makeExport(limitsFuncName, 
-      limitsFuncName,
-      ExternalKind::Function));
+    module->addExport(Builder::makeExport(
+      limitsFuncName, limitsFuncName, ExternalKind::Function));
   }
 };
 
