@@ -125,82 +125,93 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     }
 
     static void scan(Scanner* self, Expression** currp) {
-      Expression* curr = *currp;
+      // Use a loop to avoid recursing on the last call.
+      while (1) {
+        Expression* curr = *currp;
 
-      switch (curr->_id) {
-        case Expression::Id::InvalidId:
-          WASM_UNREACHABLE("bad id");
+        switch (curr->_id) {
+          case Expression::Id::InvalidId:
+            WASM_UNREACHABLE("bad id");
 
-        // local.get can just be visited immediately, as it has no children.
-        case Expression::Id::LocalGetId: {
-          auto index = curr->cast<LocalGet>()->index;
-          if (!self->localsSet[index]) {
-            self->nonDominatingIndexes.insert(index);
+          // local.get can just be visited immediately, as it has no children.
+          case Expression::Id::LocalGetId: {
+            auto index = curr->cast<LocalGet>()->index;
+            if (!self->localsSet[index]) {
+              self->nonDominatingIndexes.insert(index);
+            }
+            return;
           }
-          break;
-        }
-        case Expression::Id::LocalSetId: {
-          auto* set = curr->cast<LocalSet>();
-          if (!self->localsSet[set->index]) {
-            self->pushTask(doLocalSet, currp);
+          case Expression::Id::LocalSetId: {
+            auto* set = curr->cast<LocalSet>();
+            if (!self->localsSet[set->index]) {
+              self->pushTask(doLocalSet, currp);
+            }
+            // Immediately continue in the loop.
+            currp = &set->value;
+            continue;
           }
-          self->pushTask(Scanner::scan, &set->value);
-          break;
-        }
 
-        // Control flow structures.
-        case Expression::Id::BlockId: {
-          auto* block = (*currp)->cast<Block>();
-          // Blocks with no name are never emitted in the binary format, so do
-          // not create a scope for them. TODO document in readme
-          if (block->name.is()) {
+          // Control flow structures.
+          case Expression::Id::BlockId: {
+            auto* block = (*currp)->cast<Block>();
+            // Blocks with no name are never emitted in the binary format, so do
+            // not create a scope for them. TODO document in readme
+            if (block->name.is()) {
+              self->pushTask(Scanner::doEndScope, currp);
+            }
+            auto& list = curr->cast<Block>()->list;
+            for (int i = int(list.size()) - 1; i >= 0; i--) {
+              self->pushTask(Scanner::scan, &list[i]);
+            }
+            if (block->name.is()) {
+              // Just call the task immediately.
+              doBeginScope(self, currp);
+            }
+            return;
+          }
+          case Expression::Id::IfId: {
+            if (curr->cast<If>()->ifFalse) {
+              self->pushTask(Scanner::doEndScope, currp);
+              self->maybePushTask(Scanner::scan, &curr->cast<If>()->ifFalse);
+              self->pushTask(Scanner::doBeginScope, currp);
+            }
             self->pushTask(Scanner::doEndScope, currp);
-          }
-          auto& list = curr->cast<Block>()->list;
-          for (int i = int(list.size()) - 1; i >= 0; i--) {
-            self->pushTask(Scanner::scan, &list[i]);
-          }
-          if (block->name.is()) {
+            self->pushTask(Scanner::scan, &curr->cast<If>()->ifTrue);
             self->pushTask(Scanner::doBeginScope, currp);
+            // Immediately continue in the loop.
+            currp = &curr->cast<If>()->condition;
+            continue;
           }
-          break;
-        }
-        case Expression::Id::IfId: {
-          if (curr->cast<If>()->ifFalse) {
+          case Expression::Id::LoopId: {
             self->pushTask(Scanner::doEndScope, currp);
-            self->maybePushTask(Scanner::scan, &curr->cast<If>()->ifFalse);
-            self->pushTask(Scanner::doBeginScope, currp);
+            // Just call the task immediately.
+            doBeginScope(self, currp);
+            // Immediately continue in the loop.
+            currp = &curr->cast<Loop>()->body;
+            continue;
           }
-          self->pushTask(Scanner::doEndScope, currp);
-          self->pushTask(Scanner::scan, &curr->cast<If>()->ifTrue);
-          self->pushTask(Scanner::doBeginScope, currp);
-          self->pushTask(Scanner::scan, &curr->cast<If>()->condition);
-          break;
-        }
-        case Expression::Id::LoopId: {
-          self->pushTask(Scanner::doEndScope, currp);
-          self->pushTask(Scanner::scan, &curr->cast<Loop>()->body);
-          self->pushTask(Scanner::doBeginScope, currp);
-          break;
-        }
-        case Expression::Id::TryId: {
-          auto& list = curr->cast<Try>()->catchBodies;
-          for (int i = int(list.size()) - 1; i >= 0; i--) {
+          case Expression::Id::TryId: {
+            auto& list = curr->cast<Try>()->catchBodies;
+            for (int i = int(list.size()) - 1; i >= 0; i--) {
+              self->pushTask(Scanner::doEndScope, currp);
+              self->pushTask(Scanner::scan, &list[i]);
+              self->pushTask(Scanner::doBeginScope, currp);
+            }
             self->pushTask(Scanner::doEndScope, currp);
-            self->pushTask(Scanner::scan, &list[i]);
-            self->pushTask(Scanner::doBeginScope, currp);
+            // Just call the task immediately.
+            doBeginScope(self, currp);
+            // Immediately continue in the loop.
+            currp = &curr->cast<Try>()->body;
+            continue;
           }
-          self->pushTask(Scanner::doEndScope, currp);
-          self->pushTask(Scanner::scan, &curr->cast<Try>()->body);
-          self->pushTask(Scanner::doBeginScope, currp);
-          break;
-        }
 
-        default: {
-          // Control flow structures have been handled. This is an expression,
-          // which we scan normally.
-          assert(!Properties::isControlFlowStructure(curr));
-          PostWalker<Scanner>::scan(self, currp);
+          default: {
+            // Control flow structures have been handled. This is an expression,
+            // which we scan normally.
+            assert(!Properties::isControlFlowStructure(curr));
+            PostWalker<Scanner>::scan(self, currp);
+            return;
+          }
         }
       }
     }
