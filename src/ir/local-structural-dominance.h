@@ -22,20 +22,24 @@
 namespace wasm {
 
 //
-// Finds which local.sets have structural dominance over their gets. This is
-// important for things like non-nullable locals, and so this class only looks
-// at reference types and not anything else. It can look at both nullable and
-// non-nullable references, though, as it can be used to validate non-nullable
-// ones, and also to check if a nullable one could become non-nullable and still
-// validate.
+// This class is useful for the "1a" form of non-nullable locals that is in the
+// wasm spec: a local.get validates if it is structurally dominated by a set.
+// That dominance proves the get cannot access the default null value, and,
+// nicely, it can be validated in linear time.
+//
+// Concretely, this class finds which local indexes lack the structural
+// dominance property. It only looks at reference types and not anything else.
+// It can look at both nullable and non-nullable references, though, as it can
+// be used to validate non-nullable ones, and also to check if a nullable one
+// could become non-nullable and still validate.
 //
 // The property of "structural dominance" means that the set dominates the gets
 // using wasm's structured control flow constructs, like this:
 //
-//  (block
+//  (block $A
 //    (local.set $x ..)
 //    (local.get $x) ;; use in the same scope.
-//    (block
+//    (block $B
 //      (local.get $x) ;; use in an inner scope.
 //    )
 //  )
@@ -43,7 +47,7 @@ namespace wasm {
 // That set structurally dominates both of those gets. However, in this example
 // it does not:
 //
-//  (block
+//  (block $A
 //    (local.set $x ..)
 //  )
 //  (local.get $x) ;; use in an outer scope.
@@ -56,10 +60,17 @@ namespace wasm {
 // lowering to wasm we may remove some Block nodes, but removing nodes cannot
 // break validation.
 //
-// This concept is useful for the "1a" form of non-nullable locals that is in
-// the wasm spec: a local.get validates if it is structurally dominated by a
-// set. That dominance proves the get cannot access the default null value, and,
-// nicely, it can be validated in linear time.
+// In fact, since Blocks without names are not emitted in the binary format (we
+// never need them, since nothing can branch to them, so we just emit their
+// contents), we can ignore them here. That means that this will validate, which
+// is identical to the last example but the block has no name:
+//
+//  (block ;; no name here
+//    (local.set $x ..)
+//  )
+//  (local.get $x)
+//
+// It is useful to ignore such blocks as various passes emit them temporarily.
 //
 struct LocalStructuralDominance {
   // We always look at non-nullable locals, but can be configured to ignore

@@ -131,7 +131,8 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       each pass (finding things that do not validate and fixing them up, usually
       by demoting a local to be nullable). As a result you do not need to worry
       much about this when writing Binaryen passes. For more details see the
-      `requiresNonNullableLocalFixups()` hook in `pass.h`.
+      `requiresNonNullableLocalFixups()` hook in `pass.h` and the
+      `LocalStructuralDominance` class.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.

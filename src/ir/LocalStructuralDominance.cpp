@@ -96,7 +96,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     std::vector<Locals> cleanupStack;
 
     static void doBeginScope(Scanner* self, Expression** currp) {
-      // TODO: could push one only when first needed. Set a pointer to know.
       self->cleanupStack.emplace_back();
     }
 
