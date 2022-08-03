@@ -2616,22 +2616,16 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetElementSegmentByIndex'](module, index);
   };
   self['emitText'] = function() {
-    const old = out;
-    let ret = '';
-    out = x => { ret += x + '\n' };
-    Module['_BinaryenModulePrint'](module);
-    out = old;
-    return ret;
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteText'](module);
+    let text = UTF8ToString(textPtr);
+    if (textPtr) _free(textPtr);
+    return text;
   };
   self['emitStackIR'] = function(optimize) {
-    self['runPasses'](['generate-stack-ir']);
-    if (optimize) self['runPasses'](['optimize-stack-ir']);
-    const old = out;
-    let ret = '';
-    out = x => { ret += x + '\n' };
-    self['runPasses'](['print-stack-ir']);
-    out = old;
-    return ret;
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module, optimize);
+    let text = UTF8ToString(textPtr);
+    if (textPtr) _free(textPtr);
+    return text;
   };
   self['emitAsmjs'] = function() {
     const old = out;

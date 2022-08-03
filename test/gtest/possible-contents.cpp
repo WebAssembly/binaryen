@@ -84,7 +84,7 @@ protected:
   PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
 
   PossibleContents nonNullFunc = PossibleContents::literal(
-    Literal("func", Type(Signature(Type::none, Type::none), NonNullable)));
+    Literal("func", Signature(Type::none, Type::none)));
 
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);
