@@ -392,22 +392,7 @@ public:
   // that validation, this must return true. In that case the pass runner will
   // automatically run the necessary fixups afterwards.
   //
-  // "1a" form requires that each get be structurally dominated by a set - sets
-  // allow gets until the end of the set's block. Any time a pass adds a block,
-  // that can break, like here:
-  //
-  //  (local.set $x ..)
-  //  (local.get $x)
-  //
-  // =>
-  //
-  //  (block
-  //    ..new code..
-  //    (local.set $x ..)
-  //  )
-  //  (local.get $x)
-  //
-  // Most passes will require such fixups.
+  // For more details see the LocalStructuralDominance class.
   virtual bool requiresNonNullableLocalFixups() { return true; }
 
   std::string name;
