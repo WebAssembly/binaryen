@@ -130,6 +130,8 @@ struct StructScanner
   : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
                 FunctionStructValuesMap<T>& functionSetGetInfos)
     : functionNewInfos(functionNewInfos),
