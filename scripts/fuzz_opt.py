@@ -965,7 +965,7 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
-    frequency = 0.06
+    frequency = 0.6
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
