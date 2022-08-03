@@ -146,6 +146,20 @@ struct StackCheck : public Pass {
     PassRunner innerRunner(module);
     EnforceStackLimits(stackPointer, stackBase, stackEnd, builder, handler)
       .run(&innerRunner, module);
+
+    // TODO: Remove this function once emscripten stops calling it.
+    // This function is now a no-op, but it still needs to be here until
+    // emscripten is changed.
+    wasm::Name limitsFuncName = "__set_stack_limits";
+    auto limitsFunc = builder.makeFunction(
+      limitsFuncName,
+      Signature({stackPointer->type, stackPointer->type}, Type::none),
+      {});
+    limitsFunc->body = builder.makeBlock({});
+    module->addFunction(std::move(limitsFunc));
+    module->addExport(Builder::makeExport(limitsFuncName, 
+      limitsFuncName,
+      ExternalKind::Function));
   }
 };
 

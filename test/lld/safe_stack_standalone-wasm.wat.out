@@ -2,6 +2,7 @@
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func))
  (type $2 (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
@@ -16,6 +17,7 @@
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
+ (export "__set_stack_limits" (func $__set_stack_limits))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -160,6 +162,8 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
+ (func $__set_stack_limits (param $0 i32) (param $1 i32)
+ )
 )
 (;
 --BEGIN METADATA --
@@ -171,7 +175,8 @@
   ],
   "exports": [
     "__wasm_call_ctors",
-    "main"
+    "main",
+    "__set_stack_limits"
   ],
   "namedGlobals": {
     "__heap_base" : "66128",

@@ -2,6 +2,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow (param i32)))
  (global $__stack_pointer (mut i32) (i32.const 66112))
  (global $__stack_base (mut i32) (i32.const 0))
@@ -12,6 +13,7 @@
  (export "stackRestore" (func $stackRestore))
  (export "stackAlloc" (func $stackAlloc))
  (export "main" (func $main))
+ (export "__set_stack_limits" (func $__set_stack_limits))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -77,6 +79,8 @@
  (func $main
   (nop)
  )
+ (func $__set_stack_limits (param $0 i32) (param $1 i32)
+ )
 )
 (;
 --BEGIN METADATA --
@@ -90,7 +94,8 @@
     "__wasm_call_ctors",
     "stackRestore",
     "stackAlloc",
-    "main"
+    "main",
+    "__set_stack_limits"
   ],
   "namedGlobals": {
   },
