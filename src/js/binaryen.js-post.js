@@ -2609,6 +2609,9 @@ function wrapModule(module, self = {}) {
   self['getGlobalByIndex'] = function(index) {
     return Module['_BinaryenGetGlobalByIndex'](module, index);
   };
+  self['getGlobalIndex'] = function(name) {
+    return Module['_BinaryenGetGlobalIndex'](module, strToStack(name));
+  }
   self['getTableByIndex'] = function(index) {
     return Module['_BinaryenGetTableByIndex'](module, index);
   };

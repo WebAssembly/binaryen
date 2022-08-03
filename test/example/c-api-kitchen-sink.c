@@ -1675,6 +1675,7 @@ void test_for_each() {
                       BinaryenTypeInt32(),
                       0,
                       makeInt32(module, expected_offsets[1]));
+    assert(BinaryenGetGlobalIndex(module, "a-global") == 0);
 
     for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
