@@ -84,6 +84,11 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         }
       }
 
+      // We begin with a new scope for the function, and then we start on the
+      // body. (Note that we don't need to exit that scope, that work would not
+      // do anything useful.)
+      doBeginScope(this, nullptr);
+
       walk(func->body);
     }
 
@@ -176,7 +181,12 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
           break;
         }
 
-        default: {}
+        default: {
+          // Control flow structures have been handled. This is an expression,
+          // which we scan normally.
+          assert(!Properties::isControlFlowStructure(curr));
+          PostWalker<Scanner>::scan(self, currp);
+        }
       }
     }
   };
