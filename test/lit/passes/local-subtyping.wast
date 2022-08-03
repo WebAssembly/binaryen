@@ -388,11 +388,17 @@
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $become-non-nullable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $become-non-nullable
     (local $x (ref null func))
     (local.set $x
       (ref.func $become-non-nullable)
+    )
+    (drop
+      (local.get $x)
     )
   )
 
@@ -401,11 +407,45 @@
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $already-non-nullable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $already-non-nullable
     (local $x (ref func))
     (local.set $x
       (ref.func $already-non-nullable)
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $cannot-become-non-nullable
+  ;; CHECK-NEXT:  (local $x (ref null $none_=>_none))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $become-non-nullable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cannot-become-non-nullable
+    (local $x (ref null func))
+    ;; The set is in a nested scope, so we should not make the local non-
+    ;; nullable, as it would not validate in 1a. (We can refine the heap type,
+    ;; though.)
+    (if
+      (i32.const 1)
+      (local.set $x
+        (ref.func $become-non-nullable)
+      )
+    )
+    (drop
+      (local.get $x)
     )
   )
 )
