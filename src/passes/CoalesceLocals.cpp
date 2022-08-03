@@ -544,8 +544,8 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
         // remove such dead sets anyhow). In theory keeping such a dead set may
         // be worthwhile, as it may save code size (by keeping the local
         // non-nullable and avoiding ref.as_non_nulls later). But the tradeoff
-        // here isn't clear, so do the simple thing for now and remove the dead
-        // set normally.
+        // here isn't clear, so do the simple thing for now and remove all dead
+        // sets.
         if (!action.effective) {
           // value may have no side effects, further optimizations can eliminate
           // it
