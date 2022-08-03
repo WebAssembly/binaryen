@@ -78,10 +78,10 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         }
       }
 
-      // We begin with a new scope for the function, and then we start on the
-      // body. (Note that we don't need to exit that scope, that work would not
-      // do anything useful.)
-      doBeginScope(this, nullptr);
+      // Note that we do not need to start a scope for the function body.
+      // Logically there is a scope there, but there is no code after it, so
+      // there is nothing to clean up when that scope exits, so we may as well
+      // not even create a scope.
 
       walk(func->body);
     }
@@ -92,8 +92,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
     using Locals = SmallVector<Index, 5>;
 
-    // When we exit a control flow structure, we must undo the locals that it
-    // set.
+    // When we exit a control flow scope, we must undo the locals that it set.
     std::vector<Locals> cleanupStack;
 
     static void doBeginScope(Scanner* self, Expression** currp) {
@@ -102,7 +101,10 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     }
 
     static void doEndScope(Scanner* self, Expression** currp) {
-      assert(!self->cleanupStack.empty());
+      if (self->cleanupStack.empty()) {
+        // We are at the topmost scope, which never needs to be cleaned up.
+        return;
+      }
       for (auto index : self->cleanupStack.back()) {
         assert(self->localsSet[index]);
         self->localsSet[index] = false;
@@ -115,7 +117,10 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       if (!self->localsSet[index]) {
         // This local is now set until the end of this scope.
         self->localsSet[index] = true;
-        self->cleanupStack.back().push_back(index);
+        // If we are not in the topmost scope, note this for later cleanup.
+        if (!self->cleanupStack.empty()) {
+          self->cleanupStack.back().push_back(index);
+        }
       }
     }
 
