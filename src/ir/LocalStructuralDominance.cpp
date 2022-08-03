@@ -110,6 +110,15 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       self->cleanupStack.pop_back();
     }
 
+    void visitLocalSet(LocalSet* curr) {
+      auto index = curr->index;
+      if (!localsSet[index]) {
+        // This local is now set until the end of this scope.
+        localsSet[index] = true;
+        cleanupStack.back().push_back(index);
+      }
+    }
+
     static void scan(Scanner* self, Expression** currp) {
       Expression* curr = *currp;
 
@@ -117,20 +126,11 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         case Expression::Id::InvalidId:
           WASM_UNREACHABLE("bad id");
 
-        // Local operations
+        // local.get can just be visited immediately, as it has no children.
         case Expression::Id::LocalGetId: {
           auto index = curr->cast<LocalGet>()->index;
           if (!self->localsSet[index]) {
             self->nonDominatingIndexes.insert(index);
-          }
-          break;
-        }
-        case Expression::Id::LocalSetId: {
-          auto index = curr->cast<LocalSet>()->index;
-          if (!self->localsSet[index]) {
-            // This local is now set until the end of this scope.
-            self->localsSet[index] = true;
-            self->cleanupStack.back().push_back(index);
           }
           break;
         }
