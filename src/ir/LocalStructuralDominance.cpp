@@ -155,7 +155,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
           case Expression::Id::BlockId: {
             auto* block = (*currp)->cast<Block>();
             // Blocks with no name are never emitted in the binary format, so do
-            // not create a scope for them. TODO document in readme
+            // not create a scope for them.
             if (block->name.is()) {
               self->pushTask(Scanner::doEndScope, currp);
             }
