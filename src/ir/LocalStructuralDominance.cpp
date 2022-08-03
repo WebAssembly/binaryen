@@ -56,17 +56,11 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     }
   }
 
-
-
-
-
-
-
-
   struct Scanner : public PostWalker<Scanner> {
     std::set<Index>& nonDominatingIndexes;
 
-    Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndexes) : nonDominatingIndexes(nonDominatingIndexes) {
+    Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndexes)
+      : nonDominatingIndexes(nonDominatingIndexes) {
       auto num = func->getNumLocals();
       localsSet.resize(num);
 
@@ -98,7 +92,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
     using Locals = SmallVector<Index, 5>;
 
-    // When we exit a control flow structure, we must undo the locals that it set.
+    // When we exit a control flow structure, we must undo the locals that it
+    // set.
     std::vector<Locals> cleanupStack;
 
     static void doBeginScope(Scanner* self, Expression** currp) {
@@ -192,191 +187,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   };
 
   Scanner(func, mode, nonDominatingIndexes);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
-
-  // Our main work stack.
-  struct WorkItem {
-    enum {
-      // When we first see an expression we scan it and add work items for it
-      // and its children.
-      Scan,
-      // Visit a specific instruction. This is only ever called on a LocalSet
-      // due to the optimizations below.
-      Visit,
-      // Enter or exit a scope
-      EnterScope,
-      ExitScope
-    } op;
-
-    Expression* curr;
-  };
-  SmallVector<WorkItem, 5> workStack;
-
-  // The stack begins with a new scope for the function, and then we start on
-  // the body. (Note that we don't need to exit that scope, that work would not
-  // do anything useful.)
-  workStack.push_back(WorkItem{WorkItem::Scan, func->body});
-  workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-
-  while (!workStack.empty()) {
-    auto item = workStack.back();
-    workStack.pop_back();
-
-    if (item.op == WorkItem::Scan) {
-      if (!Properties::isControlFlowStructure(item.curr)) {
-#if 0
-        auto childIterator = ChildIterator(item.curr);
-        auto& children = childIterator.children;
-        if (children.empty()) {
-          // No children, so just visit here right now.
-          //
-          // The only such instruction we care about is a (relevant) local.get.
-          if (auto* get = item.curr->dynCast<LocalGet>()) {
-            auto index = get->index;
-            if (!localsSet[index]) {
-              nonDominatingIndexes.insert(index);
-            }
-          }
-
-          continue;
-        }
-
-        // Otherwise, prepare to visit here after our children.
-        //
-        // The only such instruction we need to visit is a (relevant) local.set.
-        if (auto* set = item.curr->dynCast<LocalSet>()) {
-          auto index = set->index;
-          if (!localsSet[index]) {
-            workStack.push_back(WorkItem{WorkItem::Visit, set});
-          }
-        }
-        for (auto* child : children) {
-          workStack.push_back(WorkItem{WorkItem::Scan, *child});
-        }
-
-#else
-
-        auto* curr = item.curr; // TODO move up
-
-#define DELEGATE_ID curr->_id
-
-#define DELEGATE_START(id)                                                     \
-  auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast);                                                           \
-  if (DELEGATE_ID == Expression::LocalSetId) { /* type check here? */          \
-    auto* set = cast->cast<LocalSet>();                                        \
-    auto index = set->index;                                                   \
-    if (!localsSet[index]) {                                                   \
-      workStack.push_back(WorkItem{WorkItem::Visit, set});                     \
-    }                                                                          \
-  } else if (DELEGATE_ID == Expression::LocalGetId) { /* type check here? */   \
-    /* no children, so just visit it right now */                              \
-    auto* get = cast->cast<LocalGet>();                                        \
-    auto index = get->index;                                                   \
-    if (!localsSet[index]) {                                                   \
-      nonDominatingIndexes.insert(index);                                      \
-    }                                                                          \
-  }
-
-#define DELEGATE_GET_FIELD(id, field) cast->field
-
-#define DELEGATE_FIELD_CHILD(id, field)                                        \
-  workStack.push_back(WorkItem{WorkItem::Scan, cast->field});
-
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  if (cast->field) {                                                           \
-    workStack.push_back(WorkItem{WorkItem::Scan, cast->field});                \
-  }
-
-#define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
-#define DELEGATE_FIELD_LITERAL(id, field)
-#define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
-#define DELEGATE_FIELD_TYPE(id, field)
-#define DELEGATE_FIELD_HEAPTYPE(id, field)
-#define DELEGATE_FIELD_ADDRESS(id, field)
-
-#include "wasm-delegations-fields.def"
-
-#endif
-
-        continue;
-      }
-
-      // This is a control flow structure.
-
-      // First, go through the structure children. Blocks are special in that
-      // all their children go in a single scope.
-      if (item.curr->is<Block>()) {
-        workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
-        for (auto* child : StructuralChildIterator(item.curr).children) {
-          workStack.push_back(WorkItem{WorkItem::Scan, *child});
-        }
-        workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-      } else {
-        for (auto* child : StructuralChildIterator(item.curr).children) {
-          workStack.push_back(WorkItem{WorkItem::ExitScope, nullptr});
-          workStack.push_back(WorkItem{WorkItem::Scan, *child});
-          workStack.push_back(WorkItem{WorkItem::EnterScope, nullptr});
-        }
-      }
-
-      // Next handle value children, which are not involved in structuring (like
-      // the If condition).
-      for (auto* child : ValueChildIterator(item.curr).children) {
-        workStack.push_back(WorkItem{WorkItem::Scan, *child});
-      }
-    } else if (item.op == WorkItem::Visit) {
-      auto* set = item.curr->cast<LocalSet>();
-      auto index = set->index;
-      if (!localsSet[index]) {
-        // This local is now set until the end of this scope.
-        localsSet[index] = true;
-        cleanupStack.back().push_back(index);
-      }
-    } else if (item.op == WorkItem::EnterScope) {
-      cleanupStack.emplace_back();
-    } else if (item.op == WorkItem::ExitScope) {
-      assert(!cleanupStack.empty());
-      for (auto index : cleanupStack.back()) {
-        assert(localsSet[index]);
-        localsSet[index] = false;
-      }
-      cleanupStack.pop_back();
-    } else {
-      WASM_UNREACHABLE("bad op");
-    }
-  }
-#endif
 }
 
 } // namespace wasm
