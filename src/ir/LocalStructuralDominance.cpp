@@ -42,37 +42,172 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     return;
   }
 
-  // The locals that have been set, and so at the current time, they
-  // structurally dominate.
-  std::vector<bool> localsSet(num);
-
-  bool hasNonNullableVar = false;
-  for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
-    auto type = func->getLocalType(i);
-    // Mark locals we don't need to care about as "set". We never do any work
-    // for such a local.
-    if (!type.isRef() || (mode == IgnoreNullable && type.isNullable())) {
-      localsSet[i] = true;
+  if (mode == IgnoreNullable) {
+    bool hasNonNullableVar = false;
+    for (auto var : func->vars) {
+      // Check if we have any non-nullable vars at all.
+      if (var.isNonNullable()) {
+        hasNonNullableVar = true;
+        break;
+      }
     }
-
-    // Check if we have any non-nullable vars at all.
-    if (type.isNonNullable()) {
-      hasNonNullableVar = true;
+    if (!hasNonNullableVar) {
+      return;
     }
   }
-  if (mode == IgnoreNullable && !hasNonNullableVar) {
-    return;
-  }
 
-  // Parameters always dominate.
-  for (Index i = 0; i < func->getNumParams(); i++) {
-    localsSet[i] = true;
-  }
 
-  using Locals = SmallVector<Index, 5>;
 
-  // When we exit a control flow structure, we must undo the locals that it set.
-  std::vector<Locals> cleanupStack;
+
+
+
+
+
+  struct Scanner : public PostWalker<Scanner> {
+    std::set<Index>& nonDominatingIndexes;
+
+    Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndexes) : nonDominatingIndexes(nonDominatingIndexes) {
+      auto num = func->getNumLocals();
+      localsSet.resize(num);
+
+      // Parameters always dominate.
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        localsSet[i] = true;
+      }
+
+      for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
+        auto type = func->getLocalType(i);
+        // Mark locals we don't need to care about as "set". We never do any
+        // work for such a local.
+        if (!type.isRef() || (mode == IgnoreNullable && type.isNullable())) {
+          localsSet[i] = true;
+        }
+      }
+
+      walk(func->body);
+    }
+
+    // The locals that have been set, and so at the current time, they
+    // structurally dominate.
+    std::vector<bool> localsSet;
+
+    using Locals = SmallVector<Index, 5>;
+
+    // When we exit a control flow structure, we must undo the locals that it set.
+    std::vector<Locals> cleanupStack;
+
+    static void doBeginScope(Scanner* self, Expression** currp) {
+      // TODO: could push one only when first needed. Set a pointer to know.
+      self->cleanupStack.emplace_back();
+    }
+
+    static void doEndScope(Scanner* self, Expression** currp) {
+      assert(!self->cleanupStack.empty());
+      for (auto index : self->cleanupStack.back()) {
+        assert(self->localsSet[index]);
+        self->localsSet[index] = false;
+      }
+      self->cleanupStack.pop_back();
+    }
+
+    static void scan(Scanner* self, Expression** currp) {
+      Expression* curr = *currp;
+
+      switch (curr->_id) {
+        case Expression::Id::InvalidId:
+          WASM_UNREACHABLE("bad id");
+
+        // Local operations
+        case Expression::Id::LocalGetId: {
+          auto index = curr->cast<LocalGet>()->index;
+          if (!self->localsSet[index]) {
+            self->nonDominatingIndexes.insert(index);
+          }
+          break;
+        }
+        case Expression::Id::LocalSetId: {
+          auto index = curr->cast<LocalSet>()->index;
+          if (!self->localsSet[index]) {
+            // This local is now set until the end of this scope.
+            self->localsSet[index] = true;
+            self->cleanupStack.back().push_back(index);
+          }
+          break;
+        }
+
+        // Control flow structures.
+        case Expression::Id::BlockId: {
+          self->pushTask(Scanner::doEndScope, currp);
+          auto& list = curr->cast<Block>()->list;
+          for (int i = int(list.size()) - 1; i >= 0; i--) {
+            self->pushTask(Scanner::scan, &list[i]);
+          }
+          self->pushTask(Scanner::doBeginScope, currp);
+          break;
+        }
+        case Expression::Id::IfId: {
+          if (curr->cast<If>()->ifFalse) {
+            self->pushTask(Scanner::doEndScope, currp);
+            self->maybePushTask(Scanner::scan, &curr->cast<If>()->ifFalse);
+            self->pushTask(Scanner::doBeginScope, currp);
+          }
+          self->pushTask(Scanner::doEndScope, currp);
+          self->pushTask(Scanner::scan, &curr->cast<If>()->ifTrue);
+          self->pushTask(Scanner::doBeginScope, currp);
+          self->pushTask(Scanner::scan, &curr->cast<If>()->condition);
+          break;
+        }
+        case Expression::Id::LoopId: {
+          self->pushTask(Scanner::doEndScope, currp);
+          self->pushTask(Scanner::scan, &curr->cast<Loop>()->body);
+          self->pushTask(Scanner::doBeginScope, currp);
+          break;
+        }
+        case Expression::Id::TryId: {
+          auto& list = curr->cast<Try>()->catchBodies;
+          for (int i = int(list.size()) - 1; i >= 0; i--) {
+            self->pushTask(Scanner::doEndScope, currp);
+            self->pushTask(Scanner::scan, &list[i]);
+            self->pushTask(Scanner::doBeginScope, currp);
+          }
+          self->pushTask(Scanner::doEndScope, currp);
+          self->pushTask(Scanner::scan, &curr->cast<Try>()->body);
+          self->pushTask(Scanner::doBeginScope, currp);
+          break;
+        }
+
+        default: {}
+      }
+    }
+  };
+
+  Scanner(func, mode, nonDominatingIndexes);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+
 
   // Our main work stack.
   struct WorkItem {
@@ -231,6 +366,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       WASM_UNREACHABLE("bad op");
     }
   }
+#endif
 }
 
 } // namespace wasm
