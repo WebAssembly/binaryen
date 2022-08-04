@@ -178,6 +178,9 @@ struct PCVScanner
 };
 
 struct ConstantFieldPropagation : public Pass {
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
     if (!module->features.hasGC()) {
       return;

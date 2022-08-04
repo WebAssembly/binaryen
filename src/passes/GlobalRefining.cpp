@@ -31,6 +31,9 @@ namespace wasm {
 namespace {
 
 struct GlobalRefining : public Pass {
+  // Only modifies globals and global.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
     if (!module->features.hasGC()) {
       return;

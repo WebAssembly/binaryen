@@ -95,6 +95,7 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
 
 struct MemoryPacking : public Pass {
   // This pass operates on linear memory, and does not affect reference locals.
+  // TODO: don't run at all if the module has no memories
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(PassRunner* runner, Module* module) override;
