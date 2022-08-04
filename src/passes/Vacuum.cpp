@@ -33,12 +33,6 @@ namespace wasm {
 struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   bool isFunctionParallel() override { return true; }
 
-  // This pass may remove some block scopes (say, removing the scope of an if
-  // whose condition is 1) but that can only help 1a validation. In particular,
-  // this pass will not move around a local.set or remove one, which would be
-  // dangerous.
-  bool requiresNonNullableLocalFixups() override { return false; }
-
   Pass* create() override { return new Vacuum; }
 
   TypeUpdater typeUpdater;
