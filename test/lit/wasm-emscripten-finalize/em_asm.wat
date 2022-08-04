@@ -6,17 +6,10 @@
 ;; Check that the data segment that contains only EM_ASM strings resized to
 ;; zero, and that the string are extracted into the metadata.
 
-;; CHECK:      (data (i32.const 100) "normal data")
-;; CHECK-NEXT: (data (i32.const 512) "")
-;; CHECK-NEXT: (data (i32.const 1024) "more data")
-
 ;; CHECK:       "asmConsts": {
 ;; CHECK-NEXT:     "512": "{ console.log('JS hello'); }",
 ;; CHECK-NEXT:     "541": "{ console.log('hello again'); }"
 ;; CHECK-NEXT:   },
-
-;; Check that the exports are removed
-;; CHECK-NOT: export
 
 (module
  (memory 1 1)
