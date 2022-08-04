@@ -1715,10 +1715,8 @@ struct OptimizeInstructions
       // Replace the expression with drops of the inputs, and a null. Note
       // that we provide a null of the previous type, so that we do not alter
       // the type received by our parent.
-      std::vector<Expression*> items;
-      items.push_back(builder.makeDrop(curr->ref));
-      items.push_back(builder.makeRefNull(intendedType));
-      Expression* rep = builder.makeBlock(items);
+      Expression* rep = builder.makeSequence(builder.makeDrop(curr->ref),
+                                             builder.makeRefNull(intendedType));
       if (curr->ref->type.isNonNullable()) {
         // Avoid a type change by forcing to be non-nullable. In practice,
         // this would have trapped before we get here, so this is just for
@@ -1874,10 +1872,8 @@ struct OptimizeInstructions
     // See above in RefCast.
     if (!canBeCastTo(refType, intendedType)) {
       // This test cannot succeed, and will definitely return 0.
-      std::vector<Expression*> items;
-      items.push_back(builder.makeDrop(curr->ref));
-      items.push_back(builder.makeConst(int32_t(0)));
-      replaceCurrent(builder.makeBlock(items));
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeConst(int32_t(0))));
       return;
     }
 
