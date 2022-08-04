@@ -3575,7 +3575,7 @@ BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
   return globals[index].get();
 }
 BinaryenIndex BinaryenGetGlobalIndex(BinaryenModuleRef module,
-                                           const char* name) {
+                                     const char* name) {
   const auto& globals = ((Module*)module)->globals;
   for (BinaryenIndex i = 0, k = globals.size(); i < k; ++i) {
     if (globals[i]->name == name) {
