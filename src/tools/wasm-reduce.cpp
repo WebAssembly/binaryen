@@ -455,7 +455,7 @@ struct Reducer
     // skip.
     //
     // After that, run and see what happens.
-    if (WasmValidator().validate(
+    if (getFunction() && WasmValidator().validate(
          getFunction(), *getModule(), WasmValidator::Quiet)) {
       if (writeAndTestReduction() ) {
         std::cerr << "|      tryToReplaceCurrent succeeded (in " << getLocation()
