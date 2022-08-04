@@ -239,6 +239,37 @@ BinaryenPackedType BinaryenPackedTypeInt16(void) {
 
 // Heap types
 
+BinaryenHeapType BinaryenHeapTypeFunc() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::func);
+}
+BinaryenHeapType BinaryenHeapTypeAny() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::any);
+}
+BinaryenHeapType BinaryenHeapTypeEq() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::eq);
+}
+BinaryenHeapType BinaryenHeapTypeI31() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::i31);
+}
+BinaryenHeapType BinaryenHeapTypeData() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::data);
+}
+BinaryenHeapType BinaryenHeapTypeString() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::string);
+}
+BinaryenHeapType BinaryenHeapTypeStringviewWTF8() {
+  return static_cast<BinaryenHeapType>(
+    HeapType::BasicHeapType::stringview_wtf8);
+}
+BinaryenHeapType BinaryenHeapTypeStringviewWTF16() {
+  return static_cast<BinaryenHeapType>(
+    HeapType::BasicHeapType::stringview_wtf16);
+}
+BinaryenHeapType BinaryenHeapTypeStringviewIter() {
+  return static_cast<BinaryenHeapType>(
+    HeapType::BasicHeapType::stringview_iter);
+}
+
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();
 }
@@ -4778,6 +4809,161 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
   }
   delete R;
   return ret;
+}
+
+//
+// ========= Type builder =========
+//
+
+TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype() {
+  return static_cast<TypeBuilderErrorReason>(
+    TypeBuilder::ErrorReason::SelfSupertype);
+}
+TypeBuilderErrorReason TypeBuilderErrorReasonInvalidSupertype() {
+  return static_cast<TypeBuilderErrorReason>(
+    TypeBuilder::ErrorReason::InvalidSupertype);
+}
+TypeBuilderErrorReason TypeBuilderErrorReasonForwardSupertypeReference() {
+  return static_cast<TypeBuilderErrorReason>(
+    TypeBuilder::ErrorReason::ForwardSupertypeReference);
+}
+TypeBuilderErrorReason TypeBuilderErrorReasonForwardChildReference() {
+  return static_cast<TypeBuilderErrorReason>(
+    TypeBuilder::ErrorReason::ForwardChildReference);
+}
+
+TypeBuilderRef TypeBuilderCreate(BinaryenIndex size) {
+  return static_cast<TypeBuilderRef>(new TypeBuilder(size));
+}
+void TypeBuilderGrow(TypeBuilderRef builder, BinaryenIndex count) {
+  ((TypeBuilder*)builder)->grow(count);
+}
+BinaryenIndex TypeBuilderGetSize(TypeBuilderRef builder) {
+  return ((TypeBuilder*)builder)->size();
+}
+void TypeBuilderSetBasicHeapType(TypeBuilderRef builder,
+                                 BinaryenIndex index,
+                                 BinaryenBasicHeapType basicHeapType) {
+  ((TypeBuilder*)builder)
+    ->setHeapType(index, HeapType::BasicHeapType(basicHeapType));
+}
+void TypeBuilderSetSignatureType(TypeBuilderRef builder,
+                                 BinaryenIndex index,
+                                 BinaryenType paramTypes,
+                                 BinaryenType resultTypes) {
+  ((TypeBuilder*)builder)
+    ->setHeapType(index, Signature(Type(paramTypes), Type(resultTypes)));
+}
+void TypeBuilderSetStructType(TypeBuilderRef builder,
+                              BinaryenIndex index,
+                              BinaryenType* fieldTypes,
+                              BinaryenPackedType* fieldPackedTypes,
+                              bool* fieldMutables,
+                              int numFields) {
+  auto* B = (TypeBuilder*)builder;
+  FieldList fields;
+  for (int cur = 0; cur < numFields; ++cur) {
+    Field field(Type(fieldTypes[cur]),
+                fieldMutables[cur] ? Mutability::Mutable
+                                   : Mutability::Immutable);
+    if (field.type == Type::i32) {
+      field.packedType = Field::PackedType(fieldPackedTypes[cur]);
+    } else {
+      assert(fieldPackedTypes[cur] == Field::PackedType::not_packed);
+    }
+    fields.push_back(field);
+  }
+  B->setHeapType(index, Struct(fields));
+}
+void TypeBuilderSetArrayType(TypeBuilderRef builder,
+                             BinaryenIndex index,
+                             BinaryenType elementType,
+                             BinaryenPackedType elementPackedType,
+                             int elementMutable) {
+  auto* B = (TypeBuilder*)builder;
+  Field element(Type(elementType),
+                elementMutable ? Mutability::Mutable : Mutability::Immutable);
+  if (element.type == Type::i32) {
+    element.packedType = Field::PackedType(elementPackedType);
+  } else {
+    assert(elementPackedType == Field::PackedType::not_packed);
+  }
+  B->setHeapType(index, Array(element));
+}
+bool TypeBuilderIsBasic(TypeBuilderRef builder, BinaryenIndex index) {
+  return ((TypeBuilder*)builder)->isBasic(index);
+}
+BinaryenBasicHeapType TypeBuilderGetBasic(TypeBuilderRef builder,
+                                          BinaryenIndex index) {
+  return BinaryenBasicHeapType(((TypeBuilder*)builder)->getBasic(index));
+}
+BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
+                                            BinaryenIndex index) {
+  return ((TypeBuilder*)builder)->getTempHeapType(index).getID();
+}
+BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
+                                         BinaryenType* types,
+                                         BinaryenIndex numTypes) {
+  TypeList typeList(numTypes);
+  for (BinaryenIndex cur = 0; cur < numTypes; ++cur) {
+    typeList[cur] = Type(types[cur]);
+  }
+  return ((TypeBuilder*)builder)->getTempTupleType(Tuple(typeList)).getID();
+}
+BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
+                                       BinaryenIndex depth,
+                                       BinaryenHeapType heapType) {
+  return ((TypeBuilder*)builder)
+    ->getTempRttType(Rtt(depth, HeapType(heapType)))
+    .getID();
+}
+BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
+                                       BinaryenHeapType heapType,
+                                       int nullable) {
+  return ((TypeBuilder*)builder)
+    ->getTempRefType(HeapType(heapType), nullable ? Nullable : NonNullable)
+    .getID();
+}
+void TypeBuilderSetSubType(TypeBuilderRef builder,
+                           BinaryenIndex index,
+                           BinaryenIndex superIndex) {
+  ((TypeBuilder*)builder)->setSubType(index, superIndex);
+}
+void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
+                               BinaryenIndex index,
+                               BinaryenIndex length) {
+  ((TypeBuilder*)builder)->createRecGroup(index, length);
+}
+bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
+                                BinaryenHeapType* heapTypes,
+                                BinaryenIndex* errorIndex,
+                                TypeBuilderErrorReason* errorReason) {
+  auto* B = (TypeBuilder*)builder;
+  auto result = B->build();
+  if (auto err = result.getError()) {
+    *errorIndex = err->index;
+    *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+    delete B;
+    return false;
+  }
+  auto types = *result;
+  for (size_t cur = 0; cur < types.size(); ++cur) {
+    heapTypes[cur] = types[cur].getID();
+  }
+  delete B;
+  return true;
+}
+
+void BinaryenModuleSetTypeName(BinaryenModuleRef module,
+                               BinaryenHeapType heapType,
+                               const char* name) {
+  ((Module*)module)->typeNames[HeapType(heapType)].name = name;
+}
+void BinaryenModuleSetFieldName(BinaryenModuleRef module,
+                                BinaryenHeapType heapType,
+                                BinaryenIndex index,
+                                const char* name) {
+  ((Module*)module)->typeNames[HeapType(heapType)].fieldNames[index] = name;
 }
 
 //

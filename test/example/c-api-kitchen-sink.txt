@@ -19,6 +19,15 @@ BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
 BinaryenPackedTypeInt16: 2
+BinaryenHeapTypeFunc: 0
+BinaryenHeapTypeAny: 1
+BinaryenHeapTypeEq: 2
+BinaryenHeapTypeI31: 3
+BinaryenHeapTypeData: 4
+BinaryenHeapTypeString: 5
+BinaryenHeapTypeStringviewWTF8: 6
+BinaryenHeapTypeStringviewWTF16: 7
+BinaryenHeapTypeStringviewIter: 8
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -2710,3 +2719,23 @@ optimized:
 BinaryenTypeSystemEquirecursive: 0
 BinaryenTypeSystemNominal: 1
 BinaryenTypeSystemIsorecursive: 2
+TypeBuilderErrorReasonSelfSupertype: 0
+TypeBuilderErrorReasonInvalidSupertype: 1
+TypeBuilderErrorReasonForwardSupertypeReference: 2
+TypeBuilderErrorReasonForwardChildReference: 3
+module with recursive GC types:
+(module
+ (type $SomeArray (array_subtype (mut (ref null $SomeArray)) data))
+ (type $SomeStruct (struct_subtype (field $SomeField (mut (ref null $SomeStruct))) data))
+ (type $SomeSignature (func_subtype (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature)) func))
+ (type $none_=>_none (func_subtype func))
+ (type $SomeSubStruct (struct_subtype (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField (mut i8)) $SomeStruct))
+ (func $test (type $none_=>_none)
+  (local $0 (ref null $SomeArray))
+  (local $1 (ref null $SomeStruct))
+  (local $2 (ref null $SomeSignature))
+  (local $3 eqref)
+  (local $4 (ref null $SomeSubStruct))
+  (nop)
+ )
+)

@@ -137,6 +137,16 @@ BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt16(void);
 
 typedef uintptr_t BinaryenHeapType;
 
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeFunc(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeAny(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeEq(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeI31(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeData(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeString(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF8(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF16(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewIter(void);
+
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
 BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
 BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
@@ -2894,6 +2904,118 @@ BINARYEN_API bool ExpressionRunnerSetGlobalValue(ExpressionRunnerRef runner,
 // to, if any. Otherwise returns `NULL`. Also disposes the runner.
 BINARYEN_API BinaryenExpressionRef ExpressionRunnerRunAndDispose(
   ExpressionRunnerRef runner, BinaryenExpressionRef expr);
+
+//
+// ========= TypeBuilder =========
+//
+
+#ifdef __cplusplus
+namespace wasm {
+struct TypeBuilder;
+} // namespace wasm
+typedef struct wasm::TypeBuilder* TypeBuilderRef;
+#else
+typedef struct TypeBuilder* TypeBuilderRef;
+#endif
+
+typedef uint32_t TypeBuilderErrorReason;
+
+// Indicates a cycle in the supertype relation.
+BINARYEN_API TypeBuilderErrorReason TypeBuilderErrorReasonSelfSupertype(void);
+// Indicates that the declared supertype of a type is invalid.
+BINARYEN_API TypeBuilderErrorReason
+TypeBuilderErrorReasonInvalidSupertype(void);
+// Indicates that the declared supertype is an invalid forward reference.
+BINARYEN_API TypeBuilderErrorReason
+TypeBuilderErrorReasonForwardSupertypeReference(void);
+// Indicates that a child of a type is an invalid forward reference.
+BINARYEN_API TypeBuilderErrorReason
+TypeBuilderErrorReasonForwardChildReference(void);
+
+typedef uint32_t BinaryenBasicHeapType;
+
+// Constructs a new type builder that allows for the construction of recursive
+// types. Contains a table of `size` mutable heap types.
+BINARYEN_API TypeBuilderRef TypeBuilderCreate(BinaryenIndex size);
+// Grows the backing table of the type builder by `count` slots.
+BINARYEN_API void TypeBuilderGrow(TypeBuilderRef builder, BinaryenIndex count);
+// Gets the size of the backing table of the type builder.
+BINARYEN_API BinaryenIndex TypeBuilderGetSize(TypeBuilderRef builder);
+// Sets the heap type at index `index` to a basic heap type. Must not be used in
+// nominal mode.
+BINARYEN_API void
+TypeBuilderSetBasicHeapType(TypeBuilderRef builder,
+                            BinaryenIndex index,
+                            BinaryenBasicHeapType basicHeapType);
+// Sets the heap type at index `index` to a concrete signature type. Expects
+// temporary tuple types if multiple parameter and/or result types include
+// temporary types.
+BINARYEN_API void TypeBuilderSetSignatureType(TypeBuilderRef builder,
+                                              BinaryenIndex index,
+                                              BinaryenType paramTypes,
+                                              BinaryenType resultTypes);
+// Sets the heap type at index `index` to a concrete struct type.
+BINARYEN_API void TypeBuilderSetStructType(TypeBuilderRef builder,
+                                           BinaryenIndex index,
+                                           BinaryenType* fieldTypes,
+                                           BinaryenPackedType* fieldPackedTypes,
+                                           bool* fieldMutables,
+                                           int numFields);
+// Sets the heap type at index `index` to a concrete array type.
+BINARYEN_API void TypeBuilderSetArrayType(TypeBuilderRef builder,
+                                          BinaryenIndex index,
+                                          BinaryenType elementType,
+                                          BinaryenPackedType elementPackedType,
+                                          int elementMutable);
+// Tests if the heap type at index `index` is a basic heap type.
+BINARYEN_API bool TypeBuilderIsBasic(TypeBuilderRef builder,
+                                     BinaryenIndex index);
+// Gets the basic heap type at index `index`.
+BINARYEN_API BinaryenBasicHeapType TypeBuilderGetBasic(TypeBuilderRef builder,
+                                                       BinaryenIndex index);
+// Gets the temporary heap type to use at index `index`. Temporary heap types
+// may only be used to construct temporary types using the type builder.
+BINARYEN_API BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
+                                                         BinaryenIndex index);
+// Gets a temporary tuple type for use with and owned by the type builder.
+BINARYEN_API BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
+                                                      BinaryenType* types,
+                                                      BinaryenIndex numTypes);
+// Gets a temporary reference type for use with and owned by the type builder.
+BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
+                                                    BinaryenHeapType heapType,
+                                                    int nullable);
+// Gets a temporary RTT for use with and owned by the type builder.
+BINARYEN_API BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
+                                                    BinaryenIndex depth,
+                                                    BinaryenHeapType heapType);
+// Sets the type at `index` to be a subtype of the type at `superIndex`.
+BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
+                                        BinaryenIndex index,
+                                        BinaryenIndex superIndex);
+// Creates a new recursion group in the range `index` inclusive to `index +
+// length` exclusive. Recursion groups must not overlap.
+BINARYEN_API void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
+                                            BinaryenIndex index,
+                                            BinaryenIndex length);
+// Builds the heap type hierarchy and disposes the builder. Returns `false` and
+// populates `errorIndex` and `errorReason` on failure.
+BINARYEN_API bool
+TypeBuilderBuildAndDispose(TypeBuilderRef builder,
+                           BinaryenHeapType* heapTypes,
+                           BinaryenIndex* errorIndex,
+                           TypeBuilderErrorReason* errorReason);
+
+// Sets the textual name of a compound `heapType`. Has no effect if the type
+// already has a canonical name.
+BINARYEN_API void BinaryenModuleSetTypeName(BinaryenModuleRef module,
+                                            BinaryenHeapType heapType,
+                                            const char* name);
+// Sets the field name of a struct `heapType` at index `index`.
+BINARYEN_API void BinaryenModuleSetFieldName(BinaryenModuleRef module,
+                                             BinaryenHeapType heapType,
+                                             BinaryenIndex index,
+                                             const char* name);
 
 //
 // ========= Utilities =========
