@@ -2983,10 +2983,6 @@ BINARYEN_API BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
 BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
                                                     BinaryenHeapType heapType,
                                                     int nullable);
-// Gets a temporary RTT for use with and owned by the type builder.
-BINARYEN_API BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
-                                                    BinaryenIndex depth,
-                                                    BinaryenHeapType heapType);
 // Sets the type at `index` to be a subtype of the type at `superIndex`.
 BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
                                         BinaryenIndex index,

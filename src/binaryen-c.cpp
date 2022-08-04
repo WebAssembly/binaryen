@@ -4908,13 +4908,6 @@ BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
   }
   return ((TypeBuilder*)builder)->getTempTupleType(Tuple(typeList)).getID();
 }
-BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
-                                       BinaryenIndex depth,
-                                       BinaryenHeapType heapType) {
-  return ((TypeBuilder*)builder)
-    ->getTempRttType(Rtt(depth, HeapType(heapType)))
-    .getID();
-}
 BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
                                        BinaryenHeapType heapType,
                                        int nullable) {
