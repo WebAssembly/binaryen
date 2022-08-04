@@ -56,7 +56,11 @@ struct WasmValidator {
   };
   typedef uint32_t Flags;
 
+  // Validate an entire module.
   bool validate(Module& module, Flags flags = Globally);
+
+  // Validate a specific function.
+  bool validate(Function* func, Module& module, Flags flags = Globally);
 };
 
 } // namespace wasm
