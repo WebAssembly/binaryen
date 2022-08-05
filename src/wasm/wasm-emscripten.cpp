@@ -445,6 +445,15 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     lastEnd = offset + seg->data.size();
   }
   wasm.dataSegments.clear();
+  // Remove the start/stop symbols that the PostEmscripten uses to remove
+  // em_asm/em_js data.  Since we just removed all the data segments from the
+  // file there is nothing more for that pass to do.
+  // TODO(sbc): Fix the ordering so that the removal the EM_ASM/EM_JS data comes
+  // before this pass.
+  wasm.removeExport("__start_em_asm");
+  wasm.removeExport("__stop_em_asm");
+  wasm.removeExport("__start_em_js");
+  wasm.removeExport("__stop_em_js");
 }
 
 } // namespace wasm
