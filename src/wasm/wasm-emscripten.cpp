@@ -188,41 +188,6 @@ struct AsmConst {
   std::string code;
 };
 
-struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
-  SegmentRemover(Index segment) : segment(segment) {}
-
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override { return new SegmentRemover(segment); }
-
-  void visitMemoryInit(MemoryInit* curr) {
-    if (segment == curr->segment) {
-      Builder builder(*getModule());
-      replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
-                                      builder.makeDrop(curr->offset),
-                                      builder.makeDrop(curr->size)));
-    }
-  }
-
-  void visitDataDrop(DataDrop* curr) {
-    if (segment == curr->segment) {
-      Builder builder(*getModule());
-      replaceCurrent(builder.makeNop());
-    }
-  }
-
-  Index segment;
-};
-
-static void removeSegment(Module& wasm, Index segment) {
-  PassRunner runner(&wasm);
-  SegmentRemover(segment).run(&runner, &wasm);
-  // Resize the segment to zero.  In theory we should completely remove it
-  // but that would mean re-numbering the segments that follow which is
-  // non-trivial.
-  wasm.dataSegments[segment]->data.resize(0);
-}
-
 static Address getExportedAddress(Module& wasm, Export* export_) {
   Global* g = wasm.getGlobal(export_->value);
   auto* addrConst = g->init->dynCast<Const>();
@@ -246,7 +211,6 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
     Fatal() << "Found only one of __start_em_asm and __stop_em_asm";
   }
 
-  std::vector<AsmConst> asmConsts;
   StringConstantTracker stringTracker(wasm);
   Address startAddress = getExportedAddress(wasm, start);
   Address endAddress = getExportedAddress(wasm, end);
@@ -255,40 +219,26 @@ static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
     size_t segmentSize = wasm.dataSegments[i]->data.size();
     if (segmentStart <= startAddress &&
         segmentStart + segmentSize >= endAddress) {
+      std::vector<AsmConst> asmConsts;
       Address address = startAddress;
       while (address < endAddress) {
         auto code = stringTracker.stringAtAddr(address);
         asmConsts.push_back({address, code});
         address.addr += strlen(code) + 1;
       }
-
-      if (segmentStart == startAddress &&
-          segmentStart + segmentSize == endAddress) {
-        removeSegment(wasm, i);
-      } else {
-        // If we can't remove the whole segment then just set the string
-        // data to zero.
-        size_t segmentOffset = startAddress - segmentStart;
-        char* startElem = &wasm.dataSegments[i]->data[segmentOffset];
-        memset(startElem, 0, endAddress - startAddress);
-      }
-      break;
+      assert(asmConsts.size());
+      return asmConsts;
     }
   }
-
-  assert(asmConsts.size());
-  wasm.removeExport("__start_em_asm");
-  wasm.removeExport("__stop_em_asm");
-  return asmConsts;
+  Fatal() << "Segment data not found between symbols __start_em_asm and "
+             "__stop_em_asm";
 }
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
   Module& wasm;
   StringConstantTracker stringTracker;
-  std::vector<Export> toRemove;
 
   std::map<std::string, std::string> codeByName;
-  std::map<Address, size_t> codeAddresses; // map from address to string len
 
   EmJsWalker(Module& _wasm) : wasm(_wasm), stringTracker(_wasm) {}
 
@@ -318,47 +268,15 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       return;
     }
 
-    toRemove.push_back(*curr);
     auto code = stringTracker.stringAtAddr(address);
     auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
     codeByName[funcName] = code;
-    codeAddresses[address] = strlen(code) + 1;
   }
 };
 
 EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
   EmJsWalker walker(wasm);
   walker.walkModule(&wasm);
-
-  for (const Export& exp : walker.toRemove) {
-    if (exp.kind == ExternalKind::Function) {
-      wasm.removeFunction(exp.value);
-    } else {
-      wasm.removeGlobal(exp.value);
-    }
-    wasm.removeExport(exp.name);
-  }
-
-  // With newer versions of emscripten/llvm we pack all EM_JS strings into
-  // single segment.
-  // We can detect this by checking for segments that contain only JS strings.
-  // When we find such segements we remove them from the final binary.
-  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
-    Address start = walker.stringTracker.segmentOffsets[i];
-    Address cur = start;
-
-    while (cur < start + wasm.dataSegments[i]->data.size()) {
-      if (walker.codeAddresses.count(cur) == 0) {
-        break;
-      }
-      cur.addr += walker.codeAddresses[cur];
-    }
-
-    if (cur == start + wasm.dataSegments[i]->data.size()) {
-      // Entire segment is contains JS strings.  Remove it.
-      removeSegment(wasm, i);
-    }
-  }
   return walker;
 }
 

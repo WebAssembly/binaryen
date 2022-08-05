@@ -340,17 +340,17 @@ def pick_initial_contents():
     FEATURE_OPTS += [
         # has not been fuzzed in general yet
         '--disable-memory64',
-        # avoid multivalue for now due to bad interactions with gc rtts in
-        # stacky code. for example, this fails to roundtrip as the tuple code
-        # ends up creating stacky binary code that needs to spill rtts to locals,
-        # which is not allowed:
+        # avoid multivalue for now due to bad interactions with gc non-nullable
+        # locals in stacky code. for example, this fails to roundtrip as the
+        # tuple code ends up creating stacky binary code that needs to spill
+        # non-nullable references to locals, which is not allowed:
         #
         # (module
         #  (type $other (struct))
-        #  (func $foo (result (rtt $other))
+        #  (func $foo (result (ref $other))
         #   (select
-        #    (rtt.canon $other)
-        #    (rtt.canon $other)
+        #    (struct.new $other)
+        #    (struct.new $other)
         #    (tuple.extract 1
         #     (tuple.make
         #      (i32.const 0)
@@ -1223,9 +1223,10 @@ def randomize_opt_flags():
                 continue
             if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
+                print('TODO: Resolving https://github.com/WebAssembly/binaryen/issues/4824 may fix this')
                 continue
             if '--gc' not in FEATURE_OPTS:
-                print('avoiding --flatten due to GC not supporting it (spilling of RTTs)')
+                print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')
                 continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')

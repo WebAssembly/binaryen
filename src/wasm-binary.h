@@ -373,10 +373,6 @@ enum EncodedType {
   nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
-  // run-time type info type, with depth index n
-  rtt_n = -0x17, // 0x69
-  // run-time type info type, without depth index n
-  rtt = -0x18, // 0x68
   // gc and string reference types
   dataref = -0x19,          // 0x67
   stringref = -0x1c,        // 0x64
@@ -1085,41 +1081,28 @@ enum ASTNodes {
 
   CallRef = 0x14,
   RetCallRef = 0x15,
-  Let = 0x17,
 
   // gc opcodes
 
   RefEq = 0xd5,
-  StructNewWithRtt = 0x01,
-  StructNewDefaultWithRtt = 0x02,
   StructGet = 0x03,
   StructGetS = 0x04,
   StructGetU = 0x05,
   StructSet = 0x06,
   StructNew = 0x07,
   StructNewDefault = 0x08,
-  ArrayNewWithRtt = 0x11,
-  ArrayNewDefaultWithRtt = 0x12,
   ArrayGet = 0x13,
   ArrayGetS = 0x14,
   ArrayGetU = 0x15,
   ArraySet = 0x16,
   ArrayLen = 0x17,
   ArrayCopy = 0x18,
-  ArrayInit = 0x19,
   ArrayInitStatic = 0x1a,
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
-  RttCanon = 0x30,
-  RttSub = 0x31,
-  RttFreshSub = 0x32,
-  RefTest = 0x40,
-  RefCast = 0x41,
-  BrOnCast = 0x42,
-  BrOnCastFail = 0x43,
   RefTestStatic = 0x44,
   RefCastStatic = 0x45,
   BrOnCastStatic = 0x46,
@@ -1585,29 +1568,6 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  // Each let block in the binary adds new locals to the bottom of the index
-  // space. That is, all previously-existing indexes are bumped to higher
-  // indexes. getAbsoluteLocalIndex does this computation.
-  // Note that we must track not just the number of locals added in each let,
-  // but also the absolute index from which they were allocated, as binaryen
-  // will add new locals as it goes for things like stacky code and tuples (so
-  // there isn't a simple way to get to the absolute index from a relative one).
-  // Hence each entry here is a pair of the number of items, and the absolute
-  // index they begin at.
-  struct LetData {
-    // How many items are defined in this let.
-    Index num;
-    // The absolute index from which they are allocated from. That is, if num is
-    // 5 and absoluteStart is 10, then we use indexes 10-14.
-    Index absoluteStart;
-  };
-  std::vector<LetData> letStack;
-
-  // Given a relative index of a local (the one used in the wasm binary), get
-  // the absolute one which takes into account lets, and is the one used in
-  // Binaryen IR.
-  Index getAbsoluteLocalIndex(Index index);
-
   // Control flow structure parsing: these have not just the normal binary
   // data for an instruction, but also some bytes later on like "end" or "else".
   // We must be aware of the connection between those things, for debug info.
@@ -1732,8 +1692,6 @@ public:
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
   bool maybeVisitRefCast(Expression*& out, uint32_t code);
   bool maybeVisitBrOn(Expression*& out, uint32_t code);
-  bool maybeVisitRttCanon(Expression*& out, uint32_t code);
-  bool maybeVisitRttSub(Expression*& out, uint32_t code);
   bool maybeVisitStructNew(Expression*& out, uint32_t code);
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
@@ -1774,14 +1732,12 @@ public:
   void visitRethrow(Rethrow* curr);
   void visitCallRef(CallRef* curr);
   void visitRefAs(RefAs* curr, uint8_t code);
-  // Let is lowered into a block.
-  void visitLet(Block* curr);
 
   [[noreturn]] void throwError(std::string text);
 
   // Struct/Array instructions have an unnecessary heap type that is just for
   // validation (except for the case of unreachability, but that's not a problem
-  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // anyhow, we can ignore it there). That is, we also have a reference typed
   // child from which we can infer the type anyhow, and we just need to check
   // that type is the same.
   void validateHeapTypeUsingChild(Expression* child, HeapType heapType);

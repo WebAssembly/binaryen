@@ -1467,19 +1467,6 @@ public:
     if (ref.breaking()) {
       return typename Cast::Breaking{ref};
     }
-    // The RTT value for the type we are trying to cast to.
-    Literal intendedRtt;
-    if (curr->rtt) {
-      // This is a dynamic check with an RTT.
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return typename Cast::Breaking{rtt};
-      }
-      intendedRtt = rtt.getSingleValue();
-    } else {
-      // If there is no explicit RTT, use the canonical RTT for the static type.
-      intendedRtt = Literal::makeCanonicalRtt(curr->intendedType);
-    }
     Literal original = ref.getSingleValue();
     if (original.isNull()) {
       return typename Cast::Null{original};
@@ -1489,30 +1476,10 @@ public:
     if (!original.isData() && !original.isFunction()) {
       return typename Cast::Failure{original};
     }
-    Literal actualRtt;
-    if (original.isFunction()) {
-      // Function references always have the canonical RTTs of the functions
-      // they reference. We must have a module to look up the function's type to
-      // get that canonical RTT.
-      auto* func =
-        module ? module->getFunctionOrNull(original.getFunc()) : nullptr;
-      if (!func) {
-        return typename Cast::Breaking{NONCONSTANT_FLOW};
-      }
-      actualRtt = Literal::makeCanonicalRtt(func->type);
-    } else {
-      assert(original.isData());
-      actualRtt = original.getGCData()->rtt;
-    };
-    // We have the actual and intended RTTs, so perform the cast.
-    if (actualRtt.isSubRtt(intendedRtt)) {
-      HeapType resultType = intendedRtt.type.getHeapType();
-      if (original.isFunction()) {
-        return typename Cast::Success{Literal{original.getFunc(), resultType}};
-      } else {
-        return
-          typename Cast::Success{Literal(original.getGCData(), resultType)};
-      }
+    HeapType actualType = original.type.getHeapType();
+    // We have the actual and intended types, so perform the cast.
+    if (HeapType::isSubType(actualType, curr->intendedType)) {
+      return typename Cast::Success{original};
     } else {
       return typename Cast::Failure{original};
     }
@@ -1629,33 +1596,8 @@ public:
     }
     return {value};
   }
-  Flow visitRttCanon(RttCanon* curr) {
-    return Literal::makeCanonicalRtt(curr->type.getHeapType());
-  }
-  Flow visitRttSub(RttSub* curr) {
-    Flow parent = self()->visit(curr->parent);
-    if (parent.breaking()) {
-      return parent;
-    }
-    auto parentValue = parent.getSingleValue();
-    auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
-    newSupers->push_back(parentValue.type.getHeapType());
-    if (curr->fresh) {
-      newSupers->back().makeFresh();
-    }
-    return Literal(std::move(newSupers), curr->type);
-  }
-
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    Literal rttVal;
-    if (curr->rtt) {
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return rtt;
-      }
-      rttVal = rtt.getSingleValue();
-    }
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // find why we are unreachable, and stop there.
@@ -1681,10 +1623,7 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    if (!curr->rtt) {
-      rttVal = Literal::makeCanonicalRtt(heapType);
-    }
-    return Literal(std::make_shared<GCData>(rttVal, data),
+    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
                    curr->type.getHeapType());
   }
   Flow visitStructGet(StructGet* curr) {
@@ -1728,14 +1667,6 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    Literal rttVal;
-    if (curr->rtt) {
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return rtt;
-      }
-      rttVal = rtt.getSingleValue();
-    }
     auto size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
@@ -1769,22 +1700,11 @@ public:
         data[i] = value;
       }
     }
-    if (!curr->rtt) {
-      rttVal = Literal::makeCanonicalRtt(heapType);
-    }
-    return Literal(std::make_shared<GCData>(rttVal, data),
+    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
                    curr->type.getHeapType());
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
-    Literal rttVal;
-    if (curr->rtt) {
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return rtt;
-      }
-      rttVal = rtt.getSingleValue();
-    }
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
@@ -1810,10 +1730,7 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    if (!curr->rtt) {
-      rttVal = Literal::makeCanonicalRtt(heapType);
-    }
-    return Literal(std::make_shared<GCData>(rttVal, data),
+    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
                    curr->type.getHeapType());
   }
   Flow visitArrayGet(ArrayGet* curr) {

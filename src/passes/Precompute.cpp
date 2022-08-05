@@ -518,9 +518,8 @@ private:
     if (type.isRef()) {
       return false;
     }
-    // For now, don't try to precompute an Rtt. TODO figure out when that would
-    // be safe and useful.
-    return !type.isRtt();
+
+    return true;
   }
 };
 

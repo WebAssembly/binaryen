@@ -416,8 +416,6 @@ struct InfoCollector
     handleBreakValue(curr);
     receiveChildValue(curr->ref, curr);
   }
-  void visitRttCanon(RttCanon* curr) { addRoot(curr); }
-  void visitRttSub(RttSub* curr) { addRoot(curr); }
   void visitRefAs(RefAs* curr) {
     // TODO: optimize when possible: like RefCast, not all values flow through.
     receiveChildValue(curr->value, curr);
@@ -1677,9 +1675,8 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     //       emitting a Many in any of these code paths
     filtered = contents;
   } else {
-    auto intendedType = cast->getIntendedType();
     bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), intendedType);
+      HeapType::isSubType(contents.getType().getHeapType(), cast->intendedType);
     if (isSubType) {
       // The contents are not Many, but their heap type is a subtype of the
       // intended type, so we'll pass that through. Note that we pass the entire
@@ -1694,7 +1691,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     if (mayBeNull) {
       // A null is possible, so pass that along.
       filtered.combine(
-        PossibleContents::literal(Literal::makeNull(intendedType)));
+        PossibleContents::literal(Literal::makeNull(cast->intendedType)));
     }
   }
   if (!filtered.isNone()) {

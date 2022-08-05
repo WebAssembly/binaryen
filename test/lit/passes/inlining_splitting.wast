@@ -14,8 +14,6 @@
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
-
   ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
 
   ;; CHECK:      (import "out" "func" (func $import))
@@ -203,19 +201,8 @@
     (call $br-to-toplevel (i32.const 2))
   )
 
-  ;; CHECK:      (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $l
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (br $l)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
-    ;; The RTT param here prevents us from even being inlined, even with
-    ;; splitting.
+  (func $nondefaultable-param (param $x i32) (param $y (ref $struct))
+    ;; We can inline despite the non-initial, non-defaultable param.
     (if
       (local.get $x)
       (return)
@@ -227,13 +214,30 @@
   )
 
   ;; CHECK:      (func $call-nondefaultable-param
-  ;; CHECK-NEXT:  (call $nondefaultable-param
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (rtt.canon $struct)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 (ref $struct))
+  ;; CHECK-NEXT:  (block $__inlined_func$nondefaultable-param
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (br $__inlined_func$nondefaultable-param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (loop $l
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (br $l)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $__inlined_func$nondefaultable-param)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-nondefaultable-param
-    (call $nondefaultable-param (i32.const 0) (rtt.canon $struct))
+    (call $nondefaultable-param (i32.const 0) (struct.new $struct))
   )
 
   (func $many-params (param $x i64) (param $y i32) (param $z f64)

@@ -604,35 +604,24 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // Casts have a very high cost because in the VM they end up implemented as
     // a combination of loads and branches. Given they contain branches, we do
     // not want to add any more such work.
-    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref) +
-           maybeVisit(curr->rtt);
+    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitRefCast(RefCast* curr) {
-    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref) +
-           maybeVisit(curr->rtt);
+    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitBrOn(BrOn* curr) {
     // BrOn of a null can be fairly fast, but anything else is a cast check
     // basically, and an unacceptable cost.
     CostType base =
       curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : Unacceptable;
-    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
-           maybeVisit(curr->rtt);
-  }
-  CostType visitRttCanon(RttCanon* curr) {
-    // TODO: investigate actual RTT costs in VMs
-    return 1;
-  }
-  CostType visitRttSub(RttSub* curr) {
-    // TODO: investigate actual RTT costs in VMs
-    return 2 + visit(curr->parent);
+    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref);
   }
   CostType visitStructNew(StructNew* curr) {
     // While allocation itself is almost free with generational GC, there is
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    CostType ret = 4 + maybeVisit(curr->rtt) + curr->operands.size();
+    CostType ret = 4 + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
@@ -645,11 +634,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
   CostType visitArrayNew(ArrayNew* curr) {
-    return 4 + maybeVisit(curr->rtt) + visit(curr->size) +
-           maybeVisit(curr->init);
+    return 4 + visit(curr->size) + maybeVisit(curr->init);
   }
   CostType visitArrayInit(ArrayInit* curr) {
-    CostType ret = 4 + maybeVisit(curr->rtt);
+    CostType ret = 4;
     for (auto* child : curr->values) {
       ret += visit(child);
     }

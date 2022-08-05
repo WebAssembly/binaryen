@@ -183,29 +183,25 @@
 
   ;; CHECK:      (func $creations
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $A
+  ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (rtt.canon $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $A
+  ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (rtt.canon $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_with_rtt $B
+  ;; CHECK-NEXT:   (array.new $B
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (rtt.canon $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_with_rtt $B
+  ;; CHECK-NEXT:   (array.new $B
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (rtt.canon $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -213,29 +209,25 @@
     ;; Allocating GC data has no side effects, but each allocation is unique
     ;; and so we cannot replace separate allocations with a single one.
     (drop
-      (struct.new_with_rtt $A
+      (struct.new $A
         (i32.const 1)
-        (rtt.canon $A)
       )
     )
     (drop
-      (struct.new_with_rtt $A
+      (struct.new $A
         (i32.const 1)
-        (rtt.canon $A)
       )
     )
     (drop
-      (array.new_with_rtt $B
+      (array.new $B
         (i32.const 1)
         (i32.const 1)
-        (rtt.canon $B)
       )
     )
     (drop
-      (array.new_with_rtt $B
+      (array.new $B
         (i32.const 1)
         (i32.const 1)
-        (rtt.canon $B)
       )
     )
   )

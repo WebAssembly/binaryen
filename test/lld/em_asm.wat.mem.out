@@ -12,6 +12,8 @@
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
+ (export "__start_em_asm" (global $global$1))
+ (export "__stop_em_asm" (global $global$2))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -84,6 +86,8 @@
     "main"
   ],
   "namedGlobals": {
+    "__start_em_asm" : "574",
+    "__stop_em_asm" : "665"
   },
   "invokeFuncs": [
   ],

@@ -399,8 +399,8 @@
 (module
   ;; A new with side effects
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) (field (rtt $struct)) data))
-  (type $struct (struct i32 f64 (ref any) (rtt $struct)))
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct i32 f64 (ref any)))
 
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -425,21 +425,11 @@
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 1
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $gets (param $x (ref any))
     ;; Gets to keep certain fields alive.
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
-      )
-    )
-    (drop
-      (struct.get $struct 3
         (ref.null $struct)
       )
     )
@@ -468,24 +458,20 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new $struct
   ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $new-side-effect
     ;; The 2nd&3rd fields here will be removed, since those fields have no
-    ;; reads. They has side effects, though, so the operands will be saved in
-    ;; locals. Note that we can't save the rtt.canon in locals, but it has
-    ;; no effects, and we leave such arguments as they are.
-    ;; Note also that one of the fields is non-nullable, and we need to use a
+    ;; reads. They have side effects, though, so the operands will be saved in
+    ;; locals. Note that one of the fields is non-nullable, and we need to use a
     ;; nullable local for it.
     (drop
       (struct.new $struct
         (call $helper0 (i32.const 0))
         (call $helper1 (i32.const 1))
         (call $helper2 (i32.const 2))
-        (rtt.canon $struct)
       )
     )
   )
@@ -507,7 +493,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new $struct
   ;; CHECK-NEXT:     (global.get $imm-i32)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -522,7 +507,6 @@
         (global.get $imm-i32)
         (call $helper1 (i32.const 0))
         (call $helper2 (i32.const 1))
-        (rtt.canon $struct)
       )
     )
   )
@@ -548,7 +532,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new $struct
   ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -561,7 +544,6 @@
         (global.get $mut-i32)
         (call $helper1 (i32.const 0))
         (call $helper2 (i32.const 1))
-        (rtt.canon $struct)
       )
     )
   )
@@ -580,9 +562,6 @@
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (rtt.canon $struct)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -594,7 +573,6 @@
         (i32.const 2)
         (unreachable)
         (call $helper2 (i32.const 3))
-        (rtt.canon $struct)
       )
     )
   )
@@ -605,7 +583,6 @@
   ;; CHECK-NEXT:    (call $helper0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -617,7 +594,6 @@
         (call $helper0 (i32.const 0))
         (f64.const 3.14159)
         (local.get $any)
-        (rtt.canon $struct)
       )
     )
   )

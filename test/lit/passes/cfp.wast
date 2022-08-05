@@ -37,9 +37,7 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i64)
@@ -61,9 +59,7 @@
     ;; references escaping and being stored etc. - it just thinks at the type
     ;; level.)
     (drop
-      (struct.new_default_with_rtt $struct
-        (rtt.canon $struct)
-      )
+      (struct.new_default $struct)
     )
     (drop
       (struct.get $struct 0
@@ -80,9 +76,8 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -100,9 +95,8 @@
     ;; The only place this type is created is with a constant value, and so we
     ;; can optimize the later get into a constant (plus a drop of the ref).
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (f32.const 42)
-        (rtt.canon $struct)
       )
     )
     (drop
@@ -120,9 +114,8 @@
 
   ;; CHECK:      (func $test (type $f32_=>_none) (param $f f32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (local.get $f)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -134,9 +127,8 @@
   (func $test (param $f f32)
     ;; The value given is not a constant, and so we cannot optimize.
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (local.get $f)
-        (rtt.canon $struct)
       )
     )
     (drop
@@ -156,17 +148,15 @@
   (type $struct (struct i32))
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
   )
@@ -221,17 +211,15 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
   )
@@ -246,15 +234,13 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 1337)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -265,15 +251,13 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (f32.const 42)
-        (rtt.canon $struct)
       )
     )
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (f32.const 1337)
-        (rtt.canon $struct)
       )
     )
     (drop
@@ -292,17 +276,15 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (f32.const 42)
-        (rtt.canon $struct)
       )
     )
   )
@@ -343,17 +325,15 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (f32.const 42)
-        (rtt.canon $struct)
       )
     )
   )
@@ -400,24 +380,22 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (block (result f32)
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:     (f32.const 42)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         ;; Fall though a 42 via a block.
         (block (result f32)
           (nop)
           (f32.const 42)
         )
-        (rtt.canon $struct)
       )
     )
   )
@@ -473,9 +451,8 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (ref.func $test)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -491,9 +468,8 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (ref.func $test)
-        (rtt.canon $struct)
       )
     )
     (drop
@@ -512,9 +488,6 @@
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -538,8 +511,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_with_rtt $struct
-        (i32.const 10)
+      (struct.new $struct
         (unreachable)
       )
     )
@@ -568,17 +540,15 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
   )
@@ -615,9 +585,8 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -627,9 +596,8 @@
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
     (struct.set $struct 0
@@ -673,19 +641,17 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $substruct
+      (struct.new $substruct
         (i32.const 10)
         (f64.const 3.14159)
-        (rtt.canon $substruct)
       )
     )
   )
@@ -722,31 +688,27 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
     (drop
-      (struct.new_with_rtt $substruct
+      (struct.new $substruct
         (i32.const 10)
         (f64.const 3.14159)
-        (rtt.canon $substruct)
       )
     )
   )
@@ -784,31 +746,27 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
     (drop
-      (struct.new_with_rtt $substruct
+      (struct.new $substruct
         (i32.const 20)
         (f64.const 3.14159)
-        (rtt.canon $substruct)
       )
     )
   )
@@ -844,31 +802,27 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
     (drop
-      (struct.new_with_rtt $substruct
+      (struct.new $substruct
         (i32.const 20)
         (f64.const 3.14159)
-        (rtt.canon $substruct)
       )
     )
   )
@@ -905,9 +859,8 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -915,18 +868,16 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.const 10)
-        (rtt.canon $struct)
       )
     )
     (struct.set $struct 0
@@ -934,10 +885,9 @@
       (i32.const 10)
     )
     (drop
-      (struct.new_with_rtt $substruct
+      (struct.new $substruct
         (i32.const 20)
         (f64.const 3.14159)
-        (rtt.canon $substruct)
       )
     )
   )
@@ -975,21 +925,19 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:   (struct.new $struct3
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (ref.null any)
-  ;; CHECK-NEXT:    (rtt.canon $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct3
+      (struct.new $struct3
         (i32.const 20)
         (f64.const 3.14159)
         (ref.null any)
-        (rtt.canon $struct3)
       )
     )
   )
@@ -1114,34 +1062,31 @@
 
   ;; CHECK:      (func $create (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct1
+  ;; CHECK-NEXT:   (struct.new $struct1
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (rtt.canon $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:   (struct.new $struct3
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (i32.const 999)
   ;; CHECK-NEXT:    (f64.const 2.71828)
   ;; CHECK-NEXT:    (f64.const 9.9999999)
   ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:    (local.get $any)
-  ;; CHECK-NEXT:    (rtt.canon $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create (param $any anyref)
     (drop
-      (struct.new_with_rtt $struct1
+      (struct.new $struct1
         (i32.const 10)
         (i32.const 20)
-        (rtt.canon $struct1)
       )
     )
     (drop
-      (struct.new_with_rtt $struct3
+      (struct.new $struct3
         (i32.const 10)
         (i32.const 999) ;; use a different value here
         (f64.const 2.71828)
@@ -1149,7 +1094,6 @@
         (ref.null any)
         (local.get $any) ;; use a non-constant value here, which can never be
                          ;; optimized.
-        (rtt.canon $struct3)
       )
     )
   )
@@ -1344,47 +1288,41 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct1
+  ;; CHECK-NEXT:   (struct.new $struct1
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct2
+  ;; CHECK-NEXT:   (struct.new $struct2
   ;; CHECK-NEXT:    (i32.const 9999)
   ;; CHECK-NEXT:    (f64.const 0)
-  ;; CHECK-NEXT:    (rtt.canon $struct2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:   (struct.new $struct3
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:    (ref.null any)
-  ;; CHECK-NEXT:    (rtt.canon $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct1
+      (struct.new $struct1
         (i32.const 10)
-        (rtt.canon $struct1)
       )
     )
     (drop
-      (struct.new_with_rtt $struct2
+      (struct.new $struct2
         (i32.const 9999) ;; use a different value here
         (f64.const 0)
-        (rtt.canon $struct2)
       )
     )
     (drop
-      (struct.new_with_rtt $struct3
+      (struct.new $struct3
         (i32.const 10)
         (f64.const 0)
         (ref.null any)
-        (rtt.canon $struct3)
       )
     )
   )
@@ -1447,16 +1385,14 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct1
+  ;; CHECK-NEXT:   (struct.new $struct1
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct2
+  ;; CHECK-NEXT:   (struct.new $struct2
   ;; CHECK-NEXT:    (i32.const 9999)
   ;; CHECK-NEXT:    (f64.const 0)
-  ;; CHECK-NEXT:    (rtt.canon $struct2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct2 0
@@ -1464,26 +1400,23 @@
   ;; CHECK-NEXT:   (i32.const 9999)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:   (struct.new $struct3
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:    (ref.null any)
-  ;; CHECK-NEXT:    (rtt.canon $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct1
+      (struct.new $struct1
         (i32.const 10)
-        (rtt.canon $struct1)
       )
     )
     (drop
-      (struct.new_with_rtt $struct2
+      (struct.new $struct2
         (i32.const 9999) ;; use a different value here
         (f64.const 0)
-        (rtt.canon $struct2)
       )
     )
     (struct.set $struct2 0
@@ -1492,11 +1425,10 @@
       (f64.const 0)
     )
     (drop
-      (struct.new_with_rtt $struct3
+      (struct.new $struct3
         (i32.const 10)
         (f64.const 0)
         (ref.null any)
-        (rtt.canon $struct3)
       )
     )
   )
@@ -1547,7 +1479,7 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (i32.const 10)
   ;; CHECK-NEXT:    )
@@ -1557,19 +1489,17 @@
   ;; CHECK-NEXT:     (f64.const 2.71828)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 30)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $struct
+      (struct.new $struct
         (i32.eqz (i32.const 10)) ;; not a constant (as far as this pass knows)
         (f64.const 3.14159)
         (i32.const 20)
         (f64.abs (f64.const 2.71828)) ;; not a constant
         (i32.const 30)
-        (rtt.canon $struct)
       )
     )
   )
@@ -1683,17 +1613,15 @@
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $C
+  ;; CHECK-NEXT:   (struct.new $C
   ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (rtt.canon $C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
     (drop
-      (struct.new_with_rtt $C
+      (struct.new $C
         (i32.const 10)
-        (rtt.canon $C)
       )
     )
   )
@@ -1735,9 +1663,7 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (ref.null $struct)
@@ -1763,9 +1689,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_default_with_rtt $struct
-        (rtt.canon $struct)
-      )
+      (struct.new_default $struct)
     )
     ;; This copy does not actually introduce any new possible values, and so it
     ;; remains true that the only possible value is the default.
@@ -1795,9 +1719,7 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 1
   ;; CHECK-NEXT:   (ref.null $struct)
@@ -1816,9 +1738,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_default_with_rtt $struct
-        (rtt.canon $struct)
-      )
+      (struct.new_default $struct)
     )
     ;; As this is not a copy, we cannot optimize struct.1's get lower down.
     (struct.set $struct 1
@@ -1844,9 +1764,7 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:    (rtt.canon $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (ref.null $struct)
@@ -1867,9 +1785,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (struct.new_default_with_rtt $struct
-        (rtt.canon $struct)
-      )
+      (struct.new_default $struct)
     )
     ;; As this is not a copy, we cannot optimize struct.0's get lower down.
     (struct.set $struct 0
@@ -2182,4 +2098,3 @@
     )
   )
 )
-

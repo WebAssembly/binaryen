@@ -53,8 +53,6 @@ Literal::Literal(Type type) : type(type) {
   if (isData()) {
     assert(!type.isNonNullable());
     new (&gcData) std::shared_ptr<GCData>();
-  } else if (type.isRtt()) {
-    new (this) Literal(Literal::makeCanonicalRtt(type.getHeapType()));
   } else {
     // For anything else, zero out all the union data.
     memset(&v128, 0, 16);
@@ -69,11 +67,6 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
   // The type must be a proper type for GC data.
   assert(isData());
-}
-
-Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
-  : rttSupers(std::move(rttSupers)), type(type) {
-  assert(type.isRtt());
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -104,11 +97,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
     func = other.func;
     return;
   }
-  if (type.isRtt()) {
-    // Allocate a new RttSupers with a copy of the other's data.
-    new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
-    return;
-  }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (heapType.isBasic()) {
@@ -136,11 +124,8 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-
   if (isData()) {
     gcData.~shared_ptr();
-  } else if (type.isRtt()) {
-    rttSupers.~unique_ptr();
   }
 }
 
@@ -150,18 +135,6 @@ Literal& Literal::operator=(const Literal& other) {
     new (this) auto(other);
   }
   return *this;
-}
-
-Literal Literal::makeCanonicalRtt(HeapType type) {
-  auto supers = std::make_unique<RttSupers>();
-  std::optional<HeapType> supertype;
-  for (auto curr = type; (supertype = curr.getSuperType()); curr = *supertype) {
-    supers->emplace_back(*supertype);
-  }
-  // We want the highest types to be first.
-  std::reverse(supers->begin(), supers->end());
-  size_t depth = supers->size();
-  return Literal(std::move(supers), Type(Rtt(depth, type)));
 }
 
 template<typename LaneT, int Lanes>
@@ -228,8 +201,6 @@ Literal Literal::makeZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
     return makeNull(type.getHeapType());
-  } else if (type.isRtt()) {
-    return Literal(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -255,11 +226,6 @@ std::array<uint8_t, 16> Literal::getv128() const {
 std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isData());
   return gcData;
-}
-
-const RttSupers& Literal::getRttSupers() const {
-  assert(type.isRtt());
-  return *rttSupers;
 }
 
 Literal Literal::castToF32() {
@@ -383,8 +349,6 @@ bool Literal::operator==(const Literal& other) const {
     // other non-null reference type literals cannot represent concrete values,
     // i.e. there is no concrete anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
-  } else if (type.isRtt()) {
-    return *rttSupers == *other.rttSupers;
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -494,7 +458,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     if (literal.isData()) {
       auto data = literal.getGCData();
       if (data) {
-        o << "[ref " << data->rtt << ' ' << data->values << ']';
+        o << "[ref " << data->type << ' ' << data->values << ']';
       } else {
         o << "[ref null " << literal.type << ']';
       }
@@ -524,15 +488,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           WASM_UNREACHABLE("type should have been handled above");
       }
     }
-  } else if (literal.type.isRtt()) {
-    o << "[rtt ";
-    for (auto& super : literal.getRttSupers()) {
-      o << super.type << " :> ";
-      if (super.freshPtr) {
-        o << " (fresh)";
-      }
-    }
-    o << literal.type << ']';
   } else {
     TODO_SINGLE_COMPOUND(literal.type);
     switch (literal.type.getBasic()) {
@@ -2562,33 +2517,6 @@ Literal Literal::relaxedFmaF64x2(const Literal& left,
 Literal Literal::relaxedFmsF64x2(const Literal& left,
                                  const Literal& right) const {
   return ternary<2, &Literal::getLanesF64x2, &Literal::fms>(*this, left, right);
-}
-
-bool Literal::isSubRtt(const Literal& other) const {
-  assert(type.isRtt() && other.type.isRtt());
-  // For this literal to be a sub-rtt of the other rtt, the supers must be a
-  // superset. That is, if other is a->b->c then we should be a->b->c as well
-  // with possibly ->d->.. added. The rttSupers array represents those chains,
-  // but only the supers, which means the last item in the chain is simply the
-  // type of the literal.
-  const auto& supers = getRttSupers();
-  const auto& otherSupers = other.getRttSupers();
-  if (otherSupers.size() > supers.size()) {
-    return false;
-  }
-  for (Index i = 0; i < otherSupers.size(); i++) {
-    if (supers[i] != otherSupers[i]) {
-      return false;
-    }
-  }
-  // If we have more supers than other, compare that extra super. Otherwise,
-  // we have the same amount of supers, and must be completely identical to
-  // other.
-  if (otherSupers.size() < supers.size()) {
-    return other.type.getHeapType() == supers[otherSupers.size()].type;
-  } else {
-    return other.type == type;
-  }
 }
 
 } // namespace wasm

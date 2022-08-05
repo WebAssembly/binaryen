@@ -12,7 +12,7 @@ void test_builder() {
   std::cout << ";; Test TypeBuilder\n";
 
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
-  // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
+  // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
 
   TypeBuilder builder;
@@ -24,11 +24,10 @@ void test_builder() {
   Type refStruct = builder.getTempRefType(builder[1], NonNullable);
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
-  Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
   Type refNullAny(HeapType::any, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
-  Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
+  Struct struct_({Field(refNullArray, Immutable)});
   Array array(Field(refNullAny, Mutable));
 
   {
@@ -41,7 +40,6 @@ void test_builder() {
     std::cout << "(ref $struct) => " << print(refStruct) << "\n";
     std::cout << "(ref $array) => " << print(refArray) << "\n";
     std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
-    std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
   }
 
   builder[0] = sig;
@@ -58,7 +56,6 @@ void test_builder() {
     std::cout << "(ref $struct) => " << print(refStruct) << "\n";
     std::cout << "(ref $array) => " << print(refArray) << "\n";
     std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
-    std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
   }
 
   std::vector<HeapType> built = *builder.build();
@@ -67,7 +64,6 @@ void test_builder() {
   Type newRefStruct = Type(built[1], NonNullable);
   Type newRefArray = Type(built[2], NonNullable);
   Type newRefNullArray = Type(built[2], Nullable);
-  Type newRttArray = Type(Rtt(0, built[2]));
 
   {
     IndexedTypeNameGenerator print(built);
@@ -79,7 +75,6 @@ void test_builder() {
     std::cout << "(ref $struct) => " << print(newRefStruct) << "\n";
     std::cout << "(ref $array) => " << print(newRefArray) << "\n";
     std::cout << "(ref null $array) => " << print(newRefNullArray) << "\n";
-    std::cout << "(rtt 0 $array) => " << print(newRttArray) << "\n\n";
   }
 }
 

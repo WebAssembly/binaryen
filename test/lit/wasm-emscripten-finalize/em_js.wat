@@ -3,16 +3,6 @@
 
 ;; RUN: wasm-emscripten-finalize %s -S | filecheck %s
 
-;; All functions should be stripped from the binary, regardless
-;; of internal name
-;; CHECK-NOT: (global
-
-;; The data section that contains only em_js strings should
-;; be stripped (shrunk to zero size):
-;; CHECK: (data (i32.const 1024) "some JS string data\00xxx")
-;; CHECK: (data (i32.const 512) "")
-;; CHECK: (data (i32.const 2048) "more JS string data\00yyy")
-
 ;;      CHECK:  "emJsFuncs": {
 ;; CHECK-NEXT:    "bar": "more JS string data",
 ;; CHECK-NEXT:    "baz": "Only em_js strings here",
