@@ -163,8 +163,6 @@ function test_ids() {
   console.log("RefTestId: " + binaryen.RefTestId);
   console.log("RefCastId: " + binaryen.RefCastId);
   console.log("BrOnId: " + binaryen.BrOnId);
-  console.log("RttCanonId: " + binaryen.RttCanonId);
-  console.log("RttSubId: " + binaryen.RttSubId);
   console.log("StructNewId: " + binaryen.StructNewId);
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);

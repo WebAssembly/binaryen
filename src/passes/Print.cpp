@@ -152,7 +152,6 @@ struct TypeNamePrinter {
   void print(const Signature& sig);
   void print(const Struct& struct_);
   void print(const Array& array);
-  void print(const Rtt& rtt);
 
   // FIXME: This hard limit on how many times we call print() avoids extremely
   //        large outputs, which can be inconveniently large in some cases, but
@@ -179,8 +178,6 @@ void TypeNamePrinter::print(Type type) {
     os << type;
   } else if (type.isTuple()) {
     print(type.getTuple());
-  } else if (type.isRtt()) {
-    print(type.getRtt());
   } else if (type.isRef()) {
     if (!maybePrintRefShorthand(os, type)) {
       os << "ref";
@@ -301,14 +298,6 @@ void TypeNamePrinter::print(const Array& array) {
   os << ']';
 }
 
-void TypeNamePrinter::print(const Rtt& rtt) {
-  os << "rtt_";
-  if (rtt.hasDepth()) {
-    os << rtt.depth << '_';
-  }
-  print(rtt.heapType);
-}
-
 } // anonymous namespace
 
 static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
@@ -322,14 +311,6 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
       printType(o, t, wasm);
       sep = " ";
     }
-    o << ')';
-  } else if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    o << "(rtt ";
-    if (rtt.hasDepth()) {
-      o << rtt.depth << ' ';
-    }
-    TypeNamePrinter(o, wasm).print(rtt.heapType);
     o << ')';
   } else if (type.isRef()) {
     if (!maybePrintRefShorthand(o, type)) {
@@ -2027,24 +2008,17 @@ struct PrintExpressionContents
     }
   }
   void visitRefTest(RefTest* curr) {
-    if (curr->rtt) {
-      printMedium(o, "ref.test");
-    } else {
-      printMedium(o, "ref.test_static ");
-      printHeapType(o, curr->intendedType, wasm);
-    }
+    printMedium(o, "ref.test_static ");
+    printHeapType(o, curr->intendedType, wasm);
   }
+
   void visitRefCast(RefCast* curr) {
-    if (curr->rtt) {
-      printMedium(o, "ref.cast");
+    if (curr->safety == RefCast::Unsafe) {
+      printMedium(o, "ref.cast_nop_static ");
     } else {
-      if (curr->safety == RefCast::Unsafe) {
-        printMedium(o, "ref.cast_nop_static ");
-      } else {
-        printMedium(o, "ref.cast_static ");
-      }
-      printHeapType(o, curr->intendedType, wasm);
+      printMedium(o, "ref.cast_static ");
     }
+    printHeapType(o, curr->intendedType, wasm);
   }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
@@ -2055,27 +2029,17 @@ struct PrintExpressionContents
         printMedium(o, "br_on_non_null ");
         break;
       case BrOnCast:
-        if (curr->rtt) {
-          printMedium(o, "br_on_cast ");
-        } else {
-          printMedium(o, "br_on_cast_static ");
-          printName(curr->name, o);
-          o << ' ';
-          printHeapType(o, curr->intendedType, wasm);
-          return;
-        }
-        break;
+        printMedium(o, "br_on_cast_static ");
+        printName(curr->name, o);
+        o << ' ';
+        printHeapType(o, curr->intendedType, wasm);
+        return;
       case BrOnCastFail:
-        if (curr->rtt) {
-          printMedium(o, "br_on_cast_fail ");
-        } else {
-          printMedium(o, "br_on_cast_static_fail ");
-          printName(curr->name, o);
-          o << ' ';
-          printHeapType(o, curr->intendedType, wasm);
-          return;
-        }
-        break;
+        printMedium(o, "br_on_cast_static_fail ");
+        printName(curr->name, o);
+        o << ' ';
+        printHeapType(o, curr->intendedType, wasm);
+        return;
       case BrOnFunc:
         printMedium(o, "br_on_func ");
         break;
@@ -2098,18 +2062,6 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid ref.is_*");
     }
     printName(curr->name, o);
-  }
-  void visitRttCanon(RttCanon* curr) {
-    printMedium(o, "rtt.canon ");
-    TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
-  }
-  void visitRttSub(RttSub* curr) {
-    if (curr->fresh) {
-      printMedium(o, "rtt.fresh_sub ");
-    } else {
-      printMedium(o, "rtt.sub ");
-    }
-    TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
 
   // If we cannot print a valid unreachable instruction (say, a struct.get,
@@ -2134,9 +2086,6 @@ struct PrintExpressionContents
     printMedium(o, "struct.new");
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
-    }
-    if (curr->rtt) {
-      printMedium(o, "_with_rtt");
     }
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
@@ -2188,9 +2137,6 @@ struct PrintExpressionContents
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
     }
-    if (curr->rtt) {
-      printMedium(o, "_with_rtt");
-    }
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
@@ -2198,10 +2144,7 @@ struct PrintExpressionContents
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "array.init");
-    if (!curr->rtt) {
-      printMedium(o, "_static");
-    }
+    printMedium(o, "array.init_static");
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }

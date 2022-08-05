@@ -943,8 +943,6 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
 // TODO (gc): ref.test
 // TODO (gc): ref.cast
 // TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
 // TODO (gc): struct.new
 // TODO (gc): struct.get
 // TODO (gc): struct.set
@@ -2985,10 +2983,6 @@ BINARYEN_API BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
 BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
                                                     BinaryenHeapType heapType,
                                                     int nullable);
-// Gets a temporary RTT for use with and owned by the type builder.
-BINARYEN_API BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
-                                                    BinaryenIndex depth,
-                                                    BinaryenHeapType heapType);
 // Sets the type at `index` to be a subtype of the type at `superIndex`.
 BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
                                         BinaryenIndex index,

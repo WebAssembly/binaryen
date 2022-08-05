@@ -69,30 +69,28 @@
    (unreachable)
   )
  )
- ;; a function that gets an rtt that is never used. we cannot create a local for
- ;; that parameter, as it is not defaultable, so do not remove the parameter.
- ;; CHECK:      (func $get-rtt (param $0 (rtt ${}))
+ ;; A function that gets a non-nullable reference that is never used. We can
+ ;; still create a nullable local for that parameter.
+ ;; CHECK:      (func $get-nonnull
+ ;; CHECK-NEXT:  (local $0 (ref null ${}))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $get-rtt (type $rtt_${}_=>_none) (param $0 (rtt ${}))
+ ;; NOMNL:      (func $get-nonnull (type $none_=>_none)
+ ;; NOMNL-NEXT:  (local $0 (ref null ${}))
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
- (func $get-rtt (param $0 (rtt ${}))
+ (func $get-nonnull (param $0 (ref ${}))
   (nop)
  )
- ;; CHECK:      (func $send-rtt
- ;; CHECK-NEXT:  (call $get-rtt
- ;; CHECK-NEXT:   (rtt.canon ${})
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $send-nonnull
+ ;; CHECK-NEXT:  (call $get-nonnull)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $send-rtt (type $none_=>_none)
- ;; NOMNL-NEXT:  (call $get-rtt
- ;; NOMNL-NEXT:   (rtt.canon ${})
- ;; NOMNL-NEXT:  )
+ ;; NOMNL:      (func $send-nonnull (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $get-nonnull)
  ;; NOMNL-NEXT: )
- (func $send-rtt
-  (call $get-rtt
-   (rtt.canon ${})
+ (func $send-nonnull
+  (call $get-nonnull
+   (struct.new ${})
   )
  )
 )

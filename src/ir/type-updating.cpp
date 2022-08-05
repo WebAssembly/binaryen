@@ -117,9 +117,6 @@ void GlobalTypeRewriter::update() {
       if (type.isRef()) {
         return Type(getNew(type.getHeapType()), type.getNullability());
       }
-      if (type.isRtt()) {
-        return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
-      }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
         for (auto& t : tuple.types) {
@@ -250,18 +247,6 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     return typeBuilder.getTempRefType(
       typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
       type.getNullability());
-  }
-  if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    auto newRtt = rtt;
-    auto heapType = type.getHeapType();
-    if (!indexedTypes.indices.count(heapType)) {
-      // See above with references.
-      return type;
-    }
-    newRtt.heapType =
-      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]);
-    return typeBuilder.getTempRttType(newRtt);
   }
   if (type.isTuple()) {
     auto& tuple = type.getTuple();

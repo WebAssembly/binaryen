@@ -1490,8 +1490,6 @@ BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
 // TODO (gc): ref.test
 // TODO (gc): ref.cast
 // TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
 // TODO (gc): struct.new
 // TODO (gc): struct.get
 // TODO (gc): struct.set
@@ -4909,13 +4907,6 @@ BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
     typeList[cur] = Type(types[cur]);
   }
   return ((TypeBuilder*)builder)->getTempTupleType(Tuple(typeList)).getID();
-}
-BinaryenType TypeBuilderGetTempRttType(TypeBuilderRef builder,
-                                       BinaryenIndex depth,
-                                       BinaryenHeapType heapType) {
-  return ((TypeBuilder*)builder)
-    ->getTempRttType(Rtt(depth, HeapType(heapType)))
-    .getID();
 }
 BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
                                        BinaryenHeapType heapType,

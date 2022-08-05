@@ -2259,14 +2259,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitRttCanon(RttCanon* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitRttSub(RttSub* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitStructNew(StructNew* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
