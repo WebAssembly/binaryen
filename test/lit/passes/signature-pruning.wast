@@ -812,7 +812,6 @@
 )
 
 ;; Do not prune signatures used in the call.without.effects intrinsic.
-
 (module
   ;; CHECK:      (type $i32_funcref_=>_i32 (func_subtype (param i32 funcref) (result i32) func))
 
