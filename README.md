@@ -566,9 +566,18 @@ The `check.py` script supports some options:
  * We have tests from upstream in `tests/spec`, in git submodules. Running
    `./check.py` should update those.
 
-Note that we are trying to gradually port the legacy wasm-opt tests to use `lit` and `filecheck` as we modify them.
-For `passes` tests that output wast, this can be done automatically with `scripts/port_passes_tests_to_lit.py` and for non-`passes` tests that output wast, see
-https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a simple manual port.
+Note that we are trying to gradually port the legacy wasm-opt tests to use `lit`
+and `filecheck` as we modify them.  For `passes` tests that output wast, this
+can be done automatically with `scripts/port_passes_tests_to_lit.py` and for
+non-`passes` tests that output wast, see
+https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a
+simple manual port.
+
+For lit test the test expectations (the CHECK lines) can often be automatically
+updated as changes are made to binaryen.  See `scripts/update_lit_checks.py`.
+
+Non-lit tests can also be automatically updated in most cases.  See
+`scripts/auto_update_tests.py`.
 
 ### Setting up dependencies
 
