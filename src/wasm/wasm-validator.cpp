@@ -820,7 +820,7 @@ void FunctionValidator::visitCall(Call* curr) {
     if (!curr->operands.empty()) {
       auto* target = curr->operands.back();
       // Ignore unreachable here, and leave other validation issues here for the
-      // global scope which already does this..
+      // global scope which already does this.
       if (target->type.isFunction()) {
         // Copy the original call and remove the reference. It must then match
         // the expected signature.
