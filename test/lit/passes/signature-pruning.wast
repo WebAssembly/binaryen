@@ -828,7 +828,8 @@
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $func (param i32) (result i32)
-    ;; The parameter is unused, so we want to prune it.
+    ;; The parameter is unused, so we want to prune it. We won't because of the
+    ;; situation in the calling function, below.
     (i32.const 1)
   )
 
