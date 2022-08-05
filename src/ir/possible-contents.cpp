@@ -1567,7 +1567,7 @@ void Flower::readFromData(HeapType declaredHeapType,
   if (refContents.isLiteral()) {
     // The only reference literals we have are nulls (handled above) and
     // ref.func. ref.func will trap in struct|array.get, so nothing will be read
-    // here (when we finish optimizing all instructions like RefAs then
+    // here (when we finish optimizing all instructions like BrOn then
     // ref.funcs should get filtered out before arriving here TODO).
     assert(refContents.getType().isFunction());
     return;
