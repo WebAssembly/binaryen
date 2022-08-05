@@ -2,6 +2,9 @@
 ;; RUN: wasm-opt %s --rse --enable-gc-nn-locals -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $B (struct (field dataref)))
+
+ ;; CHECK:      (type $A (struct (field (ref null data))))
  (type $A (struct_subtype (field (ref null data)) data))
 
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
@@ -22,6 +25,15 @@
   (local $tuple ((ref any) (ref any)))
  )
 
+ ;; CHECK:      (func $needs-refinalize (param $b (ref $B)) (result anyref)
+ ;; CHECK-NEXT:  (local $a (ref null $A))
+ ;; CHECK-NEXT:  (local.set $a
+ ;; CHECK-NEXT:   (local.get $b)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.get $B 0
+ ;; CHECK-NEXT:   (local.get $b)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $needs-refinalize (param $b (ref $B)) (result anyref)
   (local $a (ref null $A))
   ;; Make $a contain $b.
