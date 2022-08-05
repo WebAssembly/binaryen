@@ -70,7 +70,6 @@ bool flatten(Module& wasm) {
   dataSegments[0]->data.swap(data);
   wasm.removeDataSegments(
     [&](DataSegment* curr) { return curr->name != dataSegments[0]->name; });
-  dataSegments.resize(1);
 
   return true;
 }
