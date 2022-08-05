@@ -28,6 +28,7 @@
 //
 
 #include "ir/find_all.h"
+#include "ir/intrinsics.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
