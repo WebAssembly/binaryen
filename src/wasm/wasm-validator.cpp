@@ -443,15 +443,17 @@ private:
                  "return_call* requires tail calls to be enabled");
   }
 
+  // |printable| is the expression to print in case of an error. That may differ
+  // from |curr| which we are validating.
   template<typename T>
-  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+  void validateCallParamsAndResult(T* curr, HeapType sigType, Expression* printable) {
     if (!shouldBeTrue(
-          sigType.isSignature(), curr, "Heap type must be a signature type")) {
+          sigType.isSignature(), printable, "Heap type must be a signature type")) {
       return;
     }
     auto sig = sigType.getSignature();
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
-                      curr,
+                      printable,
                       "call* param number must match")) {
       return;
     }
@@ -459,7 +461,7 @@ private:
     for (const auto& param : sig.params) {
       if (!shouldBeSubType(curr->operands[i]->type,
                            param,
-                           curr,
+                           printable,
                            "call param types must match") &&
           !info.quiet) {
         getStream() << "(on argument " << i << ")\n";
@@ -469,20 +471,26 @@ private:
     if (curr->isReturn) {
       shouldBeEqual(curr->type,
                     Type(Type::unreachable),
-                    curr,
+                    printable,
                     "return_call* should have unreachable type");
       shouldBeSubType(
         sig.results,
         getFunction()->getResults(),
-        curr,
+        printable,
         "return_call* callee return type must match caller return type");
     } else {
       shouldBeEqualOrFirstIsUnreachable(
         curr->type,
         sig.results,
-        curr,
+        printable,
         "call* type must match callee return type");
     }
+  }
+
+  // In the common case, we use |curr| as |printable|.
+  template<typename T>
+  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+    validateCallParamsAndResult(curr, sigType, curr);
   }
 
   Type indexType() { return getModule()->memory.indexType; }
@@ -796,6 +804,37 @@ void FunctionValidator::visitCall(Call* curr) {
     return;
   }
   validateCallParamsAndResult(curr, target->type);
+
+  if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+    // call.without.effects has the specific form of the last argument being a
+    // function reference, which will be called with all the previous arguments.
+    // The type must be consistent with that. This, for example, is not:
+    //
+    //  (call $call.without.effects
+    //    (i32.const 1)
+    //    (.. some function reference that expects an f64 param and not i32 ..)
+    //  )
+    if (!curr->operands.empty()) {
+      auto* target = curr->operands.back();
+      // Ignore unreachable here, and leave other validation issues here for the
+      // global scope which already does this..
+      if (target->type.isFunction()) {
+        // Copy the original call and remove the reference. It must then match
+        // the expected signature.
+        struct Copy {
+          std::vector<Expression*> operands;
+          bool isReturn;
+          Type type;
+        } copy;
+        for (Index i = 0; i < curr->operands.size() - 1; i++) {
+          copy.operands.push_back(curr->operands[i]);
+        }
+        copy.isReturn = curr->isReturn;
+        copy.type = curr->type;
+        validateCallParamsAndResult(&copy, target->type.getHeapType(), curr);
+      }
+    }
+  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
