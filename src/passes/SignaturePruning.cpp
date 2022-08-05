@@ -112,7 +112,7 @@ struct SignaturePruning : public Pass {
           // The last operand is the actual call target.
           auto* target = call->operands.back();
           if (target->type != Type::unreachable) {
-//            allInfo[target->type.getHeapType()].optimizable = false;
+            allInfo[target->type.getHeapType()].optimizable = false;
           }
         }
       }

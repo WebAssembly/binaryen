@@ -816,7 +816,7 @@
 (module
   ;; CHECK:      (type $i32_funcref_=>_i32 (func_subtype (param i32 funcref) (result i32) func))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+  ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
@@ -825,8 +825,7 @@
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (func $func (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $func (type $i32_=>_i32) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $func (param i32) (result i32)
