@@ -977,6 +977,12 @@
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (local $child (ref null $child))
@@ -1011,6 +1017,16 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
+      )
+    )
+    ;; A ref.func is cast to a struct type, and then we read from that. The cast
+    ;; will trap at runtime, of course; for here, we should not error and also
+    ;; we can optimize these to unreachables.
+    (drop
+      (struct.get $parent 0
+        (ref.cast_static $parent
+          (ref.func $func)
+        )
       )
     )
   )
