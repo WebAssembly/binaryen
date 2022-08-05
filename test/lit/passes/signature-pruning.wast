@@ -810,3 +810,42 @@
     )
   )
 )
+
+;; Do not prune signatures used in the call.without.effects intrinsic.
+
+(module
+  ;; CHECK:      (type $i32_funcref_=>_i32 (func_subtype (param i32 funcref) (result i32) func))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $func (param i32) (result i32)
+    ;; The parameter is unused, so we want to prune it.
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (call $cwe
+  ;; CHECK-NEXT:   (i32.const 41)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (result i32)
+    ;; We call $func using call.without.effects. This causes us to not optimize
+    ;; in this case.
+    (call $cwe
+      (i32.const 41)
+      (ref.func $func)
+    )
+  )
+)
