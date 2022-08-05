@@ -900,6 +900,10 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // showing the state of the function body before the pass if it breaks
   // something. (Note that we must skip the "print" pass, as we'll be printing
   // from here, which runs that pass, so we'd infinitely recurse.)
+  //
+  // Note that we can't do all this in the main pass-debug logic in run()
+  // because that runs on the entire module. Here we know which individual
+  // function is being operated on.
   bool extraValidation = isNested && getPassDebug() == 2 && options.validate &&
        pass->name != "print";
   std::stringstream bodyBefore;
