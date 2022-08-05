@@ -152,12 +152,12 @@
      (i32.const 0)
      (i32.const 156)
     )
-    (memory.init 2
+    (memory.init $mimport$0 2
      (i32.const 1588)
      (i32.const 0)
      (i32.const 70)
     )
-    (memory.init 3
+    (memory.init $mimport$0 3
      (i32.const 1658)
      (i32.const 0)
      (i32.const 124)
