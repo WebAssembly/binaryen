@@ -446,9 +446,12 @@ private:
   // |printable| is the expression to print in case of an error. That may differ
   // from |curr| which we are validating.
   template<typename T>
-  void validateCallParamsAndResult(T* curr, HeapType sigType, Expression* printable) {
-    if (!shouldBeTrue(
-          sigType.isSignature(), printable, "Heap type must be a signature type")) {
+  void validateCallParamsAndResult(T* curr,
+                                   HeapType sigType,
+                                   Expression* printable) {
+    if (!shouldBeTrue(sigType.isSignature(),
+                      printable,
+                      "Heap type must be a signature type")) {
       return;
     }
     auto sig = sigType.getSignature();
