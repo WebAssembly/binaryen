@@ -154,7 +154,7 @@ public:
 
   SmallSetBase() {}
   SmallSetBase(std::initializer_list<T> init) {
-    for (T item : init) {
+    for (const T& item : init) {
       insert(item);
     }
   }
