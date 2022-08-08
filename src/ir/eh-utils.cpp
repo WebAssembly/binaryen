@@ -157,9 +157,6 @@ void handleBlockNestedPops(Function* func, Module& wasm) {
   for (auto* try_ : trys.list) {
     handleBlockNestedPop(try_, func, wasm);
   }
-  // Pops we handled can be of non-defaultable types, so we may have created
-  // non-nullable type locals. Fix them.
-  TypeUpdating::handleNonDefaultableLocals(func, wasm);
 }
 
 Pop* findPop(Expression* expr) {
