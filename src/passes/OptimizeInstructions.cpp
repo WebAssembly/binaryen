@@ -931,6 +931,7 @@ struct OptimizeInstructions
         // i32.eqz(i32.eqz(x))  =>  i32(x) != 0
         // i32.eqz(i64.eqz(x))  =>  i64(x) != 0
         //   iff shinkLevel == 0
+        // (1 instruction instead of 2, but 1 more byte)
         if (getPassRunner()->options.shrinkLevel == 0) {
           Expression* x;
           if (matches(curr, unary(EqZInt32, unary(EqZ, any(&x))))) {
