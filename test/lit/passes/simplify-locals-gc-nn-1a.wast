@@ -5,36 +5,43 @@
 ;; allows a local.get until the end of the current block.
 
 (module
-  ;; CHECK:      (func $test-nn
-  ;; CHECK-NEXT:  (local $nn (ref any))
+  ;; CHECK:      (func $test-nn (param $x (ref any))
+  ;; CHECK-NEXT:  (local $nn anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block $inner
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (call $test-nn
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.tee $nn
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (call $test-nn
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (local.get $nn)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-nn
+  (func $test-nn (param $x (ref any))
     (local $nn (ref any))
     ;; We can sink this set into the block, but we should then update things so
-    ;; that we still validate. We'll end up removing the set, and the first
-    ;; local.get. All that remains is the final local.get with the original
-    ;; value. Note that we don't need to change the local type to be nullable
-    ;; since we manage to optimize out all the local.gets and sets.
+    ;; that we still validate, as then the final local.get is not structurally
+    ;; dominated. (Note that we end up with several ref.as_non_nulls here, but
+    ;; later passes could remove them.)
     (local.set $nn
       (ref.as_non_null
         (ref.null any)
       )
     )
     (block $inner
-      (drop
+      (call $test-nn
         (local.get $nn)
       )
     )
-    (drop
+    (call $test-nn
       (local.get $nn)
     )
   )
