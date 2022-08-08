@@ -152,7 +152,7 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
     }
   }
 
-  Binary* optimize(Binary* curr) {
+  Expression* optimize(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
     {
@@ -182,6 +182,16 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
           }
         }
         return curr;
+      }
+    }
+    {
+      // i64(x) & 0x00000000FFFFFFFF   ==>   i64(i32(x))
+      Expression* x;
+      if (matches(
+            curr,
+            binary(AndInt64, any(&x), i64(int64_t(0x00000000FFFFFFFF))))) {
+        Builder builder(*getModule());
+        return builder.makeUnary(ExtendUInt32, builder.makeUnary(WrapInt64, x));
       }
     }
     return nullptr;
@@ -235,6 +245,7 @@ struct OptimizeInstructions
     // Final optimizations.
     {
       FinalOptimizer optimizer(getPassOptions());
+      optimizer.setModule(getModule());
       optimizer.walkFunction(func);
     }
 
@@ -853,6 +864,21 @@ struct OptimizeInstructions
             c->value = c->value.abs().sub(Literal::makeOne(c->type));
           }
           return replaceCurrent(curr);
+        }
+      }
+      {
+        // i32.wrap_i64(i64(x) & C)  =>  i32.wrap_i64(x)
+        //    if C & 0x00000000FFFFFFFF == 0x00000000FFFFFFFF
+        Const* c;
+        Expression* x;
+        Unary* una;
+        if (matches(
+              curr,
+              unary(&una, WrapInt64, binary(AndInt64, any(&x), i64(&c))))) {
+          if ((c->value.geti64() & 0xFFFFFFFFLL) == 0xFFFFFFFFLL) {
+            una->value = x;
+            return replaceCurrent(curr);
+          }
         }
       }
       {
@@ -3114,7 +3140,7 @@ private:
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
     }
-    // bool(x)  ^ 1  ==>  !bool(x)
+    // bool(x) ^ 1  ==>  !bool(x)
     if (matches(curr, binary(Xor, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
       auto* result = builder.makeUnary(Abstract::getUnary(type, EqZ), left);

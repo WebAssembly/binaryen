@@ -10223,6 +10223,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10419,6 +10432,21 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -9223372036854775808)
+    ))
+
+    ;; i64(x) & 0x00000000FFFFFFFF  =>  extend(wrap(x))
+    (drop (i64.and
+      (local.get $y)
+      (i64.const 0x00000000FFFFFFFF)
+    ))
+    ;; should skip "extend + wrap" when:
+    ;; (i64(x) & 0x00000000FFFFFFFF) & 3  =>  x & 3
+    (drop (i64.and
+      (i64.and
+        (local.get $y)
+        (i64.const 0x00000000FFFFFFFF)
+      )
+      (i64.const 3)
     ))
 
     ;; (unsigned)x >= 0  =>  i32(1)
@@ -12786,15 +12814,23 @@
 
   ;; CHECK:      (func $sign-and-zero-extention-elimination-2 (param $x i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.and
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i64.const 4294967295)
+  ;; CHECK-NEXT:   (i64.extend_i32_u
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.and
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend_i32_s
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -12811,24 +12847,49 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.extend_i32_s
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.and
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (i64.const 4294967295)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $sign-and-zero-extention-elimination-2 (param $x i64)
     (drop (i64.extend_i32_u (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000000FFFFFFFF)))))
     (drop (i64.extend_i32_s (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x000000007FFFFFFF)))))
+    (drop (i64.extend_i32_s (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000000FFFFFFFF)))))
 
     (drop (i64.extend_i32_u (i32.wrap_i64 (local.get $x)))) ;; skip
     (drop (i64.extend_i32_s (i32.wrap_i64 (local.get $x)))) ;; skip
-    (drop (i64.extend_i32_s (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000000FFFFFFFF))))) ;; skip
+  )
+  ;; CHECK:      (func $eliminate-mask-from-wrap (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 2147483647)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $eliminate-mask-from-wrap (param $x i64)
+    ;; i32.wrap_i64(i64(x) & 0x00000000FFFFFFFF)  =>  i32.wrap_i64(x)
+    (drop (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000000FFFFFFFF))))
+    ;; i32.wrap_i64(i64(x) & 0x00000008FFFFFFFF)  =>  i32.wrap_i64(x)
+    (drop (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x00000008FFFFFFFF))))
+    ;; i32.wrap_i64(i64(x) & 0x80000000FFFFFFFF)  =>  i32.wrap_i64(x)
+    (drop (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x80000000FFFFFFFF))))
+    ;; skip
+    (drop (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x000000007FFFFFFF))))
   )
   ;; CHECK:      (func $optimize-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
   ;; CHECK-NEXT:  (drop
