@@ -53,34 +53,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "declares": [
-    "puts"
-  ],
-  "globalImports": [
-    "__stack_pointer",
-    "__memory_base",
-    "__table_base",
-    "external_var",
-    "puts",
-    "_Z13print_messagev"
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "_Z13print_messagev"
-  ],
-  "namedGlobals": {
-    "ptr_puts" : "16",
-    "ptr_local_func" : "20",
-    "__data_end" : "42"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

@@ -68,37 +68,3 @@
  ;;   tablealignment: 0
  ;; custom section "producers", size 157
 )
-(;
---BEGIN METADATA --
-{
-  "declares": [
-    "_Z16waka_func_theirsi"
-  ],
-  "globalImports": [
-    "__stack_pointer",
-    "__memory_base",
-    "__table_base",
-    "_Z16waka_func_theirsi",
-    "_Z14waka_func_minei",
-    "waka_mine",
-    "waka_others"
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "__wasm_apply_relocs",
-    "_Z14waka_func_minei",
-    "__original_main",
-    "main"
-  ],
-  "namedGlobals": {
-    "waka_mine" : "0",
-    "__dso_handle" : "0"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

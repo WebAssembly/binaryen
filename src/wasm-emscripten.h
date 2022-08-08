@@ -33,8 +33,6 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  std::string generateEmscriptenMetadata();
-
   void fixInvokeFunctionNames();
 
   // Emits the data segments to a file. The file contains data from address base

@@ -1564,6 +1564,15 @@ void Flower::readFromData(HeapType declaredHeapType,
     return;
   }
 
+  if (refContents.isLiteral()) {
+    // The only reference literals we have are nulls (handled above) and
+    // ref.func. ref.func will trap in struct|array.get, so nothing will be read
+    // here (when we finish optimizing all instructions like BrOn then
+    // ref.funcs should get filtered out before arriving here TODO).
+    assert(refContents.getType().isFunction());
+    return;
+  }
+
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special reads\n";
 #endif
@@ -1586,12 +1595,6 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       represent them as ExactType).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
-    // Note that this cannot be a Literal, since this is a reference, and the
-    // only reference literals we have are nulls (handled above) and ref.func.
-    // ref.func is not valid in struct|array.get, so the code would trap at
-    // runtime, and also it would never reach here as because of wasm validation
-    // it would be cast to a struct/array type, and our special ref.cast code
-    // would filter it out.
     assert(refContents.isMany() || refContents.isGlobal());
 
     // We create a ConeReadLocation for the canonical cone of this type, to

@@ -20,9 +20,6 @@
 ;; CHECK-NEXT:                                        output file. In this mode if no output
 ;; CHECK-NEXT:                                        file is specified, we write to stdout.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-emit-metadata,-n                Skip the writing to emscripten metadata
-;; CHECK-NEXT:                                        JSON to stdout.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-base                        The address at which static globals were
 ;; CHECK-NEXT:                                        placed
 ;; CHECK-NEXT:
