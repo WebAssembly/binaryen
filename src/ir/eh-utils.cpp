@@ -17,7 +17,6 @@
 #include "ir/eh-utils.h"
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
-#include "ir/type-updating.h"
 
 namespace wasm {
 
