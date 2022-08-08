@@ -817,10 +817,15 @@ void FunctionValidator::visitCall(Call* curr) {
     //    (i32.const 1)
     //    (.. some function reference that expects an f64 param and not i32 ..)
     //  )
-    if (!curr->operands.empty()) {
+    if (shouldBeTrue(!curr->operands.empty(),
+                     curr,
+                     "call.without.effects must have a target operand")) {
       auto* target = curr->operands.back();
-      // Ignore unreachable here, and leave other validation issues here for the
-      // global scope which already does this.
+      // Validate only in the case that the target is a function. If it isn't,
+      // it might be unreachable (which is fine, and we can ignore this), or if
+      // the call.without.effects import doesn't have a function as the last
+      // parameter, then validateImports() will handle that later (and it's
+      // better to emit a single error there than one per callsite here).
       if (target->type.isFunction()) {
         // Copy the original call and remove the reference. It must then match
         // the expected signature.
