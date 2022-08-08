@@ -3333,6 +3333,17 @@ private:
         return curr->left;
       }
     }
+    {
+      // (x + 0.0) + 0.0   ==>   x + 0.0
+      double c1, c2;
+      Binary* inner;
+      if (matches(
+            curr,
+            binary(Add, binary(&inner, Add, any(), fval(&c1)), fval(&c2))) &&
+          c1 == 0.0 && c2 == 0.0 && !std::signbit(c1) && !std::signbit(c2)) {
+        return inner;
+      }
+    }
     // -x * fval(C)   ==>   x * -C
     // -x / fval(C)   ==>   x / -C
     if (matches(curr, binary(Mul, unary(Neg, any(&left)), fval())) ||

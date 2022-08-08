@@ -9890,6 +9890,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:    (f64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.sub
   ;; CHECK-NEXT:    (f32.const 0)
   ;; CHECK-NEXT:    (local.get $fx)
@@ -9938,6 +9950,21 @@
     (drop (f64.add
       (local.get $fy)
       (f64.const -0)
+    ))
+    ;; (x + 0.0) + 0.0   ==>   x + 0.0
+    (drop (f32.add
+      (f32.add
+        (local.get $fx)
+        (f32.const 0)
+      )
+      (f32.const 0)
+    ))
+    (drop (f64.add
+      (f64.add
+        (local.get $fy)
+        (f64.const 0)
+      )
+      (f64.const 0)
     ))
     ;; x - (-0.0)   ==>   x + 0.0
     (drop (f32.sub
