@@ -938,6 +938,8 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (elem declare func $func)
+
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $child (ref null $child))
   ;; CHECK-NEXT:  (local $parent (ref null $parent))
@@ -977,6 +979,35 @@
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block $parent (result (ref $parent))
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:         (drop
+  ;; CHECK-NEXT:          (br_on_cast_static $parent $parent
+  ;; CHECK-NEXT:           (ref.func $func)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (ref.func $func)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (local $child (ref null $child))
@@ -1011,6 +1042,29 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
+      )
+    )
+    ;; A ref.func is cast to a struct type, and then we read from that. The cast
+    ;; will trap at runtime, of course; for here, we should not error and also
+    ;; we can optimize these to unreachables. atm we filter out trapping
+    ;; contents in ref.cast, but not br_on_cast, so test both.
+    (drop
+      (struct.get $parent 0
+        (ref.cast_static $parent
+          (ref.func $func)
+        )
+      )
+    )
+    (drop
+      (struct.get $parent 0
+        (block $parent (result (ref $parent))
+          (drop
+            (br_on_cast_static $parent $parent
+              (ref.func $func)
+            )
+          )
+          (unreachable)
+        )
       )
     )
   )
