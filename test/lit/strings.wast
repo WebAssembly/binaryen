@@ -462,21 +462,29 @@
     (drop
       (string.new_wtf8_array utf8
         (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
       )
     )
     (drop
       (string.new_wtf8_array wtf8
         (local.get $array)
+        (i32.const 3)
+        (i32.const 4)
       )
     )
     (drop
       (string.new_wtf8_array replace
         (local.get $array)
+        (i32.const 5)
+        (i32.const 6)
       )
     )
     (drop
       (string.new_wtf16_array
         (local.get $array)
+        (i32.const 7)
+        (i32.const 8)
       )
     )
   )
