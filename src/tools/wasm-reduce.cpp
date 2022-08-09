@@ -446,31 +446,15 @@ struct Reducer
     if (!shouldTryToReduce()) {
       return false;
     }
-
-    // Replace it.
     replaceCurrent(with);
-
-    // Local changes can break validation, like removing a br that was keeping
-    // a block's type from being unreachable. If the change would not validate,
-    // skip.
-    //
-    // After that, run and see what happens.
-    if (getFunction() && WasmValidator().validate(
-         getFunction(), *getModule(), WasmValidator::Quiet)) {
-      if (writeAndTestReduction() ) {
-        std::cerr << "|      tryToReplaceCurrent succeeded (in " << getLocation()
-                  << ")\n";
-        noteReduction();
-        return true;
-      }
-    } else {
-      std::cout << "validation save\n";
-      abort();
+    if (!writeAndTestReduction()) {
+      replaceCurrent(curr);
+      return false;
     }
-
-    // Undo the change.
-    replaceCurrent(curr);
-    return false;
+    std::cerr << "|      tryToReplaceCurrent succeeded (in " << getLocation()
+              << ")\n";
+    noteReduction();
+    return true;
   }
 
   void noteReduction(size_t amount = 1) {
