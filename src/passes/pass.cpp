@@ -902,7 +902,7 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   //
   // XXX Note that we must skip the "print" pass, as we'll be printing
   //     from here, which runs that pass, so we'd infinitely recurse.)
-  bool extraFunctionValidation = isNested && passDebug == 2 && options.validate;// &&
+  bool extraFunctionValidation = passDebug == 2 && options.validate && !pass->name.empty();
 //       pass->name != "print";
   std::stringstream bodyBefore;
   if (extraFunctionValidation) {
@@ -925,9 +925,9 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   if (extraFunctionValidation) {
     if (!WasmValidator().validate(func, *wasm, WasmValidator::Minimal)) {
       Fatal() << "Last nested function-parallel pass (" << pass->name
-              << ") broke validation. Here is the func body before:\n"
-              << bodyBefore.str() << "\n\nAnd here it is now:\n"
-              << *func->body << '\n';
+              << ") broke validation of function " << func->name
+              << ". Here is the function body before:\n" << bodyBefore.str()
+              << "\n\nAnd here it is now:\n" << *func->body << '\n';
     }
   }
 }
