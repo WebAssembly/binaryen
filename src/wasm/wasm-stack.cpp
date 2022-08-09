@@ -2176,34 +2176,34 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringNewUTF8:
-      o << U32LEB(BinaryConsts::StringNewWTF8)
+      o << uint32_t(BinaryConsts::StringNewWTF8)
         << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringNewWTF8:
-      o << U32LEB(BinaryConsts::StringNewWTF8)
+      o << uint32_t(BinaryConsts::StringNewWTF8)
         << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringNewReplace:
-      o << U32LEB(BinaryConsts::StringNewWTF8)
+      o << uint32_t(BinaryConsts::StringNewWTF8)
         << U32LEB(BinaryConsts::StringPolicy::Replace);
       break;
     case StringNewWTF16:
-      o << U32LEB(BinaryConsts::StringNewWTF16);
+      o << uint32_t(BinaryConsts::StringNewWTF16);
       break;
     case StringNewUTF8Array:
-      o << U32LEB(BinaryConsts::StringNewWTF8Array)
+      o << uint32_t(BinaryConsts::StringNewWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringNewWTF8Array:
-      o << U32LEB(BinaryConsts::StringNewWTF8Array)
+      o << uint32_t(BinaryConsts::StringNewWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringNewReplaceArray:
-      o << U32LEB(BinaryConsts::StringNewWTF8Array)
+      o << uint32_t(BinaryConsts::StringNewWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::Replace);
       break;
     case StringNewWTF16Array:
-      o << U32LEB(BinaryConsts::StringNewWTF16Array);
+      o << uint32_t(BinaryConsts::StringNewWTF16Array);
       break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
@@ -2212,28 +2212,28 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
 
 void BinaryInstWriter::visitStringConst(StringConst* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConst)
-    << U32LEB(parent.getStringIndex(curr->string));
+    << uint32_t(parent.getStringIndex(curr->string));
 }
 
 void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringMeasureUTF8:
-      o << U32LEB(BinaryConsts::StringMeasureWTF8)
+      o << uint32_t(BinaryConsts::StringMeasureWTF8)
         << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringMeasureWTF8:
-      o << U32LEB(BinaryConsts::StringMeasureWTF8)
+      o << uint32_t(BinaryConsts::StringMeasureWTF8)
         << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringMeasureWTF16:
-      o << U32LEB(BinaryConsts::StringMeasureWTF16);
+      o << uint32_t(BinaryConsts::StringMeasureWTF16);
       break;
     case StringMeasureIsUSV:
-      o << U32LEB(BinaryConsts::StringIsUSV);
+      o << uint32_t(BinaryConsts::StringIsUSV);
       break;
     case StringMeasureWTF16View:
-      o << U32LEB(BinaryConsts::StringViewWTF16Length);
+      o << uint32_t(BinaryConsts::StringViewWTF16Length);
       break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
@@ -2244,26 +2244,26 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringEncodeUTF8:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8)
+      o << uint32_t(BinaryConsts::StringEncodeWTF8)
         << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringEncodeWTF8:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8)
+      o << uint32_t(BinaryConsts::StringEncodeWTF8)
         << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringEncodeWTF16:
-      o << U32LEB(BinaryConsts::StringEncodeWTF16);
+      o << uint32_t(BinaryConsts::StringEncodeWTF16);
       break;
     case StringEncodeUTF8Array:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
+      o << uint32_t(BinaryConsts::StringEncodeWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringEncodeWTF8Array:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
+      o << uint32_t(BinaryConsts::StringEncodeWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringEncodeWTF16Array:
-      o << U32LEB(BinaryConsts::StringEncodeWTF16Array);
+      o << uint32_t(BinaryConsts::StringEncodeWTF16Array);
       break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
@@ -2271,24 +2271,24 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
 }
 
 void BinaryInstWriter::visitStringConcat(StringConcat* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConcat);
+  o << int8_t(BinaryConsts::GCPrefix) << uint32_t(BinaryConsts::StringConcat);
 }
 
 void BinaryInstWriter::visitStringEq(StringEq* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringEq);
+  o << int8_t(BinaryConsts::GCPrefix) << uint32_t(BinaryConsts::StringEq);
 }
 
 void BinaryInstWriter::visitStringAs(StringAs* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringAsWTF8:
-      o << U32LEB(BinaryConsts::StringAsWTF8);
+      o << uint32_t(BinaryConsts::StringAsWTF8);
       break;
     case StringAsWTF16:
-      o << U32LEB(BinaryConsts::StringAsWTF16);
+      o << uint32_t(BinaryConsts::StringAsWTF16);
       break;
     case StringAsIter:
-      o << U32LEB(BinaryConsts::StringAsIter);
+      o << uint32_t(BinaryConsts::StringAsIter);
       break;
     default:
       WASM_UNREACHABLE("invalid string.as*");
@@ -2297,27 +2297,27 @@ void BinaryInstWriter::visitStringAs(StringAs* curr) {
 
 void BinaryInstWriter::visitStringWTF8Advance(StringWTF8Advance* curr) {
   o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewWTF8Advance);
+    << uint32_t(BinaryConsts::StringViewWTF8Advance);
 }
 
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
   o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewWTF16GetCodePoint);
+    << uint32_t(BinaryConsts::StringViewWTF16GetCodePoint);
 }
 
 void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
   o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewIterNext);
+    << uint32_t(BinaryConsts::StringViewIterNext);
 }
 
 void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringIterMoveAdvance:
-      o << U32LEB(BinaryConsts::StringViewIterAdvance);
+      o << uint32_t(BinaryConsts::StringViewIterAdvance);
       break;
     case StringIterMoveRewind:
-      o << U32LEB(BinaryConsts::StringViewIterRewind);
+      o << uint32_t(BinaryConsts::StringViewIterRewind);
       break;
     default:
       WASM_UNREACHABLE("invalid string.move*");
@@ -2328,10 +2328,10 @@ void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringSliceWTF8:
-      o << U32LEB(BinaryConsts::StringViewWTF8Slice);
+      o << uint32_t(BinaryConsts::StringViewWTF8Slice);
       break;
     case StringSliceWTF16:
-      o << U32LEB(BinaryConsts::StringViewWTF16Slice);
+      o << uint32_t(BinaryConsts::StringViewWTF16Slice);
       break;
     default:
       WASM_UNREACHABLE("invalid string.move*");
@@ -2340,7 +2340,7 @@ void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
 
 void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
   o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewIterSlice);
+    << uint32_t(BinaryConsts::StringViewIterSlice);
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
