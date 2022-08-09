@@ -2212,7 +2212,7 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
 
 void BinaryInstWriter::visitStringConst(StringConst* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringConst)
-    << uint32_t(parent.getStringIndex(curr->string));
+    << U32LEB(parent.getStringIndex(curr->string));
 }
 
 void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
