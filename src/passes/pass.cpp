@@ -903,7 +903,6 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // XXX Note that we must skip the "print" pass, as we'll be printing
   //     from here, which runs that pass, so we'd infinitely recurse.)
   bool extraFunctionValidation = passDebug == 2 && options.validate && !pass->name.empty();
-//       pass->name != "print";
   std::stringstream bodyBefore;
   if (extraFunctionValidation) {
     bodyBefore << *func->body << '\n';
