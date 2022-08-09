@@ -1660,7 +1660,7 @@ public:
   // Used only in GC variations.
   Expression* start = nullptr;
   Expression* end = nullptr;
-  
+
   void finalize();
 };
 

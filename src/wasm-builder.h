@@ -934,8 +934,10 @@ public:
     ret->finalize();
     return ret;
   }
-  StringNew*
-  makeStringNew(StringNewOp op, Expression* ptr, Expression* start, Expression* end) {
+  StringNew* makeStringNew(StringNewOp op,
+                           Expression* ptr,
+                           Expression* start,
+                           Expression* end) {
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ptr = ptr;
