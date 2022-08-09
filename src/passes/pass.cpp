@@ -892,40 +892,39 @@ void PassRunner::runPass(Pass* pass) {
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
 
-  // For a nested pass, we don't do extra pass-debug validation in the normal
-  // code above. We can do some helpful checking even in that case, though, for
-  // function-parallel passes like this one, by validating non-globally (we
-  // validate globally as other functions may be changing as we speak) and by
-  // showing the state of the function body before the pass if it breaks
-  // something. (Note that we must skip the "print" pass, as we'll be printing
-  // from here, which runs that pass, so we'd infinitely recurse.)
+  auto passDebug = getPassDebug();
+
+  // Add extra validation logic in pass-debug mode 2. The main logic in
+  // PassRunner::run will work at the module level, and here for a function-
+  // parallel pass we can do the same at the function level: we can print the
+  // function before the pass, run the pass on the function, and then if it
+  // fails to validate we can show an error and print the state right before the
   //
-  // Note that we can't do all this in the main pass-debug logic in run()
-  // because that runs on the entire module. Here we know which individual
-  // function is being operated on.
-  bool extraValidation = isNested && getPassDebug() == 2 && options.validate &&
-       pass->name != "print";
+  // XXX Note that we must skip the "print" pass, as we'll be printing
+  //     from here, which runs that pass, so we'd infinitely recurse.)
+  bool extraFunctionValidation = isNested && passDebug == 2 && options.validate;// &&
+//       pass->name != "print";
   std::stringstream bodyBefore;
-  if (extraValidation) {
+  if (extraFunctionValidation) {
     bodyBefore << *func->body << '\n';
   }
 
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
   std::unique_ptr<AfterEffectFunctionChecker> checker;
-  if (getPassDebug()) {
+  if (passDebug) {
     checker = std::unique_ptr<AfterEffectFunctionChecker>(
       new AfterEffectFunctionChecker(func));
   }
   instance->runOnFunction(this, wasm, func);
   handleAfterEffects(pass, func);
-  if (getPassDebug()) {
+  if (passDebug) {
     checker->check();
   }
 
-  if (extraValidation) {
+  if (extraFunctionValidation) {
     if (!WasmValidator().validate(func, *wasm, WasmValidator::Minimal)) {
-      Fatal() << "Last nested pass (" << pass->name
+      Fatal() << "Last nested function-parallel pass (" << pass->name
               << ") broke validation. Here is the func body before:\n"
               << bodyBefore.str() << "\n\nAnd here it is now:\n"
               << *func->body << '\n';
