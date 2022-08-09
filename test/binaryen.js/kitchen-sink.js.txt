@@ -93,16 +93,14 @@ CallRefId: 56
 RefTestId: 57
 RefCastId: 58
 BrOnId: 59
-RttCanonId: 60
-RttSubId: 61
-StructNewId: 62
-StructGetId: 63
-StructSetId: 64
-ArrayNewId: 65
-ArrayInitId: 66
-ArrayGetId: 67
-ArraySetId: 68
-ArrayLenId: 69
+StructNewId: 60
+StructGetId: 61
+StructSetId: 62
+ArrayNewId: 63
+ArrayInitId: 64
+ArrayGetId: 65
+ArraySetId: 66
+ArrayLenId: 67
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)

@@ -5713,18 +5713,54 @@
     (i32.const 255)
    )
   )
-  ;; CHECK:      (func $shifts-square-overflow (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.shr_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 31)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $left-shifts-square-overflow (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow (param $x i32) (result i32)
+   (i32.shl
+    (i32.shl
+     (local.get $x)
+     (i32.const 31)
+    )
+    (i32.const 1)
+   )
+  )
+  ;; CHECK:      (func $left-shifts-square-overflow-with-side-effect (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $ne0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow-with-side-effect (param $x i32) (result i32)
+   (i32.shl
+    (i32.shl
+     (call $ne0) ;; side effect
+     (i32.const 31)
+    )
+    (i32.const 5)
+   )
+  )
+  ;; CHECK:      (func $right-shifts-square-overflow-unsigned (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $right-shifts-square-overflow-unsigned (param $x i32) (result i32)
+   (i32.shr_u
+    (i32.shr_u
+     (local.get $x)
+     (i32.const 65535) ;; 31 bits effectively
+    )
+    (i32.const 32767) ;; also 31 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  ;; CHECK:      (func $shifts-square-overflow-signed (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shr_s
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $shifts-square-overflow (param $x i32) (result i32)
-   (i32.shr_u
-    (i32.shr_u
+  (func $shifts-square-overflow-signed (param $x i32) (result i32)
+   (i32.shr_s
+    (i32.shr_s
      (local.get $x)
      (i32.const 65535) ;; 31 bits effectively
     )
@@ -5746,18 +5782,39 @@
     (i32.const 4098) ;; 2 bits effectively
    )
   )
-  ;; CHECK:      (func $shifts-square-overflow-64 (param $x i64) (result i64)
-  ;; CHECK-NEXT:  (i64.shr_u
-  ;; CHECK-NEXT:   (i64.shr_u
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i64.const 63)
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $left-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.const 0)
+  ;; CHECK-NEXT: )
+  (func $left-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+   (i64.shl
+    (i64.shl
+     (local.get $x)
+     (i64.const 2)
+    )
+    (i64.const 63)
+   )
+  )
+  ;; CHECK:      (func $right-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.const 0)
+  ;; CHECK-NEXT: )
+  (func $right-shifts-square-overflow-unsigned-64 (param $x i64) (result i64)
+   (i64.shr_u
+    (i64.shr_u
+     (local.get $x)
+     (i64.const 65535) ;; 63 bits effectively
+    )
+    (i64.const 64767) ;; also 63 bits, so two shifts that force the value into nothing for sure
+   )
+  )
+  ;; CHECK:      (func $right-shifts-square-overflow-signed-64 (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.shr_s
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i64.const 63)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $shifts-square-overflow-64 (param $x i64) (result i64)
-   (i64.shr_u
-    (i64.shr_u
+  (func $right-shifts-square-overflow-signed-64 (param $x i64) (result i64)
+   (i64.shr_s
+    (i64.shr_s
      (local.get $x)
      (i64.const 65535) ;; 63 bits effectively
     )
@@ -5840,6 +5897,174 @@
         (i32.const 100)
         (i32.const 4)
       )
+    )
+  )
+  ;; CHECK:      (func $rotate-left-square-no-overflow-small (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotl
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-left-square-no-overflow-small (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotl
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.const 4)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-square-no-overflow-small (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotr
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-right-square-no-overflow-small (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotr
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.const 4)
+    )
+  )
+  ;; CHECK:      (func $rotate-left-square-no-shifts (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $rotate-left-square-no-shifts (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotl
+        (local.get $x)
+        (i32.const 12)
+      )
+      (i32.const 20)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-square-no-shifts (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $rotate-right-square-no-shifts (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotr
+        (local.get $x)
+        (i32.const 30)
+      )
+      (i32.const 2)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-left-pos (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotl
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 23)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-right-left-pos (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotl
+        (local.get $x)
+        (i32.const 27)
+      )
+      (i32.const 4)
+    )
+  )
+  ;; CHECK:      (func $rotate-left-right-pos (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotr
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-left-right-pos (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotr
+        (local.get $x)
+        (i32.const 12)
+      )
+      (i32.const 5)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-left-neg (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotl
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 27)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-right-left-neg (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotl
+        (local.get $x)
+        (i32.const 5)
+      )
+      (i32.const 10)
+    )
+  )
+  ;; CHECK:      (func $rotate-left-right-neg (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotr
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 27)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-left-right-neg (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotr
+        (local.get $x)
+        (i32.const 5)
+      )
+      (i32.const 10)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-left-none (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $rotate-right-left-none (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotl
+        (local.get $x)
+        (i32.const 16)
+      )
+      (i32.const 16)
+    )
+  )
+  ;; CHECK:      (func $rotate-left-right-none (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $rotate-left-right-none (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotr
+        (local.get $x)
+        (i32.const 16)
+      )
+      (i32.const 16)
+    )
+  )
+  ;; CHECK:      (func $rotate-right-left-overflow (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotl
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 27)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-right-left-overflow (param $x i32) (result i32)
+    (i32.rotr
+      (i32.rotl
+        (local.get $x)
+        (i32.const 18)
+      )
+      (i32.const 23)
+    )
+  )
+  ;; CHECK:      (func $rotate-left-right-overflow (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.rotr
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 27)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rotate-left-right-overflow (param $x i32) (result i32)
+    (i32.rotl
+      (i32.rotr
+        (local.get $x)
+        (i32.const 18)
+      )
+      (i32.const 23)
     )
   )
   ;; CHECK:      (func $and-popcount32 (result i32)
@@ -8647,10 +8872,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -9386,6 +9610,26 @@
       (i32.const 1)
       (i32.const 0)
     ))
+  )
+  ;; CHECK:      (func $fold-eqz-eqz (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $fold-eqz-eqz (param $x i32) (param $y i64)
+    ;; i32.eqz(i32.eqz(x))  ->  x != 0
+    (drop (i32.eqz (i32.eqz (local.get $x))))
+    ;; i32.eqz(i64.eqz(y))  ->  y != 0
+    (drop (i32.eqz (i64.eqz (local.get $y))))
   )
   ;; CHECK:      (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
   ;; CHECK-NEXT:  (drop
@@ -12026,10 +12270,9 @@
   ;; CHECK-NEXT:   (local.get $w)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop

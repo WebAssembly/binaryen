@@ -918,7 +918,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeSelect)
       .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
   }
-  if (type.isSingle() && !type.isRef() && !type.isRtt()) {
+  if (type.isSingle() && !type.isRef()) {
     options.add(FeatureSet::MVP, {&Self::makeLoad, Important});
     options.add(FeatureSet::SIMD, &Self::makeSIMD);
   }
@@ -1893,8 +1893,6 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     } else {
       return makeConstCompoundRef(type);
     }
-  } else if (type.isRtt()) {
-    return builder.makeRtt(type);
   } else if (type.isTuple()) {
     std::vector<Expression*> operands;
     for (const auto& t : type) {
@@ -2035,14 +2033,15 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
     // give up
     return makeTrivial(type);
   }
-  // There are no unary ops for reference or RTT types.
-  if (type.isRef() || type.isRtt()) {
+  // There are no unary ops for reference types.
+  // TODO: not quite true if you count struct.new and array.new.
+  if (type.isRef()) {
     return makeTrivial(type);
   }
   switch (type.getBasic()) {
     case Type::i32: {
       auto singleConcreteType = getSingleConcreteType();
-      if (singleConcreteType.isRef() || singleConcreteType.isRtt()) {
+      if (singleConcreteType.isRef()) {
         // TODO: Do something more interesting here.
         return makeTrivial(type);
       }
@@ -2241,8 +2240,9 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
     // give up
     return makeTrivial(type);
   }
-  // There are no binary ops for reference or RTT types.
-  if (type.isRef() || type.isRtt()) {
+  // There are no binary ops for reference types.
+  // TODO: Use struct.new
+  if (type.isRef()) {
     return makeTrivial(type);
   }
   switch (type.getBasic()) {
@@ -3056,19 +3056,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   return type;
 }
 
-Rtt TranslateToFuzzReader::getSubType(Rtt rtt) {
-  if (getTypeSystem() == TypeSystem::Nominal ||
-      getTypeSystem() == TypeSystem::Isorecursive) {
-    // With nominal or isorecursive typing the depth in rtts must match the
-    // nominal hierarchy, so we cannot create a random depth like we do below.
-    return rtt;
-  }
-  uint32_t depth = rtt.depth != Rtt::NoDepth
-                     ? rtt.depth
-                     : oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH + 1);
-  return Rtt(depth, rtt.heapType);
-}
-
 Type TranslateToFuzzReader::getSubType(Type type) {
   if (type.isTuple()) {
     std::vector<Type> types;
@@ -3080,8 +3067,6 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     auto heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
     return Type(heapType, nullability);
-  } else if (type.isRtt()) {
-    return Type(getSubType(type.getRtt()));
   } else {
     // This is an MVP type without subtypes.
     assert(type.isBasic());

@@ -387,7 +387,11 @@ the [`name-types` pass](https://github.com/WebAssembly/binaryen/blob/main/src/pa
 Some more notes:
 
  * See `bin/wasm-opt --help` for the full list of options and passes.
- * Passing `--debug` will emit some debugging info.
+ * Passing `--debug` will emit some debugging info.  Individual debug channels
+   (defined in the source code via `#define DEBUG_TYPE xxx`) can be enabled by
+   passing them as list of comma-separated strings.  For example: `bin/wasm-opt
+   --debug=binary`.  These debug channels can also be enabled via the
+   `BINARYEN_DEBUG` environment variable.
 
 ### wasm2js
 

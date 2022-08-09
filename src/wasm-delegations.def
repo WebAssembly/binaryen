@@ -73,8 +73,6 @@ DELEGATE(CallRef);
 DELEGATE(RefTest);
 DELEGATE(RefCast);
 DELEGATE(BrOn);
-DELEGATE(RttCanon);
-DELEGATE(RttSub);
 DELEGATE(StructNew);
 DELEGATE(StructGet);
 DELEGATE(StructSet);

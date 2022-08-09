@@ -682,57 +682,8 @@ struct OptimizeInstructions
       if (auto* ret = optimizeWithConstantOnRight(curr)) {
         return replaceCurrent(ret);
       }
-      // the square of some operations can be merged
-      if (auto* left = curr->left->dynCast<Binary>()) {
-        if (left->op == curr->op) {
-          if (auto* leftRight = left->right->dynCast<Const>()) {
-            if (left->op == AndInt32 || left->op == AndInt64) {
-              leftRight->value = leftRight->value.and_(right->value);
-              return replaceCurrent(left);
-            } else if (left->op == OrInt32 || left->op == OrInt64) {
-              leftRight->value = leftRight->value.or_(right->value);
-              return replaceCurrent(left);
-            } else if (left->op == XorInt32 || left->op == XorInt64) {
-              leftRight->value = leftRight->value.xor_(right->value);
-              return replaceCurrent(left);
-            } else if (left->op == MulInt32 || left->op == MulInt64) {
-              leftRight->value = leftRight->value.mul(right->value);
-              return replaceCurrent(left);
-
-              // TODO:
-              // handle signed / unsigned divisions. They are more complex
-            } else if (left->op == ShlInt32 || left->op == ShrUInt32 ||
-                       left->op == ShrSInt32 || left->op == ShlInt64 ||
-                       left->op == ShrUInt64 || left->op == ShrSInt64) {
-              // shifts only use an effective amount from the constant, so
-              // adding must be done carefully
-              auto total = Bits::getEffectiveShifts(leftRight) +
-                           Bits::getEffectiveShifts(right);
-              if (total == Bits::getEffectiveShifts(total, right->type)) {
-                // no overflow, we can do this
-                leftRight->value = Literal::makeFromInt32(total, right->type);
-                return replaceCurrent(left);
-              } // TODO: handle overflows
-            }
-          }
-        }
-        if (left->op == Abstract::getBinary(left->type, Abstract::Shl) &&
-            curr->op == Abstract::getBinary(curr->type, Abstract::Mul)) {
-          if (auto* leftRight = left->right->dynCast<Const>()) {
-            left->op = Abstract::getBinary(left->type, Abstract::Mul);
-            // (x << C1) * C2   ->   x * (C2 << C1)
-            leftRight->value = right->value.shl(leftRight->value);
-            return replaceCurrent(left);
-          }
-        }
-        if (left->op == Abstract::getBinary(left->type, Abstract::Mul) &&
-            curr->op == Abstract::getBinary(curr->type, Abstract::Shl)) {
-          if (auto* leftRight = left->right->dynCast<Const>()) {
-            // (x * C1) << C2   ->   x * (C1 << C2)
-            leftRight->value = leftRight->value.shl(right->value);
-            return replaceCurrent(left);
-          }
-        }
+      if (auto* ret = optimizeDoubletonWithConstantOnRight(curr)) {
+        return replaceCurrent(ret);
       }
       if (right->type == Type::i32) {
         BinaryOp op;
@@ -924,8 +875,23 @@ struct OptimizeInstructions
         if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
             Bits::getMaxBits(x, this) <= 32) {
           inner->op = EqZInt64;
-          inner->value = x;
           return replaceCurrent(inner);
+        }
+      }
+      {
+        // i32.eqz(i32.eqz(x))  =>  i32(x) != 0
+        // i32.eqz(i64.eqz(x))  =>  i64(x) != 0
+        //   iff shinkLevel == 0
+        // (1 instruction instead of 2, but 1 more byte)
+        if (getPassRunner()->options.shrinkLevel == 0) {
+          Expression* x;
+          if (matches(curr, unary(EqZInt32, unary(EqZ, any(&x))))) {
+            Builder builder(*getModule());
+            return replaceCurrent(builder.makeBinary(
+              getBinary(x->type, Ne),
+              x,
+              builder.makeConst(Literal::makeZero(x->type))));
+          }
         }
       }
       {
@@ -949,12 +915,10 @@ struct OptimizeInstructions
       if (getModule()->features.hasSignExt()) {
         // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
         Unary* inner;
-        Expression* x;
         if (matches(curr,
-                    unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+                    unary(ExtendSInt32, unary(&inner, WrapInt64, any())))) {
           inner->op = ExtendS32Int64;
           inner->type = Type::i64;
-          inner->value = x;
           return replaceCurrent(inner);
         }
       }
@@ -1483,10 +1447,9 @@ struct OptimizeInstructions
   // is, if casts of the type do not affect our behavior (which is the case in
   // ref.eq for example).
   //
-  // |requiredType| is the type we require as the final output here, or a
-  // subtype of it. We will not remove a cast that would leave something that
-  // would break that. If |requiredType| is not provided we will accept any type
-  // there.
+  // |requiredType| is the required supertype of the final output. We will not
+  // remove a cast that would leave something that would break that. If
+  // |requiredType| is not provided we will accept any type there.
   //
   // See "notes on removing casts", above, for when this is safe to do.
   void skipCast(Expression*& input,
@@ -1502,7 +1465,7 @@ struct OptimizeInstructions
           continue;
         }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (!cast->rtt && Type::isSubType(cast->ref->type, requiredType)) {
+        if (Type::isSubType(cast->ref->type, requiredType)) {
           input = cast->ref;
           continue;
         }
@@ -1754,7 +1717,7 @@ struct OptimizeInstructions
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
-    auto intendedType = curr->getIntendedType();
+    auto intendedType = curr->intendedType;
 
     // If the value is a null, it will just flow through, and we do not need
     // the cast. However, if that would change the type, then things are less
@@ -1765,13 +1728,8 @@ struct OptimizeInstructions
       // Replace the expression with drops of the inputs, and a null. Note
       // that we provide a null of the previous type, so that we do not alter
       // the type received by our parent.
-      std::vector<Expression*> items;
-      items.push_back(builder.makeDrop(curr->ref));
-      if (curr->rtt) {
-        items.push_back(builder.makeDrop(curr->rtt));
-      }
-      items.push_back(builder.makeRefNull(intendedType));
-      Expression* rep = builder.makeBlock(items);
+      Expression* rep = builder.makeSequence(builder.makeDrop(curr->ref),
+                                             builder.makeRefNull(intendedType));
       if (curr->ref->type.isNonNullable()) {
         // Avoid a type change by forcing to be non-nullable. In practice,
         // this would have trapped before we get here, so this is just for
@@ -1786,22 +1744,17 @@ struct OptimizeInstructions
     }
 
     // For the cast to be able to succeed, the value being cast must be a
-    // subtype of the desired type, as RTT subtyping is a subset of static
-    // subtyping. For example, trying to cast an array to a struct would be
-    // incompatible.
+    // subtype of the desired type. For example, trying to cast an array to a
+    // struct would be incompatible.
     if (!canBeCastTo(curr->ref->type.getHeapType(), intendedType)) {
       // This cast cannot succeed. If the input is not a null, it will
       // definitely trap.
       if (fallthrough->type.isNonNullable()) {
         // Make sure to emit a block with the same type as us; leave updating
         // types for other passes.
-        std::vector<Expression*> items;
-        items.push_back(builder.makeDrop(curr->ref));
-        if (curr->rtt) {
-          items.push_back(builder.makeDrop(curr->rtt));
-        }
-        items.push_back(builder.makeUnreachable());
-        replaceCurrent(builder.makeBlock(items, curr->type));
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+          curr->type));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime
@@ -1809,46 +1762,29 @@ struct OptimizeInstructions
       // we can see the value is definitely a null at compile time, earlier.)
     }
 
-    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen ||
-        !curr->rtt) {
-      // Aside from the issue of type incompatibility as mentioned above, the
-      // cast can trap if the types *are* compatible but it happens to be the
-      // case at runtime that the value is not of the desired subtype. If we
-      // do not consider such traps possible, we can ignore that. (Note,
-      // though, that we cannot do this if we cannot replace the current type
-      // with the reference's type.) We can also do this if this is a static
-      // cast: in that case, all we need to know about are the types.
-      if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
-        if (curr->rtt) {
-          replaceCurrent(getResultOfFirst(curr->ref,
-                                          builder.makeDrop(curr->rtt),
-                                          getFunction(),
-                                          getModule(),
-                                          passOptions));
-        } else {
-          replaceCurrent(curr->ref);
+    // Check whether the cast will definitely succeed.
+    if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+      replaceCurrent(curr->ref);
 
-          // We must refinalize here, as we may be returning a more specific
-          // type, which can alter the parent. For example:
-          //
-          //  (struct.get $parent 0
-          //   (ref.cast_static $parent
-          //    (local.get $child)
-          //   )
-          //  )
-          //
-          // Try to cast a $child to its parent, $parent. That always works,
-          // so the cast can be removed.
-          // Then once the cast is removed, the outer struct.get
-          // will have a reference with a different type, making it a
-          // (struct.get $child ..) instead of $parent.
-          // But if $parent and $child have different types on field 0 (the
-          // child may have a more refined one) then the struct.get must be
-          // refinalized so the IR node has the expected type.
-          refinalize = true;
-        }
-        return;
-      }
+      // We must refinalize here, as we may be returning a more specific
+      // type, which can alter the parent. For example:
+      //
+      //  (struct.get $parent 0
+      //   (ref.cast_static $parent
+      //    (local.get $child)
+      //   )
+      //  )
+      //
+      // Try to cast a $child to its parent, $parent. That always works,
+      // so the cast can be removed.
+      // Then once the cast is removed, the outer struct.get
+      // will have a reference with a different type, making it a
+      // (struct.get $child ..) instead of $parent.
+      // But if $parent and $child have different types on field 0 (the
+      // child may have a more refined one) then the struct.get must be
+      // refinalized so the IR node has the expected type.
+      refinalize = true;
+      return;
     }
 
     // Repeated identical ref.cast operations are unnecessary. First, find the
@@ -1867,51 +1803,41 @@ struct OptimizeInstructions
       }
     }
     if (auto* child = ref->dynCast<RefCast>()) {
-      if (curr->rtt && child->rtt) {
-        // Check if the casts are identical.
-        if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
-            !EffectAnalyzer(passOptions, *getModule(), curr->rtt)
-               .hasSideEffects()) {
-          replaceCurrent(curr->ref);
+      // Repeated casts can be removed, leaving just the most demanding of
+      // them.
+      auto childIntendedType = child->intendedType;
+      if (HeapType::isSubType(intendedType, childIntendedType)) {
+        // Skip the child.
+        if (curr->ref == child) {
+          curr->ref = child->ref;
           return;
+        } else {
+          // The child is not the direct child of the parent, but it is a
+          // fallthrough value, for example,
+          //
+          //  (ref.cast parent
+          //   (block
+          //    .. other code ..
+          //    (ref.cast child)))
+          //
+          // In this case it isn't obvious that we can remove the child, as
+          // doing so might require updating the types of the things in the
+          // middle - and in fact the sole purpose of the child may be to get
+          // a proper type for validation to work. Do nothing in this case,
+          // and hope that other opts will help here (for example,
+          // trapsNeverHappen will help if the code validates without the
+          // child).
         }
-      } else if (!curr->rtt && !child->rtt) {
-        // Repeated static casts can be removed, leaving just the most demanding
-        // of them.
-        auto childIntendedType = child->getIntendedType();
-        if (HeapType::isSubType(intendedType, childIntendedType)) {
-          // Skip the child.
-          if (curr->ref == child) {
-            curr->ref = child->ref;
-            return;
-          } else {
-            // The child is not the direct child of the parent, but it is a
-            // fallthrough value, for example,
-            //
-            //  (ref.cast parent
-            //   (block
-            //    .. other code ..
-            //    (ref.cast child)))
-            //
-            // In this case it isn't obvious that we can remove the child, as
-            // doing so might require updating the types of the things in the
-            // middle - and in fact the sole purpose of the child may be to get
-            // a proper type for validation to work. Do nothing in this case,
-            // and hope that other opts will help here (for example,
-            // trapsNeverHappen will help if the code validates without the
-            // child).
-          }
-        } else if (!canBeCastTo(intendedType, childIntendedType)) {
-          // The types are not compatible, so if the input is not null, this
-          // will trap.
-          if (!curr->type.isNullable()) {
-            // Make sure to emit a block with the same type as us; leave
-            // updating types for other passes.
-            replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-              curr->type));
-            return;
-          }
+      } else if (!canBeCastTo(intendedType, childIntendedType)) {
+        // The types are not compatible, so if the input is not null, this
+        // will trap.
+        if (!curr->type.isNullable()) {
+          // Make sure to emit a block with the same type as us; leave
+          // updating types for other passes.
+          replaceCurrent(builder.makeBlock(
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            curr->type));
+          return;
         }
       }
     }
@@ -1954,22 +1880,17 @@ struct OptimizeInstructions
     Builder builder(*getModule());
 
     auto refType = curr->ref->type.getHeapType();
-    auto intendedType = curr->getIntendedType();
+    auto intendedType = curr->intendedType;
 
     // See above in RefCast.
     if (!canBeCastTo(refType, intendedType)) {
       // This test cannot succeed, and will definitely return 0.
-      std::vector<Expression*> items;
-      items.push_back(builder.makeDrop(curr->ref));
-      if (curr->rtt) {
-        items.push_back(builder.makeDrop(curr->rtt));
-      }
-      items.push_back(builder.makeConst(int32_t(0)));
-      replaceCurrent(builder.makeBlock(items));
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeConst(int32_t(0))));
       return;
     }
 
-    if (!curr->rtt && curr->ref->type.isNonNullable() &&
+    if (curr->ref->type.isNonNullable() &&
         HeapType::isSubType(refType, intendedType)) {
       // This static test will definitely succeed.
       replaceCurrent(builder.makeBlock(
@@ -3438,6 +3359,131 @@ private:
         matches(curr, binary(DivU, any(&left), constant(1)))) {
       if (curr->type.isInteger() || fastMath) {
         return left;
+      }
+    }
+    return nullptr;
+  }
+
+  // Folding two expressions into one with similar operations and
+  // constants on RHSs
+  Expression* optimizeDoubletonWithConstantOnRight(Binary* curr) {
+    using namespace Match;
+    using namespace Abstract;
+    {
+      Binary* inner;
+      Const *c1, *c2 = curr->right->cast<Const>();
+      if (matches(curr->left, binary(&inner, any(), ival(&c1))) &&
+          inner->op == curr->op) {
+        Type type = inner->type;
+        BinaryOp op = inner->op;
+        // (x & C1) & C2   =>   x & (C1 & C2)
+        if (op == getBinary(type, And)) {
+          c1->value = c1->value.and_(c2->value);
+          return inner;
+        }
+        // (x | C1) | C2   =>   x | (C1 | C2)
+        if (op == getBinary(type, Or)) {
+          c1->value = c1->value.or_(c2->value);
+          return inner;
+        }
+        // (x ^ C1) ^ C2   =>   x ^ (C1 ^ C2)
+        if (op == getBinary(type, Xor)) {
+          c1->value = c1->value.xor_(c2->value);
+          return inner;
+        }
+        // (x * C1) * C2   =>   x * (C1 * C2)
+        if (op == getBinary(type, Mul)) {
+          c1->value = c1->value.mul(c2->value);
+          return inner;
+        }
+        // TODO:
+        // handle signed / unsigned divisions. They are more complex
+
+        // (x <<>> C1) <<>> C2   =>   x <<>> (C1 + C2)
+        if (hasAnyShift(op)) {
+          // shifts only use an effective amount from the constant, so
+          // adding must be done carefully
+          auto total =
+            Bits::getEffectiveShifts(c1) + Bits::getEffectiveShifts(c2);
+          auto effectiveTotal = Bits::getEffectiveShifts(total, c1->type);
+          if (total == effectiveTotal) {
+            // no overflow, we can do this
+            c1->value = Literal::makeFromInt32(total, c1->type);
+            return inner;
+          } else {
+            // overflow. Handle different scenarious
+            if (hasAnyRotateShift(op)) {
+              // overflow always accepted in rotation shifts
+              c1->value = Literal::makeFromInt32(effectiveTotal, c1->type);
+              return inner;
+            }
+            // handle overflows for general shifts
+            //   x << C1 << C2    =>   0 or { drop(x), 0 }
+            //   x >>> C1 >>> C2  =>   0 or { drop(x), 0 }
+            // iff `C1 + C2` -> overflows
+            if ((op == getBinary(type, Shl) || op == getBinary(type, ShrU))) {
+              auto* x = inner->left;
+              c1->value = Literal::makeZero(c1->type);
+              if (!effects(x).hasSideEffects()) {
+                //  =>  0
+                return c1;
+              } else {
+                //  =>  { drop(x), 0 }
+                Builder builder(*getModule());
+                return builder.makeBlock({builder.makeDrop(x), c1});
+              }
+            }
+            //   i32(x) >> C1 >> C2   =>   x >> 31
+            //   i64(x) >> C1 >> C2   =>   x >> 63
+            // iff `C1 + C2` -> overflows
+            if (op == getBinary(type, ShrS)) {
+              c1->value = Literal::makeFromInt32(c1->type.getByteSize() * 8 - 1,
+                                                 c1->type);
+              return inner;
+            }
+          }
+        }
+      }
+    }
+    {
+      // (x << C1) * C2   =>   x * (C2 << C1)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(Mul, binary(&inner, Shl, any(), ival(&c1)), ival(&c2)))) {
+        inner->op = getBinary(inner->type, Mul);
+        c1->value = c2->value.shl(c1->value);
+        return inner;
+      }
+    }
+    {
+      // (x * C1) << C2   =>   x * (C1 << C2)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(Shl, binary(&inner, Mul, any(), ival(&c1)), ival(&c2)))) {
+        c1->value = c1->value.shl(c2->value);
+        return inner;
+      }
+    }
+    {
+      // TODO: Add canonicalization rotr to rotl and remove these rules.
+      // rotl(rotr(x, C1), C2)   =>   rotr(x, C1 - C2)
+      // rotr(rotl(x, C1), C2)   =>   rotl(x, C1 - C2)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(RotL, binary(&inner, RotR, any(), ival(&c1)), ival(&c2))) ||
+          matches(
+            curr,
+            binary(RotR, binary(&inner, RotL, any(), ival(&c1)), ival(&c2)))) {
+        auto diff = Bits::getEffectiveShifts(c1) - Bits::getEffectiveShifts(c2);
+        c1->value = Literal::makeFromInt32(
+          Bits::getEffectiveShifts(diff, c2->type), c2->type);
+        return inner;
       }
     }
     return nullptr;

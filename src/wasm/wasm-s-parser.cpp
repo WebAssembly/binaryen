@@ -54,7 +54,7 @@ namespace wasm {
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
   ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
-  I16("i16"), RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
+  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -752,46 +752,11 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     }
   };
 
-  auto parseRttType = [&](Element& elem) -> Type {
-    // '(' 'rtt' depth? typeidx ')'
-    uint32_t depth;
-    Element* idx;
-    switch (elem.size()) {
-      default:
-        throw ParseException(
-          "unexpected number of rtt parameters", elem.line, elem.col);
-      case 2:
-        depth = Rtt::NoDepth;
-        idx = elem[1];
-        break;
-      case 3:
-        if (!String::isNumber(elem[1]->c_str())) {
-          throw ParseException(
-            "invalid rtt depth", elem[1]->line, elem[1]->col);
-        }
-        depth = atoi(elem[1]->c_str());
-        idx = elem[2];
-        break;
-    }
-    if (idx->dollared()) {
-      HeapType type = builder[typeIndices[idx->c_str()]];
-      return builder.getTempRttType(Rtt(depth, type));
-    } else if (String::isNumber(idx->c_str())) {
-      size_t index = atoi(idx->c_str());
-      if (index < numTypes) {
-        return builder.getTempRttType(Rtt(depth, builder[index]));
-      }
-    }
-    throw ParseException("invalid type index", idx->line, idx->col);
-  };
-
   auto parseValType = [&](Element& elem) {
     if (elem.isStr()) {
       return stringToType(elem.c_str());
     } else if (*elem[0] == REF) {
       return parseRefType(elem);
-    } else if (*elem[0] == RTT) {
-      return parseRttType(elem);
     } else {
       throw ParseException("unknown valtype kind", elem[0]->line, elem[0]->col);
     }
@@ -1280,18 +1245,6 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       i++;
     }
     return Type(parseHeapType(*s[i]), nullable);
-  }
-  if (elementStartsWith(s, RTT)) {
-    // It's an RTT, something like (rtt N $typename) or just (rtt $typename)
-    // if there is no depth.
-    if (s[1]->dollared()) {
-      auto heapType = parseHeapType(*s[1]);
-      return Type(Rtt(heapType));
-    } else {
-      auto depth = atoi(s[1]->str().c_str());
-      auto heapType = parseHeapType(*s[2]);
-      return Type(Rtt(depth, heapType));
-    }
   }
   // It's a tuple.
   std::vector<Type> types;
@@ -2702,22 +2655,10 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
-  auto* ref = parseExpression(*s[1]);
-  auto* rtt = parseExpression(*s[2]);
-  return Builder(wasm).makeRefTest(ref, rtt);
-}
-
 Expression* SExpressionWasmBuilder::makeRefTestStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
   return Builder(wasm).makeRefTest(ref, heapType);
-}
-
-Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  auto* ref = parseExpression(*s[1]);
-  auto* rtt = parseExpression(*s[2]);
-  return Builder(wasm).makeRefCast(ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCastStatic(Element& s) {
@@ -2735,12 +2676,8 @@ Expression* SExpressionWasmBuilder::makeRefCastNopStatic(Element& s) {
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
   auto* ref = parseExpression(*s[2]);
-  Expression* rtt = nullptr;
-  if (op == BrOnCast || op == BrOnCastFail) {
-    rtt = parseExpression(*s[3]);
-  }
   return ValidatingBuilder(wasm, s.line, s.col)
-    .validateAndMakeBrOn(op, name, ref, rtt);
+    .validateAndMakeBrOn(op, name, ref);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOnStatic(Element& s, BrOnOp op) {
@@ -2748,39 +2685,6 @@ Expression* SExpressionWasmBuilder::makeBrOnStatic(Element& s, BrOnOp op) {
   auto heapType = parseHeapType(*s[2]);
   auto* ref = parseExpression(*s[3]);
   return Builder(wasm).makeBrOn(op, name, ref, heapType);
-}
-
-Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
-  return Builder(wasm).makeRttCanon(parseHeapType(*s[1]));
-}
-
-Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto parent = parseExpression(*s[2]);
-  return Builder(wasm).makeRttSub(heapType, parent);
-}
-
-Expression* SExpressionWasmBuilder::makeRttFreshSub(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto parent = parseExpression(*s[2]);
-  return Builder(wasm).makeRttFreshSub(heapType, parent);
-}
-
-Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
-  auto heapType = parseHeapType(*s[1]);
-  auto numOperands = s.size() - 3;
-  if (default_ && numOperands > 0) {
-    throw ParseException(
-      "arguments provided for struct.new_with_default", s.line, s.col);
-  }
-  std::vector<Expression*> operands;
-  operands.resize(numOperands);
-  for (Index i = 0; i < numOperands; i++) {
-    operands[i] = parseExpression(*s[i + 2]);
-  }
-  auto* rtt = parseExpression(*s[s.size() - 1]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
-  return Builder(wasm).makeStructNew(rtt, operands);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNewStatic(Element& s,
@@ -2841,19 +2745,6 @@ Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
   return Builder(wasm).makeStructSet(index, ref, value);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
-  auto heapType = parseHeapType(*s[1]);
-  Expression* init = nullptr;
-  size_t i = 2;
-  if (!default_) {
-    init = parseExpression(*s[i++]);
-  }
-  auto* size = parseExpression(*s[i++]);
-  auto* rtt = parseExpression(*s[i++]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
-  return Builder(wasm).makeArrayNew(rtt, size, init);
-}
-
 Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
                                                        bool default_) {
   auto heapType = parseHeapType(*s[1]);
@@ -2864,18 +2755,6 @@ Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
   }
   auto* size = parseExpression(*s[i++]);
   return Builder(wasm).makeArrayNew(heapType, size, init);
-}
-
-Expression* SExpressionWasmBuilder::makeArrayInit(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  size_t i = 2;
-  std::vector<Expression*> values;
-  while (i < s.size() - 1) {
-    values.push_back(parseExpression(*s[i++]));
-  }
-  auto* rtt = parseExpression(*s[i++]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
-  return Builder(wasm).makeArrayInit(rtt, values);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
@@ -2958,6 +2837,9 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+    auto* start = parseExpression(s[i + 1]);
+    auto* end = parseExpression(s[i + 2]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end);
   }
   return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
 }
@@ -3853,7 +3735,7 @@ void SExpressionWasmBuilder::validateHeapTypeUsingChild(Expression* child,
   if (child->type == Type::unreachable) {
     return;
   }
-  if ((!child->type.isRef() && !child->type.isRtt()) ||
+  if (!child->type.isRef() ||
       !HeapType::isSubType(child->type.getHeapType(), heapType)) {
     throw ParseException("bad heap type: expected " + heapType.toString() +
                            " but found " + child->type.toString(),

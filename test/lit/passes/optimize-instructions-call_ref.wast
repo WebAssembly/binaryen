@@ -163,9 +163,6 @@
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.func $return-nothing)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (rtt.canon $none_=>_i32)
- ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -178,9 +175,8 @@
   ;; call_ref that returns nothing with a call that returns an i32. In fact, we
   ;; end up optimizing the cast into an unreachable.
   (call_ref
-   (ref.cast
+   (ref.cast_static $none_=>_i32
     (ref.func $return-nothing)
-    (rtt.canon $none_=>_i32)
    )
   )
  )

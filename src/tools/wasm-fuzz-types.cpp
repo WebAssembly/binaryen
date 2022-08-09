@@ -386,24 +386,6 @@ void Fuzzer::checkCanonicalization() {
       }
     }
 
-    CopiedType getRtt(Type old) {
-      auto copied = getChildHeapType(old.getHeapType());
-      auto rtt = old.getRtt();
-      rtt.heapType = copied.get();
-      if (copied.getNew()) {
-        // The child is temporary, so we must put it in a temporary type.
-        return {NewType{builder.getTempRttType(rtt)}};
-      } else {
-        // The child is canonical, so we can either put it in a temporary type
-        // or use the canonical type.
-        if (rand.oneIn(2)) {
-          return {NewType{builder.getTempRttType(rtt)}};
-        } else {
-          return {OldType{Type(rtt)}};
-        }
-      }
-    }
-
     CopiedType getRef(Type old) {
       auto copied = getChildHeapType(old.getHeapType());
       auto type = copied.get();
@@ -425,8 +407,6 @@ void Fuzzer::checkCanonicalization() {
     CopiedType getType(Type old) {
       if (old.isTuple()) {
         return getTuple(old);
-      } else if (old.isRtt()) {
-        return getRtt(old);
       } else if (old.isRef()) {
         return getRef(old);
       } else {

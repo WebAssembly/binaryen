@@ -111,8 +111,6 @@ function initializeConstants() {
     'RefTest',
     'RefCast',
     'BrOn',
-    'RttCanon',
-    'RttSub',
     'StructNew',
     'StructGet',
     'StructSet',

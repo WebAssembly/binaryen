@@ -805,13 +805,6 @@ public:
     ret->finalize();
     return ret;
   }
-  RefTest* makeRefTest(Expression* ref, Expression* rtt) {
-    auto* ret = wasm.allocator.alloc<RefTest>();
-    ret->ref = ref;
-    ret->rtt = rtt;
-    ret->finalize();
-    return ret;
-  }
   RefTest* makeRefTest(Expression* ref, HeapType intendedType) {
     auto* ret = wasm.allocator.alloc<RefTest>();
     ret->ref = ref;
@@ -819,14 +812,6 @@ public:
     ret->finalize();
     return ret;
   }
-  RefCast* makeRefCast(Expression* ref, Expression* rtt) {
-    auto* ret = wasm.allocator.alloc<RefCast>();
-    ret->ref = ref;
-    ret->rtt = rtt;
-    ret->finalize();
-    return ret;
-  }
-
   RefCast*
   makeRefCast(Expression* ref, HeapType intendedType, RefCast::Safety safety) {
     auto* ret = wasm.allocator.alloc<RefCast>();
@@ -836,13 +821,11 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOn*
-  makeBrOn(BrOnOp op, Name name, Expression* ref, Expression* rtt = nullptr) {
+  BrOn* makeBrOn(BrOnOp op, Name name, Expression* ref) {
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
     ret->name = name;
     ret->ref = ref;
-    ret->rtt = rtt;
     ret->finalize();
     return ret;
   }
@@ -852,37 +835,6 @@ public:
     ret->name = name;
     ret->ref = ref;
     ret->intendedType = intendedType;
-    ret->finalize();
-    return ret;
-  }
-  RttCanon* makeRttCanon(HeapType heapType) {
-    auto* ret = wasm.allocator.alloc<RttCanon>();
-    ret->type = Type(Rtt(heapType.getDepth(), heapType));
-    ret->finalize();
-    return ret;
-  }
-  RttSub* makeRttSub(HeapType heapType, Expression* parent) {
-    auto* ret = wasm.allocator.alloc<RttSub>();
-    ret->parent = parent;
-    auto parentRtt = parent->type.getRtt();
-    if (parentRtt.hasDepth()) {
-      ret->type = Type(Rtt(parentRtt.depth + 1, heapType));
-    } else {
-      ret->type = Type(Rtt(heapType));
-    }
-    ret->finalize();
-    return ret;
-  }
-  RttSub* makeRttFreshSub(HeapType heapType, Expression* parent) {
-    auto* ret = makeRttSub(heapType, parent);
-    ret->fresh = true;
-    return ret;
-  }
-  template<typename T>
-  StructNew* makeStructNew(Expression* rtt, const T& args) {
-    auto* ret = wasm.allocator.alloc<StructNew>();
-    ret->rtt = rtt;
-    ret->operands.set(args);
     ret->finalize();
     return ret;
   }
@@ -912,28 +864,11 @@ public:
     return ret;
   }
   ArrayNew*
-  makeArrayNew(Expression* rtt, Expression* size, Expression* init = nullptr) {
-    auto* ret = wasm.allocator.alloc<ArrayNew>();
-    ret->rtt = rtt;
-    ret->size = size;
-    ret->init = init;
-    ret->finalize();
-    return ret;
-  }
-  ArrayNew*
   makeArrayNew(HeapType type, Expression* size, Expression* init = nullptr) {
     auto* ret = wasm.allocator.alloc<ArrayNew>();
     ret->size = size;
     ret->init = init;
     ret->type = Type(type, NonNullable);
-    ret->finalize();
-    return ret;
-  }
-  ArrayInit* makeArrayInit(Expression* rtt,
-                           const std::vector<Expression*>& values) {
-    auto* ret = wasm.allocator.alloc<ArrayInit>();
-    ret->rtt = rtt;
-    ret->values.set(values);
     ret->finalize();
     return ret;
   }
@@ -996,6 +931,18 @@ public:
     ret->op = op;
     ret->ptr = ptr;
     ret->length = length;
+    ret->finalize();
+    return ret;
+  }
+  StringNew* makeStringNew(StringNewOp op,
+                           Expression* ptr,
+                           Expression* start,
+                           Expression* end) {
+    auto* ret = wasm.allocator.alloc<StringNew>();
+    ret->op = op;
+    ret->ptr = ptr;
+    ret->start = start;
+    ret->end = end;
     ret->finalize();
     return ret;
   }
@@ -1121,9 +1068,6 @@ public:
     if (type.isRef() && type.getHeapType() == HeapType::i31) {
       return makeI31New(makeConst(value.geti31()));
     }
-    if (type.isRtt()) {
-      return makeRtt(value.type);
-    }
     TODO_SINGLE_COMPOUND(type);
     WASM_UNREACHABLE("unsupported constant expression");
   }
@@ -1139,18 +1083,6 @@ public:
       }
       return makeTupleMake(consts);
     }
-  }
-
-  // Given a type, creates an RTT expression of that type, using a combination
-  // of rtt.canon and rtt.subs.
-  Expression* makeRtt(Type type) {
-    Expression* ret = makeRttCanon(type.getHeapType());
-    if (type.getRtt().hasDepth()) {
-      for (Index i = 0; i < type.getRtt().depth; i++) {
-        ret = makeRttSub(type.getHeapType(), ret);
-      }
-    }
-    return ret;
   }
 
   // Additional utility functions for building on top of nodes
@@ -1322,25 +1254,13 @@ public:
   ValidatingBuilder(Module& wasm, size_t line, size_t col)
     : Builder(wasm), line(line), col(col) {}
 
-  Expression* validateAndMakeBrOn(BrOnOp op,
-                                  Name name,
-                                  Expression* ref,
-                                  Expression* rtt = nullptr) {
-    if (op == BrOnCast) {
-      if (rtt->type == Type::unreachable) {
-        // An unreachable rtt is not supported: the text and binary formats do
-        // not provide the type, so if it's unreachable we should not even
-        // create a br_on_cast in such a case, as we'd have no idea what it
-        // casts to.
-        return makeSequence(makeDrop(ref), rtt);
-      }
-    }
+  Expression* validateAndMakeBrOn(BrOnOp op, Name name, Expression* ref) {
     if (op == BrOnNull) {
       if (!ref->type.isRef() && ref->type != Type::unreachable) {
         throw ParseException("Invalid ref for br_on_null", line, col);
       }
     }
-    return makeBrOn(op, name, ref, rtt);
+    return makeBrOn(op, name, ref);
   }
 
   template<typename T>

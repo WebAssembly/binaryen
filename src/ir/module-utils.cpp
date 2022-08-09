@@ -55,8 +55,6 @@ struct CodeScanner
       counts.note(call->heapType);
     } else if (curr->is<RefNull>()) {
       counts.note(curr->type);
-    } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-      counts.note(curr->type.getRtt().heapType);
     } else if (auto* make = curr->dynCast<StructNew>()) {
       handleMake(make);
     } else if (auto* make = curr->dynCast<ArrayNew>()) {
@@ -64,12 +62,12 @@ struct CodeScanner
     } else if (auto* make = curr->dynCast<ArrayInit>()) {
       handleMake(make);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
-      handleCast(cast);
+      counts.note(cast->intendedType);
     } else if (auto* cast = curr->dynCast<RefTest>()) {
-      handleCast(cast);
+      counts.note(cast->intendedType);
     } else if (auto* cast = curr->dynCast<BrOn>()) {
       if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-        handleCast(cast);
+        counts.note(cast->intendedType);
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {
       counts.note(get->ref->type);
@@ -86,16 +84,8 @@ struct CodeScanner
   }
 
   template<typename T> void handleMake(T* curr) {
-    if (!curr->rtt && curr->type != Type::unreachable) {
+    if (curr->type != Type::unreachable) {
       counts.note(curr->type.getHeapType());
-    }
-  }
-
-  template<typename T> void handleCast(T* curr) {
-    // Some operations emit a HeapType in the binary format, if they are
-    // static and not dynamic (if dynamic, the RTT provides the heap type).
-    if (!curr->rtt) {
-      counts.note(curr->intendedType);
     }
   }
 };

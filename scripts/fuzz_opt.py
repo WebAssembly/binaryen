@@ -1,12 +1,19 @@
 #!/usr/bin/python3
 
 '''
-Runs random passes and options on random inputs, using wasm-opt.
+Run various fuzzing operations on random inputs, using wasm-opt. See
+"testcase_handlers" below for the list of fuzzing operations.
 
-Can be configured to run just wasm-opt itself (using --fuzz-exec)
-or also run VMs on it.
+Usage:
 
-For afl-fuzz integration, you probably don't want this, and can use
+./scripts/fuzz_opt.py
+
+That will run forever or until it finds a problem.
+
+Setup: Some tools are optional, like emcc and wasm2c. The v8 shell (d8),
+however, is used in various sub-fuzzers and so it is mandatory.
+
+Note: For afl-fuzz integration, you probably don't want this, and can use
 something like
 
 BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-findings/ -m 100 -d -- bin/wasm-opt -ttf --fuzz-exec --Os @@
@@ -340,17 +347,17 @@ def pick_initial_contents():
     FEATURE_OPTS += [
         # has not been fuzzed in general yet
         '--disable-memory64',
-        # avoid multivalue for now due to bad interactions with gc rtts in
-        # stacky code. for example, this fails to roundtrip as the tuple code
-        # ends up creating stacky binary code that needs to spill rtts to locals,
-        # which is not allowed:
+        # avoid multivalue for now due to bad interactions with gc non-nullable
+        # locals in stacky code. for example, this fails to roundtrip as the
+        # tuple code ends up creating stacky binary code that needs to spill
+        # non-nullable references to locals, which is not allowed:
         #
         # (module
         #  (type $other (struct))
-        #  (func $foo (result (rtt $other))
+        #  (func $foo (result (ref $other))
         #   (select
-        #    (rtt.canon $other)
-        #    (rtt.canon $other)
+        #    (struct.new $other)
+        #    (struct.new $other)
         #    (tuple.extract 1
         #     (tuple.make
         #      (i32.const 0)
@@ -1223,9 +1230,10 @@ def randomize_opt_flags():
                 continue
             if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
+                print('TODO: Resolving https://github.com/WebAssembly/binaryen/issues/4824 may fix this')
                 continue
             if '--gc' not in FEATURE_OPTS:
-                print('avoiding --flatten due to GC not supporting it (spilling of RTTs)')
+                print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')
                 continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')
@@ -1278,6 +1286,14 @@ print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 IMPLIED_FEATURE_OPTS = {
     '--disable-reference-types': ['--disable-gc']
 }
+
+print('''
+<<< fuzz_opt.py >>>
+''')
+
+if not shared.V8:
+    print('The v8 shell, d8, must be in the path')
+    sys.exit(1)
 
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,

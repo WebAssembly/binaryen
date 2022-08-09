@@ -416,8 +416,6 @@ struct InfoCollector
     handleBreakValue(curr);
     receiveChildValue(curr->ref, curr);
   }
-  void visitRttCanon(RttCanon* curr) { addRoot(curr); }
-  void visitRttSub(RttSub* curr) { addRoot(curr); }
   void visitRefAs(RefAs* curr) {
     // TODO: optimize when possible: like RefCast, not all values flow through.
     receiveChildValue(curr->value, curr);
@@ -1566,6 +1564,15 @@ void Flower::readFromData(HeapType declaredHeapType,
     return;
   }
 
+  if (refContents.isLiteral()) {
+    // The only reference literals we have are nulls (handled above) and
+    // ref.func. ref.func will trap in struct|array.get, so nothing will be read
+    // here (when we finish optimizing all instructions like BrOn then
+    // ref.funcs should get filtered out before arriving here TODO).
+    assert(refContents.getType().isFunction());
+    return;
+  }
+
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special reads\n";
 #endif
@@ -1588,12 +1595,6 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       represent them as ExactType).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
-    // Note that this cannot be a Literal, since this is a reference, and the
-    // only reference literals we have are nulls (handled above) and ref.func.
-    // ref.func is not valid in struct|array.get, so the code would trap at
-    // runtime, and also it would never reach here as because of wasm validation
-    // it would be cast to a struct/array type, and our special ref.cast code
-    // would filter it out.
     assert(refContents.isMany() || refContents.isGlobal());
 
     // We create a ConeReadLocation for the canonical cone of this type, to
@@ -1677,9 +1678,8 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     //       emitting a Many in any of these code paths
     filtered = contents;
   } else {
-    auto intendedType = cast->getIntendedType();
     bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), intendedType);
+      HeapType::isSubType(contents.getType().getHeapType(), cast->intendedType);
     if (isSubType) {
       // The contents are not Many, but their heap type is a subtype of the
       // intended type, so we'll pass that through. Note that we pass the entire
@@ -1694,7 +1694,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
     if (mayBeNull) {
       // A null is possible, so pass that along.
       filtered.combine(
-        PossibleContents::literal(Literal::makeNull(intendedType)));
+        PossibleContents::literal(Literal::makeNull(cast->intendedType)));
     }
   }
   if (!filtered.isNone()) {

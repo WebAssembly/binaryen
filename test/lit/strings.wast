@@ -440,16 +440,22 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array utf8
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array replace
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 6)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -462,21 +468,29 @@
     (drop
       (string.new_wtf8_array utf8
         (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
       )
     )
     (drop
       (string.new_wtf8_array wtf8
         (local.get $array)
+        (i32.const 3)
+        (i32.const 4)
       )
     )
     (drop
       (string.new_wtf8_array replace
         (local.get $array)
+        (i32.const 5)
+        (i32.const 6)
       )
     )
     (drop
       (string.new_wtf16_array
         (local.get $array)
+        (i32.const 7)
+        (i32.const 8)
       )
     )
   )

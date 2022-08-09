@@ -967,14 +967,6 @@ Result<typename Ctx::InstrT> makeBrOn(Ctx&, ParseInput&, BrOnOp op);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, ParseInput&, BrOnOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttCanon(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttSub(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttFreshSub(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructNew(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStructNewStatic(Ctx&, ParseInput&, bool default_);
 template<typename Ctx>
@@ -983,12 +975,8 @@ makeStructGet(Ctx&, ParseInput&, bool signed_ = false);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStructSet(Ctx&, ParseInput&);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNew(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeArrayNewStatic(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInit(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&, ParseInput&);
 template<typename Ctx>
@@ -1779,27 +1767,6 @@ makeBrOnStatic(Ctx& ctx, ParseInput& in, BrOnOp op) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttCanon(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttSub(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRttFreshSub(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNew(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStructNewStatic(Ctx& ctx, ParseInput& in, bool default_) {
   return in.err("unimplemented instruction");
@@ -1818,18 +1785,7 @@ Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, ParseInput& in) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeArrayNew(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
 makeArrayNewStatic(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInit(Ctx& ctx, ParseInput& in) {
   return in.err("unimplemented instruction");
 }
 

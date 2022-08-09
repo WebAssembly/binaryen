@@ -159,6 +159,10 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    if (module->tables.empty()) {
+      return;
+    }
+
     // Find which tables are valid to optimize on. They must not be imported nor
     // exported (so the outside cannot modify them), and must have no sets in
     // any part of the module.

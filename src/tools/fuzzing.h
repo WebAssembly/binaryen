@@ -181,11 +181,11 @@ private:
 
   // Recombination and mutation can replace a node with another node of the same
   // type, but should not do so for certain types that are dangerous. For
-  // example, it would be bad to add an RTT in a tuple, as that would force us
-  // to use temporary locals for the tuple, but RTTs are not defaultable.
-  // Also, 'pop' pseudo instruction for EH is supposed to exist only at the
-  // beginning of a 'catch' block, so it shouldn't be moved around or deleted
-  // freely.
+  // example, it would be bad to add a non-nullable reference to a tuple, as
+  // that would force us to use temporary locals for the tuple, but non-nullable
+  // references cannot always be stored in locals. Also, the 'pop' pseudo
+  // instruction for EH is supposed to exist only at the beginning of a 'catch'
+  // block, so it shouldn't be moved around or deleted freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
     return curr->type.isDefaultable() &&
            !EHUtils::containsValidDanglingPop(curr);
@@ -312,7 +312,6 @@ private:
   bool isLoggableType(Type type);
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
-  Rtt getSubType(Rtt rtt);
   Type getSubType(Type type);
 
   // Utilities

@@ -75,8 +75,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 // at compile time, and passes that propagate constants can try to propagate it.
 // Constant expressions are also allowed in global initializers in wasm. Also
 // when two constant expressions compare equal at compile time, their values at
-// runtime will be equal as well.
-// TODO: look into adding more things here like RttCanon.
+// runtime will be equal as well. TODO: combine this with
+// isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
 }
@@ -407,9 +407,8 @@ bool isGenerative(Expression* curr, FeatureSet features);
 
 inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
   if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
-      expr->is<RttCanon>() || expr->is<RttSub>() || expr->is<StructNew>() ||
-      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>() ||
-      expr->is<StringConst>()) {
+      expr->is<StructNew>() || expr->is<ArrayNew>() || expr->is<ArrayInit>() ||
+      expr->is<I31New>() || expr->is<StringConst>()) {
     return true;
   }
 

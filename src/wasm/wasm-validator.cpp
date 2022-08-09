@@ -386,8 +386,6 @@ public:
   void visitRefTest(RefTest* curr);
   void visitRefCast(RefCast* curr);
   void visitBrOn(BrOn* curr);
-  void visitRttCanon(RttCanon* curr);
-  void visitRttSub(RttSub* curr);
   void visitStructNew(StructNew* curr);
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
@@ -2341,23 +2339,12 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
   }
-  if (curr->rtt) {
-    if (curr->rtt->type != Type::unreachable) {
-      shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
-    }
-    shouldBeEqual(curr->intendedType,
+  shouldBeUnequal(curr->intendedType,
                   HeapType(),
                   curr,
-                  "dynamic ref.test must not use intendedType field");
-  } else {
-    shouldBeUnequal(curr->intendedType,
-                    HeapType(),
-                    curr,
-                    "static ref.test must set intendedType field");
-    shouldBeTrue(
-      !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
-  }
+                  "static ref.test must set intendedType field");
+  shouldBeTrue(
+    !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
@@ -2367,23 +2354,12 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
   }
-  if (curr->rtt) {
-    if (curr->rtt->type != Type::unreachable) {
-      shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
-    }
-    shouldBeEqual(curr->intendedType,
+  shouldBeUnequal(curr->intendedType,
                   HeapType(),
                   curr,
-                  "dynamic ref.cast must not use intendedType field");
-  } else {
-    shouldBeUnequal(curr->intendedType,
-                    HeapType(),
-                    curr,
-                    "static ref.cast must set intendedType field");
-    shouldBeTrue(
-      !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
-  }
+                  "static ref.cast must set intendedType field");
+  shouldBeTrue(
+    !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
@@ -2395,66 +2371,20 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
   }
   if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-    if (curr->rtt) {
-      // Note that an unreachable rtt is not supported: the text and binary
-      // formats do not provide the type, so if it's unreachable we should not
-      // even create a br_on_cast in such a case, as we'd have no idea what it
-      // casts to.
-      shouldBeTrue(
-        curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
-      shouldBeEqual(curr->intendedType,
+    shouldBeUnequal(curr->intendedType,
                     HeapType(),
                     curr,
-                    "dynamic br_on_cast* must not use intendedType field");
-    } else {
-      shouldBeUnequal(curr->intendedType,
-                      HeapType(),
-                      curr,
-                      "static br_on_cast* must set intendedType field");
-      shouldBeTrue(!curr->intendedType.isBasic(),
-                   curr,
-                   "br_on_cast* must cast to a non-basic");
-    }
+                    "static br_on_cast* must set intendedType field");
+    shouldBeTrue(!curr->intendedType.isBasic(),
+                 curr,
+                 "br_on_cast* must cast to a non-basic");
   } else {
-    shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
     shouldBeEqual(curr->intendedType,
                   HeapType(),
                   curr,
                   "non-cast br_on* must not set intendedType field");
   }
   noteBreak(curr->name, curr->getSentType(), curr);
-}
-
-void FunctionValidator::visitRttCanon(RttCanon* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
-  shouldBeTrue(curr->type.isRtt(), curr, "rtt.canon must have RTT type");
-  auto rtt = curr->type.getRtt();
-  shouldBeEqual(rtt.depth,
-                Index(curr->type.getHeapType().getDepth()),
-                curr,
-                "rtt.canon must have the depth of its heap type");
-}
-
-void FunctionValidator::visitRttSub(RttSub* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "rtt.sub requires gc to be enabled");
-  shouldBeTrue(curr->type.isRtt(), curr, "rtt.sub must have RTT type");
-  if (curr->parent->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->parent->type.isRtt(), curr, "rtt.sub parent must have RTT type");
-    auto parentRtt = curr->parent->type.getRtt();
-    auto rtt = curr->type.getRtt();
-    if (rtt.hasDepth() && parentRtt.hasDepth()) {
-      shouldBeEqual(rtt.depth,
-                    parentRtt.depth + 1,
-                    curr,
-                    "rtt.canon has a depth of 1 over the parent");
-    }
-    shouldBeTrue(HeapType::isSubType(rtt.heapType, parentRtt.heapType),
-                 curr,
-                 "rtt.sub parent must be a supertype");
-  }
 }
 
 void FunctionValidator::visitStructNew(StructNew* curr) {
@@ -2464,19 +2394,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (curr->rtt) {
-    if (!shouldBeTrue(
-          curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
-      return;
-    }
-  }
   auto heapType = curr->type.getHeapType();
-  if (curr->rtt) {
-    shouldBeEqual(curr->rtt->type.getHeapType(),
-                  heapType,
-                  curr,
-                  "struct.new heap type must match rtt");
-  }
   if (!shouldBeTrue(
         heapType.isStruct(), curr, "struct.new heap type must be struct")) {
     return;
@@ -2568,19 +2486,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (curr->rtt) {
-    if (!shouldBeTrue(
-          curr->rtt->type.isRtt(), curr, "array.new rtt must be rtt")) {
-      return;
-    }
-  }
   auto heapType = curr->type.getHeapType();
-  if (curr->rtt) {
-    shouldBeEqual(curr->rtt->type.getHeapType(),
-                  heapType,
-                  curr,
-                  "array.new heap type must match rtt");
-  }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.new heap type must be array")) {
     return;
@@ -2610,19 +2516,7 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (curr->rtt) {
-    if (!shouldBeTrue(
-          curr->rtt->type.isRtt(), curr, "array.init rtt must be rtt")) {
-      return;
-    }
-  }
   auto heapType = curr->type.getHeapType();
-  if (curr->rtt) {
-    shouldBeEqual(curr->rtt->type.getHeapType(),
-                  heapType,
-                  curr,
-                  "array.init heap type must match rtt");
-  }
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.init heap type must be array")) {
     return;
@@ -2719,9 +2613,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    bool valid = getModule()->features.hasGCNNLocals()
-                   ? var.isDefaultableOrNonNullable()
-                   : var.isDefaultable();
+    bool valid = getModule()->features.hasGCNNLocals() || var.isDefaultable();
     shouldBeTrue(valid, var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
@@ -3170,10 +3062,9 @@ static void validateTables(Module& module, ValidationInfo& info) {
 
   for (auto& segment : module.elementSegments) {
     // Since element segment items need to be constant expressions, that leaves
-    // us with ref.null, ref.func and global.get. The GC proposal adds rtt.canon
-    // and rtt.sub to the list, but Binaryen doesn't consider RTTs as reference-
-    // types yet. As a result, the only possible type for element segments will
-    // be function references.
+    // us with ref.null, ref.func and global.get. As a result, the only possible
+    // type for element segments will be function references.
+    // TODO: This is not true! Allow GC data here (#4846).
     info.shouldBeTrue(segment->type.isFunction(),
                       "elem",
                       "element segment type must be of function type.");

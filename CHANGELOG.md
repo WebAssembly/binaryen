@@ -20,6 +20,8 @@ Current Trunk
 - `BinaryenModulePrintStackIR`, `BinaryenModuleWriteStackIR` and
   `BinaryenModuleAllocateAndWriteStackIR` now have an extra boolean
   argument `optimize`. (#4832)
+- Remove support for the `let` instruction that has been removed from the typed
+  function references spec.
 
 v109
 ----

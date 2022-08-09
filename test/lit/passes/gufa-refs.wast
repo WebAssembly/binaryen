@@ -938,6 +938,8 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (elem declare func $func)
+
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $child (ref null $child))
   ;; CHECK-NEXT:  (local $parent (ref null $parent))
@@ -977,6 +979,35 @@
   ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block $parent (result (ref $parent))
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:         (drop
+  ;; CHECK-NEXT:          (br_on_cast_static $parent $parent
+  ;; CHECK-NEXT:           (ref.func $func)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (ref.func $func)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (local $child (ref null $child))
@@ -1011,6 +1042,29 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
+      )
+    )
+    ;; A ref.func is cast to a struct type, and then we read from that. The cast
+    ;; will trap at runtime, of course; for here, we should not error and also
+    ;; we can optimize these to unreachables. atm we filter out trapping
+    ;; contents in ref.cast, but not br_on_cast, so test both.
+    (drop
+      (struct.get $parent 0
+        (ref.cast_static $parent
+          (ref.func $func)
+        )
+      )
+    )
+    (drop
+      (struct.get $parent 0
+        (block $parent (result (ref $parent))
+          (drop
+            (br_on_cast_static $parent $parent
+              (ref.func $func)
+            )
+          )
+          (unreachable)
+        )
       )
     )
   )
@@ -2896,10 +2950,9 @@
 ;; they might appear as if no content were possible there, and we'd emit an
 ;; unreachable. That should not happen anywhere here.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $A (struct_subtype  data))
   (type $A (struct_subtype data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
@@ -3142,44 +3195,6 @@
       (i32.add
         (i32.const 1)
         (i32.const 2)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $refs-rtts (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.null data)
-  ;; CHECK-NEXT:    (ref.null data)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $A))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast
-  ;; CHECK-NEXT:      (ref.null $A)
-  ;; CHECK-NEXT:      (rtt.sub $A
-  ;; CHECK-NEXT:       (rtt.canon $A)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $A)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $refs-rtts
-    (drop
-      (ref.eq
-        (ref.null data)
-        (ref.null data)
-      )
-    )
-    (drop
-      (ref.cast
-        (ref.null $A)
-        (rtt.sub $A
-          (rtt.canon $A)
-        )
       )
     )
   )
