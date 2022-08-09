@@ -262,11 +262,7 @@ struct SimplifyLocals
         // We are replacing a local.get with the value of the local.set. That
         // may require a refinalize in certain cases, like this:
         //
-<<<<<<< HEAD
-        //  (struct.get $X
-=======
         //  (struct.get $X 0
->>>>>>> origin/main
         //    (local.get $x)
         //  )
         //
