@@ -356,7 +356,7 @@ struct RedundantSetElimination
       // If we are replacing the set with something of a more specific type,
       // then we need to refinalize, for example:
       //
-      //  (struct.get $X
+      //  (struct.get $X 0
       //    (local.tee $x
       //      (..something of type $Y, a subtype of $X..)
       //    )

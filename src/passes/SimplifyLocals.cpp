@@ -53,7 +53,6 @@
 #include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
-#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -263,7 +262,11 @@ struct SimplifyLocals
         // We are replacing a local.get with the value of the local.set. That
         // may require a refinalize in certain cases, like this:
         //
+<<<<<<< HEAD
         //  (struct.get $X
+=======
+        //  (struct.get $X 0
+>>>>>>> origin/main
         //    (local.get $x)
         //  )
         //
