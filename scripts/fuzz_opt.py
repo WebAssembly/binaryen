@@ -977,10 +977,12 @@ class Asyncify(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', 'async.' + before_wasm] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', 'async.' + after_wasm] + FEATURE_OPTS)
-        before_wasm = 'async.' + before_wasm
-        after_wasm = 'async.' + after_wasm
+        async_before_wasm = abspath('async.' + os.path.basename(before_wasm))
+        async_after_wasm = abspath('async.' + os.path.basename(after_wasm))
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', async_before_wasm] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', async_after_wasm] + FEATURE_OPTS)
+        before_wasm = async_before_wasm
+        after_wasm = async_after_wasm
         before = fix_output(run_d8_wasm(before_wasm))
         after = fix_output(run_d8_wasm(after_wasm))
 
