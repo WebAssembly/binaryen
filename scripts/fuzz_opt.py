@@ -1,12 +1,19 @@
 #!/usr/bin/python3
 
 '''
-Runs random passes and options on random inputs, using wasm-opt.
+Run various fuzzing operations on random inputs, using wasm-opt. See
+"testcase_handlers" below for the list of fuzzing operations.
 
-Can be configured to run just wasm-opt itself (using --fuzz-exec)
-or also run VMs on it.
+Usage:
 
-For afl-fuzz integration, you probably don't want this, and can use
+./scripts/fuzz_opt.py
+
+That will run forever or until it finds a problem.
+
+Setup: Some tools are optional, like emcc and wasm2c. The v8 shell (d8),
+however, is used in various sub-fuzzers and so it is mandatory.
+
+Note: For afl-fuzz integration, you probably don't want this, and can use
 something like
 
 BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-findings/ -m 100 -d -- bin/wasm-opt -ttf --fuzz-exec --Os @@
@@ -1279,6 +1286,14 @@ print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 IMPLIED_FEATURE_OPTS = {
     '--disable-reference-types': ['--disable-gc']
 }
+
+print('''
+<<< fuzz_opt.py >>>
+''')
+
+if not shared.V8:
+    print('The v8 shell, d8, must be in the path')
+    sys.exit(1)
 
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
