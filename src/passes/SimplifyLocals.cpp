@@ -53,6 +53,7 @@
 #include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -119,6 +120,9 @@ struct SimplifyLocals
 
   // local => # of local.gets for it
   LocalGetCounter getCounter;
+
+  // In rare cases we make a change to a type that requires a refinalize.
+  bool refinalize = false;
 
   static void
   doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
@@ -254,6 +258,23 @@ struct SimplifyLocals
       if (oneUse) {
         // with just one use, we can sink just the value
         this->replaceCurrent(set->value);
+
+        // We are replacing a local.get with the value of the local.set. That
+        // may require a refinalize in certain cases, like this:
+        //
+        //  (struct.get $X 0
+        //    (local.get $x)
+        //  )
+        //
+        // If we replace the local.get with a more refined type then the
+        // struct.get may read a more refined type (if the subtype has a more
+        // refined type for that particular field). Note that this cannot happen
+        // in the other arm of this if-else, where we replace the local.get with
+        // a tee, since tees have the type of the local, so no types change
+        // there.
+        if (set->value->type != curr->type) {
+          refinalize = true;
+        }
       } else {
         this->replaceCurrent(set);
         assert(!set->isTee());
@@ -889,6 +910,10 @@ struct SimplifyLocals
         }
       }
     } while (anotherCycle);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
   }
 
   bool runMainOptimizations(Function* func) {
