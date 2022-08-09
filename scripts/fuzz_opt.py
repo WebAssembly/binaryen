@@ -33,6 +33,7 @@ import re
 import sys
 import time
 import traceback
+from os.path import abspath
 
 from test import shared
 from test import support
@@ -338,7 +339,7 @@ def pick_initial_contents():
                 # there is no module in this choice (just asserts), ignore it
                 print('initial contents has no module')
                 return
-            test_name = 'initial.wat'
+            test_name = abspath('initial.wat')
             with open(test_name, 'w') as f:
                 f.write(module)
             print('  picked submodule %d from multi-module wast' % index)
@@ -767,7 +768,7 @@ class CompareVMs(TestCaseHandler):
                 # large and it isn't what we are focused on testing here
                 with no_pass_debug():
                     run(compile_cmd)
-                return run_d8_js('a.out.js')
+                return run_d8_js(abspath('a.out.js'))
 
             def can_run(self, wasm):
                 # quite slow (more steps), so run it less frequently
@@ -833,15 +834,15 @@ class CheckDeterminism(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
-        run([in_bin('wasm-opt'), before_wasm, '-o', 'b1.wasm'] + opts)
-        run([in_bin('wasm-opt'), before_wasm, '-o', 'b2.wasm'] + opts)
+        run([in_bin('wasm-opt'), before_wasm, '-o', abspath('b1.wasm')] + opts)
+        run([in_bin('wasm-opt'), before_wasm, '-o', abspath('b2.wasm')] + opts)
         b1 = open('b1.wasm', 'rb').read()
         b2 = open('b2.wasm', 'rb').read()
         if (b1 != b2):
-            run([in_bin('wasm-dis'), 'b1.wasm', '-o', 'b1.wat'] + FEATURE_OPTS)
-            run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'] + FEATURE_OPTS)
-            t1 = open('b1.wat', 'r').read()
-            t2 = open('b2.wat', 'r').read()
+            run([in_bin('wasm-dis'), abspath('b1.wasm'), '-o', abspath('b1.wat')] + FEATURE_OPTS)
+            run([in_bin('wasm-dis'), abspath('b2.wasm'), '-o', abspath('b2.wat')] + FEATURE_OPTS)
+            t1 = open(abspath('b1.wat'), 'r').read()
+            t2 = open(abspath('b2.wat'), 'r').read()
             compare(t1, t2, 'Output must be deterministic.', verbose=False)
 
 
@@ -958,7 +959,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(glue)
             f.write(main)
             f.write(wrapper)
-        return run_vm([shared.NODEJS, js_file, 'a.wasm'])
+        return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
 
     def can_run_on_feature_opts(self, feature_opts):
         # TODO: properly handle memory growth. right now the wasm2js handler
@@ -992,7 +993,7 @@ class Asyncify(TestCaseHandler):
             return
 
         def do_asyncify(wasm):
-            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', 'async.t.wasm']
+            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', abspath('async.t.wasm')]
             # if we allow NaNs, running binaryen optimizations and then
             # executing in d8 may lead to different results due to NaN
             # nondeterminism between VMs.
@@ -1003,7 +1004,7 @@ class Asyncify(TestCaseHandler):
                     cmd += ['--shrink-level=%d' % random.randint(1, 2)]
             cmd += FEATURE_OPTS
             run(cmd)
-            out = run_d8_wasm('async.t.wasm')
+            out = run_d8_wasm(abspath('async.t.wasm'))
             # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
             for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
                            '[fuzz-exec] calling asyncify_start_unwind\n',
@@ -1034,8 +1035,8 @@ class RoundtripText(TestCaseHandler):
         # names which are very long, causing names to collide and the wast to be
         # invalid
         # FIXME: run name-types by default during load?
-        run([in_bin('wasm-opt'), wasm, '--name-types', '-S', '-o', 'a.wast'] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), 'a.wast'] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), wasm, '--name-types', '-S', '-o', abspath('a.wast')] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
 # The global list of all test case handlers
@@ -1078,14 +1079,14 @@ def test_one(random_input, given_wasm):
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
         try:
-            run([in_bin('wasm-opt'), given_wasm, '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS)
+            run([in_bin('wasm-opt'), given_wasm, '-o', abspath('a.wasm')] + FUZZ_OPTS + FEATURE_OPTS)
         except Exception as e:
             print("Internal error in fuzzer! Could not run given wasm")
             raise e
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
-        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
+        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', abspath('a.wasm')] + FUZZ_OPTS + FEATURE_OPTS
         if INITIAL_CONTENTS:
             generate_command += ['--initial-fuzz=' + INITIAL_CONTENTS]
         if PRINT_WATS:
@@ -1100,7 +1101,7 @@ def test_one(random_input, given_wasm):
     update_feature_opts('a.wasm')
 
     # create a second wasm for handlers that want to look at pairs.
-    generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
+    generate_command = [in_bin('wasm-opt'), abspath('a.wasm'), '-o', abspath('b.wasm')] + opts + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
         with open('b.printed.wast', 'w') as f:
@@ -1136,7 +1137,7 @@ def test_one(random_input, given_wasm):
 
         # let the testcase handler handle this testcase however it wants. in this case we give it
         # the input and both wasms.
-        testcase_handler.handle_pair(input=random_input, before_wasm='a.wasm', after_wasm='b.wasm', opts=opts + FEATURE_OPTS)
+        testcase_handler.handle_pair(input=random_input, before_wasm=abspath('a.wasm'), after_wasm=abspath('b.wasm'), opts=opts + FEATURE_OPTS)
         print('')
 
     return bytes
@@ -1315,7 +1316,7 @@ if __name__ == '__main__':
     init_important_initial_contents()
 
     seed = time.time() * os.getpid()
-    raw_input_data = 'input.dat'
+    raw_input_data = abspath('input.dat')
     counter = 0
     total_wasm_size = 0
     total_input_size = 0
@@ -1400,7 +1401,7 @@ on valid wasm files.)
                 # testcase (to make reduction simple, save "original.wasm" on
                 # the side, so that we can autoreduce using the name "a.wasm"
                 # which we use internally)
-                original_wasm = os.path.abspath('original.wasm')
+                original_wasm = abspath('original.wasm')
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
                 auto_init = ''
@@ -1446,9 +1447,9 @@ echo "  " $?
                          'seed': seed,
                          'auto_init': auto_init,
                          'original_wasm': original_wasm,
-                         'temp_wasm': os.path.abspath('t.wasm'),
+                         'temp_wasm': abspath('t.wasm'),
                          'features': ' '.join(FEATURE_OPTS),
-                         'reduce_sh': os.path.abspath('reduce.sh')})
+                         'reduce_sh': abspath('reduce.sh')})
 
                 print('''\
 ================================================================================
@@ -1494,10 +1495,10 @@ After reduction, the reduced file will be in %(working_wasm)s
 ================================================================================
                 ''' % {'seed': seed,
                        'original_wasm': original_wasm,
-                       'temp_wasm': os.path.abspath('t.wasm'),
-                       'working_wasm': os.path.abspath('w.wasm'),
+                       'temp_wasm': abspath('t.wasm'),
+                       'working_wasm': abspath('w.wasm'),
                        'wasm_reduce': in_bin('wasm-reduce'),
-                       'reduce_sh': os.path.abspath('reduce.sh'),
+                       'reduce_sh': abspath('reduce.sh'),
                        'features': ' '.join(FEATURE_OPTS)})
                 break
         if given_seed is not None:

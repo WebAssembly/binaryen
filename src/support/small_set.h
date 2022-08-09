@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <optional>
 #include <set>
 #include <unordered_set>
 
@@ -39,16 +40,19 @@ template<typename T, size_t N, typename FlexibleSet> class SmallSetBase {
   size_t usedFixed = 0;
   std::array<T, N> fixed;
 
-  // flexible additional storage
-  FlexibleSet flexible;
+  // flexible additional storage.
+  // Because std::set allocates the root node of its red-black tree on the
+  // heap, we wrap it std::optional to defer that allocation until we start
+  // using the flexible storage.
+  std::optional<FlexibleSet> flexible;
 
   bool usingFixed() const {
-    // If the flexible storage contains something, then we are using it.
+    // If the flexible optional has a value, we are using it.
     // Otherwise we use the fixed storage. Note that if we grow and shrink then
     // we will stay in flexible mode until we reach a size of zero, at which
     // point we return to fixed mode. This is intentional, to avoid a lot of
     // movement in switching between fixed and flexible mode.
-    return flexible.empty();
+    return !flexible;
   }
 
 public:
@@ -61,7 +65,7 @@ public:
 
   SmallSetBase() {}
   SmallSetBase(std::initializer_list<T> init) {
-    for (T item : init) {
+    for (const T& item : init) {
       insert(item);
     }
   }
@@ -79,14 +83,15 @@ public:
       } else {
         // No fixed storage remains. Switch to flexible.
         assert(usedFixed == N);
-        assert(flexible.empty());
-        flexible.insert(fixed.begin(), fixed.begin() + usedFixed);
-        flexible.insert(x);
+        assert(!flexible.has_value());
+        flexible = FlexibleSet{};
+        flexible->insert(fixed.begin(), fixed.begin() + usedFixed);
+        flexible->insert(x);
         assert(!usingFixed());
         usedFixed = 0;
       }
     } else {
-      flexible.insert(x);
+      flexible->insert(x);
     }
   }
 
@@ -102,7 +107,7 @@ public:
         }
       }
     } else {
-      flexible.erase(x);
+      flexible->erase(x);
     }
   }
 
@@ -116,7 +121,7 @@ public:
       }
       return 0;
     } else {
-      return flexible.count(x);
+      return flexible->count(x);
     }
   }
 
@@ -124,7 +129,7 @@ public:
     if (usingFixed()) {
       return usedFixed;
     } else {
-      return flexible.size();
+      return flexible->size();
     }
   }
 
@@ -132,7 +137,9 @@ public:
 
   void clear() {
     usedFixed = 0;
-    flexible.clear();
+    if (flexible) {
+      flexible->clear();
+    }
   }
 
   bool operator==(const SmallSetBase<T, N, FlexibleSet>& other) const {
@@ -148,7 +155,7 @@ public:
                          other.fixed.begin() + other.usedFixed,
                          [this](const T& x) { return count(x); });
     } else {
-      return flexible == other.flexible;
+      return flexible.value == other.flexible.value;
     }
   }
 
@@ -183,7 +190,7 @@ public:
       if (usingFixed) {
         fixedIndex = 0;
       } else {
-        flexibleIterator = parent->flexible.begin();
+        flexibleIterator = parent->flexible->begin();
       }
     }
 
@@ -191,7 +198,7 @@ public:
       if (usingFixed) {
         fixedIndex = parent->size();
       } else {
-        flexibleIterator = parent->flexible.end();
+        flexibleIterator = parent->flexible->end();
       }
     }
 
