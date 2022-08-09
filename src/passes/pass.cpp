@@ -899,9 +899,11 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // parallel pass we can do the same at the function level: we can print the
   // function before the pass, run the pass on the function, and then if it
   // fails to validate we can show an error and print the state right before the
+  // pass broke it.
   //
-  // XXX Note that we must skip the "print" pass, as we'll be printing
-  //     from here, which runs that pass, so we'd infinitely recurse.)
+  // Skip nameless passes for this. Anything without a name is an internal
+  // component of some larger pass, and information about it won't be very
+  // useful - leave it to the entire module to fail validation in that case.
   bool extraFunctionValidation =
     passDebug == 2 && options.validate && !pass->name.empty();
   std::stringstream bodyBefore;
