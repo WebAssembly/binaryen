@@ -8,14 +8,16 @@
 ;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
 
 (module
+  (memory 10 10)
+
   ;; CHECK:      (type $stringref_=>_none (func (param stringref)))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
 
   ;; CHECK:      (type $stringref_stringref_=>_none (func (param stringref stringref)))
 
-  ;; CHECK:      (type $array (array i32))
-  (type $array (array_subtype i32 data))
+  ;; CHECK:      (type $array (array i8))
+  (type $array (array_subtype i8 data))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
@@ -29,6 +31,8 @@
 
   ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
   (global $string-const stringref (string.const "string in a global"))
+
+  ;; CHECK:      (memory $0 10 10)
 
   ;; CHECK:      (func $string.new (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
   ;; CHECK-NEXT:  (drop
