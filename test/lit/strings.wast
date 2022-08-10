@@ -461,6 +461,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16_array
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 7)
+  ;; CHECK-NEXT:    (i32.const 8)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
