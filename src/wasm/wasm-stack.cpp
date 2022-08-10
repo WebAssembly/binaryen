@@ -2176,19 +2176,23 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringNewUTF8:
-      o << int8_t(BinaryConsts::StringNewWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      o << int8_t(BinaryConsts::StringNewWTF8);
+      o << int8_t(0); // Memory index.
+      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringNewWTF8:
-      o << int8_t(BinaryConsts::StringNewWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      o << int8_t(BinaryConsts::StringNewWTF8);
+      o << int8_t(0); // Memory index.
+      o << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringNewReplace:
-      o << int8_t(BinaryConsts::StringNewWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::Replace);
+      o << int8_t(BinaryConsts::StringNewWTF8);
+      o << int8_t(0); // Memory index.
+      o << U32LEB(BinaryConsts::StringPolicy::Replace);
       break;
     case StringNewWTF16:
       o << int8_t(BinaryConsts::StringNewWTF16);
+      o << int8_t(0); // Memory index.
       break;
     case StringNewUTF8Array:
       o << int8_t(BinaryConsts::StringNewWTF8Array)
@@ -2244,19 +2248,22 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringEncodeUTF8:
-      o << int8_t(BinaryConsts::StringEncodeWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      o << int8_t(BinaryConsts::StringEncodeWTF8);
+      o << int8_t(0); // Memory index.
+      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringEncodeWTF8:
-      o << int8_t(BinaryConsts::StringEncodeWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      o << int8_t(BinaryConsts::StringEncodeWTF8);
+      o << int8_t(0); // Memory index.
+      o << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringEncodeWTF16:
       o << int8_t(BinaryConsts::StringEncodeWTF16);
+      o << int8_t(0); // Memory index.
       break;
     case StringEncodeUTF8Array:
-      o << int8_t(BinaryConsts::StringEncodeWTF8Array)
-        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      o << int8_t(BinaryConsts::StringEncodeWTF8Array);
+      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringEncodeWTF8Array:
       o << int8_t(BinaryConsts::StringEncodeWTF8Array)
