@@ -8,6 +8,8 @@
 ;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
 
 (module
+  (memory 10 10)
+
   ;; CHECK:      (type $stringref_=>_none (func (param stringref)))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
@@ -15,7 +17,7 @@
   ;; CHECK:      (type $stringref_stringref_=>_none (func (param stringref stringref)))
 
   ;; CHECK:      (type $array (array i32))
-  (type $array (array_subtype i32 data))
+  (type $array (array_subtype i8 data))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
