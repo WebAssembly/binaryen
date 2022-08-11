@@ -11,7 +11,9 @@
  ;; CHECK-NEXT:   (block $any (result anyref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br $any
- ;; CHECK-NEXT:      (ref.func $br_on_non_data-1)
+ ;; CHECK-NEXT:      (i31.new
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null any)
@@ -22,9 +24,9 @@
   (drop
    (block $any (result anyref)
     (drop
-     ;; A function is not data, and so we should branch.
+     ;; An i31 is not data, and so we should branch.
      (br_on_non_data $any
-      (ref.func $br_on_non_data-1)
+      (i31.new (i32.const 0))
      )
     )
     (ref.null any)

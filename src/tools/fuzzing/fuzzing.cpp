@@ -1984,17 +1984,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      HeapType subtype;
-      if (funcContext || nullability == Nullable) {
-        subtype = pick(FeatureOptions<HeapType>()
-                         .add(FeatureSet::ReferenceTypes, HeapType::func)
-                         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                              HeapType::func,
-                              HeapType::i31,
-                              HeapType::data));
-      } else {
-        subtype = HeapType::func;
-      }
+      HeapType subtype = oneIn(2) ? HeapType::i31 : HeapType::data;
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -2017,13 +2007,10 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
     }
     case HeapType::i31: {
       assert(wasm.features.hasGC());
-      // i31.new is not allowed in initializer expressions.
-      if (funcContext) {
-        return builder.makeI31New(makeConst(Type::i32));
-      } else {
-        assert(type.isNullable());
+      if (type.isNullable() && oneIn(4)) {
         return builder.makeRefNull(type);
       }
+      return builder.makeI31New(makeConst(Type::i32));
     }
     case HeapType::data: {
       assert(wasm.features.hasGC());
@@ -2986,9 +2973,11 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
                 .add(FeatureSet::ReferenceTypes,
                      Type(HeapType::func, Nullable),
-                     Type(HeapType::any, Nullable))
+                     Type(HeapType::ext, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
+                     // Type(HeapType::ext, NonNullable),
+                     Type(HeapType::any, Nullable),
                      // Type(HeapType::any, NonNullable),
                      Type(HeapType::eq, Nullable),
                      Type(HeapType::eq, NonNullable),
@@ -3000,8 +2989,7 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 
 Type TranslateToFuzzReader::getReferenceType() {
   return pick(FeatureOptions<Type>()
-                // Avoid Type::anyref without GC enabled, see
-                // TranslateToFuzzReader::getSingleConcreteType.
+                // TODO: Add externref here.
                 .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
@@ -3102,14 +3090,9 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return HeapType::ext;
       case HeapType::any:
         // TODO: nontrivial types as well.
-        return pick(
-          FeatureOptions<HeapType>()
-            .add(FeatureSet::ReferenceTypes, HeapType::func /*, HeapType::ext*/)
-            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                 HeapType::any,
-                 HeapType::eq,
-                 HeapType::i31,
-                 HeapType::data));
+        assert(wasm.features.hasReferenceTypes());
+        assert(wasm.features.hasGC());
+        return pick(HeapType::any, HeapType::eq, HeapType::i31, HeapType::data);
       case HeapType::eq:
         // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());

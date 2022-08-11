@@ -2453,8 +2453,6 @@
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (elem declare func $test)
-
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -2526,17 +2524,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast_static $struct
-  ;; CHECK-NEXT:      (select (result anyref)
-  ;; CHECK-NEXT:       (ref.null $struct)
-  ;; CHECK-NEXT:       (ref.func $test)
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (select (result eqref)
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (i31.new
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2563,14 +2558,14 @@
         )
       )
     )
-    ;; A null or a func will reach the cast; only the null can actually pass
-    ;; through (a func would fail the cast). Given that, we can infer a null for
+    ;; A null or an i31 will reach the cast; only the null can actually pass
+    ;; through (an i31 would fail the cast). Given that, we can infer a null for
     ;; the value of the cast.
     (drop
       (ref.cast_static $struct
         (select
           (ref.null $struct)
-          (ref.func $test)
+          (i31.new (i32.const 0))
           (call $import)
         )
       )
@@ -2773,21 +2768,21 @@
 
 ;; array.copy between types.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $bytes (array_subtype (mut anyref) data))
   (type $bytes (array (mut anyref)))
   ;; CHECK:      (type $chars (array_subtype (mut anyref) data))
   (type $chars (array (mut anyref)))
 
-  ;; CHECK:      (elem declare func $test)
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
   ;; CHECK-NEXT:   (array.init_static $bytes
-  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
@@ -2803,14 +2798,9 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $none_=>_none))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (array.get $bytes
-  ;; CHECK-NEXT:      (local.get $bytes)
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   (array.get $bytes
+  ;; CHECK-NEXT:    (local.get $bytes)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2829,7 +2819,7 @@
     ;; there.
     (local.set $bytes
       (array.init_static $bytes
-        (ref.func $test)
+        (i31.new (i32.const 0))
       )
     )
     (local.set $chars
@@ -2870,14 +2860,14 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (elem declare func $test)
-
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
   ;; CHECK-NEXT:   (array.init_static $bytes
-  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
@@ -2915,7 +2905,7 @@
     (local $chars (ref null $chars))
     (local.set $bytes
       (array.init_static $bytes
-        (ref.func $test)
+        (i31.new (i32.const 0))
       )
     )
     (local.set $chars

@@ -5,12 +5,10 @@
   ;; A struct with three fields. The first will have no writes, the second one
   ;; write of the same type, and the last a write of a subtype, which will allow
   ;; us to specialize that one.
-  ;; CHECK:      (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut (ref $ref|$struct|_=>_none))) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut i31ref)) data))
   (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut anyref)) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
-
-  ;; CHECK:      (elem declare func $work)
 
   ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 1
@@ -19,7 +17,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (ref.func $work)
+  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 2
@@ -34,7 +34,7 @@
     )
     (struct.set $struct 2
       (local.get $struct)
-      (ref.func $work)
+      (i31.new (i32.const 0))
     )
     (drop
       ;; The type of this struct.get must be updated after the field's type
@@ -51,12 +51,10 @@
   ;; must keep the type nullable, unlike in the previous module, due to the
   ;; default value being null.
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null $ref|$struct|_=>_none))) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null i31))) data))
   (type $struct (struct_subtype (field (mut anyref)) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
-
-  ;; CHECK:      (elem declare func $work)
 
   ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -64,7 +62,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (ref.func $work)
+  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
@@ -73,7 +73,7 @@
     )
     (struct.set $struct 0
       (local.get $struct)
-      (ref.func $work)
+      (i31.new (i32.const 0))
     )
   )
 )

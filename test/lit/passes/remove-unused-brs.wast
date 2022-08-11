@@ -4,16 +4,11 @@
 
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-  (type $i32_=>_none (func (param i32)))
-
   ;; Regression test in which we need to calculate a proper LUB.
   ;; CHECK:      (func $selectify-fresh-lub (param $x i32) (result anyref)
-  ;; CHECK-NEXT:  (select (result funcref)
-  ;; CHECK-NEXT:   (ref.null $none_=>_i32)
-  ;; CHECK-NEXT:   (ref.null $i32_=>_none)
+  ;; CHECK-NEXT:  (select (result eqref)
+  ;; CHECK-NEXT:   (ref.null i31)
+  ;; CHECK-NEXT:   (ref.null data)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -21,10 +16,10 @@
     (if
       (local.get $x)
       (return
-        (ref.null $none_=>_i32)
+        (ref.null i31)
       )
       (return
-        (ref.null $i32_=>_none)
+        (ref.null data)
       )
     )
   )

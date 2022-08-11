@@ -65,6 +65,7 @@ protected:
 
   Type anyref = Type(HeapType::any, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
+  Type i31ref = Type(HeapType::i31, Nullable);
 
   PossibleContents none = PossibleContents::none();
 
@@ -75,6 +76,8 @@ protected:
     PossibleContents::literal(Literal::makeNull(HeapType::any));
   PossibleContents funcNull =
     PossibleContents::literal(Literal::makeNull(HeapType::func));
+  PossibleContents i31Null =
+    PossibleContents::literal(Literal::makeNull(HeapType::i31));
 
   PossibleContents i32Global1 =
     PossibleContents::global("i32Global1", Type::i32);
@@ -89,10 +92,13 @@ protected:
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);
   PossibleContents exactFuncref = PossibleContents::exactType(funcref);
+  PossibleContents exactI31ref = PossibleContents::exactType(i31ref);
   PossibleContents exactNonNullAnyref =
     PossibleContents::exactType(Type(HeapType::any, NonNullable));
   PossibleContents exactNonNullFuncref =
     PossibleContents::exactType(Type(HeapType::func, NonNullable));
+  PossibleContents exactNonNullI31ref =
+    PossibleContents::exactType(Type(HeapType::i31, NonNullable));
 
   PossibleContents exactFuncSignatureType = PossibleContents::exactType(
     Type(Signature(Type::none, Type::none), Nullable));
@@ -183,7 +189,10 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyNull, exactAnyref, exactAnyref);
 
   // Two nulls go to the lub.
-  assertCombination(anyNull, funcNull, anyNull);
+  assertCombination(anyNull, i31Null, anyNull);
+
+  // Incompatible nulls go to Many.
+  assertCombination(anyNull, funcNull, many);
 
   assertCombination(exactNonNullAnyref, exactNonNullAnyref, exactNonNullAnyref);
 
@@ -191,13 +200,12 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   // null be a nullable type - but keeps the heap type of the other (since the
   // type of the null does not matter, all nulls compare equal).
   assertCombination(anyNull, exactNonNullAnyref, exactAnyref);
-  assertCombination(anyNull, exactNonNullFuncref, exactFuncref);
+  assertCombination(anyNull, exactNonNullI31ref, exactI31ref);
 
   // Funcrefs
 
   // A function reference + a null becomes an exact type (of that sig), plus
   // nullability.
-  assertCombination(nonNullFunc, anyNull, exactFuncSignatureType);
   assertCombination(nonNullFunc, funcNull, exactFuncSignatureType);
   assertCombination(exactFuncSignatureType, funcNull, exactFuncSignatureType);
   assertCombination(
@@ -211,7 +219,7 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   // Globals vs nulls.
 
   assertCombination(anyGlobal, anyNull, many);
-  assertCombination(anyGlobal, funcNull, many);
+  assertCombination(anyGlobal, i31Null, many);
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {

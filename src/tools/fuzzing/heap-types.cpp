@@ -343,14 +343,10 @@ struct HeapTypeGeneratorImpl {
   }
 
   HeapType pickSubAny() {
-    switch (rand.upTo(4)) {
+    switch (rand.upTo(2)) {
       case 0:
-        return HeapType::func;
-      case 1:
         return HeapType::eq;
-      case 2:
-        return pickSubFunc();
-      case 3:
+      case 1:
         return pickSubEq();
     }
     WASM_UNREACHABLE("unexpected index");

@@ -500,16 +500,19 @@ TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
 }
 
 // Test SubTypes utility code.
-TEST_F(NominalTest, testSubTypes) {
+TEST_F(NominalTest, TestSubTypes) {
   Type anyref = Type(HeapType::any, Nullable);
-  Type funcref = Type(HeapType::func, Nullable);
+  Type eqref = Type(HeapType::eq, Nullable);
 
   // Build type types, the second of which is a subtype.
   TypeBuilder builder(2);
   builder[0] = Struct({Field(anyref, Immutable)});
-  builder[1] = Struct({Field(funcref, Immutable)});
+  builder[1] = Struct({Field(eqref, Immutable)});
   builder[1].subTypeOf(builder[0]);
-  auto built = *builder.build();
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
 
   // Build a tiny wasm module that uses the types, so that we can test the
   // SubTypes utility code.
