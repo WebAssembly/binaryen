@@ -1745,7 +1745,7 @@ std::optional<HeapType> TypeBounder::getLeastUpperBound(HeapType a,
                                                         HeapType b) {
   auto maybeLub = lub(a, b);
   if (!maybeLub) {
-    return {};
+    return std::nullopt;
   }
   HeapType l = *maybeLub;
   if (!isTemp(l)) {
