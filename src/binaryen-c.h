@@ -137,6 +137,7 @@ BINARYEN_API BinaryenPackedType BinaryenPackedTypeInt16(void);
 
 typedef uintptr_t BinaryenHeapType;
 
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeExt(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeFunc(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeAny(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeEq(void);

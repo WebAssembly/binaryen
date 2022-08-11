@@ -3087,7 +3087,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
     }
   }
 
-  Type anyref = Type(HeapType::any, Nullable);
+  Type externref = Type(HeapType::ext, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
   for (auto& table : module.tables) {
     info.shouldBeTrue(table->initial <= table->max,
@@ -3098,15 +3098,15 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "table",
       "Non-nullable reference types are not yet supported for tables");
     if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type.isFunction() || table->type == anyref,
+      info.shouldBeTrue(table->type.isFunction() || table->type == externref,
                         "table",
                         "Only function reference types or externref are valid "
                         "for table type (when GC is disabled)");
     }
     if (!module.features.hasTypedFunctionReferences()) {
-      info.shouldBeTrue(table->type == funcref || table->type == anyref,
+      info.shouldBeTrue(table->type == funcref || table->type == externref,
                         "table",
-                        "Only funcref and anyref are valid for table type "
+                        "Only funcref and externref are valid for table type "
                         "(when typed-function references are disabled)");
     }
   }

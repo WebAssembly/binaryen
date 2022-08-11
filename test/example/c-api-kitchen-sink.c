@@ -318,6 +318,7 @@ void test_types() {
   BinaryenPackedType i16 = BinaryenPackedTypeInt16();
   printf("BinaryenPackedTypeInt16: %d\n", i16);
 
+  printf("BinaryenHeapTypeExt: %zd\n", BinaryenHeapTypeExt());
   printf("BinaryenHeapTypeFunc: %zd\n", BinaryenHeapTypeFunc());
   printf("BinaryenHeapTypeAny: %zd\n", BinaryenHeapTypeAny());
   printf("BinaryenHeapTypeEq: %zd\n", BinaryenHeapTypeEq());

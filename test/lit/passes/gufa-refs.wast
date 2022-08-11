@@ -2961,7 +2961,7 @@
 
   ;; CHECK:      (memory $0 10)
 
-  ;; CHECK:      (table $t 0 anyref)
+  ;; CHECK:      (table $t 0 externref)
 
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
@@ -3210,7 +3210,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (table.grow $t
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null extern)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

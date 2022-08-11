@@ -1136,8 +1136,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
     return Type(HeapType::func, Nullable);
   }
-  if ((strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) ||
-      (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0))) {
+  if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
+    return Type(HeapType::ext, Nullable);
+  }
+  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type(HeapType::any, Nullable);
   }
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
@@ -1181,7 +1183,7 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     }
     if (str[1] == 'x' && str[2] == 't' && str[3] == 'e' && str[4] == 'r' &&
         str[5] == 'n' && (prefix || str[6] == 0)) {
-      return HeapType::any;
+      return HeapType::ext;
     }
   }
   if (str[0] == 'a') {

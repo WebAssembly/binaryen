@@ -114,8 +114,9 @@ public:
       auto type = getConstantLiteral().type.getHeapType();
       auto otherType = other.getConstantLiteral().type.getHeapType();
       auto lub = HeapType::getLeastUpperBound(type, otherType);
-      if (lub != type) {
-        value = Literal::makeNull(lub);
+      assert(lub && "TODO: Handle case without LUB");
+      if (*lub != type) {
+        value = Literal::makeNull(*lub);
         return true;
       }
       return false;

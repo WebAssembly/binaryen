@@ -80,6 +80,9 @@ static bool maybePrintRefShorthand(std::ostream& o, Type type) {
   if (heapType.isBasic()) {
     if (type.isNullable()) {
       switch (heapType.getBasic()) {
+        case HeapType::ext:
+          o << "externref";
+          return true;
         case HeapType::func:
           o << "funcref";
           return true;
@@ -107,6 +110,7 @@ static bool maybePrintRefShorthand(std::ostream& o, Type type) {
       }
     } else {
       switch (heapType.getBasic()) {
+        case HeapType::ext:
         case HeapType::func:
         case HeapType::any:
         case HeapType::eq:

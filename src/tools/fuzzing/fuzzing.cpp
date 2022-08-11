@@ -3024,6 +3024,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::func:
         // TODO: Typed function references.
         return HeapType::func;
+      case HeapType::ext:
+        return HeapType::ext;
       case HeapType::any:
         // TODO: nontrivial types as well.
         return pick(
