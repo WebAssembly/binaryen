@@ -72,6 +72,24 @@ struct FieldInfoScanner
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
   }
+
+  bool canUseFallthrough() {
+    // Looking at fallthrough values may be dangerous here, because it ignores
+    // intermediate steps. Consider this:
+    //
+    // (struct.set $T 0
+    //   (local.tee
+    //     (struct.get $T 0)))
+    //
+    // This is a copy of a field to itself- normally something we can ignore
+    // (see above). But in this case, if we refine the field then that will
+    // update the struct.get, but the local.tee will still have the old type,
+    // which may not be refined enough. We could in theory always fix this up
+    // using casts later, but those casts may be expensive (especially ref.casts
+    // as opposed to ref.as_non_null), so for now just ignore fallthroughs.
+    // TODO: investigate more
+    return false;
+  }
 };
 
 struct TypeRefining : public Pass {
@@ -207,12 +225,6 @@ struct TypeRefining : public Pass {
   }
 
   // If we change types then some instructions may need to be modified.
-  // Specifically, we assume that reads from structs impose no constraints on
-  // us, so that we can optimize maximally. If a struct is never created nor
-  // written to, but only read from, then we have literally no constraints on it
-  // at all, and we can end up with a situation where we alter the type to
-  // something that is invalid for that read. To ensure the code still
-  // validates, simply remove such reads.
   void updateInstructions(Module& wasm, PassRunner* runner) {
     struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
       bool isFunctionParallel() override { return true; }
