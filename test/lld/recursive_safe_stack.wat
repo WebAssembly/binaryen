@@ -9,6 +9,8 @@
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 587))
+ (global $__stack_base (mut i32) (i32.const 0))
+ (global $__stack_end (mut i32) (i32.const 0))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__heap_base" (global $global$1))

@@ -3,6 +3,8 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (global $__stack_pointer (mut i32) (i32.const 66112))
+ (global $__stack_base (mut i32) (i32.const 0))
+ (global $__stack_end (mut i32) (i32.const 0))
  (memory $0 2)
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))

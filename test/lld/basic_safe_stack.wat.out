@@ -6,7 +6,7 @@
  (import "env" "__handle_stack_overflow" (func $__handle_stack_overflow (param i32)))
  (global $__stack_pointer (mut i32) (i32.const 66112))
  (global $__stack_base (mut i32) (i32.const 0))
- (global $__stack_limit (mut i32) (i32.const 0))
+ (global $__stack_end (mut i32) (i32.const 0))
  (memory $0 2)
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
@@ -29,7 +29,7 @@
     )
     (i32.lt_u
      (local.get $1)
-     (global.get $__stack_limit)
+     (global.get $__stack_end)
     )
    )
    (call $__handle_stack_overflow
@@ -63,7 +63,7 @@
      )
      (i32.lt_u
       (local.get $3)
-      (global.get $__stack_limit)
+      (global.get $__stack_end)
      )
     )
     (call $__handle_stack_overflow
@@ -80,11 +80,5 @@
   (nop)
  )
  (func $__set_stack_limits (param $0 i32) (param $1 i32)
-  (global.set $__stack_base
-   (local.get $0)
-  )
-  (global.set $__stack_limit
-   (local.get $1)
-  )
  )
 )

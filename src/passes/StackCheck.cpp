@@ -33,9 +33,6 @@
 
 namespace wasm {
 
-// Exported function to set the base and the limit.
-static Name SET_STACK_LIMITS("__set_stack_limits");
-
 static void
 importStackOverflowHandler(Module& module, Name name, Signature sig) {
   ImportInfo info(module);
@@ -46,14 +43,6 @@ importStackOverflowHandler(Module& module, Name name, Signature sig) {
     import->base = name;
     module.addFunction(std::move(import));
   }
-}
-
-static void addExportedFunction(Module& module,
-                                std::unique_ptr<Function> function) {
-  auto export_ =
-    Builder::makeExport(function->name, function->name, ExternalKind::Function);
-  module.addFunction(std::move(function));
-  module.addExport(std::move(export_));
 }
 
 struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
@@ -130,9 +119,17 @@ struct StackCheck : public Pass {
       return;
     }
 
-    // Pick appropriate names.
-    auto stackBaseName = Names::getValidGlobalName(*module, "__stack_base");
-    auto stackLimitName = Names::getValidGlobalName(*module, "__stack_limit");
+    // __stack_base and __stack_end are created by the toolchain (emscripten)
+    // If we don't find these globals, error out.
+    auto stackBase = module->getGlobalOrNull("__stack_base");
+    if (!stackBase) {
+      Fatal() << "cannot do stack checking without __stack_base variable\n";
+    }
+
+    auto stackEnd = module->getGlobalOrNull("__stack_end");
+    if (!stackEnd) {
+      Fatal() << "cannot do stack checking without __stack_end variable\n";
+    }
 
     Name handler;
     auto handlerName =
@@ -145,34 +142,23 @@ struct StackCheck : public Pass {
 
     Builder builder(*module);
 
-    // Add the globals.
-    auto stackBase =
-      module->addGlobal(builder.makeGlobal(stackBaseName,
-                                           stackPointer->type,
-                                           builder.makeConstPtr(0),
-                                           Builder::Mutable));
-    auto stackLimit =
-      module->addGlobal(builder.makeGlobal(stackLimitName,
-                                           stackPointer->type,
-                                           builder.makeConstPtr(0),
-                                           Builder::Mutable));
-
     // Instrument all the code.
     PassRunner innerRunner(module);
-    EnforceStackLimits(stackPointer, stackBase, stackLimit, builder, handler)
+    EnforceStackLimits(stackPointer, stackBase, stackEnd, builder, handler)
       .run(&innerRunner, module);
 
-    // Generate the exported function.
+    // TODO: Remove this function once emscripten stops calling it.
+    // This function is now a no-op, but it still needs to be here until
+    // emscripten is changed.
+    wasm::Name limitsFuncName = "__set_stack_limits";
     auto limitsFunc = builder.makeFunction(
-      SET_STACK_LIMITS,
+      limitsFuncName,
       Signature({stackPointer->type, stackPointer->type}, Type::none),
       {});
-    auto* getBase = builder.makeLocalGet(0, stackPointer->type);
-    auto* storeBase = builder.makeGlobalSet(stackBaseName, getBase);
-    auto* getLimit = builder.makeLocalGet(1, stackPointer->type);
-    auto* storeLimit = builder.makeGlobalSet(stackLimitName, getLimit);
-    limitsFunc->body = builder.makeBlock({storeBase, storeLimit});
-    addExportedFunction(*module, std::move(limitsFunc));
+    limitsFunc->body = builder.makeBlock({});
+    module->addFunction(std::move(limitsFunc));
+    module->addExport(Builder::makeExport(
+      limitsFuncName, limitsFuncName, ExternalKind::Function));
   }
 };
 
