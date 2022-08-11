@@ -904,7 +904,8 @@
     ;; Set a get of the same field to the field - this is a copy. However, the
     ;; copy goes through a local.tee. Even after we refine the type of the field
     ;; to non-nullable, the tee will remain nullable since it has the type of
-    ;; the local. We will need to do some fixing up here.
+    ;; the local. We could add casts perhaps, but for now we do not optimize,
+    ;; and type $A's field will remain nullable.
     (struct.set $A 0
       (ref.null $A)
       (local.tee $temp
@@ -957,7 +958,8 @@
     ;; now it is the heap type. We write a B to B's field, so we can trivially
     ;; refine that, and we want to do a similar refinement to the supertype A.
     ;; But below we do a copy on A through a tee. As above, the tee's type will
-    ;; not change, so we must do some fixing up here.
+    ;; not change, so we do not optimize type $A's field (however, we can
+    ;; refine $B's field, which is safe to do).
     (drop
       (struct.new $B
         (local.get $b)
