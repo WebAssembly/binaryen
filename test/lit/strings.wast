@@ -17,7 +17,8 @@
   ;; CHECK:      (type $stringref_stringref_=>_none (func (param stringref stringref)))
 
   ;; CHECK:      (type $array (array i8))
-  (type $array (array_subtype i8 data))
+  (type $array (array_subtype (mut i8) data))
+  (type $array16 (array_subtype (mut i16) data))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
@@ -470,7 +471,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $string.new.gc (param $array (ref $array))
+  (func $string.new.gc (param $array (ref $array)) (param $array16 (ref $array16))
     (drop
       (string.new_wtf8_array utf8
         (local.get $array)
@@ -494,7 +495,7 @@
     )
     (drop
       (string.new_wtf16_array
-        (local.get $array)
+        (local.get $array16)
         (i32.const 7)
         (i32.const 8)
       )
@@ -526,7 +527,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $string.encode.gc (param $ref stringref) (param $array (ref $array))
+  (func $string.encode.gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (drop
       (i32.eqz ;; validate the output is i32
         (string.encode_wtf8_array wtf8
@@ -546,7 +547,7 @@
     (drop
       (string.encode_wtf16_array
         (local.get $ref)
-        (local.get $array)
+        (local.get $array16)
         (i32.const 30)
       )
     )
