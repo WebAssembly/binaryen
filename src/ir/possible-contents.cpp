@@ -56,7 +56,12 @@ void PossibleContents::combine(const PossibleContents& other) {
       assert(other.isNull());
       auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
                                               otherType.getHeapType());
-      assert(lub && "TODO: handle case where there is no LUB");
+      if (!lub) {
+        // TODO: Remove this workaround once we have bottom types to assign to
+        // null literals.
+        value = Many();
+        return;
+      }
       value = Literal::makeNull(*lub);
     }
     return;
