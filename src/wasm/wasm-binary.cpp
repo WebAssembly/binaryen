@@ -3830,7 +3830,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
     case BinaryConsts::GCPrefix: {
-      auto opcode = getU32LEB();
+      uint8_t opcode = getInt8();
       if (maybeVisitI31New(curr, opcode)) {
         break;
       }
@@ -6981,7 +6981,12 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   StringNewOp op;
   Expression* length = nullptr;
+  Expression* start = nullptr;
+  Expression* end = nullptr;
   if (code == BinaryConsts::StringNewWTF8) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
     auto policy = getU32LEB();
     switch (policy) {
       case BinaryConsts::StringPolicy::UTF8:
@@ -6998,6 +7003,9 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     }
     length = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
     op = StringNewWTF16;
     length = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF8Array) {
@@ -7015,13 +7023,21 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
       default:
         throwError("bad policy for string.new");
     }
+    end = popNonVoidExpression();
+    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16Array) {
     op = StringNewWTF16Array;
+    end = popNonVoidExpression();
+    start = popNonVoidExpression();
   } else {
     return false;
   }
   auto* ptr = popNonVoidExpression();
-  out = Builder(wasm).makeStringNew(op, ptr, length);
+  if (length) {
+    out = Builder(wasm).makeStringNew(op, ptr, length);
+  } else {
+    out = Builder(wasm).makeStringNew(op, ptr, start, end);
+  }
   return true;
 }
 
@@ -7072,6 +7088,9 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
   Expression* start = nullptr;
   // TODO: share this code with string.measure?
   if (code == BinaryConsts::StringEncodeWTF8) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
     auto policy = getU32LEB();
     switch (policy) {
       case BinaryConsts::StringPolicy::UTF8:
@@ -7084,6 +7103,9 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
         throwError("bad policy for string.encode");
     }
   } else if (code == BinaryConsts::StringEncodeWTF16) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
     op = StringEncodeWTF16;
   } else if (code == BinaryConsts::StringEncodeWTF8Array) {
     auto policy = getU32LEB();

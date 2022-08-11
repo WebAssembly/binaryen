@@ -1657,6 +1657,10 @@ public:
   // Used only in linear memory variations.
   Expression* length = nullptr;
 
+  // Used only in GC variations.
+  Expression* start = nullptr;
+  Expression* end = nullptr;
+
   void finalize();
 };
 

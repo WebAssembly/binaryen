@@ -2824,8 +2824,10 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
       throw ParseException("bad string.new op", s.line, s.col);
     }
     length = parseExpression(s[i + 1]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
   } else if (op == StringNewWTF16) {
     length = parseExpression(s[i + 1]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
   } else if (op == StringNewWTF8Array) {
     const char* str = s[i++]->c_str();
     if (strncmp(str, "utf8", 4) == 0) {
@@ -2837,8 +2839,16 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
+    auto* start = parseExpression(s[i + 1]);
+    auto* end = parseExpression(s[i + 2]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end);
+  } else if (op == StringNewWTF16Array) {
+    auto* start = parseExpression(s[i + 1]);
+    auto* end = parseExpression(s[i + 2]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end);
+  } else {
+    throw ParseException("bad string.new op", s.line, s.col);
   }
-  return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
@@ -2855,7 +2865,7 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
     } else if (strncmp(str, "wtf8", 4) == 0) {
       op = StringMeasureWTF8;
     } else {
-      throw ParseException("bad string.new op", s.line, s.col);
+      throw ParseException("bad string.measure op", s.line, s.col);
     }
   }
   return Builder(wasm).makeStringMeasure(op, parseExpression(s[i]));
