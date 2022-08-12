@@ -976,3 +976,35 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $A))) data))
+  (type $A (struct_subtype (field (mut (ref null $A))) data))
+
+  (func $non-nullability-block (param $nn (ref $A))
+    (struct.set $A 0
+      (ref.null $A)
+      (local.get $nn)
+    )
+    ;; As above, but instead of a local.tee fallthrough, use a block. We *can*
+    ;; optimize in this case, as blocks do not pose a problem (we'll refinalize
+    ;; the blocks to the proper, non-nullable type, the same as the field).
+    (struct.set $A 0
+      (ref.null $A)
+      (block (result (ref null $A))
+        (struct.get $A 0
+          (ref.null $A)
+        )
+      )
+    )
+    (drop
+      (struct.new $A
+        (block (result (ref null $A))
+          (struct.get $A 0
+            (ref.null $A)
+          )
+        )
+      )
+    )
+  )
+)

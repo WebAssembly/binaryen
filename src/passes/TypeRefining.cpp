@@ -73,7 +73,7 @@ struct FieldInfoScanner
     // Nothing to do for a read, we just care about written values.
   }
 
-  FallthroughBehavior getFallthroughBehavior() {
+  Properties::FallthroughBehavior getFallthroughBehavior() {
     // Looking at fallthrough values may be dangerous here, because it ignores
     // intermediate steps. Consider this:
     //
@@ -88,7 +88,7 @@ struct FieldInfoScanner
     // using casts later, but those casts may be expensive (especially ref.casts
     // as opposed to ref.as_non_null), so for now just ignore fallthroughs.
     // TODO: investigate more
-    return FallthroughBehavior::NoTee;
+    return Properties::FallthroughBehavior::NoTee;
   }
 };
 

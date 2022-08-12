@@ -190,12 +190,10 @@ struct StructScanner
     // Look at the value falling through, if it has the exact same type
     // (otherwise, we'd need to consider both the type actually written and the
     // type of the fallthrough, somehow).
-    if (static_cast<SubType*>(this)->canUseFallthrough()) {
-      auto* fallthrough = Properties::getFallthrough(
-        expr, this->getPassOptions(), *this->getModule());
-      if (fallthrough->type == expr->type) {
-        expr = fallthrough;
-      }
+    auto* fallthrough = Properties::getFallthrough(
+      expr, this->getPassOptions(), *this->getModule(), static_cast<SubType*>(this)->getFallthroughBehavior());
+    if (fallthrough->type == expr->type) {
+      expr = fallthrough;
     }
     if (auto* get = expr->dynCast<StructGet>()) {
       if (get->index == index && get->ref->type != Type::unreachable &&
@@ -207,9 +205,9 @@ struct StructScanner
     static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
   }
 
-  FallthroughBehavior getFallthroughBehavior() {
+  Properties::FallthroughBehavior getFallthroughBehavior() {
     // By default, look at and use fallthrough values.
-    return FallthroughBehavior::AllowTee;
+    return Properties::FallthroughBehavior::AllowTee;
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
