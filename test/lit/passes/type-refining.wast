@@ -978,7 +978,7 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $A))) data))
+  ;; CHECK:      (type $A (struct_subtype (field (mut (ref $A))) data))
   (type $A (struct_subtype (field (mut (ref null $A))) data))
 
   ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
@@ -990,18 +990,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (ref.null $A)
-  ;; CHECK-NEXT:   (block $block (result (ref null $A))
+  ;; CHECK-NEXT:   (if (result (ref $A))
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (struct.get $A 0
   ;; CHECK-NEXT:     (ref.null $A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (block $block0 (result (ref null $A))
+  ;; CHECK-NEXT:    (if (result (ref $A))
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (struct.get $A 0
   ;; CHECK-NEXT:      (ref.null $A)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1011,23 +1015,27 @@
       (ref.null $A)
       (local.get $nn)
     )
-    ;; As above, but instead of a local.tee fallthrough, use a block. We *can*
+    ;; As above, but instead of a local.tee fallthrough, use an if. We *can*
     ;; optimize in this case, as blocks do not pose a problem (we'll refinalize
     ;; the blocks to the proper, non-nullable type, the same as the field).
     (struct.set $A 0
       (ref.null $A)
-      (block (result (ref null $A))
+      (if (result (ref null $A))
+        (i32.const 1)
         (struct.get $A 0
           (ref.null $A)
         )
+        (unreachable)
       )
     )
     (drop
       (struct.new $A
-        (block (result (ref null $A))
+        (if (result (ref null $A))
+          (i32.const 1)
           (struct.get $A 0
             (ref.null $A)
           )
+          (unreachable)
         )
       )
     )
