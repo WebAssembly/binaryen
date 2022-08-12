@@ -109,6 +109,7 @@ Pass* createRemoveUnusedModuleElementsPass();
 Pass* createRemoveUnusedNonFunctionModuleElementsPass();
 Pass* createRemoveUnusedNamesPass();
 Pass* createReorderFunctionsPass();
+Pass* createReorderGlobalsPass();
 Pass* createReorderLocalsPass();
 Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();

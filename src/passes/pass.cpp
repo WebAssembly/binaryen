@@ -346,6 +346,9 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
+  registerPass("reorder-globals",
+               "sorts globals by access frequency",
+               createReorderGlobalsPass);
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);

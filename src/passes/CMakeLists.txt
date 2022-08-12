@@ -88,8 +88,9 @@ set(passes_SOURCES
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
-  ReorderLocals.cpp
   ReorderFunctions.cpp
+  ReorderGlobals.cpp
+  ReorderLocals.cpp
   ReReloop.cpp
   TrapMode.cpp
   TypeRefining.cpp
