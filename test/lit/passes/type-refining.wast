@@ -981,6 +981,31 @@
   ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $A))) data))
   (type $A (struct_subtype (field (mut (ref null $A))) data))
 
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (func $non-nullability-block (type $ref|$A|_=>_none) (param $nn (ref $A))
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $nn)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (block $block (result (ref null $A))
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (block $block0 (result (ref null $A))
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $non-nullability-block (param $nn (ref $A))
     (struct.set $A 0
       (ref.null $A)
