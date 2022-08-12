@@ -57,7 +57,7 @@ Name get_f32("get_f32");
 Name get_f64("get_f64");
 Name get_v128("get_v128");
 Name get_funcref("get_funcref");
-Name get_extref("get_extref");
+Name get_externref("get_externref");
 
 Name set_i32("set_i32");
 Name set_i64("set_i64");
@@ -65,7 +65,7 @@ Name set_f32("set_f32");
 Name set_f64("set_f64");
 Name set_v128("set_v128");
 Name set_funcref("set_funcref");
-Name set_extref("set_extref");
+Name set_externref("set_externref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
@@ -76,7 +76,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       if (heapType == HeapType::func && curr->type.isNullable()) {
         import = get_funcref;
       } else if (heapType == HeapType::ext && curr->type.isNullable()) {
-        import = get_extref;
+        import = get_externref;
       } else {
         WASM_UNREACHABLE("TODO: general reference types");
       }
@@ -129,7 +129,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       if (heapType == HeapType::func && type.isNullable()) {
         import = set_funcref;
       } else if (heapType == HeapType::ext && type.isNullable()) {
-        import = set_extref;
+        import = set_externref;
       } else {
         WASM_UNREACHABLE("TODO: general reference types");
       }
@@ -179,8 +179,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
 
       addImport(curr, get_funcref, {Type::i32, Type::i32, func}, func);
       addImport(curr, set_funcref, {Type::i32, Type::i32, func}, func);
-      addImport(curr, get_extref, {Type::i32, Type::i32, ext}, ext);
-      addImport(curr, set_extref, {Type::i32, Type::i32, ext}, ext);
+      addImport(curr, get_externref, {Type::i32, Type::i32, ext}, ext);
+      addImport(curr, set_externref, {Type::i32, Type::i32, ext}, ext);
     }
     if (curr->features.hasSIMD()) {
       addImport(curr, get_v128, {Type::i32, Type::i32, Type::v128}, Type::v128);
