@@ -207,9 +207,9 @@ struct StructScanner
     static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
   }
 
-  bool canUseFallthrough() {
+  FallthroughBehavior getFallthroughBehavior() {
     // By default, look at and use fallthrough values.
-    return true;
+    return FallthroughBehavior::AllowTee;
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
