@@ -573,7 +573,7 @@ non-`passes` tests that output wast, see
 https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a
 simple manual port.
 
-For lit test the test expectations (the CHECK lines) can often be automatically
+For lit tests the test expectations (the CHECK lines) can often be automatically
 updated as changes are made to binaryen.  See `scripts/update_lit_checks.py`.
 
 Non-lit tests can also be automatically updated in most cases.  See
