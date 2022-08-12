@@ -26,7 +26,6 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -84,6 +83,7 @@ struct ReorderGlobals : public Pass {
       }
       for (auto get : FindAll<GlobalGet>(global->init).list) {
         dependsOn[global->name].insert(get->name);
+//        std::cout << global->name << " depends on " << get->name << '\n';
       }
     }
     while (true) {
@@ -118,7 +118,7 @@ struct ReorderGlobals : public Pass {
     // Sort.
     std::sort(module->globals.begin(),
               module->globals.end(),
-              [&counts](const std::unique_ptr<Global>& a,
+              [&](const std::unique_ptr<Global>& a,
                         const std::unique_ptr<Global>& b) -> bool {
                 // If one depends on the other, the other must be first.
                 if (dependsOn[a->name].count(b->name)) {

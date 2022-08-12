@@ -344,6 +344,9 @@
 ;; CHECK-NEXT:   --reorder-functions                           sorts functions by access
 ;; CHECK-NEXT:                                                 frequency
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --reorder-globals                             sorts globals by access
+;; CHECK-NEXT:                                                 frequency
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --reorder-locals                              sorts locals by access frequency
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --rereloop                                    re-optimize control flow using
