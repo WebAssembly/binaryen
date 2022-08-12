@@ -65,6 +65,84 @@
   )
 )
 
+;; $c has more uses, but it depends on $b and $a and cannot be sorted before
+;; them. Likewise $b cannot be before $a.
+(module
+  (global $a i32 (i32.const 10))
+  (global $b i32 (global.get $a))
+  (global $c i32 (global.get $c))
+
+  (func $uses
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
+    )
+    (drop
+      (global.get $c)
+    )
+  )
+)
+
+;; As above, but without dependencies, so now $c is first and then $b.
+(module
+  (global $a i32 (i32.const 10))
+  (global $b i32 (i32.const 20))
+  (global $c i32 (i32.const 30))
+
+  (func $uses
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
+    )
+    (drop
+      (global.get $c)
+    )
+  )
+)
+
+;; As above, but a mixed case: $b depends on $a but $c has no dependencies. $c
+;; can be first.
+(module
+  (global $a i32 (i32.const 10))
+  (global $b i32 (global.get $a))
+  (global $c i32 (i32.const 30))
+
+  (func $uses
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
+    )
+    (drop
+      (global.get $c)
+    )
+  )
+)
+
+;; Another mixed case, now with $c depending on $b. $b can be before $a.
+(module
+  (global $a i32 (i32.const 10))
+  (global $b i32 (i32.const 20))
+  (global $c i32 (global.get $b))
+
+  (func $uses
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
+    )
+    (drop
+      (global.get $c)
+    )
+  )
+)
+
 ;; $b has more uses, but $a is an import and must remain first.
 (module
   (import "a" "b" (global $a i32))
