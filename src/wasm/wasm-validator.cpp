@@ -223,6 +223,9 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   // Validate a specific expression.
   void validate(Expression* curr) { walk(curr); }
 
+  // Validate a function.
+  void validate(Function* func) { walkFunction(func); }
+
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
@@ -3210,6 +3213,20 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     for (auto& func : module.functions) {
       std::cerr << info.getStream(func.get()).str();
     }
+    std::cerr << info.getStream(nullptr).str();
+  }
+  return info.valid.load();
+}
+
+bool WasmValidator::validate(Function* func, Module& module, Flags flags) {
+  ValidationInfo info(module);
+  info.validateWeb = (flags & Web) != 0;
+  info.validateGlobally = (flags & Globally) != 0;
+  info.quiet = (flags & Quiet) != 0;
+  FunctionValidator(module, &info).validate(func);
+  // print all the data
+  if (!info.valid.load() && !info.quiet) {
+    std::cerr << info.getStream(func).str();
     std::cerr << info.getStream(nullptr).str();
   }
   return info.valid.load();
