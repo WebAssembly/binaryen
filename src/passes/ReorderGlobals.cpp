@@ -118,7 +118,7 @@ struct ReorderGlobals : public Pass {
     std::sort(module->globals.begin(),
               module->globals.end(),
               [&](const std::unique_ptr<Global>& a,
-                        const std::unique_ptr<Global>& b) -> bool {
+                  const std::unique_ptr<Global>& b) -> bool {
                 // If one depends on the other, the other must be first.
                 if (dependsOn[a->name].count(b->name)) {
                   return false;
