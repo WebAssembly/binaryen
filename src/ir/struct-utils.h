@@ -191,7 +191,10 @@ struct StructScanner
     // (otherwise, we'd need to consider both the type actually written and the
     // type of the fallthrough, somehow).
     auto* fallthrough = Properties::getFallthrough(
-      expr, this->getPassOptions(), *this->getModule(), static_cast<SubType*>(this)->getFallthroughBehavior());
+      expr,
+      this->getPassOptions(),
+      *this->getModule(),
+      static_cast<SubType*>(this)->getFallthroughBehavior());
     if (fallthrough->type == expr->type) {
       expr = fallthrough;
     }
