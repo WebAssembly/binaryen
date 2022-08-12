@@ -209,7 +209,7 @@ struct StructScanner
   }
 
   Properties::FallthroughBehavior getFallthroughBehavior() {
-    // By default, look at and use fallthrough values.
+    // By default, look at and use tee fallthrough values.
     return Properties::FallthroughBehavior::AllowTee;
   }
 
