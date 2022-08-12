@@ -83,7 +83,6 @@ struct ReorderGlobals : public Pass {
       }
       for (auto get : FindAll<GlobalGet>(global->init).list) {
         dependsOn[global->name].insert(get->name);
-//        std::cout << global->name << " depends on " << get->name << '\n';
       }
     }
     while (true) {
