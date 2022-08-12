@@ -86,7 +86,7 @@ struct FieldInfoScanner
     // update the struct.get, but the local.tee will still have the old type,
     // which may not be refined enough. We could in theory always fix this up
     // using casts later, but those casts may be expensive (especially ref.casts
-    // as opposed to ref.as_non_null), so for now just ignore fallthroughs.
+    // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
     // TODO: investigate more
     return Properties::FallthroughBehavior::NoTee;
   }
