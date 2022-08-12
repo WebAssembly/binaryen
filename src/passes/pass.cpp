@@ -605,6 +605,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("reorder-globals");
+  }
   // may allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
   // perform Stack IR optimizations here, at the very end of the
