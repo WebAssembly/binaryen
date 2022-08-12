@@ -1016,8 +1016,8 @@
       (local.get $nn)
     )
     ;; As above, but instead of a local.tee fallthrough, use an if. We *can*
-    ;; optimize in this case, as blocks do not pose a problem (we'll refinalize
-    ;; the blocks to the proper, non-nullable type, the same as the field).
+    ;; optimize in this case, as ifs etc do not pose a problem (we'll refinalize
+    ;; the ifs to the proper, non-nullable type, the same as the field).
     (struct.set $A 0
       (ref.null $A)
       (if (result (ref null $A))
