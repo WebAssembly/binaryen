@@ -19,8 +19,8 @@
 
 ;; As above, but now with global.sets. Again $b should be sorted first.
 (module
-  (global $a i32 (i32.const 10))
-  (global $b i32 (i32.const 20))
+  (global $a (mut i32) (i32.const 10))
+  (global $b (mut i32) (i32.const 20))
 
   (func $uses
     (global.set $b
@@ -37,8 +37,8 @@
 
 ;; As above, but flipped so now $a has more, and should remain first.
 (module
-  (global $a i32 (i32.const 10))
-  (global $b i32 (i32.const 20))
+  (global $a (mut i32) (i32.const 10))
+  (global $b (mut i32) (i32.const 20))
 
   (func $uses
     (global.set $a
