@@ -19,8 +19,6 @@
 // binaries because fewer bytes are needed to encode references to frequently
 // used globals.
 //
-// TODO measure
-//
 
 #include "memory"
 
