@@ -4,13 +4,21 @@
 ;; RUN: foreach %s %t wasm-opt --dae --all-features -S -o - | filecheck %s
 
 (module
+
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
+  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+
   ;; CHECK:      (type $f64_=>_none (func (param f64)))
+
+  ;; CHECK:      (import "a" "b" (func $get-i32 (result i32)))
+  (import "a" "b" (func $get-i32 (result i32)))
+  ;; CHECK:      (import "a" "c" (func $get-f64 (result f64)))
+  (import "a" "c" (func $get-f64 (result f64)))
 
   ;; CHECK:      (table $0 2 2 funcref)
 
@@ -172,11 +180,11 @@
   )
   ;; CHECK:      (func $b6
   ;; CHECK-NEXT:  (call $a6
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (call $get-i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $b6
-    (call $a6 (unreachable) (f64.const 3.14159))
+    (call $a6 (call $get-i32) (f64.const 3.14159))
   )
   ;; CHECK:      (func $a7 (param $0 f64)
   ;; CHECK-NEXT:  (local $1 i32)
@@ -198,11 +206,11 @@
   )
   ;; CHECK:      (func $b7
   ;; CHECK-NEXT:  (call $a7
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (call $get-f64)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $b7
-    (call $a7 (i32.const 1) (unreachable))
+    (call $a7 (i32.const 1) (call $get-f64))
   )
   ;; CHECK:      (func $a8 (param $x i32)
   ;; CHECK-NEXT:  (nop)
