@@ -480,11 +480,25 @@ private:
         curr,
         "return_call* callee return type must match caller return type");
     } else {
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->type,
-        sig.results,
-        curr,
-        "call* type must match callee return type");
+      if (curr->type == Type::unreachable) {
+        // One of the children must be unreachable: otherwise, the type of the
+        // call is the result of the called function, and function signatures
+        // cannot have unreachable as their type.
+        shouldBeTrue(
+          !curr->operands.empty() && std::any_of(curr->operands.begin(),
+                                                 curr->operands.end(),
+                                                 [&](Expression* operand) {
+                                                   return operand->type ==
+                                                          Type::unreachable;
+                                                 }),
+          curr,
+          "unreachable non-return call* must have unreachable child");
+      } else {
+        shouldBeEqual(curr->type,
+                      sig.results,
+                      curr,
+                      "call* type must match callee return type");
+      }
     }
   }
 
