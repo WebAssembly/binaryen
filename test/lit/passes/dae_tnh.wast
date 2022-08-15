@@ -32,3 +32,17 @@
     )
   )
 )
+
+(module
+  (func $caller
+    ;; Removing this parameter would require the type of the call to change from
+    ;; unreachable to none. We don't handle such complexity and ignore such
+    ;; cases.
+    (call $target
+      (unreachable)
+    )
+  )
+
+  (func $target (param i32)
+  )
+)
