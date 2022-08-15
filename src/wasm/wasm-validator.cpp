@@ -2790,8 +2790,8 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         // contents have a concrete type. Refinalize will make it unreachable,
         // so both are valid here.
         bool validControlFlowStructureChange =
-          Properties::isControlFlowStructure(curr) && oldType.isConcrete()
-              && newType == Type::unreachable;
+          Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
+          newType == Type::unreachable;
         if (!Type::isSubType(newType, oldType) &&
             !validControlFlowStructureChange) {
           std::ostringstream ss;
