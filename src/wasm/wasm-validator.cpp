@@ -491,8 +491,9 @@ private:
         // only check this if this is an expression and we can iterate over its
         // children.
         if (std::is_base_of_v<Expression, T>) {
+          auto* expr = (Expression*)curr;
           bool hasUnreachableChild = false;
-          for (auto* child : ChildIterator(static_cast<Expression*>(curr))) {
+          for (auto* child : ChildIterator(expr)) {
             if (child->type == Type::unreachable) {
               hasUnreachableChild = true;
               break;
