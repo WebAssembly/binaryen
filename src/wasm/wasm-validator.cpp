@@ -487,6 +487,7 @@ private:
         // cannot have unreachable as their type.
         std::cout << "chak " << *curr << '\n';
         shouldBeTrue(
+          !curr->operands.empty() &&
           std::any_of(curr->operands.begin(), curr->operands.end(), [&](Expression* operand) {
             return operand->type == Type::unreachable;
           }),
