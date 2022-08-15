@@ -77,8 +77,9 @@ bool removeParameter(const std::vector<Function*>& funcs,
   auto hasBadEffects = [&](ExpressionList& operands, Type type, bool isReturn) {
     bool hasUnremovable =
       EffectAnalyzer(runner->options, *module, operands[index])
-      .hasUnremovableSideEffects();
-    bool wouldChangeType = type == Type::unreachable && !isReturn &&
+        .hasUnremovableSideEffects();
+    bool wouldChangeType =
+      type == Type::unreachable && !isReturn &&
       std::any_of(operands.begin(), operands.end(), [](Expression* operand) {
         return operand->type == Type::unreachable;
       });

@@ -487,18 +487,19 @@ private:
         // cannot have unreachable as their type.
         std::cout << "chak " << *curr << '\n';
         shouldBeTrue(
-          !curr->operands.empty() &&
-          std::any_of(curr->operands.begin(), curr->operands.end(), [&](Expression* operand) {
-            return operand->type == Type::unreachable;
-          }),
+          !curr->operands.empty() && std::any_of(curr->operands.begin(),
+                                                 curr->operands.end(),
+                                                 [&](Expression* operand) {
+                                                   return operand->type ==
+                                                          Type::unreachable;
+                                                 }),
           curr,
           "unreachable non-return call* must have unreachable child");
       } else {
-        shouldBeEqual(
-          curr->type,
-          sig.results,
-          curr,
-          "call* type must match callee return type");
+        shouldBeEqual(curr->type,
+                      sig.results,
+                      curr,
+                      "call* type must match callee return type");
       }
     }
   }
@@ -2629,7 +2630,8 @@ void FunctionValidator::visitFunction(Function* curr) {
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
     // The experimental GCNNLocals flag lets everything validate.
-    bool valid = getModule()->features.hasGCNNLocals() || (var.isDefaultable() || var.isNonNullable());
+    bool valid = getModule()->features.hasGCNNLocals() ||
+                 (var.isDefaultable() || var.isNonNullable());
     shouldBeTrue(valid, var, "vars must be defaultable or non-nullable");
   }
   shouldBeTrue(features <= getModule()->features,

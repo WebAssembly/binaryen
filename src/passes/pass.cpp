@@ -905,7 +905,7 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   // because that runs on the entire module. Here we know which individual
   // function is being operated on.
   bool extraValidation = isNested && getPassDebug() == 2 && options.validate &&
-       pass->name != "print";
+                         pass->name != "print";
   std::stringstream bodyBefore;
   if (extraValidation) {
     bodyBefore << *func->body << '\n';
