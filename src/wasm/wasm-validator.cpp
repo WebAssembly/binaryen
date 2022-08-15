@@ -2193,7 +2193,7 @@ void FunctionValidator::visitTry(Try* curr) {
     } else {
       if (shouldBeTrue(pops.size() == 1, curr, "")) {
         auto* pop = *pops.begin();
-        if (!shouldBeSubType(pop->type, tag->sig.params, curr, "")) {
+        if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
           getStream()
             << "catch's tag (" << tagName
             << ")'s pop doesn't have the same type as the tag's params";

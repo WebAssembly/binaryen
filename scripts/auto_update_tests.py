@@ -19,12 +19,12 @@ import subprocess
 import sys
 from collections import OrderedDict
 
-from scripts.test import binaryenjs
-from scripts.test import lld
-from scripts.test import shared
-from scripts.test import support
-from scripts.test import wasm2js
-from scripts.test import wasm_opt
+from test import binaryenjs
+from test import lld
+from test import shared
+from test import support
+from test import wasm2js
+from test import wasm_opt
 
 
 def update_example_tests():

@@ -2,7 +2,7 @@
   (tag $e-i32 (param i32))
   (tag $e-i64 (param i64))
   (tag $e-i32-i64 (param i32 i64))
-  (tag $e-anyref (param anyref))
+  (tag $e-funcref (param funcref))
   (tag $e-empty)
 
   (func $foo)
@@ -330,9 +330,9 @@
 
     (try
       (do)
-      (catch $e-anyref
+      (catch $e-funcref
         (drop
-          (pop funcref) ;; pop can be subtype
+          (pop anyref) ;; pop can be supertype
         )
       )
     )

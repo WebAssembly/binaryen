@@ -3,11 +3,11 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (type $anyref_=>_none (func (param anyref)))
+ (type $funcref_=>_none (func (param funcref)))
  (tag $e-i32 (param i32))
  (tag $e-i64 (param i64))
  (tag $e-i32-i64 (param i32 i64))
- (tag $e-anyref (param anyref))
+ (tag $e-funcref (param funcref))
  (tag $e-empty (param))
  (func $foo
   (nop)
@@ -372,9 +372,9 @@
    (do
     (nop)
    )
-   (catch $e-anyref
+   (catch $e-funcref
     (drop
-     (pop funcref)
+     (pop anyref)
     )
    )
   )
