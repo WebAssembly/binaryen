@@ -276,10 +276,10 @@
  ;; CHECK-NEXT:  (local $var$0 i32)
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.load $0 offset=22
+ ;; CHECK-NEXT:   (i32.load offset=22
  ;; CHECK-NEXT:    (local.get $var$0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.atomic.load $0 offset=22
+ ;; CHECK-NEXT:   (i32.atomic.load offset=22
  ;; CHECK-NEXT:    (local.get $var$0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

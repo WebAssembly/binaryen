@@ -19,7 +19,7 @@
   (call $__wasm_init_memory)
  )
  (func $__wasm_init_memory
-  (memory.init $0 0
+  (memory.init 0
    (i32.const 568)
    (i32.const 0)
    (i32.const 14)

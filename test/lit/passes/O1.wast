@@ -37,7 +37,7 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.load $0 align=1
+;; CHECK-NEXT:  (i32.load align=1
 ;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

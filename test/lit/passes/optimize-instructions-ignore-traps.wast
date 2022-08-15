@@ -764,7 +764,7 @@
  ;; CHECK-NEXT:    (local.get $val)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (memory.fill $0
+ ;; CHECK-NEXT:  (memory.fill
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (local.get $sz)

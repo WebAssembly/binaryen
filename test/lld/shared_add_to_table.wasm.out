@@ -45,7 +45,7 @@
   )
   (i32.add
    (i32.add
-    (i32.load $mimport$0
+    (i32.load
      (global.get $gimport$5)
     )
     (i32.add
@@ -53,7 +53,7 @@
      (local.get $0)
     )
    )
-   (i32.load $mimport$0
+   (i32.load
     (global.get $gimport$6)
    )
   )

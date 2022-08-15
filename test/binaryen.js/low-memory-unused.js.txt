@@ -18,7 +18,7 @@
  (memory $0 1)
  (export "test" (func $test))
  (func $test (param $0 i32) (result i32)
-  (i32.load $0
+  (i32.load
    (i32.add
     (local.get $0)
     (i32.const 128)
@@ -33,7 +33,7 @@
  (memory $0 1)
  (export "test" (func $test))
  (func $test (; has Stack IR ;) (param $0 i32) (result i32)
-  (i32.load $0
+  (i32.load
    (i32.add
     (local.get $0)
     (i32.const 128)
@@ -49,7 +49,7 @@
  (memory $0 1)
  (export "test" (func $test))
  (func $test (; has Stack IR ;) (param $0 i32) (result i32)
-  (i32.load $0 offset=128
+  (i32.load offset=128
    (local.get $0)
   )
  )

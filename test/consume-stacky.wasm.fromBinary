@@ -6,7 +6,7 @@
   (local.set $0
    (i32.const 1)
   )
-  (i32.store $0
+  (i32.store
    (i32.const 2)
    (i32.const 3)
   )

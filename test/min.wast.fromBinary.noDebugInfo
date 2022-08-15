@@ -17,11 +17,11 @@
   (local.tee $2
    (f32.neg
     (block $label$1 (result f32)
-     (i32.store $0
+     (i32.store
       (local.get $0)
       (local.get $1)
      )
-     (f32.load $0
+     (f32.load
       (local.get $0)
      )
     )

@@ -13,23 +13,23 @@
   (call $init_y)
  )
  (func $init_x
-  (i32.store $0 offset=568
+  (i32.store offset=568
    (i32.const 0)
    (i32.const 14)
   )
  )
  (func $init_y
-  (i32.store $0 offset=572
+  (i32.store offset=572
    (i32.const 0)
    (i32.const 144)
   )
  )
  (func $__original_main (result i32)
   (i32.add
-   (i32.load $0 offset=568
+   (i32.load offset=568
     (i32.const 0)
    )
-   (i32.load $0 offset=572
+   (i32.load offset=572
     (i32.const 0)
    )
   )

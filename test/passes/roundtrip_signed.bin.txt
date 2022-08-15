@@ -18,7 +18,7 @@
    )
   )
   (drop
-   (i32.load $0
+   (i32.load
     (i32.const 0)
    )
   )

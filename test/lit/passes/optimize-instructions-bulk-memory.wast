@@ -5,148 +5,148 @@
 (module
   (memory 0)
   ;; CHECK:      (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $sz)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $src)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store8 $0
+  ;; CHECK-NEXT:  (i32.store8
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i32.load8_u $0
+  ;; CHECK-NEXT:   (i32.load8_u
   ;; CHECK-NEXT:    (local.get $src)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store16 $0 align=1
+  ;; CHECK-NEXT:  (i32.store16 align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i32.load16_u $0 align=1
+  ;; CHECK-NEXT:   (i32.load16_u align=1
   ;; CHECK-NEXT:    (local.get $src)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $src)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store $0 align=1
+  ;; CHECK-NEXT:  (i32.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i32.load $0 align=1
+  ;; CHECK-NEXT:   (i32.load align=1
   ;; CHECK-NEXT:    (local.get $src)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $src)
   ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $src)
   ;; CHECK-NEXT:   (i32.const 6)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $src)
   ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i64.store $0 align=1
+  ;; CHECK-NEXT:  (i64.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (i64.load $0 align=1
+  ;; CHECK-NEXT:   (i64.load align=1
   ;; CHECK-NEXT:    (local.get $src)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (v128.store $0 align=1
+  ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
-  ;; CHECK-NEXT:   (v128.load $0 align=1
+  ;; CHECK-NEXT:   (v128.load align=1
   ;; CHECK-NEXT:    (local.get $src)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $src)
   ;; CHECK-NEXT:   (local.get $sz)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.copy $0 $0
+  ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.load $0
+  ;; CHECK-NEXT:   (i32.load
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOSIMD:      (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $sz)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store8 $0
+  ;; NOSIMD-NEXT:  (i32.store8
   ;; NOSIMD-NEXT:   (local.get $dst)
-  ;; NOSIMD-NEXT:   (i32.load8_u $0
+  ;; NOSIMD-NEXT:   (i32.load8_u
   ;; NOSIMD-NEXT:    (local.get $src)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store16 $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store16 align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
-  ;; NOSIMD-NEXT:   (i32.load16_u $0 align=1
+  ;; NOSIMD-NEXT:   (i32.load16_u align=1
   ;; NOSIMD-NEXT:    (local.get $src)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (i32.const 3)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
-  ;; NOSIMD-NEXT:   (i32.load $0 align=1
+  ;; NOSIMD-NEXT:   (i32.load align=1
   ;; NOSIMD-NEXT:    (local.get $src)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (i32.const 5)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (i32.const 6)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (i32.const 7)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i64.store $0 align=1
+  ;; NOSIMD-NEXT:  (i64.store align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
-  ;; NOSIMD-NEXT:   (i64.load $0 align=1
+  ;; NOSIMD-NEXT:   (i64.load align=1
   ;; NOSIMD-NEXT:    (local.get $src)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (i32.const 16)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $src)
   ;; NOSIMD-NEXT:   (local.get $sz)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.copy $0 $0
+  ;; NOSIMD-NEXT:  (memory.copy
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:   (i32.const 0)
-  ;; NOSIMD-NEXT:   (i32.load $0
+  ;; NOSIMD-NEXT:   (i32.load
   ;; NOSIMD-NEXT:    (i32.const 3)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
@@ -234,98 +234,98 @@
   )
 
   ;; CHECK:      (func $optimize-bulk-memory-fill (param $dst i32) (param $val i32) (param $sz i32)
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store8 $0
+  ;; CHECK-NEXT:  (i32.store8
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store8 $0
+  ;; CHECK-NEXT:  (i32.store8
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $val)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store8 $0
+  ;; CHECK-NEXT:  (i32.store8
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store8 $0
+  ;; CHECK-NEXT:  (i32.store8
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 255)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store16 $0 align=1
+  ;; CHECK-NEXT:  (i32.store16 align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store16 $0 align=1
+  ;; CHECK-NEXT:  (i32.store16 align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 257)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store16 $0 align=1
+  ;; CHECK-NEXT:  (i32.store16 align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 65535)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store $0 align=1
+  ;; CHECK-NEXT:  (i32.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i64.store $0 align=1
+  ;; CHECK-NEXT:  (i64.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (v128.store $0 align=1
+  ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store $0 align=1
+  ;; CHECK-NEXT:  (i32.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 16843009)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i64.store $0 align=1
+  ;; CHECK-NEXT:  (i64.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i64.const 72340172838076673)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (v128.store $0 align=1
+  ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (v128.store $0 align=1
+  ;; CHECK-NEXT:  (v128.store align=1
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (v128.const i32x4 0xffffffff 0xffffffff 0xffffffff 0xffffffff)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $val)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $sz)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (local.get $val)
   ;; CHECK-NEXT:   (local.get $sz)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (local.get $dst)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 17)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.fill $0
+  ;; CHECK-NEXT:  (memory.fill
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 16)
@@ -335,122 +335,122 @@
   ;; NOSIMD-NEXT:  (local $3 i32)
   ;; NOSIMD-NEXT:  (local $4 i32)
   ;; NOSIMD-NEXT:  (local $5 i32)
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store8 $0
+  ;; NOSIMD-NEXT:  (i32.store8
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store8 $0
+  ;; NOSIMD-NEXT:  (i32.store8
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $val)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store8 $0
+  ;; NOSIMD-NEXT:  (i32.store8
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 1)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store8 $0
+  ;; NOSIMD-NEXT:  (i32.store8
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 255)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store16 $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store16 align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store16 $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store16 align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 257)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store16 $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store16 align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 65535)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i64.store $0 align=1
+  ;; NOSIMD-NEXT:  (i64.store align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i64.const 0)
   ;; NOSIMD-NEXT:  )
   ;; NOSIMD-NEXT:  (block
-  ;; NOSIMD-NEXT:   (i64.store $0 align=1
+  ;; NOSIMD-NEXT:   (i64.store align=1
   ;; NOSIMD-NEXT:    (local.tee $3
   ;; NOSIMD-NEXT:     (local.get $dst)
   ;; NOSIMD-NEXT:    )
   ;; NOSIMD-NEXT:    (i64.const 0)
   ;; NOSIMD-NEXT:   )
-  ;; NOSIMD-NEXT:   (i64.store $0 offset=8 align=1
+  ;; NOSIMD-NEXT:   (i64.store offset=8 align=1
   ;; NOSIMD-NEXT:    (local.get $3)
   ;; NOSIMD-NEXT:    (i64.const 0)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i32.store $0 align=1
+  ;; NOSIMD-NEXT:  (i32.store align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 16843009)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (i64.store $0 align=1
+  ;; NOSIMD-NEXT:  (i64.store align=1
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i64.const 72340172838076673)
   ;; NOSIMD-NEXT:  )
   ;; NOSIMD-NEXT:  (block
-  ;; NOSIMD-NEXT:   (i64.store $0 align=1
+  ;; NOSIMD-NEXT:   (i64.store align=1
   ;; NOSIMD-NEXT:    (local.tee $4
   ;; NOSIMD-NEXT:     (local.get $dst)
   ;; NOSIMD-NEXT:    )
   ;; NOSIMD-NEXT:    (i64.const 72340172838076673)
   ;; NOSIMD-NEXT:   )
-  ;; NOSIMD-NEXT:   (i64.store $0 offset=8 align=1
+  ;; NOSIMD-NEXT:   (i64.store offset=8 align=1
   ;; NOSIMD-NEXT:    (local.get $4)
   ;; NOSIMD-NEXT:    (i64.const 72340172838076673)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
   ;; NOSIMD-NEXT:  (block
-  ;; NOSIMD-NEXT:   (i64.store $0 align=1
+  ;; NOSIMD-NEXT:   (i64.store align=1
   ;; NOSIMD-NEXT:    (local.tee $5
   ;; NOSIMD-NEXT:     (local.get $dst)
   ;; NOSIMD-NEXT:    )
   ;; NOSIMD-NEXT:    (i64.const -1)
   ;; NOSIMD-NEXT:   )
-  ;; NOSIMD-NEXT:   (i64.store $0 offset=8 align=1
+  ;; NOSIMD-NEXT:   (i64.store offset=8 align=1
   ;; NOSIMD-NEXT:    (local.get $5)
   ;; NOSIMD-NEXT:    (i64.const -1)
   ;; NOSIMD-NEXT:   )
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $val)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:   (local.get $sz)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (local.get $val)
   ;; NOSIMD-NEXT:   (local.get $sz)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:   (i32.const 3)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 1)
   ;; NOSIMD-NEXT:   (i32.const 3)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (local.get $dst)
   ;; NOSIMD-NEXT:   (i32.const 0)
   ;; NOSIMD-NEXT:   (i32.const 17)
   ;; NOSIMD-NEXT:  )
-  ;; NOSIMD-NEXT:  (memory.fill $0
+  ;; NOSIMD-NEXT:  (memory.fill
   ;; NOSIMD-NEXT:   (unreachable)
   ;; NOSIMD-NEXT:   (i32.const 1)
   ;; NOSIMD-NEXT:   (i32.const 16)

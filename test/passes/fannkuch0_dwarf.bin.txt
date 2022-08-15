@@ -5485,7 +5485,7 @@ file_names[  3]:
    (i32.const 0)
   )
   ;; code offset: 0x20c
-  (i32.store $mimport$0 offset=60
+  (i32.store offset=60
    ;; code offset: 0x208
    (local.get $3)
    ;; code offset: 0x20a
@@ -5494,20 +5494,20 @@ file_names[  3]:
   ;; code offset: 0x214
   (local.set $5
    ;; code offset: 0x211
-   (i32.load $mimport$0 offset=60
+   (i32.load offset=60
     ;; code offset: 0x20f
     (local.get $3)
    )
   )
   ;; code offset: 0x21a
-  (i32.store $mimport$0 offset=56
+  (i32.store offset=56
    ;; code offset: 0x216
    (local.get $3)
    ;; code offset: 0x218
    (local.get $5)
   )
   ;; code offset: 0x221
-  (i32.store $mimport$0 offset=40
+  (i32.store offset=40
    ;; code offset: 0x21d
    (local.get $3)
    ;; code offset: 0x21f
@@ -5516,7 +5516,7 @@ file_names[  3]:
   ;; code offset: 0x229
   (local.set $6
    ;; code offset: 0x226
-   (i32.load $mimport$0 offset=56
+   (i32.load offset=56
     ;; code offset: 0x224
     (local.get $3)
    )
@@ -5524,13 +5524,13 @@ file_names[  3]:
   ;; code offset: 0x230
   (local.set $7
    ;; code offset: 0x22d
-   (i32.load $mimport$0 offset=4
+   (i32.load offset=4
     ;; code offset: 0x22b
     (local.get $6)
    )
   )
   ;; code offset: 0x236
-  (i32.store $mimport$0 offset=28
+  (i32.store offset=28
    ;; code offset: 0x232
    (local.get $3)
    ;; code offset: 0x234
@@ -5539,7 +5539,7 @@ file_names[  3]:
   ;; code offset: 0x23e
   (local.set $8
    ;; code offset: 0x23b
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x239
     (local.get $3)
    )
@@ -5568,7 +5568,7 @@ file_names[  3]:
    )
   )
   ;; code offset: 0x255
-  (i32.store $mimport$0 offset=52
+  (i32.store offset=52
    ;; code offset: 0x251
    (local.get $3)
    ;; code offset: 0x253
@@ -5577,7 +5577,7 @@ file_names[  3]:
   ;; code offset: 0x25d
   (local.set $12
    ;; code offset: 0x25a
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x258
     (local.get $3)
    )
@@ -5606,7 +5606,7 @@ file_names[  3]:
    )
   )
   ;; code offset: 0x274
-  (i32.store $mimport$0 offset=44
+  (i32.store offset=44
    ;; code offset: 0x270
    (local.get $3)
    ;; code offset: 0x272
@@ -5615,7 +5615,7 @@ file_names[  3]:
   ;; code offset: 0x27c
   (local.set $16
    ;; code offset: 0x279
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x277
     (local.get $3)
    )
@@ -5644,14 +5644,14 @@ file_names[  3]:
    )
   )
   ;; code offset: 0x293
-  (i32.store $mimport$0 offset=48
+  (i32.store offset=48
    ;; code offset: 0x28f
    (local.get $3)
    ;; code offset: 0x291
    (local.get $19)
   )
   ;; code offset: 0x29a
-  (i32.store $mimport$0 offset=32
+  (i32.store offset=32
    ;; code offset: 0x296
    (local.get $3)
    ;; code offset: 0x298
@@ -5664,7 +5664,7 @@ file_names[  3]:
     ;; code offset: 0x2a6
     (local.set $20
      ;; code offset: 0x2a3
-     (i32.load $mimport$0 offset=32
+     (i32.load offset=32
       ;; code offset: 0x2a1
       (local.get $3)
      )
@@ -5672,7 +5672,7 @@ file_names[  3]:
     ;; code offset: 0x2ad
     (local.set $21
      ;; code offset: 0x2aa
-     (i32.load $mimport$0 offset=28
+     (i32.load offset=28
       ;; code offset: 0x2a8
       (local.get $3)
      )
@@ -5723,7 +5723,7 @@ file_names[  3]:
     ;; code offset: 0x2d3
     (local.set $27
      ;; code offset: 0x2d0
-     (i32.load $mimport$0 offset=32
+     (i32.load offset=32
       ;; code offset: 0x2ce
       (local.get $3)
      )
@@ -5731,7 +5731,7 @@ file_names[  3]:
     ;; code offset: 0x2da
     (local.set $28
      ;; code offset: 0x2d7
-     (i32.load $mimport$0 offset=52
+     (i32.load offset=52
       ;; code offset: 0x2d5
       (local.get $3)
      )
@@ -5739,7 +5739,7 @@ file_names[  3]:
     ;; code offset: 0x2e1
     (local.set $29
      ;; code offset: 0x2de
-     (i32.load $mimport$0 offset=32
+     (i32.load offset=32
       ;; code offset: 0x2dc
       (local.get $3)
      )
@@ -5770,7 +5770,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0x2f9
-    (i32.store $mimport$0
+    (i32.store
      ;; code offset: 0x2f5
      (local.get $32)
      ;; code offset: 0x2f7
@@ -5779,7 +5779,7 @@ file_names[  3]:
     ;; code offset: 0x301
     (local.set $33
      ;; code offset: 0x2fe
-     (i32.load $mimport$0 offset=32
+     (i32.load offset=32
       ;; code offset: 0x2fc
       (local.get $3)
      )
@@ -5800,7 +5800,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0x312
-    (i32.store $mimport$0 offset=32
+    (i32.store offset=32
      ;; code offset: 0x30e
      (local.get $3)
      ;; code offset: 0x310
@@ -5813,7 +5813,7 @@ file_names[  3]:
   ;; code offset: 0x31f
   (local.set $36
    ;; code offset: 0x31c
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x31a
     (local.get $3)
    )
@@ -5836,7 +5836,7 @@ file_names[  3]:
   ;; code offset: 0x331
   (local.set $39
    ;; code offset: 0x32e
-   (i32.load $mimport$0 offset=52
+   (i32.load offset=52
     ;; code offset: 0x32c
     (local.get $3)
    )
@@ -5844,7 +5844,7 @@ file_names[  3]:
   ;; code offset: 0x338
   (local.set $40
    ;; code offset: 0x335
-   (i32.load $mimport$0 offset=56
+   (i32.load offset=56
     ;; code offset: 0x333
     (local.get $3)
    )
@@ -5852,7 +5852,7 @@ file_names[  3]:
   ;; code offset: 0x33f
   (local.set $41
    ;; code offset: 0x33c
-   (i32.load $mimport$0
+   (i32.load
     ;; code offset: 0x33a
     (local.get $40)
    )
@@ -5883,7 +5883,7 @@ file_names[  3]:
    )
   )
   ;; code offset: 0x357
-  (i32.store $mimport$0
+  (i32.store
    ;; code offset: 0x353
    (local.get $44)
    ;; code offset: 0x355
@@ -5892,7 +5892,7 @@ file_names[  3]:
   ;; code offset: 0x35f
   (local.set $45
    ;; code offset: 0x35c
-   (i32.load $mimport$0 offset=56
+   (i32.load offset=56
     ;; code offset: 0x35a
     (local.get $3)
    )
@@ -5900,7 +5900,7 @@ file_names[  3]:
   ;; code offset: 0x366
   (local.set $46
    ;; code offset: 0x363
-   (i32.load $mimport$0
+   (i32.load
     ;; code offset: 0x361
     (local.get $45)
    )
@@ -5908,7 +5908,7 @@ file_names[  3]:
   ;; code offset: 0x36d
   (local.set $47
    ;; code offset: 0x36a
-   (i32.load $mimport$0 offset=52
+   (i32.load offset=52
     ;; code offset: 0x368
     (local.get $3)
    )
@@ -5916,7 +5916,7 @@ file_names[  3]:
   ;; code offset: 0x374
   (local.set $48
    ;; code offset: 0x371
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x36f
     (local.get $3)
    )
@@ -5962,7 +5962,7 @@ file_names[  3]:
    )
   )
   ;; code offset: 0x397
-  (i32.store $mimport$0
+  (i32.store
    ;; code offset: 0x393
    (local.get $53)
    ;; code offset: 0x395
@@ -5971,13 +5971,13 @@ file_names[  3]:
   ;; code offset: 0x39f
   (local.set $54
    ;; code offset: 0x39c
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x39a
     (local.get $3)
    )
   )
   ;; code offset: 0x3a5
-  (i32.store $mimport$0 offset=24
+  (i32.store offset=24
    ;; code offset: 0x3a1
    (local.get $3)
    ;; code offset: 0x3a3
@@ -5997,7 +5997,7 @@ file_names[  3]:
      ;; code offset: 0x3b7
      (local.set $56
       ;; code offset: 0x3b4
-      (i32.load $mimport$0 offset=24
+      (i32.load offset=24
        ;; code offset: 0x3b2
        (local.get $3)
       )
@@ -6048,7 +6048,7 @@ file_names[  3]:
      ;; code offset: 0x3dd
      (local.set $62
       ;; code offset: 0x3da
-      (i32.load $mimport$0 offset=24
+      (i32.load offset=24
        ;; code offset: 0x3d8
        (local.get $3)
       )
@@ -6056,7 +6056,7 @@ file_names[  3]:
      ;; code offset: 0x3e4
      (local.set $63
       ;; code offset: 0x3e1
-      (i32.load $mimport$0 offset=48
+      (i32.load offset=48
        ;; code offset: 0x3df
        (local.get $3)
       )
@@ -6064,7 +6064,7 @@ file_names[  3]:
      ;; code offset: 0x3eb
      (local.set $64
       ;; code offset: 0x3e8
-      (i32.load $mimport$0 offset=24
+      (i32.load offset=24
        ;; code offset: 0x3e6
        (local.get $3)
       )
@@ -6110,7 +6110,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x40e
-     (i32.store $mimport$0
+     (i32.store
       ;; code offset: 0x40a
       (local.get $69)
       ;; code offset: 0x40c
@@ -6119,7 +6119,7 @@ file_names[  3]:
      ;; code offset: 0x416
      (local.set $70
       ;; code offset: 0x413
-      (i32.load $mimport$0 offset=24
+      (i32.load offset=24
        ;; code offset: 0x411
        (local.get $3)
       )
@@ -6140,7 +6140,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x427
-     (i32.store $mimport$0 offset=24
+     (i32.store offset=24
       ;; code offset: 0x423
       (local.get $3)
       ;; code offset: 0x425
@@ -6153,7 +6153,7 @@ file_names[  3]:
    ;; code offset: 0x434
    (local.set $73
     ;; code offset: 0x431
-    (i32.load $mimport$0 offset=52
+    (i32.load offset=52
      ;; code offset: 0x42f
      (local.get $3)
     )
@@ -6161,7 +6161,7 @@ file_names[  3]:
    ;; code offset: 0x43b
    (local.set $74
     ;; code offset: 0x438
-    (i32.load $mimport$0
+    (i32.load
      ;; code offset: 0x436
      (local.get $73)
     )
@@ -6179,7 +6179,7 @@ file_names[  3]:
     ;; code offset: 0x449
     (local.set $75
      ;; code offset: 0x446
-     (i32.load $mimport$0 offset=52
+     (i32.load offset=52
       ;; code offset: 0x444
       (local.get $3)
      )
@@ -6187,7 +6187,7 @@ file_names[  3]:
     ;; code offset: 0x450
     (local.set $76
      ;; code offset: 0x44d
-     (i32.load $mimport$0 offset=28
+     (i32.load offset=28
       ;; code offset: 0x44b
       (local.get $3)
      )
@@ -6235,7 +6235,7 @@ file_names[  3]:
     ;; code offset: 0x474
     (local.set $82
      ;; code offset: 0x471
-     (i32.load $mimport$0
+     (i32.load
       ;; code offset: 0x46f
       (local.get $81)
      )
@@ -6243,7 +6243,7 @@ file_names[  3]:
     ;; code offset: 0x47b
     (local.set $83
      ;; code offset: 0x478
-     (i32.load $mimport$0 offset=28
+     (i32.load offset=28
       ;; code offset: 0x476
       (local.get $3)
      )
@@ -6312,7 +6312,7 @@ file_names[  3]:
      (i32.const 0)
     )
     ;; code offset: 0x4af
-    (i32.store $mimport$0 offset=32
+    (i32.store offset=32
      ;; code offset: 0x4ab
      (local.get $3)
      ;; code offset: 0x4ad
@@ -6325,7 +6325,7 @@ file_names[  3]:
       ;; code offset: 0x4bb
       (local.set $92
        ;; code offset: 0x4b8
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x4b6
         (local.get $3)
        )
@@ -6333,7 +6333,7 @@ file_names[  3]:
       ;; code offset: 0x4c2
       (local.set $93
        ;; code offset: 0x4bf
-       (i32.load $mimport$0 offset=28
+       (i32.load offset=28
         ;; code offset: 0x4bd
         (local.get $3)
        )
@@ -6384,7 +6384,7 @@ file_names[  3]:
       ;; code offset: 0x4e8
       (local.set $99
        ;; code offset: 0x4e5
-       (i32.load $mimport$0 offset=52
+       (i32.load offset=52
         ;; code offset: 0x4e3
         (local.get $3)
        )
@@ -6392,7 +6392,7 @@ file_names[  3]:
       ;; code offset: 0x4ef
       (local.set $100
        ;; code offset: 0x4ec
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x4ea
         (local.get $3)
        )
@@ -6425,7 +6425,7 @@ file_names[  3]:
       ;; code offset: 0x508
       (local.set $104
        ;; code offset: 0x505
-       (i32.load $mimport$0
+       (i32.load
         ;; code offset: 0x503
         (local.get $103)
        )
@@ -6433,7 +6433,7 @@ file_names[  3]:
       ;; code offset: 0x50f
       (local.set $105
        ;; code offset: 0x50c
-       (i32.load $mimport$0 offset=44
+       (i32.load offset=44
         ;; code offset: 0x50a
         (local.get $3)
        )
@@ -6441,7 +6441,7 @@ file_names[  3]:
       ;; code offset: 0x516
       (local.set $106
        ;; code offset: 0x513
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x511
         (local.get $3)
        )
@@ -6472,7 +6472,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x52e
-      (i32.store $mimport$0
+      (i32.store
        ;; code offset: 0x52a
        (local.get $109)
        ;; code offset: 0x52c
@@ -6481,7 +6481,7 @@ file_names[  3]:
       ;; code offset: 0x536
       (local.set $110
        ;; code offset: 0x533
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x531
         (local.get $3)
        )
@@ -6502,7 +6502,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x547
-      (i32.store $mimport$0 offset=32
+      (i32.store offset=32
        ;; code offset: 0x543
        (local.get $3)
        ;; code offset: 0x545
@@ -6518,7 +6518,7 @@ file_names[  3]:
      (i32.const 0)
     )
     ;; code offset: 0x557
-    (i32.store $mimport$0 offset=36
+    (i32.store offset=36
      ;; code offset: 0x553
      (local.get $3)
      ;; code offset: 0x555
@@ -6527,7 +6527,7 @@ file_names[  3]:
     ;; code offset: 0x55f
     (local.set $114
      ;; code offset: 0x55c
-     (i32.load $mimport$0 offset=44
+     (i32.load offset=44
       ;; code offset: 0x55a
       (local.get $3)
      )
@@ -6535,13 +6535,13 @@ file_names[  3]:
     ;; code offset: 0x566
     (local.set $115
      ;; code offset: 0x563
-     (i32.load $mimport$0
+     (i32.load
       ;; code offset: 0x561
       (local.get $114)
      )
     )
     ;; code offset: 0x56c
-    (i32.store $mimport$0 offset=16
+    (i32.store offset=16
      ;; code offset: 0x568
      (local.get $3)
      ;; code offset: 0x56a
@@ -6555,7 +6555,7 @@ file_names[  3]:
       (i32.const 1)
      )
      ;; code offset: 0x579
-     (i32.store $mimport$0 offset=32
+     (i32.store offset=32
       ;; code offset: 0x575
       (local.get $3)
       ;; code offset: 0x577
@@ -6564,7 +6564,7 @@ file_names[  3]:
      ;; code offset: 0x581
      (local.set $117
       ;; code offset: 0x57e
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x57c
        (local.get $3)
       )
@@ -6585,7 +6585,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x592
-     (i32.store $mimport$0 offset=20
+     (i32.store offset=20
       ;; code offset: 0x58e
       (local.get $3)
       ;; code offset: 0x590
@@ -6598,7 +6598,7 @@ file_names[  3]:
        ;; code offset: 0x59e
        (local.set $120
         ;; code offset: 0x59b
-        (i32.load $mimport$0 offset=32
+        (i32.load offset=32
          ;; code offset: 0x599
          (local.get $3)
         )
@@ -6606,7 +6606,7 @@ file_names[  3]:
        ;; code offset: 0x5a5
        (local.set $121
         ;; code offset: 0x5a2
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x5a0
          (local.get $3)
         )
@@ -6657,7 +6657,7 @@ file_names[  3]:
        ;; code offset: 0x5cb
        (local.set $127
         ;; code offset: 0x5c8
-        (i32.load $mimport$0 offset=44
+        (i32.load offset=44
          ;; code offset: 0x5c6
          (local.get $3)
         )
@@ -6665,7 +6665,7 @@ file_names[  3]:
        ;; code offset: 0x5d2
        (local.set $128
         ;; code offset: 0x5cf
-        (i32.load $mimport$0 offset=32
+        (i32.load offset=32
          ;; code offset: 0x5cd
          (local.get $3)
         )
@@ -6698,13 +6698,13 @@ file_names[  3]:
        ;; code offset: 0x5f3
        (local.set $132
         ;; code offset: 0x5f0
-        (i32.load $mimport$0
+        (i32.load
          ;; code offset: 0x5ed
          (local.get $131)
         )
        )
        ;; code offset: 0x5fb
-       (i32.store $mimport$0 offset=12
+       (i32.store offset=12
         ;; code offset: 0x5f6
         (local.get $3)
         ;; code offset: 0x5f8
@@ -6713,7 +6713,7 @@ file_names[  3]:
        ;; code offset: 0x603
        (local.set $133
         ;; code offset: 0x600
-        (i32.load $mimport$0 offset=44
+        (i32.load offset=44
          ;; code offset: 0x5fe
          (local.get $3)
         )
@@ -6721,7 +6721,7 @@ file_names[  3]:
        ;; code offset: 0x60b
        (local.set $134
         ;; code offset: 0x608
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x606
          (local.get $3)
         )
@@ -6754,7 +6754,7 @@ file_names[  3]:
        ;; code offset: 0x62d
        (local.set $138
         ;; code offset: 0x62a
-        (i32.load $mimport$0
+        (i32.load
          ;; code offset: 0x627
          (local.get $137)
         )
@@ -6762,7 +6762,7 @@ file_names[  3]:
        ;; code offset: 0x635
        (local.set $139
         ;; code offset: 0x632
-        (i32.load $mimport$0 offset=44
+        (i32.load offset=44
          ;; code offset: 0x630
          (local.get $3)
         )
@@ -6770,7 +6770,7 @@ file_names[  3]:
        ;; code offset: 0x63d
        (local.set $140
         ;; code offset: 0x63a
-        (i32.load $mimport$0 offset=32
+        (i32.load offset=32
          ;; code offset: 0x638
          (local.get $3)
         )
@@ -6801,7 +6801,7 @@ file_names[  3]:
         )
        )
        ;; code offset: 0x65f
-       (i32.store $mimport$0
+       (i32.store
         ;; code offset: 0x659
         (local.get $143)
         ;; code offset: 0x65c
@@ -6810,7 +6810,7 @@ file_names[  3]:
        ;; code offset: 0x667
        (local.set $144
         ;; code offset: 0x664
-        (i32.load $mimport$0 offset=12
+        (i32.load offset=12
          ;; code offset: 0x662
          (local.get $3)
         )
@@ -6818,7 +6818,7 @@ file_names[  3]:
        ;; code offset: 0x66f
        (local.set $145
         ;; code offset: 0x66c
-        (i32.load $mimport$0 offset=44
+        (i32.load offset=44
          ;; code offset: 0x66a
          (local.get $3)
         )
@@ -6826,7 +6826,7 @@ file_names[  3]:
        ;; code offset: 0x677
        (local.set $146
         ;; code offset: 0x674
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x672
          (local.get $3)
         )
@@ -6857,7 +6857,7 @@ file_names[  3]:
         )
        )
        ;; code offset: 0x699
-       (i32.store $mimport$0
+       (i32.store
         ;; code offset: 0x693
         (local.get $149)
         ;; code offset: 0x696
@@ -6866,7 +6866,7 @@ file_names[  3]:
        ;; code offset: 0x6a1
        (local.set $150
         ;; code offset: 0x69e
-        (i32.load $mimport$0 offset=32
+        (i32.load offset=32
          ;; code offset: 0x69c
          (local.get $3)
         )
@@ -6887,7 +6887,7 @@ file_names[  3]:
         )
        )
        ;; code offset: 0x6b8
-       (i32.store $mimport$0 offset=32
+       (i32.store offset=32
         ;; code offset: 0x6b3
         (local.get $3)
         ;; code offset: 0x6b5
@@ -6896,7 +6896,7 @@ file_names[  3]:
        ;; code offset: 0x6c0
        (local.set $153
         ;; code offset: 0x6bd
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x6bb
          (local.get $3)
         )
@@ -6917,7 +6917,7 @@ file_names[  3]:
         )
        )
        ;; code offset: 0x6d7
-       (i32.store $mimport$0 offset=20
+       (i32.store offset=20
         ;; code offset: 0x6d2
         (local.get $3)
         ;; code offset: 0x6d4
@@ -6930,7 +6930,7 @@ file_names[  3]:
      ;; code offset: 0x6e4
      (local.set $156
       ;; code offset: 0x6e1
-      (i32.load $mimport$0 offset=36
+      (i32.load offset=36
        ;; code offset: 0x6df
        (local.get $3)
       )
@@ -6951,7 +6951,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x6fb
-     (i32.store $mimport$0 offset=36
+     (i32.store offset=36
       ;; code offset: 0x6f6
       (local.get $3)
       ;; code offset: 0x6f8
@@ -6960,7 +6960,7 @@ file_names[  3]:
      ;; code offset: 0x703
      (local.set $159
       ;; code offset: 0x700
-      (i32.load $mimport$0 offset=44
+      (i32.load offset=44
        ;; code offset: 0x6fe
        (local.get $3)
       )
@@ -6968,7 +6968,7 @@ file_names[  3]:
      ;; code offset: 0x70b
      (local.set $160
       ;; code offset: 0x708
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x706
        (local.get $3)
       )
@@ -7001,13 +7001,13 @@ file_names[  3]:
      ;; code offset: 0x72d
      (local.set $164
       ;; code offset: 0x72a
-      (i32.load $mimport$0
+      (i32.load
        ;; code offset: 0x727
        (local.get $163)
       )
      )
      ;; code offset: 0x735
-     (i32.store $mimport$0 offset=12
+     (i32.store offset=12
       ;; code offset: 0x730
       (local.get $3)
       ;; code offset: 0x732
@@ -7016,7 +7016,7 @@ file_names[  3]:
      ;; code offset: 0x73d
      (local.set $165
       ;; code offset: 0x73a
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x738
        (local.get $3)
       )
@@ -7024,7 +7024,7 @@ file_names[  3]:
      ;; code offset: 0x745
      (local.set $166
       ;; code offset: 0x742
-      (i32.load $mimport$0 offset=44
+      (i32.load offset=44
        ;; code offset: 0x740
        (local.get $3)
       )
@@ -7032,7 +7032,7 @@ file_names[  3]:
      ;; code offset: 0x74d
      (local.set $167
       ;; code offset: 0x74a
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x748
        (local.get $3)
       )
@@ -7063,7 +7063,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x76f
-     (i32.store $mimport$0
+     (i32.store
       ;; code offset: 0x769
       (local.get $170)
       ;; code offset: 0x76c
@@ -7072,13 +7072,13 @@ file_names[  3]:
      ;; code offset: 0x777
      (local.set $171
       ;; code offset: 0x774
-      (i32.load $mimport$0 offset=12
+      (i32.load offset=12
        ;; code offset: 0x772
        (local.get $3)
       )
      )
      ;; code offset: 0x77f
-     (i32.store $mimport$0 offset=16
+     (i32.store offset=16
       ;; code offset: 0x77a
       (local.get $3)
       ;; code offset: 0x77c
@@ -7087,7 +7087,7 @@ file_names[  3]:
      ;; code offset: 0x787
      (local.set $172
       ;; code offset: 0x784
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x782
        (local.get $3)
       )
@@ -7101,7 +7101,7 @@ file_names[  3]:
     ;; code offset: 0x795
     (local.set $173
      ;; code offset: 0x792
-     (i32.load $mimport$0 offset=40
+     (i32.load offset=40
       ;; code offset: 0x790
       (local.get $3)
      )
@@ -7109,7 +7109,7 @@ file_names[  3]:
     ;; code offset: 0x79d
     (local.set $174
      ;; code offset: 0x79a
-     (i32.load $mimport$0 offset=36
+     (i32.load offset=36
       ;; code offset: 0x798
       (local.get $3)
      )
@@ -7162,13 +7162,13 @@ file_names[  3]:
      ;; code offset: 0x7d2
      (local.set $180
       ;; code offset: 0x7cf
-      (i32.load $mimport$0 offset=36
+      (i32.load offset=36
        ;; code offset: 0x7cd
        (local.get $3)
       )
      )
      ;; code offset: 0x7da
-     (i32.store $mimport$0 offset=40
+     (i32.store offset=40
       ;; code offset: 0x7d5
       (local.get $3)
       ;; code offset: 0x7d7
@@ -7181,7 +7181,7 @@ file_names[  3]:
     ;; code offset: 0x7e6
     (local.set $181
      ;; code offset: 0x7e3
-     (i32.load $mimport$0 offset=24
+     (i32.load offset=24
       ;; code offset: 0x7e1
       (local.get $3)
      )
@@ -7189,7 +7189,7 @@ file_names[  3]:
     ;; code offset: 0x7ee
     (local.set $182
      ;; code offset: 0x7eb
-     (i32.load $mimport$0 offset=28
+     (i32.load offset=28
       ;; code offset: 0x7e9
       (local.get $3)
      )
@@ -7257,7 +7257,7 @@ file_names[  3]:
      ;; code offset: 0x832
      (local.set $190
       ;; code offset: 0x82f
-      (i32.load $mimport$0 offset=52
+      (i32.load offset=52
        ;; code offset: 0x82d
        (local.get $3)
       )
@@ -7270,7 +7270,7 @@ file_names[  3]:
      ;; code offset: 0x83f
      (local.set $191
       ;; code offset: 0x83c
-      (i32.load $mimport$0 offset=44
+      (i32.load offset=44
        ;; code offset: 0x83a
        (local.get $3)
       )
@@ -7283,7 +7283,7 @@ file_names[  3]:
      ;; code offset: 0x84c
      (local.set $192
       ;; code offset: 0x849
-      (i32.load $mimport$0 offset=48
+      (i32.load offset=48
        ;; code offset: 0x847
        (local.get $3)
       )
@@ -7296,7 +7296,7 @@ file_names[  3]:
      ;; code offset: 0x859
      (local.set $193
       ;; code offset: 0x856
-      (i32.load $mimport$0 offset=40
+      (i32.load offset=40
        ;; code offset: 0x854
        (local.get $3)
       )
@@ -7335,7 +7335,7 @@ file_names[  3]:
     ;; code offset: 0x87f
     (local.set $197
      ;; code offset: 0x87c
-     (i32.load $mimport$0 offset=52
+     (i32.load offset=52
       ;; code offset: 0x87a
       (local.get $3)
      )
@@ -7343,20 +7343,20 @@ file_names[  3]:
     ;; code offset: 0x888
     (local.set $198
      ;; code offset: 0x885
-     (i32.load $mimport$0
+     (i32.load
       ;; code offset: 0x882
       (local.get $197)
      )
     )
     ;; code offset: 0x890
-    (i32.store $mimport$0 offset=8
+    (i32.store offset=8
      ;; code offset: 0x88b
      (local.get $3)
      ;; code offset: 0x88d
      (local.get $198)
     )
     ;; code offset: 0x898
-    (i32.store $mimport$0 offset=32
+    (i32.store offset=32
      ;; code offset: 0x893
      (local.get $3)
      ;; code offset: 0x895
@@ -7369,7 +7369,7 @@ file_names[  3]:
       ;; code offset: 0x8a4
       (local.set $199
        ;; code offset: 0x8a1
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x89f
         (local.get $3)
        )
@@ -7377,7 +7377,7 @@ file_names[  3]:
       ;; code offset: 0x8ac
       (local.set $200
        ;; code offset: 0x8a9
-       (i32.load $mimport$0 offset=24
+       (i32.load offset=24
         ;; code offset: 0x8a7
         (local.get $3)
        )
@@ -7428,7 +7428,7 @@ file_names[  3]:
       ;; code offset: 0x8df
       (local.set $206
        ;; code offset: 0x8dc
-       (i32.load $mimport$0 offset=52
+       (i32.load offset=52
         ;; code offset: 0x8da
         (local.get $3)
        )
@@ -7436,7 +7436,7 @@ file_names[  3]:
       ;; code offset: 0x8e7
       (local.set $207
        ;; code offset: 0x8e4
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x8e2
         (local.get $3)
        )
@@ -7484,7 +7484,7 @@ file_names[  3]:
       ;; code offset: 0x918
       (local.set $213
        ;; code offset: 0x915
-       (i32.load $mimport$0
+       (i32.load
         ;; code offset: 0x912
         (local.get $212)
        )
@@ -7492,7 +7492,7 @@ file_names[  3]:
       ;; code offset: 0x920
       (local.set $214
        ;; code offset: 0x91d
-       (i32.load $mimport$0 offset=52
+       (i32.load offset=52
         ;; code offset: 0x91b
         (local.get $3)
        )
@@ -7500,7 +7500,7 @@ file_names[  3]:
       ;; code offset: 0x928
       (local.set $215
        ;; code offset: 0x925
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x923
         (local.get $3)
        )
@@ -7531,7 +7531,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x94a
-      (i32.store $mimport$0
+      (i32.store
        ;; code offset: 0x944
        (local.get $218)
        ;; code offset: 0x947
@@ -7540,7 +7540,7 @@ file_names[  3]:
       ;; code offset: 0x952
       (local.set $219
        ;; code offset: 0x94f
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0x94d
         (local.get $3)
        )
@@ -7561,7 +7561,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x969
-      (i32.store $mimport$0 offset=32
+      (i32.store offset=32
        ;; code offset: 0x964
        (local.get $3)
        ;; code offset: 0x966
@@ -7579,7 +7579,7 @@ file_names[  3]:
     ;; code offset: 0x97b
     (local.set $223
      ;; code offset: 0x978
-     (i32.load $mimport$0 offset=8
+     (i32.load offset=8
       ;; code offset: 0x976
       (local.get $3)
      )
@@ -7587,7 +7587,7 @@ file_names[  3]:
     ;; code offset: 0x983
     (local.set $224
      ;; code offset: 0x980
-     (i32.load $mimport$0 offset=52
+     (i32.load offset=52
       ;; code offset: 0x97e
       (local.get $3)
      )
@@ -7595,7 +7595,7 @@ file_names[  3]:
     ;; code offset: 0x98b
     (local.set $225
      ;; code offset: 0x988
-     (i32.load $mimport$0 offset=32
+     (i32.load offset=32
       ;; code offset: 0x986
       (local.get $3)
      )
@@ -7626,7 +7626,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0x9ad
-    (i32.store $mimport$0
+    (i32.store
      ;; code offset: 0x9a7
      (local.get $228)
      ;; code offset: 0x9aa
@@ -7635,7 +7635,7 @@ file_names[  3]:
     ;; code offset: 0x9b5
     (local.set $229
      ;; code offset: 0x9b2
-     (i32.load $mimport$0 offset=48
+     (i32.load offset=48
       ;; code offset: 0x9b0
       (local.get $3)
      )
@@ -7643,7 +7643,7 @@ file_names[  3]:
     ;; code offset: 0x9bd
     (local.set $230
      ;; code offset: 0x9ba
-     (i32.load $mimport$0 offset=24
+     (i32.load offset=24
       ;; code offset: 0x9b8
       (local.get $3)
      )
@@ -7676,7 +7676,7 @@ file_names[  3]:
     ;; code offset: 0x9df
     (local.set $234
      ;; code offset: 0x9dc
-     (i32.load $mimport$0
+     (i32.load
       ;; code offset: 0x9d9
       (local.get $233)
      )
@@ -7697,7 +7697,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0x9f7
-    (i32.store $mimport$0
+    (i32.store
      ;; code offset: 0x9f1
      (local.get $233)
      ;; code offset: 0x9f4
@@ -7755,7 +7755,7 @@ file_names[  3]:
      ;; code offset: 0xa31
      (local.set $242
       ;; code offset: 0xa2e
-      (i32.load $mimport$0 offset=24
+      (i32.load offset=24
        ;; code offset: 0xa2c
        (local.get $3)
       )
@@ -7776,7 +7776,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0xa48
-     (i32.store $mimport$0 offset=24
+     (i32.store offset=24
       ;; code offset: 0xa43
       (local.get $3)
       ;; code offset: 0xa45
@@ -7862,21 +7862,21 @@ file_names[  3]:
    (i32.const 0)
   )
   ;; code offset: 0xabb
-  (i32.store $mimport$0 offset=28
+  (i32.store offset=28
    ;; code offset: 0xab7
    (local.get $4)
    ;; code offset: 0xab9
    (local.get $6)
   )
   ;; code offset: 0xac2
-  (i32.store $mimport$0 offset=24
+  (i32.store offset=24
    ;; code offset: 0xabe
    (local.get $4)
    ;; code offset: 0xac0
    (local.get $0)
   )
   ;; code offset: 0xac9
-  (i32.store $mimport$0 offset=20
+  (i32.store offset=20
    ;; code offset: 0xac5
    (local.get $4)
    ;; code offset: 0xac7
@@ -7885,7 +7885,7 @@ file_names[  3]:
   ;; code offset: 0xad1
   (local.set $7
    ;; code offset: 0xace
-   (i32.load $mimport$0 offset=24
+   (i32.load offset=24
     ;; code offset: 0xacc
     (local.get $4)
    )
@@ -7939,7 +7939,7 @@ file_names[  3]:
     ;; code offset: 0xafb
     (local.set $13
      ;; code offset: 0xaf8
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xaf6
       (local.get $4)
      )
@@ -7947,7 +7947,7 @@ file_names[  3]:
     ;; code offset: 0xb02
     (local.set $14
      ;; code offset: 0xaff
-     (i32.load $mimport$0 offset=4
+     (i32.load offset=4
       ;; code offset: 0xafd
       (local.get $13)
      )
@@ -7990,7 +7990,7 @@ file_names[  3]:
    (i32.const 1)
   )
   ;; code offset: 0xb26
-  (i32.store $mimport$0 offset=16
+  (i32.store offset=16
    ;; code offset: 0xb22
    (local.get $4)
    ;; code offset: 0xb24
@@ -7999,7 +7999,7 @@ file_names[  3]:
   ;; code offset: 0xb2e
   (local.set $20
    ;; code offset: 0xb2b
-   (i32.load $mimport$0 offset=16
+   (i32.load offset=16
     ;; code offset: 0xb29
     (local.get $4)
    )
@@ -8076,7 +8076,7 @@ file_names[  3]:
      (i32.const 1)
     )
     ;; code offset: 0xb6b
-    (i32.store $mimport$0 offset=28
+    (i32.store offset=28
      ;; code offset: 0xb67
      (local.get $4)
      ;; code offset: 0xb69
@@ -8088,7 +8088,7 @@ file_names[  3]:
    ;; code offset: 0xb76
    (local.set $29
     ;; code offset: 0xb73
-    (i32.load $mimport$0 offset=16
+    (i32.load offset=16
      ;; code offset: 0xb71
      (local.get $4)
     )
@@ -8096,7 +8096,7 @@ file_names[  3]:
    ;; code offset: 0xb7d
    (local.set $30
     ;; code offset: 0xb7a
-    (i32.load $mimport$0 offset=16
+    (i32.load offset=16
      ;; code offset: 0xb78
      (local.get $4)
     )
@@ -8110,14 +8110,14 @@ file_names[  3]:
     )
    )
    ;; code offset: 0xb89
-   (i32.store $mimport$0 offset=4
+   (i32.store offset=4
     ;; code offset: 0xb85
     (local.get $4)
     ;; code offset: 0xb87
     (local.get $31)
    )
    ;; code offset: 0xb90
-   (i32.store $mimport$0
+   (i32.store
     ;; code offset: 0xb8c
     (local.get $4)
     ;; code offset: 0xb8e
@@ -8144,7 +8144,7 @@ file_names[  3]:
     (i32.const 0)
    )
    ;; code offset: 0xba7
-   (i32.store $mimport$0 offset=28
+   (i32.store offset=28
     ;; code offset: 0xba3
     (local.get $4)
     ;; code offset: 0xba5
@@ -8154,7 +8154,7 @@ file_names[  3]:
   ;; code offset: 0xbb0
   (local.set $34
    ;; code offset: 0xbad
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0xbab
     (local.get $4)
    )
@@ -8401,28 +8401,28 @@ file_names[  3]:
    (i32.const 30)
   )
   ;; code offset: 0xd4e
-  (i32.store $mimport$0 offset=44
+  (i32.store offset=44
    ;; code offset: 0xd4a
    (local.get $3)
    ;; code offset: 0xd4c
    (local.get $0)
   )
   ;; code offset: 0xd55
-  (i32.store $mimport$0 offset=32
+  (i32.store offset=32
    ;; code offset: 0xd51
    (local.get $3)
    ;; code offset: 0xd53
    (local.get $5)
   )
   ;; code offset: 0xd5c
-  (i32.store $mimport$0 offset=40
+  (i32.store offset=40
    ;; code offset: 0xd58
    (local.get $3)
    ;; code offset: 0xd5a
    (local.get $4)
   )
   ;; code offset: 0xd63
-  (i32.store $mimport$0 offset=20
+  (i32.store offset=20
    ;; code offset: 0xd5f
    (local.get $3)
    ;; code offset: 0xd61
@@ -8435,7 +8435,7 @@ file_names[  3]:
     ;; code offset: 0xd6f
     (local.set $6
      ;; code offset: 0xd6c
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xd6a
       (local.get $3)
      )
@@ -8443,7 +8443,7 @@ file_names[  3]:
     ;; code offset: 0xd76
     (local.set $7
      ;; code offset: 0xd73
-     (i32.load $mimport$0 offset=44
+     (i32.load offset=44
       ;; code offset: 0xd71
       (local.get $3)
      )
@@ -8520,7 +8520,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0xdb0
-    (i32.store $mimport$0 offset=36
+    (i32.store offset=36
      ;; code offset: 0xdac
      (local.get $3)
      ;; code offset: 0xdae
@@ -8529,7 +8529,7 @@ file_names[  3]:
     ;; code offset: 0xdb8
     (local.set $17
      ;; code offset: 0xdb5
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xdb3
       (local.get $3)
      )
@@ -8537,13 +8537,13 @@ file_names[  3]:
     ;; code offset: 0xdbf
     (local.set $18
      ;; code offset: 0xdbc
-     (i32.load $mimport$0 offset=36
+     (i32.load offset=36
       ;; code offset: 0xdba
       (local.get $3)
      )
     )
     ;; code offset: 0xdc5
-    (i32.store $mimport$0
+    (i32.store
      ;; code offset: 0xdc1
      (local.get $18)
      ;; code offset: 0xdc3
@@ -8552,7 +8552,7 @@ file_names[  3]:
     ;; code offset: 0xdcd
     (local.set $19
      ;; code offset: 0xdca
-     (i32.load $mimport$0 offset=44
+     (i32.load offset=44
       ;; code offset: 0xdc8
       (local.get $3)
      )
@@ -8560,13 +8560,13 @@ file_names[  3]:
     ;; code offset: 0xdd4
     (local.set $20
      ;; code offset: 0xdd1
-     (i32.load $mimport$0 offset=36
+     (i32.load offset=36
       ;; code offset: 0xdcf
       (local.get $3)
      )
     )
     ;; code offset: 0xdda
-    (i32.store $mimport$0 offset=4
+    (i32.store offset=4
      ;; code offset: 0xdd6
      (local.get $20)
      ;; code offset: 0xdd8
@@ -8575,7 +8575,7 @@ file_names[  3]:
     ;; code offset: 0xde2
     (local.set $21
      ;; code offset: 0xddf
-     (i32.load $mimport$0 offset=40
+     (i32.load offset=40
       ;; code offset: 0xddd
       (local.get $3)
      )
@@ -8583,13 +8583,13 @@ file_names[  3]:
     ;; code offset: 0xde9
     (local.set $22
      ;; code offset: 0xde6
-     (i32.load $mimport$0 offset=36
+     (i32.load offset=36
       ;; code offset: 0xde4
       (local.get $3)
      )
     )
     ;; code offset: 0xdef
-    (i32.store $mimport$0 offset=8
+    (i32.store offset=8
      ;; code offset: 0xdeb
      (local.get $22)
      ;; code offset: 0xded
@@ -8598,13 +8598,13 @@ file_names[  3]:
     ;; code offset: 0xdf7
     (local.set $23
      ;; code offset: 0xdf4
-     (i32.load $mimport$0 offset=36
+     (i32.load offset=36
       ;; code offset: 0xdf2
       (local.get $3)
      )
     )
     ;; code offset: 0xdfd
-    (i32.store $mimport$0 offset=40
+    (i32.store offset=40
      ;; code offset: 0xdf9
      (local.get $3)
      ;; code offset: 0xdfb
@@ -8613,7 +8613,7 @@ file_names[  3]:
     ;; code offset: 0xe05
     (local.set $24
      ;; code offset: 0xe02
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xe00
       (local.get $3)
      )
@@ -8634,7 +8634,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0xe16
-    (i32.store $mimport$0 offset=20
+    (i32.store offset=20
      ;; code offset: 0xe12
      (local.get $3)
      ;; code offset: 0xe14
@@ -8652,7 +8652,7 @@ file_names[  3]:
   ;; code offset: 0xe27
   (local.set $28
    ;; code offset: 0xe24
-   (i32.load $mimport$0 offset=44
+   (i32.load offset=44
     ;; code offset: 0xe22
     (local.get $3)
    )
@@ -8681,7 +8681,7 @@ file_names[  3]:
    )
   )
   ;; code offset: 0xe3e
-  (i32.store $mimport$0 offset=28
+  (i32.store offset=28
    ;; code offset: 0xe3a
    (local.get $3)
    ;; code offset: 0xe3c
@@ -8690,7 +8690,7 @@ file_names[  3]:
   ;; code offset: 0xe46
   (local.set $32
    ;; code offset: 0xe43
-   (i32.load $mimport$0 offset=44
+   (i32.load offset=44
     ;; code offset: 0xe41
     (local.get $3)
    )
@@ -8719,14 +8719,14 @@ file_names[  3]:
    )
   )
   ;; code offset: 0xe5d
-  (i32.store $mimport$0 offset=24
+  (i32.store offset=24
    ;; code offset: 0xe59
    (local.get $3)
    ;; code offset: 0xe5b
    (local.get $35)
   )
   ;; code offset: 0xe64
-  (i32.store $mimport$0 offset=20
+  (i32.store offset=20
    ;; code offset: 0xe60
    (local.get $3)
    ;; code offset: 0xe62
@@ -8739,7 +8739,7 @@ file_names[  3]:
     ;; code offset: 0xe70
     (local.set $36
      ;; code offset: 0xe6d
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xe6b
       (local.get $3)
      )
@@ -8747,7 +8747,7 @@ file_names[  3]:
     ;; code offset: 0xe77
     (local.set $37
      ;; code offset: 0xe74
-     (i32.load $mimport$0 offset=44
+     (i32.load offset=44
       ;; code offset: 0xe72
       (local.get $3)
      )
@@ -8798,7 +8798,7 @@ file_names[  3]:
     ;; code offset: 0xe9d
     (local.set $43
      ;; code offset: 0xe9a
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xe98
       (local.get $3)
      )
@@ -8806,7 +8806,7 @@ file_names[  3]:
     ;; code offset: 0xea4
     (local.set $44
      ;; code offset: 0xea1
-     (i32.load $mimport$0 offset=28
+     (i32.load offset=28
       ;; code offset: 0xe9f
       (local.get $3)
      )
@@ -8814,7 +8814,7 @@ file_names[  3]:
     ;; code offset: 0xeab
     (local.set $45
      ;; code offset: 0xea8
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xea6
       (local.get $3)
      )
@@ -8845,7 +8845,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0xec3
-    (i32.store $mimport$0
+    (i32.store
      ;; code offset: 0xebf
      (local.get $48)
      ;; code offset: 0xec1
@@ -8854,7 +8854,7 @@ file_names[  3]:
     ;; code offset: 0xecb
     (local.set $49
      ;; code offset: 0xec8
-     (i32.load $mimport$0 offset=20
+     (i32.load offset=20
       ;; code offset: 0xec6
       (local.get $3)
      )
@@ -8875,7 +8875,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0xedc
-    (i32.store $mimport$0 offset=20
+    (i32.store offset=20
      ;; code offset: 0xed8
      (local.get $3)
      ;; code offset: 0xeda
@@ -8888,13 +8888,13 @@ file_names[  3]:
   ;; code offset: 0xee9
   (local.set $52
    ;; code offset: 0xee6
-   (i32.load $mimport$0 offset=44
+   (i32.load offset=44
     ;; code offset: 0xee4
     (local.get $3)
    )
   )
   ;; code offset: 0xeef
-  (i32.store $mimport$0 offset=16
+  (i32.store offset=16
    ;; code offset: 0xeeb
    (local.get $3)
    ;; code offset: 0xeed
@@ -8907,7 +8907,7 @@ file_names[  3]:
     ;; code offset: 0xefb
     (local.set $53
      ;; code offset: 0xef8
-     (i32.load $mimport$0 offset=32
+     (i32.load offset=32
       ;; code offset: 0xef6
       (local.get $3)
      )
@@ -8929,7 +8929,7 @@ file_names[  3]:
        (i32.const 0)
       )
       ;; code offset: 0xf0e
-      (i32.store $mimport$0 offset=20
+      (i32.store offset=20
        ;; code offset: 0xf0a
        (local.get $3)
        ;; code offset: 0xf0c
@@ -8942,7 +8942,7 @@ file_names[  3]:
         ;; code offset: 0xf1a
         (local.set $55
          ;; code offset: 0xf17
-         (i32.load $mimport$0 offset=20
+         (i32.load offset=20
           ;; code offset: 0xf15
           (local.get $3)
          )
@@ -8950,7 +8950,7 @@ file_names[  3]:
         ;; code offset: 0xf21
         (local.set $56
          ;; code offset: 0xf1e
-         (i32.load $mimport$0 offset=44
+         (i32.load offset=44
           ;; code offset: 0xf1c
           (local.get $3)
          )
@@ -9001,7 +9001,7 @@ file_names[  3]:
         ;; code offset: 0xf47
         (local.set $62
          ;; code offset: 0xf44
-         (i32.load $mimport$0 offset=28
+         (i32.load offset=28
           ;; code offset: 0xf42
           (local.get $3)
          )
@@ -9009,7 +9009,7 @@ file_names[  3]:
         ;; code offset: 0xf4e
         (local.set $63
          ;; code offset: 0xf4b
-         (i32.load $mimport$0 offset=20
+         (i32.load offset=20
           ;; code offset: 0xf49
           (local.get $3)
          )
@@ -9042,7 +9042,7 @@ file_names[  3]:
         ;; code offset: 0xf67
         (local.set $67
          ;; code offset: 0xf64
-         (i32.load $mimport$0
+         (i32.load
           ;; code offset: 0xf62
           (local.get $66)
          )
@@ -9063,7 +9063,7 @@ file_names[  3]:
          )
         )
         ;; code offset: 0xf78
-        (i32.store $mimport$0
+        (i32.store
          ;; code offset: 0xf74
          (local.get $3)
          ;; code offset: 0xf76
@@ -9087,7 +9087,7 @@ file_names[  3]:
         ;; code offset: 0xf8c
         (local.set $71
          ;; code offset: 0xf89
-         (i32.load $mimport$0 offset=20
+         (i32.load offset=20
           ;; code offset: 0xf87
           (local.get $3)
          )
@@ -9108,7 +9108,7 @@ file_names[  3]:
          )
         )
         ;; code offset: 0xf9d
-        (i32.store $mimport$0 offset=20
+        (i32.store offset=20
          ;; code offset: 0xf99
          (local.get $3)
          ;; code offset: 0xf9b
@@ -9141,7 +9141,7 @@ file_names[  3]:
       ;; code offset: 0xfba
       (local.set $76
        ;; code offset: 0xfb7
-       (i32.load $mimport$0 offset=32
+       (i32.load offset=32
         ;; code offset: 0xfb5
         (local.get $3)
        )
@@ -9162,7 +9162,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0xfcb
-      (i32.store $mimport$0 offset=32
+      (i32.store offset=32
        ;; code offset: 0xfc7
        (local.get $3)
        ;; code offset: 0xfc9
@@ -9186,7 +9186,7 @@ file_names[  3]:
       ;; code offset: 0xfe1
       (local.set $80
        ;; code offset: 0xfde
-       (i32.load $mimport$0 offset=16
+       (i32.load offset=16
         ;; code offset: 0xfdc
         (local.get $3)
        )
@@ -9237,7 +9237,7 @@ file_names[  3]:
       ;; code offset: 0x1007
       (local.set $86
        ;; code offset: 0x1004
-       (i32.load $mimport$0 offset=16
+       (i32.load offset=16
         ;; code offset: 0x1002
         (local.get $3)
        )
@@ -9245,7 +9245,7 @@ file_names[  3]:
       ;; code offset: 0x100e
       (local.set $87
        ;; code offset: 0x100b
-       (i32.load $mimport$0 offset=24
+       (i32.load offset=24
         ;; code offset: 0x1009
         (local.get $3)
        )
@@ -9253,7 +9253,7 @@ file_names[  3]:
       ;; code offset: 0x1015
       (local.set $88
        ;; code offset: 0x1012
-       (i32.load $mimport$0 offset=16
+       (i32.load offset=16
         ;; code offset: 0x1010
         (local.get $3)
        )
@@ -9299,7 +9299,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x1038
-      (i32.store $mimport$0
+      (i32.store
        ;; code offset: 0x1034
        (local.get $93)
        ;; code offset: 0x1036
@@ -9308,7 +9308,7 @@ file_names[  3]:
       ;; code offset: 0x1040
       (local.set $94
        ;; code offset: 0x103d
-       (i32.load $mimport$0 offset=16
+       (i32.load offset=16
         ;; code offset: 0x103b
         (local.get $3)
        )
@@ -9329,7 +9329,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x1051
-      (i32.store $mimport$0 offset=16
+      (i32.store offset=16
        ;; code offset: 0x104d
        (local.get $3)
        ;; code offset: 0x104f
@@ -9344,7 +9344,7 @@ file_names[  3]:
      ;; code offset: 0x1060
      (local.set $97
       ;; code offset: 0x105d
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x105b
        (local.get $3)
       )
@@ -9352,7 +9352,7 @@ file_names[  3]:
      ;; code offset: 0x1067
      (local.set $98
       ;; code offset: 0x1064
-      (i32.load $mimport$0 offset=44
+      (i32.load offset=44
        ;; code offset: 0x1062
        (local.get $3)
       )
@@ -9413,7 +9413,7 @@ file_names[  3]:
      ;; code offset: 0x1096
      (local.set $105
       ;; code offset: 0x1093
-      (i32.load $mimport$0 offset=28
+      (i32.load offset=28
        ;; code offset: 0x1091
        (local.get $3)
       )
@@ -9421,20 +9421,20 @@ file_names[  3]:
      ;; code offset: 0x109d
      (local.set $106
       ;; code offset: 0x109a
-      (i32.load $mimport$0
+      (i32.load
        ;; code offset: 0x1098
        (local.get $105)
       )
      )
      ;; code offset: 0x10a3
-     (i32.store $mimport$0 offset=4
+     (i32.store offset=4
       ;; code offset: 0x109f
       (local.get $3)
       ;; code offset: 0x10a1
       (local.get $106)
      )
      ;; code offset: 0x10aa
-     (i32.store $mimport$0 offset=20
+     (i32.store offset=20
       ;; code offset: 0x10a6
       (local.get $3)
       ;; code offset: 0x10a8
@@ -9447,7 +9447,7 @@ file_names[  3]:
        ;; code offset: 0x10b6
        (local.set $107
         ;; code offset: 0x10b3
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x10b1
          (local.get $3)
         )
@@ -9455,7 +9455,7 @@ file_names[  3]:
        ;; code offset: 0x10bd
        (local.set $108
         ;; code offset: 0x10ba
-        (i32.load $mimport$0 offset=16
+        (i32.load offset=16
          ;; code offset: 0x10b8
          (local.get $3)
         )
@@ -9506,7 +9506,7 @@ file_names[  3]:
        ;; code offset: 0x10e3
        (local.set $114
         ;; code offset: 0x10e0
-        (i32.load $mimport$0 offset=28
+        (i32.load offset=28
          ;; code offset: 0x10de
          (local.get $3)
         )
@@ -9514,7 +9514,7 @@ file_names[  3]:
        ;; code offset: 0x10ea
        (local.set $115
         ;; code offset: 0x10e7
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x10e5
          (local.get $3)
         )
@@ -9562,7 +9562,7 @@ file_names[  3]:
        ;; code offset: 0x110e
        (local.set $121
         ;; code offset: 0x110b
-        (i32.load $mimport$0
+        (i32.load
          ;; code offset: 0x1109
          (local.get $120)
         )
@@ -9570,7 +9570,7 @@ file_names[  3]:
        ;; code offset: 0x1115
        (local.set $122
         ;; code offset: 0x1112
-        (i32.load $mimport$0 offset=28
+        (i32.load offset=28
          ;; code offset: 0x1110
          (local.get $3)
         )
@@ -9578,7 +9578,7 @@ file_names[  3]:
        ;; code offset: 0x111c
        (local.set $123
         ;; code offset: 0x1119
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x1117
          (local.get $3)
         )
@@ -9609,7 +9609,7 @@ file_names[  3]:
         )
        )
        ;; code offset: 0x1134
-       (i32.store $mimport$0
+       (i32.store
         ;; code offset: 0x1130
         (local.get $126)
         ;; code offset: 0x1132
@@ -9618,7 +9618,7 @@ file_names[  3]:
        ;; code offset: 0x113c
        (local.set $127
         ;; code offset: 0x1139
-        (i32.load $mimport$0 offset=20
+        (i32.load offset=20
          ;; code offset: 0x1137
          (local.get $3)
         )
@@ -9639,7 +9639,7 @@ file_names[  3]:
         )
        )
        ;; code offset: 0x1151
-       (i32.store $mimport$0 offset=20
+       (i32.store offset=20
         ;; code offset: 0x114c
         (local.get $3)
         ;; code offset: 0x114e
@@ -9657,7 +9657,7 @@ file_names[  3]:
      ;; code offset: 0x1163
      (local.set $131
       ;; code offset: 0x1160
-      (i32.load $mimport$0 offset=4
+      (i32.load offset=4
        ;; code offset: 0x115e
        (local.get $3)
       )
@@ -9665,7 +9665,7 @@ file_names[  3]:
      ;; code offset: 0x116b
      (local.set $132
       ;; code offset: 0x1168
-      (i32.load $mimport$0 offset=28
+      (i32.load offset=28
        ;; code offset: 0x1166
        (local.get $3)
       )
@@ -9673,7 +9673,7 @@ file_names[  3]:
      ;; code offset: 0x1173
      (local.set $133
       ;; code offset: 0x1170
-      (i32.load $mimport$0 offset=20
+      (i32.load offset=20
        ;; code offset: 0x116e
        (local.get $3)
       )
@@ -9704,7 +9704,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x1195
-     (i32.store $mimport$0
+     (i32.store
       ;; code offset: 0x118f
       (local.get $136)
       ;; code offset: 0x1192
@@ -9713,7 +9713,7 @@ file_names[  3]:
      ;; code offset: 0x119d
      (local.set $137
       ;; code offset: 0x119a
-      (i32.load $mimport$0 offset=24
+      (i32.load offset=24
        ;; code offset: 0x1198
        (local.get $3)
       )
@@ -9721,7 +9721,7 @@ file_names[  3]:
      ;; code offset: 0x11a5
      (local.set $138
       ;; code offset: 0x11a2
-      (i32.load $mimport$0 offset=16
+      (i32.load offset=16
        ;; code offset: 0x11a0
        (local.get $3)
       )
@@ -9754,7 +9754,7 @@ file_names[  3]:
      ;; code offset: 0x11c7
      (local.set $142
       ;; code offset: 0x11c4
-      (i32.load $mimport$0
+      (i32.load
        ;; code offset: 0x11c1
        (local.get $141)
       )
@@ -9775,7 +9775,7 @@ file_names[  3]:
       )
      )
      ;; code offset: 0x11df
-     (i32.store $mimport$0
+     (i32.store
       ;; code offset: 0x11d9
       (local.get $141)
       ;; code offset: 0x11dc
@@ -9833,7 +9833,7 @@ file_names[  3]:
       ;; code offset: 0x1219
       (local.set $150
        ;; code offset: 0x1216
-       (i32.load $mimport$0 offset=16
+       (i32.load offset=16
         ;; code offset: 0x1214
         (local.get $3)
        )
@@ -9854,7 +9854,7 @@ file_names[  3]:
        )
       )
       ;; code offset: 0x1230
-      (i32.store $mimport$0 offset=16
+      (i32.store offset=16
        ;; code offset: 0x122b
        (local.get $3)
        ;; code offset: 0x122d
@@ -9876,7 +9876,7 @@ file_names[  3]:
   ;; code offset: 0x1246
   (local.set $154
    ;; code offset: 0x1243
-   (i32.load $mimport$0 offset=28
+   (i32.load offset=28
     ;; code offset: 0x1241
     (local.get $3)
    )
@@ -9889,7 +9889,7 @@ file_names[  3]:
   ;; code offset: 0x1253
   (local.set $155
    ;; code offset: 0x1250
-   (i32.load $mimport$0 offset=24
+   (i32.load offset=24
     ;; code offset: 0x124e
     (local.get $3)
    )
@@ -9900,7 +9900,7 @@ file_names[  3]:
    (local.get $155)
   )
   ;; code offset: 0x1260
-  (i32.store $mimport$0 offset=12
+  (i32.store offset=12
    ;; code offset: 0x125b
    (local.get $3)
    ;; code offset: 0x125d
@@ -9918,7 +9918,7 @@ file_names[  3]:
     ;; code offset: 0x1271
     (local.set $157
      ;; code offset: 0x126e
-     (i32.load $mimport$0 offset=40
+     (i32.load offset=40
       ;; code offset: 0x126c
       (local.get $3)
      )
@@ -9969,7 +9969,7 @@ file_names[  3]:
     ;; code offset: 0x12a4
     (local.set $163
      ;; code offset: 0x12a1
-     (i32.load $mimport$0 offset=40
+     (i32.load offset=40
       ;; code offset: 0x129f
       (local.get $3)
      )
@@ -9983,7 +9983,7 @@ file_names[  3]:
      )
     )
     ;; code offset: 0x12b4
-    (i32.store $mimport$0 offset=8
+    (i32.store offset=8
      ;; code offset: 0x12af
      (local.get $3)
      ;; code offset: 0x12b1
@@ -9992,7 +9992,7 @@ file_names[  3]:
     ;; code offset: 0x12bc
     (local.set $165
      ;; code offset: 0x12b9
-     (i32.load $mimport$0 offset=12
+     (i32.load offset=12
       ;; code offset: 0x12b7
       (local.get $3)
      )
@@ -10000,7 +10000,7 @@ file_names[  3]:
     ;; code offset: 0x12c4
     (local.set $166
      ;; code offset: 0x12c1
-     (i32.load $mimport$0 offset=8
+     (i32.load offset=8
       ;; code offset: 0x12bf
       (local.get $3)
      )
@@ -10053,13 +10053,13 @@ file_names[  3]:
      ;; code offset: 0x12f9
      (local.set $172
       ;; code offset: 0x12f6
-      (i32.load $mimport$0 offset=8
+      (i32.load offset=8
        ;; code offset: 0x12f4
        (local.get $3)
       )
      )
      ;; code offset: 0x1301
-     (i32.store $mimport$0 offset=12
+     (i32.store offset=12
       ;; code offset: 0x12fc
       (local.get $3)
       ;; code offset: 0x12fe
@@ -10069,13 +10069,13 @@ file_names[  3]:
     ;; code offset: 0x130a
     (local.set $173
      ;; code offset: 0x1307
-     (i32.load $mimport$0 offset=40
+     (i32.load offset=40
       ;; code offset: 0x1305
       (local.get $3)
      )
     )
     ;; code offset: 0x1312
-    (i32.store $mimport$0 offset=36
+    (i32.store offset=36
      ;; code offset: 0x130d
      (local.get $3)
      ;; code offset: 0x130f
@@ -10084,7 +10084,7 @@ file_names[  3]:
     ;; code offset: 0x131a
     (local.set $174
      ;; code offset: 0x1317
-     (i32.load $mimport$0 offset=40
+     (i32.load offset=40
       ;; code offset: 0x1315
       (local.get $3)
      )
@@ -10092,13 +10092,13 @@ file_names[  3]:
     ;; code offset: 0x1323
     (local.set $175
      ;; code offset: 0x1320
-     (i32.load $mimport$0 offset=8
+     (i32.load offset=8
       ;; code offset: 0x131d
       (local.get $174)
      )
     )
     ;; code offset: 0x132b
-    (i32.store $mimport$0 offset=40
+    (i32.store offset=40
      ;; code offset: 0x1326
      (local.get $3)
      ;; code offset: 0x1328
@@ -10107,7 +10107,7 @@ file_names[  3]:
     ;; code offset: 0x1333
     (local.set $176
      ;; code offset: 0x1330
-     (i32.load $mimport$0 offset=36
+     (i32.load offset=36
       ;; code offset: 0x132e
       (local.get $3)
      )
@@ -10124,7 +10124,7 @@ file_names[  3]:
   ;; code offset: 0x1345
   (local.set $177
    ;; code offset: 0x1342
-   (i32.load $mimport$0 offset=12
+   (i32.load offset=12
     ;; code offset: 0x1340
     (local.get $3)
    )

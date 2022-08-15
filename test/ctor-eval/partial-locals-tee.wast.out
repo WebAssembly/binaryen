@@ -10,7 +10,7 @@
    (i32.const 1)
    (i32.const 50)
   )
-  (i32.store8 $0
+  (i32.store8
    (i32.const 13)
    (i32.const 115)
   )

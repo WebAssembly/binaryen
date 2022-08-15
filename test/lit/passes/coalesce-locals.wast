@@ -1498,9 +1498,9 @@
   ;; CHECK-NEXT:         (local.get $3)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.store8 $0
+  ;; CHECK-NEXT:       (i32.store8
   ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:        (i32.load8_s $0
+  ;; CHECK-NEXT:        (i32.load8_s
   ;; CHECK-NEXT:         (local.get $1)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -1538,9 +1538,9 @@
   ;; CHECK-NEXT:       (br $while-out$2)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (block $block7
-  ;; CHECK-NEXT:       (i32.store $0
+  ;; CHECK-NEXT:       (i32.store
   ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:        (i32.load $0
+  ;; CHECK-NEXT:        (i32.load
   ;; CHECK-NEXT:         (local.get $1)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -1580,9 +1580,9 @@
   ;; CHECK-NEXT:     (br $while-out$4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block $block9
-  ;; CHECK-NEXT:     (i32.store8 $0
+  ;; CHECK-NEXT:     (i32.store8
   ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:      (i32.load8_s $0
+  ;; CHECK-NEXT:      (i32.load8_s
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -1968,7 +1968,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (i32.store $0
+  ;; CHECK-NEXT:   (i32.store
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )

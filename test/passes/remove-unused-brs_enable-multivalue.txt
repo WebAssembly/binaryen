@@ -890,7 +890,7 @@
       (block $switch$26
       )
      )
-     (i32.store $0
+     (i32.store
       (i32.const 5724)
       (i32.const -254899267)
      )
@@ -1004,12 +1004,12 @@
      (i32.const 607395945)
     )
     (br_if $label$1
-     (i32.load $0 offset=3 align=1
+     (i32.load offset=3 align=1
       (select
        (call $untaken-brs-might-prevent-block-removal
         (f32.const 1.4904844647389837e-07)
         (br_if $label$0
-         (i32.store16 $0 offset=4 align=1
+         (i32.store16 offset=4 align=1
           (i32.const 1900641)
           (br $label$0
            (i32.const 1628075109)
@@ -1036,7 +1036,7 @@
   (loop $label$0
    (loop $label$1
     (br_if $label$0
-     (i32.load8_s $0
+     (i32.load8_s
       (i32.const 201460482)
      )
     )
@@ -2673,7 +2673,7 @@
      )
     )
    )
-   (i32.store $0
+   (i32.store
     (i32.const 1024)
     (i32.add
      (local.get $0)
@@ -2686,7 +2686,7 @@
   (block $label$1 (result i32)
    (br_table $label$1
     (block $label$2 (result i32)
-     (i32.store $0
+     (i32.store
       (i32.const 1)
       (i32.const 2)
      )

@@ -498,7 +498,7 @@
   ;; CHECK-NEXT:     (local.tee $x
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.load $0
+  ;; CHECK-NEXT:     (i32.load
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.add

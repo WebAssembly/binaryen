@@ -16,11 +16,11 @@
   ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 f64)
   ;; CHECK-NEXT:  (local $2 f32)
   ;; CHECK-NEXT:  (local $3 i64)
-  ;; CHECK-NEXT:  (i32.store $0
+  ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (f64.store $0
+  ;; CHECK-NEXT:  (f64.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
@@ -81,11 +81,11 @@
   ;; CHECK:      (func $foo (type $sig) (param $0 i64) (param $1 f32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (i64.store $0
+  ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (f32.store $0
+  ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
@@ -144,11 +144,11 @@
 
   ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 i64) (param $2 f32)
   ;; CHECK-NEXT:  (local $3 f64)
-  ;; CHECK-NEXT:  (i64.store $0
+  ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (f32.store $0
+  ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -220,11 +220,11 @@
 
   ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 i64) (param $2 f32)
   ;; CHECK-NEXT:  (local $3 f64)
-  ;; CHECK-NEXT:  (i64.store $0
+  ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (f32.store $0
+  ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -337,7 +337,7 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store $0
+  ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -421,7 +421,7 @@
   )
 
   ;; CHECK:      (func $bar (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (i32.store $0
+  ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $i32)
   ;; CHECK-NEXT:  )
@@ -455,7 +455,7 @@
   )
 
   ;; CHECK:      (func $bar (type $sig2) (param $i32 i32)
-  ;; CHECK-NEXT:  (i32.store $0
+  ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $i32)
   ;; CHECK-NEXT:  )
@@ -636,7 +636,7 @@
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (i32.store $0
+  ;; CHECK-NEXT:   (i32.store
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
@@ -658,7 +658,7 @@
   )
 
   ;; CHECK:      (func $bar (type $sig-bar) (param $i32 i32)
-  ;; CHECK-NEXT:  (i32.store $0
+  ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $i32)
   ;; CHECK-NEXT:  )

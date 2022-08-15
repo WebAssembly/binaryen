@@ -17,7 +17,7 @@
   (drop
    (if (result i32)
     (i32.const 1)
-    (i32.load $0
+    (i32.load
      (i32.const 10)
     )
     (i32.const 27)
@@ -126,7 +126,7 @@
   (block $label$1
    (block $block
     (br_if $label$1
-     (i32.load8_u $0
+     (i32.load8_u
       (i32.const -93487262)
      )
     )

@@ -694,7 +694,7 @@
  ;; CHECK-NEXT:  (local $2 f32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $0
- ;; CHECK-NEXT:    (i32.load16_u $0
+ ;; CHECK-NEXT:    (i32.load16_u
  ;; CHECK-NEXT:     (i32.const 53)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -873,7 +873,7 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.load $0
+ ;; CHECK-NEXT:   (i32.load
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -1346,7 +1346,7 @@
  ;; CHECK-NEXT:   (i32.const 22)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (i32.load $0
+ ;; CHECK-NEXT:    (i32.load
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
@@ -1359,7 +1359,7 @@
  ;; CHECK-NEXT:   (i32.const 33)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (i32.store $0
+ ;; CHECK-NEXT:    (i32.store
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
@@ -1370,7 +1370,7 @@
  ;; CHECK-NEXT:   (i32.const 44)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (i32.store $0
+ ;; CHECK-NEXT:    (i32.store
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
@@ -1382,7 +1382,7 @@
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (i32.store $0
+ ;; CHECK-NEXT:    (i32.store
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
@@ -2172,7 +2172,7 @@
  ;; CHECK-NEXT:    (i32.const 18)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (br $label$0)
- ;; CHECK-NEXT:   (memory.grow $0
+ ;; CHECK-NEXT:   (memory.grow
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -3049,7 +3049,7 @@
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (local.set $15
-  ;; CHECK-NEXT:        (i32.load16_u $0 offset=2
+  ;; CHECK-NEXT:        (i32.load16_u offset=2
   ;; CHECK-NEXT:         (local.get $14)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )

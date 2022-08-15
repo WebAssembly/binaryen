@@ -232,7 +232,7 @@
 ;; CHECK:      (func $0 (; has Stack IR ;)
 ;; CHECK-NEXT:  (block $label$3
 ;; CHECK-NEXT:   (br_if $label$3
-;; CHECK-NEXT:    (i32.load $0
+;; CHECK-NEXT:    (i32.load
 ;; CHECK-NEXT:     (i32.const 3060)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -254,7 +254,7 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $3 (; has Stack IR ;)
-;; CHECK-NEXT:  (i32.store $0
+;; CHECK-NEXT:  (i32.store
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:   (i32.const -16384)
 ;; CHECK-NEXT:  )

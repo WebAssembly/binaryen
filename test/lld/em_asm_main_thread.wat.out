@@ -36,7 +36,7 @@
     )
    )
   )
-  (i32.store8 $0 offset=24
+  (i32.store8 offset=24
    (local.get $0)
    (call $__em_asm_sig_builder::inner<>\20const\20__em_asm_sig_builder::__em_asm_sig<>\28\29)
   )
@@ -58,7 +58,7 @@
    (i32.const 13)
    (i32.const 27)
   )
-  (i64.store $0 offset=16
+  (i64.store offset=16
    (local.get $0)
    (i64.const 115964117005)
   )
@@ -81,7 +81,7 @@
     )
    )
   )
-  (i32.store $0
+  (i32.store
    (local.get $0)
    (local.get $1)
   )
@@ -116,7 +116,7 @@
     )
    )
   )
-  (i32.store8 $0 offset=13
+  (i32.store8 offset=13
    (local.get $3)
    (call $__em_asm_sig_builder::sig_char\28int\29
     (local.get $1)
@@ -127,20 +127,20 @@
     (local.get $2)
    )
   )
-  (i32.store8 $0
+  (i32.store8
    (i32.add
     (local.get $0)
     (i32.const 2)
    )
    (i32.const 0)
   )
-  (i32.store8 $0 offset=14
+  (i32.store8 offset=14
    (local.get $3)
    (local.get $2)
   )
-  (i32.store16 $0 align=1
+  (i32.store16 align=1
    (local.get $0)
-   (i32.load16_u $0 offset=13 align=1
+   (i32.load16_u offset=13 align=1
     (local.get $3)
    )
   )
@@ -166,17 +166,17 @@
     (local.get $1)
    )
   )
-  (i32.store8 $0 offset=15
+  (i32.store8 offset=15
    (local.get $2)
    (i32.const 0)
   )
-  (i32.store8 $0 offset=14
+  (i32.store8 offset=14
    (local.get $2)
    (local.get $1)
   )
-  (i32.store16 $0 align=1
+  (i32.store16 align=1
    (local.get $0)
-   (i32.load16_u $0 offset=14
+   (i32.load16_u offset=14
     (local.get $2)
    )
   )

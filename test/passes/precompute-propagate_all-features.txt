@@ -264,7 +264,7 @@
  (func $simd-load (result v128)
   (local $x v128)
   (local.set $x
-   (v128.load8_splat $0
+   (v128.load8_splat
     (i32.const 0)
    )
   )

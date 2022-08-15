@@ -674,21 +674,21 @@
     (f64.add
      (f64.add
       (f64.add
-       (f64.load $0
+       (f64.load
         (i32.const 8)
        )
-       (f64.load $0
+       (f64.load
         (i32.const 16)
        )
       )
       (f64.neg
-       (f64.load $0
+       (f64.load
         (i32.const 16)
        )
       )
      )
      (f64.neg
-      (f64.load $0
+      (f64.load
        (i32.const 8)
       )
      )
@@ -696,7 +696,7 @@
    )
    (if
     (i32.gt_s
-     (i32.load $0
+     (i32.load
       (i32.const 24)
      )
      (i32.const 0)
@@ -707,7 +707,7 @@
    )
    (if
     (f64.gt
-     (f64.load $0
+     (f64.load
       (i32.const 32)
      )
      (f64.const 0)
@@ -1072,7 +1072,7 @@
   (i64.const -9218868437227405313)
  )
  (func $i64-store32 (; has Stack IR ;) (param $0 i32) (param $1 i64)
-  (i64.store32 $0
+  (i64.store32
    (local.get $0)
    (local.get $1)
   )

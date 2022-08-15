@@ -34,11 +34,11 @@
  )
  (func $2 (result i32)
   (i32.add
-   (i32.load $mimport$0
+   (i32.load
     (global.get $global$3)
    )
    (i32.add
-    (i32.load $mimport$0
+    (i32.load
      (global.get $global$2)
     )
     (i32.add
@@ -50,11 +50,11 @@
  )
  (func $3 (param $0 i32) (param $1 i32) (result i32)
   (i32.add
-   (i32.load $mimport$0
+   (i32.load
     (global.get $global$3)
    )
    (i32.add
-    (i32.load $mimport$0
+    (i32.load
      (global.get $global$2)
     )
     (i32.add

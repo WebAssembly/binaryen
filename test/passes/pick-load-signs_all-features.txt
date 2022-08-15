@@ -6,7 +6,7 @@
   (drop
    (block $block (result i32)
     (local.set $0
-     (i32.atomic.load16_u $0
+     (i32.atomic.load16_u
       (i32.const 27)
      )
     )

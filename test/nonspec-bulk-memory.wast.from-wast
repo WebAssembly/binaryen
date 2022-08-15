@@ -3,7 +3,7 @@
  (memory $0 1024 1024)
  (data (i32.const 0) "hello, world")
  (func $memory.init
-  (memory.init $0 0
+  (memory.init 0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
@@ -13,14 +13,14 @@
   (data.drop 0)
  )
  (func $memory.copy
-  (memory.copy $0 $0
+  (memory.copy
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
  (func $memory.fill
-  (memory.fill $0
+  (memory.fill
    (i32.const 0)
    (i32.const 42)
    (i32.const 1024)

@@ -29,7 +29,7 @@
     )
    )
   )
-  (i32.store8 $0 offset=31
+  (i32.store8 offset=31
    (local.get $0)
    (i32.const 0)
   )
@@ -43,15 +43,15 @@
     (i32.const 0)
    )
   )
-  (i32.store8 $0 offset=30
+  (i32.store8 offset=30
    (local.get $0)
    (i32.const 0)
   )
-  (i32.store16 $0 offset=28 align=1
+  (i32.store16 offset=28 align=1
    (local.get $0)
    (i32.const 26985)
   )
-  (i64.store $0 offset=16
+  (i64.store offset=16
    (local.get $0)
    (i64.const 128849018900)
   )
@@ -68,11 +68,11 @@
     )
    )
   )
-  (i32.store $0
+  (i32.store
    (local.get $0)
    (i32.const 42)
   )
-  (i32.store16 $0 offset=26 align=1
+  (i32.store16 offset=26 align=1
    (local.get $0)
    (i32.const 105)
   )

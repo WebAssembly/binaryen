@@ -18,62 +18,62 @@
  (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
  (memory $0 1 1)
  (func $v128.load (param $0 i32) (result v128)
-  (v128.load $0
+  (v128.load
    (local.get $0)
   )
  )
  (func $v128.load8x8_s (param $0 i32) (result v128)
-  (v128.load8x8_s $0
+  (v128.load8x8_s
    (local.get $0)
   )
  )
  (func $v128.load8x8_u (param $0 i32) (result v128)
-  (v128.load8x8_u $0
+  (v128.load8x8_u
    (local.get $0)
   )
  )
  (func $v128.load16x4_s (param $0 i32) (result v128)
-  (v128.load16x4_s $0
+  (v128.load16x4_s
    (local.get $0)
   )
  )
  (func $v128.load16x4_u (param $0 i32) (result v128)
-  (v128.load16x4_u $0
+  (v128.load16x4_u
    (local.get $0)
   )
  )
  (func $v128.load32x2_s (param $0 i32) (result v128)
-  (v128.load32x2_s $0
+  (v128.load32x2_s
    (local.get $0)
   )
  )
  (func $v128.load32x2_u (param $0 i32) (result v128)
-  (v128.load32x2_u $0
+  (v128.load32x2_u
    (local.get $0)
   )
  )
  (func $v128.load8_splat (param $0 i32) (result v128)
-  (v128.load8_splat $0
+  (v128.load8_splat
    (local.get $0)
   )
  )
  (func $v128.load16_splat (param $0 i32) (result v128)
-  (v128.load16_splat $0
+  (v128.load16_splat
    (local.get $0)
   )
  )
  (func $v128.load32_splat (param $0 i32) (result v128)
-  (v128.load32_splat $0
+  (v128.load32_splat
    (local.get $0)
   )
  )
  (func $v128.load64_splat (param $0 i32) (result v128)
-  (v128.load64_splat $0
+  (v128.load64_splat
    (local.get $0)
   )
  )
  (func $v128.store (param $0 i32) (param $1 v128)
-  (v128.store $0
+  (v128.store
    (local.get $0)
    (local.get $1)
   )
@@ -498,96 +498,96 @@
   )
  )
  (func $v128.load8_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load8_lane $0 0
+  (v128.load8_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load16_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load16_lane $0 0
+  (v128.load16_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load32_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load32_lane $0 0
+  (v128.load32_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane $0 0
+  (v128.load64_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane_align (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane $0 align=1 0
+  (v128.load64_lane align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane_offset (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane $0 offset=32 0
+  (v128.load64_lane offset=32 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load64_lane_align_offset (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane $0 offset=32 align=1 0
+  (v128.load64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store8_lane (param $0 i32) (param $1 v128)
-  (v128.store8_lane $0 0
+  (v128.store8_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store16_lane (param $0 i32) (param $1 v128)
-  (v128.store16_lane $0 0
+  (v128.store16_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store32_lane (param $0 i32) (param $1 v128)
-  (v128.store32_lane $0 0
+  (v128.store32_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane (param $0 i32) (param $1 v128)
-  (v128.store64_lane $0 0
+  (v128.store64_lane 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane_align (param $0 i32) (param $1 v128)
-  (v128.store64_lane $0 align=1 0
+  (v128.store64_lane align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane_offset (param $0 i32) (param $1 v128)
-  (v128.store64_lane $0 offset=32 0
+  (v128.store64_lane offset=32 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.store64_lane_align_offset (param $0 i32) (param $1 v128)
-  (v128.store64_lane $0 offset=32 align=1 0
+  (v128.store64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
  )
  (func $v128.load32_zero (param $0 i32) (result v128)
-  (v128.load32_zero $0
+  (v128.load32_zero
    (local.get $0)
   )
  )
  (func $v128.load64_zero (param $0 i32) (result v128)
-  (v128.load64_zero $0
+  (v128.load64_zero
    (local.get $0)
   )
  )

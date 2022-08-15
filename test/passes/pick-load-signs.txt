@@ -5,7 +5,7 @@
  (func $a
   (local $y i32)
   (local.set $y
-   (i32.load8_u $0
+   (i32.load8_u
     (i32.const 1024)
    )
   )
@@ -19,7 +19,7 @@
  (func $b
   (local $y i32)
   (local.set $y
-   (i32.load16_u $0
+   (i32.load16_u
     (i32.const 1024)
    )
   )
@@ -33,7 +33,7 @@
  (func $c
   (local $y i32)
   (local.set $y
-   (i32.load8_u $0
+   (i32.load8_u
     (i32.const 1024)
    )
   )
@@ -47,7 +47,7 @@
  (func $d
   (local $y i32)
   (local.set $y
-   (i32.load16_u $0
+   (i32.load16_u
     (i32.const 1024)
    )
   )
@@ -61,7 +61,7 @@
  (func $one-of-each
   (local $y i32)
   (local.set $y
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
@@ -84,7 +84,7 @@
  (func $more-of-one
   (local $y i32)
   (local.set $y
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
@@ -113,7 +113,7 @@
  (func $many-more-of-one
   (local $y i32)
   (local.set $y
-   (i32.load8_u $0
+   (i32.load8_u
     (i32.const 1024)
    )
   )
@@ -148,7 +148,7 @@
  (func $a-sign
   (local $y i32)
   (local.set $y
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
@@ -166,7 +166,7 @@
   (local $x i32)
   (local $y i32)
   (local.set $x
-   (i32.load8_u $0
+   (i32.load8_u
     (i32.const 1024)
    )
   )
@@ -177,7 +177,7 @@
    )
   )
   (local.set $y
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
@@ -194,12 +194,12 @@
  (func $corners
   (local $y i32)
   (drop
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
   (drop
-   (i32.load8_u $0
+   (i32.load8_u
     (i32.const 1024)
    )
   )
@@ -210,7 +210,7 @@
  (func $wrong-size
   (local $y i32)
   (local.set $y
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
@@ -224,7 +224,7 @@
  (func $wrong-size_s
   (local $y i32)
   (local.set $y
-   (i32.load8_u $0
+   (i32.load8_u
     (i32.const 1024)
    )
   )
@@ -241,7 +241,7 @@
  (func $non-sign-or-unsigned-use
   (local $y i32)
   (local.set $y
-   (i32.load8_s $0
+   (i32.load8_s
     (i32.const 1024)
    )
   )
@@ -256,7 +256,7 @@
   )
  )
  (func $toplevel-load (result i32)
-  (i32.load8_s $0
+  (i32.load8_s
    (i32.const 1024)
   )
  )
@@ -264,7 +264,7 @@
   (local $y i32)
   (drop
    (local.tee $y
-    (i32.load8_s $0
+    (i32.load8_s
      (i32.const 1024)
     )
    )

@@ -10,7 +10,7 @@
 
   ;; CHECK:      (func $call-size (result i64)
   ;; CHECK-NEXT:  (block $__inlined_func$size (result i64)
-  ;; CHECK-NEXT:   (memory.size $0)
+  ;; CHECK-NEXT:   (memory.size)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-size (result i64)
@@ -26,7 +26,7 @@
 
   ;; CHECK:      (func $call-grow (result i64)
   ;; CHECK-NEXT:  (block $__inlined_func$grow (result i64)
-  ;; CHECK-NEXT:   (memory.grow $0
+  ;; CHECK-NEXT:   (memory.grow
   ;; CHECK-NEXT:    (i64.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
