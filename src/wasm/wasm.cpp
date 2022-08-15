@@ -57,8 +57,6 @@ const char* StringsFeature = "strings";
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
-Name GET_TEMP_RET0("getTempRet0");
-Name SET_TEMP_RET0("setTempRet0");
 Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
