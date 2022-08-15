@@ -488,17 +488,22 @@ private:
         "call* type must match callee return type");
       if (curr->type == Type::unreachable) {
         // An unreachable is only allowed if one of the children is unreachable,
-        // since this is not a return call (which is always unreachable).
-        bool hasUnreachableChild = false;
-        for (auto* child : ChildIterator(curr)) {
-          if (child->type == Type::unreachable) {
-            hasUnreachableChild = true;
-            break;
+        // since this is not a return call (which is always unreachable). We can
+        // only check this if this is an expression and we can iterate over its
+        // children.
+        if (std::is_base_of_v<Expression, T>) {
+          auto* expr = (Expression*)curr;
+          bool hasUnreachableChild = false;
+          for (auto* child : ChildIterator(expr)) {
+            if (child->type == Type::unreachable) {
+              hasUnreachableChild = true;
+              break;
+            }
           }
+          shouldBeTrue(hasUnreachableChild,
+                       curr,
+                       "unreachable call* must have unreachable child");
         }
-        shouldBeTrue(hasUnreachableChild,
-                     curr,
-                     "unreachable call* must have unreachable child");
       }
     }
   }
