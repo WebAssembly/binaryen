@@ -62,20 +62,39 @@ bool removeParameter(const std::vector<Function*>& funcs,
   // Check if none of the calls has a param with side effects that we cannot
   // remove (as if we can remove them, we will simply do that when we remove the
   // parameter). Note: flattening the IR beforehand can help here.
-  auto hasBadEffects = [&](ExpressionList& operands) {
-    return EffectAnalyzer(runner->options, *module, operands[index])
-      .hasUnremovableSideEffects();
+  //
+  // It would also be bad if we remove a parameter that causes the type of the
+  // call to change, like this:
+  //
+  //  (call $foo
+  //    (unreachable))
+  //
+  // After removing the parameter the type should change from unreachable to
+  // something concrete. We could handle this by updating the type and then
+  // propagating that out, or by appending an unreachable after the call, but
+  // for simplicity just ignore such cases; if we are called again later then
+  // DCE would let us optimize then.
+  auto hasBadEffects = [&](ExpressionList& operands, Type type, bool isReturn) {
+    bool hasUnremovable =
+      EffectAnalyzer(runner->options, *module, operands[index])
+        .hasUnremovableSideEffects();
+    bool wouldChangeType =
+      type == Type::unreachable && !isReturn &&
+      std::any_of(operands.begin(), operands.end(), [](Expression* operand) {
+        return operand->type == Type::unreachable;
+      });
+    return hasUnremovable || wouldChangeType;
   };
   bool callParamsAreValid =
     std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      return hasBadEffects(call->operands);
+      return hasBadEffects(call->operands, call->type, call->isReturn);
     });
   if (!callParamsAreValid) {
     return false;
   }
   bool callRefParamsAreValid =
     std::none_of(callRefs.begin(), callRefs.end(), [&](CallRef* call) {
-      return hasBadEffects(call->operands);
+      return hasBadEffects(call->operands, call->type, call->isReturn);
     });
   if (!callRefParamsAreValid) {
     return false;
