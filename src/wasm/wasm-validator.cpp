@@ -485,6 +485,16 @@ private:
         sig.results,
         curr,
         "call* type must match callee return type");
+      if (curr->type == Type::unreachable) {
+        // An unreachable is only allowed if one of the children is unreachable,
+        // since this is not a return call (which is always unreachable).
+        bool hasUnreachableChild = false;
+        for (auto* child : ChildIterator(curr)) {
+          hasUnreachableChild = true;
+          break;
+        }
+        shouldBeTrue(hasUnreachableChild, curr, "unreachable call* must have unreachable child");
+      }
     }
   }
 
