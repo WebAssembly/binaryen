@@ -490,8 +490,10 @@ private:
         // since this is not a return call (which is always unreachable).
         bool hasUnreachableChild = false;
         for (auto* child : ChildIterator(curr)) {
-          hasUnreachableChild = true;
-          break;
+          if (child->type == Type::unreachable) {
+            hasUnreachableChild = true;
+            break;
+          }
         }
         shouldBeTrue(hasUnreachableChild,
                      curr,
