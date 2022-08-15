@@ -36,8 +36,12 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
   ;; CHECK:      (func $caller
-  ;; CHECK-NEXT:  (call $target)
+  ;; CHECK-NEXT:  (call $target
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     ;; Removing this parameter would require the type of the call to change from
@@ -48,8 +52,7 @@
     )
   )
 
-  ;; CHECK:      (func $target
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $target (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
