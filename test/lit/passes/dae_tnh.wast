@@ -34,6 +34,11 @@
 )
 
 (module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $target)
+  ;; CHECK-NEXT: )
   (func $caller
     ;; Removing this parameter would require the type of the call to change from
     ;; unreachable to none. We don't handle such complexity and ignore such
@@ -43,6 +48,10 @@
     )
   )
 
+  ;; CHECK:      (func $target
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $target (param i32)
   )
 )

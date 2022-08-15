@@ -78,12 +78,12 @@ bool removeParameter(const std::vector<Function*>& funcs,
     bool hasUnremovable =
       EffectAnalyzer(runner->options, *module, operands[index])
         .hasUnremovableSideEffects();
-    bool wouldChangeType =
-      type == Type::unreachable && !isReturn &&
-      std::any_of(operands.begin(), operands.end(), [](Expression* operand) {
-        return operand->type == Type::unreachable;
-      });
-    return hasUnremovable || wouldChangeType;
+    //bool wouldChangeType =
+    //  type == Type::unreachable && !isReturn &&
+    //  std::any_of(operands.begin(), operands.end(), [](Expression* operand) {
+    //    return operand->type == Type::unreachable;
+    //  });
+    return hasUnremovable;// || wouldChangeType;
   };
   bool callParamsAreValid =
     std::none_of(calls.begin(), calls.end(), [&](Call* call) {
