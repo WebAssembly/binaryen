@@ -480,10 +480,11 @@ private:
         curr,
         "return_call* callee return type must match caller return type");
     } else {
-      shouldBeEqualOrFirstIsUnreachable(curr->type,
-                    sig.results,
-                    curr,
-                    "call* type must match callee return type");
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->type,
+        sig.results,
+        curr,
+        "call* type must match callee return type");
     }
   }
 
