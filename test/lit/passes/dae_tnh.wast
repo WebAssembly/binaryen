@@ -58,3 +58,25 @@
   (func $target (param i32)
   )
 )
+
+;; As above, but use a return_call. We can optimize that, since return_calls
+;; have type unreachable anyhow, and the optimization would not change the type.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (return_call $target)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (return_call $target
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $target
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $target (param i32)
+  )
+)
