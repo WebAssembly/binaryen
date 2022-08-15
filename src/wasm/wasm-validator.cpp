@@ -493,7 +493,9 @@ private:
           hasUnreachableChild = true;
           break;
         }
-        shouldBeTrue(hasUnreachableChild, curr, "unreachable call* must have unreachable child");
+        shouldBeTrue(hasUnreachableChild,
+                     curr,
+                     "unreachable call* must have unreachable child");
       }
     }
   }
