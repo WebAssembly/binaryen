@@ -3830,7 +3830,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
     case BinaryConsts::GCPrefix: {
-      uint8_t opcode = getInt8();
+      auto opcode = getU32LEB();
       if (maybeVisitI31New(curr, opcode)) {
         break;
       }

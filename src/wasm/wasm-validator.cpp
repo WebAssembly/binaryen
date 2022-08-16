@@ -223,6 +223,9 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   // Validate a specific expression.
   void validate(Expression* curr) { walk(curr); }
 
+  // Validate a function.
+  void validate(Function* func) { walkFunction(func); }
+
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
@@ -443,15 +446,20 @@ private:
                  "return_call* requires tail calls to be enabled");
   }
 
+  // |printable| is the expression to print in case of an error. That may differ
+  // from |curr| which we are validating.
   template<typename T>
-  void validateCallParamsAndResult(T* curr, HeapType sigType) {
-    if (!shouldBeTrue(
-          sigType.isSignature(), curr, "Heap type must be a signature type")) {
+  void validateCallParamsAndResult(T* curr,
+                                   HeapType sigType,
+                                   Expression* printable) {
+    if (!shouldBeTrue(sigType.isSignature(),
+                      printable,
+                      "Heap type must be a signature type")) {
       return;
     }
     auto sig = sigType.getSignature();
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
-                      curr,
+                      printable,
                       "call* param number must match")) {
       return;
     }
@@ -459,7 +467,7 @@ private:
     for (const auto& param : sig.params) {
       if (!shouldBeSubType(curr->operands[i]->type,
                            param,
-                           curr,
+                           printable,
                            "call param types must match") &&
           !info.quiet) {
         getStream() << "(on argument " << i << ")\n";
@@ -469,20 +477,26 @@ private:
     if (curr->isReturn) {
       shouldBeEqual(curr->type,
                     Type(Type::unreachable),
-                    curr,
+                    printable,
                     "return_call* should have unreachable type");
       shouldBeSubType(
         sig.results,
         getFunction()->getResults(),
-        curr,
+        printable,
         "return_call* callee return type must match caller return type");
     } else {
       shouldBeEqualOrFirstIsUnreachable(
         curr->type,
         sig.results,
-        curr,
+        printable,
         "call* type must match callee return type");
     }
+  }
+
+  // In the common case, we use |curr| as |printable|.
+  template<typename T>
+  void validateCallParamsAndResult(T* curr, HeapType sigType) {
+    validateCallParamsAndResult(curr, sigType, curr);
   }
 
   Type indexType() { return getModule()->memory.indexType; }
@@ -796,6 +810,42 @@ void FunctionValidator::visitCall(Call* curr) {
     return;
   }
   validateCallParamsAndResult(curr, target->type);
+
+  if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+    // call.without.effects has the specific form of the last argument being a
+    // function reference, which will be called with all the previous arguments.
+    // The type must be consistent with that. This, for example, is not:
+    //
+    //  (call $call.without.effects
+    //    (i32.const 1)
+    //    (.. some function reference that expects an f64 param and not i32 ..)
+    //  )
+    if (shouldBeTrue(!curr->operands.empty(),
+                     curr,
+                     "call.without.effects must have a target operand")) {
+      auto* target = curr->operands.back();
+      // Validate only in the case that the target is a function. If it isn't,
+      // it might be unreachable (which is fine, and we can ignore this), or if
+      // the call.without.effects import doesn't have a function as the last
+      // parameter, then validateImports() will handle that later (and it's
+      // better to emit a single error there than one per callsite here).
+      if (target->type.isFunction()) {
+        // Copy the original call and remove the reference. It must then match
+        // the expected signature.
+        struct Copy {
+          std::vector<Expression*> operands;
+          bool isReturn;
+          Type type;
+        } copy;
+        for (Index i = 0; i < curr->operands.size() - 1; i++) {
+          copy.operands.push_back(curr->operands[i]);
+        }
+        copy.isReturn = curr->isReturn;
+        copy.type = curr->type;
+        validateCallParamsAndResult(&copy, target->type.getHeapType(), curr);
+      }
+    }
+  }
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -2175,7 +2225,7 @@ void FunctionValidator::visitTry(Try* curr) {
     } else {
       if (shouldBeTrue(pops.size() == 1, curr, "")) {
         auto* pop = *pops.begin();
-        if (!shouldBeSubType(pop->type, tag->sig.params, curr, "")) {
+        if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
           getStream()
             << "catch's tag (" << tagName
             << ")'s pop doesn't have the same type as the tag's params";
@@ -3210,6 +3260,20 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     for (auto& func : module.functions) {
       std::cerr << info.getStream(func.get()).str();
     }
+    std::cerr << info.getStream(nullptr).str();
+  }
+  return info.valid.load();
+}
+
+bool WasmValidator::validate(Function* func, Module& module, Flags flags) {
+  ValidationInfo info(module);
+  info.validateWeb = (flags & Web) != 0;
+  info.validateGlobally = (flags & Globally) != 0;
+  info.quiet = (flags & Quiet) != 0;
+  FunctionValidator(module, &info).validate(func);
+  // print all the data
+  if (!info.valid.load() && !info.quiet) {
+    std::cerr << info.getStream(func).str();
     std::cerr << info.getStream(nullptr).str();
   }
   return info.valid.load();
