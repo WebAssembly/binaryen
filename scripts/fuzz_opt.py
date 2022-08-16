@@ -1287,7 +1287,8 @@ print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 # some features depend on other features, so if a required feature is
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
-    '--disable-reference-types': ['--disable-gc']
+    '--disable-reference-types': ['--disable-gc'],
+    '--disable-typed-function-references': ['--disable-gc'],
 }
 
 print('''
