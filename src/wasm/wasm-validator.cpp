@@ -327,6 +327,57 @@ public:
         self->pushTask(visitPoppyExpression, currp);
       }
     }
+
+    // Also verify that only allowed expressions end up in the situation where
+    // the expression has type unreachable but there is no unreachable child.
+    // For example a Call with no unreachable child cannot be unreachable, but a
+    // Break can be.
+    if (curr->type == Type::unreachable) {
+      switch (curr->_id) {
+        case Expression::BreakId:
+        case Expression::SwitchId:
+        case Expression::ReturnId:
+        case Expression::UnreachableId:
+        case Expression::ThrowId:
+        case Expression::RethrowId: {
+          // These can be unreachable without an unreachable child.
+          return;
+        }
+        case Expression::CallId: {
+          if (curr->cast<Call>()->isReturn) {
+            return;
+          }
+          break;
+        }
+        case Expression::CallIndirectId: {
+          if (curr->cast<CallIndirect>()->isReturn) {
+            return;
+          }
+          break;
+        }
+        case Expression::CallRefId: {
+          if (curr->cast<CallRef>()->isReturn) {
+            return;
+          }
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+
+      // If we reach here, then we must have an unreachable child.
+      bool hasUnreachableChild = false;
+      for (auto* child : ChildIterator(curr)) {
+        if (child->type == Type::unreachable) {
+          hasUnreachableChild = true;
+          break;
+        }
+      }
+      self->shouldBeTrue(hasUnreachableChild,
+                   curr,
+                   "unreachable instruction must have unreachable child");
+    }
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
@@ -490,25 +541,6 @@ private:
         sig.results,
         printable,
         "call* type must match callee return type");
-      if (curr->type == Type::unreachable) {
-        // An unreachable is only allowed if one of the children is unreachable,
-        // since this is not a return call (which is always unreachable). We can
-        // only check this if this is an expression and we can iterate over its
-        // children.
-        if (std::is_base_of_v<Expression, T>) {
-          auto* expr = (Expression*)curr;
-          bool hasUnreachableChild = false;
-          for (auto* child : ChildIterator(expr)) {
-            if (child->type == Type::unreachable) {
-              hasUnreachableChild = true;
-              break;
-            }
-          }
-          shouldBeTrue(hasUnreachableChild,
-                       curr,
-                       "unreachable call* must have unreachable child");
-        }
-      }
     }
   }
 
