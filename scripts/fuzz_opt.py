@@ -1039,7 +1039,7 @@ class TrapsNeverHappen(TestCaseHandler):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
         after_wasm_tnh = after_wasm + '.tnh.wasm'
         run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
-        after = 'waka\n' + run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
+        after = run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
 
         # if a trap happened, we must stop comparing from that.
         if TRAP_PREFIX in before:
