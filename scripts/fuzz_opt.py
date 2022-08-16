@@ -1061,7 +1061,7 @@ class TrapsNeverHappen(TestCaseHandler):
             after_index = after.index(call_line)
             after = after[:after_index]
 
-        compare_between_vms(before, after, 'TrapsNeverHappen')
+        compare_between_vms(fix_output(before), fix_output(after), 'TrapsNeverHappen')
 
 
 # Check that the text format round-trips without error.
