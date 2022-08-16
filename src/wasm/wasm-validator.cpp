@@ -2814,15 +2814,19 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
       if (newType != oldType) {
-        // We accept concrete => undefined,
+        // We accept concrete => undefined on control flow structures:
         // e.g.
         //
         //  (drop (block (result i32) (unreachable)))
         //
-        // The block has an added type, not derived from the ast itself, so it
-        // is ok for it to be either i32 or unreachable.
+        // The block has a type annotated on it, which can make its unreachable
+        // contents have a concrete type. Refinalize will make it unreachable,
+        // so both are valid here.
+        bool validControlFlowStructureChange =
+          Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
+          newType == Type::unreachable;
         if (!Type::isSubType(newType, oldType) &&
-            !(oldType.isConcrete() && newType == Type::unreachable)) {
+            !validControlFlowStructureChange) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
              << "\n(marked as " << oldType << ", should be " << newType
