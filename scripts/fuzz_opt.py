@@ -1054,7 +1054,13 @@ class TrapsNeverHappen(TestCaseHandler):
             # (tnh could move the trap around, so even things before the trap
             # are unsafe). erase everything from this function's output and
             # onward, so we only compare the previous trap-free code.
-            call_start = before.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_start = before.rfind(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            if call_start < 0:
+                # the trap happened before we called an export, so it occured
+                # during startup (the start function, or memory segment
+                # operations, etc.). in that case there is nothing for us to
+                # compare here; just leave.
+                return
             call_end = before.index('\n', call_start)
             call_line = before[call_start:call_end]
             before_index = before.index(call_line)
