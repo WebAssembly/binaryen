@@ -375,8 +375,8 @@ public:
         }
       }
       self->shouldBeTrue(hasUnreachableChild,
-                   curr,
-                   "unreachable instruction must have unreachable child");
+                         curr,
+                         "unreachable instruction must have unreachable child");
     }
   }
 
