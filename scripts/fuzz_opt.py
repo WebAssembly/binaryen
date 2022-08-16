@@ -514,7 +514,7 @@ def fix_output(out):
 
     # funcref(0) has the index of the function in it, and optimizations can
     # change that index, so ignore it
-    out = re.sub(r'funcref\(\d+\)', 'funcref()', out)
+    out = re.sub(r'funcref\([\d\w$+-_:]+\)', 'funcref()', out)
 
     lines = out.splitlines()
     for i in range(len(lines)):
