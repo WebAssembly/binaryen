@@ -1028,6 +1028,42 @@ class Asyncify(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc'])
 
 
+# Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
+# happen mode is that if a trap *does* happen then that is undefined behavior,
+# and the optimizer was free to make changes to observable behavior there. The
+# fuzzer therefore needs to ignore code that traps.
+class TrapsNeverHappen(TestCaseHandler):
+    frequency = 1
+
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
+        before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
+        after_wasm_tnh = after_wasm + '.tnh.wasm'
+        run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
+        after = 'waka\n' + run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
+
+        # if a trap happened, we must stop comparing from that.
+        if TRAP_PREFIX in before:
+            trap_index = before.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of
+            # (tnh could move the trap around, so even things before the trap
+            # are unsafe). erase everything from this function's output and
+            # onward, so we only compare the previous trap-free code.
+            call_start = before.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = before.index('\n', call_start)
+            call_line = before[call_start:call_end]
+            before_index = before.index(call_line)
+            lines_pre = before.count(os.linesep)
+            before = before[:before_index]
+            lines_post = before.count(os.linesep)
+            print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
+
+            # also remove the relevant lines from after.
+            after_index = after.index(call_line)
+            after = after[:after_index]
+
+        compare_between_vms(before, after, 'TrapsNeverHappen')
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1048,6 +1084,7 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
+    TrapsNeverHappen(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
