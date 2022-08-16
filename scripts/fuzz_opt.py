@@ -464,6 +464,9 @@ def numbers_are_close_enough(x, y):
         return False
 
 
+FUZZ_EXEC_NOTE_RESULT = '[fuzz-exec] note result'
+
+
 # compare between vms, which may slightly change how numbers are printed
 def compare_between_vms(x, y, context):
     x_lines = x.splitlines()
@@ -483,8 +486,7 @@ def compare_between_vms(x, y, context):
                 y_val = y_line[len(LEI_LOGGING) + 1:-1]
                 if numbers_are_close_enough(x_val, y_val):
                     continue
-            NOTE_RESULT = '[fuzz-exec] note result'
-            if x_line.startswith(NOTE_RESULT) and y_line.startswith(NOTE_RESULT):
+            if x_line.startswith(FUZZ_EXEC_NOTE_RESULT) and y_line.startswith(FUZZ_EXEC_NOTE_RESULT):
                 x_val = x_line.split(' ')[-1]
                 y_val = y_line.split(' ')[-1]
                 if numbers_are_close_enough(x_val, y_val):
@@ -1073,7 +1075,24 @@ class TrapsNeverHappen(TestCaseHandler):
             after_index = after.index(call_line)
             after = after[:after_index]
 
-        compare_between_vms(fix_output(before), fix_output(after), 'TrapsNeverHappen')
+        # some results cannot be compared, so we must filter them out here.
+        def ignore_references(out):
+            ret = []
+            for line in out.splitlines():
+                # only result lines are relevant here, which look like
+                # [fuzz-exec] note result: foo => [...]
+                if FUZZ_EXEC_NOTE_RESULT in line:
+                    # we want to filter out things like "anyref(null)" or
+                    # "[ref null data]".
+                    if 'ref(' in line or 'ref ' in line:
+                        line = line[:line.index('=>') + 2] + ' ?'
+                ret.append(line)
+            return '\n'.join(ret)
+
+        before = fix_output(ignore_references(before))
+        after = fix_output(ignore_references(after))
+
+        compare_between_vms(before, after, 'TrapsNeverHappen')
 
 
 # Check that the text format round-trips without error.
