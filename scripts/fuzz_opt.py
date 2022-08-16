@@ -508,8 +508,14 @@ def fix_output(out):
             x = str(float(x))
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
+
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
+
+    # funcref(0) has the index of the function in it, and optimizations can
+    # change that index, so ignore it
+    out = re.sub(r'funcref\(\d+\)', 'funcref()', out)
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
