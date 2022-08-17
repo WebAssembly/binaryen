@@ -604,35 +604,24 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // Casts have a very high cost because in the VM they end up implemented as
     // a combination of loads and branches. Given they contain branches, we do
     // not want to add any more such work.
-    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref) +
-           maybeVisit(curr->rtt);
+    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitRefCast(RefCast* curr) {
-    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref) +
-           maybeVisit(curr->rtt);
+    return Unacceptable + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitBrOn(BrOn* curr) {
     // BrOn of a null can be fairly fast, but anything else is a cast check
     // basically, and an unacceptable cost.
     CostType base =
       curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : Unacceptable;
-    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref) +
-           maybeVisit(curr->rtt);
-  }
-  CostType visitRttCanon(RttCanon* curr) {
-    // TODO: investigate actual RTT costs in VMs
-    return 1;
-  }
-  CostType visitRttSub(RttSub* curr) {
-    // TODO: investigate actual RTT costs in VMs
-    return 2 + visit(curr->parent);
+    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref);
   }
   CostType visitStructNew(StructNew* curr) {
     // While allocation itself is almost free with generational GC, there is
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    CostType ret = 4 + maybeVisit(curr->rtt) + curr->operands.size();
+    CostType ret = 4 + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
@@ -645,11 +634,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
   CostType visitArrayNew(ArrayNew* curr) {
-    return 4 + maybeVisit(curr->rtt) + visit(curr->size) +
-           maybeVisit(curr->init);
+    return 4 + visit(curr->size) + maybeVisit(curr->init);
   }
   CostType visitArrayInit(ArrayInit* curr) {
-    CostType ret = 4 + maybeVisit(curr->rtt);
+    CostType ret = 4;
     for (auto* child : curr->values) {
       ret += visit(child);
     }
@@ -671,6 +659,43 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
+  CostType visitStringNew(StringNew* curr) {
+    return 8 + visit(curr->ptr) + maybeVisit(curr->length) +
+           maybeVisit(curr->start) + maybeVisit(curr->end);
+  }
+  CostType visitStringConst(StringConst* curr) { return 4; }
+  CostType visitStringMeasure(StringMeasure* curr) {
+    return 6 + visit(curr->ref);
+  }
+  CostType visitStringEncode(StringEncode* curr) {
+    return 6 + visit(curr->ref) + visit(curr->ptr);
+  }
+  CostType visitStringConcat(StringConcat* curr) {
+    return 10 + visit(curr->left) + visit(curr->right);
+  }
+  CostType visitStringEq(StringEq* curr) {
+    // "3" is chosen since strings might or might not be interned in the engine.
+    return 3 + visit(curr->left) + visit(curr->right);
+  }
+  CostType visitStringAs(StringAs* curr) { return 4 + visit(curr->ref); }
+  CostType visitStringWTF8Advance(StringWTF8Advance* curr) {
+    return 4 + visit(curr->ref) + visit(curr->pos) + visit(curr->bytes);
+  }
+  CostType visitStringWTF16Get(StringWTF16Get* curr) {
+    return 1 + visit(curr->ref) + visit(curr->pos);
+  }
+  CostType visitStringIterNext(StringIterNext* curr) {
+    return 2 + visit(curr->ref);
+  }
+  CostType visitStringIterMove(StringIterMove* curr) {
+    return 4 + visit(curr->ref) + visit(curr->num);
+  }
+  CostType visitStringSliceWTF(StringSliceWTF* curr) {
+    return 8 + visit(curr->ref) + visit(curr->start) + visit(curr->end);
+  }
+  CostType visitStringSliceIter(StringSliceIter* curr) {
+    return 8 + visit(curr->ref) + visit(curr->num);
+  }
 
 private:
   CostType nullCheckCost(Expression* ref) {

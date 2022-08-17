@@ -68,24 +68,6 @@ function test_types() {
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
   console.log("  //", binaryen.expandType(binaryen.v128).join(","));
 
-  console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
-  console.log("  //", binaryen.expandType(binaryen.funcref).join(","));
-
-  console.log("  // BinaryenTypeExternref: " + binaryen.externref);
-  console.log("  //", binaryen.expandType(binaryen.externref).join(","));
-
-  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
-
-  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
-  console.log("  //", binaryen.expandType(binaryen.eqref).join(","));
-
-  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
-  console.log("  //", binaryen.expandType(binaryen.i31ref).join(","));
-
-  console.log("  // BinaryenTypeDataref: " + binaryen.dataref);
-  console.log("  //", binaryen.expandType(binaryen.dataref).join(","));
-
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
@@ -117,6 +99,7 @@ function test_features() {
   console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
+  console.log("Features.Strings: " + binaryen.Features.Strings);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -180,8 +163,6 @@ function test_ids() {
   console.log("RefTestId: " + binaryen.RefTestId);
   console.log("RefCastId: " + binaryen.RefCastId);
   console.log("BrOnId: " + binaryen.BrOnId);
-  console.log("RttCanonId: " + binaryen.RttCanonId);
-  console.log("RttSubId: " + binaryen.RttSubId);
   console.log("StructNewId: " + binaryen.StructNewId);
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);
@@ -650,6 +631,10 @@ function test_core() {
     module.eqref.pop(),
     module.i31ref.pop(),
     module.dataref.pop(),
+    module.stringref.pop(),
+    module.stringview_wtf8.pop(),
+    module.stringview_wtf16.pop(),
+    module.stringview_iter.pop(),
 
     // Memory
     module.memory.size(),
@@ -1091,9 +1076,9 @@ function test_for_each() {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
-  var expected_offsets = [10, 125];
-  var expected_data = ["hello, world", "segment data 2"];
-  var expected_passive = [false, false];
+  var expected_offsets = [10, 125, null];
+  var expected_data = ["hello, world", "segment data 2", "hello, passive"];
+  var expected_passive = [false, false, true];
 
   var glos = [
     module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1])),
@@ -1115,6 +1100,11 @@ function test_for_each() {
       passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
+    },
+    {
+      passive: expected_passive[2],
+      offset: expected_offsets[2],
+      data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
   for (i = 0; i < module.getNumMemorySegments(); i++) {

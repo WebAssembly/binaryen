@@ -326,7 +326,8 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
-  Tag = 13
+  Tag = 13,
+  Strings = 14,
 };
 
 // A passive segment is a segment that will not be automatically copied into a
@@ -372,11 +373,12 @@ enum EncodedType {
   nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
-  // run-time type info type, with depth index n
-  rtt_n = -0x17, // 0x69
-  // run-time type info type, without depth index n
-  rtt = -0x18,     // 0x68
-  dataref = -0x19, // 0x67
+  // gc and string reference types
+  dataref = -0x19,          // 0x67
+  stringref = -0x1c,        // 0x64
+  stringview_wtf8 = -0x1d,  // 0x63
+  stringview_wtf16 = -0x1e, // 0x62
+  stringview_iter = -0x1f,  // 0x61
   // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -393,11 +395,18 @@ enum EncodedType {
 };
 
 enum EncodedHeapType {
-  func = -0x10, // 0x70
-  any = -0x11,  // 0x6f
-  eq = -0x13,   // 0x6d
-  i31 = -0x16,  // 0x6a
-  data = -0x19, // 0x67
+  func = -0x10,   // 0x70
+  any = -0x11,    // 0x6f
+  eq = -0x13,     // 0x6d
+  i31 = -0x16,    // 0x6a
+  data = -0x19,   // 0x67
+  string = -0x1c, // 0x64
+  // stringview/iter constants are identical to type, and cannot be duplicated
+  // here as that would be a compiler error, so add _heap suffixes. See
+  // https://github.com/WebAssembly/stringref/issues/12
+  stringview_wtf8_heap = -0x1d,  // 0x63
+  stringview_wtf16_heap = -0x1e, // 0x62
+  stringview_iter_heap = -0x1f,  // 0x61
 };
 
 namespace UserSections {
@@ -425,6 +434,7 @@ extern const char* Memory64Feature;
 extern const char* TypedFunctionReferencesFeature;
 extern const char* RelaxedSIMDFeature;
 extern const char* ExtendedConstFeature;
+extern const char* StringsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1071,41 +1081,28 @@ enum ASTNodes {
 
   CallRef = 0x14,
   RetCallRef = 0x15,
-  Let = 0x17,
 
   // gc opcodes
 
   RefEq = 0xd5,
-  StructNewWithRtt = 0x01,
-  StructNewDefaultWithRtt = 0x02,
   StructGet = 0x03,
   StructGetS = 0x04,
   StructGetU = 0x05,
   StructSet = 0x06,
   StructNew = 0x07,
   StructNewDefault = 0x08,
-  ArrayNewWithRtt = 0x11,
-  ArrayNewDefaultWithRtt = 0x12,
   ArrayGet = 0x13,
   ArrayGetS = 0x14,
   ArrayGetU = 0x15,
   ArraySet = 0x16,
   ArrayLen = 0x17,
   ArrayCopy = 0x18,
-  ArrayInit = 0x19,
   ArrayInitStatic = 0x1a,
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
-  RttCanon = 0x30,
-  RttSub = 0x31,
-  RttFreshSub = 0x32,
-  RefTest = 0x40,
-  RefCast = 0x41,
-  BrOnCast = 0x42,
-  BrOnCastFail = 0x43,
   RefTestStatic = 0x44,
   RefCastStatic = 0x45,
   BrOnCastStatic = 0x46,
@@ -1123,6 +1120,32 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  StringNewWTF8 = 0x80,
+  StringNewWTF16 = 0x81,
+  StringConst = 0x82,
+  StringMeasureWTF8 = 0x84,
+  StringMeasureWTF16 = 0x85,
+  StringEncodeWTF8 = 0x86,
+  StringEncodeWTF16 = 0x87,
+  StringConcat = 0x88,
+  StringEq = 0x89,
+  StringIsUSV = 0x8a,
+  StringAsWTF8 = 0x90,
+  StringViewWTF8Advance = 0x91,
+  StringViewWTF8Slice = 0x93,
+  StringAsWTF16 = 0x98,
+  StringViewWTF16Length = 0x99,
+  StringViewWTF16GetCodePoint = 0x9a,
+  StringViewWTF16Slice = 0x9c,
+  StringAsIter = 0xa0,
+  StringViewIterNext = 0xa1,
+  StringViewIterAdvance = 0xa2,
+  StringViewIterRewind = 0xa3,
+  StringViewIterSlice = 0xa4,
+  StringNewWTF8Array = 0xb0,
+  StringNewWTF16Array = 0xb1,
+  StringEncodeWTF8Array = 0xb2,
+  StringEncodeWTF16Array = 0xb3,
 };
 
 enum MemoryAccess {
@@ -1132,6 +1155,12 @@ enum MemoryAccess {
 };
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
+
+enum StringPolicy {
+  UTF8 = 0x00,
+  WTF8 = 0x01,
+  Replace = 0x02,
+};
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -1158,6 +1187,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
+    std::unordered_map<Name, Index> dataIndexes;
 
     BinaryIndexes(Module& wasm) {
       auto addIndexes = [&](auto& source, auto& indexes) {
@@ -1183,6 +1213,11 @@ class WasmBinaryWriter {
       for (auto& curr : wasm.elementSegments) {
         auto index = elemIndexes.size();
         elemIndexes[curr->name] = index;
+      }
+
+      for (auto& curr : wasm.dataSegments) {
+        auto index = dataIndexes.size();
+        dataIndexes[curr->name] = index;
       }
 
       // Globals may have tuple types in the IR, in which case they lower to
@@ -1253,6 +1288,7 @@ public:
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
   void writeFunctions();
+  void writeStrings();
   void writeGlobals();
   void writeExports();
   void writeDataCount();
@@ -1264,6 +1300,7 @@ public:
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
+  uint32_t getStringIndex(Name string) const;
 
   void writeTableDeclarations();
   void writeElementSegments();
@@ -1353,6 +1390,9 @@ private:
   // local names section: we map the locals when writing the function, save that
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
+  // Indexes in the string literal section of each StringConst in the wasm.
+  std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
 };
@@ -1466,7 +1506,7 @@ public:
   // their names
   std::vector<Function*> functionImports;
   // at index i we have all refs to the function i
-  std::map<Index, std::vector<Expression*>> functionRefs;
+  std::map<Index, std::vector<Name*>> functionRefs;
   Function* currFunction = nullptr;
   // before we see a function (like global init expressions), there is no end of
   // function to check
@@ -1478,7 +1518,7 @@ public:
   // their names
   std::vector<Table*> tableImports;
   // at index i we have all references to the table i
-  std::map<Index, std::vector<Expression*>> tableRefs;
+  std::map<Index, std::vector<Name*>> tableRefs;
 
   std::map<Index, Name> elemTables;
 
@@ -1486,13 +1526,16 @@ public:
   // names
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
 
+  // we store data here after being read from binary, before we know their names
+  std::vector<std::unique_ptr<DataSegment>> dataSegments;
+
   // we store globals here before wasm.addGlobal after we know their names
   std::vector<std::unique_ptr<Global>> globals;
   // we store global imports here before wasm.addGlobalImport after we know
   // their names
   std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
-  std::map<Index, std::vector<Expression*>> globalRefs;
+  std::map<Index, std::vector<Name*>> globalRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -1503,6 +1546,10 @@ public:
   std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
   void readExports();
+
+  // The strings in the strings section (which are referred to by StringConst).
+  std::vector<Name> strings;
+  void readStrings();
 
   Expression* readExpression();
   void readGlobals();
@@ -1520,29 +1567,6 @@ public:
   std::unordered_set<Name> exceptionTargetNames;
 
   std::vector<Expression*> expressionStack;
-
-  // Each let block in the binary adds new locals to the bottom of the index
-  // space. That is, all previously-existing indexes are bumped to higher
-  // indexes. getAbsoluteLocalIndex does this computation.
-  // Note that we must track not just the number of locals added in each let,
-  // but also the absolute index from which they were allocated, as binaryen
-  // will add new locals as it goes for things like stacky code and tuples (so
-  // there isn't a simple way to get to the absolute index from a relative one).
-  // Hence each entry here is a pair of the number of items, and the absolute
-  // index they begin at.
-  struct LetData {
-    // How many items are defined in this let.
-    Index num;
-    // The absolute index from which they are allocated from. That is, if num is
-    // 5 and absoluteStart is 10, then we use indexes 10-14.
-    Index absoluteStart;
-  };
-  std::vector<LetData> letStack;
-
-  // Given a relative index of a local (the one used in the wasm binary), get
-  // the absolute one which takes into account lets, and is the one used in
-  // Binaryen IR.
-  Index getAbsoluteLocalIndex(Index index);
 
   // Control flow structure parsing: these have not just the normal binary
   // data for an instruction, but also some bytes later on like "end" or "else".
@@ -1590,7 +1614,7 @@ public:
   bool hasDataCount = false;
 
   void readDataSegments();
-  void readDataCount();
+  void readDataSegmentCount();
 
   void readTableDeclarations();
   void readElementSegments();
@@ -1668,8 +1692,6 @@ public:
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
   bool maybeVisitRefCast(Expression*& out, uint32_t code);
   bool maybeVisitBrOn(Expression*& out, uint32_t code);
-  bool maybeVisitRttCanon(Expression*& out, uint32_t code);
-  bool maybeVisitRttSub(Expression*& out, uint32_t code);
   bool maybeVisitStructNew(Expression*& out, uint32_t code);
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
@@ -1679,6 +1701,19 @@ public:
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
+  bool maybeVisitStringNew(Expression*& out, uint32_t code);
+  bool maybeVisitStringConst(Expression*& out, uint32_t code);
+  bool maybeVisitStringMeasure(Expression*& out, uint32_t code);
+  bool maybeVisitStringEncode(Expression*& out, uint32_t code);
+  bool maybeVisitStringConcat(Expression*& out, uint32_t code);
+  bool maybeVisitStringEq(Expression*& out, uint32_t code);
+  bool maybeVisitStringAs(Expression*& out, uint32_t code);
+  bool maybeVisitStringWTF8Advance(Expression*& out, uint32_t code);
+  bool maybeVisitStringWTF16Get(Expression*& out, uint32_t code);
+  bool maybeVisitStringIterNext(Expression*& out, uint32_t code);
+  bool maybeVisitStringIterMove(Expression*& out, uint32_t code);
+  bool maybeVisitStringSliceWTF(Expression*& out, uint32_t code);
+  bool maybeVisitStringSliceIter(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
@@ -1697,14 +1732,12 @@ public:
   void visitRethrow(Rethrow* curr);
   void visitCallRef(CallRef* curr);
   void visitRefAs(RefAs* curr, uint8_t code);
-  // Let is lowered into a block.
-  void visitLet(Block* curr);
 
-  void throwError(std::string text);
+  [[noreturn]] void throwError(std::string text);
 
   // Struct/Array instructions have an unnecessary heap type that is just for
   // validation (except for the case of unreachability, but that's not a problem
-  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // anyhow, we can ignore it there). That is, we also have a reference typed
   // child from which we can infer the type anyhow, and we just need to check
   // that type is the same.
   void validateHeapTypeUsingChild(Expression* child, HeapType heapType);

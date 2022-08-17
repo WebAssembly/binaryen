@@ -28,6 +28,7 @@
 #include <sstream>
 #include <variant>
 
+#include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
@@ -1362,7 +1363,7 @@ public:
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
     NOTE_NAME(curr->func);
-    return Literal::makeFunc(curr->func, curr->type);
+    return Literal::makeFunc(curr->func, curr->type.getHeapType());
   }
   Flow visitRefEq(RefEq* curr) {
     NOTE_ENTER("RefEq");
@@ -1419,6 +1420,9 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
+    if (value.isNull()) {
+      trap("null ref");
+    }
     return Literal(value.geti31(curr->signed_));
   }
 
@@ -1463,19 +1467,6 @@ public:
     if (ref.breaking()) {
       return typename Cast::Breaking{ref};
     }
-    // The RTT value for the type we are trying to cast to.
-    Literal intendedRtt;
-    if (curr->rtt) {
-      // This is a dynamic check with an RTT.
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return typename Cast::Breaking{rtt};
-      }
-      intendedRtt = rtt.getSingleValue();
-    } else {
-      // If there is no explicit RTT, use the canonical RTT for the static type.
-      intendedRtt = Literal::makeCanonicalRtt(curr->intendedType);
-    }
     Literal original = ref.getSingleValue();
     if (original.isNull()) {
       return typename Cast::Null{original};
@@ -1485,30 +1476,10 @@ public:
     if (!original.isData() && !original.isFunction()) {
       return typename Cast::Failure{original};
     }
-    Literal actualRtt;
-    if (original.isFunction()) {
-      // Function references always have the canonical RTTs of the functions
-      // they reference. We must have a module to look up the function's type to
-      // get that canonical RTT.
-      auto* func =
-        module ? module->getFunctionOrNull(original.getFunc()) : nullptr;
-      if (!func) {
-        return typename Cast::Breaking{NONCONSTANT_FLOW};
-      }
-      actualRtt = Literal::makeCanonicalRtt(func->type);
-    } else {
-      assert(original.isData());
-      actualRtt = original.getGCData()->rtt;
-    };
-    // We have the actual and intended RTTs, so perform the cast.
-    if (actualRtt.isSubRtt(intendedRtt)) {
-      Type resultType(intendedRtt.type.getHeapType(), NonNullable);
-      if (original.isFunction()) {
-        return typename Cast::Success{Literal{original.getFunc(), resultType}};
-      } else {
-        return
-          typename Cast::Success{Literal(original.getGCData(), resultType)};
-      }
+    HeapType actualType = original.type.getHeapType();
+    // We have the actual and intended types, so perform the cast.
+    if (HeapType::isSubType(actualType, curr->intendedType)) {
+      return typename Cast::Success{original};
     } else {
       return typename Cast::Failure{original};
     }
@@ -1625,33 +1596,8 @@ public:
     }
     return {value};
   }
-  Flow visitRttCanon(RttCanon* curr) {
-    return Literal::makeCanonicalRtt(curr->type.getHeapType());
-  }
-  Flow visitRttSub(RttSub* curr) {
-    Flow parent = self()->visit(curr->parent);
-    if (parent.breaking()) {
-      return parent;
-    }
-    auto parentValue = parent.getSingleValue();
-    auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
-    newSupers->push_back(parentValue.type.getHeapType());
-    if (curr->fresh) {
-      newSupers->back().makeFresh();
-    }
-    return Literal(std::move(newSupers), curr->type);
-  }
-
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    Literal rttVal;
-    if (curr->rtt) {
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return rtt;
-      }
-      rttVal = rtt.getSingleValue();
-    }
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // find why we are unreachable, and stop there.
@@ -1677,10 +1623,8 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    if (!curr->rtt) {
-      rttVal = Literal::makeCanonicalRtt(heapType);
-    }
-    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
+                   curr->type.getHeapType());
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1723,14 +1667,6 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    Literal rttVal;
-    if (curr->rtt) {
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return rtt;
-      }
-      rttVal = rtt.getSingleValue();
-    }
     auto size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
@@ -1764,21 +1700,11 @@ public:
         data[i] = value;
       }
     }
-    if (!curr->rtt) {
-      rttVal = Literal::makeCanonicalRtt(heapType);
-    }
-    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
+                   curr->type.getHeapType());
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
-    Literal rttVal;
-    if (curr->rtt) {
-      Flow rtt = self()->visit(curr->rtt);
-      if (rtt.breaking()) {
-        return rtt;
-      }
-      rttVal = rtt.getSingleValue();
-    }
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");
@@ -1804,10 +1730,8 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    if (!curr->rtt) {
-      rttVal = Literal::makeCanonicalRtt(heapType);
-    }
-    return Literal(std::make_shared<GCData>(rttVal, data), curr->type);
+    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
+                   curr->type.getHeapType());
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1954,6 +1878,23 @@ public:
         WASM_UNREACHABLE("unimplemented ref.as_*");
     }
     return value;
+  }
+  Flow visitStringNew(StringNew* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringConst(StringConst* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringEq(StringEq* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringAs(StringAs* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
+    WASM_UNREACHABLE("unimp");
+  }
+  Flow visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringIterNext(StringIterNext* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringSliceIter(StringSliceIter* curr) {
+    WASM_UNREACHABLE("unimp");
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
@@ -2258,6 +2199,33 @@ public:
     NOTE_ENTER("Rethrow");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitStringNew(StringNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringConst(StringConst* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringMeasure(StringMeasure* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringEq(StringEq* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringAs(StringAs* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringWTF16Get(StringWTF16Get* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringIterNext(StringIterNext* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringIterMove(StringIterMove* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringSliceWTF(StringSliceWTF* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringSliceIter(StringSliceIter* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
@@ -2357,11 +2325,6 @@ public:
           return Literal(load64u(addr)).castToF64();
         case Type::v128:
           return Literal(load128(addr).data());
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2415,11 +2378,6 @@ public:
         case Type::v128:
           store128(addr, value.getv128());
           break;
-        case Type::funcref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2604,19 +2562,18 @@ private:
     offset.finalize();
 
     // apply active memory segments
-    for (size_t i = 0, e = wasm.memory.segments.size(); i < e; ++i) {
-      Memory::Segment& segment = wasm.memory.segments[i];
-      if (segment.isPassive) {
+    for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
+      auto& segment = wasm.dataSegments[i];
+      if (segment->isPassive) {
         continue;
       }
-
       Const size;
-      size.value = Literal(uint32_t(segment.data.size()));
+      size.value = Literal(uint32_t(segment->data.size()));
       size.finalize();
 
       MemoryInit init;
       init.segment = i;
-      init.dest = segment.offset;
+      init.dest = segment->offset;
       init.offset = &offset;
       init.size = &size;
       init.finalize();
@@ -2721,7 +2678,14 @@ public:
     }
     auto* func = wasm.getFunction(curr->target);
     Flow ret;
-    if (func->imported()) {
+    if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
+      // The call.without.effects intrinsic is a call to an import that actually
+      // calls the given function reference that is the final argument.
+      auto newArguments = arguments;
+      auto target = newArguments.back();
+      newArguments.pop_back();
+      ret.values = callFunctionInternal(target.getFunc(), newArguments);
+    } else if (func->imported()) {
       ret.values = externalInterface->callImport(func, arguments);
     } else {
       ret.values = callFunctionInternal(curr->target, arguments);
@@ -3303,8 +3267,8 @@ public:
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
 
-    assert(curr->segment < wasm.memory.segments.size());
-    Memory::Segment& segment = wasm.memory.segments[curr->segment];
+    assert(curr->segment < wasm.dataSegments.size());
+    auto& segment = wasm.dataSegments[curr->segment];
 
     Address destVal(dest.getSingleValue().getUnsigned());
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
@@ -3313,7 +3277,7 @@ public:
     if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
+    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto* inst = getMemoryInstance();
@@ -3324,7 +3288,7 @@ public:
       Literal addr(destVal + i);
       inst->externalInterface->store8(
         inst->getFinalAddressWithoutOffset(addr, 1),
-        segment.data[offsetVal + i]);
+        segment->data[offsetVal + i]);
     }
     return {};
   }

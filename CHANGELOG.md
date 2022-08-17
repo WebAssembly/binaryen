@@ -14,6 +14,14 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+- Change constant values of some reference types in the C and JS APIs. This is
+  only observable if you hardcode specific values instead of calling the
+  relevant methods (like `BinaryenTypeDataref()`). (#4755)
+- `BinaryenModulePrintStackIR`, `BinaryenModuleWriteStackIR` and
+  `BinaryenModuleAllocateAndWriteStackIR` now have an extra boolean
+  argument `optimize`. (#4832)
+- Remove support for the `let` instruction that has been removed from the typed
+  function references spec.
 
 v109
 ----

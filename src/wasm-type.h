@@ -67,7 +67,6 @@ struct Signature;
 struct Field;
 struct Struct;
 struct Array;
-struct Rtt;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
@@ -106,13 +105,8 @@ public:
     f32,
     f64,
     v128,
-    funcref,
-    anyref,
-    eqref,
-    i31ref,
-    dataref,
   };
-  static constexpr BasicType _last_basic_type = dataref;
+  static constexpr BasicType _last_basic_type = v128;
 
   Type() : id(none) {}
 
@@ -132,9 +126,6 @@ public:
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
   Type(HeapType, Nullability nullable);
-
-  // Construct from rtt description
-  Type(Rtt);
 
   // Predicates
   //                 Compound Concrete
@@ -157,7 +148,6 @@ public:
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
-  // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
   constexpr bool isBasic() const { return id <= _last_basic_type; }
   constexpr bool isConcrete() const { return id >= i32; }
@@ -179,17 +169,9 @@ public:
   // is irrelevant. (For that reason, this is only the negation of isNullable()
   // on references, but both return false on non-references.)
   bool isNonNullable() const;
-  bool isRtt() const;
   bool isStruct() const;
   bool isArray() const;
   bool isDefaultable() const;
-
-  // Check if a type is either defaultable or non-nullable. This is useful in
-  // the case where we allow non-nullable types, but we disallow other things
-  // that are non-defaultable. For example, when GC-non-nullable references are
-  // allowed we can have  a non-nullable reference, but we cannot have any other
-  // nondefaultable type.
-  bool isDefaultableOrNonNullable() const;
 
   Nullability getNullability() const;
 
@@ -242,11 +224,8 @@ public:
   const Tuple& getTuple() const;
 
   // Gets the heap type corresponding to this type, assuming that it is a
-  // reference or Rtt type.
+  // reference type.
   HeapType getHeapType() const;
-
-  // Gets the Rtt for this type, assuming that it is an Rtt type.
-  Rtt getRtt() const;
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -342,8 +321,12 @@ public:
     eq,
     i31,
     data,
+    string,
+    stringview_wtf8,
+    stringview_wtf16,
+    stringview_iter,
   };
-  static constexpr BasicHeapType _last_basic_type = data;
+  static constexpr BasicHeapType _last_basic_type = stringview_iter;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -562,21 +545,6 @@ struct Array {
   std::string toString() const;
 };
 
-struct Rtt {
-  // An Rtt can have no depth specified
-  static constexpr uint32_t NoDepth = -1;
-  uint32_t depth;
-  HeapType heapType;
-  explicit Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
-  Rtt(uint32_t depth, HeapType heapType) : depth(depth), heapType(heapType) {}
-  bool operator==(const Rtt& other) const {
-    return depth == other.depth && heapType == other.heapType;
-  }
-  bool operator!=(const Rtt& other) const { return !(*this == other); }
-  bool hasDepth() const { return depth != uint32_t(NoDepth); }
-  std::string toString() const;
-};
-
 // TypeBuilder - allows for the construction of recursive types. Contains a
 // table of `n` mutable HeapTypes and can construct temporary types that are
 // backed by those HeapTypes, refering to them by reference. Those temporary
@@ -624,11 +592,10 @@ struct TypeBuilder {
   HeapType getTempHeapType(size_t i);
 
   // Gets a temporary type or heap type for use in initializing the
-  // TypeBuilder's HeapTypes. For Ref and Rtt types, the HeapType may be a
-  // temporary HeapType owned by this builder or a canonical HeapType.
+  // TypeBuilder's HeapTypes. For Ref types, the HeapType may be a temporary
+  // HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
   Type getTempRefType(HeapType heapType, Nullability nullable);
-  Type getTempRttType(Rtt rtt);
 
   // In nominal mode, or for nominal types, declare the HeapType being built at
   // index `i` to be an immediate subtype of the HeapType being built at index
@@ -718,7 +685,6 @@ std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, Rtt);
 std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
 
 } // namespace wasm
@@ -752,10 +718,6 @@ public:
 template<> class hash<wasm::HeapType> {
 public:
   size_t operator()(const wasm::HeapType&) const;
-};
-template<> class hash<wasm::Rtt> {
-public:
-  size_t operator()(const wasm::Rtt&) const;
 };
 template<> class hash<wasm::RecGroup> {
 public:

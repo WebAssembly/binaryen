@@ -12,18 +12,6 @@
   // 5
   // BinaryenTypeVec128: 6
   // 6
-  // BinaryenTypeFuncref: 7
-  // 7
-  // BinaryenTypeExternref: 8
-  // 8
-  // BinaryenTypeAnyref: 8
-  // 8
-  // BinaryenTypeEqref: 9
-  // 9
-  // BinaryenTypeI31ref: 10
-  // 10
-  // BinaryenTypeDataref: 11
-  // 11
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -44,7 +32,8 @@ Features.Memory64: 2048
 Features.TypedFunctionReferences: 4096
 Features.RelaxedSIMD: 16384
 Features.ExtendedConst: 32768
-Features.All: 57343
+Features.Strings: 65536
+Features.All: 122879
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -104,16 +93,14 @@ CallRefId: 56
 RefTestId: 57
 RefCastId: 58
 BrOnId: 59
-RttCanonId: 60
-RttSubId: 61
-StructNewId: 62
-StructGetId: 63
-StructSetId: 64
-ArrayNewId: 65
-ArrayInitId: 66
-ArrayGetId: 67
-ArraySetId: 68
-ArrayLenId: 69
+StructNewId: 60
+StructGetId: 61
+StructSetId: 62
+ArrayNewId: 63
+ArrayInitId: 64
+ArrayGetId: 65
+ArraySetId: 66
+ArrayLenId: 67
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -2180,6 +2167,18 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop dataref)
       )
       (drop
+       (pop stringref)
+      )
+      (drop
+       (pop stringview_wtf8)
+      )
+      (drop
+       (pop stringview_wtf16)
+      )
+      (drop
+       (pop stringview_iter)
+      )
+      (drop
        (memory.size)
       )
       (drop
@@ -4272,6 +4271,18 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop dataref)
       )
       (drop
+       (pop stringref)
+      )
+      (drop
+       (pop stringview_wtf8)
+      )
+      (drop
+       (pop stringview_wtf16)
+      )
+      (drop
+       (pop stringview_iter)
+      )
+      (drop
        (memory.size)
       )
       (drop
@@ -4860,6 +4871,7 @@ sizeof Literal: 24
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
+ (data "hello, passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))

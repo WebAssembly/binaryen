@@ -134,6 +134,7 @@ class SExpressionWasmBuilder {
   int tableCounter = 0;
   int elemCounter = 0;
   int memoryCounter = 0;
+  int dataCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, HeapType> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
@@ -278,30 +279,35 @@ private:
   Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
-  Expression* makeRefTest(Element& s);
   Expression* makeRefTestStatic(Element& s);
-  Expression* makeRefCast(Element& s);
   Expression* makeRefCastStatic(Element& s);
   Expression* makeRefCastNopStatic(Element& s);
   Expression* makeBrOn(Element& s, BrOnOp op);
   Expression* makeBrOnStatic(Element& s, BrOnOp op);
-  Expression* makeRttCanon(Element& s);
-  Expression* makeRttSub(Element& s);
-  Expression* makeRttFreshSub(Element& s);
-  Expression* makeStructNew(Element& s, bool default_);
   Expression* makeStructNewStatic(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
-  Expression* makeArrayNew(Element& s, bool default_);
   Expression* makeArrayNewStatic(Element& s, bool default_);
-  Expression* makeArrayInit(Element& s);
   Expression* makeArrayInitStatic(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
+  Expression* makeStringNew(Element& s, StringNewOp op);
+  Expression* makeStringConst(Element& s);
+  Expression* makeStringMeasure(Element& s, StringMeasureOp op);
+  Expression* makeStringEncode(Element& s, StringEncodeOp op);
+  Expression* makeStringConcat(Element& s);
+  Expression* makeStringEq(Element& s);
+  Expression* makeStringAs(Element& s, StringAsOp op);
+  Expression* makeStringWTF8Advance(Element& s);
+  Expression* makeStringWTF16Get(Element& s);
+  Expression* makeStringIterNext(Element& s);
+  Expression* makeStringIterMove(Element& s, StringIterMoveOp op);
+  Expression* makeStringSliceWTF(Element& s, StringSliceWTFOp op);
+  Expression* makeStringSliceIter(Element& s);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
@@ -320,8 +326,12 @@ private:
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
-  void parseInnerData(
-    Element& s, Index i, Name name, Expression* offset, bool isPassive);
+  void parseInnerData(Element& s,
+                      Index i,
+                      Name name,
+                      bool hasExplicitName,
+                      Expression* offset,
+                      bool isPassive);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);
@@ -341,7 +351,7 @@ private:
 
   // Struct/Array instructions have an unnecessary heap type that is just for
   // validation (except for the case of unreachability, but that's not a problem
-  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // anyhow, we can ignore it there). That is, we also have a reference typed
   // child from which we can infer the type anyhow, and we just need to check
   // that type is the same.
   void

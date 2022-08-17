@@ -12,7 +12,7 @@ void test_builder() {
   std::cout << ";; Test TypeBuilder\n";
 
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
-  // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
+  // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
 
   TypeBuilder builder;
@@ -24,11 +24,10 @@ void test_builder() {
   Type refStruct = builder.getTempRefType(builder[1], NonNullable);
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
-  Type rttArray = builder.getTempRttType(Rtt(0, builder[2]));
   Type refNullAny(HeapType::any, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
-  Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
+  Struct struct_({Field(refNullArray, Immutable)});
   Array array(Field(refNullAny, Mutable));
 
   {
@@ -41,7 +40,6 @@ void test_builder() {
     std::cout << "(ref $struct) => " << print(refStruct) << "\n";
     std::cout << "(ref $array) => " << print(refArray) << "\n";
     std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
-    std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
   }
 
   builder[0] = sig;
@@ -58,7 +56,6 @@ void test_builder() {
     std::cout << "(ref $struct) => " << print(refStruct) << "\n";
     std::cout << "(ref $array) => " << print(refArray) << "\n";
     std::cout << "(ref null $array) => " << print(refNullArray) << "\n";
-    std::cout << "(rtt 0 $array) => " << print(rttArray) << "\n\n";
   }
 
   std::vector<HeapType> built = *builder.build();
@@ -67,7 +64,6 @@ void test_builder() {
   Type newRefStruct = Type(built[1], NonNullable);
   Type newRefArray = Type(built[2], NonNullable);
   Type newRefNullArray = Type(built[2], Nullable);
-  Type newRttArray = Type(Rtt(0, built[2]));
 
   {
     IndexedTypeNameGenerator print(built);
@@ -79,7 +75,6 @@ void test_builder() {
     std::cout << "(ref $struct) => " << print(newRefStruct) << "\n";
     std::cout << "(ref $array) => " << print(newRefArray) << "\n";
     std::cout << "(ref null $array) => " << print(newRefNullArray) << "\n";
-    std::cout << "(rtt 0 $array) => " << print(newRttArray) << "\n\n";
   }
 }
 
@@ -123,21 +118,24 @@ void test_canonicalization() {
 void test_basic() {
   std::cout << ";; Test basic\n";
 
+  Type canonAnyref = Type(HeapType::any, Nullable);
+  Type canonI31ref = Type(HeapType::i31, NonNullable);
+
   TypeBuilder builder(6);
 
   Type anyref = builder.getTempRefType(builder[4], Nullable);
   Type i31ref = builder.getTempRefType(builder[5], NonNullable);
 
-  builder[0] = Signature(Type::anyref, Type::i31ref);
-  builder[1] = Signature(anyref, Type::i31ref);
-  builder[2] = Signature(Type::anyref, i31ref);
+  builder[0] = Signature(canonAnyref, canonI31ref);
+  builder[1] = Signature(anyref, canonI31ref);
+  builder[2] = Signature(canonAnyref, i31ref);
   builder[3] = Signature(anyref, i31ref);
   builder[4] = HeapType::any;
   builder[5] = HeapType::i31;
 
   std::vector<HeapType> built = *builder.build();
 
-  assert(built[0].getSignature() == Signature(Type::anyref, Type::i31ref));
+  assert(built[0].getSignature() == Signature(canonAnyref, canonI31ref));
   assert(built[1].getSignature() == built[0].getSignature());
   assert(built[2].getSignature() == built[1].getSignature());
   assert(built[3].getSignature() == built[2].getSignature());
@@ -150,16 +148,18 @@ void test_basic() {
 void test_signatures(bool warm) {
   std::cout << ";; Test canonical signatures\n";
 
+  Type canonAnyref = Type(HeapType::any, Nullable);
+  Type canonI31ref = Type(HeapType::i31, NonNullable);
+
   TypeBuilder builder(2);
   Type tempRef = builder.getTempRefType(builder[0], Nullable);
-  builder[0] = Signature(Type::i31ref, Type::anyref);
+  builder[0] = Signature(canonI31ref, canonAnyref);
   builder[1] = Signature(tempRef, tempRef);
   std::vector<HeapType> built = *builder.build();
 
-  HeapType small = Signature(Type::i31ref, Type::anyref);
-  HeapType big =
-    Signature(Type(Signature(Type::i31ref, Type::anyref), Nullable),
-              Type(Signature(Type::i31ref, Type::anyref), Nullable));
+  HeapType small = Signature(canonI31ref, canonAnyref);
+  HeapType big = Signature(Type(Signature(canonI31ref, canonAnyref), Nullable),
+                           Type(Signature(canonI31ref, canonAnyref), Nullable));
   if (warm) {
     assert(built[0] != small);
     assert(built[1] != big);
@@ -306,6 +306,9 @@ void test_recursive() {
 void test_subtypes() {
   std::cout << ";; Test subtyping\n";
 
+  Type anyref = Type(HeapType::any, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
+
   auto LUB = [&](HeapType a, HeapType b) {
     Type refA = Type(a, Nullable);
     Type refB = Type(b, Nullable);
@@ -362,7 +365,7 @@ void test_subtypes() {
       Type structRef1 = builder.getTempRefType(builder[1], Nullable);
       builder[0] = Struct{};
       builder[1] = Struct{};
-      builder[2] = Signature(Type::none, Type::anyref);
+      builder[2] = Signature(Type::none, anyref);
       builder[3] = Signature(Type::none, structRef0);
       builder[4] = Signature(Type::none, structRef1);
       built = *builder.build();
@@ -394,12 +397,10 @@ void test_subtypes() {
       builder[0].subTypeOf(builder[1]);
       builder[2].subTypeOf(builder[3]);
       builder[4].subTypeOf(builder[5]);
-      builder[0] =
-        Struct({Field(Type::i32, Mutable), Field(Type::anyref, Mutable)});
-      builder[1] =
-        Struct({Field(Type::i32, Mutable), Field(Type::anyref, Mutable)});
-      builder[2] = Signature(Type::i32, Type::anyref);
-      builder[3] = Signature(Type::i32, Type::anyref);
+      builder[0] = Struct({Field(Type::i32, Mutable), Field(anyref, Mutable)});
+      builder[1] = Struct({Field(Type::i32, Mutable), Field(anyref, Mutable)});
+      builder[2] = Signature(Type::i32, anyref);
+      builder[3] = Signature(Type::i32, anyref);
       builder[4] = Array(Field(Type::i32, Mutable));
       builder[5] = Array(Field(Type::i32, Mutable));
       built = *builder.build();
@@ -428,8 +429,8 @@ void test_subtypes() {
     std::vector<HeapType> built;
     {
       TypeBuilder builder(2);
-      builder[0] = Struct({Field(Type::anyref, Immutable)});
-      builder[1] = Struct({Field(Type::funcref, Immutable)});
+      builder[0] = Struct({Field(anyref, Immutable)});
+      builder[1] = Struct({Field(funcref, Immutable)});
       builder[1].subTypeOf(builder[0]);
       built = *builder.build();
     }

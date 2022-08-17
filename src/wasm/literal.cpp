@@ -46,11 +46,6 @@ Literal::Literal(Type type) : type(type) {
       case Type::none:
         return;
       case Type::unreachable:
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
         break;
     }
   }
@@ -58,8 +53,6 @@ Literal::Literal(Type type) : type(type) {
   if (isData()) {
     assert(!type.isNonNullable());
     new (&gcData) std::shared_ptr<GCData>();
-  } else if (type.isRtt()) {
-    new (this) Literal(Literal::makeCanonicalRtt(type.getHeapType()));
   } else {
     // For anything else, zero out all the union data.
     memset(&v128, 0, 16);
@@ -70,17 +63,10 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
-Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
-  : gcData(gcData), type(type) {
-  // Null data is only allowed if nullable.
-  assert(gcData || type.isNullable());
+Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
+  : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
   // The type must be a proper type for GC data.
   assert(isData());
-}
-
-Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
-  : rttSupers(std::move(rttSupers)), type(type) {
-  assert(type.isRtt());
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -100,11 +86,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::none:
         return;
       case Type::unreachable:
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
         break;
     }
   }
@@ -114,11 +95,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
   }
   if (type.isFunction()) {
     func = other.func;
-    return;
-  }
-  if (type.isRtt()) {
-    // Allocate a new RttSupers with a copy of the other's data.
-    new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
     return;
   }
   if (type.isRef()) {
@@ -133,6 +109,10 @@ Literal::Literal(const Literal& other) : type(other.type) {
           return;
         case HeapType::func:
         case HeapType::data:
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
           WASM_UNREACHABLE("invalid type");
       }
     }
@@ -144,11 +124,8 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-
   if (isData()) {
     gcData.~shared_ptr();
-  } else if (type.isRtt()) {
-    rttSupers.~unique_ptr();
   }
 }
 
@@ -158,18 +135,6 @@ Literal& Literal::operator=(const Literal& other) {
     new (this) auto(other);
   }
   return *this;
-}
-
-Literal Literal::makeCanonicalRtt(HeapType type) {
-  auto supers = std::make_unique<RttSupers>();
-  std::optional<HeapType> supertype;
-  for (auto curr = type; (supertype = curr.getSuperType()); curr = *supertype) {
-    supers->emplace_back(*supertype);
-  }
-  // We want the highest types to be first.
-  std::reverse(supers->begin(), supers->end());
-  size_t depth = supers->size();
-  return Literal(std::move(supers), Type(Rtt(depth, type)));
 }
 
 template<typename LaneT, int Lanes>
@@ -235,13 +200,7 @@ Literals Literal::makeNegOnes(Type type) {
 Literal Literal::makeZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    if (type == Type::i31ref) {
-      return makeI31(0);
-    } else {
-      return makeNull(type.getHeapType());
-    }
-  } else if (type.isRtt()) {
-    return Literal(type);
+    return makeNull(type.getHeapType());
   } else {
     return makeFromInt32(0, type);
   }
@@ -267,11 +226,6 @@ std::array<uint8_t, 16> Literal::getv128() const {
 std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isData());
   return gcData;
-}
-
-const RttSupers& Literal::getRttSupers() const {
-  assert(type.isRtt());
-  return *rttSupers;
 }
 
 Literal Literal::castToF32() {
@@ -351,11 +305,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
       break;
     case Type::none:
     case Type::unreachable:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -369,7 +318,22 @@ bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
   }
-  auto compareRef = [&]() {
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return true; // special voided literal
+      case Type::i32:
+      case Type::f32:
+        return i32 == other.i32;
+      case Type::i64:
+      case Type::f64:
+        return i64 == other.i64;
+      case Type::v128:
+        return memcmp(v128, other.v128, 16) == 0;
+      case Type::unreachable:
+        break;
+    }
+  } else if (type.isRef()) {
     assert(type.isRef());
     // Note that we've already handled nulls earlier.
     if (type.isFunction()) {
@@ -379,35 +343,12 @@ bool Literal::operator==(const Literal& other) const {
     if (type.isData()) {
       return gcData == other.gcData;
     }
+    if (type.getHeapType() == HeapType::i31) {
+      return i32 == other.i32;
+    }
     // other non-null reference type literals cannot represent concrete values,
     // i.e. there is no concrete anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
-  };
-  if (type.isBasic()) {
-    switch (type.getBasic()) {
-      case Type::none:
-        return true; // special voided literal
-      case Type::i32:
-      case Type::f32:
-      case Type::i31ref:
-        return i32 == other.i32;
-      case Type::i64:
-      case Type::f64:
-        return i64 == other.i64;
-      case Type::v128:
-        return memcmp(v128, other.v128, 16) == 0;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::dataref:
-        return compareRef();
-      case Type::unreachable:
-        break;
-    }
-  } else if (type.isRef()) {
-    return compareRef();
-  } else if (type.isRtt()) {
-    return *rttSupers == *other.rttSupers;
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -517,7 +458,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     if (literal.isData()) {
       auto data = literal.getGCData();
       if (data) {
-        o << "[ref " << data->rtt << ' ' << data->values << ']';
+        o << "[ref " << data->type << ' ' << data->values << ']';
       } else {
         o << "[ref null " << literal.type << ']';
       }
@@ -532,22 +473,21 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           o << "eqref(null)";
           break;
         case HeapType::i31:
-          o << "i31ref(" << literal.geti31() << ")";
+          if (literal.isNull()) {
+            o << "i31ref(null)";
+          } else {
+            o << "i31ref(" << literal.geti31() << ")";
+          }
           break;
         case HeapType::func:
         case HeapType::data:
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
           WASM_UNREACHABLE("type should have been handled above");
       }
     }
-  } else if (literal.type.isRtt()) {
-    o << "[rtt ";
-    for (auto& super : literal.getRttSupers()) {
-      o << super.type << " :> ";
-      if (super.freshPtr) {
-        o << " (fresh)";
-      }
-    }
-    o << literal.type << ']';
   } else {
     TODO_SINGLE_COMPOUND(literal.type);
     switch (literal.type.getBasic()) {
@@ -570,11 +510,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         o << "i32x4 ";
         literal.printVec128(o, literal.getv128());
         break;
-      case Type::funcref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -793,11 +728,6 @@ Literal Literal::eqz() const {
     case Type::f64:
       return eq(Literal(double(0)));
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -816,11 +746,6 @@ Literal Literal::neg() const {
     case Type::f64:
       return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -839,11 +764,6 @@ Literal Literal::abs() const {
     case Type::f64:
       return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -979,11 +899,6 @@ Literal Literal::add(const Literal& other) const {
     case Type::f64:
       return standardizeNaN(getf64() + other.getf64());
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1002,11 +917,6 @@ Literal Literal::sub(const Literal& other) const {
     case Type::f64:
       return standardizeNaN(getf64() - other.getf64());
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1104,11 +1014,6 @@ Literal Literal::mul(const Literal& other) const {
     case Type::f64:
       return standardizeNaN(getf64() * other.getf64());
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1339,11 +1244,6 @@ Literal Literal::eq(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() == other.getf64());
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1362,11 +1262,6 @@ Literal Literal::ne(const Literal& other) const {
     case Type::f64:
       return Literal(getf64() != other.getf64());
     case Type::v128:
-    case Type::funcref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2622,33 +2517,6 @@ Literal Literal::relaxedFmaF64x2(const Literal& left,
 Literal Literal::relaxedFmsF64x2(const Literal& left,
                                  const Literal& right) const {
   return ternary<2, &Literal::getLanesF64x2, &Literal::fms>(*this, left, right);
-}
-
-bool Literal::isSubRtt(const Literal& other) const {
-  assert(type.isRtt() && other.type.isRtt());
-  // For this literal to be a sub-rtt of the other rtt, the supers must be a
-  // superset. That is, if other is a->b->c then we should be a->b->c as well
-  // with possibly ->d->.. added. The rttSupers array represents those chains,
-  // but only the supers, which means the last item in the chain is simply the
-  // type of the literal.
-  const auto& supers = getRttSupers();
-  const auto& otherSupers = other.getRttSupers();
-  if (otherSupers.size() > supers.size()) {
-    return false;
-  }
-  for (Index i = 0; i < otherSupers.size(); i++) {
-    if (supers[i] != otherSupers[i]) {
-      return false;
-    }
-  }
-  // If we have more supers than other, compare that extra super. Otherwise,
-  // we have the same amount of supers, and must be completely identical to
-  // other.
-  if (otherSupers.size() < supers.size()) {
-    return other.type.getHeapType() == supers[otherSupers.size()].type;
-  } else {
-    return other.type == type;
-  }
 }
 
 } // namespace wasm

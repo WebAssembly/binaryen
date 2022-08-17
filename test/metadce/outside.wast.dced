@@ -1,13 +1,13 @@
 (module
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256 256))
- (data (i32.const 1024) "abcd")
- (data (global.get $from_segment) "abcd")
  (import "env" "table" (table $timport$0 10 10 funcref))
  (import "env" "js_func" (func $a_js_func))
  (global $__THREW__ (mut i32) (i32.const 0))
  (global $from_segment (mut i32) (i32.const 0))
  (global $from_segment_2 (mut i32) (i32.const 0))
+ (data (i32.const 1024) "abcd")
+ (data (global.get $from_segment) "abcd")
  (elem (global.get $from_segment_2) $table_func)
  (export "wasm_func" (func $a_wasm_func))
  (func $table_func

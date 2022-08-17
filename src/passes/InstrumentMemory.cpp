@@ -54,7 +54,7 @@
 //
 // GC struct and array operations are similarly instrumented, but without their
 // pointers (which are references), and we only log MVP wasm types (i.e., not
-// references or rtts).
+// references).
 //
 
 #include "asmjs/shared-constants.h"

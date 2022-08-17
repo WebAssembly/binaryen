@@ -94,8 +94,8 @@ bool isTableExported(Module& wasm) {
 }
 
 bool hasActiveSegments(Module& wasm) {
-  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-    if (!wasm.memory.segments[i].isPassive) {
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    if (!wasm.dataSegments[i]->isPassive) {
       return true;
     }
   }
@@ -2259,14 +2259,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitRttCanon(RttCanon* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitRttSub(RttSub* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitStructNew(StructNew* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2300,6 +2292,58 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitArrayCopy(ArrayCopy* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringNew(StringNew* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringConst(StringConst* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringMeasure(StringMeasure* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringEncode(StringEncode* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringConcat(StringConcat* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringEq(StringEq* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringAs(StringAs* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringWTF8Advance(StringWTF8Advance* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringWTF16Get(StringWTF16Get* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringIterNext(StringIterNext* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringIterMove(StringIterMove* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringSliceWTF(StringSliceWTF* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStringSliceIter(StringSliceIter* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2665,13 +2709,13 @@ void Wasm2JSGlue::emitMemory() {
 
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
-  if ((!wasm.memory.exists) || wasm.memory.segments.empty()) {
+  if ((!wasm.memory.exists) || wasm.dataSegments.empty()) {
     return;
   }
 
   // If we have passive memory segments, we need to store those.
-  for (auto& seg : wasm.memory.segments) {
-    if (seg.isPassive) {
+  for (auto& seg : wasm.dataSegments) {
+    if (seg->isPassive) {
       out << "  var memorySegments = {};\n";
       break;
     }
@@ -2706,20 +2750,20 @@ void Wasm2JSGlue::emitMemory() {
   }
 )";
 
-  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-    auto& seg = wasm.memory.segments[i];
-    if (seg.isPassive) {
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    auto& seg = wasm.dataSegments[i];
+    if (seg->isPassive) {
       // Fancy passive segments are decoded into typed arrays on the side, for
       // later copying.
       out << "memorySegments[" << i
           << "] = base64DecodeToExistingUint8Array(new Uint8Array("
-          << seg.data.size() << ")"
-          << ", 0, \"" << base64Encode(seg.data) << "\");\n";
+          << seg->data.size() << ")"
+          << ", 0, \"" << base64Encode(seg->data) << "\");\n";
     }
   }
 
   if (hasActiveSegments(wasm)) {
-    auto globalOffset = [&](const Memory::Segment& segment) {
+    auto globalOffset = [&](const DataSegment& segment) {
       if (auto* c = segment.offset->dynCast<Const>()) {
         return std::to_string(c->value.getInteger());
       }
@@ -2732,12 +2776,12 @@ void Wasm2JSGlue::emitMemory() {
     };
 
     out << "function initActiveSegments(imports) {\n";
-    for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-      auto& seg = wasm.memory.segments[i];
-      if (!seg.isPassive) {
+    for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+      auto& seg = wasm.dataSegments[i];
+      if (!seg->isPassive) {
         // Plain active segments are decoded directly into the main memory.
         out << "  base64DecodeToExistingUint8Array(bufferView, "
-            << globalOffset(seg) << ", \"" << base64Encode(seg.data)
+            << globalOffset(*seg) << ", \"" << base64Encode(seg->data)
             << "\");\n";
       }
     }

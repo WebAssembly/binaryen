@@ -232,6 +232,7 @@ struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
   bool binary, deNan, verbose, debugInfo;
+  ToolOptions& toolOptions;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
@@ -241,9 +242,11 @@ struct Reducer
           bool binary,
           bool deNan,
           bool verbose,
-          bool debugInfo)
+          bool debugInfo,
+          ToolOptions& toolOptions)
     : command(command), test(test), working(working), binary(binary),
-      deNan(deNan), verbose(verbose), debugInfo(debugInfo) {}
+      deNan(deNan), verbose(verbose), debugInfo(debugInfo),
+      toolOptions(toolOptions) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -358,12 +361,16 @@ struct Reducer
       std::cerr << '\n';
       Fatal() << "error in parsing working wasm binary";
     }
+
     // If there is no features section, assume we may need them all (without
     // this, a module with no features section but that uses e.g. atomics and
     // bulk memory would not work).
     if (!module->hasFeaturesSection) {
       module->features = FeatureSet::All;
     }
+    // Apply features the user passed on the commandline.
+    toolOptions.applyFeatures(*module);
+
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
@@ -583,6 +590,13 @@ struct Reducer
         tryToReplaceCurrent(loop->body);
       }
       return; // nothing more to do
+    } else if (curr->is<Drop>()) {
+      if (curr->type == Type::none) {
+        // We can't improve this: the child has a different type than us. Return
+        // here to avoid reaching the code below that tries to add a drop on
+        // children (which would recreate the current state).
+        return;
+      }
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
@@ -626,13 +640,9 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt32, child);
                 break;
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
@@ -653,13 +663,9 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(TruncSFloat64ToInt64, child);
                 break;
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
@@ -680,13 +686,9 @@ struct Reducer
               case Type::f64:
                 fixed = builder->makeUnary(DemoteFloat64, child);
                 break;
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
@@ -707,26 +709,18 @@ struct Reducer
                 break;
               case Type::f64:
                 WASM_UNREACHABLE("unexpected type");
+              // not implemented yet
               case Type::v128:
-              case Type::funcref:
-              case Type::anyref:
-              case Type::eqref:
-              case Type::i31ref:
-              case Type::dataref:
-                continue; // not implemented yet
+                continue;
               case Type::none:
               case Type::unreachable:
                 WASM_UNREACHABLE("unexpected type");
             }
             break;
           }
+          // not implemented yet
           case Type::v128:
-          case Type::funcref:
-          case Type::anyref:
-          case Type::eqref:
-          case Type::i31ref:
-          case Type::dataref:
-            continue; // not implemented yet
+            continue;
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -752,20 +746,14 @@ struct Reducer
 
   // TODO: bisection on segment shrinking?
 
-  void visitMemory(Memory* curr) {
-    std::cerr << "|    try to simplify memory\n";
-
+  void visitDataSegment(DataSegment* curr) {
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool shrank = false;
-    for (auto& segment : curr->segments) {
-      shrank = shrinkByReduction(&segment, 2);
-    }
+    shrank = shrinkByReduction(curr, 2);
     // the "opposite" of shrinking: copy a 'zero' element
-    for (auto& segment : curr->segments) {
-      reduceByZeroing(
-        &segment, 0, [](char item) { return item == 0; }, 2, shrank);
-    }
+    reduceByZeroing(
+      curr, 0, [](char item) { return item == 0; }, 2, shrank);
   }
 
   template<typename T, typename U, typename C>
@@ -947,6 +935,7 @@ struct Reducer
     // process things here, we may replace the module, so we should never again
     // refer to curr.
     assert(curr == module.get());
+    WASM_UNUSED(curr);
     curr = nullptr;
 
     // Reduction of entire functions at a time is very effective, and we do it
@@ -1413,7 +1402,8 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, binary, deNan, verbose, debugInfo);
+    Reducer reducer(
+      command, test, working, binary, deNan, verbose, debugInfo, options);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed

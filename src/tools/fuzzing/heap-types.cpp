@@ -163,13 +163,7 @@ struct HeapTypeGeneratorImpl {
     return rand.pick(
       Random::FeatureOptions<Type::BasicType>{}
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-             Type::funcref,
-             Type::anyref,
-             Type::eqref,
-             Type::i31ref,
-             Type::dataref));
+        .add(FeatureSet::SIMD, Type::v128));
   }
 
   HeapType generateHeapType() {
@@ -187,20 +181,12 @@ struct HeapTypeGeneratorImpl {
     return builder.getTempRefType(heapType, nullability);
   }
 
-  Type generateRttType() {
-    auto heapType = generateHeapType();
-    auto depth = rand.oneIn(2) ? Rtt::NoDepth : rand.upTo(MAX_RTT_DEPTH);
-    return builder.getTempRttType(Rtt(depth, heapType));
-  }
-
   Type generateSingleType() {
-    switch (rand.upTo(3)) {
+    switch (rand.upTo(2)) {
       case 0:
         return generateBasicType();
       case 1:
         return generateRefType();
-      case 2:
-        return generateRttType();
     }
     WASM_UNREACHABLE("unexpected");
   }
@@ -303,6 +289,11 @@ struct HeapTypeGeneratorImpl {
           return generateSubEq();
         case HeapType::data:
           return generateSubData();
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected index");
     }
@@ -390,6 +381,11 @@ struct HeapTypeGeneratorImpl {
           return HeapType::i31;
         case HeapType::data:
           return pickSubData();
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected kind");
     }
@@ -408,20 +404,10 @@ struct HeapTypeGeneratorImpl {
     return {pickSubHeapType(super.type), nullability};
   }
 
-  Rtt generateSubRtt(Rtt super) {
-    auto depth = super.hasDepth()
-                   ? super.depth
-                   : rand.oneIn(2) ? Rtt::NoDepth : rand.upTo(MAX_RTT_DEPTH);
-    return {depth, super.heapType};
-  }
-
   Type generateSubtype(Type type) {
     if (type.isRef()) {
       auto ref = generateSubRef({type.getHeapType(), type.getNullability()});
       return builder.getTempRefType(ref.type, ref.nullability);
-    } else if (type.isRtt()) {
-      auto rtt = generateSubRtt(type.getRtt());
-      return builder.getTempRttType(rtt);
     } else if (type.isBasic()) {
       // Non-reference basic types do not have subtypes.
       return type;
@@ -503,6 +489,11 @@ struct HeapTypeGeneratorImpl {
           }
         case HeapType::data:
           return DataKind{};
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: fuzz strings");
       }
       WASM_UNREACHABLE("unexpected kind");
     } else {

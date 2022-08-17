@@ -70,9 +70,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     : module(module) {
     queue = roots;
     // Globals used in memory/table init expressions are also roots
-    for (auto& segment : module->memory.segments) {
-      if (!segment.isPassive) {
-        walk(segment.offset);
+    for (auto& segment : module->dataSegments) {
+      if (!segment->isPassive) {
+        walk(segment->offset);
       }
     }
     for (auto& segment : module->elementSegments) {
@@ -132,7 +132,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       // handle this automatically by the reference flowing out to an import,
       // which is what binaryen intrinsics look like. For now, to support use
       // cases of a closed world but that also use this intrinsic, handle the
-      // intrinsic specifically here.
+      // intrinsic specifically here. (Without that, the closed world assumption
+      // makes us ignore the function ref that flows to an import, so we are not
+      // aware that it is actually called.)
       auto* target = curr->operands.back();
       if (auto* refFunc = target->dynCast<RefFunc>()) {
         // We can see exactly where this goes.
@@ -365,9 +367,9 @@ struct RemoveUnusedModuleElements : public Pass {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the
         // contents.
-        module->memory.segments.clear();
+        module->dataSegments.clear();
       }
-      if (module->memory.segments.empty()) {
+      if (module->dataSegments.empty()) {
         module->memory.exists = false;
         module->memory.module = module->memory.base = Name();
         module->memory.initial = 0;

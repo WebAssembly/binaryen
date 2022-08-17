@@ -62,6 +62,8 @@ template<typename T = Ok> struct MaybeResult {
   Err* getErr() { return std::get_if<Err>(&val); }
   T& operator*() { return *std::get_if<T>(&val); }
   T* operator->() { return std::get_if<T>(&val); }
+
+  T* getPtr() { return std::get_if<T>(&val); }
 };
 
 // Parse a single WAT module.

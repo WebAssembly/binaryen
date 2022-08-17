@@ -72,7 +72,7 @@ public:
     // Removing unneeded blocks is dangerous with GC, as if we do this:
     //
     //   (call
-    //     (rtt)
+    //     (struct.new)
     //     (block
     //       (nop)
     //       (i32)
@@ -80,7 +80,7 @@ public:
     //   )
     // === remove inner block ==>
     //   (call
-    //     (rtt)
+    //     (struct.new)
     //     (nop)
     //     (i32)
     //   )
@@ -90,7 +90,7 @@ public:
     //   (call
     //     (block
     //       (local.set
-    //         (rtt)
+    //         (struct.new)
     //       )
     //       (nop)
     //       (local.get)
@@ -98,7 +98,9 @@ public:
     //     (i32)
     //   )
     //
-    // However, that is not valid as an rtt cannot be set to a local.
+    // However, that is not valid as an non-nullable reference cannot be set to
+    // a local. TODO: double check that this is still true now that we don't
+    // have RTTs.
     if (!features.hasGC()) {
       removeUnneededBlocks();
     }

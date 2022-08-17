@@ -204,7 +204,7 @@ This repository contains code that builds the following tools in `bin/`:
    performs emscripten-specific passes over it.
  * **wasm-ctor-eval**: A tool that can execute functions (or parts of functions)
    at compile time.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
+ * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
 
 Usage instructions for each are below.
 
@@ -387,7 +387,11 @@ the [`name-types` pass](https://github.com/WebAssembly/binaryen/blob/main/src/pa
 Some more notes:
 
  * See `bin/wasm-opt --help` for the full list of options and passes.
- * Passing `--debug` will emit some debugging info.
+ * Passing `--debug` will emit some debugging info.  Individual debug channels
+   (defined in the source code via `#define DEBUG_TYPE xxx`) can be enabled by
+   passing them as list of comma-separated strings.  For example: `bin/wasm-opt
+   --debug=binary`.  These debug channels can also be enabled via the
+   `BINARYEN_DEBUG` environment variable.
 
 ### wasm2js
 
@@ -562,6 +566,19 @@ The `check.py` script supports some options:
  * We have tests from upstream in `tests/spec`, in git submodules. Running
    `./check.py` should update those.
 
+Note that we are trying to gradually port the legacy wasm-opt tests to use `lit`
+and `filecheck` as we modify them.  For `passes` tests that output wast, this
+can be done automatically with `scripts/port_passes_tests_to_lit.py` and for
+non-`passes` tests that output wast, see
+https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a
+simple manual port.
+
+For lit tests the test expectations (the CHECK lines) can often be automatically
+updated as changes are made to binaryen.  See `scripts/update_lit_checks.py`.
+
+Non-lit tests can also be automatically updated in most cases.  See
+`scripts/auto_update_tests.py`.
+
 ### Setting up dependencies
 
 ```
@@ -611,7 +628,7 @@ Emscripten's WebAssembly processing library (`wasm-emscripten`).
 * Does it compile under Windows and/or Visual Studio?
 
 Yes, it does. Here's a step-by-step [tutorial][win32]  on how to compile it
-under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. 
+under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**.
 However, Visual Studio 2017 may now be required. Help would be appreciated on
 Windows and OS X as most of the core devs are on Linux.
 

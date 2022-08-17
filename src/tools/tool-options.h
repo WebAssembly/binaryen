@@ -94,6 +94,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
+      .addFeature(FeatureSet::Strings, "strings")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
@@ -176,6 +177,12 @@ struct ToolOptions : public Options {
   void applyFeatures(Module& module) const {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
+    // Non-default type systems only make sense with GC enabled. TODO: Error on
+    // non-GC equirecursive types as well once we make isorecursive the default
+    // if we don't remove equirecursive types entirely.
+    if (!module.features.hasGC() && getTypeSystem() == TypeSystem::Nominal) {
+      Fatal() << "Nominal typing is only allowed when GC is enabled";
+    }
   }
 
 private:

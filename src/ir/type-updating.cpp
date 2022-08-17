@@ -32,6 +32,15 @@ void GlobalTypeRewriter::update() {
   }
   typeBuilder.grow(indexedTypes.types.size());
 
+  // All the input types are distinct, so we need to make sure the output types
+  // are distinct as well. Further, the new types may have more recursions than
+  // the original types, so the old recursion groups may not be sufficient any
+  // more. Both of these problems are solved by putting all the new types into a
+  // single large recursion group.
+  // TODO: When we properly analyze which types are external and which are
+  // internal to the module, only optimize internal types.
+  typeBuilder.createRecGroup(0, typeBuilder.size());
+
   // Create the temporary heap types.
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
     auto type = indexedTypes.types[i];
@@ -107,9 +116,6 @@ void GlobalTypeRewriter::update() {
     Type getNew(Type type) {
       if (type.isRef()) {
         return Type(getNew(type.getHeapType()), type.getNullability());
-      }
-      if (type.isRtt()) {
-        return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
       }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
@@ -241,18 +247,6 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     return typeBuilder.getTempRefType(
       typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
       type.getNullability());
-  }
-  if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    auto newRtt = rtt;
-    auto heapType = type.getHeapType();
-    if (!indexedTypes.indices.count(heapType)) {
-      // See above with references.
-      return type;
-    }
-    newRtt.heapType =
-      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]);
-    return typeBuilder.getTempRttType(newRtt);
   }
   if (type.isTuple()) {
     auto& tuple = type.getTuple();

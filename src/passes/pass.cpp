@@ -169,9 +169,17 @@ void PassRegistry::registerPasses() {
   registerPass(
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
-    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
-  registerPass(
     "gsi", "globally optimize struct values", createGlobalStructInferencePass);
+  registerPass(
+    "gto", "globally optimize GC types", createGlobalTypeOptimizationPass);
+  registerPass("gufa",
+               "Grand Unified Flow Analysis: optimize the entire program using "
+               "information about what content can actually appear in each "
+               "location",
+               createGUFAPass);
+  registerPass("gufa-optimizing",
+               "GUFA plus local optimizations in functions we modified",
+               createGUFAOptimizingPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
@@ -883,17 +891,47 @@ void PassRunner::runPass(Pass* pass) {
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
+
+  auto passDebug = getPassDebug();
+
+  // Add extra validation logic in pass-debug mode 2. The main logic in
+  // PassRunner::run will work at the module level, and here for a function-
+  // parallel pass we can do the same at the function level: we can print the
+  // function before the pass, run the pass on the function, and then if it
+  // fails to validate we can show an error and print the state right before the
+  // pass broke it.
+  //
+  // Skip nameless passes for this. Anything without a name is an internal
+  // component of some larger pass, and information about it won't be very
+  // useful - leave it to the entire module to fail validation in that case.
+  bool extraFunctionValidation =
+    passDebug == 2 && options.validate && !pass->name.empty();
+  std::stringstream bodyBefore;
+  if (extraFunctionValidation) {
+    bodyBefore << *func->body << '\n';
+  }
+
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
   std::unique_ptr<AfterEffectFunctionChecker> checker;
-  if (getPassDebug()) {
+  if (passDebug) {
     checker = std::unique_ptr<AfterEffectFunctionChecker>(
       new AfterEffectFunctionChecker(func));
   }
   instance->runOnFunction(this, wasm, func);
   handleAfterEffects(pass, func);
-  if (getPassDebug()) {
+  if (passDebug) {
     checker->check();
+  }
+
+  if (extraFunctionValidation) {
+    if (!WasmValidator().validate(func, *wasm, WasmValidator::Minimal)) {
+      Fatal() << "Last nested function-parallel pass (" << pass->name
+              << ") broke validation of function " << func->name
+              << ". Here is the function body before:\n"
+              << bodyBefore.str() << "\n\nAnd here it is now:\n"
+              << *func->body << '\n';
+    }
   }
 }
 

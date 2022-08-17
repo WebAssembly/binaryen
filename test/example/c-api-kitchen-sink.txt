@@ -1,17 +1,33 @@
-  // BinaryenTypeNone: 0
-  // BinaryenTypeUnreachable: 1
-  // BinaryenTypeInt32: 2
-  // BinaryenTypeInt64: 3
-  // BinaryenTypeFloat32: 4
-  // BinaryenTypeFloat64: 5
-  // BinaryenTypeVec128: 6
-  // BinaryenTypeFuncref: 7
-  // BinaryenTypeExternref: 8
-  // BinaryenTypeAnyref: 8
-  // BinaryenTypeEqref: 9
-  // BinaryenTypeI31ref: 10
-  // BinaryenTypeDataref: 11
-  // BinaryenTypeAuto: -1
+BinaryenTypeNone: 0
+BinaryenTypeUnreachable: 1
+BinaryenTypeInt32: 2
+BinaryenTypeInt64: 3
+BinaryenTypeFloat32: 4
+BinaryenTypeFloat64: 5
+BinaryenTypeVec128: 6
+BinaryenTypeFuncref: (ptr)
+BinaryenTypeExternref: (ptr)
+BinaryenTypeAnyref: (ptr)
+BinaryenTypeEqref: (ptr)
+BinaryenTypeI31ref: (ptr)
+BinaryenTypeDataref: (ptr)
+BinaryenTypeStringref: (ptr)
+BinaryenTypeStringviewWTF8: (ptr)
+BinaryenTypeStringviewWTF16: (ptr)
+BinaryenTypeStringviewIter: (ptr)
+BinaryenTypeAuto: -1
+BinaryenPackedTypeNotPacked: 0
+BinaryenPackedTypeInt8: 1
+BinaryenPackedTypeInt16: 2
+BinaryenHeapTypeFunc: 0
+BinaryenHeapTypeAny: 1
+BinaryenHeapTypeEq: 2
+BinaryenHeapTypeI31: 3
+BinaryenHeapTypeData: 4
+BinaryenHeapTypeString: 5
+BinaryenHeapTypeStringviewWTF8: 6
+BinaryenHeapTypeStringviewWTF16: 7
+BinaryenHeapTypeStringviewIter: 8
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -28,7 +44,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureTypedFunctionReferences: 4096
 BinaryenFeatureRelaxedSIMD: 16384
 BinaryenFeatureExtendedConst: 32768
-BinaryenFeatureAll: 57343
+BinaryenFeatureAll: 122879
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -60,8 +76,8 @@ BinaryenFeatureAll: 57343
  (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")
  (elem $passive func "$kitchen()sinker")
  (tag $a-tag (param i32))
- (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
+ (export "kitchen_sinker" (func "$kitchen()sinker"))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
@@ -2698,5 +2714,28 @@ optimized:
  (type $none_=>_i32 (func (result i32)))
  (func $adder (result i32)
   (i32.const 4)
+ )
+)
+BinaryenTypeSystemEquirecursive: 0
+BinaryenTypeSystemNominal: 1
+BinaryenTypeSystemIsorecursive: 2
+TypeBuilderErrorReasonSelfSupertype: 0
+TypeBuilderErrorReasonInvalidSupertype: 1
+TypeBuilderErrorReasonForwardSupertypeReference: 2
+TypeBuilderErrorReasonForwardChildReference: 3
+module with recursive GC types:
+(module
+ (type $SomeArray (array_subtype (mut (ref null $SomeArray)) data))
+ (type $SomeStruct (struct_subtype (field $SomeField (mut (ref null $SomeStruct))) data))
+ (type $SomeSignature (func_subtype (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature)) func))
+ (type $none_=>_none (func_subtype func))
+ (type $SomeSubStruct (struct_subtype (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField (mut i8)) $SomeStruct))
+ (func $test (type $none_=>_none)
+  (local $0 (ref null $SomeArray))
+  (local $1 (ref null $SomeStruct))
+  (local $2 (ref null $SomeSignature))
+  (local $3 eqref)
+  (local $4 (ref null $SomeSubStruct))
+  (nop)
  )
 )

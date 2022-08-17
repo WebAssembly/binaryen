@@ -99,17 +99,18 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   void visitAtomicNotify(AtomicNotify* curr) { wrapAddress64(curr->ptr); }
 
   void visitMemory(Memory* memory) {
-    for (auto& segment : memory->segments) {
-      if (!segment.isPassive) {
-        auto* c = segment.offset->cast<Const>();
-        c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
-        c->type = Type::i32;
-      }
-    }
     // This is visited last.
     memory->indexType = Type::i32;
     if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
       memory->max = Memory::kMaxSize32;
+    }
+  }
+
+  void visitDataSegment(DataSegment* segment) {
+    if (!segment->isPassive) {
+      auto* c = segment->offset->cast<Const>();
+      c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
+      c->type = Type::i32;
     }
   }
 };

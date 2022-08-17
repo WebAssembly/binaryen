@@ -67,8 +67,8 @@ def port_test(args, test):
     run_line = (f';; RUN: foreach %s %t wasm-opt {" ".join(opts)} -S -o -'
                 ' | filecheck %s')
 
-    notice = (f';; NOTE: This test was ported using port_test.py and could be'
-              ' cleaned up.')
+    notice = (f';; NOTE: This test was ported using'
+              ' port_passes_tests_to_lit.py and could be cleaned up.')
 
     with open(test, 'r') as src_file:
         with open(dest, 'w') as dest_file:
@@ -79,7 +79,10 @@ def port_test(args, test):
             print(src_file.read(), file=dest_file, end='')
 
     update_script = os.path.join(script_dir, 'update_lit_checks.py')
-    subprocess.run([sys.executable, update_script, '-f', '--all-items', dest])
+    cmd = [sys.executable, update_script, '-f', '--all-items', dest]
+    if args.binaryen_bin:
+        cmd += ['--binaryen-bin', args.binaryen_bin]
+    subprocess.check_call(cmd)
 
     if not args.no_delete:
         for f in glob.glob(test.replace('.wast', '.*')):
@@ -88,14 +91,19 @@ def port_test(args, test):
                 continue
             os.remove(f)
             if args.git_add:
-                subprocess.run(['git', 'add', f])
+                subprocess.rcheck_call(['git', 'add', f])
 
     if args.git_add:
-        subprocess.run(['git', 'add', dest])
+        subprocess.check_call(['git', 'add', dest])
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '--binaryen-bin', dest='binaryen_bin', default='bin',
+        help=('Specifies the path to the Binaryen executables in the CMake build'
+              ' directory. Default: bin/ of current directory (i.e. assume an'
+              ' in-tree build).'))
     parser.add_argument('-f', '--force', action='store_true',
                         help='Overwrite existing lit tests')
     parser.add_argument('--no-delete', action='store_true',
@@ -104,6 +112,7 @@ def main():
                         help='Stage changes')
     parser.add_argument('tests', nargs='+', help='The test files to port')
     args = parser.parse_args()
+    args.binaryen_bin = os.path.abspath(args.binaryen_bin)
 
     for pattern in args.tests:
         for test in glob.glob(pattern, recursive=True):
