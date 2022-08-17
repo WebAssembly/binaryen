@@ -334,13 +334,19 @@ public:
     // Break can be.
     if (curr->type == Type::unreachable) {
       switch (curr->_id) {
-        case Expression::BreakId:
+        case Expression::BreakId: {
+          // If there is a condition, that is already validated fully in
+          // visitBreak(). If there isn't a condition, then this is allowed to
+          // be unreachable even without an unreachable child. Either way, we
+          // can leave.
+          return;
+        }
         case Expression::SwitchId:
         case Expression::ReturnId:
         case Expression::UnreachableId:
         case Expression::ThrowId:
         case Expression::RethrowId: {
-          // These can be unreachable without an unreachable child.
+          // These can all be unreachable without an unreachable child.
           return;
         }
         case Expression::CallId: {
