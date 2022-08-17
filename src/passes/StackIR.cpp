@@ -69,41 +69,7 @@ public:
     if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
       local2Stack();
     }
-    // Removing unneeded blocks is dangerous with GC, as if we do this:
-    //
-    //   (call
-    //     (struct.new)
-    //     (block
-    //       (nop)
-    //       (i32)
-    //     )
-    //   )
-    // === remove inner block ==>
-    //   (call
-    //     (struct.new)
-    //     (nop)
-    //     (i32)
-    //   )
-    //
-    // Then we end up with a nop that forces us to emit this during load:
-    //
-    //   (call
-    //     (block
-    //       (local.set
-    //         (struct.new)
-    //       )
-    //       (nop)
-    //       (local.get)
-    //     )
-    //     (i32)
-    //   )
-    //
-    // However, that is not valid as an non-nullable reference cannot be set to
-    // a local. TODO: double check that this is still true now that we don't
-    // have RTTs.
-    if (!features.hasGC()) {
-      removeUnneededBlocks();
-    }
+    removeUnneededBlocks();
     dce();
   }
 
