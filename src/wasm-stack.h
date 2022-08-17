@@ -208,10 +208,10 @@ template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
   // Even if the block has a name, check if the name is necessary (if it has no
-  // uses, it is equivalent to not having one). This is potentially quadratic,
-  // but it is extremely rare to have recursion on this function, since it is
-  // limited by the number of non-block control flow structures (the places that
-  // call here).
+  // uses, it is equivalent to not having one). Scanning the children of the
+  // block means that this takes quadratic time, but it will be N^2 for a fairly
+  // small N since the number of nested non-block control flow structures tends
+  // to be very reasonable.
   if (!block || BranchUtils::BranchSeeker::has(block, block->name)) {
     visit(curr);
     return;
