@@ -72,6 +72,24 @@ struct FieldInfoScanner
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
   }
+
+  Properties::FallthroughBehavior getFallthroughBehavior() {
+    // Looking at fallthrough values may be dangerous here, because it ignores
+    // intermediate steps. Consider this:
+    //
+    // (struct.set $T 0
+    //   (local.tee
+    //     (struct.get $T 0)))
+    //
+    // This is a copy of a field to itself - normally something we can ignore
+    // (see above). But in this case, if we refine the field then that will
+    // update the struct.get, but the local.tee will still have the old type,
+    // which may not be refined enough. We could in theory always fix this up
+    // using casts later, but those casts may be expensive (especially ref.casts
+    // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
+    // TODO: investigate more
+    return Properties::FallthroughBehavior::NoTeeBrIf;
+  }
 };
 
 struct TypeRefining : public Pass {

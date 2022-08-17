@@ -863,3 +863,181 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $A))) data))
+  (type $A (struct_subtype (field (mut (ref null $A))) data))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (func $non-nullability (type $ref|$A|_=>_none) (param $nn (ref $A))
+  ;; CHECK-NEXT:  (local $temp (ref null $A))
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $nn)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-nullability (param $nn (ref $A))
+    (local $temp (ref null $A))
+    ;; Set a non-null value to the field.
+    (struct.set $A 0
+      (ref.null $A)
+      (local.get $nn)
+    )
+    ;; Set a get of the same field to the field - this is a copy. However, the
+    ;; copy goes through a local.tee. Even after we refine the type of the field
+    ;; to non-nullable, the tee will remain nullable since it has the type of
+    ;; the local. We could add casts perhaps, but for now we do not optimize,
+    ;; and type $A's field will remain nullable.
+    (struct.set $A 0
+      (ref.null $A)
+      (local.tee $temp
+        (struct.get $A 0
+          (ref.null $A)
+        )
+      )
+    )
+    ;; The same, but with a struct.new.
+    (drop
+      (struct.new $A
+        (local.tee $temp
+          (struct.get $A 0
+            (ref.null $A)
+          )
+        )
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+  (type $A (struct_subtype (field (ref null $A)) data))
+  ;; CHECK:      (type $B (struct_subtype (field (ref null $B)) $A))
+  (type $B (struct_subtype (field (ref null $A)) $A))
+
+  ;; CHECK:      (type $ref?|$B|_=>_none (func_subtype (param (ref null $B)) func))
+
+  ;; CHECK:      (func $heap-type (type $ref?|$B|_=>_none) (param $b (ref null $B))
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.tee $a
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $heap-type (param $b (ref null $B))
+    (local $a (ref null $A))
+    ;; Similar to the above, but instead of non-nullability being the issue,
+    ;; now it is the heap type. We write a B to B's field, so we can trivially
+    ;; refine that, and we want to do a similar refinement to the supertype A.
+    ;; But below we do a copy on A through a tee. As above, the tee's type will
+    ;; not change, so we do not optimize type $A's field (however, we can
+    ;; refine $B's field, which is safe to do).
+    (drop
+      (struct.new $B
+        (local.get $b)
+      )
+    )
+    (drop
+      (struct.new $A
+        (local.tee $a
+          (struct.get $A 0
+            (ref.null $A)
+          )
+        )
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut (ref $A))) data))
+  (type $A (struct_subtype (field (mut (ref null $A))) data))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (func $non-nullability-block (type $ref|$A|_=>_none) (param $nn (ref $A))
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $nn)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (if (result (ref $A))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (if (result (ref $A))
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-nullability-block (param $nn (ref $A))
+    (struct.set $A 0
+      (ref.null $A)
+      (local.get $nn)
+    )
+    ;; As above, but instead of a local.tee fallthrough, use an if. We *can*
+    ;; optimize in this case, as ifs etc do not pose a problem (we'll refinalize
+    ;; the ifs to the proper, non-nullable type, the same as the field).
+    (struct.set $A 0
+      (ref.null $A)
+      (if (result (ref null $A))
+        (i32.const 1)
+        (struct.get $A 0
+          (ref.null $A)
+        )
+        (unreachable)
+      )
+    )
+    (drop
+      (struct.new $A
+        (if (result (ref null $A))
+          (i32.const 1)
+          (struct.get $A 0
+            (ref.null $A)
+          )
+          (unreachable)
+        )
+      )
+    )
+  )
+)

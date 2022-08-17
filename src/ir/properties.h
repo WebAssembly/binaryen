@@ -240,17 +240,29 @@ inline Index getZeroExtBits(Expression* curr) {
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
 //
+// Behavior wrt tee/br_if is customizable, since in some cases we do not want to
+// look through them (for example, the type of a tee is related to the local,
+// not the value, so if we returned the fallthrough of the tee we'd have a
+// possible difference between the type in the IR and the type of the value,
+// which some cases care about; the same for a br_if, whose type is related to
+// the branch target).
+//
 // TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
-inline Expression* getImmediateFallthrough(Expression* curr,
-                                           const PassOptions& passOptions,
-                                           Module& module) {
+
+enum class FallthroughBehavior { AllowTeeBrIf, NoTeeBrIf };
+
+inline Expression* getImmediateFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
     return curr;
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
-    if (set->isTee()) {
+    if (set->isTee() && behavior == FallthroughBehavior::AllowTeeBrIf) {
       return set->value;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
@@ -270,7 +282,8 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
-    if (br->condition && br->value) {
+    if (br->condition && br->value &&
+        behavior == FallthroughBehavior::AllowTeeBrIf) {
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
@@ -289,11 +302,13 @@ inline Expression* getImmediateFallthrough(Expression* curr,
 
 // Similar to getImmediateFallthrough, but looks through multiple children to
 // find the final value that falls through.
-inline Expression* getFallthrough(Expression* curr,
-                                  const PassOptions& passOptions,
-                                  Module& module) {
+inline Expression* getFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
   while (1) {
-    auto* next = getImmediateFallthrough(curr, passOptions, module);
+    auto* next = getImmediateFallthrough(curr, passOptions, module, behavior);
     if (next == curr) {
       return curr;
     }
