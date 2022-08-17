@@ -14,8 +14,8 @@
 
 import os
 
-from scripts.test import shared
-from scripts.test import support
+from . import shared
+from . import support
 
 tests = shared.get_tests(shared.options.binaryen_test)
 # memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
