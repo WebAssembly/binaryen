@@ -198,7 +198,7 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
 }
 
 // Emits a node, but if it is a block with no name, emit a list of its contents.
-// This is ok to do because it is valid in the binary format - if will just be
+// This is ok to do because it is valid in the binary format - it will just be
 // "stacky" code. Such stacky code does not fit in Binaryen IR, but our binary
 // reader will automatically create a block for it (note that while doing so it
 // creates a block without a name, since nothing branches to it, which makes it
