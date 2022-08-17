@@ -88,7 +88,7 @@ struct FieldInfoScanner
     // using casts later, but those casts may be expensive (especially ref.casts
     // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
     // TODO: investigate more
-    return Properties::FallthroughBehavior::NoTee;
+    return Properties::FallthroughBehavior::NoTeeBrIf;
   }
 };
 

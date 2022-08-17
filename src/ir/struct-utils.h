@@ -209,8 +209,8 @@ struct StructScanner
   }
 
   Properties::FallthroughBehavior getFallthroughBehavior() {
-    // By default, look at and use tee fallthrough values.
-    return Properties::FallthroughBehavior::AllowTee;
+    // By default, look at and use tee&br_if fallthrough values.
+    return Properties::FallthroughBehavior::AllowTeeBrIf;
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
