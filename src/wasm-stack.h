@@ -200,7 +200,7 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
 // Emits a node in a position that can contain a list of contents, like an if
 // arm. This will emit the node, but if it is a block with no name, just emit
 // its contents. This is ok to do because a list of contents is ok in the wasm
-// binary format in such positions anyhow. When we reach such code in Binaryen
+// binary format in such positions anyhow. When we read such code in Binaryen
 // we will end up creating a block for it (note that while doing so we create a
 // block without a name, since nothing branches to it, which makes it easy to
 // handle in optimization passes and when writing the binary out again).
