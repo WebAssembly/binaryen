@@ -74,12 +74,13 @@ bool removeParameter(const std::vector<Function*>& funcs,
   // propagating that out, or by appending an unreachable after the call, but
   // for simplicity just ignore such cases; if we are called again later then
   // if DCE ran meanwhile then we could optimize.
-  auto hasBadEffects = [&](ExpressionList& operands, Type type, bool isReturn) {
+  auto hasBadEffects = [&](auto* call) {
+    auto& operands = call->operands;
     bool hasUnremovable =
       EffectAnalyzer(runner->options, *module, operands[index])
         .hasUnremovableSideEffects();
     bool wouldChangeType =
-      type == Type::unreachable && !isReturn &&
+      call->type == Type::unreachable && !call->isReturn &&
       std::any_of(operands.begin(), operands.end(), [](Expression* operand) {
         return operand->type == Type::unreachable;
       });
@@ -87,14 +88,14 @@ bool removeParameter(const std::vector<Function*>& funcs,
   };
   bool callParamsAreValid =
     std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      return hasBadEffects(call->operands, call->type, call->isReturn);
+      return hasBadEffects(call);
     });
   if (!callParamsAreValid) {
     return false;
   }
   bool callRefParamsAreValid =
     std::none_of(callRefs.begin(), callRefs.end(), [&](CallRef* call) {
-      return hasBadEffects(call->operands, call->type, call->isReturn);
+      return hasBadEffects(call);
     });
   if (!callRefParamsAreValid) {
     return false;
