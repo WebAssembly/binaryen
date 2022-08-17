@@ -273,13 +273,18 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
   };
 
   // A block with no name never needs to be emitted: we can just emit its
-  // contents. Note: in visitPossibleBlockContents() we also check the case
-  // where a name exists (we see if it actually has any uses); that handles more
+  // contents. In some cases that will end up as "stacky" code, which is valid
+  // in wasm but not in Binaryen IR. This is similar to what we do in
+  // visitPossibleBlockContents(), and like there, when we reload such a binary
+  // we'll end up creating a block for it then.
+  //
+  // Note that in visitPossibleBlockContents() we also optimize the case of a
+  // block with a name but the name actually has no uses - that handles more
   // cases, but it requires more work. It is reasonable to do it in
-  // visitPossibleBlockContents which handles the common cases of blocks that
+  // visitPossibleBlockContents() which handles the common cases of blocks that
   // are children of control flow structures (like an if arm); doing it here
   // would affect every block, including highly-nested block stacks, which would
-  // end up as quadratic time. In optimized code the name will not exist if it
+  // end up as quadratic time. In optimized code the name will not exist if it's
   // not used anyhow, so a minor optimization for the unoptimized case that
   // leads to potential quadratic behavior is not worth it here.
   if (!curr->name.is()) {
