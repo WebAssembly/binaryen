@@ -40,9 +40,9 @@
 
   ;; CHECK:      (import "env" "set_funcref" (func $set_funcref (param i32 i32 funcref) (result funcref)))
 
-  ;; CHECK:      (import "env" "get_extref" (func $get_extref (param i32 i32 externref) (result externref)))
+  ;; CHECK:      (import "env" "get_externref" (func $get_externref (param i32 i32 externref) (result externref)))
 
-  ;; CHECK:      (import "env" "set_extref" (func $set_extref (param i32 i32 externref) (result externref)))
+  ;; CHECK:      (import "env" "set_externref" (func $set_externref (param i32 i32 externref) (result externref)))
 
   ;; CHECK:      (import "env" "get_v128" (func $get_v128 (param i32 i32 v128) (result v128)))
 
@@ -90,7 +90,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $get_extref
+  ;; CHECK-NEXT:   (call $get_externref
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:    (local.get $X)
@@ -128,7 +128,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $get_extref
+  ;; CHECK-NEXT:   (call $get_externref
   ;; CHECK-NEXT:    (i32.const 9)
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:    (local.get $X)
@@ -162,10 +162,10 @@
   ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $X
-  ;; CHECK-NEXT:   (call $set_extref
+  ;; CHECK-NEXT:   (call $set_externref
   ;; CHECK-NEXT:    (i32.const 14)
   ;; CHECK-NEXT:    (i32.const 5)
-  ;; CHECK-NEXT:    (call $get_extref
+  ;; CHECK-NEXT:    (call $get_externref
   ;; CHECK-NEXT:     (i32.const 13)
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:     (local.get $X)
@@ -208,10 +208,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $X
-  ;; CHECK-NEXT:   (call $set_extref
+  ;; CHECK-NEXT:   (call $set_externref
   ;; CHECK-NEXT:    (i32.const 21)
   ;; CHECK-NEXT:    (i32.const 5)
-  ;; CHECK-NEXT:    (call $get_extref
+  ;; CHECK-NEXT:    (call $get_externref
   ;; CHECK-NEXT:     (i32.const 20)
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:     (local.get $X)
