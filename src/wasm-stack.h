@@ -197,15 +197,21 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
   emitFunctionEnd();
 }
 
-// Emits a node, but if it is a block with no name, emit a list of its contents.
-// This is ok to do because it is valid in the binary format - it will just be
-// "stacky" code. Such stacky code does not fit in Binaryen IR, but our binary
-// reader will automatically create a block for it (note that while doing so it
-// creates a block without a name, since nothing branches to it, which makes it
-// easy to handle in optimization passes and when writing the binary out again).
+// Emits a node in a position that can contain a list of contents, like an if
+// arm. This will emit the node, but if it is a block with no name, just emit
+// its contents. This is ok to do because a list of contents is ok in the wasm
+// binary format in such positions anyhow. When we reach such code in Binaryen
+// we will end up creating a block for it (note that while doing so we create a
+// block without a name, since nothing branches to it, which makes it easy to
+// handle in optimization passes and when writing the binary out again).
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
+  // Even if the block has a name, check if the name is necessary (if it has no
+  // uses, it is equivalent to not having one). This is potentially quadratic,
+  // but it is extremely rare to have recursion on this function, since it is
+  // limited by the number of non-block control flow structures (the places that
+  // call here).
   if (!block || BranchUtils::BranchSeeker::has(block, block->name)) {
     visit(curr);
     return;
