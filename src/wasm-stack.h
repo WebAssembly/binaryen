@@ -261,6 +261,13 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
     }
   };
 
+  // A block with no name never needs to be emitted: we can just emit its
+  // contents
+  if (!block->name.is()) {
+    visitChildren();
+    return;
+  }
+
   auto afterChildren = [this](Block* curr) {
     emitScopeEnd(curr);
     if (curr->type == Type::unreachable) {
