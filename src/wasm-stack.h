@@ -197,7 +197,12 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
   emitFunctionEnd();
 }
 
-// emits a node, but if it is a block with no name, emit a list of its contents
+// Emits a node, but if it is a block with no name, emit a list of its contents.
+// This is ok to do because it is valid in the binary format - if will just be
+// "stacky" code. Such stacky code does not fit in Binaryen IR, but our binary
+// reader will automatically create a block for it (note that while doing so it
+// creates a block without a name, since nothing branches to it, which makes it
+// easy to handle in optimization passes and when writing the binary out again).
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
@@ -260,6 +265,21 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
       ++from;
     }
   };
+
+  // A block with no name never needs to be emitted: we can just emit its
+  // contents. Note: in visitPossibleBlockContents() we also check the case
+  // where a name exists (we see if it actually has any uses); that handles more
+  // cases, but it requires more work. It is reasonable to do it in
+  // visitPossibleBlockContents which handles the common cases of blocks that
+  // are children of control flow structures (like an if arm); doing it here
+  // would affect every block, including highly-nested block stacks, which would
+  // end up as quadratic time. In optimized code the name will not exist if it
+  // not used anyhow, so a minor optimization for the unoptimized case that
+  // leads to potential quadratic behavior is not worth it here.
+  if (!curr->name.is()) {
+    visitChildren(curr, 0);
+    return;
+  }
 
   auto afterChildren = [this](Block* curr) {
     emitScopeEnd(curr);
