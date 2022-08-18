@@ -327,6 +327,63 @@ public:
         self->pushTask(visitPoppyExpression, currp);
       }
     }
+
+    // Also verify that only allowed expressions end up in the situation where
+    // the expression has type unreachable but there is no unreachable child.
+    // For example a Call with no unreachable child cannot be unreachable, but a
+    // Break can be.
+    if (curr->type == Type::unreachable) {
+      switch (curr->_id) {
+        case Expression::BreakId: {
+          // If there is a condition, that is already validated fully in
+          // visitBreak(). If there isn't a condition, then this is allowed to
+          // be unreachable even without an unreachable child. Either way, we
+          // can leave.
+          return;
+        }
+        case Expression::SwitchId:
+        case Expression::ReturnId:
+        case Expression::UnreachableId:
+        case Expression::ThrowId:
+        case Expression::RethrowId: {
+          // These can all be unreachable without an unreachable child.
+          return;
+        }
+        case Expression::CallId: {
+          if (curr->cast<Call>()->isReturn) {
+            return;
+          }
+          break;
+        }
+        case Expression::CallIndirectId: {
+          if (curr->cast<CallIndirect>()->isReturn) {
+            return;
+          }
+          break;
+        }
+        case Expression::CallRefId: {
+          if (curr->cast<CallRef>()->isReturn) {
+            return;
+          }
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+
+      // If we reach here, then we must have an unreachable child.
+      bool hasUnreachableChild = false;
+      for (auto* child : ChildIterator(curr)) {
+        if (child->type == Type::unreachable) {
+          hasUnreachableChild = true;
+          break;
+        }
+      }
+      self->shouldBeTrue(hasUnreachableChild,
+                         curr,
+                         "unreachable instruction must have unreachable child");
+    }
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
