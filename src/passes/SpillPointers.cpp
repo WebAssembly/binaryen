@@ -74,7 +74,7 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
-    pointerType = getModule()->memory.indexType;
+    pointerType = getModule()->memories[0]->indexType;
 
     // we only care about possible pointers
     auto* func = getFunction();
@@ -192,7 +192,8 @@ struct SpillPointers
                           pointerType.getByteSize(),
                           builder.makeLocalGet(spillLocal, pointerType),
                           builder.makeLocalGet(index, pointerType),
-                          pointerType));
+                          pointerType,
+                          getModule()->memories[0]->name));
     }
     // add the (modified) call
     block->list.push_back(call);

@@ -283,6 +283,14 @@ INITIAL_CONTENTS_IGNORE = [
     'fib2_emptylocspan_dwarf.wasm',
     'fannkuch3_dwarf.wasm',
     'multi_unit_abbrev_noprint.wasm',
+    # TODO fuzzer support for multi-memories
+    'multi-memories-atomics64.wast',
+    'multi-memories-basics.wast',
+    'multi-memories-simd.wast',
+    'multi-memories-atomics64.wasm',
+    'multi-memories-basics.wasm',
+    'multi-memories-simd.wasm',
+    'multi-memories_size.wast',
 ]
 
 

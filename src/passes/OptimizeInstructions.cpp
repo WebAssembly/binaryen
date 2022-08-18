@@ -1159,14 +1159,14 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    optimizeMemoryAccess(curr->ptr, curr->offset);
+    optimizeMemoryAccess(curr->ptr, curr->offset, curr->memory);
   }
 
   void visitStore(Store* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
-    optimizeMemoryAccess(curr->ptr, curr->offset);
+    optimizeMemoryAccess(curr->ptr, curr->offset, curr->memory);
     optimizeStoredValue(curr->value, curr->bytes);
     if (auto* unary = curr->value->dynCast<Unary>()) {
       if (unary->op == WrapInt64) {
@@ -2912,7 +2912,7 @@ private:
   }
 
   // fold constant factors into the offset
-  void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
+  void optimizeMemoryAccess(Expression*& ptr, Address& offset, Name memory) {
     // ptr may be a const, but it isn't worth folding that in (we still have a
     // const); in fact, it's better to do the opposite for gzip purposes as well
     // as for readability.
@@ -2920,7 +2920,8 @@ private:
     if (last) {
       uint64_t value64 = last->value.getInteger();
       uint64_t offset64 = offset;
-      if (getModule()->memory.is64()) {
+      auto mem = getModule()->getMemory(memory);
+      if (mem->is64()) {
         last->value = Literal(int64_t(value64 + offset64));
         offset = 0;
       } else {
@@ -3797,36 +3798,53 @@ private:
         case 1:
         case 2:
         case 4: {
-          return builder.makeStore(
-            bytes, // bytes
-            0,     // offset
-            1,     // align
-            memCopy->dest,
-            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i32),
-            Type::i32);
+          return builder.makeStore(bytes, // bytes
+                                   0,     // offset
+                                   1,     // align
+                                   memCopy->dest,
+                                   builder.makeLoad(bytes,
+                                                    false,
+                                                    0,
+                                                    1,
+                                                    memCopy->source,
+                                                    Type::i32,
+                                                    memCopy->sourceMemory),
+                                   Type::i32,
+                                   memCopy->destMemory);
         }
         case 8: {
-          return builder.makeStore(
-            bytes, // bytes
-            0,     // offset
-            1,     // align
-            memCopy->dest,
-            builder.makeLoad(bytes, false, 0, 1, memCopy->source, Type::i64),
-            Type::i64);
+          return builder.makeStore(bytes, // bytes
+                                   0,     // offset
+                                   1,     // align
+                                   memCopy->dest,
+                                   builder.makeLoad(bytes,
+                                                    false,
+                                                    0,
+                                                    1,
+                                                    memCopy->source,
+                                                    Type::i64,
+                                                    memCopy->sourceMemory),
+                                   Type::i64,
+                                   memCopy->destMemory);
         }
         case 16: {
           if (options.shrinkLevel == 0) {
             // This adds an extra 2 bytes so apply it only for
             // minimal shrink level
             if (getModule()->features.hasSIMD()) {
-              return builder.makeStore(
-                bytes, // bytes
-                0,     // offset
-                1,     // align
-                memCopy->dest,
-                builder.makeLoad(
-                  bytes, false, 0, 1, memCopy->source, Type::v128),
-                Type::v128);
+              return builder.makeStore(bytes, // bytes
+                                       0,     // offset
+                                       1,     // align
+                                       memCopy->dest,
+                                       builder.makeLoad(bytes,
+                                                        false,
+                                                        0,
+                                                        1,
+                                                        memCopy->source,
+                                                        Type::v128,
+                                                        memCopy->sourceMemory),
+                                       Type::v128,
+                                       memCopy->destMemory);
             }
           }
           break;
@@ -3873,7 +3891,8 @@ private:
                                    align,
                                    memFill->dest,
                                    builder.makeConst<uint32_t>(value),
-                                   Type::i32);
+                                   Type::i32,
+                                   memFill->memory);
         }
         case 2: {
           return builder.makeStore(2,
@@ -3881,7 +3900,8 @@ private:
                                    align,
                                    memFill->dest,
                                    builder.makeConst<uint32_t>(value * 0x0101U),
-                                   Type::i32);
+                                   Type::i32,
+                                   memFill->memory);
         }
         case 4: {
           // transform only when "value" or shrinkLevel equal to zero due to
@@ -3893,7 +3913,8 @@ private:
               align,
               memFill->dest,
               builder.makeConst<uint32_t>(value * 0x01010101U),
-              Type::i32);
+              Type::i32,
+              memFill->memory);
           }
           break;
         }
@@ -3907,7 +3928,8 @@ private:
               align,
               memFill->dest,
               builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
-              Type::i64);
+              Type::i64,
+              memFill->memory);
           }
           break;
         }
@@ -3921,7 +3943,8 @@ private:
                                        align,
                                        memFill->dest,
                                        builder.makeConst<uint8_t[16]>(values),
-                                       Type::v128);
+                                       Type::v128,
+                                       memFill->memory);
             } else {
               // { i64.store(d, C', 0), i64.store(d, C', 8) }
               auto destType = memFill->dest->type;
@@ -3933,14 +3956,16 @@ private:
                   align,
                   builder.makeLocalTee(tempLocal, memFill->dest, destType),
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
-                  Type::i64),
+                  Type::i64,
+                  memFill->memory),
                 builder.makeStore(
                   8,
                   offset + 8,
                   align,
                   builder.makeLocalGet(tempLocal, destType),
                   builder.makeConst<uint64_t>(value * 0x0101010101010101ULL),
-                  Type::i64),
+                  Type::i64,
+                  memFill->memory),
               });
             }
           }
@@ -3952,8 +3977,13 @@ private:
     }
     // memory.fill(d, v, 1)  ==>  store8(d, v)
     if (bytes == 1LL) {
-      return builder.makeStore(
-        1, offset, align, memFill->dest, memFill->value, Type::i32);
+      return builder.makeStore(1,
+                               offset,
+                               align,
+                               memFill->dest,
+                               memFill->value,
+                               Type::i32,
+                               memFill->memory);
     }
 
     return nullptr;
