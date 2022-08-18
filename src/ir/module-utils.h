@@ -106,10 +106,22 @@ inline Table* copyTable(const Table* table, Module& out) {
   return out.addTable(std::move(ret));
 }
 
+inline Memory* copyMemory(const Memory* memory, Module& out) {
+  auto ret = Builder::makeMemory(memory->name);
+  ret->hasExplicitName = memory->hasExplicitName;
+  ret->initial = memory->initial;
+  ret->max = memory->max;
+  ret->shared = memory->shared;
+  ret->indexType = memory->indexType;
+
+  return out.addMemory(std::move(ret));
+}
+
 inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   auto ret = Builder::makeDataSegment();
   ret->name = segment->name;
   ret->hasExplicitName = segment->hasExplicitName;
+  ret->memory = segment->memory;
   ret->isPassive = segment->isPassive;
   if (!segment->isPassive) {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
@@ -141,10 +153,12 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
+  for (auto& curr : in.memories) {
+    copyMemory(curr.get(), out);
+  }
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
-  out.memory = in.memory;
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
@@ -207,14 +221,27 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 // Convenient iteration over imported/non-imported module elements
 
 template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    if (!segment->isPassive && segment->memory == memory) {
+      visitor(segment.get());
+    }
   }
 }
 

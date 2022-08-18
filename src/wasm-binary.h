@@ -363,8 +363,10 @@ enum EncodedType {
   i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // top type of references, including host references
-  anyref = -0x11, // 0x6f
+  // external (host) references
+  externref = -0x11, // 0x6f
+  // top type of references to non-function Wasm data.
+  anyref = -0x12, // 0x6e
   // comparable reference type
   eqref = -0x13, // 0x6d
   // nullable typed function reference type, with parameter
@@ -396,7 +398,8 @@ enum EncodedType {
 
 enum EncodedHeapType {
   func = -0x10,   // 0x70
-  any = -0x11,    // 0x6f
+  ext = -0x11,    // 0x6f
+  any = -0x12,    // 0x6e
   eq = -0x13,     // 0x6d
   i31 = -0x16,    // 0x6a
   data = -0x19,   // 0x67
@@ -1187,6 +1190,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
+    std::unordered_map<Name, Index> memoryIndexes;
     std::unordered_map<Name, Index> dataIndexes;
 
     BinaryIndexes(Module& wasm) {
@@ -1209,6 +1213,7 @@ class WasmBinaryWriter {
       addIndexes(wasm.functions, functionIndexes);
       addIndexes(wasm.tags, tagIndexes);
       addIndexes(wasm.tables, tableIndexes);
+      addIndexes(wasm.memories, memoryIndexes);
 
       for (auto& curr : wasm.elementSegments) {
         auto index = elemIndexes.size();
@@ -1281,7 +1286,7 @@ public:
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
   void writeStart();
-  void writeMemory();
+  void writeMemories();
   void writeTypes();
   void writeImports();
 
@@ -1297,6 +1302,7 @@ public:
 
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getTableIndex(Name name) const;
+  uint32_t getMemoryIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
@@ -1466,14 +1472,18 @@ public:
   void verifyInt64(int64_t x);
   void readHeader();
   void readStart();
-  void readMemory();
+  void readMemories();
   void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
   Name getTableName(Index index);
+  Name getMemoryName(Index index);
   Name getGlobalName(Index index);
   Name getTagName(Index index);
+
+  // gets a memory in the combined import+defined space
+  Memory* getMemory(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
@@ -1525,6 +1535,15 @@ public:
   // we store elems here after being read from binary, until when we know their
   // names
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+
+  // we store memories here after being read from binary, before we know their
+  // names
+  std::vector<std::unique_ptr<Memory>> memories;
+  // we store memory imports here before wasm.addMemoryImport after we know
+  // their names
+  std::vector<Memory*> memoryImports;
+  // at index i we have all references to the memory i
+  std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
   // we store data here after being read from binary, before we know their names
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
@@ -1646,7 +1665,7 @@ public:
   BreakTarget getBreakTarget(int32_t offset);
   Name getExceptionTargetName(int32_t offset);
 
-  void readMemoryAccess(Address& alignment, Address& offset);
+  Index readMemoryAccess(Address& alignment, Address& offset);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);

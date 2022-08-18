@@ -83,12 +83,13 @@ const size_t DATA_DROP_SIZE = 3;
 
 Expression*
 makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
+  auto mem = module.getMemory(curr->memory);
   return builder.makeBinary(
-    module.memory.is64() ? GtUInt64 : GtUInt32,
+    mem->is64() ? GtUInt64 : GtUInt32,
     curr->dest,
-    builder.makeBinary(module.memory.is64() ? ShlInt64 : ShlInt32,
-                       builder.makeMemorySize(),
-                       builder.makeConstPtr(16)));
+    builder.makeBinary(mem->is64() ? ShlInt64 : ShlInt32,
+                       builder.makeMemorySize(mem->name),
+                       builder.makeConstPtr(16, mem->indexType)));
 }
 
 } // anonymous namespace
@@ -99,12 +100,13 @@ struct MemoryPacking : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const Memory& memory,
+  bool canOptimize(std::vector<std::unique_ptr<Memory>>& memories,
                    std::vector<std::unique_ptr<DataSegment>>& dataSegments,
                    const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
-  void dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
+  void dropUnusedSegments(Module* module,
+                          std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
   bool canSplit(const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
@@ -127,7 +129,8 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!canOptimize(module->memory, module->dataSegments, runner->options)) {
+  // Does not have multi-memories support
+  if (!canOptimize(module->memories, module->dataSegments, runner->options)) {
     return;
   }
 
@@ -144,7 +147,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     // like, such as memory.inits not having both zero offset and size.
     optimizeBulkMemoryOps(runner, module);
     getSegmentReferrers(module, referrers);
-    dropUnusedSegments(segments, referrers);
+    dropUnusedSegments(module, segments, referrers);
   }
 
   // The new, split memory segments
@@ -175,6 +178,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 
   segments.swap(packed);
+  module->updateDataSegmentsMap();
 
   if (module->features.hasBulkMemory()) {
     replaceBulkMemoryOps(runner, module, replacements);
@@ -182,17 +186,17 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
 }
 
 bool MemoryPacking::canOptimize(
-  const Memory& memory,
+  std::vector<std::unique_ptr<Memory>>& memories,
   std::vector<std::unique_ptr<DataSegment>>& dataSegments,
   const PassOptions& passOptions) {
-  if (!memory.exists) {
+  if (memories.empty() || memories.size() > 1) {
     return false;
   }
-
+  auto& memory = memories[0];
   // We must optimize under the assumption that memory has been initialized to
   // zero. That is the case for a memory declared in the module, but for a
   // memory that is imported, we must be told that it is zero-initialized.
-  if (memory.imported() && !passOptions.zeroFilledMemory) {
+  if (memory->imported() && !passOptions.zeroFilledMemory) {
     return false;
   }
 
@@ -480,6 +484,7 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 }
 
 void MemoryPacking::dropUnusedSegments(
+  Module* module,
   std::vector<std::unique_ptr<DataSegment>>& segments,
   ReferrersMap& referrers) {
   std::vector<std::unique_ptr<DataSegment>> usedSegments;
@@ -516,6 +521,7 @@ void MemoryPacking::dropUnusedSegments(
     }
   }
   std::swap(segments, usedSegments);
+  module->updateDataSegmentsMap();
   std::swap(referrers, usedReferrers);
 }
 
@@ -571,6 +577,7 @@ void MemoryPacking::createSplitSegments(
       segmentCount++;
     }
     auto curr = Builder::makeDataSegment(name,
+                                         segment->memory,
                                          segment->isPassive,
                                          offset,
                                          &segment->data[range.start],
@@ -719,11 +726,12 @@ void MemoryPacking::createReplacements(Module* module,
       // Create new memory.init or memory.fill
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
-        appendResult(builder.makeMemoryFill(dest, value, size));
+        appendResult(builder.makeMemoryFill(dest, value, size, init->memory));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
-        appendResult(builder.makeMemoryInit(initIndex, dest, offset, size));
+        appendResult(
+          builder.makeMemoryInit(initIndex, dest, offset, size, init->memory));
         initIndex++;
       }
     }

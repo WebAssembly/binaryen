@@ -20,6 +20,10 @@
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
+  // Flatten does not currently have support for multi-memories
+  if (wasm.memories.size() > 1) {
+    return false;
+  }
   // The presence of any MemoryInit instructions is a problem because they care
   // about segment identity, which flattening gets rid of ( when it merges them
   // all into one big segment).
@@ -62,7 +66,6 @@ bool flatten(Module& wasm) {
     }
     std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
   }
-  dataSegments.resize(1);
   dataSegments[0]->offset->cast<Const>()->value = Literal(int32_t(0));
   dataSegments[0]->data.swap(data);
   wasm.removeDataSegments(

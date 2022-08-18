@@ -186,7 +186,7 @@ void TranslateToFuzzReader::build() {
 
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
-  MemoryUtils::ensureExists(wasm.memory);
+  MemoryUtils::ensureExists(&wasm);
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
@@ -203,12 +203,14 @@ void TranslateToFuzzReader::setupMemory() {
       if (!segment->isPassive) {
         segment->offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
+        segment->memory = wasm.memories[0]->name;
       }
       wasm.dataSegments.push_back(std::move(segment));
     }
   } else {
     // init some data
     auto segment = builder.makeDataSegment();
+    segment->memory = wasm.memories[0]->name;
     segment->offset = builder.makeConst(int32_t(0));
     segment->setName(Name::fromInt(0), false);
     wasm.dataSegments.push_back(std::move(segment));
@@ -230,7 +232,7 @@ void TranslateToFuzzReader::setupMemory() {
   std::vector<Expression*> contents;
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
   for (Index i = 0; i < USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
@@ -242,7 +244,13 @@ void TranslateToFuzzReader::setupMemory() {
                              builder.makeLocalGet(0, Type::i32),
                              builder.makeConst(uint32_t(5))),
           builder.makeLocalGet(0, Type::i32)),
-        builder.makeLoad(1, false, i, 1, builder.makeConst(zero), Type::i32))));
+        builder.makeLoad(1,
+                         false,
+                         i,
+                         1,
+                         builder.makeConst(zero),
+                         Type::i32,
+                         wasm.memories[0]->name))));
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
@@ -252,7 +260,8 @@ void TranslateToFuzzReader::setupMemory() {
     builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   // Export memory so JS fuzzing can use it
   if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
+    wasm.addExport(builder.makeExport(
+      "memory", wasm.memories[0]->name, ExternalKind::Memory));
   }
 }
 
@@ -355,25 +364,26 @@ void TranslateToFuzzReader::finalizeMemory() {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
-    wasm.memory.initial = std::max(
-      wasm.memory.initial,
+    wasm.memories[0]->initial = std::max(
+      wasm.memories[0]->initial,
       Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
   }
-  wasm.memory.initial = std::max(wasm.memory.initial, USABLE_MEMORY);
+  wasm.memories[0]->initial =
+    std::max(wasm.memories[0]->initial, USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways.
-  if (wasm.memory.max == Memory::kUnlimitedSize) {
-    wasm.memory.max = wasm.memory.initial;
+  if (wasm.memories[0]->max == Memory::kUnlimitedSize) {
+    wasm.memories[0]->max = wasm.memories[0]->initial;
   }
-  if (wasm.memory.max <= wasm.memory.initial) {
+  if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
-    wasm.memory.max =
-      std::min(Address(wasm.memory.initial + 1), Address(Memory::kMaxSize32));
+    wasm.memories[0]->max = std::min(Address(wasm.memories[0]->initial + 1),
+                                     Address(Memory::kMaxSize32));
   }
   // Avoid an imported memory (which the fuzz harness would need to handle).
-  wasm.memory.module = wasm.memory.base = Name();
+  wasm.memories[0]->module = wasm.memories[0]->base = Name();
 }
 
 void TranslateToFuzzReader::finalizeTable() {
@@ -1407,12 +1417,12 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memory.indexType);
+  auto* ret = make(wasm.memories[0]->indexType);
   // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
   // most memory ops will just trap
   if (!allowOOB || !oneIn(10)) {
-    if (wasm.memory.is64()) {
+    if (wasm.memories[0]->is64()) {
       ret = builder.makeBinary(
         AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
     } else {
@@ -1431,11 +1441,19 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
       bool signed_ = get() & 1;
       switch (upTo(3)) {
         case 0:
-          return builder.makeLoad(1, signed_, offset, 1, ptr, type);
+          return builder.makeLoad(
+            1, signed_, offset, 1, ptr, type, wasm.memories[0]->name);
         case 1:
-          return builder.makeLoad(2, signed_, offset, pick(1, 2), ptr, type);
+          return builder.makeLoad(
+            2, signed_, offset, pick(1, 2), ptr, type, wasm.memories[0]->name);
         case 2:
-          return builder.makeLoad(4, signed_, offset, pick(1, 2, 4), ptr, type);
+          return builder.makeLoad(4,
+                                  signed_,
+                                  offset,
+                                  pick(1, 2, 4),
+                                  ptr,
+                                  type,
+                                  wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("unexpected value");
     }
@@ -1443,29 +1461,49 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
       bool signed_ = get() & 1;
       switch (upTo(4)) {
         case 0:
-          return builder.makeLoad(1, signed_, offset, 1, ptr, type);
-        case 1:
-          return builder.makeLoad(2, signed_, offset, pick(1, 2), ptr, type);
-        case 2:
-          return builder.makeLoad(4, signed_, offset, pick(1, 2, 4), ptr, type);
-        case 3:
           return builder.makeLoad(
-            8, signed_, offset, pick(1, 2, 4, 8), ptr, type);
+            1, signed_, offset, 1, ptr, type, wasm.memories[0]->name);
+        case 1:
+          return builder.makeLoad(
+            2, signed_, offset, pick(1, 2), ptr, type, wasm.memories[0]->name);
+        case 2:
+          return builder.makeLoad(4,
+                                  signed_,
+                                  offset,
+                                  pick(1, 2, 4),
+                                  ptr,
+                                  type,
+                                  wasm.memories[0]->name);
+        case 3:
+          return builder.makeLoad(8,
+                                  signed_,
+                                  offset,
+                                  pick(1, 2, 4, 8),
+                                  ptr,
+                                  type,
+                                  wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("unexpected value");
     }
     case Type::f32: {
-      return builder.makeLoad(4, false, offset, pick(1, 2, 4), ptr, type);
+      return builder.makeLoad(
+        4, false, offset, pick(1, 2, 4), ptr, type, wasm.memories[0]->name);
     }
     case Type::f64: {
-      return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
+      return builder.makeLoad(
+        8, false, offset, pick(1, 2, 4, 8), ptr, type, wasm.memories[0]->name);
     }
     case Type::v128: {
       if (!wasm.features.hasSIMD()) {
         return makeTrivial(type);
       }
-      return builder.makeLoad(
-        16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
+      return builder.makeLoad(16,
+                              false,
+                              offset,
+                              pick(1, 2, 4, 8, 16),
+                              ptr,
+                              type,
+                              wasm.memories[0]->name);
     }
     case Type::none:
     case Type::unreachable:
@@ -1488,7 +1526,7 @@ Expression* TranslateToFuzzReader::makeLoad(Type type) {
   }
   // make it atomic
   auto* load = ret->cast<Load>();
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   load->isAtomic = true;
   load->signed_ = false;
   load->align = load->bytes;
@@ -1515,6 +1553,7 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
         store->value = make(Type::unreachable);
         break;
     }
+    store->memory = wasm.memories[0]->name;
     store->finalize();
     return store;
   }
@@ -1530,40 +1569,58 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
     case Type::i32: {
       switch (upTo(3)) {
         case 0:
-          return builder.makeStore(1, offset, 1, ptr, value, type);
+          return builder.makeStore(
+            1, offset, 1, ptr, value, type, wasm.memories[0]->name);
         case 1:
-          return builder.makeStore(2, offset, pick(1, 2), ptr, value, type);
+          return builder.makeStore(
+            2, offset, pick(1, 2), ptr, value, type, wasm.memories[0]->name);
         case 2:
-          return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
+          return builder.makeStore(
+            4, offset, pick(1, 2, 4), ptr, value, type, wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("invalid value");
     }
     case Type::i64: {
       switch (upTo(4)) {
         case 0:
-          return builder.makeStore(1, offset, 1, ptr, value, type);
-        case 1:
-          return builder.makeStore(2, offset, pick(1, 2), ptr, value, type);
-        case 2:
-          return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
-        case 3:
           return builder.makeStore(
-            8, offset, pick(1, 2, 4, 8), ptr, value, type);
+            1, offset, 1, ptr, value, type, wasm.memories[0]->name);
+        case 1:
+          return builder.makeStore(
+            2, offset, pick(1, 2), ptr, value, type, wasm.memories[0]->name);
+        case 2:
+          return builder.makeStore(
+            4, offset, pick(1, 2, 4), ptr, value, type, wasm.memories[0]->name);
+        case 3:
+          return builder.makeStore(8,
+                                   offset,
+                                   pick(1, 2, 4, 8),
+                                   ptr,
+                                   value,
+                                   type,
+                                   wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("invalid value");
     }
     case Type::f32: {
-      return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
+      return builder.makeStore(
+        4, offset, pick(1, 2, 4), ptr, value, type, wasm.memories[0]->name);
     }
     case Type::f64: {
-      return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
+      return builder.makeStore(
+        8, offset, pick(1, 2, 4, 8), ptr, value, type, wasm.memories[0]->name);
     }
     case Type::v128: {
       if (!wasm.features.hasSIMD()) {
         return makeTrivial(type);
       }
-      return builder.makeStore(
-        16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
+      return builder.makeStore(16,
+                               offset,
+                               pick(1, 2, 4, 8, 16),
+                               ptr,
+                               value,
+                               type,
+                               wasm.memories[0]->name);
     }
     case Type::none:
     case Type::unreachable:
@@ -1588,7 +1645,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
     return store;
   }
   // make it atomic
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   store->isAtomic = true;
   store->align = store->bytes;
   return store;
@@ -1915,6 +1972,10 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   assert(heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
   switch (heapType.getBasic()) {
+    case HeapType::ext: {
+      assert(type.isNullable() && "Cannot handle non-nullable externref");
+      return builder.makeRefNull(type);
+    }
     case HeapType::func: {
       return makeRefFuncConst(type);
     }
@@ -2534,7 +2595,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   if (!allowMemory) {
     return makeTrivial(type);
   }
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   if (type == Type::none) {
     return builder.makeAtomicFence();
   }
@@ -2544,12 +2605,17 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       auto expectedType = pick(Type::i32, Type::i64);
       auto* expected = make(expectedType);
       auto* timeout = make(Type::i64);
-      return builder.makeAtomicWait(
-        ptr, expected, timeout, expectedType, logify(get()));
+      return builder.makeAtomicWait(ptr,
+                                    expected,
+                                    timeout,
+                                    expectedType,
+                                    logify(get()),
+                                    wasm.memories[0]->name);
     } else {
       auto* ptr = makePointer();
       auto* count = make(Type::i32);
-      return builder.makeAtomicNotify(ptr, count, logify(get()));
+      return builder.makeAtomicNotify(
+        ptr, count, logify(get()), wasm.memories[0]->name);
     }
   }
   Index bytes;
@@ -2602,12 +2668,13 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       offset,
       ptr,
       value,
-      type);
+      type,
+      wasm.memories[0]->name);
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
     return builder.makeAtomicCmpxchg(
-      bytes, offset, ptr, expected, replacement, type);
+      bytes, offset, ptr, expected, replacement, type, wasm.memories[0]->name);
   }
 }
 
@@ -2808,7 +2875,7 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
       WASM_UNREACHABLE("Unexpected SIMD loads");
   }
   Expression* ptr = makePointer();
-  return builder.makeSIMDLoad(op, offset, align, ptr);
+  return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
@@ -2872,7 +2939,8 @@ Expression* TranslateToFuzzReader::makeMemoryInit() {
   Expression* dest = makePointer();
   Expression* offset = builder.makeConst(int32_t(offsetVal));
   Expression* size = builder.makeConst(int32_t(sizeVal));
-  return builder.makeMemoryInit(segment, dest, offset, size);
+  return builder.makeMemoryInit(
+    segment, dest, offset, size, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeDataDrop() {
@@ -2888,8 +2956,9 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   }
   Expression* dest = makePointer();
   Expression* source = makePointer();
-  Expression* size = make(wasm.memory.indexType);
-  return builder.makeMemoryCopy(dest, source, size);
+  Expression* size = make(wasm.memories[0]->indexType);
+  return builder.makeMemoryCopy(
+    dest, source, size, wasm.memories[0]->name, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryFill() {
@@ -2898,8 +2967,8 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   }
   Expression* dest = makePointer();
   Expression* value = make(Type::i32);
-  Expression* size = make(wasm.memory.indexType);
-  return builder.makeMemoryFill(dest, value, size);
+  Expression* size = make(wasm.memories[0]->indexType);
+  return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
@@ -3028,13 +3097,14 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::func:
         // TODO: Typed function references.
         return HeapType::func;
+      case HeapType::ext:
+        return HeapType::ext;
       case HeapType::any:
         // TODO: nontrivial types as well.
         return pick(
           FeatureOptions<HeapType>()
-            .add(FeatureSet::ReferenceTypes, HeapType::func, HeapType::any)
+            .add(FeatureSet::ReferenceTypes, HeapType::func /*, HeapType::ext*/)
             .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                 HeapType::func,
                  HeapType::any,
                  HeapType::eq,
                  HeapType::i31,

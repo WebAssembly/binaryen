@@ -59,6 +59,14 @@ std::ostream& printName(Name name, std::ostream& o) {
   return o;
 }
 
+std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
+  if (!wasm || wasm->memories.size() > 1) {
+    o << ' ';
+    printName(name, o);
+  }
+  return o;
+}
+
 static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   Name name;
   if (func) {
@@ -80,6 +88,9 @@ static bool maybePrintRefShorthand(std::ostream& o, Type type) {
   if (heapType.isBasic()) {
     if (type.isNullable()) {
       switch (heapType.getBasic()) {
+        case HeapType::ext:
+          o << "externref";
+          return true;
         case HeapType::func:
           o << "funcref";
           return true;
@@ -107,6 +118,7 @@ static bool maybePrintRefShorthand(std::ostream& o, Type type) {
       }
     } else {
       switch (heapType.getBasic()) {
+        case HeapType::ext:
         case HeapType::func:
         case HeapType::any:
         case HeapType::eq:
@@ -521,6 +533,7 @@ struct PrintExpressionContents
       o << (curr->signed_ ? "_s" : "_u");
     }
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -546,6 +559,7 @@ struct PrintExpressionContents
       }
     }
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -596,6 +610,7 @@ struct PrintExpressionContents
       o << "_u";
     }
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -609,6 +624,7 @@ struct PrintExpressionContents
       o << "_u";
     }
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -619,12 +635,14 @@ struct PrintExpressionContents
     assert(type == Type::i32 || type == Type::i64);
     o << "memory.atomic.wait" << (type == Type::i32 ? "32" : "64");
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
   }
   void visitAtomicNotify(AtomicNotify* curr) {
     printMedium(o, "memory.atomic.notify");
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -813,6 +831,7 @@ struct PrintExpressionContents
         break;
     }
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -849,6 +868,7 @@ struct PrintExpressionContents
         break;
     }
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -861,6 +881,7 @@ struct PrintExpressionContents
     prepareColor(o);
     o << "memory.init";
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
     o << ' ' << curr->segment;
   }
   void visitDataDrop(DataDrop* curr) {
@@ -873,11 +894,14 @@ struct PrintExpressionContents
     prepareColor(o);
     o << "memory.copy";
     restoreNormalColor(o);
+    printMemoryName(curr->destMemory, o, wasm);
+    printMemoryName(curr->sourceMemory, o, wasm);
   }
   void visitMemoryFill(MemoryFill* curr) {
     prepareColor(o);
     o << "memory.fill";
     restoreNormalColor(o);
+    printMemoryName(curr->memory, o, wasm);
   }
   void visitConst(Const* curr) {
     o << curr->value.type << ".const " << curr->value;
@@ -1917,8 +1941,14 @@ struct PrintExpressionContents
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
-  void visitMemorySize(MemorySize* curr) { printMedium(o, "memory.size"); }
-  void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
+  void visitMemorySize(MemorySize* curr) {
+    printMedium(o, "memory.size");
+    printMemoryName(curr->memory, o, wasm);
+  }
+  void visitMemoryGrow(MemoryGrow* curr) {
+    printMedium(o, "memory.grow");
+    printMemoryName(curr->memory, o, wasm);
+  }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
     printHeapType(o, curr->type.getHeapType(), wasm);
@@ -3129,14 +3159,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << ")";
   }
   void visitMemory(Memory* curr) {
-    if (!curr->exists) {
-      return;
-    }
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
       emitImportHeader(curr);
-      printMemoryHeader(&currModule->memory);
+      printMemoryHeader(curr);
       o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);
@@ -3390,6 +3417,7 @@ public:
     PrintSExpression print(o);
     print.setFull(true);
     print.setDebugInfo(runner->options.debugInfo);
+    print.currModule = module;
     print.visitModule(module);
   }
 };
@@ -3407,6 +3435,7 @@ public:
     PrintSExpression print(o);
     print.setDebugInfo(runner->options.debugInfo);
     print.setStackIR(true);
+    print.currModule = module;
     print.visitModule(module);
   }
 };

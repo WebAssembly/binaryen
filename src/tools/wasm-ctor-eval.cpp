@@ -122,14 +122,11 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
     if (memory->module == env->name) {
-      env->memory.name = wasm.memory.name;
-      env->memory.exists = true;
-      env->memory.initial = memory->initial;
-      env->memory.max = memory->max;
-      env->memory.shared = memory->shared;
-      env->memory.indexType = memory->indexType;
+      auto* copied = ModuleUtils::copyMemory(memory, *env);
+      copied->module = Name();
+      copied->base = Name();
       env->addExport(Builder(*env).makeExport(
-        wasm.memory.base, wasm.memory.name, ExternalKind::Memory));
+        memory->base, copied->name, ExternalKind::Memory));
     }
   });
 
@@ -147,7 +144,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
   // A representation of the contents of wasm memory as we execute.
-  std::vector<char> memory;
+  std::unordered_map<Name, std::vector<char>> memories;
 
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
@@ -160,8 +157,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   void applyToModule() {
     clearApplyState();
 
-    // If nothing was ever written to memory then there is nothing to update.
-    if (!memory.empty()) {
+    // If nothing was ever written to memories then there is nothing to update.
+    if (!memories.empty()) {
       applyMemoryToModule();
     }
 
@@ -171,6 +168,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   void init(Module& wasm_, EvallingModuleRunner& instance_) override {
     wasm = &wasm_;
     instance = &instance_;
+    for (auto& memory : wasm->memories) {
+      if (!memory->imported()) {
+        std::vector<char> data;
+        memories[memory->name] = data;
+      }
+    }
   }
 
   void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
@@ -204,7 +207,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
           }
 
           // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0);
+          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
           return {Literal(int32_t(0))};
         }
 
@@ -225,7 +228,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
           }
 
           // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0);
+          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
           return {Literal(int32_t(0))};
         }
 
@@ -336,29 +339,47 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // called during initialization
   void tableStore(Name tableName, Index index, const Literal& value) override {}
 
-  int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
-  uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
-  int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }
-  uint16_t load16u(Address addr) override { return doLoad<uint16_t>(addr); }
-  int32_t load32s(Address addr) override { return doLoad<int32_t>(addr); }
-  uint32_t load32u(Address addr) override { return doLoad<uint32_t>(addr); }
-  int64_t load64s(Address addr) override { return doLoad<int64_t>(addr); }
-  uint64_t load64u(Address addr) override { return doLoad<uint64_t>(addr); }
+  int8_t load8s(Address addr, Name memoryName) override {
+    return doLoad<int8_t>(addr, memoryName);
+  }
+  uint8_t load8u(Address addr, Name memoryName) override {
+    return doLoad<uint8_t>(addr, memoryName);
+  }
+  int16_t load16s(Address addr, Name memoryName) override {
+    return doLoad<int16_t>(addr, memoryName);
+  }
+  uint16_t load16u(Address addr, Name memoryName) override {
+    return doLoad<uint16_t>(addr, memoryName);
+  }
+  int32_t load32s(Address addr, Name memoryName) override {
+    return doLoad<int32_t>(addr, memoryName);
+  }
+  uint32_t load32u(Address addr, Name memoryName) override {
+    return doLoad<uint32_t>(addr, memoryName);
+  }
+  int64_t load64s(Address addr, Name memoryName) override {
+    return doLoad<int64_t>(addr, memoryName);
+  }
+  uint64_t load64u(Address addr, Name memoryName) override {
+    return doLoad<uint64_t>(addr, memoryName);
+  }
 
-  void store8(Address addr, int8_t value) override {
-    doStore<int8_t>(addr, value);
+  void store8(Address addr, int8_t value, Name memoryName) override {
+    doStore<int8_t>(addr, value, memoryName);
   }
-  void store16(Address addr, int16_t value) override {
-    doStore<int16_t>(addr, value);
+  void store16(Address addr, int16_t value, Name memoryName) override {
+    doStore<int16_t>(addr, value, memoryName);
   }
-  void store32(Address addr, int32_t value) override {
-    doStore<int32_t>(addr, value);
+  void store32(Address addr, int32_t value, Name memoryName) override {
+    doStore<int32_t>(addr, value, memoryName);
   }
-  void store64(Address addr, int64_t value) override {
-    doStore<int64_t>(addr, value);
+  void store64(Address addr, int64_t value, Name memoryName) override {
+    doStore<int64_t>(addr, value, memoryName);
   }
 
-  bool growMemory(Address /*oldSize*/, Address /*newSize*/) override {
+  bool growMemory(Name memoryName,
+                  Address /*oldSize*/,
+                  Address /*newSize*/) override {
     throw FailToEvalException("grow memory");
   }
 
@@ -385,8 +406,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
 private:
   // TODO: handle unaligned too, see shell-interface
-
-  template<typename T> T* getMemory(Address address) {
+  template<typename T> T* getMemory(Address address, Name memoryName) {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      Fatal() << "memory not found: " << memoryName;
+    }
+    auto& memory = it->second;
     // resize the memory buffer as needed.
     auto max = address + sizeof(T);
     if (max > memory.size()) {
@@ -395,15 +420,15 @@ private:
     return (T*)(&memory[address]);
   }
 
-  template<typename T> void doStore(Address address, T value) {
+  template<typename T> void doStore(Address address, T value, Name memoryName) {
     // do a memcpy to avoid undefined behavior if unaligned
-    memcpy(getMemory<T>(address), &value, sizeof(T));
+    memcpy(getMemory<T>(address, memoryName), &value, sizeof(T));
   }
 
-  template<typename T> T doLoad(Address address) {
+  template<typename T> T doLoad(Address address, Name memoryName) {
     // do a memcpy to avoid undefined behavior if unaligned
     T ret;
-    memcpy(&ret, getMemory<T>(address), sizeof(T));
+    memcpy(&ret, getMemory<T>(address, memoryName), sizeof(T));
     return ret;
   }
 
@@ -431,14 +456,15 @@ private:
       auto curr = builder.makeDataSegment();
       curr->offset = builder.makeConst(int32_t(0));
       curr->setName(Name::fromInt(0), false);
-      wasm->dataSegments.push_back(std::move(curr));
+      curr->memory = wasm->memories[0]->name;
+      wasm->addDataSegment(std::move(curr));
     }
     auto& segment = wasm->dataSegments[0];
     assert(segment->offset->cast<Const>()->value.getInteger() == 0);
 
     // Copy the current memory contents after execution into the Module's
     // memory.
-    segment->data = memory;
+    segment->data = memories[wasm->memories[0]->name];
   }
 
   // Serializing GC data requires more work than linear memory, because

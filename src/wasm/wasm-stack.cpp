@@ -234,7 +234,7 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  emitMemoryAccess(curr->align, curr->bytes, curr->offset);
+  emitMemoryAccess(curr->align, curr->bytes, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitStore(Store* curr) {
@@ -331,7 +331,7 @@ void BinaryInstWriter::visitStore(Store* curr) {
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  emitMemoryAccess(curr->align, curr->bytes, curr->offset);
+  emitMemoryAccess(curr->align, curr->bytes, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
@@ -390,7 +390,7 @@ void BinaryInstWriter::visitAtomicRMW(AtomicRMW* curr) {
   }
 #undef CASE_FOR_OP
 
-  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
+  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
@@ -432,7 +432,7 @@ void BinaryInstWriter::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     default:
       WASM_UNREACHABLE("unexpected type");
   }
-  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
+  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
@@ -440,12 +440,12 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
   switch (curr->expectedType.getBasic()) {
     case Type::i32: {
       o << int8_t(BinaryConsts::I32AtomicWait);
-      emitMemoryAccess(4, 4, curr->offset);
+      emitMemoryAccess(4, 4, curr->offset, curr->memory);
       break;
     }
     case Type::i64: {
       o << int8_t(BinaryConsts::I64AtomicWait);
-      emitMemoryAccess(8, 8, curr->offset);
+      emitMemoryAccess(8, 8, curr->offset, curr->memory);
       break;
     }
     default:
@@ -455,7 +455,7 @@ void BinaryInstWriter::visitAtomicWait(AtomicWait* curr) {
 
 void BinaryInstWriter::visitAtomicNotify(AtomicNotify* curr) {
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicNotify);
-  emitMemoryAccess(4, 4, curr->offset);
+  emitMemoryAccess(4, 4, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
@@ -646,7 +646,8 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
       break;
   }
   assert(curr->align);
-  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
+  emitMemoryAccess(
+    curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
 }
 
 void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
@@ -678,14 +679,15 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       break;
   }
   assert(curr->align);
-  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
+  emitMemoryAccess(
+    curr->align, /*(unused) bytes=*/0, curr->offset, curr->memory);
   o << curr->index;
 }
 
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);
-  o << U32LEB(curr->segment) << int8_t(0);
+  o << U32LEB(curr->segment) << int8_t(parent.getMemoryIndex(curr->memory));
 }
 
 void BinaryInstWriter::visitDataDrop(DataDrop* curr) {
@@ -697,13 +699,14 @@ void BinaryInstWriter::visitDataDrop(DataDrop* curr) {
 void BinaryInstWriter::visitMemoryCopy(MemoryCopy* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryCopy);
-  o << int8_t(0) << int8_t(0);
+  o << int8_t(parent.getMemoryIndex(curr->destMemory))
+    << int8_t(parent.getMemoryIndex(curr->sourceMemory));
 }
 
 void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryFill);
-  o << int8_t(0);
+  o << int8_t(parent.getMemoryIndex(curr->memory));
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
@@ -1859,12 +1862,12 @@ void BinaryInstWriter::visitReturn(Return* curr) {
 
 void BinaryInstWriter::visitMemorySize(MemorySize* curr) {
   o << int8_t(BinaryConsts::MemorySize);
-  o << U32LEB(0); // Reserved flags field
+  o << U32LEB(parent.getMemoryIndex(curr->memory));
 }
 
 void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
   o << int8_t(BinaryConsts::MemoryGrow);
-  o << U32LEB(0); // Reserved flags field
+  o << U32LEB(parent.getMemoryIndex(curr->memory));
 }
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
@@ -2476,8 +2479,19 @@ void BinaryInstWriter::setScratchLocals() {
 
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
-                                        uint32_t offset) {
-  o << U32LEB(Bits::log2(alignment ? alignment : bytes));
+                                        uint32_t offset,
+                                        Name memory) {
+  uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
+  uint32_t memoryIdx = parent.getMemoryIndex(memory);
+  if (memoryIdx > 0) {
+    // Set bit 6 in the alignment to indicate a memory index is present per:
+    // https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md
+    alignmentBits = alignmentBits | 1 << 6;
+  }
+  o << U32LEB(alignmentBits);
+  if (memoryIdx > 0) {
+    o << U32LEB(memoryIdx);
+  }
   o << U32LEB(offset);
 }
 

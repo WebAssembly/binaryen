@@ -153,6 +153,7 @@ struct HeapTypeGeneratorImpl {
 
   HeapType::BasicHeapType generateBasicHeapType() {
     return rand.pick(HeapType::func,
+                     HeapType::ext,
                      HeapType::any,
                      HeapType::eq,
                      HeapType::i31,
@@ -278,6 +279,7 @@ struct HeapTypeGeneratorImpl {
       return type;
     } else {
       switch (type) {
+        case HeapType::ext:
         case HeapType::i31:
           // No other subtypes.
           return type;
@@ -371,6 +373,8 @@ struct HeapTypeGeneratorImpl {
       // This is not a constructed type, so it must be a basic type.
       assert(type.isBasic());
       switch (type.getBasic()) {
+        case HeapType::ext:
+          return HeapType::ext;
         case HeapType::func:
           return pickSubFunc();
         case HeapType::any:
@@ -477,16 +481,31 @@ struct HeapTypeGeneratorImpl {
       switch (*basic) {
         case HeapType::func:
           return SignatureKind{};
+        case HeapType::ext:
         case HeapType::i31:
           return super;
         case HeapType::any:
-          return generateHeapTypeKind();
+          if (rand.oneIn(4)) {
+            switch (rand.upTo(3)) {
+              case 0:
+                return HeapType::eq;
+              case 1:
+                return HeapType::i31;
+              case 2:
+                return HeapType::data;
+            }
+          }
+          return DataKind{};
         case HeapType::eq:
           if (rand.oneIn(4)) {
-            return HeapType::i31;
-          } else {
-            return DataKind{};
+            switch (rand.upTo(2)) {
+              case 0:
+                return HeapType::i31;
+              case 1:
+                return HeapType::data;
+            }
           }
+          return DataKind{};
         case HeapType::data:
           return DataKind{};
         case HeapType::string:

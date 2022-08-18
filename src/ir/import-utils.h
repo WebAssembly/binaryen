@@ -30,6 +30,7 @@ struct ImportInfo {
   std::vector<Global*> importedGlobals;
   std::vector<Function*> importedFunctions;
   std::vector<Table*> importedTables;
+  std::vector<Memory*> importedMemories;
   std::vector<Tag*> importedTags;
 
   ImportInfo(Module& wasm) : wasm(wasm) {
@@ -46,6 +47,11 @@ struct ImportInfo {
     for (auto& import : wasm.tables) {
       if (import->imported()) {
         importedTables.push_back(import.get());
+      }
+    }
+    for (auto& import : wasm.memories) {
+      if (import->imported()) {
+        importedMemories.push_back(import.get());
       }
     }
     for (auto& import : wasm.tags) {
@@ -88,11 +94,13 @@ struct ImportInfo {
 
   Index getNumImportedTables() { return importedTables.size(); }
 
+  Index getNumImportedMemories() { return importedMemories.size(); }
+
   Index getNumImportedTags() { return importedTags.size(); }
 
   Index getNumImports() {
     return getNumImportedGlobals() + getNumImportedFunctions() +
-           getNumImportedTags() + (wasm.memory.imported() ? 1 : 0) +
+           getNumImportedTags() + getNumImportedMemories() +
            getNumImportedTables();
   }
 
@@ -106,6 +114,10 @@ struct ImportInfo {
 
   Index getNumDefinedTables() {
     return wasm.tables.size() - getNumImportedTables();
+  }
+
+  Index getNumDefinedMemories() {
+    return wasm.memories.size() - getNumImportedMemories();
   }
 
   Index getNumDefinedTags() { return wasm.tags.size() - getNumImportedTags(); }

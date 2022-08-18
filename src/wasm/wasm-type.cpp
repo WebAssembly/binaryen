@@ -172,7 +172,7 @@ struct TypeBounder {
 
   bool hasLeastUpperBound(Type a, Type b);
   Type getLeastUpperBound(Type a, Type b);
-  HeapType getLeastUpperBound(HeapType a, HeapType b);
+  std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
 
 private:
   // Return the LUB iff a LUB was found. The HeapType and Struct overloads are
@@ -181,7 +181,7 @@ private:
   // Note that these methods can return temporary types, so they should never be
   // used directly.
   std::optional<Type> lub(Type a, Type b);
-  HeapType lub(HeapType a, HeapType b);
+  std::optional<HeapType> lub(HeapType a, HeapType b);
   std::optional<Tuple> lub(const Tuple& a, const Tuple& b);
   std::optional<Field> lub(const Field& a, const Field& b);
   std::optional<Signature> lub(const Signature& a, const Signature& b);
@@ -573,8 +573,8 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
   WASM_UNREACHABLE("unexpected kind");
 };
 
-HeapType getBasicHeapTypeLUB(HeapType::BasicHeapType a,
-                             HeapType::BasicHeapType b) {
+std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
+                                            HeapType::BasicHeapType b) {
   if (a == b) {
     return a;
   }
@@ -583,25 +583,27 @@ HeapType getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     std::swap(a, b);
   }
   switch (a) {
+    case HeapType::ext:
+      return {};
     case HeapType::func:
     case HeapType::any:
-      return HeapType::any;
+      return {HeapType::any};
     case HeapType::eq:
       if (b == HeapType::i31 || b == HeapType::data) {
-        return HeapType::eq;
+        return {HeapType::eq};
       }
-      return HeapType::any;
+      return {HeapType::any};
     case HeapType::i31:
       if (b == HeapType::data) {
-        return HeapType::eq;
+        return {HeapType::eq};
       }
-      return HeapType::any;
+      return {HeapType::any};
     case HeapType::data:
     case HeapType::string:
     case HeapType::stringview_wtf8:
     case HeapType::stringview_wtf16:
     case HeapType::stringview_iter:
-      return HeapType::any;
+      return {HeapType::any};
   }
   WASM_UNREACHABLE("unexpected basic type");
 }
@@ -1205,11 +1207,12 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     return Type(elems);
   }
   if (a.isRef() && b.isRef()) {
-    auto nullability =
-      (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
-    auto heapType =
-      HeapType::getLeastUpperBound(a.getHeapType(), b.getHeapType());
-    return Type(heapType, nullability);
+    if (auto heapType =
+          HeapType::getLeastUpperBound(a.getHeapType(), b.getHeapType())) {
+      auto nullability =
+        (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+      return Type(*heapType, nullability);
+    }
   }
   return Type::none;
   WASM_UNREACHABLE("unexpected type");
@@ -1411,7 +1414,7 @@ std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
   return types;
 }
 
-HeapType HeapType::getLeastUpperBound(HeapType a, HeapType b) {
+std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
   if (a == b) {
     return a;
   }
@@ -1616,10 +1619,13 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   }
   if (b.isBasic()) {
     switch (b.getBasic()) {
+      case HeapType::ext:
+        return a == HeapType::ext;
       case HeapType::func:
         return a.isSignature();
       case HeapType::any:
-        return true;
+        // TODO: exclude functions as well.
+        return a != HeapType::ext;
       case HeapType::eq:
         return a == HeapType::i31 || a.isData();
       case HeapType::i31:
@@ -1735,8 +1741,13 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   return built.back().getArray().element.type;
 }
 
-HeapType TypeBounder::getLeastUpperBound(HeapType a, HeapType b) {
-  HeapType l = lub(a, b);
+std::optional<HeapType> TypeBounder::getLeastUpperBound(HeapType a,
+                                                        HeapType b) {
+  auto maybeLub = lub(a, b);
+  if (!maybeLub) {
+    return std::nullopt;
+  }
+  HeapType l = *maybeLub;
   if (!isTemp(l)) {
     // The LUB is already canonical, so we're done.
     return l;
@@ -1767,15 +1778,16 @@ std::optional<Type> TypeBounder::lub(Type a, Type b) {
     }
     return builder.getTempTupleType(*tuple);
   } else if (a.isRef() && b.isRef()) {
-    auto nullability =
-      (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
-    HeapType heapType = lub(a.getHeapType(), b.getHeapType());
-    return builder.getTempRefType(heapType, nullability);
+    if (auto heapType = lub(a.getHeapType(), b.getHeapType())) {
+      auto nullability =
+        (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+      return builder.getTempRefType(*heapType, nullability);
+    }
   }
   return {};
 }
 
-HeapType TypeBounder::lub(HeapType a, HeapType b) {
+std::optional<HeapType> TypeBounder::lub(HeapType a, HeapType b) {
   if (a == b) {
     return a;
   }
@@ -1999,6 +2011,8 @@ std::ostream& TypePrinter::print(Type type) {
 std::ostream& TypePrinter::print(HeapType type) {
   if (type.isBasic()) {
     switch (type.getBasic()) {
+      case HeapType::ext:
+        return os << "extern";
       case HeapType::func:
         return os << "func";
       case HeapType::any:

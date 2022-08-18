@@ -101,6 +101,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     auto heapType = type.getHeapType();
     if (heapType.isBasic()) {
       switch (heapType.getBasic()) {
+        case HeapType::ext:
         case HeapType::any:
         case HeapType::eq:
           return; // null
@@ -464,6 +465,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
     } else {
       switch (literal.type.getHeapType().getBasic()) {
+        case HeapType::ext:
+          assert(literal.isNull() && "unexpected non-null externref literal");
+          o << "externref(null)";
+          break;
         case HeapType::any:
           assert(literal.isNull() && "unexpected non-null anyref literal");
           o << "anyref(null)";

@@ -160,7 +160,7 @@ BinaryenExpressionRef makeMemoryInit(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 1024);
   BinaryenExpressionRef offset = makeInt32(module, 0);
   BinaryenExpressionRef size = makeInt32(module, 12);
-  return BinaryenMemoryInit(module, 0, dest, offset, size);
+  return BinaryenMemoryInit(module, 0, dest, offset, size, "0");
 };
 
 BinaryenExpressionRef makeDataDrop(BinaryenModuleRef module) {
@@ -171,14 +171,14 @@ BinaryenExpressionRef makeMemoryCopy(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 2048);
   BinaryenExpressionRef source = makeInt32(module, 1024);
   BinaryenExpressionRef size = makeInt32(module, 12);
-  return BinaryenMemoryCopy(module, dest, source, size);
+  return BinaryenMemoryCopy(module, dest, source, size, "0", "0");
 };
 
 BinaryenExpressionRef makeMemoryFill(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 0);
   BinaryenExpressionRef value = makeInt32(module, 42);
   BinaryenExpressionRef size = makeInt32(module, 1024);
-  return BinaryenMemoryFill(module, dest, value, size);
+  return BinaryenMemoryFill(module, dest, value, size, "0");
 };
 
 // tests
@@ -318,6 +318,7 @@ void test_types() {
   BinaryenPackedType i16 = BinaryenPackedTypeInt16();
   printf("BinaryenPackedTypeInt16: %d\n", i16);
 
+  printf("BinaryenHeapTypeExt: %zd\n", BinaryenHeapTypeExt());
   printf("BinaryenHeapTypeFunc: %zd\n", BinaryenHeapTypeFunc());
   printf("BinaryenHeapTypeAny: %zd\n", BinaryenHeapTypeAny());
   printf("BinaryenHeapTypeEq: %zd\n", BinaryenHeapTypeEq());
@@ -488,7 +489,8 @@ void test_core() {
                     segmentOffsets,
                     segmentSizes,
                     2,
-                    1);
+                    1,
+                    "0");
 
   BinaryenExpressionRef valueList[] = {
     // Unary
@@ -784,29 +786,29 @@ void test_core() {
     makeSIMDShift(module, BinaryenShrUVecI64x2()),
     // SIMD load
     BinaryenSIMDLoad(
-      module, BinaryenLoad8SplatVec128(), 0, 1, makeInt32(module, 128)),
+      module, BinaryenLoad8SplatVec128(), 0, 1, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad16SplatVec128(), 16, 1, makeInt32(module, 128)),
+      module, BinaryenLoad16SplatVec128(), 16, 1, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32SplatVec128(), 16, 4, makeInt32(module, 128)),
+      module, BinaryenLoad32SplatVec128(), 16, 4, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad64SplatVec128(), 0, 4, makeInt32(module, 128)),
+      module, BinaryenLoad64SplatVec128(), 0, 4, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad8x8SVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad8x8SVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad8x8UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad8x8UVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad16x4SVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad16x4SVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad16x4UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad16x4UVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32x2SVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad32x2SVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32x2UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad32x2UVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32ZeroVec128(), 0, 4, makeInt32(module, 128)),
+      module, BinaryenLoad32ZeroVec128(), 0, 4, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad64ZeroVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad64ZeroVec128(), 0, 8, makeInt32(module, 128), "0"),
     // SIMD load/store lane
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad8LaneVec128(),
@@ -814,57 +816,64 @@ void test_core() {
                               1,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad16LaneVec128(),
                               0,
                               2,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad32LaneVec128(),
                               0,
                               4,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad64LaneVec128(),
                               0,
                               8,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
-
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore8LaneVec128(),
                               0,
                               1,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore16LaneVec128(),
                               0,
                               2,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore32LaneVec128(),
                               0,
                               4,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore64LaneVec128(),
                               0,
                               8,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDTernary(module, BinaryenBitselectVec128()),
@@ -914,14 +923,16 @@ void test_core() {
     BinaryenDrop(
       module,
       BinaryenLocalTee(module, 0, makeInt32(module, 102), BinaryenTypeInt32())),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
-    BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
     BinaryenLoad(
-      module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
+      module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1), "0"),
     BinaryenLoad(
-      module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9)),
-    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32()),
-    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64()),
+      module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8), "0"),
+    BinaryenLoad(
+      module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2), "0"),
+    BinaryenLoad(
+      module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9), "0"),
+    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32(), "0"),
+    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64(), "0"),
     BinaryenSelect(module, temp10, temp11, temp12, BinaryenTypeAuto()),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // Tail call
@@ -1002,12 +1013,13 @@ void test_core() {
       4,
       0,
       temp6,
-      BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6),
-      BinaryenTypeInt32()),
-    BinaryenDrop(
-      module,
-      BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32())),
-    BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6)),
+      BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6, "0"),
+      BinaryenTypeInt32(),
+      "0"),
+    BinaryenDrop(module,
+                 BinaryenAtomicWait(
+                   module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
+    BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6, "0")),
     BinaryenAtomicFence(module),
     // Tuples
     BinaryenTupleMake(module, tupleElements4a, 4),
@@ -1022,8 +1034,8 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, iIfF),
     // Memory
-    BinaryenMemorySize(module),
-    BinaryenMemoryGrow(module, makeInt32(module, 0)),
+    BinaryenMemorySize(module, "0"),
+    BinaryenMemoryGrow(module, makeInt32(module, 0), "0"),
     // GC
     BinaryenI31New(module, makeInt32(module, 0)),
     BinaryenI31Get(module, i31refExpr, 1),
@@ -1683,7 +1695,8 @@ void test_for_each() {
                       segmentOffsets,
                       segmentSizes,
                       2,
-                      0);
+                      0,
+                      "0");
     BinaryenAddGlobal(module,
                       "a-global",
                       BinaryenTypeInt32(),

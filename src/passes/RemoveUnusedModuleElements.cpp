@@ -38,6 +38,7 @@ typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
 // Finds reachabilities
 // TODO: use Effects to determine if a memory is used
+// This pass does not have multi-memories support
 
 struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
@@ -285,7 +286,7 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     // Check for special imports, which are roots.
     bool importsMemory = false;
-    if (module->memory.imported()) {
+    if (!module->memories.empty() && module->memories[0]->imported()) {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
@@ -371,13 +372,10 @@ struct RemoveUnusedModuleElements : public Pass {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the
         // contents.
-        module->dataSegments.clear();
+        module->removeDataSegments([&](DataSegment* curr) { return true; });
       }
-      if (module->dataSegments.empty()) {
-        module->memory.exists = false;
-        module->memory.module = module->memory.base = Name();
-        module->memory.initial = 0;
-        module->memory.max = 0;
+      if (module->dataSegments.empty() && !module->memories.empty()) {
+        module->removeMemory(module->memories[0]->name);
       }
     }
   }
