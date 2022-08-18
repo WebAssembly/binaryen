@@ -3622,16 +3622,18 @@ private:
     return nullptr;
   }
 
-  Expression* simplifyRoundingsAndConversions(Unary* unaryOuter) {
-    switch (unaryOuter->op) {
+  Expression* simplifyRoundingsAndConversions(Unary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    switch (curr->op) {
       case TruncSFloat64ToInt32:
       case TruncSatSFloat64ToInt32: {
         // i32 -> f64 -> i32 rountripping optimization:
         //   i32.trunc(_sat)_f64_s(f64.convert_i32_s(x))  ==>  x
-        if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-          if (unaryInner->op == ConvertSInt32ToFloat64) {
-            return unaryInner->value;
-          }
+        Expression* x;
+        if (matches(curr->value, unary(ConvertSInt32ToFloat64, any(&x)))) {
+          return x;
         }
         break;
       }
@@ -3639,10 +3641,9 @@ private:
       case TruncSatUFloat64ToInt32: {
         // u32 -> f64 -> u32 rountripping optimization:
         //   i32.trunc(_sat)_f64_u(f64.convert_i32_u(x))  ==>  x
-        if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-          if (unaryInner->op == ConvertUInt32ToFloat64) {
-            return unaryInner->value;
-          }
+        Expression* x;
+        if (matches(curr->value, unary(ConvertUInt32ToFloat64, any(&x)))) {
+          return x;
         }
         break;
       }
@@ -3659,8 +3660,9 @@ private:
         //   floor(float(int(x)))    ==>  float(int(x))
         //   trunc(float(int(x)))    ==>  float(int(x))
         //   nearest(float(int(x)))  ==>  float(int(x))
-        if (auto* unaryInner = unaryOuter->value->dynCast<Unary>()) {
-          switch (unaryInner->op) {
+        Unary* inner;
+        if (matches(curr->value, unary(&inner, any()))) {
+          switch (inner->op) {
             case ConvertSInt32ToFloat32:
             case ConvertSInt32ToFloat64:
             case ConvertUInt32ToFloat32:
@@ -3669,7 +3671,7 @@ private:
             case ConvertSInt64ToFloat64:
             case ConvertUInt64ToFloat32:
             case ConvertUInt64ToFloat64: {
-              return unaryInner;
+              return inner;
             }
             default: {
             }
