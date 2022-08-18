@@ -29,10 +29,6 @@ namespace wasm {
 
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
-  void run(PassRunner* runner, Module* module) override {
-    super::run(runner, module);
-  }
-
   void wrapAddress64(Expression*& ptr, Name memoryName) {
     if (ptr->type == Type::unreachable) {
       return;

@@ -6515,17 +6515,28 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
 
 void WasmBinaryBuilder::visitMemorySize(MemorySize* curr) {
   BYN_TRACE("zz node: MemorySize\n");
-  Index memIdx = getU32LEB();
+  Index index = getU32LEB();
+  if (index >= memories.size()) {
+    throwError("invalid memory index");
+  }
+  if (memories[index]->is64()) {
+    curr->make64();
+  }
   curr->finalize();
-  memoryRefs[memIdx].push_back(&curr->memory);
+  memoryRefs[index].push_back(&curr->memory);
 }
 
 void WasmBinaryBuilder::visitMemoryGrow(MemoryGrow* curr) {
   BYN_TRACE("zz node: MemoryGrow\n");
   curr->delta = popNonVoidExpression();
-  Index memIdx = getU32LEB();
-  curr->finalize();
-  memoryRefs[memIdx].push_back(&curr->memory);
+  Index index = getU32LEB();
+  if (index >= memories.size()) {
+    throwError("invalid memory index");
+  }
+  if (memories[index]->is64()) {
+    curr->make64();
+  }
+  memoryRefs[index].push_back(&curr->memory);
 }
 
 void WasmBinaryBuilder::visitNop(Nop* curr) { BYN_TRACE("zz node: Nop\n"); }
