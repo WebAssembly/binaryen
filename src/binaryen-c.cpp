@@ -58,10 +58,11 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
         case HeapType::func:
           ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
           break;
-        case HeapType::any:
+        case HeapType::ext:
         case HeapType::eq:
           assert(x.isNull() && "unexpected non-null reference type literal");
           break;
+        case HeapType::any:
         case HeapType::i31:
         case HeapType::data:
         case HeapType::string:
@@ -113,6 +114,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
         case HeapType::data:
           assert(false && "Literals must have concrete types");
           WASM_UNREACHABLE("no fallthrough here");
+        case HeapType::ext:
         case HeapType::i31:
         case HeapType::string:
         case HeapType::stringview_wtf8:
@@ -158,7 +160,6 @@ extern "C" {
 //
 
 // Core types
-// TODO: Deprecate BinaryenTypeExternref?
 
 BinaryenType BinaryenTypeNone(void) { return Type::none; }
 BinaryenType BinaryenTypeInt32(void) { return Type::i32; }
@@ -170,7 +171,7 @@ BinaryenType BinaryenTypeFuncref(void) {
   return Type(HeapType::func, Nullable).getID();
 }
 BinaryenType BinaryenTypeExternref(void) {
-  return Type(HeapType::any, Nullable).getID();
+  return Type(HeapType::ext, Nullable).getID();
 }
 BinaryenType BinaryenTypeAnyref(void) {
   return Type(HeapType::any, Nullable).getID();
@@ -239,6 +240,9 @@ BinaryenPackedType BinaryenPackedTypeInt16(void) {
 
 // Heap types
 
+BinaryenHeapType BinaryenHeapTypeExt() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::ext);
+}
 BinaryenHeapType BinaryenHeapTypeFunc() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::func);
 }

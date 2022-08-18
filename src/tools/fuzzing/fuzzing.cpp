@@ -1968,6 +1968,10 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   assert(heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
   switch (heapType.getBasic()) {
+    case HeapType::ext: {
+      assert(type.isNullable() && "Cannot handle non-nullable externref");
+      return builder.makeRefNull(type);
+    }
     case HeapType::func: {
       return makeRefFuncConst(type);
     }
@@ -3089,13 +3093,14 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::func:
         // TODO: Typed function references.
         return HeapType::func;
+      case HeapType::ext:
+        return HeapType::ext;
       case HeapType::any:
         // TODO: nontrivial types as well.
         return pick(
           FeatureOptions<HeapType>()
-            .add(FeatureSet::ReferenceTypes, HeapType::func, HeapType::any)
+            .add(FeatureSet::ReferenceTypes, HeapType::func /*, HeapType::ext*/)
             .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                 HeapType::func,
                  HeapType::any,
                  HeapType::eq,
                  HeapType::i31,

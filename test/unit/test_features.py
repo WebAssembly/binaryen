@@ -343,7 +343,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types', 'gc'])
         disassembly = self.disassemble(filename)
-        self.assertIn('anyref', disassembly)
+        self.assertIn('externref', disassembly)
         self.assertIn('eqref', disassembly)
 
     def test_superset(self):

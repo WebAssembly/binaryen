@@ -22,6 +22,8 @@ Current Trunk
   argument `optimize`. (#4832)
 - Remove support for the `let` instruction that has been removed from the typed
   function references spec.
+- HeapType::ext has been restored but is no longer a subtype of HeapType::any to
+  match the latest updates in the GC spec. (#4898)
 
 v109
 ----

@@ -3416,55 +3416,59 @@
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
   ;; CHECK:      (func $subtype (result anyref)
-  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 anyref)
-  ;; CHECK-NEXT:  (local $3 anyref)
-  ;; CHECK-NEXT:  (local $4 anyref)
-  ;; CHECK-NEXT:  (local $5 anyref)
-  ;; CHECK-NEXT:  (local $6 anyref)
+  ;; CHECK-NEXT:  (local $2 eqref)
+  ;; CHECK-NEXT:  (local $3 eqref)
+  ;; CHECK-NEXT:  (local $4 eqref)
+  ;; CHECK-NEXT:  (local $5 eqref)
+  ;; CHECK-NEXT:  (local $6 eqref)
+  ;; CHECK-NEXT:  (local $7 anyref)
   ;; CHECK-NEXT:  (block $label0
   ;; CHECK-NEXT:   (block $block
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null eq)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (ref.null eq)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br_if $label0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (local.get $3)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $5
-  ;; CHECK-NEXT:    (local.get $4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:   (local.set $6
   ;; CHECK-NEXT:    (local.get $5)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $6)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $6
+  ;; CHECK-NEXT:  (local.set $7
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (local.get $6)
+  ;; CHECK-NEXT:   (local.get $7)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $subtype (result anyref)
-    (local $0 externref)
+    (local $0 eqref)
     (block $label0 (result anyref)
-      (block (result externref)
+      (block (result eqref)
         (local.tee $0
           (br_if $label0
-            (ref.null extern)
+            (ref.null eq)
             (i32.const 0)
           )
         )

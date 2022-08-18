@@ -363,8 +363,10 @@ enum EncodedType {
   i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // top type of references, including host references
-  anyref = -0x11, // 0x6f
+  // external (host) references
+  externref = -0x11, // 0x6f
+  // top type of references to non-function Wasm data.
+  anyref = -0x12, // 0x6e
   // comparable reference type
   eqref = -0x13, // 0x6d
   // nullable typed function reference type, with parameter
@@ -396,7 +398,8 @@ enum EncodedType {
 
 enum EncodedHeapType {
   func = -0x10,   // 0x70
-  any = -0x11,    // 0x6f
+  ext = -0x11,    // 0x6f
+  any = -0x12,    // 0x6e
   eq = -0x13,     // 0x6d
   i31 = -0x16,    // 0x6a
   data = -0x19,   // 0x67

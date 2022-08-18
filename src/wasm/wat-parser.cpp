@@ -431,7 +431,7 @@ template<typename Ctx> struct TypeParserCtx {
 
   HeapTypeT makeFunc() { return HeapType::func; }
   HeapTypeT makeAny() { return HeapType::any; }
-  HeapTypeT makeExtern() { return HeapType::any; }
+  HeapTypeT makeExtern() { return HeapType::ext; }
   HeapTypeT makeEq() { return HeapType::eq; }
   HeapTypeT makeI31() { return HeapType::i31; }
   HeapTypeT makeData() { return HeapType::data; }
