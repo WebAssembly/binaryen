@@ -2220,6 +2220,16 @@ Name WasmBinaryBuilder::getTagName(Index index) {
   return wasm.tags[index]->name;
 }
 
+Memory* WasmBinaryBuilder::getMemory(Index index) {
+  Index numMemoryImports = memoryImports.size();
+  if (index < numMemoryImports) {
+    return memoryImports[index];
+  } else if (index - numMemoryImports < memories.size()) {
+    return memories[index - numMemoryImports].get();
+  }
+  throwError("Memory index out of range.");
+}
+
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
                                            Address& max,
                                            bool& shared,
@@ -3047,16 +3057,7 @@ void WasmBinaryBuilder::readDataSegments() {
     if (flags & BinaryConsts::HasIndex) {
       memIdx = getU32LEB();
     }
-    Memory* memory = nullptr;
-    Index numMemoryImports = memoryImports.size();
-    if (memIdx < numMemoryImports) {
-      memory = memoryImports[memIdx];
-    } else if (memIdx - numMemoryImports < memories.size()) {
-      memory = memories[memIdx - numMemoryImports].get();
-    }
-    if (!memory) {
-      throwError("Memory index out of range while reading data segments.");
-    }
+    auto* memory = getMemory(memIdx);
     curr->memory = memory->name;
     if (!curr->isPassive) {
       curr->offset = readExpression();
@@ -6516,10 +6517,7 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
 void WasmBinaryBuilder::visitMemorySize(MemorySize* curr) {
   BYN_TRACE("zz node: MemorySize\n");
   Index index = getU32LEB();
-  if (index >= memories.size()) {
-    throwError("invalid memory index");
-  }
-  if (memories[index]->is64()) {
+  if (getMemory(index)->is64()) {
     curr->make64();
   }
   curr->finalize();
@@ -6530,10 +6528,7 @@ void WasmBinaryBuilder::visitMemoryGrow(MemoryGrow* curr) {
   BYN_TRACE("zz node: MemoryGrow\n");
   curr->delta = popNonVoidExpression();
   Index index = getU32LEB();
-  if (index >= memories.size()) {
-    throwError("invalid memory index");
-  }
-  if (memories[index]->is64()) {
+  if (getMemory(index)->is64()) {
     curr->make64();
   }
   memoryRefs[index].push_back(&curr->memory);

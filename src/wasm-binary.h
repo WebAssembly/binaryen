@@ -1482,6 +1482,9 @@ public:
   Name getGlobalName(Index index);
   Name getTagName(Index index);
 
+  // gets a memory in the combined import+defined space
+  Memory* getMemory(Index index);
+
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,

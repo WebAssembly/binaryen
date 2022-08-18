@@ -3,8 +3,15 @@
 ;; RUN: foreach %s %t wasm-opt -all --roundtrip -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (memory $mem i64 1)
   (memory $mem i64 1)
 
+  ;; CHECK:      (func $get_heap_size (result i64)
+  ;; CHECK-NEXT:  (i64.shl
+  ;; CHECK-NEXT:   (memory.size)
+  ;; CHECK-NEXT:   (i64.const 16)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $get_heap_size (result i64)
     (i64.shl
       (memory.size $mem)
@@ -12,6 +19,11 @@
     )
   )
 
+  ;; CHECK:      (func $grow-heap (result i64)
+  ;; CHECK-NEXT:  (memory.grow
+  ;; CHECK-NEXT:   (i64.const 32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $grow-heap (result i64)
     (memory.grow $mem
       (i64.const 32)
