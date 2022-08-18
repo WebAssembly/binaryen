@@ -1234,6 +1234,13 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
           }
         }
       }
+    } else if (ex->kind == ExternalKind::Global) {
+      // Exported mutable globals are roots, since the outside may write any
+      // value to them.
+      auto name = ex->value;
+      if (wasm.getGlobal(name)->mutable_) {
+//        roots[GlobalLocation{name}] = PossibleContents::many();
+      }
     }
   }
 
