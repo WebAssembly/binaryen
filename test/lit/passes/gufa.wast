@@ -1088,7 +1088,7 @@
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (global.get $exported-mutable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 42)

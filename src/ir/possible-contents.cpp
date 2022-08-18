@@ -1239,7 +1239,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       // value to them.
       auto name = ex->value;
       if (wasm.getGlobal(name)->mutable_) {
-//        roots[GlobalLocation{name}] = PossibleContents::many();
+        roots[GlobalLocation{name}] = PossibleContents::many();
       }
     }
   }
