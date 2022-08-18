@@ -259,6 +259,12 @@ void Break::finalize() {
     if (condition->type == Type::unreachable) {
       type = Type::unreachable;
     } else if (value) {
+      // N.B. This is not correct wrt the spec, which mandates that it be the
+      // type of the block we target. In practice this does not matter because
+      // the br_if return value is not really used in the wild. To fix this,
+      // we'd need to do something like what we do for local.tee's type, which
+      // is to fix it up in a way that is aware of function-level context and
+      // not just the instruction itself (which would be a pain).
       type = value->type;
     } else {
       type = Type::none;
