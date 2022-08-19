@@ -15,6 +15,7 @@
 ;; UNESCAPED: - bar(double[3])
 
 (module
+  (memory 0 0)
   (export "memory" (memory 0 0))
   (export "foo" (func $foo))
   (export "bar" (func $bar\28double\5b3\5d\29))
