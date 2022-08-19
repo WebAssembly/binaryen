@@ -99,10 +99,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     }
 
     static void doEndScope(Scanner* self, Expression** currp) {
-      if (self->cleanupStack.empty()) {
-        // We are at the topmost scope, which never needs to be cleaned up.
-        return;
-      }
       for (auto index : self->cleanupStack.back()) {
         assert(self->localsSet[index]);
         self->localsSet[index] = false;
