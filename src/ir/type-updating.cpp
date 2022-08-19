@@ -299,8 +299,10 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     badIndexes.insert(index);
 
     // LocalStructuralDominance should have only looked at non-nullable indexes
-    // since we told it to ignore nullable ones.
+    // since we told it to ignore nullable ones. Also, params always dominate
+    // and should not appear here.
     assert(func->getLocalType(index).isNonNullable());
+    assert(!func->isParam(index));
   }
   if (badIndexes.empty()) {
     return;
