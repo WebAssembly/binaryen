@@ -837,20 +837,7 @@
   )
 
   ;; CHECK:      (func $unreachable-set-3 (type $none_=>_none)
-<<<<<<< HEAD
   ;; CHECK-NEXT:  (local $0 (ref ${mut:i8}))
-  ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (block (result (ref ${mut:i8}))
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (call $helper-ref)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (call $helper-i32)
-  ;; CHECK-NEXT:      )
-=======
-  ;; CHECK-NEXT:  (local $0 (ref null ${mut:i8}))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (block (result (ref ${mut:i8}))
@@ -860,10 +847,7 @@
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $helper-i32)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.as_non_null
->>>>>>> origin/s-name
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

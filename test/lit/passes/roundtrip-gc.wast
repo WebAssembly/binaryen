@@ -8,47 +8,27 @@
  ;; NOMNL:      (export "export" (func $test))
  (export "export" (func $test))
  ;; CHECK:      (func $test
-<<<<<<< HEAD
  ;; CHECK-NEXT:  (local $0 (ref $\7bi32\7d))
-=======
- ;; CHECK-NEXT:  (local $0 (ref null $\7bi32\7d))
->>>>>>> origin/s-name
  ;; CHECK-NEXT:  (call $help
  ;; CHECK-NEXT:   (block (result (ref $\7bi32\7d))
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (struct.new_default $\7bi32\7d)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (nop)
-<<<<<<< HEAD
  ;; CHECK-NEXT:    (local.get $0)
-=======
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:    )
->>>>>>> origin/s-name
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $test (type $none_=>_none)
-<<<<<<< HEAD
  ;; NOMNL-NEXT:  (local $0 (ref $\7bi32\7d))
-=======
- ;; NOMNL-NEXT:  (local $0 (ref null $\7bi32\7d))
->>>>>>> origin/s-name
  ;; NOMNL-NEXT:  (call $help
  ;; NOMNL-NEXT:   (block (result (ref $\7bi32\7d))
  ;; NOMNL-NEXT:    (local.set $0
  ;; NOMNL-NEXT:     (struct.new_default $\7bi32\7d)
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:    (nop)
-<<<<<<< HEAD
  ;; NOMNL-NEXT:    (local.get $0)
-=======
- ;; NOMNL-NEXT:    (ref.as_non_null
- ;; NOMNL-NEXT:     (local.get $0)
- ;; NOMNL-NEXT:    )
->>>>>>> origin/s-name
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:   (i32.const 1)
  ;; NOMNL-NEXT:  )
