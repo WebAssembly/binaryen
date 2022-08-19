@@ -55,13 +55,13 @@ struct TableInfo {
 
   std::unique_ptr<TableUtils::FlatTable> flatTable;
 
-  bool canOptimize() {
+  bool canOptimize() const {
     // We can optimize if:
     //  * Either the table can't be modified at all, or it can be modified but
     //    the initial contents are immutable (so we can optimize them).
     //  * The table is flat.
-    return (!info.mayBeModified || info.initialContentsImmutable) &&
-            info.flatTable->valid);
+    return (!mayBeModified || initialContentsImmutable) &&
+            flatTable->valid;
   }
 };
 
@@ -75,11 +75,11 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   FunctionDirectizer(const TableInfoMap& tables) : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    auto& table = tables[curr->table];
+    auto& table = tables.at(curr->table);
     if (!table.canOptimize()) {
       return;
     }
-    auto& flatTable = table.flatTable;
+    auto& flatTable = *table.flatTable;
 
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
@@ -239,7 +239,7 @@ struct Directize : public Pass {
     using TablesWithSet = std::unordered_set<Name>;
 
     ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
-      *module, [&](Function* func, TableInfoMap& tablesWithSet) {
+      *module, [&](Function* func, TablesWithSet& tablesWithSet) {
         if (func->imported()) {
           return;
         }
