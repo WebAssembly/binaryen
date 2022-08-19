@@ -1577,7 +1577,8 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     // if one did not exist, perhaps a break targeted it by index), then we can
     // remove the name. Note that we only do this if it never had a name: if it
     // did, we don't want to change anything; we just want to be the same as
-    // the code we are loading.
+    // the code we are loading - if there was no name before, we don't want one
+    // now, so that we roundtrip text precisely.
     if (!hadName && !BranchUtils::BranchSeeker::has(curr, curr->name)) {
       curr->name = Name();
     }

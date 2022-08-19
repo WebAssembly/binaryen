@@ -267,7 +267,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (drop
+<<<<<<< HEAD
   ;; CHECK-NEXT:   (block (result (ref $none_=>_funcref))
+=======
+  ;; CHECK-NEXT:   (block (result (ref null $none_=>_funcref))
+>>>>>>> origin/s-name
   ;; CHECK-NEXT:    (local.tee $temp
   ;; CHECK-NEXT:     (ref.func $unreachables)
   ;; CHECK-NEXT:    )

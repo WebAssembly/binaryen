@@ -230,7 +230,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.reinterpret_i32
-  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:    (block $a-name-avoids-fallthrough (result i32)
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -246,9 +246,11 @@
     )
     (drop
      (f32.reinterpret_i32
-      (block (result i32)
+      (block $a-name-avoids-fallthrough (result i32)
        (nop) ;; this would be removed by other opts, but in general, we can't
              ;; just look at the fallthrough, as we can't just remove code here
+             ;; (note that we need a name on the block, or else we would look at
+             ;; the fallthrough)
        (local.get $x)
       )
      )

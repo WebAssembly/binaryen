@@ -403,7 +403,7 @@
  )
  (func $nested-blocks
   (loop $loop
-   (block $block
+   (block
     (nop)
    )
    (block $x
@@ -423,7 +423,7 @@
  )
  (func $nested-unhoistable-blocks
   (loop $loop
-   (block $block
+   (block
     (call $nested-unhoistable-blocks)
    )
    (block $x

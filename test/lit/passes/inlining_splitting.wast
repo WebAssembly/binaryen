@@ -161,12 +161,10 @@
   ;; CHECK-NEXT:  (block $toplevel
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (block $block
-  ;; CHECK-NEXT:     (if
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (br $toplevel)
-  ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (br $toplevel)
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -886,7 +884,7 @@
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -930,7 +928,7 @@
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -1396,17 +1394,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$error-if-null (param $x anyref) (result anyref)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (param $x anyref)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$multi-if_0 (param $x anyref)

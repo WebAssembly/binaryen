@@ -71,7 +71,7 @@
    (ref.null $struct.A)
   )
   (drop
-   (block $block (result (ref null $struct.A))
+   (block (result (ref null $struct.A))
     (local.get $x)
    )
   )

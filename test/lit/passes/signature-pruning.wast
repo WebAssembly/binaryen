@@ -167,7 +167,7 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $caller)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -247,7 +247,7 @@
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $caller)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )

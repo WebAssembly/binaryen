@@ -289,7 +289,7 @@
  ;; CHECK-NEXT:  (local $7 f64)
  ;; CHECK-NEXT:  (local $8 i32)
  ;; CHECK-NEXT:  (loop $label$0 (result i32)
- ;; CHECK-NEXT:   (block $block
+ ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (i32.eqz
  ;; CHECK-NEXT:      (global.get $hangLimit)

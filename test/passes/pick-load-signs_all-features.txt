@@ -4,7 +4,7 @@
  (func $atomics-are-always-unsigned (result i32)
   (local $0 i32)
   (drop
-   (block $block (result i32)
+   (block (result i32)
     (local.set $0
      (i32.atomic.load16_u
       (i32.const 27)

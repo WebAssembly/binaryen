@@ -688,7 +688,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (call $foo
-  ;; CHECK-NEXT:    (block $block
+  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)

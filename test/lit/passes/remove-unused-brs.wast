@@ -109,7 +109,7 @@
 
   ;; CHECK:      (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -142,7 +142,7 @@
 
   ;; CHECK:      (func $restructure-br_if-value-effectful (param $x i32) (result i32)
   ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:   )
@@ -153,7 +153,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 300)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block0 (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -186,11 +186,11 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block $block1 (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -231,11 +231,11 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block $block2 (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -270,7 +270,7 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
@@ -303,7 +303,7 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
