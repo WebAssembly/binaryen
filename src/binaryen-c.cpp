@@ -1067,7 +1067,12 @@ BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
     Builder(*(Module*)module).makeGlobalSet(name, (Expression*)value));
 }
 
-// All memory instructions should pass their memory name parameter through this helper function. It maintains compatibility for when JS calls memory instructions that don't specify a memory name (send null), by assuming the singly defined memory is the intended one. This function takes in the memory name passed to API functions to avoid duplicating the nullptr logic check in each instruction
+// All memory instructions should pass their memory name parameter through this
+// helper function. It maintains compatibility for when JS calls memory
+// instructions that don't specify a memory name (send null), by assuming the
+// singly defined memory is the intended one. This function takes in the memory
+// name passed to API functions to avoid duplicating the nullptr logic check in
+// each instruction
 static Name getMemoryName(BinaryenModuleRef module, const char* memName) {
   const char* memoryName = memName;
   if (memName == nullptr && module->memories.size() == 1) {
@@ -1085,14 +1090,15 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                    BinaryenType type,
                                    BinaryenExpressionRef ptr,
                                    const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeLoad(bytes,
-                                              !!signed_,
-                                              offset,
-                                              align ? align : bytes,
-                                              (Expression*)ptr,
-                                              Type(type),
-                                              getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeLoad(bytes,
+                !!signed_,
+                offset,
+                align ? align : bytes,
+                (Expression*)ptr,
+                Type(type),
+                getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     uint32_t bytes,
@@ -1102,14 +1108,15 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                     BinaryenExpressionRef value,
                                     BinaryenType type,
                                     const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeStore(bytes,
-                                               offset,
-                                               align ? align : bytes,
-                                               (Expression*)ptr,
-                                               (Expression*)value,
-                                               Type(type),
-                                               getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStore(bytes,
+                 offset,
+                 align ? align : bytes,
+                 (Expression*)ptr,
+                 (Expression*)value,
+                 Type(type),
+                 getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
                                     BinaryenLiteral value) {
@@ -1158,14 +1165,16 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
                                          const char* memoryName) {
-  auto* ret = Builder(*(Module*)module).makeMemorySize(getMemoryName(module, memoryName));
+  auto* ret =
+    Builder(*(Module*)module).makeMemorySize(getMemoryName(module, memoryName));
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
                                          const char* memoryName) {
   auto* ret =
-    Builder(*(Module*)module).makeMemoryGrow((Expression*)delta, getMemoryName(module, memoryName));
+    Builder(*(Module*)module)
+      .makeMemoryGrow((Expression*)delta, getMemoryName(module, memoryName));
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
@@ -1182,7 +1191,11 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                          const char* memoryName) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type), getMemoryName(module, memoryName)));
+      .makeAtomicLoad(bytes,
+                      offset,
+                      (Expression*)ptr,
+                      Type(type),
+                      getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           uint32_t bytes,
@@ -1193,8 +1206,12 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module,
                                           const char* memoryName) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeAtomicStore(
-        bytes, offset, (Expression*)ptr, (Expression*)value, Type(type), getMemoryName(module, memoryName)));
+      .makeAtomicStore(bytes,
+                       offset,
+                       (Expression*)ptr,
+                       (Expression*)value,
+                       Type(type),
+                       getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenOp op,
@@ -1204,14 +1221,15 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module,
                                         BinaryenExpressionRef value,
                                         BinaryenType type,
                                         const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeAtomicRMW(AtomicRMWOp(op),
-                                                   bytes,
-                                                   offset,
-                                                   (Expression*)ptr,
-                                                   (Expression*)value,
-                                                   Type(type),
-                                                   getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeAtomicRMW(AtomicRMWOp(op),
+                     bytes,
+                     offset,
+                     (Expression*)ptr,
+                     (Expression*)value,
+                     Type(type),
+                     getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenIndex bytes,
@@ -1221,14 +1239,15 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                                             BinaryenExpressionRef replacement,
                                             BinaryenType type,
                                             const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeAtomicCmpxchg(bytes,
-                                                       offset,
-                                                       (Expression*)ptr,
-                                                       (Expression*)expected,
-                                                       (Expression*)replacement,
-                                                       Type(type),
-                                                       getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeAtomicCmpxchg(bytes,
+                         offset,
+                         (Expression*)ptr,
+                         (Expression*)expected,
+                         (Expression*)replacement,
+                         Type(type),
+                         getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef ptr,
@@ -1236,13 +1255,14 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module,
                                          BinaryenExpressionRef timeout,
                                          BinaryenType expectedType,
                                          const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeAtomicWait((Expression*)ptr,
-                                                    (Expression*)expected,
-                                                    (Expression*)timeout,
-                                                    Type(expectedType),
-                                                    0,
-                                                    getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeAtomicWait((Expression*)ptr,
+                      (Expression*)expected,
+                      (Expression*)timeout,
+                      Type(expectedType),
+                      0,
+                      getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            BinaryenExpressionRef ptr,
@@ -1250,7 +1270,10 @@ BinaryenExpressionRef BinaryenAtomicNotify(BinaryenModuleRef module,
                                            const char* memoryName) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeAtomicNotify((Expression*)ptr, (Expression*)notifyCount, 0, getMemoryName(module, memoryName)));
+      .makeAtomicNotify((Expression*)ptr,
+                        (Expression*)notifyCount,
+                        0,
+                        getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenAtomicFence(BinaryenModuleRef module) {
   return static_cast<Expression*>(Builder(*(Module*)module).makeAtomicFence());
@@ -1308,12 +1331,13 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                        uint32_t align,
                                        BinaryenExpressionRef ptr,
                                        const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeSIMDLoad(SIMDLoadOp(op),
-                                                  Address(offset),
-                                                  Address(align),
-                                                  (Expression*)ptr,
-                                                  getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeSIMDLoad(SIMDLoadOp(op),
+                    Address(offset),
+                    Address(align),
+                    (Expression*)ptr,
+                    getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                                                 BinaryenOp op,
@@ -1339,12 +1363,13 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          BinaryenExpressionRef offset,
                                          BinaryenExpressionRef size,
                                          const char* memoryName) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeMemoryInit(segment,
-                                                    (Expression*)dest,
-                                                    (Expression*)offset,
-                                                    (Expression*)size,
-                                                    getMemoryName(module, memoryName)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeMemoryInit(segment,
+                      (Expression*)dest,
+                      (Expression*)offset,
+                      (Expression*)size,
+                      getMemoryName(module, memoryName)));
 }
 
 BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
@@ -1359,12 +1384,13 @@ BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
                                          BinaryenExpressionRef size,
                                          const char* destMemory,
                                          const char* sourceMemory) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeMemoryCopy((Expression*)dest,
-                                                    (Expression*)source,
-                                                    (Expression*)size,
-                                                    getMemoryName(module, destMemory),
-                                                    getMemoryName(module, sourceMemory)));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeMemoryCopy((Expression*)dest,
+                      (Expression*)source,
+                      (Expression*)size,
+                      getMemoryName(module, destMemory),
+                      getMemoryName(module, sourceMemory)));
 }
 
 BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
@@ -1374,8 +1400,10 @@ BinaryenExpressionRef BinaryenMemoryFill(BinaryenModuleRef module,
                                          const char* memoryName) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeMemoryFill(
-        (Expression*)dest, (Expression*)value, (Expression*)size, getMemoryName(module, memoryName)));
+      .makeMemoryFill((Expression*)dest,
+                      (Expression*)value,
+                      (Expression*)size,
+                      getMemoryName(module, memoryName)));
 }
 
 BinaryenExpressionRef BinaryenTupleMake(BinaryenModuleRef module,
