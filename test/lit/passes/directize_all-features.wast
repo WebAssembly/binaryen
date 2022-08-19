@@ -1185,27 +1185,24 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-non-nullable (param $x i32)
- ;; IMMUT-NEXT:  (local $1 (ref null $i32_=>_none))
+ ;; IMMUT-NEXT:  (local $1 (ref $i32_=>_none))
  ;; IMMUT-NEXT:  (local.set $1
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (call $foo-ref
- ;; IMMUT-NEXT:    (ref.as_non_null
- ;; IMMUT-NEXT:     (local.get $1)
- ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:    (local.get $1)
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:   (call $foo-ref
- ;; IMMUT-NEXT:    (ref.as_non_null
- ;; IMMUT-NEXT:     (local.get $1)
- ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:    (local.get $1)
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
  (func $select-non-nullable (param $x i32)
   ;; Test we can handle a non-nullable value when optimizing a select, during
-  ;; which we place values in locals.
+  ;; which we place values in locals. The local can remain non-nullable since it
+  ;; dominates the uses.
   (call_indirect (type $F)
    (ref.func $select-non-nullable)
    (select
