@@ -85,8 +85,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       // Note that we do not need to start a scope for the function body.
       // Logically there is a scope there, but there is no code after it, so
       // there is nothing to clean up when that scope exits, so we may as well
-      // not even create a scope.
-
+      // not even create a scope. Just start walking the body now.
       walk(func->body);
     }
 
