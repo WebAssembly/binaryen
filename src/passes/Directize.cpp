@@ -72,9 +72,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   Pass* create() override { return new FunctionDirectizer(tables); }
 
-  FunctionDirectizer(
-    const TableInfoMap& tables)
-    : tables(tables) {}
+  FunctionDirectizer(const TableInfoMap& tables) : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     auto& table = tables[curr->table];
@@ -195,14 +193,16 @@ struct Directize : public Pass {
     }
 
     // TODO: consider a per-table option here
-    auto initialContentsImmutable = runner->options.getArgumentOrDefault(
-                             "directize-initial-contents-immutable", "") == "";
+    auto initialContentsImmutable =
+      runner->options.getArgumentOrDefault(
+        "directize-initial-contents-immutable", "") == "";
 
     // Set up the initial info.
     TableInfoMap tables;
     for (auto& table : module->tables) {
       tables[table->name].initialContentsImmutable = initialContentsImmutable;
-      tables[table->name].flatTable = std::make_unique<TableUtils::FlatTable>(*module, *table);
+      tables[table->name].flatTable =
+        std::make_unique<TableUtils::FlatTable>(*module, *table);
     }
 
     // Next, look at the imports and exports.
