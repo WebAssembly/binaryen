@@ -89,6 +89,19 @@
     )
   )
 
+  ;; CHECK:      (func $nested-nonames (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $nested-nonames (result i32)
+    (block i32
+      (block i32
+        (block i32
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $child-blocks (result i32)
   ;; CHECK-NEXT:  (block $block (result i32)
   ;; CHECK-NEXT:   (block $block0 (result i32)
@@ -110,6 +123,27 @@
           (i32.const 0)
         )
         (block $block1 (result i32)
+          (i32.const 1)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $child-blocks-nonames (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (pop i32)
+  ;; CHECK-NEXT:   (pop i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $child-blocks-nonames (result i32)
+    (block (result i32)
+      (i32.add
+        (block (result i32)
+          (i32.const 0)
+        )
+        (block (result i32)
           (i32.const 1)
         )
       )
