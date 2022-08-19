@@ -117,7 +117,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     }
 
     static void scan(Scanner* self, Expression** currp) {
-      // Use a loop to avoid recursing on the last call.
+      // Use a loop to avoid recursing on the last child - we can just go
+      // straight into a loop iteration for it.
       while (1) {
         Expression* curr = *currp;
 
@@ -145,13 +146,13 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
           // Control flow structures.
           case Expression::Id::BlockId: {
-            auto* block = (*currp)->cast<Block>();
+            auto* block = curr->cast<Block>();
             // Blocks with no name are never emitted in the binary format, so do
             // not create a scope for them.
             if (block->name.is()) {
               self->pushTask(Scanner::doEndScope, currp);
             }
-            auto& list = curr->cast<Block>()->list;
+            auto& list = block->list;
             for (int i = int(list.size()) - 1; i >= 0; i--) {
               self->pushTask(Scanner::scan, &list[i]);
             }
