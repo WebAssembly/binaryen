@@ -40,7 +40,7 @@
    ;; "stacky" location. On load, we will use a local to work around that. It
    ;; is fine for the local to be non-nullable since the get is later in that
    ;; same block.
-   (block (result i32)
+   (block $block (result i32)
     (nop)
     (i32.const 1)
    )
