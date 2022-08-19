@@ -19,6 +19,15 @@
 // the table cannot change, and if we see a constant argument for the
 // indirect call's index.
 //
+// If called with
+//
+//   --directize-initial-tables-immutable
+//
+// then the initial tables' contents are assumed to be immutable. That is, if
+// a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
+// will assume it must call b. It is possible that the table is appended to, but
+// in this mode we assume the initial contents are not overwritten.
+//
 
 #include <unordered_map>
 
@@ -35,13 +44,27 @@ namespace wasm {
 
 namespace {
 
+struct TableInfo {
+  // Whether the table may be modifed at runtime, either because it is imported
+  // or exported, or table.set operations exist for it in the code.
+  bool mayBeModified = false;
+
+  // Whether we can assume that the initial contents are immutable. See the
+  // toplevel comment.
+  bool initialContentsImmutable = false;
+
+  std::unique_ptr<TableUtils::FlatTable> flatTable;
+};
+
+using TableInfoMap = std::unordered_map<Name, TableInfo>;
+
 struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionDirectizer(tables); }
 
   FunctionDirectizer(
-    const std::unordered_map<Name, TableUtils::FlatTable>& tables)
+    const std::unordered_map<Name, TableInfo>& tables)
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
@@ -50,7 +73,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       return;
     }
 
-    auto& flatTable = it->second;
+    auto& table = it->second;
+    auto& flatTable = table.flatTable;
 
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
@@ -163,15 +187,57 @@ struct Directize : public Pass {
       return;
     }
 
-    // Find which tables are valid to optimize on. They must not be imported nor
-    // exported (so the outside cannot modify them), and must have no sets in
-    // any part of the module.
+    // TODO: consider a per-table option here
+    auto initialContentsImmutable = runner->options.getArgumentOrDefault(
+                             "directize-initial-contents-immutable", "") == "";
 
-    // First, find which tables have sets.
+    // Set up the initial info.
+    TableInfoMap tables;
+    for (auto& table : module->tables) {
+      tables[table->name].initialContentsImmutable = initialContentsImmutable;
+      tables[table->name].flatTable = std::make_unique<TableUtils::FlatTable>(*module, *table);
+    }
+
+    // Next, look at the imports and exports.
+
+    for (auto& table : module->tables) {
+      if (table->imported()) {
+        tables[table->name].mayBeModified = true;
+      }
+    }
+
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Table) {
+        tables[ex->value].mayBeModified = true;
+      }
+    }
+
+    // This may already be enough information to know that we can't optimize
+    // anything. If so, skip scanning all the module contents.
+    auto canOptimize = [&]() {
+      for (auto& [_, info] : tables) {
+        // We can optimize if:
+        //  * Either the table can't be modified at all, or it can be modified
+        //    but the initial contents are immutable (so we can optimize them).
+        //  * The table is flat.
+        if ((!info.mayBeModified || info.initialContentsImmutable) &&
+            info.flatTable->valid)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (!canOptimize()) {
+      return;
+    }
+
+    // Find which tables have sets.
+
     using TablesWithSet = std::unordered_set<Name>;
 
-    ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
-      *module, [&](Function* func, TablesWithSet& tablesWithSet) {
+    ModuleUtils::ParallelFunctionAnalysis<int> analysis(
+      *module, [&](Function* func, TableInfoMap& tablesWithSet) {
         if (func->imported()) {
           return;
         }
@@ -180,47 +246,20 @@ struct Directize : public Pass {
         }
       });
 
-    TablesWithSet tablesWithSet;
     for (auto& [_, names] : analysis.map) {
       for (auto name : names) {
-        tablesWithSet.insert(name);
+        tables[name].mayBeModified = true;
       }
     }
 
-    std::unordered_map<Name, TableUtils::FlatTable> validTables;
-
-    for (auto& table : module->tables) {
-      if (table->imported()) {
-        continue;
-      }
-
-      if (tablesWithSet.count(table->name)) {
-        continue;
-      }
-
-      bool canOptimizeCallIndirect = true;
-      for (auto& ex : module->exports) {
-        if (ex->kind == ExternalKind::Table && ex->value == table->name) {
-          canOptimizeCallIndirect = false;
-          break;
-        }
-      }
-      if (!canOptimizeCallIndirect) {
-        continue;
-      }
-
-      // All conditions are valid, this is optimizable.
-      TableUtils::FlatTable flatTable(*module, *table);
-      if (flatTable.valid) {
-        validTables.emplace(table->name, flatTable);
-      }
-    }
-
-    if (validTables.empty()) {
+    // Perhaps the new information about tables with sets shows we cannot
+    // optimize.
+    if (!canOptimize()) {
       return;
     }
 
-    FunctionDirectizer(validTables).run(runner, module);
+    // We can optimize!
+    FunctionDirectizer(tables).run(runner, module);
   }
 };
 
