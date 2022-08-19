@@ -59,6 +59,10 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   struct Scanner : public PostWalker<Scanner> {
     std::set<Index>& nonDominatingIndexes;
 
+    // The locals that have been set, and so at the current time, they
+    // structurally dominate.
+    std::vector<bool> localsSet;
+
     Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndexes)
       : nonDominatingIndexes(nonDominatingIndexes) {
       auto num = func->getNumLocals();
@@ -85,10 +89,6 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
       walk(func->body);
     }
-
-    // The locals that have been set, and so at the current time, they
-    // structurally dominate.
-    std::vector<bool> localsSet;
 
     using Locals = SmallVector<Index, 5>;
 
