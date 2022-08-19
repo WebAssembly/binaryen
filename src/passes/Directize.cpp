@@ -135,13 +135,13 @@ private:
       // The index is out of bounds for the initial table's content. This may
       // trap, but it may also not trap if the table is modified later (if a
       // function is appended to it).
-      if (!info.mayBeModified) {
+      if (!table.mayBeModified) {
         return CallUtils::Trap{};
       } else {
         // The table may be modified, so it might be appended to. We should only
         // get here in the case that the initial contents are immutable, as
         // otherwise we have nothing to optimize at all.
-        assert(info.initialContentsImmutable);
+        assert(table.initialContentsImmutable);
         return CallUtils::Unknown{};
       }
     }
@@ -168,7 +168,7 @@ private:
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto info = getTargetInfo(c, *table.flatTable, original);
+    auto info = getTargetInfo(c, table, original);
     if (std::get_if<CallUtils::Trap>(&info)) {
       return replaceWithUnreachable(operands);
     }
