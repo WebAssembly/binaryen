@@ -248,7 +248,7 @@
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 1)
@@ -258,7 +258,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block0
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 2)

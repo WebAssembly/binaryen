@@ -71,9 +71,7 @@
    (ref.null ${i32_f32_f64})
   )
   (drop
-   (block $label$1 (result (ref null ${i32_f32_f64}))
-    (local.get $0)
-   )
+   (local.get $0)
   )
   (drop
    (if (result (ref null ${i32_f32_f64}))
@@ -83,7 +81,7 @@
    )
   )
   (drop
-   (loop $label$4 (result (ref null ${i32_f32_f64}))
+   (loop $label$3 (result (ref null ${i32_f32_f64}))
     (local.get $0)
    )
   )

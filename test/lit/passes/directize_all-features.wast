@@ -709,23 +709,19 @@
  ;; IMMUT:      (table $0 8 8 funcref)
  (table $0 8 8 funcref)
  ;; CHECK:      (func $0
- ;; CHECK-NEXT:  (block $block
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $0
- ;; IMMUT-NEXT:  (block $block
- ;; IMMUT-NEXT:   (nop)
+ ;; IMMUT-NEXT:  (nop)
+ ;; IMMUT-NEXT:  (block
  ;; IMMUT-NEXT:   (block
- ;; IMMUT-NEXT:    (block
- ;; IMMUT-NEXT:    )
- ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (unreachable)
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
  (func $0

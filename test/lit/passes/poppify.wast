@@ -60,10 +60,8 @@
   )
 
   ;; CHECK:      (func $block (result i32)
-  ;; CHECK-NEXT:  (block $block (result i32)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $block (result i32)
     (block i32
@@ -73,13 +71,7 @@
   )
 
   ;; CHECK:      (func $nested (result i32)
-  ;; CHECK-NEXT:  (block $block (result i32)
-  ;; CHECK-NEXT:   (block $block0 (result i32)
-  ;; CHECK-NEXT:    (block $block1 (result i32)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $nested (result i32)
     (block i32
@@ -92,17 +84,11 @@
   )
 
   ;; CHECK:      (func $child-blocks (result i32)
-  ;; CHECK-NEXT:  (block $block (result i32)
-  ;; CHECK-NEXT:   (block $block2 (result i32)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block3 (result i32)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (pop i32)
-  ;; CHECK-NEXT:    (pop i32)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (pop i32)
+  ;; CHECK-NEXT:   (pop i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $child-blocks (result i32)

@@ -51,8 +51,6 @@
 
   (type $i32-i32 (func (param i32) (result i32)))
 
-  ;; CHECK-BINARY:      (type $none_=>_i32_ref?|$mixed_results|_f64 (func (result i32 (ref null $mixed_results) f64)))
-
   ;; CHECK-BINARY:      (type $ref?|$mixed_results|_=>_none (func (param (ref null $mixed_results))))
 
   ;; CHECK-BINARY:      (elem declare func $call-ref $call-ref-more)
@@ -62,8 +60,6 @@
   ;; CHECK-BINARY-NEXT:   (ref.func $call-ref)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
-  ;; CHECK-TEXT:      (type $none_=>_i32_ref?|$mixed_results|_f64 (func (result i32 (ref null $mixed_results) f64)))
-
   ;; CHECK-TEXT:      (type $ref?|$mixed_results|_=>_none (func (param (ref null $mixed_results))))
 
   ;; CHECK-TEXT:      (elem declare func $call-ref $call-ref-more)
@@ -184,74 +180,10 @@
     (local $x (i32 (ref null $=>anyref) f64))
   )
   ;; CHECK-BINARY:      (func $type-only-in-tuple-block
-  ;; CHECK-BINARY-NEXT:  (local $0 (i32 (ref null $mixed_results) f64))
-  ;; CHECK-BINARY-NEXT:  (local $1 (ref null $mixed_results))
-  ;; CHECK-BINARY-NEXT:  (local $2 i32)
-  ;; CHECK-BINARY-NEXT:  (local.set $0
-  ;; CHECK-BINARY-NEXT:   (block $label$1 (result i32 (ref null $mixed_results) f64)
-  ;; CHECK-BINARY-NEXT:    (unreachable)
-  ;; CHECK-BINARY-NEXT:   )
-  ;; CHECK-BINARY-NEXT:  )
-  ;; CHECK-BINARY-NEXT:  (drop
-  ;; CHECK-BINARY-NEXT:   (block (result i32)
-  ;; CHECK-BINARY-NEXT:    (local.set $2
-  ;; CHECK-BINARY-NEXT:     (tuple.extract 0
-  ;; CHECK-BINARY-NEXT:      (local.get $0)
-  ;; CHECK-BINARY-NEXT:     )
-  ;; CHECK-BINARY-NEXT:    )
-  ;; CHECK-BINARY-NEXT:    (drop
-  ;; CHECK-BINARY-NEXT:     (block (result (ref null $mixed_results))
-  ;; CHECK-BINARY-NEXT:      (local.set $1
-  ;; CHECK-BINARY-NEXT:       (tuple.extract 1
-  ;; CHECK-BINARY-NEXT:        (local.get $0)
-  ;; CHECK-BINARY-NEXT:       )
-  ;; CHECK-BINARY-NEXT:      )
-  ;; CHECK-BINARY-NEXT:      (drop
-  ;; CHECK-BINARY-NEXT:       (tuple.extract 2
-  ;; CHECK-BINARY-NEXT:        (local.get $0)
-  ;; CHECK-BINARY-NEXT:       )
-  ;; CHECK-BINARY-NEXT:      )
-  ;; CHECK-BINARY-NEXT:      (local.get $1)
-  ;; CHECK-BINARY-NEXT:     )
-  ;; CHECK-BINARY-NEXT:    )
-  ;; CHECK-BINARY-NEXT:    (local.get $2)
-  ;; CHECK-BINARY-NEXT:   )
-  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT:  (unreachable)
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $type-only-in-tuple-block
-  ;; CHECK-TEXT-NEXT:  (local $0 (i32 (ref null $mixed_results) f64))
-  ;; CHECK-TEXT-NEXT:  (local $1 (ref null $mixed_results))
-  ;; CHECK-TEXT-NEXT:  (local $2 i32)
-  ;; CHECK-TEXT-NEXT:  (local.set $0
-  ;; CHECK-TEXT-NEXT:   (block $label$1 (result i32 (ref null $mixed_results) f64)
-  ;; CHECK-TEXT-NEXT:    (unreachable)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block (result i32)
-  ;; CHECK-TEXT-NEXT:    (local.set $2
-  ;; CHECK-TEXT-NEXT:     (tuple.extract 0
-  ;; CHECK-TEXT-NEXT:      (local.get $0)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (block $block0 (result (ref null $mixed_results))
-  ;; CHECK-TEXT-NEXT:      (local.set $1
-  ;; CHECK-TEXT-NEXT:       (tuple.extract 1
-  ;; CHECK-TEXT-NEXT:        (local.get $0)
-  ;; CHECK-TEXT-NEXT:       )
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:      (drop
-  ;; CHECK-TEXT-NEXT:       (tuple.extract 2
-  ;; CHECK-TEXT-NEXT:        (local.get $0)
-  ;; CHECK-TEXT-NEXT:       )
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:      (local.get $1)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (local.get $2)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
   (func $type-only-in-tuple-block
     (drop
@@ -392,8 +324,6 @@
 
 ;; CHECK-NODEBUG:      (type $none_=>_anyref (func (result anyref)))
 
-;; CHECK-NODEBUG:      (type $none_=>_i32_ref?|none_->_anyref_f32_anyref_f32|_f64 (func (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)))
-
 ;; CHECK-NODEBUG:      (type $ref?|none_->_anyref_f32_anyref_f32|_=>_none (func (param (ref null $none_=>_anyref_f32_anyref_f32))))
 
 ;; CHECK-NODEBUG:      (elem declare func $0 $2)
@@ -454,39 +384,7 @@
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $8
-;; CHECK-NODEBUG-NEXT:  (local $0 (i32 (ref null $none_=>_anyref_f32_anyref_f32) f64))
-;; CHECK-NODEBUG-NEXT:  (local $1 (ref null $none_=>_anyref_f32_anyref_f32))
-;; CHECK-NODEBUG-NEXT:  (local $2 i32)
-;; CHECK-NODEBUG-NEXT:  (local.set $0
-;; CHECK-NODEBUG-NEXT:   (block $label$1 (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)
-;; CHECK-NODEBUG-NEXT:    (unreachable)
-;; CHECK-NODEBUG-NEXT:   )
-;; CHECK-NODEBUG-NEXT:  )
-;; CHECK-NODEBUG-NEXT:  (drop
-;; CHECK-NODEBUG-NEXT:   (block (result i32)
-;; CHECK-NODEBUG-NEXT:    (local.set $2
-;; CHECK-NODEBUG-NEXT:     (tuple.extract 0
-;; CHECK-NODEBUG-NEXT:      (local.get $0)
-;; CHECK-NODEBUG-NEXT:     )
-;; CHECK-NODEBUG-NEXT:    )
-;; CHECK-NODEBUG-NEXT:    (drop
-;; CHECK-NODEBUG-NEXT:     (block (result (ref null $none_=>_anyref_f32_anyref_f32))
-;; CHECK-NODEBUG-NEXT:      (local.set $1
-;; CHECK-NODEBUG-NEXT:       (tuple.extract 1
-;; CHECK-NODEBUG-NEXT:        (local.get $0)
-;; CHECK-NODEBUG-NEXT:       )
-;; CHECK-NODEBUG-NEXT:      )
-;; CHECK-NODEBUG-NEXT:      (drop
-;; CHECK-NODEBUG-NEXT:       (tuple.extract 2
-;; CHECK-NODEBUG-NEXT:        (local.get $0)
-;; CHECK-NODEBUG-NEXT:       )
-;; CHECK-NODEBUG-NEXT:      )
-;; CHECK-NODEBUG-NEXT:      (local.get $1)
-;; CHECK-NODEBUG-NEXT:     )
-;; CHECK-NODEBUG-NEXT:    )
-;; CHECK-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-NODEBUG-NEXT:   )
-;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $9

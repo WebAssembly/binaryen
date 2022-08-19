@@ -48,7 +48,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (global.set $sleeping
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -56,7 +56,7 @@
   ;; CHECK-NEXT:     (i32.const 4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block0
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (global.set $sleeping
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )

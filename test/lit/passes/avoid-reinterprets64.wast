@@ -223,14 +223,26 @@
   )
   ;; CHECK:      (func $nofallthrough
   ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $1 i64)
+  ;; CHECK-NEXT:  (local $2 f32)
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i64.const 1024)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i64.const 1024)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f32.load
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.reinterpret_i32
-  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )

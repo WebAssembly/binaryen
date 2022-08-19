@@ -1348,7 +1348,7 @@
   ;; CHECK:      (func $canonicalize-block-var (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.const -5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $x)
@@ -1356,7 +1356,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block0 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.const -6)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $x)
@@ -1380,7 +1380,7 @@
   ;; CHECK:      (func $canonicalize-block-loop
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (loop $loop-in (result i32)
@@ -1390,7 +1390,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block2 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.const 8)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (loop $loop-in1 (result i32)
@@ -1400,7 +1400,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block4 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.const 10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (loop $loop-in3 (result i32)
@@ -1411,7 +1411,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block6 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (call $and-pos1)
   ;; CHECK-NEXT:     (i32.const 12)
   ;; CHECK-NEXT:    )
@@ -1426,7 +1426,7 @@
   ;; CHECK-NEXT:     (call $and-pos1)
   ;; CHECK-NEXT:     (i32.const 13)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $block8 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (call $and-pos1)
   ;; CHECK-NEXT:     (i32.const 14)
   ;; CHECK-NEXT:    )
@@ -1434,7 +1434,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (block $block9 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (call $and-pos1)
   ;; CHECK-NEXT:     (i32.const 14)
   ;; CHECK-NEXT:    )
@@ -1840,7 +1840,7 @@
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (call $ne0)
   ;; CHECK-NEXT:   )
@@ -11808,7 +11808,7 @@
   ;; CHECK-NEXT:   (i32.gt_s
   ;; CHECK-NEXT:    (i32.sub
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (i32.const -2147483648)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -11819,7 +11819,7 @@
   ;; CHECK-NEXT:   (i32.gt_s
   ;; CHECK-NEXT:    (i32.sub
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (block $block23 (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (i32.const -2147483648)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -13758,12 +13758,12 @@
   ;; CHECK:      (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $block24 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $y)
   ;; CHECK-NEXT:     )

@@ -206,22 +206,20 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (block $block (result anyref)
- ;; CHECK-NEXT:     (block $something (result anyref)
- ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (br_on_cast_static $something $struct
- ;; CHECK-NEXT:        (ref.null $struct)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:    (block $something (result anyref)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (br_on_cast_static $something $struct
+ ;; CHECK-NEXT:       (ref.null $struct)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (ref.null any)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null any)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null any)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (select (result anyref)
- ;; CHECK-NEXT:    (block $block3 (result anyref)
+ ;; CHECK-NEXT:    (block (result anyref)
  ;; CHECK-NEXT:     (block $nothing
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (br_on_null $nothing
