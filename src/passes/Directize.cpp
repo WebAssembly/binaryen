@@ -26,7 +26,8 @@
 // then the initial tables' contents are assumed to be immutable. That is, if
 // a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
 // will assume it must call b. It is possible that the table is appended to, but
-// in this mode we assume the initial contents are not overwritten.
+// in this mode we assume the initial contents are not overwritten. This is the
+// case for output from LLVM, for example.
 //
 
 #include <unordered_map>

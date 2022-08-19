@@ -1352,5 +1352,140 @@
  )
 )
 
-;; TODO: do we need new tests?
-;; split ranges
+;; An imported table with a non-contiguous range in the initial contents.
+(module
+ ;; CHECK:      (type $ii (func (param i32 i32)))
+ ;; IMMUT:      (type $ii (func (param i32 i32)))
+ (type $ii (func (param i32 i32)))
+
+ ;; CHECK:      (import "env" "table" (table $table 5 5 funcref))
+ ;; IMMUT:      (import "env" "table" (table $table 5 5 funcref))
+ (import "env" "table" (table $table 5 5 funcref))
+ (elem (i32.const 1) $foo1)
+ (elem (i32.const 3) $foo2)
+
+ ;; CHECK:      (elem $0 (i32.const 1) $foo1)
+
+ ;; CHECK:      (elem $1 (i32.const 3) $foo2)
+
+ ;; CHECK:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (elem $0 (i32.const 1) $foo1)
+
+ ;; IMMUT:      (elem $1 (i32.const 3) $foo2)
+
+ ;; IMMUT:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $foo1 (param i32) (param i32)
+  (unreachable)
+ )
+ ;; CHECK:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $foo2 (param i32) (param i32)
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (call_indirect $table (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT-NEXT:  (block
+ ;; IMMUT-NEXT:   (block
+ ;; IMMUT-NEXT:    (drop
+ ;; IMMUT-NEXT:     (local.get $x)
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:    (drop
+ ;; IMMUT-NEXT:     (local.get $y)
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (unreachable)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call $foo1
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (block
+ ;; IMMUT-NEXT:   (block
+ ;; IMMUT-NEXT:    (drop
+ ;; IMMUT-NEXT:     (local.get $x)
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:    (drop
+ ;; IMMUT-NEXT:     (local.get $y)
+ ;; IMMUT-NEXT:    )
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (unreachable)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call $foo2
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $table (type $ii)
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:   (i32.const 4)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $bar (param $x i32) (param $y i32)
+  ;; When assuming the initial contents are immutable, we can optimize some
+  ;; of these cases. 0 and 2 are offsets that are known to contain a null, so
+  ;; they will trap, and 1 and 3 contain known contents we can do a direct call
+  ;; to. 4 is out of bounds so we cannot optimize there. (And in all of these,
+  ;; we cannot optimize anything in the non-immutable case, since the table is
+  ;; imported.)
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 0)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 1)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 2)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 3)
+  )
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 4)
+  )
+ )
+)
