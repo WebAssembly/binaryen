@@ -119,10 +119,9 @@ private:
   // analyze it and return one of the results of CallUtils::IndirectCallInfo,
   // that is, whether we know a direct call target, or we know it will trap, or
   // if we know nothing.
-  CallUtils::IndirectCallInfo
-  getTargetInfo(Expression* target,
-                const TableInfo& table,
-                CallIndirect* original) {
+  CallUtils::IndirectCallInfo getTargetInfo(Expression* target,
+                                            const TableInfo& table,
+                                            CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
       return CallUtils::Unknown{};
