@@ -760,20 +760,6 @@ struct SimplifyLocals
     if (sinkables.empty()) {
       return;
     }
-    Index goodIndex = sinkables.begin()->first;
-    auto localType = this->getFunction()->getLocalType(goodIndex);
-    if (localType.isNonNullable() &&
-        !this->getModule()->features.hasGCNNLocals()) {
-      // This is a non-nullable local that must validate according to "1a"
-      // rules, that is, sets must structurally dominate gets, and so when we
-      // add a local.get in the lines below we might break that validation. We
-      // could automatically fix it up later by making the local nullable +
-      // ref.as_non_nulls, but as this entire optimization is somewhat
-      // speculative (see comment on top of this function), it's probably not
-      // worth hoping for it to still be worthwhile with such fixups.
-      // TODO Check if we could still validate, and optimize if so?
-      return;
-    }
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
@@ -782,6 +768,11 @@ struct SimplifyLocals
       ifsToEnlarge.push_back(iff);
       return;
     }
+
+    // We can optimize!
+    Index goodIndex = sinkables.begin()->first;
+    auto localType = this->getFunction()->getLocalType(goodIndex);
+
     // Update the ifTrue side.
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;

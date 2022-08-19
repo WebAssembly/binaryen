@@ -227,11 +227,120 @@
   )
 
   ;; CHECK:      (func $if-nnl
+  ;; CHECK-NEXT:  (local $x funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref func))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (ref.func $if-nnl)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (ref.func $if-nnl)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $if-nnl (type $none_=>_none)
+  ;; NOMNL-NEXT:  (local $x funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (if (result (ref func))
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:    (block (result (ref $none_=>_none))
+  ;; NOMNL-NEXT:     (nop)
+  ;; NOMNL-NEXT:     (ref.func $if-nnl)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (local.tee $x
+  ;; NOMNL-NEXT:     (ref.func $if-nnl)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $if-nnl
+   (local $x (ref func))
+   ;; We will turn this if into an if-else with a set on the outside:
+   ;;
+   ;;  (local.set $x
+   ;;   (if
+   ;;    (i32.const 1)
+   ;;    (ref.func $if-nnl)
+   ;;    (local.get $x)))
+   ;;
+   ;; That will not validate in "1a", however, so the local will become
+   ;; nullable. That is not optimal, but this situation is not really one that
+   ;; matters: if there are gets later that actually read this value then there
+   ;; must be another set before us:
+   ;;
+   ;;  x = v1;
+   ;;  if (condition) x = v2;
+   ;;  foo(x);
+   ;;
+   ;; That is the case because if there is *not* that initial set of v1 then
+   ;; the get in foo(x) cannot validate, since the set of v2 only allows gets to
+   ;; validate inside the if arm. Thus, the other set before the if is what
+   ;; allows validation to work, and so this set just ends up possibly modifying
+   ;; a local that is already written to. Adding a get in the if is therefore
+   ;; valid due ot the other set before us. In summary, if there is a set before
+   ;; us then we can add a get, and we'll remain non-nullable (see next
+   ;; function); if there is no set before us then the local becomes nullable,
+   ;; but also this set is dead and not read by anything later, so other
+   ;; optimizations will remove it anyhow.
+   (if
+    (i32.const 1)
+    (local.set $x
+     (ref.func $if-nnl)
+    )
+   )
+   ;; An exta set + gets, just to avoid other optimizations kicking in
+   ;; (without them, the function only has a set and nothing else, and will
+   ;; remove the set entirely). Nothing should change here.
+   (call $helper
+    (local.tee $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.get $x)
+   )
+  )
+
+  ;; CHECK:      (func $if-nnl-previous-set
   ;; CHECK-NEXT:  (local $x (ref func))
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $if-nnl)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref func))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (block (result (ref $none_=>_none))
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (ref.func $if-nnl)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $helper
@@ -243,12 +352,19 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $if-nnl (type $none_=>_none)
+  ;; NOMNL:      (func $if-nnl-previous-set (type $none_=>_none)
   ;; NOMNL-NEXT:  (local $x (ref func))
-  ;; NOMNL-NEXT:  (if
-  ;; NOMNL-NEXT:   (i32.const 1)
-  ;; NOMNL-NEXT:   (local.set $x
-  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:  (local.set $x
+  ;; NOMNL-NEXT:   (ref.func $if-nnl)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (if (result (ref func))
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:    (block (result (ref $none_=>_none))
+  ;; NOMNL-NEXT:     (nop)
+  ;; NOMNL-NEXT:     (ref.func $if-nnl)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $x)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (call $helper
@@ -260,26 +376,19 @@
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $if-nnl
+  (func $if-nnl-previous-set
    (local $x (ref func))
-   ;; We would like to turn this if into an if-else with a set on the outside,
-   ;;  (local.set $x
-   ;;   (if
-   ;;    (i32.const 1)
-   ;;    (ref.func $if-nnl)
-   ;;    (local.get $x)))
-   ;; However, the added local.get will not validate in "1a" - it has no set
-   ;; that dominates it. In this case we should leave the if as it is, but we
-   ;; can at least nop out the set (as no get exists).
+   ;; As the above testcase, but now there is a set before the if. The local
+   ;; will remain non-nullable here even though we add a get in the if.
+   (local.set $x
+    (ref.func $if-nnl)
+   )
    (if
     (i32.const 1)
     (local.set $x
      (ref.func $if-nnl)
     )
    )
-   ;; An exta set + gets, just to avoid other optimizations kicking in
-   ;; (without them, the function only has a set and nothing else, and will
-   ;; remove the set entirely). Nothing should change here.
    (call $helper
     (local.tee $x
      (ref.func $if-nnl)
