@@ -389,25 +389,6 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   for (unsigned j = i; j < module.size(); j++) {
     parseModuleElement(*module[j]);
   }
-
-  // Finally, do some fixing up. We do not want to emit unnecessary names, as
-  // they can affect 1a validation of non-nullable locals. Specifically, imagine
-  // that we begin with this:
-  //
-  //  (block
-  //    (local.set $foo (value))
-  //  )
-  //  (local.get $foo)
-  //
-  // Such blocks without names do not interfere with 1a validation, since they
-  // are not emitted in the binary format, so we ignore them, and the above will
-  // validate. But when doing a text roundtrip, we don't want that block to have
-  // a name after reloading it. To avoid that, remove unneeded names.
-  PassRunner runner(&wasm);
-  runner.options.validate = false;
-  runner.setIsNested(true);
-  runner.add("remove-unused-names");
-  runner.run();
 }
 
 bool SExpressionWasmBuilder::isImport(Element& curr) {
@@ -1522,23 +1503,33 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
   // incredibly deep
   auto curr = allocator.alloc<Block>();
   auto* sp = &s;
-  std::vector<std::pair<Element*, Block*>> stack;
+  // The information we need for the stack of blocks here is the element we are
+  // converting, the block we are converting it to, and whether it originally
+  // had a name or not (which will be useful later).
+  struct Info {
+    Element* element;
+    Block* block;
+    bool hadName;
+  };
+  std::vector<Info> stack;
   while (1) {
-    stack.emplace_back(sp, curr);
     auto& s = *sp;
     Index i = 1;
     Name sName;
+    bool hadName = false;
     if (i < s.size() && s[i]->isStr()) {
       // could be a name or a type
       if (s[i]->dollared() ||
           stringToType(s[i]->str(), true /* allowError */) == Type::none) {
         sName = s[i++]->str();
+        hadName = true;
       } else {
         sName = "block";
       }
     } else {
       sName = "block";
     }
+    stack.emplace_back(Info{sp, curr, hadName});
     curr->name = nameMapper.pushLabelName(sName);
     // block signature
     curr->type = parseOptionalResultType(s, i);
@@ -1559,8 +1550,9 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
   }
   // we now have a stack of Blocks, with their labels, but no contents yet
   for (int t = int(stack.size()) - 1; t >= 0; t--) {
-    auto* sp = stack[t].first;
-    auto* curr = stack[t].second;
+    auto* sp = stack[t].element;
+    auto* curr = stack[t].block;
+    auto hadName = stack[t].hadName;
     auto& s = *sp;
     size_t i = 1;
     if (i < s.size()) {
@@ -1572,7 +1564,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       }
       if (t < int(stack.size()) - 1) {
         // first child is one of our recursions
-        curr->list.push_back(stack[t + 1].second);
+        curr->list.push_back(stack[t + 1].block);
         i++;
       }
       for (; i < s.size(); i++) {
@@ -1581,8 +1573,16 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     }
     nameMapper.popLabelName(curr->name);
     curr->finalize(curr->type);
+    // If the block never had a name, and one was not needed in practice (even
+    // if one did not exist, perhaps a break targeted it by index), then we can
+    // remove the name. Note that we only do this if it never had a name: if it
+    // did, we don't want to change anything; we just want to be the same as
+    // the code we are loading.
+    if (!hadName && !BranchUtils::BranchSeeker::has(curr, curr->name)) {
+      curr->name = Name();
+    }
   }
-  return stack[0].second;
+  return stack[0].block;
 }
 
 // Similar to block, but the label is handled by the enclosing if (since there
