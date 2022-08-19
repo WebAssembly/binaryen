@@ -54,6 +54,15 @@ struct TableInfo {
   bool initialContentsImmutable = false;
 
   std::unique_ptr<TableUtils::FlatTable> flatTable;
+
+  bool canOptimize() {
+    // We can optimize if:
+    //  * Either the table can't be modified at all, or it can be modified but
+    //    the initial contents are immutable (so we can optimize them).
+    //  * The table is flat.
+    return (!info.mayBeModified || info.initialContentsImmutable) &&
+            info.flatTable->valid);
+  }
 };
 
 using TableInfoMap = std::unordered_map<Name, TableInfo>;
@@ -64,16 +73,14 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   Pass* create() override { return new FunctionDirectizer(tables); }
 
   FunctionDirectizer(
-    const std::unordered_map<Name, TableInfo>& tables)
+    const TableInfoMap& tables)
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    auto it = tables.find(curr->table);
-    if (it == tables.end()) {
+    auto& table = tables[curr->table];
+    if (!table.canOptimize()) {
       return;
     }
-
-    auto& table = it->second;
     auto& flatTable = table.flatTable;
 
     // If the target is constant, we can emit a direct call.
@@ -109,7 +116,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable>& tables;
+  const TableInfoMap& tables;
 
   bool changedTypes = false;
 
@@ -216,12 +223,7 @@ struct Directize : public Pass {
     // anything. If so, skip scanning all the module contents.
     auto canOptimize = [&]() {
       for (auto& [_, info] : tables) {
-        // We can optimize if:
-        //  * Either the table can't be modified at all, or it can be modified
-        //    but the initial contents are immutable (so we can optimize them).
-        //  * The table is flat.
-        if ((!info.mayBeModified || info.initialContentsImmutable) &&
-            info.flatTable->valid)) {
+        if (info.canOptimize()) {
           return true;
         }
       }
@@ -236,7 +238,7 @@ struct Directize : public Pass {
 
     using TablesWithSet = std::unordered_set<Name>;
 
-    ModuleUtils::ParallelFunctionAnalysis<int> analysis(
+    ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
       *module, [&](Function* func, TableInfoMap& tablesWithSet) {
         if (func->imported()) {
           return;
