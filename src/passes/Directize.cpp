@@ -80,6 +80,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
     auto& flatTable = *table.flatTable;
 
+    // TODO: use initialContentsImmutable
+
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
       std::vector<Expression*> operands(curr->operands.begin(),
@@ -194,7 +196,7 @@ struct Directize : public Pass {
     // TODO: consider a per-table option here
     auto initialContentsImmutable =
       runner->options.getArgumentOrDefault(
-        "directize-initial-contents-immutable", "") == "";
+        "directize-initial-contents-immutable", "") != "";
 
     // Set up the initial info.
     TableInfoMap tables;
