@@ -403,7 +403,7 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   // are not emitted in the binary format, so we ignore them, and the above will
   // validate. But when doing a text roundtrip, we don't want that block to have
   // a name after reloading it. To avoid that, remove unneeded names.
-  PassRunner runner(module);
+  PassRunner runner(&wasm);
   runner.options.validate = false;
   runner.setIsNested(true);
   runner.add("remove-unused-names");
