@@ -1073,10 +1073,9 @@ BinaryenExpressionRef BinaryenGlobalSet(BinaryenModuleRef module,
 // singly defined memory is the intended one. This function takes in the memory
 // name passed to API functions to avoid duplicating the nullptr logic check in
 // each instruction
-static Name getMemoryName(BinaryenModuleRef module, const char* memName) {
-  const char* memoryName = memName;
-  if (memName == nullptr && module->memories.size() == 1) {
-    memoryName = module->memories[0]->name.c_str();
+static Name getMemoryName(BinaryenModuleRef module, const char* memoryName) {
+  if (memoryName == nullptr && module->memories.size() == 1) {
+    return module->memories[0]->name;
   }
 
   return memoryName;
