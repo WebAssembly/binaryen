@@ -55,8 +55,8 @@ namespace wasm {
 // This is a little similar to breaks: (br $foo) can only go to a label $foo
 // that is in scope.
 //
-// Note that this properly must hold on the final wasm binary, while we are
-// checking it on Binaryen IR. The propery will carry over, however: when
+// Note that this property must hold on the final wasm binary, while we are
+// checking it on Binaryen IR. The property will carry over, however: when
 // lowering to wasm we may remove some Block nodes, but removing nodes cannot
 // break validation.
 //
@@ -70,7 +70,8 @@ namespace wasm {
 //  )
 //  (local.get $x)
 //
-// It is useful to ignore such blocks as various passes emit them temporarily.
+// It is useful to ignore such blocks here, as various passes emit them
+// temporarily.
 //
 struct LocalStructuralDominance {
   // We always look at non-nullable locals, but can be configured to ignore
