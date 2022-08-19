@@ -78,15 +78,11 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     if (!table.canOptimize()) {
       return;
     }
-    auto& flatTable = *table.flatTable;
-
-    // TODO: use initialContentsImmutable
-
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
       std::vector<Expression*> operands(curr->operands.begin(),
                                         curr->operands.end());
-      replaceCurrent(makeDirectCall(operands, curr->target, flatTable, curr));
+      replaceCurrent(makeDirectCall(operands, curr->target, table, curr));
       return;
     }
 
@@ -94,7 +90,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
           [&](Expression* target) {
-            return getTargetInfo(target, flatTable, curr);
+            return getTargetInfo(target, table, curr);
           },
           *getFunction(),
           *getModule())) {
@@ -125,7 +121,7 @@ private:
   // if we know nothing.
   CallUtils::IndirectCallInfo
   getTargetInfo(Expression* target,
-                const TableUtils::FlatTable& flatTable,
+                const TableInfo& table,
                 CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
@@ -134,9 +130,21 @@ private:
 
     Index index = c->value.geti32();
 
-    // If the index is invalid, or the type is wrong, then this will trap.
+    // Check if index is invalid, or the type is wrong.
+    auto& flatTable = *table.flatTable;
     if (index >= flatTable.names.size()) {
-      return CallUtils::Trap{};
+      // The index is out of bounds for the initial table's content. This may
+      // trap, but it may also not trap if the table is modified later (if a
+      // function is appended to it).
+      if (!info.mayBeModified) {
+        return CallUtils::Trap{};
+      } else {
+        // The table may be modified, so it might be appended to. We should only
+        // get here in the case that the initial contents are immutable, as
+        // otherwise we have nothing to optimize at all.
+        assert(info.initialContentsImmutable);
+        return CallUtils::Unknown{};
+      }
     }
     auto name = flatTable.names[index];
     if (!name.is()) {
@@ -155,13 +163,13 @@ private:
   // unreachable.
   Expression* makeDirectCall(const std::vector<Expression*>& operands,
                              Expression* c,
-                             const TableUtils::FlatTable& flatTable,
+                             const TableInfo& table,
                              CallIndirect* original) {
     // If the index is invalid, or the type is wrong, we can
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto info = getTargetInfo(c, flatTable, original);
+    auto info = getTargetInfo(c, *table.flatTable, original);
     if (std::get_if<CallUtils::Trap>(&info)) {
       return replaceWithUnreachable(operands);
     }
