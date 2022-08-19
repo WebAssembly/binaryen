@@ -748,7 +748,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module,
                                                 uint32_t align,
                                                 BinaryenType type,
                                                 BinaryenExpressionRef ptr,
-                                                const char* name);
+                                                const char* memoryName);
 // Store: align can be 0, in which case it will be the natural alignment (equal
 // to bytes)
 BINARYEN_API BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
@@ -758,7 +758,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module,
                                                  BinaryenExpressionRef ptr,
                                                  BinaryenExpressionRef value,
                                                  BinaryenType type,
-                                                 const char* name);
+                                                 const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module,
                                                  struct BinaryenLiteral value);
 BINARYEN_API BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module,
@@ -780,9 +780,9 @@ BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
-                                                      const char* name);
+                                                      const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenMemoryGrow(
-  BinaryenModuleRef module, BinaryenExpressionRef delta, const char* name);
+  BinaryenModuleRef module, BinaryenExpressionRef delta, const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
 BinaryenUnreachable(BinaryenModuleRef module);
@@ -791,7 +791,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module,
                                                       uint32_t offset,
                                                       BinaryenType type,
                                                       BinaryenExpressionRef ptr,
-                                                      const char* name);
+                                                      const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicStore(BinaryenModuleRef module,
                     uint32_t bytes,
@@ -799,7 +799,7 @@ BinaryenAtomicStore(BinaryenModuleRef module,
                     BinaryenExpressionRef ptr,
                     BinaryenExpressionRef value,
                     BinaryenType type,
-                    const char* name);
+                    const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicRMW(BinaryenModuleRef module,
                   BinaryenOp op,
@@ -808,7 +808,7 @@ BinaryenAtomicRMW(BinaryenModuleRef module,
                   BinaryenExpressionRef ptr,
                   BinaryenExpressionRef value,
                   BinaryenType type,
-                  const char* name);
+                  const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                       BinaryenIndex bytes,
@@ -817,19 +817,19 @@ BinaryenAtomicCmpxchg(BinaryenModuleRef module,
                       BinaryenExpressionRef expected,
                       BinaryenExpressionRef replacement,
                       BinaryenType type,
-                      const char* name);
+                      const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWait(BinaryenModuleRef module,
                    BinaryenExpressionRef ptr,
                    BinaryenExpressionRef expected,
                    BinaryenExpressionRef timeout,
                    BinaryenType type,
-                   const char* name);
+                   const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicNotify(BinaryenModuleRef module,
                      BinaryenExpressionRef ptr,
                      BinaryenExpressionRef notifyCount,
-                     const char* name);
+                     const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicFence(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
@@ -872,14 +872,14 @@ BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                           uint8_t index,
                           BinaryenExpressionRef ptr,
                           BinaryenExpressionRef vec,
-                          const char* name);
+                          const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInit(BinaryenModuleRef module,
                    uint32_t segment,
                    BinaryenExpressionRef dest,
                    BinaryenExpressionRef offset,
                    BinaryenExpressionRef size,
-                   const char* name);
+                   const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
                                                     uint32_t segment);
 BINARYEN_API BinaryenExpressionRef
@@ -894,7 +894,7 @@ BinaryenMemoryFill(BinaryenModuleRef module,
                    BinaryenExpressionRef dest,
                    BinaryenExpressionRef value,
                    BinaryenExpressionRef size,
-                   const char* name);
+                   const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
                                                    BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
