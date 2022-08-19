@@ -21,7 +21,7 @@
 //
 // If called with
 //
-//   --directize-initial-tables-immutable
+//   --pass-arg=directize-initial-contents-immutable
 //
 // then the initial tables' contents are assumed to be immutable. That is, if
 // a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
