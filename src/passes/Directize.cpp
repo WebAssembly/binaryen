@@ -82,7 +82,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     if (curr->target->is<Const>()) {
       std::vector<Expression*> operands(curr->operands.begin(),
                                         curr->operands.end());
-      replaceCurrent(makeDirectCall(operands, curr->target, table, curr));
+      makeDirectCall(operands, curr->target, table, curr);
       return;
     }
 
@@ -158,26 +158,30 @@ private:
 
   // Create a direct call for a given list of operands, an expression which is
   // known to contain a constant indicating the table offset, and the relevant
-  // table. If we can see that the call will trap, instead return an
-  // unreachable.
-  Expression* makeDirectCall(const std::vector<Expression*>& operands,
-                             Expression* c,
-                             const TableInfo& table,
-                             CallIndirect* original) {
+  // table, if we can. If we can see that the call will trap, instead replace
+  // with an unreachable.
+  void makeDirectCall(const std::vector<Expression*>& operands,
+                      Expression* c,
+                      const TableInfo& table,
+                      CallIndirect* original) {
+    auto info = getTargetInfo(c, table, original);
+    if (std::get_if<CallUtils::Unknown>(&info)) {
+      // We don't know anything here.
+      return;
+    }
     // If the index is invalid, or the type is wrong, we can
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto info = getTargetInfo(c, table, original);
     if (std::get_if<CallUtils::Trap>(&info)) {
-      return replaceWithUnreachable(operands);
+      replaceCurrent(replaceWithUnreachable(operands));
+      return;
     }
-    assert(std::get_if<CallUtils::Known>(&info));
-    auto name = std::get_if<CallUtils::Known>(&info)->target;
 
     // Everything looks good!
-    return Builder(*getModule())
-      .makeCall(name, operands, original->type, original->isReturn);
+    auto name = std::get<CallUtils::Known>(info).target;
+    replaceCurrent(Builder(*getModule())
+      .makeCall(name, operands, original->type, original->isReturn));
   }
 
   Expression* replaceWithUnreachable(const std::vector<Expression*>& operands) {

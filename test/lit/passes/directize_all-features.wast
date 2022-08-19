@@ -293,6 +293,31 @@
    (i32.const 1)
   )
  )
+
+ ;; CHECK:      (func $out-of-bounds (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (call_indirect $table (type $ii)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 999)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $out-of-bounds (param $x i32) (param $y i32)
+ ;; IMMUT-NEXT:  (call_indirect $table (type $ii)
+ ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:   (i32.const 999)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $out-of-bounds (param $x i32) (param $y i32)
+  ;; The index here, 999, is out of bounds. We can't optimize that even in the
+  ;; immutable case, since we only assume the initial contents in the table are
+  ;; immutable, and so something might be written to offset 999 later.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i32.const 999)
+  )
+ )
 )
 
 ;; exported table. only optimizable in the immutable case.
@@ -1328,3 +1353,4 @@
 )
 
 ;; TODO: do we need new tests?
+;; split ranges
