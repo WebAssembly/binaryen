@@ -77,9 +77,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     std::unordered_set<Index> cannotBeNonNullable;
 
     if (getModule()->features.hasGCNNLocals()) {
-      // If the feature enabled then the only constraint is being able to read
-      // the default value - if it is readable, the local cannot become non-
-      // nullable.
+      // If the feature is enabled then the only constraint is being able to
+      // read the default value - if it is readable, the local cannot become
+      // non-nullable.
       for (auto& [get, sets] : localGraph.getSetses) {
         auto index = get->index;
         if (func->isVar(index) &&
