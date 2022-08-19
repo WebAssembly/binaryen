@@ -304,7 +304,7 @@
    ;; validate inside the if arm. Thus, the other set before the if is what
    ;; allows validation to work, and so this set just ends up possibly modifying
    ;; a local that is already written to. Adding a get in the if is therefore
-   ;; valid due ot the other set before us. In summary, if there is a set before
+   ;; valid due to the other set before us. In summary, if there is a set before
    ;; us then we can add a get, and we'll remain non-nullable (see next
    ;; function); if there is no set before us then the local becomes nullable,
    ;; but also this set is dead and not read by anything later, so other
