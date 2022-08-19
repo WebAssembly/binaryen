@@ -60,8 +60,7 @@ struct TableInfo {
     //  * Either the table can't be modified at all, or it can be modified but
     //    the initial contents are immutable (so we can optimize them).
     //  * The table is flat.
-    return (!mayBeModified || initialContentsImmutable) &&
-            flatTable->valid;
+    return (!mayBeModified || initialContentsImmutable) && flatTable->valid;
   }
 };
 
