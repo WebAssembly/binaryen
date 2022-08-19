@@ -33,9 +33,6 @@ namespace wasm {
 struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   bool isFunctionParallel() override { return true; }
 
-  // ?
-  bool requiresNonNullableLocalFixups() override { return false; }
-
   Pass* create() override { return new Vacuum; }
 
   TypeUpdater typeUpdater;
