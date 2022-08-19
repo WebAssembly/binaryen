@@ -765,11 +765,13 @@ struct SimplifyLocals
     if (localType.isNonNullable() &&
         !this->getModule()->features.hasGCNNLocals()) {
       // This is a non-nullable local that must validate according to "1a"
-      // rules, that is, sets must structurally dominate gets (see comment
-      // above on 1a for more details). We would be adding a local.get in the
-      // if-else arm, and that might not validate if there doesn't happen to be
-      // a proper set for it. TODO check if such a set exists, and optimize in
-      // that case.
+      // rules, that is, sets must structurally dominate gets, and so when we
+      // add a local.get in the lines below we might break that validation. We
+      // could automatically fix it up later by making the local nullable +
+      // ref.as_non_nulls, but as this entire optimization is somewhat
+      // speculative (see comment on top of this function), it's probably not
+      // worth hoping for it to still be worthwhile with such fixups.
+      // TODO Check if we could still validate, and optimize if so?
       return;
     }
     // Ensure we have a place to write the return values for, if not, we
