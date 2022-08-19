@@ -389,6 +389,25 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   for (unsigned j = i; j < module.size(); j++) {
     parseModuleElement(*module[j]);
   }
+
+  // Finally, do some fixing up. We do not want to emit unnecessary names, as
+  // they can affect 1a validation of non-nullable locals. Specifically, imagine
+  // that we begin with this:
+  //
+  //  (block
+  //    (local.set $foo (value))
+  //  )
+  //  (local.get $foo)
+  //
+  // Such blocks without names do not interfere with 1a validation, since they
+  // are not emitted in the binary format, so we ignore them, and the above will
+  // validate. But when doing a text roundtrip, we don't want that block to have
+  // a name after reloading it. To avoid that, remove unneeded names.
+  PassRunner runner(module);
+  runner.options.validate = false;
+  runner.setIsNested(true);
+  runner.add("remove-unused-names");
+  runner.run();
 }
 
 bool SExpressionWasmBuilder::isImport(Element& curr) {
