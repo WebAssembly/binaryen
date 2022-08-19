@@ -181,8 +181,9 @@ private:
 
     // Everything looks good!
     auto name = std::get<CallUtils::Known>(info).target;
-    replaceCurrent(Builder(*getModule())
-      .makeCall(name, operands, original->type, original->isReturn));
+    replaceCurrent(
+      Builder(*getModule())
+        .makeCall(name, operands, original->type, original->isReturn));
   }
 
   Expression* replaceWithUnreachable(const std::vector<Expression*>& operands) {
