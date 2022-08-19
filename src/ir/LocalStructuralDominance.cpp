@@ -32,8 +32,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   auto num = func->getNumLocals();
 
   bool hasRefVar = false;
-  for (Index i = func->getNumParams(); i < num; i++) {
-    if (func->getLocalType(i).isRef()) {
+  for (auto var : func->vars) {
+    if (var.isRef()) {
       hasRefVar = true;
       break;
     }
