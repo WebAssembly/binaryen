@@ -14,6 +14,10 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+- Add a new flag to Directize, `--pass-arg=directize-initial-contents-immutable`
+  which indicates the initial table contents are immutable. That is the case for
+  LLVM, for example, and it allows us to optimize more indirect calls to direct
+  ones. (#4942)
 - Change constant values of some reference types in the C and JS APIs. This is
   only observable if you hardcode specific values instead of calling the
   relevant methods (like `BinaryenTypeDataref()`). (#4755)

@@ -19,6 +19,16 @@
 // the table cannot change, and if we see a constant argument for the
 // indirect call's index.
 //
+// If called with
+//
+//   --pass-arg=directize-initial-contents-immutable
+//
+// then the initial tables' contents are assumed to be immutable. That is, if
+// a table looks like [a, b, c] in the wasm, and we see a call to index 1, we
+// will assume it must call b. It is possible that the table is appended to, but
+// in this mode we assume the initial contents are not overwritten. This is the
+// case for output from LLVM, for example.
+//
 
 #include <unordered_map>
 
@@ -34,28 +44,45 @@ namespace wasm {
 
 namespace {
 
+struct TableInfo {
+  // Whether the table may be modifed at runtime, either because it is imported
+  // or exported, or table.set operations exist for it in the code.
+  bool mayBeModified = false;
+
+  // Whether we can assume that the initial contents are immutable. See the
+  // toplevel comment.
+  bool initialContentsImmutable = false;
+
+  std::unique_ptr<TableUtils::FlatTable> flatTable;
+
+  bool canOptimize() const {
+    // We can optimize if:
+    //  * Either the table can't be modified at all, or it can be modified but
+    //    the initial contents are immutable (so we can optimize them).
+    //  * The table is flat.
+    return (!mayBeModified || initialContentsImmutable) && flatTable->valid;
+  }
+};
+
+using TableInfoMap = std::unordered_map<Name, TableInfo>;
+
 struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionDirectizer(tables); }
 
-  FunctionDirectizer(
-    const std::unordered_map<Name, TableUtils::FlatTable>& tables)
-    : tables(tables) {}
+  FunctionDirectizer(const TableInfoMap& tables) : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    auto it = tables.find(curr->table);
-    if (it == tables.end()) {
+    auto& table = tables.at(curr->table);
+    if (!table.canOptimize()) {
       return;
     }
-
-    auto& flatTable = it->second;
-
     // If the target is constant, we can emit a direct call.
     if (curr->target->is<Const>()) {
       std::vector<Expression*> operands(curr->operands.begin(),
                                         curr->operands.end());
-      replaceCurrent(makeDirectCall(operands, curr->target, flatTable, curr));
+      makeDirectCall(operands, curr->target, table, curr);
       return;
     }
 
@@ -63,7 +90,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     if (auto* calls = CallUtils::convertToDirectCalls(
           curr,
           [&](Expression* target) {
-            return getTargetInfo(target, flatTable, curr);
+            return getTargetInfo(target, table, curr);
           },
           *getFunction(),
           *getModule())) {
@@ -83,7 +110,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable>& tables;
+  const TableInfoMap& tables;
 
   bool changedTypes = false;
 
@@ -91,10 +118,9 @@ private:
   // analyze it and return one of the results of CallUtils::IndirectCallInfo,
   // that is, whether we know a direct call target, or we know it will trap, or
   // if we know nothing.
-  CallUtils::IndirectCallInfo
-  getTargetInfo(Expression* target,
-                const TableUtils::FlatTable& flatTable,
-                CallIndirect* original) {
+  CallUtils::IndirectCallInfo getTargetInfo(Expression* target,
+                                            const TableInfo& table,
+                                            CallIndirect* original) {
     auto* c = target->dynCast<Const>();
     if (!c) {
       return CallUtils::Unknown{};
@@ -102,9 +128,21 @@ private:
 
     Index index = c->value.geti32();
 
-    // If the index is invalid, or the type is wrong, then this will trap.
+    // Check if index is invalid, or the type is wrong.
+    auto& flatTable = *table.flatTable;
     if (index >= flatTable.names.size()) {
-      return CallUtils::Trap{};
+      // The index is out of bounds for the initial table's content. This may
+      // trap, but it may also not trap if the table is modified later (if a
+      // function is appended to it).
+      if (!table.mayBeModified) {
+        return CallUtils::Trap{};
+      } else {
+        // The table may be modified, so it might be appended to. We should only
+        // get here in the case that the initial contents are immutable, as
+        // otherwise we have nothing to optimize at all.
+        assert(table.initialContentsImmutable);
+        return CallUtils::Unknown{};
+      }
     }
     auto name = flatTable.names[index];
     if (!name.is()) {
@@ -119,26 +157,31 @@ private:
 
   // Create a direct call for a given list of operands, an expression which is
   // known to contain a constant indicating the table offset, and the relevant
-  // table. If we can see that the call will trap, instead return an
-  // unreachable.
-  Expression* makeDirectCall(const std::vector<Expression*>& operands,
-                             Expression* c,
-                             const TableUtils::FlatTable& flatTable,
-                             CallIndirect* original) {
+  // table, if we can. If we can see that the call will trap, instead replace
+  // with an unreachable.
+  void makeDirectCall(const std::vector<Expression*>& operands,
+                      Expression* c,
+                      const TableInfo& table,
+                      CallIndirect* original) {
+    auto info = getTargetInfo(c, table, original);
+    if (std::get_if<CallUtils::Unknown>(&info)) {
+      // We don't know anything here.
+      return;
+    }
     // If the index is invalid, or the type is wrong, we can
     // emit an unreachable here, since in Binaryen it is ok to
     // reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
-    auto info = getTargetInfo(c, flatTable, original);
     if (std::get_if<CallUtils::Trap>(&info)) {
-      return replaceWithUnreachable(operands);
+      replaceCurrent(replaceWithUnreachable(operands));
+      return;
     }
-    assert(std::get_if<CallUtils::Known>(&info));
-    auto name = std::get_if<CallUtils::Known>(&info)->target;
 
     // Everything looks good!
-    return Builder(*getModule())
-      .makeCall(name, operands, original->type, original->isReturn);
+    auto name = std::get<CallUtils::Known>(info).target;
+    replaceCurrent(
+      Builder(*getModule())
+        .makeCall(name, operands, original->type, original->isReturn));
   }
 
   Expression* replaceWithUnreachable(const std::vector<Expression*>& operands) {
@@ -161,11 +204,50 @@ struct Directize : public Pass {
       return;
     }
 
-    // Find which tables are valid to optimize on. They must not be imported nor
-    // exported (so the outside cannot modify them), and must have no sets in
-    // any part of the module.
+    // TODO: consider a per-table option here
+    auto initialContentsImmutable =
+      runner->options.getArgumentOrDefault(
+        "directize-initial-contents-immutable", "") != "";
 
-    // First, find which tables have sets.
+    // Set up the initial info.
+    TableInfoMap tables;
+    for (auto& table : module->tables) {
+      tables[table->name].initialContentsImmutable = initialContentsImmutable;
+      tables[table->name].flatTable =
+        std::make_unique<TableUtils::FlatTable>(*module, *table);
+    }
+
+    // Next, look at the imports and exports.
+
+    for (auto& table : module->tables) {
+      if (table->imported()) {
+        tables[table->name].mayBeModified = true;
+      }
+    }
+
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Table) {
+        tables[ex->value].mayBeModified = true;
+      }
+    }
+
+    // This may already be enough information to know that we can't optimize
+    // anything. If so, skip scanning all the module contents.
+    auto canOptimize = [&]() {
+      for (auto& [_, info] : tables) {
+        if (info.canOptimize()) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (!canOptimize()) {
+      return;
+    }
+
+    // Find which tables have sets.
+
     using TablesWithSet = std::unordered_set<Name>;
 
     ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis(
@@ -178,47 +260,20 @@ struct Directize : public Pass {
         }
       });
 
-    TablesWithSet tablesWithSet;
     for (auto& [_, names] : analysis.map) {
       for (auto name : names) {
-        tablesWithSet.insert(name);
+        tables[name].mayBeModified = true;
       }
     }
 
-    std::unordered_map<Name, TableUtils::FlatTable> validTables;
-
-    for (auto& table : module->tables) {
-      if (table->imported()) {
-        continue;
-      }
-
-      if (tablesWithSet.count(table->name)) {
-        continue;
-      }
-
-      bool canOptimizeCallIndirect = true;
-      for (auto& ex : module->exports) {
-        if (ex->kind == ExternalKind::Table && ex->value == table->name) {
-          canOptimizeCallIndirect = false;
-          break;
-        }
-      }
-      if (!canOptimizeCallIndirect) {
-        continue;
-      }
-
-      // All conditions are valid, this is optimizable.
-      TableUtils::FlatTable flatTable(*module, *table);
-      if (flatTable.valid) {
-        validTables.emplace(table->name, flatTable);
-      }
-    }
-
-    if (validTables.empty()) {
+    // Perhaps the new information about tables with sets shows we cannot
+    // optimize.
+    if (!canOptimize()) {
       return;
     }
 
-    FunctionDirectizer(validTables).run(runner, module);
+    // We can optimize!
+    FunctionDirectizer(tables).run(runner, module);
   }
 };
 
