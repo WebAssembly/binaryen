@@ -3053,23 +3053,23 @@ static void validateMemories(Module& module, ValidationInfo& info) {
       memory->initial > memory->max, "memory", "memory max >= initial");
     if (memory->is64()) {
       info.shouldBeTrue(module.features.hasMemory64(),
-                      "memory",
-                      "memory is 64-bit, but memory64 is disabled");
+                        "memory",
+                        "memory is 64-bit, but memory64 is disabled");
     } else {
       info.shouldBeTrue(memory->initial <= Memory::kMaxSize32,
-                      "memory",
-                      "initial memory must be <= 4GB");
+                        "memory",
+                        "initial memory must be <= 4GB");
       info.shouldBeTrue(!memory->hasMax() || memory->max <= Memory::kMaxSize32,
-                      "memory",
-                      "max memory must be <= 4GB, or unlimited");
+                        "memory",
+                        "max memory must be <= 4GB, or unlimited");
     }
     info.shouldBeTrue(!memory->shared || memory->hasMax(),
-                    "memory",
-                    "shared memory must have max size");
+                      "memory",
+                      "shared memory must have max size");
     if (memory->shared) {
       info.shouldBeTrue(module.features.hasAtomics(),
-                      "memory",
-                      "memory is shared, but atomics are disabled");
+                        "memory",
+                        "memory is shared, but atomics are disabled");
     }
   }
 }
@@ -3119,14 +3119,14 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
                           "segment size should fit in memory (end)");
       }
       FunctionValidator(module, &info).validate(segment->offset);
-    // If the memory is imported we don't actually know its initial size.
-    // Specifically wasm dll's import a zero sized memory which is perfectly
-    // valid.
-    if (!memory->imported()) {
-      info.shouldBeTrue(size <= memory->initial * Memory::kPageSize,
-                        segment->data.size(),
-                        "segment size should fit in memory (initial)");
-    }
+      // If the memory is imported we don't actually know its initial size.
+      // Specifically wasm dll's import a zero sized memory which is perfectly
+      // valid.
+      if (!memory->imported()) {
+        info.shouldBeTrue(size <= memory->initial * Memory::kPageSize,
+                          segment->data.size(),
+                          "segment size should fit in memory (initial)");
+      }
     }
   }
 }
