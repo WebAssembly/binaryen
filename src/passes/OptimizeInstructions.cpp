@@ -2081,8 +2081,7 @@ private:
 
   // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
   // are equal (and not that they are foldable).
-  bool areConsecutiveInputsEqual(Expression* left,
-                                 Expression* right) {
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
     // TODO: optimize cases that must be equal but are *not* foldable.
     return areConsecutiveInputsEqualAndFoldable(left, right);
   }

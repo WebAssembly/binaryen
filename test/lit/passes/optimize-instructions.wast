@@ -5,6 +5,10 @@
   (memory 0)
   ;; CHECK:      (type $0 (func (param i32 i64)))
   (type $0 (func (param i32 i64)))
+
+  ;; CHECK:      (import "a" "b" (func $get-f64 (result f64)))
+  (import "a" "b" (func $get-f64 (result f64)))
+
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.and
   ;; CHECK-NEXT:   (local.get $i1)
@@ -13238,6 +13242,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (call $get-f64)
+  ;; CHECK-NEXT:     (call $get-f64)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.div
   ;; CHECK-NEXT:    (local.get $x0)
   ;; CHECK-NEXT:    (local.get $x0)
@@ -13376,6 +13388,13 @@
       (f32.mul
         (local.get $y0)
         (local.get $y0)
+      )
+    ))
+    ;; this one cannot be optimized as the runtime values may differ
+    (drop (f64.abs
+      (f64.mul
+        (call $get-f64)
+        (call $get-f64)
       )
     ))
 
