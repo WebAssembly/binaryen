@@ -1162,18 +1162,26 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
   auto* ret = Builder(*(Module*)module).makeReturn((Expression*)value);
   return static_cast<Expression*>(ret);
 }
+
+static Builder::MemoryInfo getMemoryInfo(bool memoryIs64) {
+  return memoryIs64 ? Builder::MemoryInfo::Memory64
+                    : Builder::MemoryInfo::Memory32;
+}
+
 BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
-                                         const char* memoryName) {
+                                         const char* memoryName,
+                                         bool memoryIs64) {
   auto* ret =
-    Builder(*(Module*)module).makeMemorySize(getMemoryName(module, memoryName));
+    Builder(*(Module*)module).makeMemorySize(getMemoryName(module, memoryName), getMemoryInfo(memoryIs64));
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
-                                         const char* memoryName) {
+                                         const char* memoryName,
+                                         bool memoryIs64) {
   auto* ret =
     Builder(*(Module*)module)
-      .makeMemoryGrow((Expression*)delta, getMemoryName(module, memoryName));
+      .makeMemoryGrow((Expression*)delta, getMemoryName(module, memoryName), getMemoryInfo(memoryIs64));
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {

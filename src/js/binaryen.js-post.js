@@ -687,11 +687,12 @@ function wrapModule(module, self = {}) {
   }
 
   self['memory'] = {
-    'size'(name) {
-      return Module['_BinaryenMemorySize'](module, strToStack(name));
+    // memory64 defaults to undefined/false.
+    'size'(name, memory64) {
+      return Module['_BinaryenMemorySize'](module, strToStack(name), memory64);
     },
-    'grow'(value, name) {
-      return Module['_BinaryenMemoryGrow'](module, value, strToStack(name));
+    'grow'(value, name, memory64) {
+      return Module['_BinaryenMemoryGrow'](module, value, strToStack(name), memory64);
     },
     'init'(segment, dest, offset, size, name) {
       return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size, strToStack(name));
