@@ -672,7 +672,7 @@ public:
 
   bool isMemory64(Name memoryName, MemoryInfo info) {
     return info == MemoryInfo::Memory64 || (info == MemoryInfo::Unspecified &&
-                                            wasm.getMemory(memoryName).is64());
+                                            wasm.getMemory(memoryName)->is64());
   }
 
   MemorySize* makeMemorySize(Name memoryName, MemoryInfo info) {
