@@ -45,7 +45,7 @@
   ;; NOMNL-NEXT: )
   (func $non-nullable
     (local $x (ref null $struct))
-    (local $y anyref)
+    (local $y funcref)
     ;; x is assigned a value that is non-nullable.
     (local.set $x
       (ref.as_non_null (ref.null $struct))

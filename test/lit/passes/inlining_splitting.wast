@@ -1216,7 +1216,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if0 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (ref.null func)
+  ;; CHECK-NEXT:      (ref.null data)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -1246,7 +1246,7 @@
   ;; CHECK-NEXT: )
   (func $call-multi-if
     (drop (call $multi-if (ref.null any)))
-    (drop (call $multi-if (ref.null func)))
+    (drop (call $multi-if (ref.null data)))
   )
 
   ;; CHECK:      (func $too-many-ifs (param $x anyref) (result anyref)
@@ -1325,13 +1325,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many-ifs
-  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null data)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-too-many-ifs
     (drop (call $too-many-ifs (ref.null any)))
-    (drop (call $too-many-ifs (ref.null func)))
+    (drop (call $too-many-ifs (ref.null data)))
   )
 )
 
