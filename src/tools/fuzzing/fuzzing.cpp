@@ -1969,8 +1969,13 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   assert(wasm.features.hasReferenceTypes());
   switch (heapType.getBasic()) {
     case HeapType::ext: {
-      assert(type.isNullable() && "Cannot handle non-nullable externref");
-      return builder.makeRefNull(type);
+      auto null = builder.makeRefNull(HeapType::ext);
+      // TODO: support actual non-nullable externrefs via imported globals or
+      // similar.
+      if (!type.isNullable()) {
+        return builder.makeRefAs(RefAsNonNull, null);
+      }
+      return null;
     }
     case HeapType::func: {
       return makeRefFuncConst(type);
