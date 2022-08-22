@@ -1055,7 +1055,18 @@ class TrapsNeverHappen(TestCaseHandler):
             # we can't test this function, which the trap is in the middle of
             # (tnh could move the trap around, so even things before the trap
             # are unsafe). erase everything from this function's output and
-            # onward, so we only compare the previous trap-free code.
+            # onward, so we only compare the previous trap-free code. first,
+            # find the function call during which the trap happened, by finding
+            # the call line right before us. that is, the output looks like
+            # this:
+            #
+            #   [fuzz-exec] calling foo
+            #   .. stuff happening during foo ..
+            #   [fuzz-exec] calling bar
+            #   .. stuff happening during bar ..
+            #
+            # if the trap happened during bar, the relevant call line is
+            # "[fuzz-exec] calling bar".
             call_start = before.rfind(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
             if call_start < 0:
                 # the trap happened before we called an export, so it occured
@@ -1064,7 +1075,11 @@ class TrapsNeverHappen(TestCaseHandler):
                 # compare here; just leave.
                 return
             call_end = before.index('\n', call_start)
+            # we now know the contents of the call line after which the trap
+            # happens, which is something like "[fuzz-exec] calling bar", and
+            # it is unique since it contains the function being called.
             call_line = before[call_start:call_end]
+            # find that call line, and remove everything from it onward.
             before_index = before.index(call_line)
             lines_pre = before.count(os.linesep)
             before = before[:before_index]
