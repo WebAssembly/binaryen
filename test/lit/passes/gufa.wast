@@ -1066,3 +1066,54 @@
     )
   )
 )
+
+;; Exported mutable globals can contain any value, as the outside can write to
+;; them.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $exported-mutable (mut i32) (i32.const 42))
+  (global $exported-mutable (mut i32) (i32.const 42))
+  ;; CHECK:      (global $exported-immutable i32 (i32.const 42))
+  (global $exported-immutable i32 (i32.const 42))
+  ;; CHECK:      (global $mutable (mut i32) (i32.const 42))
+  (global $mutable (mut i32) (i32.const 42))
+  ;; CHECK:      (global $immutable i32 (i32.const 42))
+  (global $immutable i32 (i32.const 42))
+
+  ;; CHECK:      (export "exported-mutable" (global $exported-mutable))
+  (export "exported-mutable" (global $exported-mutable))
+  ;; CHECK:      (export "exported-immutable" (global $exported-immutable))
+  (export "exported-immutable" (global $exported-immutable))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $exported-mutable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This should not be optimized to a constant.
+    (drop
+      (global.get $exported-mutable)
+    )
+    ;; All the rest can be optimized.
+    (drop
+      (global.get $exported-immutable)
+    )
+    (drop
+      (global.get $mutable)
+    )
+    (drop
+      (global.get $immutable)
+    )
+  )
+)
