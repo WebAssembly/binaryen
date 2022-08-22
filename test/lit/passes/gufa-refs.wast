@@ -2396,8 +2396,8 @@
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (block $block (result (ref $struct))
-  ;; CHECK-NEXT:    (block $block0 (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (block (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )

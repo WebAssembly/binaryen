@@ -310,7 +310,7 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $block (result (ref null ${i32}))
+ ;; CHECK-NEXT:   (block (result (ref null ${i32}))
  ;; CHECK-NEXT:    (local.tee $x
  ;; CHECK-NEXT:     (call $get_null_{i32_i64})
  ;; CHECK-NEXT:    )
@@ -322,7 +322,7 @@
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (block $block (result (ref null ${i32}))
+ ;; NOMNL-NEXT:   (block (result (ref null ${i32}))
  ;; NOMNL-NEXT:    (local.tee $x
  ;; NOMNL-NEXT:     (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:    )

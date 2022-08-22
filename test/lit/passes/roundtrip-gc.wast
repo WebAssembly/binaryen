@@ -35,7 +35,7 @@
    ;; non-nullable reference, so we should not optimize this sort of thing in
    ;; stack IR.
    ;; TODO: This shouldn't be true after #4824 is resolved.
-   (block (result i32)
+   (block $block (result i32)
     (nop)
     (i32.const 1)
    )

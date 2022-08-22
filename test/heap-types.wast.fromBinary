@@ -71,9 +71,7 @@
    (ref.null $struct.A)
   )
   (drop
-   (block $label$1 (result (ref null $struct.A))
-    (local.get $x)
-   )
+   (local.get $x)
   )
   (drop
    (if (result (ref null $struct.A))
@@ -83,7 +81,7 @@
    )
   )
   (drop
-   (loop $label$4 (result (ref null $struct.A))
+   (loop $label$3 (result (ref null $struct.A))
     (local.get $x)
    )
   )

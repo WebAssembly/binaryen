@@ -132,7 +132,7 @@
 
   ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref $parent))
+  ;; CHECK-NEXT:   (block (result (ref $parent))
   ;; CHECK-NEXT:    (call $foo)
   ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
@@ -145,7 +145,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-iit-bad (type $ref|$parent|_=>_none) (param $parent (ref $parent))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block $block (result (ref $parent))
+  ;; NOMNL-NEXT:   (block (result (ref $parent))
   ;; NOMNL-NEXT:    (call $foo)
   ;; NOMNL-NEXT:    (local.get $parent)
   ;; NOMNL-NEXT:   )
@@ -158,7 +158,7 @@
   ;; NOMNL-NEXT: )
   ;; NOMNL-TNH:      (func $ref-cast-iit-bad (type $ref|$parent|_=>_none) (param $parent (ref $parent))
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (block $block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
   ;; NOMNL-TNH-NEXT:    (call $foo)
   ;; NOMNL-TNH-NEXT:    (local.get $parent)
   ;; NOMNL-TNH-NEXT:   )

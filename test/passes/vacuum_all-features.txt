@@ -185,7 +185,7 @@
   (block $out
    (if
     (local.get $x)
-    (block $block9
+    (block
      (local.set $x
       (local.get $x)
      )
@@ -208,16 +208,14 @@
   (nop)
  )
  (func $a
-  (block $block
-   (i32.store
-    (i32.const 1)
-    (i32.const 2)
-   )
-   (f64.div
-    (f64.const -nan:0xfffffffffa361)
-    (loop $label$1
-     (br $label$1)
-    )
+  (i32.store
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (f64.div
+   (f64.const -nan:0xfffffffffa361)
+   (loop $label$1
+    (br $label$1)
    )
   )
  )
@@ -248,7 +246,7 @@
  )
  (func $load-may-have-side-effects (result i32)
   (i64.ge_s
-   (block $block (result i64)
+   (block (result i64)
     (drop
      (i64.load32_s
       (i32.const 678585719)
@@ -385,7 +383,7 @@
    (call $_deflateInit2_
     (local.get $3)
    )
-   (block $block
+   (block
     (global.set $global$1
      (local.get $3)
     )
@@ -402,7 +400,7 @@
      )
      (i32.const 1)
     )
-    (block $block1 (result i32)
+    (block (result i32)
      (i32.store
       (local.get $1)
       (i32.load offset=20
@@ -419,7 +417,7 @@
      )
      (i32.const 0)
     )
-    (block $block2 (result i32)
+    (block (result i32)
      (drop
       (call $_deflateEnd
        (local.get $3)

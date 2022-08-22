@@ -1966,12 +1966,10 @@
   )
   ;; CHECK:      (func $nop-in-unreachable
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (i32.store
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nop-in-unreachable

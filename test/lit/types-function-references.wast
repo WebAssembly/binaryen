@@ -228,14 +228,14 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block (result i32)
+  ;; CHECK-TEXT-NEXT:   (block (result i32)
   ;; CHECK-TEXT-NEXT:    (local.set $2
   ;; CHECK-TEXT-NEXT:     (tuple.extract 0
   ;; CHECK-TEXT-NEXT:      (local.get $0)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (block $block0 (result (ref null $mixed_results))
+  ;; CHECK-TEXT-NEXT:     (block (result (ref null $mixed_results))
   ;; CHECK-TEXT-NEXT:      (local.set $1
   ;; CHECK-TEXT-NEXT:       (tuple.extract 1
   ;; CHECK-TEXT-NEXT:        (local.get $0)
@@ -255,7 +255,7 @@
   ;; CHECK-TEXT-NEXT: )
   (func $type-only-in-tuple-block
     (drop
-      (block (result i32 (ref null $mixed_results) f64)
+      (block $block (result i32 (ref null $mixed_results) f64)
         (unreachable)
       )
     )

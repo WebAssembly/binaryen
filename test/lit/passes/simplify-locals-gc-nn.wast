@@ -93,7 +93,7 @@
   ;; CHECK-NEXT:  (local $nullable anyref)
   ;; CHECK-NEXT:  (local $nn (ref any))
   ;; CHECK-NEXT:  (local.set $nullable
-  ;; CHECK-NEXT:   (block $block (result (ref any))
+  ;; CHECK-NEXT:   (block (result (ref any))
   ;; CHECK-NEXT:    (local.set $nn
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (ref.null any)
