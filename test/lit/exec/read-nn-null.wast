@@ -30,13 +30,13 @@
 (module
   (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
-  (func $foo (export "foo") (param $i i32) (result anyref)
+  (func $foo (export "foo") (param $i i32) (result funcref)
     (local $ref (ref func))
     (local.set $ref
       (ref.func $foo)
     )
-    (select (result anyref)
-      (block $trap (result anyref)
+    (select (result funcref)
+      (block $trap (result funcref)
         (call $log
           (i32.const 42)
         )

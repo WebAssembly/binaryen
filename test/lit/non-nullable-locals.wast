@@ -10,7 +10,7 @@
 
   ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
 
-  ;; CHECK:      (type $anyref_=>_i32 (func (param anyref) (result i32)))
+  ;; CHECK:      (type $funcref_=>_i32 (func (param funcref) (result i32)))
 
   ;; CHECK:      (elem declare func $helper)
 
@@ -168,10 +168,10 @@
   ;; CHECK-NEXT: )
   (func $helper)
 
-  ;; CHECK:      (func $helper2 (param $0 anyref) (result i32)
+  ;; CHECK:      (func $helper2 (param $0 funcref) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $helper2 (param anyref) (result i32)
+  (func $helper2 (param funcref) (result i32)
     (unreachable)
   )
 )

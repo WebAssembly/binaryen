@@ -89,10 +89,10 @@
     )
   )
 
-  ;; CHECK:      (func $locals-with-multiple-assignments
-  ;; CHECK-NEXT:  (local $x (ref eq))
-  ;; CHECK-NEXT:  (local $y (ref i31))
-  ;; CHECK-NEXT:  (local $z (ref data))
+  ;; CHECK:      (func $locals-with-multiple-assignments (param $data (ref null data))
+  ;; CHECK-NEXT:  (local $x eqref)
+  ;; CHECK-NEXT:  (local $y i31ref)
+  ;; CHECK-NEXT:  (local $z (ref null data))
   ;; CHECK-NEXT:  (local $w (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i31.new
