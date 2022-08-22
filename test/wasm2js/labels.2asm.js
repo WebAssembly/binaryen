@@ -116,56 +116,52 @@ function asmFunc(env) {
  function $7() {
   var i = 0;
   i = 0;
-  block : {
-   l : {
-    break l;
-   }
-   i = i + 1 | 0;
-   l1 : {
-    break l1;
-   }
-   i = i + 1 | 0;
-   l2 : {
-    break l2;
-   }
-   i = i + 1 | 0;
-   l3 : {
-    break l3;
-   }
-   i = i + 1 | 0;
-   l4 : {
-    break l4;
-   }
-   i = i + 1 | 0;
+  l : {
+   break l;
   }
+  i = i + 1 | 0;
+  l1 : {
+   break l1;
+  }
+  i = i + 1 | 0;
+  l2 : {
+   break l2;
+  }
+  i = i + 1 | 0;
+  l3 : {
+   break l3;
+  }
+  i = i + 1 | 0;
+  l4 : {
+   break l4;
+  }
+  i = i + 1 | 0;
   return i | 0;
  }
  
  function $8() {
   var i = 0;
   i = 0;
-  block : {
-   if_ : {
-    break if_;
-   }
-   i = i + 1 | 0;
-   if5 : {
-    break if5;
-   }
-   i = i + 1 | 0;
-   if6 : {
-    break if6;
-   }
-   i = i + 1 | 0;
-   if7 : {
-    break if7;
-   }
-   i = i + 1 | 0;
-   if8 : {
-    break if8;
-   }
-   i = i + 1 | 0;
+  if_ : {
+   break if_;
   }
+  i = i + 1 | 0;
+  if5 : {
+   break if5;
+  }
+  i = i + 1 | 0;
+  if6 : {
+   break if6;
+  }
+  i = i + 1 | 0;
+  if7 : {
+   break if7;
+  }
+  i = i + 1 | 0;
+  if8 : {
+   break if8;
+  }
+  i = i + 1 | 0;
   return i | 0;
  }
  
