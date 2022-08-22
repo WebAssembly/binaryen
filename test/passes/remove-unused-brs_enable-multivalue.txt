@@ -23,7 +23,6 @@
     (drop
      (i32.const 0)
     )
-    (nop)
    )
   )
  )
@@ -46,7 +45,6 @@
      (drop
       (i32.const 0)
      )
-     (nop)
     )
    )
   )
@@ -58,7 +56,6 @@
      (drop
       (i32.const 0)
      )
-     (nop)
     )
    )
   )
@@ -140,7 +137,6 @@
       (drop
        (i32.const 1)
       )
-      (nop)
      )
     )
    )
@@ -152,7 +148,6 @@
      (drop
       (i32.const 2)
      )
-     (nop)
     )
    )
   )
@@ -231,7 +226,6 @@
      (drop
       (i32.const 0)
      )
-     (nop)
     )
    )
   )
@@ -385,7 +379,6 @@
       (drop
        (i32.const 1)
       )
-      (nop)
      )
     )
     (block $a20
@@ -393,7 +386,6 @@
       (drop
        (i32.const 2)
       )
-      (nop)
      )
     )
    )
@@ -526,7 +518,6 @@
     (block $out49
      (block
       (call $loops)
-      (nop)
      )
     )
     (br $in48)
@@ -997,7 +988,6 @@
      (br_if $shape$6$continue
       (local.get $0)
      )
-     (nop)
     )
    )
   )
@@ -1790,7 +1780,6 @@
     (drop
      (i32.const 0)
     )
-    (nop)
    )
   )
  )
@@ -2326,8 +2315,6 @@
      (i32.const 0)
      (block $label$3
       (block
-       (nop)
-       (nop)
       )
      )
      (return
