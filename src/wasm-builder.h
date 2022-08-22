@@ -670,14 +670,14 @@ public:
   // information fetched from there.
   enum MemoryInfo { Memory32, Memory64, Unspecified };
 
-  bool isMemory64(MemoryInfo info) {
+  bool isMemory64(Name memoryName, MemoryInfo info) {
     return info == MemoryInfo::Memory64 || (info == MemoryInfo::Unspecified &&
                                             wasm.getMemory(memoryName).is64());
   }
 
   MemorySize* makeMemorySize(Name memoryName, MemoryInfo info) {
     auto* ret = wasm.allocator.alloc<MemorySize>();
-    if (isMemory64(info)) {
+    if (isMemory64(memoryName, info)) {
       ret->make64();
     }
     ret->memory = memoryName;
@@ -687,7 +687,7 @@ public:
   MemoryGrow*
   makeMemoryGrow(Expression* delta, Name memoryName, MemoryInfo info) {
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
-    if (isMemory64(info)) {
+    if (isMemory64(memoryName, info)) {
       ret->make64();
     }
     ret->delta = delta;
