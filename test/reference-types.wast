@@ -24,8 +24,6 @@
 
   ;; Test subtype relationship in global initializer expressions
   (global $global_anyref2 (mut anyref) (ref.null eq))
-  (global $global_anyref3 (mut anyref) (ref.null func))
-  (global $global_anyref4 (mut anyref) (ref.func $foo))
 
   (tag $e-i32 (param i32))
 
@@ -50,10 +48,6 @@
     (local.set $local_anyref (local.get $local_eqref))
     (local.set $local_anyref (global.get $global_eqref))
     (local.set $local_anyref (ref.null eq))
-    (local.set $local_anyref (local.get $local_funcref))
-    (local.set $local_anyref (global.get $global_funcref))
-    (local.set $local_anyref (ref.null func))
-    (local.set $local_anyref (ref.func $foo))
 
     ;; Test types for global.get/set
     (global.set $global_eqref (global.get $global_eqref))
@@ -71,10 +65,6 @@
     (global.set $global_anyref (global.get $global_eqref))
     (global.set $global_anyref (local.get $local_eqref))
     (global.set $global_anyref (ref.null eq))
-    (global.set $global_anyref (global.get $global_funcref))
-    (global.set $global_anyref (local.get $local_funcref))
-    (global.set $global_anyref (ref.null func))
-    (global.set $global_anyref (ref.func $foo))
 
     ;; Test function call params
     (call $take_eqref (local.get $local_eqref))
@@ -92,10 +82,6 @@
     (call $take_anyref (local.get $local_eqref))
     (call $take_anyref (global.get $global_eqref))
     (call $take_anyref (ref.null eq))
-    (call $take_anyref (local.get $local_funcref))
-    (call $take_anyref (global.get $global_funcref))
-    (call $take_anyref (ref.null func))
-    (call $take_anyref (ref.func $foo))
 
     ;; Test call_indirect params
     (call_indirect (type $sig_eqref) (local.get $local_eqref) (i32.const 0))
@@ -113,10 +99,6 @@
     (call_indirect (type $sig_anyref) (local.get $local_eqref) (i32.const 3))
     (call_indirect (type $sig_anyref) (global.get $global_eqref) (i32.const 3))
     (call_indirect (type $sig_anyref) (ref.null eq) (i32.const 3))
-    (call_indirect (type $sig_anyref) (local.get $local_funcref) (i32.const 3))
-    (call_indirect (type $sig_anyref) (global.get $global_funcref) (i32.const 3))
-    (call_indirect (type $sig_anyref) (ref.null func) (i32.const 3))
-    (call_indirect (type $sig_anyref) (ref.func $foo) (i32.const 3))
 
     ;; Test block return type
     (drop
@@ -178,22 +160,7 @@
     )
     (drop
       (block (result anyref)
-        (br_if 0 (local.get $local_funcref) (i32.const 1))
-      )
-    )
-    (drop
-      (block (result anyref)
         (br_if 0 (ref.null eq) (i32.const 1))
-      )
-    )
-    (drop
-      (block (result anyref)
-        (br_if 0 (ref.null func) (i32.const 1))
-      )
-    )
-    (drop
-      (block (result anyref)
-        (br_if 0 (ref.func $foo) (i32.const 1))
       )
     )
 
@@ -265,26 +232,6 @@
         (ref.null eq)
       )
     )
-    (drop
-      (loop (result anyref)
-        (local.get $local_funcref)
-      )
-    )
-    (drop
-      (loop (result anyref)
-        (global.get $global_funcref)
-      )
-    )
-    (drop
-      (loop (result anyref)
-        (ref.null func)
-      )
-    )
-    (drop
-      (loop (result anyref)
-        (ref.func $foo)
-      )
-    )
 
     ;; Test if return type
     (drop
@@ -314,20 +261,22 @@
       (if (result anyref)
         (i32.const 1)
         (local.get $local_eqref)
-        (local.get $local_funcref)
+        (local.get $local_eqref)
       )
     )
     (drop
       (if (result anyref)
         (i32.const 1)
         (ref.null eq)
-        (ref.null func)
+        (ref.null i31)
       )
     )
     (drop
       (if (result anyref)
         (i32.const 1)
-        (ref.func $foo)
+        (i31.new
+          (i32.const 0)
+        )
         (ref.null eq)
       )
     )
@@ -364,14 +313,14 @@
         )
         (catch $e-i32
           (drop (pop i32))
-          (ref.func $foo)
+          (ref.null any)
         )
       )
     )
     (drop
       (try (result anyref)
         (do
-          (ref.func $foo)
+          (ref.null eq)
         )
         (catch $e-i32
           (drop (pop i32))
@@ -407,14 +356,9 @@
     (drop
       (select (result anyref)
         (local.get $local_eqref)
-        (local.get $local_funcref)
-        (i32.const 1)
-      )
-    )
-    (drop
-      (select (result anyref)
-        (local.get $local_funcref)
-        (local.get $local_eqref)
+        (i31.new
+          (i32.const 0)
+        )
         (i32.const 1)
       )
     )
@@ -478,19 +422,6 @@
   (func $return_anyref4 (result anyref)
     (ref.null eq)
   )
-  (func $return_anyref5 (result anyref)
-    (local $local_funcref funcref)
-    (local.get $local_funcref)
-  )
-  (func $return_anyref6 (result anyref)
-    (global.get $global_funcref)
-  )
-  (func $return_anyref7 (result anyref)
-    (ref.null func)
-  )
-  (func $return_anyref8 (result anyref)
-    (ref.func $foo)
-  )
 
   ;; Test returns
   (func $returns_eqref (result eqref)
@@ -520,10 +451,6 @@
     (return (local.get $local_eqref))
     (return (global.get $global_eqref))
     (return (ref.null eq))
-    (return (local.get $local_funcref))
-    (return (global.get $global_funcref))
-    (return (ref.func $foo))
-    (return (ref.null func))
   )
 
   (func $ref-user

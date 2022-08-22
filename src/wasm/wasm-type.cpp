@@ -584,8 +584,8 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   }
   switch (a) {
     case HeapType::ext:
-      return {};
     case HeapType::func:
+      return {};
     case HeapType::any:
       return {HeapType::any};
     case HeapType::eq:
@@ -1072,6 +1072,10 @@ FeatureSet Type::getFeatures() const {
       }
       if (heapType.isBasic()) {
         switch (heapType.getBasic()) {
+          case HeapType::BasicHeapType::ext:
+          case HeapType::BasicHeapType::func:
+            return FeatureSet::ReferenceTypes;
+          case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::i31:
           case HeapType::BasicHeapType::data:
@@ -1081,7 +1085,6 @@ FeatureSet Type::getFeatures() const {
           case HeapType::stringview_wtf16:
           case HeapType::stringview_iter:
             return FeatureSet::ReferenceTypes | FeatureSet::Strings;
-          default: {}
         }
       }
       // Note: Technically typed function references also require the typed
@@ -1624,8 +1627,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
       case HeapType::func:
         return a.isSignature();
       case HeapType::any:
-        // TODO: exclude functions as well.
-        return a != HeapType::ext;
+        return a != HeapType::ext && !a.isFunction();
       case HeapType::eq:
         return a == HeapType::i31 || a.isData();
       case HeapType::i31:

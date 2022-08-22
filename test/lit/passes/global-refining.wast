@@ -6,40 +6,42 @@
   ;; a null, so we have nothing concrete to improve with (though we could use
   ;; the type of the null perhaps, TODO). The second is a ref.func which lets
   ;; us refine.
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $foo_t (func_subtype func))
+  (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut anyref) (ref.null func))
-  (global $func-null-init (mut anyref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
-  (global $func-func-init (mut anyref) (ref.func $foo))
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null $foo_t))
+  (global $func-null-init (mut funcref) (ref.null $foo_t))
+  ;; CHECK:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
+  (global $func-func-init (mut funcref) (ref.func $foo))
+  ;; CHECK:      (func $foo (type $foo_t)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $foo)
+  (func $foo (type $foo_t))
 )
 
 (module
   ;; Globals with later assignments of null. The global with a function in its
   ;; init will update the null to allow it to refine.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $foo_t (func_subtype func))
+  (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut anyref) (ref.null func))
-  (global $func-null-init (mut anyref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref null $none_=>_none)) (ref.func $foo))
-  (global $func-func-init (mut anyref) (ref.func $foo))
+  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null $foo_t))
+  (global $func-null-init (mut funcref) (ref.null $foo_t))
+  ;; CHECK:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
+  (global $func-func-init (mut funcref) (ref.func $foo))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $foo_t)
   ;; CHECK-NEXT:  (global.set $func-null-init
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $func-func-init
-  ;; CHECK-NEXT:   (ref.null $none_=>_none)
+  ;; CHECK-NEXT:   (ref.null $foo_t)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
-   (global.set $func-null-init (ref.null any))
-   (global.set $func-func-init (ref.null any))
+  (func $foo (type $foo_t)
+   (global.set $func-null-init (ref.null func))
+   (global.set $func-func-init (ref.null $foo_t))
   )
 )
 
@@ -50,9 +52,9 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null $none_=>_none))
-  (global $func-null-init (mut anyref) (ref.null func))
+  (global $func-null-init (mut funcref) (ref.null func))
   ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
-  (global $func-func-init (mut anyref) (ref.func $foo))
+  (global $func-func-init (mut funcref) (ref.func $foo))
 
   ;; CHECK:      (elem declare func $foo)
 
@@ -76,44 +78,39 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct))
+  ;; CHECK:      (type $array (array_subtype i8 data))
+  (type $array (array i8))
 
-  ;; CHECK:      (global $global (mut funcref) (ref.null func))
+  ;; CHECK:      (global $global (mut eqref) (ref.null eq))
   (global $global (mut anyref) (ref.null any))
-
-  ;; CHECK:      (elem declare func $bar $foo)
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.func $bar)
+  ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null eq)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null i31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null $array)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
-   (global.set $global (ref.func $foo))
-   (global.set $global (ref.func $bar))
-   (global.set $global (ref.null func))
-   ;; These nulls will be updated.
+   (global.set $global (i31.new (i32.const 0)))
+   (global.set $global (struct.new_default $struct))
    (global.set $global (ref.null eq))
-   (global.set $global (ref.null data))
-  )
-
-  ;; CHECK:      (func $bar (type $i32_=>_none) (param $x i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $bar (param $x i32)
-    ;; A function with a different signature, whose reference is also assigned
-    ;; to the global.
+   ;; These nulls will be updated.
+   (global.set $global (ref.null i31))
+   (global.set $global (ref.null $array))
   )
 )
