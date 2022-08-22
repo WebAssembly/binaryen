@@ -1171,17 +1171,19 @@ static Builder::MemoryInfo getMemoryInfo(bool memoryIs64) {
 BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
                                          const char* memoryName,
                                          bool memoryIs64) {
-  auto* ret =
-    Builder(*(Module*)module).makeMemorySize(getMemoryName(module, memoryName), getMemoryInfo(memoryIs64));
+  auto* ret = Builder(*(Module*)module)
+                .makeMemorySize(getMemoryName(module, memoryName),
+                                getMemoryInfo(memoryIs64));
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenMemoryGrow(BinaryenModuleRef module,
                                          BinaryenExpressionRef delta,
                                          const char* memoryName,
                                          bool memoryIs64) {
-  auto* ret =
-    Builder(*(Module*)module)
-      .makeMemoryGrow((Expression*)delta, getMemoryName(module, memoryName), getMemoryInfo(memoryIs64));
+  auto* ret = Builder(*(Module*)module)
+                .makeMemoryGrow((Expression*)delta,
+                                getMemoryName(module, memoryName),
+                                getMemoryInfo(memoryIs64));
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {

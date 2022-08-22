@@ -668,14 +668,11 @@ public:
   // Some APIs can be told if the memory is 32 or 64-bit. If they are not
   // informed of that, then the memory they refer to is looked up and that
   // information fetched from there.
-  enum MemoryInfo {
-    Memory32,
-    Memory64,
-    Unspecified
-  };
+  enum MemoryInfo { Memory32, Memory64, Unspecified };
 
   bool isMemory64(MemoryInfo info) {
-    return info == MemoryInfo::Memory64 || (info == MemoryInfo::Unspecified && wasm.getMemory(memoryName).is64());
+    return info == MemoryInfo::Memory64 || (info == MemoryInfo::Unspecified &&
+                                            wasm.getMemory(memoryName).is64());
   }
 
   MemorySize* makeMemorySize(Name memoryName, MemoryInfo info) {
@@ -687,7 +684,8 @@ public:
     ret->finalize();
     return ret;
   }
-  MemoryGrow* makeMemoryGrow(Expression* delta, Name memoryName, MemoryInfo info) {
+  MemoryGrow*
+  makeMemoryGrow(Expression* delta, Name memoryName, MemoryInfo info) {
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
     if (isMemory64(info)) {
       ret->make64();
