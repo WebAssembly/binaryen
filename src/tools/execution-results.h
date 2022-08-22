@@ -95,12 +95,6 @@ struct ExecutionResults {
 
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
-  // If set, we don't compare whether a trap has occurred or not.
-  bool ignoreTrap = false;
-
-  ExecutionResults(const PassOptions& options)
-    : ignoreTrap(options.ignoreImplicitTraps || options.trapsNeverHappen) {}
-  ExecutionResults(bool ignoreTrap) : ignoreTrap(ignoreTrap) {}
 
   // get results of execution
   void get(Module& wasm) {
@@ -140,7 +134,7 @@ struct ExecutionResults {
 
   // get current results and check them against previous ones
   void check(Module& wasm) {
-    ExecutionResults optimizedResults(ignoreTrap);
+    ExecutionResults optimizedResults;
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
       std::cout << "[fuzz-exec] optimization passes changed results\n";
@@ -202,14 +196,7 @@ struct ExecutionResults {
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
       if (results[name].index() != other.results[name].index()) {
-        if (ignoreTrap) {
-          if (!std::get_if<Trap>(&results[name]) &&
-              !std::get_if<Trap>(&other.results[name])) {
-            return false;
-          }
-        } else {
-          return false;
-        }
+        return false;
       }
       auto* values = std::get_if<Literals>(&results[name]);
       auto* otherValues = std::get_if<Literals>(&other.results[name]);
