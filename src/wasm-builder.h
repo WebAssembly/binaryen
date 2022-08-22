@@ -675,7 +675,8 @@ public:
                                             wasm.getMemory(memoryName)->is64());
   }
 
-  MemorySize* makeMemorySize(Name memoryName, MemoryInfo info = MemoryInfo::Unspecified) {
+  MemorySize* makeMemorySize(Name memoryName,
+                             MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemorySize>();
     if (isMemory64(memoryName, info)) {
       ret->make64();
@@ -684,8 +685,9 @@ public:
     ret->finalize();
     return ret;
   }
-  MemoryGrow*
-  makeMemoryGrow(Expression* delta, Name memoryName, MemoryInfo info = MemoryInfo::Unspecified) {
+  MemoryGrow* makeMemoryGrow(Expression* delta,
+                             Name memoryName,
+                             MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
     if (isMemory64(memoryName, info)) {
       ret->make64();
