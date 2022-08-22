@@ -472,6 +472,9 @@ def numbers_are_close_enough(x, y):
         return False
 
 
+FUZZ_EXEC_NOTE_RESULT = '[fuzz-exec] note result'
+
+
 # compare between vms, which may slightly change how numbers are printed
 def compare_between_vms(x, y, context):
     x_lines = x.splitlines()
@@ -491,8 +494,7 @@ def compare_between_vms(x, y, context):
                 y_val = y_line[len(LEI_LOGGING) + 1:-1]
                 if numbers_are_close_enough(x_val, y_val):
                     continue
-            NOTE_RESULT = '[fuzz-exec] note result'
-            if x_line.startswith(NOTE_RESULT) and y_line.startswith(NOTE_RESULT):
+            if x_line.startswith(FUZZ_EXEC_NOTE_RESULT) and y_line.startswith(FUZZ_EXEC_NOTE_RESULT):
                 x_val = x_line.split(' ')[-1]
                 y_val = y_line.split(' ')[-1]
                 if numbers_are_close_enough(x_val, y_val):
@@ -516,8 +518,14 @@ def fix_output(out):
             x = str(float(x))
         return 'f64.const ' + x
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
+
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
+
+    # funcref(0) has the index of the function in it, and optimizations can
+    # change that index, so ignore it
+    out = re.sub(r'funcref\([\d\w$+-_:]+\)', 'funcref()', out)
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
@@ -1036,6 +1044,80 @@ class Asyncify(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc'])
 
 
+# Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
+# happen mode is that if a trap *does* happen then that is undefined behavior,
+# and the optimizer was free to make changes to observable behavior there. The
+# fuzzer therefore needs to ignore code that traps.
+class TrapsNeverHappen(TestCaseHandler):
+    frequency = 1
+
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
+        before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
+        after_wasm_tnh = after_wasm + '.tnh.wasm'
+        run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
+        after = run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
+
+        # if a trap happened, we must stop comparing from that.
+        if TRAP_PREFIX in before:
+            trap_index = before.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of
+            # (tnh could move the trap around, so even things before the trap
+            # are unsafe). erase everything from this function's output and
+            # onward, so we only compare the previous trap-free code. first,
+            # find the function call during which the trap happened, by finding
+            # the call line right before us. that is, the output looks like
+            # this:
+            #
+            #   [fuzz-exec] calling foo
+            #   .. stuff happening during foo ..
+            #   [fuzz-exec] calling bar
+            #   .. stuff happening during bar ..
+            #
+            # if the trap happened during bar, the relevant call line is
+            # "[fuzz-exec] calling bar".
+            call_start = before.rfind(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            if call_start < 0:
+                # the trap happened before we called an export, so it occured
+                # during startup (the start function, or memory segment
+                # operations, etc.). in that case there is nothing for us to
+                # compare here; just leave.
+                return
+            call_end = before.index('\n', call_start)
+            # we now know the contents of the call line after which the trap
+            # happens, which is something like "[fuzz-exec] calling bar", and
+            # it is unique since it contains the function being called.
+            call_line = before[call_start:call_end]
+            # find that call line, and remove everything from it onward.
+            before_index = before.index(call_line)
+            lines_pre = before.count(os.linesep)
+            before = before[:before_index]
+            lines_post = before.count(os.linesep)
+            print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
+
+            # also remove the relevant lines from after.
+            after_index = after.index(call_line)
+            after = after[:after_index]
+
+        # some results cannot be compared, so we must filter them out here.
+        def ignore_references(out):
+            ret = []
+            for line in out.splitlines():
+                # only result lines are relevant here, which look like
+                # [fuzz-exec] note result: foo => [...]
+                if FUZZ_EXEC_NOTE_RESULT in line:
+                    # we want to filter out things like "anyref(null)" or
+                    # "[ref null data]".
+                    if 'ref(' in line or 'ref ' in line:
+                        line = line[:line.index('=>') + 2] + ' ?'
+                ret.append(line)
+            return '\n'.join(ret)
+
+        before = fix_output(ignore_references(before))
+        after = fix_output(ignore_references(after))
+
+        compare_between_vms(before, after, 'TrapsNeverHappen')
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1056,6 +1138,7 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
+    TrapsNeverHappen(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
