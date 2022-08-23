@@ -61,6 +61,7 @@ Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
 Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
+Pass* createJSPIPass();
 Pass* createLegalizeJSInterfacePass();
 Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLimitSegmentsPass();

@@ -206,6 +206,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
+;; CHECK-NEXT:                                                 JavaScript promise integration
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
 ;; CHECK-NEXT:
