@@ -1082,7 +1082,9 @@ class TrapsNeverHappen(TestCaseHandler):
                 # operations, etc.). in that case there is nothing for us to
                 # compare here; just leave.
                 return
-            call_end = before.index('\n', call_start)
+            # include the line separator in the index, as function names may
+            # be prefixes of each other
+            call_end = before.index(os.linesep, call_start) + 1
             # we now know the contents of the call line after which the trap
             # happens, which is something like "[fuzz-exec] calling bar", and
             # it is unique since it contains the function being called.
