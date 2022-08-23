@@ -28,19 +28,27 @@ Instrumenter::Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash)
 void Instrumenter::run(PassRunner* runner, Module* wasm) {
   this->runner = runner;
   this->wasm = wasm;
-  addGlobals();
+  size_t numFuncs = 0;
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
+
+  // Calculate the size of the profile:
+  //   8 bytes module hash +
+  //   4 bytes for the timestamp for each function
+  const size_t profileSize = 8 + 4 * numFuncs;
+  addGlobals(numFuncs);
+  addMemory(profileSize);
   instrumentFuncs();
-  addProfileExport();
+  addProfileExport(numFuncs, profileSize);
 }
 
-void Instrumenter::addGlobals() {
+void Instrumenter::addGlobals(size_t numFuncs) {
   if (options.storageKind != WasmSplitOptions::StorageKind::InGlobals) {
     // Don't need globals
     return;
   }
   // Create fresh global names (over-reserves, but that's ok)
   counterGlobal = Names::getValidGlobalName(*wasm, "monotonic_counter");
-  functionGlobals.reserve(wasm->functions.size());
+  functionGlobals.reserve(numFuncs);
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     functionGlobals.push_back(Names::getValidGlobalName(
       *wasm, std::string(func->name.c_str()) + "_timestamp"));
@@ -60,6 +68,13 @@ void Instrumenter::addGlobals() {
   for (auto& name : functionGlobals) {
     addGlobal(name);
   }
+}
+
+void Instrumenter::addMemory(size_t profileSize) {
+  instrumentMemory = Names::getValidMemoryName(*wasm, "split_instrumenter");
+  // Create a memory with enough pages to write into
+  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
+  wasm->addMemory(Builder::makeMemory(instrumentMemory, pages, pages));
 }
 
 void Instrumenter::instrumentFuncs() {
@@ -108,7 +123,6 @@ void Instrumenter::instrumentFuncs() {
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
-      assert(!wasm->memories.empty());
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
@@ -116,7 +130,7 @@ void Instrumenter::instrumentFuncs() {
                                   builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
                                   Type::i32,
-                                  wasm->memories[0]->name),
+                                  instrumentMemory),
           func->body,
           func->body->type);
         ++funcIdx;
@@ -141,7 +155,7 @@ void Instrumenter::instrumentFuncs() {
 // otherwise. Functions with smaller non-zero timestamps were called earlier in
 // the instrumented run than funtions with larger timestamps.
 
-void Instrumenter::addProfileExport() {
+void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
@@ -153,13 +167,6 @@ void Instrumenter::addProfileExport() {
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
 
-  size_t numFuncs = 0;
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
-
-  // Calculate the size of the profile:
-  //   8 bytes module hash +
-  //   4 bytes for the timestamp for each function
-  const size_t profileSize = 8 + 4 * numFuncs;
 
   // Create the function body
   Builder builder(*wasm);
@@ -170,22 +177,10 @@ void Instrumenter::addProfileExport() {
     return builder.makeConst(int32_t(profileSize));
   };
 
-  // Also make sure there is a memory with enough pages to write into
-  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
-  if (wasm->memories.empty()) {
-    wasm->addMemory(Builder::makeMemory("0"));
-    wasm->memories[0]->initial = pages;
-    wasm->memories[0]->max = pages;
-  } else if (wasm->memories[0]->initial < pages) {
-    wasm->memories[0]->initial = pages;
-    if (wasm->memories[0]->max < pages) {
-      wasm->memories[0]->max = pages;
-    }
-  }
 
   // Write the hash followed by all the time stamps
   Expression* writeData = builder.makeStore(
-    8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
+    8, 0, 1, getAddr(), hashConst(), Type::i64, instrumentMemory);
   uint32_t offset = 8;
 
   switch (options.storageKind) {
@@ -199,7 +194,7 @@ void Instrumenter::addProfileExport() {
                             getAddr(),
                             builder.makeGlobalGet(global, Type::i32),
                             Type::i32,
-                            wasm->memories[0]->name));
+                            instrumentMemory));
         offset += 4;
       }
       break;
@@ -249,9 +244,9 @@ void Instrumenter::addProfileExport() {
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
                 builder.makeAtomicLoad(
-                  1, 0, getFuncIdx(), Type::i32, wasm->memories[0]->name),
+                  1, 0, getFuncIdx(), Type::i32, instrumentMemory),
                 Type::i32,
-                wasm->memories[0]->name),
+                instrumentMemory),
               builder.makeLocalSet(
                 funcIdxVar,
                 builder.makeBinary(
@@ -271,11 +266,13 @@ void Instrumenter::addProfileExport() {
   wasm->addExport(
     Builder::makeExport(options.profileExport, name, ExternalKind::Function));
 
-  // Export the memory if it is not already exported or imported.
+  // Export the main memory, assumed to be at idx 0, if it is not already exported or imported.
   if (!wasm->memories[0]->imported()) {
     bool memoryExported = false;
+    const char* memoryName = wasm->memories[0]->name.c_str();
     for (auto& ex : wasm->exports) {
-      if (ex->kind == ExternalKind::Memory) {
+      const char* exportValue = ex->value.c_str();
+      if (ex->kind == ExternalKind::Memory && strncmp(exportValue, memoryName, strlen(memoryName) == 0)) {
         memoryExported = true;
         break;
       }

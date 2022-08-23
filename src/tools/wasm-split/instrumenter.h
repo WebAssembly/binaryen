@@ -36,14 +36,16 @@ struct Instrumenter : public Pass {
   Name counterGlobal;
   std::vector<Name> functionGlobals;
 
-  Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash);
+  Name instrumentMemory;
 
+  Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash);
   void run(PassRunner* runner, Module* wasm) override;
 
 private:
-  void addGlobals();
+  void addGlobals(size_t numFuncs);
+  void addMemory(size_t profileSize);
   void instrumentFuncs();
-  void addProfileExport();
+  void addProfileExport(size_t numFuncs, size_t profileSize);
 };
 
 } // namespace wasm

@@ -83,6 +83,10 @@ inline Name getValidElementSegmentName(Module& module, Name root) {
   return getValidName(
     root, [&](Name test) { return !module.getElementSegmentOrNull(test); });
 }
+inline Name getValidMemoryName(Module& module, Name root) {
+  return getValidName(root,
+                      [&](Name test) { return !module.getMemoryOrNull(test); });
+}
 
 class MinifiedNameGenerator {
   size_t state = 0;
