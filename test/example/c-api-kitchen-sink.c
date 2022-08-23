@@ -1034,8 +1034,8 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, iIfF),
     // Memory
-    BinaryenMemorySize(module, "0"),
-    BinaryenMemoryGrow(module, makeInt32(module, 0), "0"),
+    BinaryenMemorySize(module, "0", false),
+    BinaryenMemoryGrow(module, makeInt32(module, 0), "0", false),
     // GC
     BinaryenI31New(module, makeInt32(module, 0)),
     BinaryenI31Get(module, i31refExpr, 1),

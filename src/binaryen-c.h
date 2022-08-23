@@ -780,11 +780,13 @@ BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenMemorySize(BinaryenModuleRef module,
-                                                      const char* memoryName);
+                                                      const char* memoryName,
+                                                      bool memoryIs64);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryGrow(BinaryenModuleRef module,
                    BinaryenExpressionRef delta,
-                   const char* memoryName);
+                   const char* memoryName,
+                   bool memoryIs64);
 BINARYEN_API BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BINARYEN_API BinaryenExpressionRef
 BinaryenUnreachable(BinaryenModuleRef module);
