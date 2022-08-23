@@ -1087,10 +1087,9 @@ class TrapsNeverHappen(TestCaseHandler):
             # happens, which is something like "[fuzz-exec] calling bar", and
             # it is unique since it contains the function being called.
             call_line = before[call_start:call_end]
-            # find that call line, and remove everything from it onward.
-            before_index = before.index(call_line)
+            # remove everything from that call line onward.
             lines_pre = before.count(os.linesep)
-            before = before[:before_index]
+            before = before[:call_start]
             lines_post = before.count(os.linesep)
             print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
 
