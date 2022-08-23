@@ -24,7 +24,7 @@
   ;; CHECK-NEXT: )
   (func $test-nn
     (local $nn (ref any))
-    ;; We can not sink this set into the try, but the spec does not allow it to
+    ;; We can sink this set into the try, but the spec does not allow it to
     ;; remain non-nullable. Even though we are not changing dominance (we are
     ;; not changing it, because there is nothing that can throw in the try's
     ;; body that can reach the catch_all before the local.set that we move

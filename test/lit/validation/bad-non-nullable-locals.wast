@@ -1,9 +1,7 @@
-;; Test that an invalid supertype results in a useful error message
-
-;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
-
 ;; Tests for the "1a" form of non-nullable locals. This will likely be the final
 ;; form in the spec.
+
+;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 
 ;; CHECK: non-nullable local's sets must dominate gets
 (module
