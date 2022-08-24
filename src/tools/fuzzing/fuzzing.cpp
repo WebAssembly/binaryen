@@ -504,8 +504,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
   auto paramType = Type(params);
   auto resultType = getControlFlowType();
-  func->type =
-    Signature(paramType, resultType);
+  func->type = Signature(paramType, resultType);
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -554,7 +553,8 @@ Function* TranslateToFuzzReader::addFunction() {
       return true;
     }
     auto heapType = t.getHeapType();
-    return heapType == HeapType::ext || heapType == HeapType::func || heapType == HeapType::string;
+    return heapType == HeapType::ext || heapType == HeapType::func ||
+           heapType == HeapType::string;
   };
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
