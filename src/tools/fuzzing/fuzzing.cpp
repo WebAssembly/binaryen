@@ -545,8 +545,8 @@ Function* TranslateToFuzzReader::addFunction() {
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Only functions
-  // with valid params can be exported because the trap fuzzer depends on that
-  // (TODO: fix this).
+  // with valid params and returns can be exported because the trap fuzzer
+  // depends on that (TODO: fix this).
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [](Type t) {
       if (t.isRef() && t.getHeapType() == HeapType::any) {
@@ -555,7 +555,16 @@ Function* TranslateToFuzzReader::addFunction() {
       }
       return t.isDefaultable();
     });
-  if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
+  bool validExportReturns =
+    std::all_of(paramType.begin(), paramType.end(), [](Type t) {
+      if (t.isRef() && t.getHeapType() == HeapType::any) {
+        // Anyref is not allowed in JS interop in the current GC spec.
+        return false;
+      }
+      return true
+    });
+  if (validExportParams && validExportReturns &&
+      (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
     export_->name = func->name;
