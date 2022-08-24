@@ -561,9 +561,7 @@ Function* TranslateToFuzzReader::addFunction() {
       return validExportType(t) && t.isDefaultable();
     });
   bool validExportResults =
-    std::all_of(resultType.begin(), resultType.end(), [](Type t) {
-      return validExportType(t);
-    });
+    std::all_of(resultType.begin(), resultType.end(), validExportType);
   if (validExportParams && validExportResults &&
       (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
