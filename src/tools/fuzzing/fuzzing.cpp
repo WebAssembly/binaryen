@@ -503,7 +503,8 @@ Function* TranslateToFuzzReader::addFunction() {
     params.push_back(type);
   }
   auto paramType = Type(params);
-  func->type = Signature(paramType, getControlFlowType());
+  auto resultType = getControlFlowType()
+  func->type = Signature(paramType, resultType);
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -555,15 +556,15 @@ Function* TranslateToFuzzReader::addFunction() {
       }
       return t.isDefaultable();
     });
-  bool validExportReturns =
-    std::all_of(paramType.begin(), paramType.end(), [](Type t) {
+  bool validExportResults =
+    std::all_of(resultType.begin(), resultType.end(), [](Type t) {
       if (t.isRef() && t.getHeapType() == HeapType::any) {
         // Anyref is not allowed in JS interop in the current GC spec.
         return false;
       }
       return true;
     });
-  if (validExportParams && validExportReturns &&
+  if (validExportParams && validExportResults &&
       (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
