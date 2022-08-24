@@ -561,7 +561,7 @@ Function* TranslateToFuzzReader::addFunction() {
         // Anyref is not allowed in JS interop in the current GC spec.
         return false;
       }
-      return true
+      return true;
     });
   if (validExportParams && validExportReturns &&
       (numAddedFunctions == 0 || oneIn(2)) &&
