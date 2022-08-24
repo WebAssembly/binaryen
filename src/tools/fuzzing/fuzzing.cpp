@@ -557,7 +557,7 @@ Function* TranslateToFuzzReader::addFunction() {
     return heapType == HeapType::ext || heapType ==HeapType::func || heapType == HeapType::string;
   };
   bool validExportParams =
-    std::all_of(paramType.begin(), paramType.end(), [](Type t) {
+    std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
       return validExportType(t) && t.isDefaultable();
     });
   bool validExportResults =
