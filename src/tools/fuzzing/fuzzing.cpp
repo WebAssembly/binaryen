@@ -503,7 +503,8 @@ Function* TranslateToFuzzReader::addFunction() {
     params.push_back(type);
   }
   auto paramType = Type(params);
-  auto resultType = getControlFlowType() func->type =
+  auto resultType = getControlFlowType();
+  func->type =
     Signature(paramType, resultType);
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
