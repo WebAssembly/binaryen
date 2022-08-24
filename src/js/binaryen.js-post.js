@@ -2538,7 +2538,8 @@ function wrapModule(module, self = {}) {
       'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module, strToStack(name))),
       'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module, strToStack(name))),
       'initial': Module['_BinaryenMemoryGetInitial'](module, strToStack(name)),
-      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module, strToStack(name)))
+      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module, strToStack(name))),
+      'is64': Boolean(Module['_BinaryenMemoryIs64'](module, strToStack(name))),
     };
     if (Module['_BinaryenMemoryHasMax'](module, strToStack(name))) {
       memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module, strToStack(name));
