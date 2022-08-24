@@ -549,22 +549,19 @@ Function* TranslateToFuzzReader::addFunction() {
   // at least one, though, to keep each testcase interesting. Only functions
   // with valid params and returns can be exported because the trap fuzzer
   // depends on that (TODO: fix this).
+  bool validExportType = [](Type t) {
+    if (!t.isRef()) {
+      return true;
+    }
+    auto heapType = t.getHeapType();
+    return heapType == HeapType::ext || heapType ==HeapType::func || heapType == HeapType::string;
+  };
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [](Type t) {
-      if (t.isRef() && t.getHeapType() == HeapType::any) {
-        // Anyref is not allowed in JS interop in the current GC spec.
-        return false;
-      }
-      return t.isDefaultable();
+      return validExportType(t) && t.isDefaultable();
     });
   bool validExportResults =
-    std::all_of(resultType.begin(), resultType.end(), [](Type t) {
-      if (t.isRef() && t.getHeapType() == HeapType::any) {
-        // Anyref is not allowed in JS interop in the current GC spec.
-        return false;
-      }
-      return true;
-    });
+    std::all_of(resultType.begin(), resultType.end(), validExportType);
   if (validExportParams && validExportResults &&
       (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
