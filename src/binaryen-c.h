@@ -2360,8 +2360,8 @@ BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
                                                      const char* name);
 BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module,
                                          const char* name);
- BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
-                                      const char* name);
+BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
+                                     const char* name);
 
 // Memory segments. Query utilities.
 
