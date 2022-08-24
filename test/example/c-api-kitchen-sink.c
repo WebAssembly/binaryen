@@ -490,6 +490,7 @@ void test_core() {
                     segmentSizes,
                     2,
                     1,
+                    0,
                     "0");
 
   BinaryenExpressionRef valueList[] = {
@@ -1695,6 +1696,7 @@ void test_for_each() {
                       segmentOffsets,
                       segmentSizes,
                       2,
+                      0,
                       0,
                       "0");
     BinaryenAddGlobal(module,

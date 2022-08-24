@@ -3965,12 +3965,14 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex* segmentSizes,
                        BinaryenIndex numSegments,
                        bool shared,
+                       bool memory64,
                        const char* name) {
   auto memory = std::make_unique<Memory>();
   memory->name = name ? name : "0";
   memory->initial = initial;
   memory->max = int32_t(maximum); // Make sure -1 extends.
   memory->shared = shared;
+  memory->indexType = memory64 ? Type::i64 : Type::i32;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;

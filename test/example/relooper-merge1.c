@@ -232,7 +232,7 @@ int main() {
                             BinaryenTypeNone());
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0, "0");
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0, 0, "0");
 
   // optionally, optimize
   if (0)

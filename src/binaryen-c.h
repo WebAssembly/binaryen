@@ -2345,6 +2345,7 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
                                     bool shared,
+                                    bool memory64,
                                     const char* name);
 
 BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
