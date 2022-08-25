@@ -148,6 +148,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
 ;; CHECK-NEXT:                                        correct
 ;; CHECK-NEXT:
