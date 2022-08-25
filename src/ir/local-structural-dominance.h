@@ -22,10 +22,11 @@
 namespace wasm {
 
 //
-// This class is useful for the "1a" form of non-nullable locals that is in the
+// This class is useful for the handling of non-nullable locals that is in the
 // wasm spec: a local.get validates if it is structurally dominated by a set.
 // That dominance proves the get cannot access the default null value, and,
-// nicely, it can be validated in linear time.
+// nicely, it can be validated in linear time. (Historically, this was called
+// "1a" during spec discussions.)
 //
 // Concretely, this class finds which local indexes lack the structural
 // dominance property. It only looks at reference types and not anything else.

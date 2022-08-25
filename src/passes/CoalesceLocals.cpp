@@ -529,8 +529,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
 
         // Remove ineffective actions, that is, dead stores.
         //
-        // Note that this may have downsides for non-nullable locals in the "1a"
-        // form in the wasm GC spec:
+        // Note that this may have downsides for non-nullable locals:
         //
         //   x = whatever; // dead set for validation
         //   if (..) {

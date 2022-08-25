@@ -236,7 +236,7 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
 
   // This pass moves code forward in blocks, but a local.set would not be moved
   // after a local.get with the same index (effects prevent breaking things that
-  // way), so 1a validation will be preserved.
+  // way), so validation will be preserved.
   bool requiresNonNullableLocalFixups() override { return false; }
 
   Pass* create() override { return new CodePushing; }

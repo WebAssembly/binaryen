@@ -244,8 +244,8 @@ struct SignatureRefining : public Pass {
     struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
 
-      // Updating parameter types cannot affect 1a validation (updating var
-      // types might).
+      // Updating parameter types cannot affect validation (only updating var
+      // types types might).
       bool requiresNonNullableLocalFixups() override { return false; }
 
       SignatureRefining& parent;

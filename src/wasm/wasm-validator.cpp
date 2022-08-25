@@ -2767,7 +2767,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   if (getModule()->features.hasGC()) {
     // If we have non-nullable locals, verify that local.get are valid.
     if (!getModule()->features.hasGCNNLocals()) {
-      // Without the special GCNNLocals feature, we implement "1a" semantics,
+      // Without the special GCNNLocals feature, we implement the spec rules,
       // that is, a set allows gets until the end of the block.
       LocalStructuralDominance info(curr, *getModule());
       for (auto index : info.nonDominatingIndexes) {
@@ -2778,7 +2778,7 @@ void FunctionValidator::visitFunction(Function* curr) {
     } else {
       // With the special GCNNLocals feature, we allow gets anywhere, so long as
       // we can prove they cannot read the null value. (TODO: remove this once
-      // 1a is stable).
+      // the spec is stable).
       //
       // This is slow, so only do it if we find such locals exist at all.
       bool hasNNLocals = false;

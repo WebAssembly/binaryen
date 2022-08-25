@@ -37,8 +37,8 @@ namespace wasm {
 struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   bool isFunctionParallel() override { return true; }
 
-  // This pass carefully avoids breaking 1a by only refining a local's type to
-  // be non-nullable if it would validate as 1a.
+  // This pass carefully avoids breaking validation by only refining a local's
+  // type to be non-nullable if it would validate.
   bool requiresNonNullableLocalFixups() override { return false; }
 
   Pass* create() override { return new LocalSubtyping(); }
@@ -90,7 +90,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         }
       }
     } else {
-      // Without GCNNLocals, validation rules follow "1a" in the spec: all gets
+      // Without GCNNLocals, validation rules follow the spec rules: all gets
       // must be dominated structurally by sets, for the local to be non-
       // nullable.
       LocalStructuralDominance info(func, *getModule());
