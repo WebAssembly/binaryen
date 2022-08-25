@@ -118,18 +118,21 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     it does not represent it in IR. That is, IR can be worked on without needing
     to think about declaring function references.
   * Binaryen IR allows non-nullable locals in the form that the wasm spec does,
-    nicknamed "1a", in which a `local.get` must be structurally dominated by a
-    `local.set` in order to validate (that ensures we do not read the default
-    value of null). Despite being aligned with the wasm spec, there are some
-    minor details that you may notice:
-    * A nameless `Block` in Binaryen IR does not interfere with 1a validation.
+    (which was historically nicknamed "1a"), in which a `local.get` must be
+    structurally dominated by a `local.set` in order to validate (that ensures
+    we do not read the default value of null). Despite being aligned with the
+    wasm spec, there are some minor details that you may notice:
+    * A nameless `Block` in Binaryen IR does not interfere with validation.
       Nameless blocks are never emitted into the binary format (we just emit
       their contents), so we ignore them for purposes of non-nullable locals. As
-      a result you may see what seems to be code that should not validate per
-      the spec, but that difference will not exist in the binary format.
-    * The Binaryen pass runner will automatically fix up 1a validation after
-      each pass (finding things that do not validate and fixing them up, usually
-      by demoting a local to be nullable). As a result you do not need to worry
+      a result, if you read wasm text emitted by Binaryen then you may see what
+      seems to be code that should not validate per the spec (and may not
+      validate in wasm text parsers), but that difference will not exist in the
+      binary format (binaries emitted by Binaryen will always work everywhere,
+      aside for bugs of course).
+    * The Binaryen pass runner will automatically fix up validation after each
+      pass (finding things that do not validate and fixing them up, usually by
+      demoting a local to be nullable). As a result you do not need to worry
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
