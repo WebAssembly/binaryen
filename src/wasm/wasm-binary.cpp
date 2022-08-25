@@ -1202,6 +1202,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::ExtendedConstFeature;
       case FeatureSet::Strings:
         return BinaryConsts::UserSections::StringsFeature;
+      case FeatureSet::MultiMemories:
+        return BinaryConsts::UserSections::MultiMemoriesFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -3534,6 +3536,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
       feature = FeatureSet::ExtendedConst;
     } else if (name == BinaryConsts::UserSections::StringsFeature) {
       feature = FeatureSet::Strings;
+    } else if (name == BinaryConsts::UserSections::MultiMemoriesFeature) {
+      feature = FeatureSet::MultiMemories;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
