@@ -778,12 +778,14 @@ struct SimplifyLocals
     // ref.as_non_null around the local.get, which will then trap at runtime:
     //
     //  (func $silly
-    //    (local $x (ref $T))
+    //    (local $x (ref null $T))
     //    (local.set $x
     //      (if
     //        (condition)
     //        (..)
-    //        (local.get $x)
+    //        (ref.as_non_null
+    //          (local.get $x)
+    //        )
     //      )
     //    )
     //  )
