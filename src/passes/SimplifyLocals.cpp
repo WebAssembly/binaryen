@@ -769,9 +769,44 @@ struct SimplifyLocals
       return;
     }
 
-    // We can optimize!
+    // Check if the type makes sense. A non-nullable local might be dangerous
+    // here, as creating new local.gets for such locals is risky:
+    //
+    //  (func $silly
+    //    (local $x (ref $T))
+    //    (if
+    //      (condition)
+    //      (local.set $x ..)
+    //    )
+    //  )
+    //
+    // That local is silly as the write is never read. If we optimize it and add
+    // a local.get, however, then we'd no longer validate (as no set would
+    // dominate that new get in the if's else arm). Fixups would add a
+    // ref.as_non_null around the local.get, which will then trap at runtime:
+    //
+    //  (func $silly
+    //    (local $x (ref $T))
+    //    (local.set $x
+    //      (if
+    //        (condition)
+    //        (..)
+    //        (local.get $x)
+    //      )
+    //    )
+    //  )
+    //
+    // In other words, local.get is not necessarily free of effects if the local
+    // is non-nullable - it must have been set already. We could check that
+    // here, but running that linear-time check may not be worth it as this
+    // optimization is fairly minor, so just skip the non-nullable case.
     Index goodIndex = sinkables.begin()->first;
     auto localType = this->getFunction()->getLocalType(goodIndex);
+    if (localType.isNonNullable()) {
+      return;
+    }
+
+    // We can optimize!
 
     // Update the ifTrue side.
     Builder builder(*this->getModule());
