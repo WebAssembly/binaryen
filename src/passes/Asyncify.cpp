@@ -150,7 +150,7 @@
 //    which means it will keep unwinding in a meaningless way.
 //
 //  * asyncify_start_rewind(data : iPTR): call this to start rewinding the
-//    stack vack up to the location stored in the provided data. This prepares
+//    stack back up to the location stored in the provided data. This prepares
 //    for the rewind; to start it, you must call the first function in the
 //    call stack to be unwound.
 //
@@ -234,7 +234,7 @@
 //
 //   --pass-arg=asyncify-asserts
 //
-//      This enables extra asserts in the output, like checking if we in
+//      This enables extra asserts in the output, like checking if we put in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only-list / remove-list, see later).
 //
