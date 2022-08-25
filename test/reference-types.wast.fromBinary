@@ -18,7 +18,7 @@
  (table $0 3 3 funcref)
  (elem (i32.const 0) $take_eqref $take_funcref $take_anyref)
  (elem declare func $foo $ref-taken-but-not-in-table)
- (tag $tag$0 (param i32))
+ (tag $e-i32 (param i32))
  (export "export_func" (func $import_func))
  (export "export_global" (global $import_global))
  (func $take_eqref (param $0 eqref)
@@ -416,7 +416,7 @@
     (do
      (local.get $local_eqref)
     )
-    (catch $tag$0
+    (catch $e-i32
      (drop
       (pop i32)
      )
@@ -429,7 +429,7 @@
     (do
      (ref.func $foo)
     )
-    (catch $tag$0
+    (catch $e-i32
      (drop
       (pop i32)
      )
@@ -442,7 +442,7 @@
     (do
      (local.get $local_eqref)
     )
-    (catch $tag$0
+    (catch $e-i32
      (drop
       (pop i32)
      )
@@ -455,7 +455,7 @@
     (do
      (ref.null eq)
     )
-    (catch $tag$0
+    (catch $e-i32
      (drop
       (pop i32)
      )
