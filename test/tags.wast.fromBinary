@@ -4,7 +4,7 @@
  (type $none_=>_none (func))
  (import "env" "im0" (tag $e-import (param i32)))
  (import "env" "im1" (tag $eimport$1 (param i32 f32)))
- (tag $2 (param i32))
+ (tag $tag$0 (param i32))
  (tag $e (param i32 f32))
  (tag $empty (param))
  (tag $e-params0 (param i32 f32))
