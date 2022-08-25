@@ -3062,6 +3062,12 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 }
 
 static void validateMemories(Module& module, ValidationInfo& info) {
+  if (module.memories.size() > 1) {
+    info.shouldBeTrue(
+      module.features.hasMultiMemories(),
+      "memory",
+      "multiple memories present, but multi-memories is disabled");
+  }
   for (auto& memory : module.memories) {
     info.shouldBeFalse(
       memory->initial > memory->max, "memory", "memory max >= initial");

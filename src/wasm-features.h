@@ -44,11 +44,12 @@ struct FeatureSet {
     RelaxedSIMD = 1 << 14,
     ExtendedConst = 1 << 15,
     Strings = 1 << 16,
+    MultiMemories = 1 << 17,
     // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
     // get all possible values use AllPossible. See setAll() below for more
     // details.
-    All = ((1 << 17) - 1) & ~GCNNLocals,
-    AllPossible = (1 << 17) - 1,
+    All = ((1 << 18) - 1) & ~GCNNLocals,
+    AllPossible = (1 << 18) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -87,6 +88,8 @@ struct FeatureSet {
         return "extended-const";
       case Strings:
         return "strings";
+      case MultiMemories:
+        return "multi-memories";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -134,6 +137,7 @@ struct FeatureSet {
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
   bool hasStrings() const { return (features & Strings) != 0; }
+  bool hasMultiMemories() const { return (features & MultiMemories) != 0; }
   bool hasAll() const { return (features & AllPossible) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -158,6 +162,7 @@ struct FeatureSet {
   void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
   void setExtendedConst(bool v = true) { set(ExtendedConst, v); }
   void setStrings(bool v = true) { set(Strings, v); }
+  void setMultiMemories(bool v = true) { set(MultiMemories, v); }
   void setMVP() { features = MVP; }
   void setAll() {
     // Do not set GCNNLocals, which forces the user to opt in to that feature

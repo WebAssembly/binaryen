@@ -1016,7 +1016,7 @@ struct OptimizeInstructions
       if (auto* binary = curr->value->dynCast<Binary>()) {
         if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
-            ExpressionAnalyzer::equal(binary->left, binary->right)) {
+            areConsecutiveInputsEqual(binary->left, binary->right)) {
           return replaceCurrent(binary);
         }
         // abs(0 - x)   ==>   abs(x),
@@ -2023,13 +2023,14 @@ private:
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
   //
-  // This also checks that the inputs are removable.
+  // This also checks that the inputs are removable (but we do not assume the
+  // caller will always remove them).
   bool areConsecutiveInputsEqualAndRemovable(Expression* left,
                                              Expression* right) {
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical. (It is
-    // also ok to have side effects here, if we can remove them, as we are also
-    // checking if we can remove the two inputs anyhow.)
+    // also ok to have removable side effects here, see the function
+    // description.)
     auto& passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, *getModule(), left)
           .hasUnremovableSideEffects() ||
@@ -2052,9 +2053,13 @@ private:
     return true;
   }
 
-  // Check if two consecutive inputs to an instruction are equal and can be
-  // folded into the first of the two. This identifies reads from the same local
-  // variable when one of them is a "tee" operation.
+  // Check if two consecutive inputs to an instruction are equal and can also be
+  // folded into the first of the two (but we do not assume the caller will
+  // always fold them). This is similar to areConsecutiveInputsEqualAndRemovable
+  // but also identifies reads from the same local variable when the first of
+  // them is a "tee" operation and the second is a get (in which case, it is
+  // fine to remove the get, but not the tee).
+  //
   // The inputs here must be consecutive, but it is also ok to have code with no
   // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
@@ -2069,6 +2074,13 @@ private:
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
+  }
+
+  // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
+  // are equal (and not that they are foldable).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // TODO: optimize cases that must be equal but are *not* foldable.
+    return areConsecutiveInputsEqualAndFoldable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
@@ -3836,7 +3848,7 @@ private:
     auto& options = getPassOptions();
 
     if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
-      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+      if (areConsecutiveInputsEqual(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
         return builder.makeBlock({builder.makeDrop(memCopy->dest),
