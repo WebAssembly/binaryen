@@ -1072,15 +1072,26 @@ void WasmBinaryWriter::writeNames() {
 
   // tag names
   if (!wasm->tags.empty()) {
-    // TODO: we could add checks for hasExplicitName here, if that matters
-    auto substart =
-      startSubsection(BinaryConsts::UserSections::Subsection::NameTag);
-    o << U32LEB(wasm->tags.size());
-    for (Index i = 0; i < wasm->tags.size(); i++) {
-      o << U32LEB(i);
-      writeEscapedName(wasm->tags[i]->name.str);
+    Index count = 0;
+    for (auto& tag : wasm->tags) {
+      if (tag->hasExplicitName) {
+        count++;
+      }
     }
-    finishSubsection(substart);
+
+    if (count) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameTag);
+      o << U32LEB(count);
+      for (Index i = 0; i < wasm->tags.size(); i++) {
+        auto& tag = wasm->tags[i];
+        if (tag->hasExplicitName) {
+          o << U32LEB(i);
+          writeEscapedName(tag->name.str);
+        }
+      }
+      finishSubsection(substart);
+    }
   }
 
   finishSection(start);
