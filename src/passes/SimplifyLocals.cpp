@@ -792,6 +792,8 @@ struct SimplifyLocals
     // is non-nullable - it must have been set already. We could check that
     // here, but running that linear-time check may not be worth it as this
     // optimization is fairly minor, so just skip the non-nullable case.
+    //
+    // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
     auto localType = this->getFunction()->getLocalType(goodIndex);
     if (localType.isNonNullable()) {

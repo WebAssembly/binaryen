@@ -335,8 +335,8 @@
   ;; NOMNL-NEXT: )
   (func $if-nnl-previous-set
    (local $x (ref func))
-   ;; As the above testcase, but now there is a set before the if. The local
-   ;; will remain non-nullable here even though we add a get in the if.
+   ;; As the above testcase, but now there is a set before the if. We could
+   ;; optimize in this case, but don't atm. TODO
    (local.set $x
     (ref.func $if-nnl)
    )
