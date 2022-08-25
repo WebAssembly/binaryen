@@ -211,7 +211,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     // Only local.set needs to be visited.
     void pushTask(TaskFunc func, Expression** currp) {
       // Visits to anything but a set can be ignored, so only very specific
-      // tasks need to actually be pushed here.
+      // tasks need to actually be pushed here. In particular, we don't want to
+      // push tasks to call doVisit* when those callbacks do nothing.
       if (func == scan || func == doLocalSet || func == doBeginScope ||
           func == doEndScope) {
         PostWalker<Scanner>::pushTask(func, currp);
