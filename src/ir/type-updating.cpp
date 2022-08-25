@@ -346,6 +346,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 }
 
 Type getValidLocalType(Type type, FeatureSet features) {
+  // TODO: this should handle tuples with a non-nullable item
   assert(canHandleAsLocal(type));
   if (type.isNonNullable() && !features.hasGCNNLocals()) {
     type = Type(type.getHeapType(), Nullable);
