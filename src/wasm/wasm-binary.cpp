@@ -857,28 +857,30 @@ void WasmBinaryWriter::writeNames() {
         // Pairs of (local index in IR, name).
         std::vector<std::pair<Index, Name>> localsWithNames;
         auto numLocals = func->getNumLocals();
-        for (Index i = 0; i < numLocals; ++i) {
-          if (func->hasLocalName(i)) {
-            localsWithNames.push_back({i, func->getLocalName(i)});
+        for (Index indexInFunc = 0; indexInFunc < numLocals; ++indexInFunc) {
+          if (func->hasLocalName(indexInFunc)) {
+            Index indexInBinary;
+            auto iter = funcMappedLocals.find(func->name);
+            if (iter != funcMappedLocals.end()) {
+              // TODO: handle multivalue
+              indexInBinary = iter->second[{indexInFunc, 0}];
+            } else {
+              // No data on funcMappedLocals. That is only possible if we are an
+              // imported function, where there are no locals to map, and in
+              // that case the index is unchanged anyhow: parameters always have
+              // the same index, they are not mapped in any way.
+              assert(func->imported());
+              indexInBinary = indexInFunc;
+            }
+            localsWithNames.push_back(
+              {indexInBinary, func->getLocalName(indexInFunc)});
           }
         }
         assert(localsWithNames.size());
+        std::sort(localsWithNames.begin(), localsWithNames.end());
         o << U32LEB(index);
         o << U32LEB(localsWithNames.size());
-        for (auto& [indexInFunc, name] : localsWithNames) {
-          // TODO: handle multivalue
-          Index indexInBinary;
-          auto iter = funcMappedLocals.find(func->name);
-          if (iter != funcMappedLocals.end()) {
-            indexInBinary = iter->second[{indexInFunc, 0}];
-          } else {
-            // No data on funcMappedLocals. That is only possible if we are an
-            // imported function, where there are no locals to map, and in that
-            // case the index is unchanged anyhow: parameters always have the
-            // same index, they are not mapped in any way.
-            assert(func->imported());
-            indexInBinary = indexInFunc;
-          }
+        for (auto& [indexInBinary, name] : localsWithNames) {
           o << U32LEB(indexInBinary);
           writeEscapedName(name.str);
         }
