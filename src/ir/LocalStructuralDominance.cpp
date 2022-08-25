@@ -63,8 +63,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
 
     Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndexes)
       : nonDominatingIndexes(nonDominatingIndexes) {
-      auto num = func->getNumLocals();
-      localsSet.resize(num);
+      localsSet.resize(func->getNumLocals());
 
       // Parameters always dominate.
       for (Index i = 0; i < func->getNumParams(); i++) {
