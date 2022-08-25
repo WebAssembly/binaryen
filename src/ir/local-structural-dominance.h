@@ -82,9 +82,7 @@ struct LocalStructuralDominance {
     NonNullableOnly,
   };
 
-  LocalStructuralDominance(Function* func,
-                           Module& wasm,
-                           Mode mode = All);
+  LocalStructuralDominance(Function* func, Module& wasm, Mode mode = All);
 
   // Local indexes for whom a local.get exists that is not structurally
   // dominated.
