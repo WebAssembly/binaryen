@@ -760,14 +760,6 @@ struct SimplifyLocals
     if (sinkables.empty()) {
       return;
     }
-    // Ensure we have a place to write the return values for, if not, we
-    // need another cycle.
-    auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
-    if (!ifTrueBlock || ifTrueBlock->name.is() ||
-        ifTrueBlock->list.size() == 0 || !ifTrueBlock->list.back()->is<Nop>()) {
-      ifsToEnlarge.push_back(iff);
-      return;
-    }
 
     // Check if the type makes sense. A non-nullable local might be dangerous
     // here, as creating new local.gets for such locals is risky:
@@ -803,6 +795,15 @@ struct SimplifyLocals
     Index goodIndex = sinkables.begin()->first;
     auto localType = this->getFunction()->getLocalType(goodIndex);
     if (localType.isNonNullable()) {
+      return;
+    }
+
+    // Ensure we have a place to write the return values for, if not, we
+    // need another cycle.
+    auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
+    if (!ifTrueBlock || ifTrueBlock->name.is() ||
+        ifTrueBlock->list.size() == 0 || !ifTrueBlock->list.back()->is<Nop>()) {
+      ifsToEnlarge.push_back(iff);
       return;
     }
 
