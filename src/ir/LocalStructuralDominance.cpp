@@ -40,7 +40,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     return;
   }
 
-  if (mode == IgnoreNullable) {
+  if (mode == NonNullableOnly) {
     bool hasNonNullableVar = false;
     for (auto var : func->vars) {
       // Check if we have any non-nullable vars at all.
@@ -74,7 +74,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         auto type = func->getLocalType(i);
         // Mark locals we don't need to care about as "set". We never do any
         // work for such a local.
-        if (!type.isRef() || (mode == IgnoreNullable && type.isNullable())) {
+        if (!type.isRef() || (mode == NonNullableOnly && type.isNullable())) {
           localsSet[i] = true;
         }
       }

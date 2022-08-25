@@ -293,7 +293,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // validate as they are, that is, if they fall within the validation rules of
   // the wasm spec. We do not need to modify such locals.
   LocalStructuralDominance info(
-    func, wasm, LocalStructuralDominance::IgnoreNullable);
+    func, wasm, LocalStructuralDominance::NonNullableOnly);
   std::unordered_set<Index> badIndexes;
   for (auto index : info.nonDominatingIndexes) {
     badIndexes.insert(index);

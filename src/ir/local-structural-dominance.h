@@ -78,13 +78,13 @@ struct LocalStructuralDominance {
   // We always look at non-nullable locals, but can be configured to ignore
   // or process nullable ones.
   enum Mode {
-    ProcessNullable,
-    IgnoreNullable,
+    All,
+    NonNullableOnly,
   };
 
   LocalStructuralDominance(Function* func,
                            Module& wasm,
-                           Mode mode = ProcessNullable);
+                           Mode mode = All);
 
   // Local indexes for whom a local.get exists that is not structurally
   // dominated.
