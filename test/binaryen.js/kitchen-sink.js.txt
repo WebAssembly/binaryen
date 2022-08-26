@@ -2161,10 +2161,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop eqref)
       )
       (drop
-       (pop i31ref)
+       (pop (ref i31))
       )
       (drop
-       (pop dataref)
+       (pop (ref data))
       )
       (drop
        (pop stringref)
@@ -4265,10 +4265,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop eqref)
       )
       (drop
-       (pop i31ref)
+       (pop (ref i31))
       )
       (drop
-       (pop dataref)
+       (pop (ref data))
       )
       (drop
        (pop stringref)
