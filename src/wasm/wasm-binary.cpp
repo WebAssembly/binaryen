@@ -1070,6 +1070,30 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
+  // tag names
+  if (!wasm->tags.empty()) {
+    Index count = 0;
+    for (auto& tag : wasm->tags) {
+      if (tag->hasExplicitName) {
+        count++;
+      }
+    }
+
+    if (count) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameTag);
+      o << U32LEB(count);
+      for (Index i = 0; i < wasm->tags.size(); i++) {
+        auto& tag = wasm->tags[i];
+        if (tag->hasExplicitName) {
+          o << U32LEB(i);
+          writeEscapedName(tag->name.str);
+        }
+      }
+      finishSubsection(substart);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -1385,13 +1409,11 @@ void WasmBinaryWriter::writeType(Type type) {
           o << S32LEB(BinaryConsts::EncodedType::eqref);
           return;
         case HeapType::i31:
-          // TODO: Emit i31ref once V8 (and Binaryen itself) treats it as
-          // nullable.
-          break;
+          o << S32LEB(BinaryConsts::EncodedType::i31ref);
+          return;
         case HeapType::data:
-          // TODO: Emit dataref once V8 (and Binaryen itself) treats it as
-          // nullable.
-          break;
+          o << S32LEB(BinaryConsts::EncodedType::dataref);
+          return;
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
@@ -1825,10 +1847,10 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
       out = Type(HeapType::eq, Nullable);
       return true;
     case BinaryConsts::EncodedType::i31ref:
-      out = Type(HeapType::i31, NonNullable);
+      out = Type(HeapType::i31, Nullable);
       return true;
     case BinaryConsts::EncodedType::dataref:
-      out = Type(HeapType::data, NonNullable);
+      out = Type(HeapType::data, Nullable);
       return true;
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);
@@ -2288,7 +2310,6 @@ void WasmBinaryBuilder::readImports() {
         auto curr = builder.makeFunction(name, type, {});
         curr->module = module;
         curr->base = base;
-        functionImports.push_back(curr.get());
         wasm.addFunction(std::move(curr));
         break;
       }
@@ -2420,8 +2441,9 @@ Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
 
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
+  auto numImports = wasm.functions.size();
   size_t total = getU32LEB();
-  if (total != functionTypes.size() - functionImports.size()) {
+  if (total != functionTypes.size() - numImports) {
     throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
@@ -2435,7 +2457,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->type = getTypeByFunctionIndex(functionImports.size() + i);
+    func->type = getTypeByFunctionIndex(numImports + i);
     currFunction = func;
 
     if (DWARF) {
@@ -2470,7 +2492,7 @@ void WasmBinaryBuilder::readFunctions() {
       // the form of pthread-related segment initializations. As this is just
       // one function, it doesn't add significant time, so the optimization of
       // skipping bodies is still very useful.
-      auto currFunctionIndex = functionImports.size() + functions.size();
+      auto currFunctionIndex = wasm.functions.size();
       bool isStart = startIndex == currFunctionIndex;
       if (!skipFunctionBodies || isStart) {
         func->body = getBlockOrSingleton(func->getResults());
@@ -2503,7 +2525,7 @@ void WasmBinaryBuilder::readFunctions() {
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    functions.push_back(func);
+    wasm.addFunction(func);
   }
   BYN_TRACE(" end function bodies\n");
 }
@@ -2961,9 +2983,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto* func : functions) {
-    wasm.addFunction(func);
-  }
   for (auto& global : globals) {
     wasm.addGlobal(std::move(global));
   }
@@ -3015,22 +3034,24 @@ void WasmBinaryBuilder::processNames() {
       *ref = getFunctionName(index);
     }
   }
-
   for (auto& [index, refs] : tableRefs) {
     for (auto* ref : refs) {
       *ref = getTableName(index);
     }
   }
-
   for (auto& [index, refs] : memoryRefs) {
     for (auto ref : refs) {
       *ref = getMemoryName(index);
     }
   }
-
   for (auto& [index, refs] : globalRefs) {
     for (auto* ref : refs) {
       *ref = getGlobalName(index);
+    }
+  }
+  for (auto& [index, refs] : tagRefs) {
+    for (auto* ref : refs) {
+      *ref = getTagName(index);
     }
   }
 
@@ -3277,11 +3298,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numFunctionImports = functionImports.size();
-        if (index < numFunctionImports) {
-          functionImports[index]->setExplicitName(name);
-        } else if (index - numFunctionImports < functions.size()) {
-          functions[index - numFunctionImports]->setExplicitName(name);
+        if (index < wasm.functions.size()) {
+          wasm.functions[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: function index out of bounds in name section, "
                        "function subsection: "
@@ -3291,14 +3309,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameLocal) {
       auto numFuncs = getU32LEB();
-      auto numFunctionImports = functionImports.size();
       for (size_t i = 0; i < numFuncs; i++) {
         auto funcIndex = getU32LEB();
         Function* func = nullptr;
-        if (funcIndex < numFunctionImports) {
-          func = functionImports[funcIndex];
-        } else if (funcIndex - numFunctionImports < functions.size()) {
-          func = functions[funcIndex - numFunctionImports];
+        if (funcIndex < wasm.functions.size()) {
+          func = wasm.functions[funcIndex].get();
         } else {
           std::cerr
             << "warning: function index out of bounds in name section, local "
@@ -3462,6 +3477,22 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
           if (validType) {
             wasm.typeNames[types[typeIndex]].fieldNames[fieldIndex] = name;
           }
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameTag) {
+      auto num = getU32LEB();
+      NameProcessor processor;
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        auto name = processor.process(rawName);
+        if (index < wasm.tags.size()) {
+          wasm.tags[index]->setExplicitName(name);
+        } else {
+          std::cerr << "warning: tag index out of bounds in name section, "
+                       "tag subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
         }
       }
     } else {
@@ -6661,6 +6692,11 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     }
   };
 
+  // We cannot immediately update tagRefs in the loop below, as catchTags is
+  // being grown, an so references would get invalidated. Store the indexes
+  // here, then do that later.
+  std::vector<Index> tagIndexes;
+
   while (lastSeparator == BinaryConsts::Catch ||
          lastSeparator == BinaryConsts::CatchAll) {
     if (lastSeparator == BinaryConsts::Catch) {
@@ -6668,10 +6704,10 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
       if (index >= wasm.tags.size()) {
         throwError("bad tag index");
       }
+      tagIndexes.push_back(index);
       auto* tag = wasm.tags[index].get();
       curr->catchTags.push_back(tag->name);
       readCatchBody(tag->sig.params);
-
     } else { // catch_all
       if (curr->hasCatchAll()) {
         throwError("there should be at most one 'catch_all' clause per try");
@@ -6680,6 +6716,11 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     }
   }
   breakStack.pop_back();
+
+  for (Index i = 0; i < tagIndexes.size(); i++) {
+    // We don't know the final name yet.
+    tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
+  }
 
   if (lastSeparator == BinaryConsts::Delegate) {
     curr->delegateTarget = getExceptionTargetName(getU32LEB());
@@ -6777,6 +6818,7 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
   }
   auto* tag = wasm.tags[index].get();
   curr->tag = tag->name;
+  tagRefs[index].push_back(&curr->tag); // we don't know the final name yet
   size_t num = tag->sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {

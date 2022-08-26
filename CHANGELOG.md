@@ -29,6 +29,7 @@ Current Trunk
   function references spec.
 - HeapType::ext has been restored but is no longer a subtype of HeapType::any to
   match the latest updates in the GC spec. (#4898)
+- `i31ref` and `dataref` are now nullable to match the latest GC spec. (#4843)
 
 v109
 ----

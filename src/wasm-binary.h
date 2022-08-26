@@ -454,6 +454,7 @@ enum Subsection {
   NameData = 9,
   // see: https://github.com/WebAssembly/gc/issues/193
   NameField = 10,
+  NameTag = 11,
 
   DylinkMemInfo = 1,
   DylinkNeeded = 2,
@@ -1511,11 +1512,6 @@ public:
   // We read functions and globals before we know their names, so we need to
   // backpatch the names later
 
-  // we store functions here before wasm.addFunction after we know their names
-  std::vector<Function*> functions;
-  // we store function imports here before wasm.addFunctionImport after we know
-  // their names
-  std::vector<Function*> functionImports;
   // at index i we have all refs to the function i
   std::map<Index, std::vector<Name*>> functionRefs;
   Function* currFunction = nullptr;
@@ -1556,6 +1552,9 @@ public:
   std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
   std::map<Index, std::vector<Name*>> globalRefs;
+
+  // at index i we have all refs to the tag i
+  std::map<Index, std::vector<Name*>> tagRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);

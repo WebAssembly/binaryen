@@ -12,10 +12,10 @@
  ;; CHECK:      (global $global (ref null $array) (ref.null $array))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (func $test-dead-get-non-nullable (param $0 dataref)
+ ;; CHECK:      (func $test-dead-get-non-nullable (param $0 (ref data))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result dataref)
+ ;; CHECK-NEXT:   (block (result (ref data))
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

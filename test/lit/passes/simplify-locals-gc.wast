@@ -13,15 +13,15 @@
   ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
   (type $struct-immutable (struct (field i32)))
 
-  ;; CHECK:      (type $B (struct (field dataref)))
+  ;; CHECK:      (type $B (struct (field (ref data))))
 
-  ;; CHECK:      (type $A (struct (field (ref null data))))
-  ;; NOMNL:      (type $A (struct_subtype (field (ref null data)) data))
+  ;; CHECK:      (type $A (struct (field dataref)))
+  ;; NOMNL:      (type $A (struct_subtype (field dataref) data))
   (type $A (struct_subtype (field (ref null data)) data))
 
   ;; $B is a subtype of $A, and its field has a more refined type (it is non-
   ;; nullable).
-  ;; NOMNL:      (type $B (struct_subtype (field dataref) $A))
+  ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
   (type $B (struct_subtype (field (ref data)) $A))
 
   ;; Writes to heap objects cannot be reordered with reads.

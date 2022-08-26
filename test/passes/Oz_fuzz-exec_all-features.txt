@@ -204,7 +204,7 @@
  )
  (func $7 (; has Stack IR ;) (param $0 anyref)
   (drop
-   (block $data (result dataref)
+   (block $data (result (ref data))
     (drop
      (br_on_data $data
       (local.get $0)

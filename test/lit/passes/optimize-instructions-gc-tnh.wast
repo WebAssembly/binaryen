@@ -75,7 +75,7 @@
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (unreachable)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (block (result dataref)
+  ;; NO_TNH-NEXT:    (block (result (ref data))
   ;; NO_TNH-NEXT:     (drop
   ;; NO_TNH-NEXT:      (ref.func $ref.eq-no)
   ;; NO_TNH-NEXT:     )

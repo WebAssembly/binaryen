@@ -735,7 +735,7 @@
   ;; data that is filled with vtables of different types. On usage, we do a
   ;; cast of the vtable type.
 
-  ;; CHECK:      (type $itable (array_subtype (ref null data) data))
+  ;; CHECK:      (type $itable (array_subtype dataref data))
   (type $itable (array_subtype (ref null data) data))
 
   ;; CHECK:      (type $object (struct_subtype (field (ref $itable)) data))
