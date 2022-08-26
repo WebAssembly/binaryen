@@ -83,6 +83,7 @@ DELEGATE(ArraySet);
 DELEGATE(ArrayLen);
 DELEGATE(ArrayCopy);
 DELEGATE(RefAs);
+DELEGATE(ExternConversion);
 DELEGATE(StringNew);
 DELEGATE(StringConst);
 DELEGATE(StringMeasure);

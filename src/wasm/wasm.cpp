@@ -1127,6 +1127,23 @@ void RefAs::finalize() {
   }
 }
 
+void ExternConversion::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  switch (op) {
+    case Externalize:
+      type = Type(HeapType::ext, value->type.getNullability());
+      break;
+    case Internalize:
+      type = Type(HeapType::any, value->type.getNullability());
+      break;
+    default:
+      WASM_UNREACHABLE("invalid extern conversion");
+  }
+}
+
 void StringNew::finalize() {
   if (ptr->type == Type::unreachable ||
       (length && length->type == Type::unreachable)) {

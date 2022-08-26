@@ -3948,6 +3948,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayCopy(curr, opcode)) {
         break;
       }
+      if (maybeVisitExternConversion(curr, opcode)) {
+        break;
+      }
       if (maybeVisitStringNew(curr, opcode)) {
         break;
       }
@@ -7100,6 +7103,20 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
   return true;
 }
 
+bool WasmBinaryBuilder::maybeVisitExternConversion(Expression*& out,
+                                                   uint32_t code) {
+  ExternConversionOp op;
+  if (code == BinaryConsts::ExternExternalize) {
+    op = Externalize;
+  } else if (code == BinaryConsts::ExternInternalize) {
+    op = Internalize;
+  } else {
+    return false;
+  }
+  out = Builder(wasm).makeExternConversion(op, popNonVoidExpression());
+  return true;
+}
+
 bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   StringNewOp op;
   Expression* length = nullptr;
@@ -7392,6 +7409,7 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   }
   curr->finalize();
 }
+
 void WasmBinaryBuilder::throwError(std::string text) {
   throw ParseException(text, 0, pos);
 }

@@ -426,6 +426,11 @@ struct InfoCollector
     // TODO: optimize when possible: like RefCast, not all values flow through.
     receiveChildValue(curr->value, curr);
   }
+  void visitExternConversion(ExternConversion* curr) {
+    // TODO: Integrate with interpreter so we can track values through
+    // incompatible type conversions.
+    addRoot(curr);
+  }
 
   // Locals read and write to their index.
   // TODO: we could use a LocalGraph for SSA-like precision

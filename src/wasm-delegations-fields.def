@@ -709,6 +709,13 @@ switch (DELEGATE_ID) {
     DELEGATE_END(RefAs);
     break;
   }
+  case Expression::Id::ExternConversionId: {
+    DELEGATE_START(ExternConversion);
+    DELEGATE_FIELD_INT(ExternConversion, op);
+    DELEGATE_FIELD_CHILD(ExternConversion, value);
+    DELEGATE_END(ExternConversion);
+    break;
+  }
   case Expression::Id::StringNewId: {
     DELEGATE_START(StringNew);
     DELEGATE_FIELD_INT(StringNew, op);

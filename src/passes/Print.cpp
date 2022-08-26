@@ -2218,6 +2218,18 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid ref.is_*");
     }
   }
+  void visitExternConversion(ExternConversion* curr) {
+    switch (curr->op) {
+      case Externalize:
+        printMedium(o, "extern.externalize");
+        break;
+      case Internalize:
+        printMedium(o, "extern.internalize");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid extern conversion");
+    }
+  }
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
       case StringNewUTF8:

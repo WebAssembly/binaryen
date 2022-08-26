@@ -2175,6 +2175,20 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
   }
 }
 
+void BinaryInstWriter::visitExternConversion(ExternConversion* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case Externalize:
+      o << U32LEB(BinaryConsts::ExternExternalize);
+      break;
+    case Internalize:
+      o << U32LEB(BinaryConsts::ExternInternalize);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid extern conversion");
+  }
+}
+
 void BinaryInstWriter::visitStringNew(StringNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {

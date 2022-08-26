@@ -2998,6 +2998,12 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, parseExpression(s[1]));
 }
 
+Expression*
+SExpressionWasmBuilder::makeExternConversion(Element& s,
+                                             ExternConversionOp op) {
+  return Builder(wasm).makeExternConversion(op, parseExpression(s[1]));
+}
+
 Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
   size_t i = 1;
   Expression* length = nullptr;

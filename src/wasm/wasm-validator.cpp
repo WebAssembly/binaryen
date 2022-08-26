@@ -452,6 +452,7 @@ public:
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
+  void visitExternConversion(ExternConversion* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2707,6 +2708,28 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
                   curr,
                   "array.copy must have the proper types");
   shouldBeTrue(destElement.mutable_, curr, "array.copy type must be mutable");
+}
+
+void FunctionValidator::visitExternConversion(ExternConversion* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "extern conversions require gc to be enabled");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  HeapType expected;
+  switch (curr->op) {
+    case Externalize:
+      expected = HeapType::ext;
+      break;
+    case Internalize:
+      expected = HeapType::any;
+      break;
+  }
+  shouldBeEqual(curr->type,
+                Type(expected, curr->value->type.getNullability()),
+                curr,
+                "extern conversion must have the proper type");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

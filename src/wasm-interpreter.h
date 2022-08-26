@@ -1879,6 +1879,9 @@ public:
     }
     return value;
   }
+  Flow visitExternConversion(ExternConversion* curr) {
+    WASM_UNREACHABLE("unimp");
+  }
   Flow visitStringNew(StringNew* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConst(StringConst* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }

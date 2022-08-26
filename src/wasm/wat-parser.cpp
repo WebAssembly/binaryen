@@ -1235,6 +1235,9 @@ Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, ParseInput&);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefAs(Ctx&, ParseInput&, RefAsOp op);
 template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeExternConversion(Ctx&, ParseInput&, RefAsOp op);
+template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringNew(Ctx&, ParseInput&, StringNewOp op);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConst(Ctx&, ParseInput&);
@@ -2066,6 +2069,12 @@ Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx, ParseInput& in) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, ParseInput& in, RefAsOp op) {
+  return in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeExternConversion(Ctx& ctx, ParseInput& in, ExternConversionOp op) {
   return in.err("unimplemented instruction");
 }
 
