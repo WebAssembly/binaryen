@@ -16,6 +16,7 @@
 
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
+#include "support/small_set.h"
 #include "support/small_vector.h"
 
 namespace wasm {
@@ -63,6 +64,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndices)
       : nonDominatingIndices(nonDominatingIndices) {
       localsSet.resize(func->getNumLocals());
+
       // Parameters always dominate.
       for (Index i = 0; i < func->getNumParams(); i++) {
         localsSet[i] = true;
@@ -84,46 +86,21 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
       walk(func->body);
     }
 
+    using Locals = SmallVector<Index, 5>;
+
     // When we exit a control flow scope, we must undo the locals that it set.
-    // We use two stacks for this, one with local indexes that we need to clean
-    // up, and with with markers of when scopes end. For example, if we add two
-    // indexes in a scope, 1 and 17, we'll have this:
-    //
-    //   cleanups:  [.., 1, 17]
-    //   scopeEnds: [.., ]
-    //
-    // And after we enter another scope, we mark that on the ends vector:
-    //
-    //   cleanups:  [.., 1, 17]
-    //   scopeEnds: [.., 2]
-    //
-    // If in that new scope we add index 9, then at the end of the scope we'd
-    // see this:
-    //
-    //   cleanups:  [.., 1, 17, 9]
-    //   scopeEnds: [.., 2]
-    //
-    // When the last scope ends, we pop that 2 and then pop the other stack up
-    // to index 2.
-    SmallVector<Index, 10> cleanups;
-    SmallVector<Index, 10> scopeEnds;
+    std::vector<Locals> cleanupStack;
 
     static void doBeginScope(Scanner* self, Expression** currp) {
-      self->scopeEnds.push_back(self->cleanups.size());
+      self->cleanupStack.emplace_back();
     }
 
     static void doEndScope(Scanner* self, Expression** currp) {
-      // Shrink cleanups back to the previous scope.
-      assert(!self->scopeEnds.empty());
-      auto previousScope = self->scopeEnds.back();
-      self->scopeEnds.pop_back();
-      auto size = self->cleanups.size();
-      for (Index i = previousScope; i < size; i++) {
-        auto index = self->cleanups[i];
+      for (auto index : self->cleanupStack.back()) {
         assert(self->localsSet[index]);
         self->localsSet[index] = false;
       }
-      self->cleanups.resize(previousScope);
+      self->cleanupStack.pop_back();
     }
 
     static void doLocalSet(Scanner* self, Expression** currp) {
@@ -132,8 +109,8 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         // This local is now set until the end of this scope.
         self->localsSet[index] = true;
         // If we are not in the topmost scope, note this for later cleanup.
-        if (!self->scopeEnds.empty()) {
-          self->cleanups.push_back(index);
+        if (!self->cleanupStack.empty()) {
+          self->cleanupStack.back().push_back(index);
         }
       }
     }
