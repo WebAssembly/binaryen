@@ -75,7 +75,8 @@ void Instrumenter::addSecondaryMemory(size_t profileSize) {
     return;
   }
   if (!wasm->features.hasMultiMemories()) {
-    Fatal() << "error: --in-secondary-memory requires multi-memories to be enabled";
+    Fatal()
+      << "error: --in-secondary-memory requires multi-memories to be enabled";
   }
 
   secondaryMemory = Names::getValidMemoryName(*wasm, "split_data");
@@ -125,14 +126,18 @@ void Instrumenter::instrumentFuncs() {
       break;
     }
     case WasmSplitOptions::StorageKind::InMemory:
-    case WasmSplitOptions::StorageKind::InSecondaryMemory:{
+    case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       if (!wasm->features.hasAtomics()) {
-        Fatal() << "error: --in-memory and --in-secondary-memory requires atomics to be enabled";
+        Fatal() << "error: --in-memory and --in-secondary-memory requires "
+                   "atomics to be enabled";
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
       assert(!wasm->memories.empty());
-      Name memoryName = options.storageKind == WasmSplitOptions::StorageKind::InMemory ? wasm->memories[0]->name : secondaryMemory;
+      Name memoryName =
+        options.storageKind == WasmSplitOptions::StorageKind::InMemory
+          ? wasm->memories[0]->name
+          : secondaryMemory;
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
@@ -278,9 +283,13 @@ void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
     case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       // Copy the secondary memory into main memory for exporting the profile to
       // the user provided buffer
-      writeData = builder.blockify(
-          writeData,
-          builder.makeMemoryCopy(builder.makeConst(8), builder.makeConst(0), builder.makeConst(numFuncs), wasm->memories[0]->name, secondaryMemory));
+      writeData =
+        builder.blockify(writeData,
+                         builder.makeMemoryCopy(builder.makeConst(8),
+                                                builder.makeConst(0),
+                                                builder.makeConst(numFuncs),
+                                                wasm->memories[0]->name,
+                                                secondaryMemory));
       break;
     }
   }
