@@ -389,6 +389,9 @@ BinaryenFeatures BinaryenFeatureExtendedConst(void) {
 BinaryenFeatures BinaryenFeatureStrings(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Strings);
 }
+BinaryenFeatures BinaryenFeatureMultiMemories(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::MultiMemories);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }
