@@ -55,14 +55,14 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
   }
 
   struct Scanner : public PostWalker<Scanner> {
-    std::set<Index>& nonDominatingIndexes;
+    std::set<Index>& nonDominatingIndices;
 
     // The locals that have been set, and so at the current time, they
     // structurally dominate.
     std::vector<bool> localsSet;
 
-    Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndexes)
-      : nonDominatingIndexes(nonDominatingIndexes) {
+    Scanner(Function* func, Mode mode, std::set<Index>& nonDominatingIndices)
+      : nonDominatingIndices(nonDominatingIndices) {
       localsSet.resize(func->getNumLocals());
 
       // Parameters always dominate.
@@ -129,7 +129,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
           case Expression::Id::LocalGetId: {
             auto index = curr->cast<LocalGet>()->index;
             if (!self->localsSet[index]) {
-              self->nonDominatingIndexes.insert(index);
+              self->nonDominatingIndices.insert(index);
             }
             return;
           }
@@ -225,7 +225,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
     }
   };
 
-  Scanner(func, mode, nonDominatingIndexes);
+  Scanner(func, mode, nonDominatingIndices);
 }
 
 } // namespace wasm

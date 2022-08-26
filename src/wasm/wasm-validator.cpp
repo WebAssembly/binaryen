@@ -2770,7 +2770,7 @@ void FunctionValidator::visitFunction(Function* curr) {
       // Without the special GCNNLocals feature, we implement the spec rules,
       // that is, a set allows gets until the end of the block.
       LocalStructuralDominance info(curr, *getModule());
-      for (auto index : info.nonDominatingIndexes) {
+      for (auto index : info.nonDominatingIndices) {
         shouldBeTrue(!curr->getLocalType(index).isNonNullable(),
                      index,
                      "non-nullable local's sets must dominate gets");

@@ -86,7 +86,7 @@ struct LocalStructuralDominance {
 
   // Local indexes for whom a local.get exists that is not structurally
   // dominated.
-  std::set<Index> nonDominatingIndexes;
+  std::set<Index> nonDominatingIndices;
 };
 
 } // namespace wasm

@@ -295,7 +295,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   LocalStructuralDominance info(
     func, wasm, LocalStructuralDominance::NonNullableOnly);
   std::unordered_set<Index> badIndexes;
-  for (auto index : info.nonDominatingIndexes) {
+  for (auto index : info.nonDominatingIndices) {
     badIndexes.insert(index);
 
     // LocalStructuralDominance should have only looked at non-nullable indexes

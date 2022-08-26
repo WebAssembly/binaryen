@@ -94,7 +94,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // must be dominated structurally by sets, for the local to be non-
       // nullable.
       LocalStructuralDominance info(func, *getModule());
-      for (auto index : info.nonDominatingIndexes) {
+      for (auto index : info.nonDominatingIndices) {
         cannotBeNonNullable.insert(index);
       }
     }
