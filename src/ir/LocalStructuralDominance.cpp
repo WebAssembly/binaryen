@@ -16,7 +16,6 @@
 
 #include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
-#include "support/small_set.h"
 #include "support/small_vector.h"
 
 namespace wasm {
