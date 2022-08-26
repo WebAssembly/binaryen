@@ -91,8 +91,8 @@
 
   ;; CHECK:      (func $locals-with-multiple-assignments (param $data dataref)
   ;; CHECK-NEXT:  (local $x eqref)
-  ;; CHECK-NEXT:  (local $y i31ref)
-  ;; CHECK-NEXT:  (local $z (ref null data))
+  ;; CHECK-NEXT:  (local $y (ref i31))
+  ;; CHECK-NEXT:  (local $z dataref)
   ;; CHECK-NEXT:  (local $w (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i31.new
@@ -150,8 +150,9 @@
     (local.set $z
       (local.get $data)
     )
-    ;; w is assigned two different types *without* a new LUB possible, as it
-    ;; already had the optimal LUB
+    ;; w is assigned two different types *without* a new LUB heap type possible,
+    ;; as it already had the optimal LUB heap type (but it can become non-
+    ;; nullable).
     (local.set $w
       (ref.func $i32)
     )
