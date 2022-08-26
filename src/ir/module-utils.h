@@ -204,13 +204,9 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
 
     Updater* create() override { return new Updater(map); }
 
-    void visitCall(Call* curr) {
-      maybeUpdate(curr->target);
-    }
+    void visitCall(Call* curr) { maybeUpdate(curr->target); }
 
-    void visitRefFunc(RefFunc* curr) {
-      maybeUpdate(curr->func);
-    }
+    void visitRefFunc(RefFunc* curr) { maybeUpdate(curr->func); }
   };
 
   Updater updater(map);
