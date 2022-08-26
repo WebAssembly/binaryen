@@ -2362,7 +2362,6 @@ void WasmBinaryBuilder::readImports() {
                              mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;
-        globalImports.push_back(curr.get());
         wasm.addGlobal(std::move(curr));
         break;
       }
@@ -2771,7 +2770,7 @@ void WasmBinaryBuilder::readGlobals() {
       throwError("Global mutability must be 0 or 1");
     }
     auto* init = readExpression();
-    globals.push_back(
+    wasm.addGlobal(
       Builder::makeGlobal("global$" + std::to_string(i),
                           type,
                           init,
@@ -2982,9 +2981,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto& global : globals) {
-    wasm.addGlobal(std::move(global));
-  }
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
@@ -3431,11 +3427,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numGlobalImports = globalImports.size();
-        if (index < numGlobalImports) {
-          globalImports[index]->setExplicitName(name);
-        } else if (index - numGlobalImports < globals.size()) {
-          globals[index - numGlobalImports]->setExplicitName(name);
+        if (index < wasm.globals.size()) {
+          wasm.globals[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: global index out of bounds in name section, "
                        "global subsection: "
@@ -4345,35 +4338,22 @@ void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
 void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
   BYN_TRACE("zz node: GlobalGet " << pos << std::endl);
   auto index = getU32LEB();
-  if (index < globalImports.size()) {
-    auto* import = globalImports[index];
-    curr->name = import->name;
-    curr->type = import->type;
-  } else {
-    Index adjustedIndex = index - globalImports.size();
-    if (adjustedIndex >= globals.size()) {
-      throwError("invalid global index");
-    }
-    auto& glob = globals[adjustedIndex];
-    curr->name = glob->name;
-    curr->type = glob->type;
+  if (index >= wasm.globals.size()) {
+    throwError("invalid global index");
   }
+  auto* global = wasm.globals[index].get();
+  curr->name = global->name;
+  curr->type = global->type;
   globalRefs[index].push_back(&curr->name); // we don't know the final name yet
 }
 
 void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
   BYN_TRACE("zz node: GlobalSet\n");
   auto index = getU32LEB();
-  if (index < globalImports.size()) {
-    auto* import = globalImports[index];
-    curr->name = import->name;
-  } else {
-    Index adjustedIndex = index - globalImports.size();
-    if (adjustedIndex >= globals.size()) {
-      throwError("invalid global index");
-    }
-    curr->name = globals[adjustedIndex]->name;
+  if (index >= wasm.globals.size()) {
+    throwError("invalid global index");
   }
+  curr->name = wasm.globals[index]->name;
   curr->value = popNonVoidExpression();
   globalRefs[index].push_back(&curr->name); // we don't know the final name yet
   curr->finalize();
