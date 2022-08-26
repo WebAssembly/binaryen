@@ -186,30 +186,38 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
     }
   }
   wasm.updateMaps();
-  // Update other global things.
-  auto maybeUpdate = [&](Name& name) {
-    auto iter = map.find(name);
-    if (iter != map.end()) {
-      name = iter->second;
-    }
-  };
-  maybeUpdate(wasm.start);
-  ElementUtils::iterAllElementFunctionNames(&wasm, maybeUpdate);
-  for (auto& exp : wasm.exports) {
-    if (exp->kind == ExternalKind::Function) {
-      maybeUpdate(exp->value);
-    }
-  }
-  // Update call instructions.
-  for (auto& func : wasm.functions) {
-    // TODO: parallelize
-    if (!func->imported()) {
-      FindAll<Call> calls(func->body);
-      for (auto* call : calls.list) {
-        maybeUpdate(call->target);
+
+  // Update all references to it.
+  struct Updater : public WalkerPass<PostWalker<Updater>> {
+    bool isFunctionParallel() override { return true; }
+
+    T& map;
+
+    void maybeUpdate(Name& name) {
+      auto iter = map.find(name);
+      if (iter != map.end()) {
+        name = iter->second;
       }
     }
-  }
+
+    Updater(T& map) : map(map) {}
+
+    Updater* create() override { return new Updater(map); }
+
+    void visitCall(Call* curr) {
+      maybeUpdate(curr->target);
+    }
+
+    void visitRefFunc(RefFunc* curr) {
+      maybeUpdate(curr->func);
+    }
+  };
+
+  Updater updater(map);
+  updater.maybeUpdate(wasm.start);
+  PassRunner runner(&wasm);
+  updater.run(&runner, &wasm);
+  updater.runOnModuleCode(&runner, &wasm);
 }
 
 inline void renameFunction(Module& wasm, Name oldName, Name newName) {
