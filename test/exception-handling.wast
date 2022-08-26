@@ -2,7 +2,7 @@
   (tag $e-i32 (param i32))
   (tag $e-i64 (param i64))
   (tag $e-i32-i64 (param i32 i64))
-  (tag $e-anyref (param anyref))
+  (tag $e-eqref (param (ref null eq)))
   (tag $e-empty)
 
   (func $foo)
@@ -330,9 +330,9 @@
 
     (try
       (do)
-      (catch $e-anyref
+      (catch $e-eqref
         (drop
-          (pop funcref) ;; pop can be subtype
+          (pop anyref) ;; pop can be supertype
         )
       )
     )
@@ -351,5 +351,18 @@
         )
       )
     )
+  )
+
+  ;; When 'delegate' is next to a nested block, make sure its delegate argument
+  ;; is parsed correctly.
+  (func $nested-block-and-try
+    (block $l0
+      (block $l1)
+      (try
+        (do)
+        (delegate 1) ;; to caller
+      )
+    )
+    (nop)
   )
 )

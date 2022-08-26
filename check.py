@@ -343,11 +343,14 @@ def run_lit():
 def run_gtest():
     def run():
         gtest = os.path.join(shared.options.binaryen_bin, 'binaryen-unittests')
-        result = subprocess.run(gtest)
-        if result.returncode != 0:
-            shared.num_failures += 1
-        if shared.options.abort_on_first_failure and shared.num_failures:
-            raise Exception("gtest test failed")
+        if not os.path.isfile(gtest):
+            shared.warn('gtest binary not found - skipping tests')
+        else:
+            result = subprocess.run(gtest)
+            if result.returncode != 0:
+                shared.num_failures += 1
+            if shared.options.abort_on_first_failure and shared.num_failures:
+                raise Exception("gtest test failed")
 
     shared.with_pass_debug(run)
 

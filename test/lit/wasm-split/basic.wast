@@ -148,7 +148,7 @@
 
 ;; KEEP-BOTH: warning: not splitting any functions out to the secondary module
 ;; KEEP-BOTH-NEXT: Keeping functions: bar, foo{{$}}
-;; KEEP-BOTH-NEXT: Splitting out functions:{{$}}
+;; KEEP-BOTH-NEXT: Splitting out functions: {{$}}
 
 ;; KEEP-BOTH-PRIMARY:      (module
 ;; KEEP-BOTH-PRIMARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))

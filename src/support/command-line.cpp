@@ -55,6 +55,10 @@ Options::Options(const std::string& command, const std::string& description)
   : debug(false), positional(Arguments::Zero) {
   std::string GeneralOption = "General options";
 
+  if (getenv("BINARYEN_DEBUG")) {
+    setDebugEnabled(getenv("BINARYEN_DEBUG"));
+  }
+
   add("--version",
       "",
       "Output version information and exit",

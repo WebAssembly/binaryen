@@ -13,6 +13,7 @@ configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
 FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
+  param-utils.cpp
   pass.cpp
   test_passes.cpp
   AlignmentLowering.cpp
@@ -37,7 +38,9 @@ set(passes_SOURCES
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
   GlobalRefining.cpp
+  GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
+  GUFA.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
@@ -53,6 +56,7 @@ set(passes_SOURCES
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
+  MergeSimilarFunctions.cpp
   MergeLocals.cpp
   Metrics.cpp
   MinifyImportsAndExports.cpp
@@ -73,6 +77,7 @@ set(passes_SOURCES
   RoundTrip.cpp
   SetGlobals.cpp
   StackIR.cpp
+  SignaturePruning.cpp
   SignatureRefining.cpp
   Strip.cpp
   StripTargetFeatures.cpp
@@ -92,6 +97,7 @@ set(passes_SOURCES
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
+  SpillPointers.cpp
   StackCheck.cpp
   SSAify.cpp
   Untee.cpp

@@ -27,6 +27,8 @@ namespace wasm {
 
 struct OptimizationOptions : public ToolOptions {
   static constexpr const char* DEFAULT_OPT_PASSES = "O";
+  static constexpr const int OS_OPTIMIZE_LEVEL = 2;
+  static constexpr const int OS_SHRINK_LEVEL = 1;
 
   std::vector<std::string> passes;
 
@@ -37,15 +39,20 @@ struct OptimizationOptions : public ToolOptions {
                       const std::string& description)
     : ToolOptions(command, description) {
     (*this)
-      .add("",
-           "-O",
-           "execute default optimization passes",
-           OptimizationOptionsCategory,
-           Options::Arguments::Zero,
-           [this](Options*, const std::string&) {
-             passOptions.setDefaultOptimizationOptions();
-             passes.push_back(DEFAULT_OPT_PASSES);
-           })
+      .add(
+        "",
+        "-O",
+        "execute default optimization passes (equivalent to -Os)",
+        OptimizationOptionsCategory,
+        Options::Arguments::Zero,
+        [this](Options*, const std::string&) {
+          passOptions.setDefaultOptimizationOptions();
+          static_assert(
+            PassOptions::DEFAULT_OPTIMIZE_LEVEL == OS_OPTIMIZE_LEVEL &&
+              PassOptions::DEFAULT_SHRINK_LEVEL == OS_SHRINK_LEVEL,
+            "Help text states that -O is equivalent to -Os but now it isn't.");
+          passes.push_back(DEFAULT_OPT_PASSES);
+        })
       .add("",
            "-O0",
            "execute no optimization passes",
@@ -106,8 +113,8 @@ struct OptimizationOptions : public ToolOptions {
            OptimizationOptionsCategory,
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
-             passOptions.optimizeLevel = 2;
-             passOptions.shrinkLevel = 1;
+             passOptions.optimizeLevel = OS_OPTIMIZE_LEVEL;
+             passOptions.shrinkLevel = OS_SHRINK_LEVEL;
              passes.push_back(DEFAULT_OPT_PASSES);
            })
       .add("",

@@ -88,28 +88,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "declares": [
-    "__handle_stack_overflow"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "stackRestore",
-    "stackAlloc",
-    "main",
-    "__set_stack_limits"
-  ],
-  "namedGlobals": {
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 1,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

@@ -24,9 +24,8 @@
 #include "sanitizer/common_interface_defs.h"
 #endif
 
-void wasm::handle_unreachable(const char* msg,
-                              const char* file,
-                              unsigned line) {
+[[noreturn]] void
+wasm::handle_unreachable(const char* msg, const char* file, unsigned line) {
 #ifndef NDEBUG
   if (msg) {
     std::cerr << msg << "\n";

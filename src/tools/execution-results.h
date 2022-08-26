@@ -95,18 +95,12 @@ struct ExecutionResults {
 
   // If set, we should ignore this and not compare it to anything.
   bool ignore = false;
-  // If set, we don't compare whether a trap has occurred or not.
-  bool ignoreTrap = false;
-
-  ExecutionResults(const PassOptions& options)
-    : ignoreTrap(options.ignoreImplicitTraps || options.trapsNeverHappen) {}
-  ExecutionResults(bool ignoreTrap) : ignoreTrap(ignoreTrap) {}
 
   // get results of execution
   void get(Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
-      ModuleInstance instance(wasm, &interface);
+      ModuleRunner instance(wasm, &interface);
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
@@ -140,7 +134,7 @@ struct ExecutionResults {
 
   // get current results and check them against previous ones
   void check(Module& wasm) {
-    ExecutionResults optimizedResults(ignoreTrap);
+    ExecutionResults optimizedResults;
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
       std::cout << "[fuzz-exec] optimization passes changed results\n";
@@ -151,9 +145,14 @@ struct ExecutionResults {
   bool areEqual(Literal a, Literal b) {
     // We allow nulls to have different types (as they compare equal regardless)
     // but anything else must have an identical type.
-    if (a.type != b.type && !(a.isNull() && b.isNull())) {
-      std::cout << "types not identical! " << a << " != " << b << '\n';
-      return false;
+    // We cannot do this in nominal typing, however, as different modules will
+    // have different types in general. We could perhaps compare the entire
+    // graph structurally TODO
+    if (getTypeSystem() != TypeSystem::Nominal) {
+      if (a.type != b.type && !(a.isNull() && b.isNull())) {
+        std::cout << "types not identical! " << a << " != " << b << '\n';
+        return false;
+      }
     }
     if (a.type.isRef()) {
       // Don't compare references - only their types. There are several issues
@@ -197,14 +196,7 @@ struct ExecutionResults {
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
       if (results[name].index() != other.results[name].index()) {
-        if (ignoreTrap) {
-          if (!std::get_if<Trap>(&results[name]) &&
-              !std::get_if<Trap>(&other.results[name])) {
-            return false;
-          }
-        } else {
-          return false;
-        }
+        return false;
       }
       auto* values = std::get_if<Literals>(&results[name]);
       auto* otherValues = std::get_if<Literals>(&other.results[name]);
@@ -229,7 +221,7 @@ struct ExecutionResults {
   FunctionResult run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
-      ModuleInstance instance(wasm, &interface);
+      ModuleRunner instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
@@ -237,7 +229,7 @@ struct ExecutionResults {
     }
   }
 
-  FunctionResult run(Function* func, Module& wasm, ModuleInstance& instance) {
+  FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
     try {
       Literals arguments;
       // init hang support, if present
@@ -250,6 +242,7 @@ struct ExecutionResults {
         if (!param.isDefaultable()) {
           std::cout << "[trap fuzzer can only send defaultable parameters to "
                        "exports]\n";
+          return Trap{};
         }
         arguments.push_back(Literal::makeZero(param));
       }

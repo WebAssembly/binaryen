@@ -41,12 +41,12 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
 
   void analyze(Function* func) {
     auto num = func->getNumLocals();
+    numSets.clear();
     numSets.resize(num);
-    std::fill(numSets.begin(), numSets.end(), 0);
+    numGets.clear();
     numGets.resize(num);
-    std::fill(numGets.begin(), numGets.end(), 0);
+    sfa.clear();
     sfa.resize(num);
-    std::fill(sfa.begin(), sfa.begin() + func->getNumParams(), false);
     std::fill(sfa.begin() + func->getNumParams(), sfa.end(), true);
     walk(func->body);
     for (Index i = 0; i < num; i++) {
@@ -245,8 +245,8 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     // pre-scan to find which vars are sfa, and also count their gets&sets
     analyzer.analyze(func);
     // prepare to walk
+    numGetsSoFar.clear();
     numGetsSoFar.resize(func->getNumLocals());
-    std::fill(numGetsSoFar.begin(), numGetsSoFar.end(), 0);
     // walk and optimize
     walk(func->body);
   }

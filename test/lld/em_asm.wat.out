@@ -9,11 +9,13 @@
  (global $global$2 i32 (i32.const 665))
  (memory $0 2)
  (data $.rodata (i32.const 568) "\00ii\00i\00")
- (data $em_asm (i32.const 574) "")
+ (data $em_asm (i32.const 574) "{ Module.print(\"Hello \\\\ world\\t\\n\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (table $0 1 1 funcref)
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
+ (export "__start_em_asm" (global $global$1))
+ (export "__stop_em_asm" (global $global$2))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -68,30 +70,3 @@
   (call $__original_main)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "asmConsts": {
-    "574": "{ Module.print(\"Hello \\ world\\t\\n\"); }",
-    "614": "{ return $0 + $1; }",
-    "634": "{ Module.print(\"Got \" + $0); }"
-  },
-  "declares": [
-    "emscripten_asm_const_int"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "main"
-  ],
-  "namedGlobals": {
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

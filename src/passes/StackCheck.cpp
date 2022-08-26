@@ -21,6 +21,7 @@
 //
 
 #include "abi/js.h"
+#include "ir/abstract.h"
 #include "ir/import-utils.h"
 #include "ir/names.h"
 #include "pass.h"
@@ -87,16 +88,17 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
     } else {
       handlerExpr = builder.makeUnreachable();
     }
+
     // If it is >= the base or <= the limit, then error.
     auto check = builder.makeIf(
       builder.makeBinary(
         BinaryOp::OrInt32,
         builder.makeBinary(
-          BinaryOp::GtUInt32,
+          Abstract::getBinary(stackPointer->type, Abstract::GtU),
           builder.makeLocalTee(newSP, value, stackPointer->type),
           builder.makeGlobalGet(stackBase->name, stackBase->type)),
         builder.makeBinary(
-          BinaryOp::LtUInt32,
+          Abstract::getBinary(stackPointer->type, Abstract::LtU),
           builder.makeLocalGet(newSP, stackPointer->type),
           builder.makeGlobalGet(stackLimit->name, stackLimit->type))),
       handlerExpr);
@@ -144,15 +146,17 @@ struct StackCheck : public Pass {
     Builder builder(*module);
 
     // Add the globals.
+    Type indexType =
+      module->memories.empty() ? Type::i32 : module->memories[0]->indexType;
     auto stackBase =
       module->addGlobal(builder.makeGlobal(stackBaseName,
                                            stackPointer->type,
-                                           builder.makeConst(int32_t(0)),
+                                           builder.makeConstPtr(0, indexType),
                                            Builder::Mutable));
     auto stackLimit =
       module->addGlobal(builder.makeGlobal(stackLimitName,
                                            stackPointer->type,
-                                           builder.makeConst(int32_t(0)),
+                                           builder.makeConstPtr(0, indexType),
                                            Builder::Mutable));
 
     // Instrument all the code.
@@ -162,10 +166,12 @@ struct StackCheck : public Pass {
 
     // Generate the exported function.
     auto limitsFunc = builder.makeFunction(
-      SET_STACK_LIMITS, Signature({Type::i32, Type::i32}, Type::none), {});
-    auto* getBase = builder.makeLocalGet(0, Type::i32);
+      SET_STACK_LIMITS,
+      Signature({stackPointer->type, stackPointer->type}, Type::none),
+      {});
+    auto* getBase = builder.makeLocalGet(0, stackPointer->type);
     auto* storeBase = builder.makeGlobalSet(stackBaseName, getBase);
-    auto* getLimit = builder.makeLocalGet(1, Type::i32);
+    auto* getLimit = builder.makeLocalGet(1, stackPointer->type);
     auto* storeLimit = builder.makeGlobalSet(stackLimitName, getLimit);
     limitsFunc->body = builder.makeBlock({storeBase, storeLimit});
     addExportedFunction(*module, std::move(limitsFunc));

@@ -106,6 +106,32 @@ inline Table* copyTable(const Table* table, Module& out) {
   return out.addTable(std::move(ret));
 }
 
+inline Memory* copyMemory(const Memory* memory, Module& out) {
+  auto ret = Builder::makeMemory(memory->name);
+  ret->hasExplicitName = memory->hasExplicitName;
+  ret->initial = memory->initial;
+  ret->max = memory->max;
+  ret->shared = memory->shared;
+  ret->indexType = memory->indexType;
+
+  return out.addMemory(std::move(ret));
+}
+
+inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
+  auto ret = Builder::makeDataSegment();
+  ret->name = segment->name;
+  ret->hasExplicitName = segment->hasExplicitName;
+  ret->memory = segment->memory;
+  ret->isPassive = segment->isPassive;
+  if (!segment->isPassive) {
+    auto offset = ExpressionManipulator::copy(segment->offset, out);
+    ret->offset = offset;
+  }
+  ret->data = segment->data;
+
+  return out.addDataSegment(std::move(ret));
+}
+
 inline void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -127,10 +153,11 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
-
-  out.memory = in.memory;
-  for (auto& segment : out.memory.segments) {
-    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+  for (auto& curr : in.memories) {
+    copyMemory(curr.get(), out);
+  }
+  for (auto& curr : in.dataSegments) {
+    copyDataSegment(curr.get(), out);
   }
   out.start = in.start;
   out.userSections = in.userSections;
@@ -194,14 +221,36 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 // Convenient iteration over imported/non-imported module elements
 
 template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    if (!segment->isPassive && segment->memory == memory) {
+      visitor(segment.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterActiveDataSegments(Module& wasm, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    if (!segment->isPassive) {
+      visitor(segment.get());
+    }
   }
 }
 
@@ -303,10 +352,14 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
-// The operation performend should not modify the wasm module in any way.
-// TODO: enforce this
+// The operation performed should not modify the wasm module in any way, by
+// default - otherwise, set the Mutability to Mutable. (This is not enforced at
+// compile time - TODO find a way - but at runtime in pass-debug mode it is
+// checked.)
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
-template<typename T, template<typename, typename> class MapT = DefaultMap>
+template<typename T,
+         Mutability Mut = Immutable,
+         template<typename, typename> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
   Module& wasm;
 
@@ -331,7 +384,7 @@ struct ParallelFunctionAnalysis {
 
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
-      bool modifiesBinaryenIR() override { return false; }
+      bool modifiesBinaryenIR() override { return Mut; }
 
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
@@ -465,11 +518,8 @@ struct IndexedHeapTypes {
 };
 
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
-// type as well.
-IndexedHeapTypes getIndexedHeapTypes(Module& wasm);
-
-// The same as `getIndexedHeapTypes`, but also sorts the types by frequency of
-// use to minimize code size.
+// type as well. Also orders the types to be valid and sorts the types by
+// frequency of use to minimize code size.
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
 } // namespace wasm::ModuleUtils

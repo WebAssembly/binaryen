@@ -5,72 +5,62 @@
  (type $none_=>_f32 (func (result f32)))
  (global $global$0 (mut i32) (i32.const 10))
  (func $drop-block
-  (block $block
+  (drop
+   (i32.const 0)
+  )
+ )
+ (func $drop-block-br
+  (drop
+   (block $x (result i32)
+    (br $x
+     (i32.const 1)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $drop-block-br-if
+  (drop
+   (i32.const 1)
+  )
+  (block $x
+   (br_if $x
+    (i32.const 2)
+   )
    (drop
     (i32.const 0)
    )
   )
  )
- (func $drop-block-br
-  (block $block
-   (drop
-    (block $x (result i32)
-     (br $x
-      (i32.const 1)
-     )
-     (i32.const 0)
-    )
-   )
-  )
- )
- (func $drop-block-br-if
-  (block $block
-   (drop
-    (i32.const 1)
-   )
-   (block $x
-    (br_if $x
-     (i32.const 2)
-    )
-    (drop
-     (i32.const 0)
-    )
-   )
-  )
- )
  (func $undroppable-block-br-if (param $0 i32)
-  (block $block
-   (drop
-    (block $x (result i32)
-     (call $undroppable-block-br-if
-      (br_if $x
-       (i32.const 1)
-       (i32.const 2)
-      )
+  (drop
+   (block $x (result i32)
+    (call $undroppable-block-br-if
+     (br_if $x
+      (i32.const 1)
+      (i32.const 2)
      )
-     (i32.const 0)
     )
+    (i32.const 0)
    )
   )
  )
  (func $drop-block-nested-br-if
-  (block $block
-   (block $x
-    (if
-     (i32.const 100)
-     (block $block0
-      (drop
-       (i32.const 1)
-      )
-      (br_if $x
-       (i32.const 2)
-      )
-      (nop)
+  (block $x
+   (if
+    (i32.const 100)
+    (block
+     (drop
+      (i32.const 1)
      )
+     (br_if $x
+      (i32.const 2)
+     )
+     (nop)
     )
-    (drop
-     (i32.const 0)
-    )
+   )
+   (drop
+    (i32.const 0)
    )
   )
  )
@@ -100,21 +90,19 @@
   )
  )
  (func $br-goes-away-label2-becomes-unreachable
-  (block $block
-   (drop
-    (block $label$1 (result i32)
-     (block $label$2
-      (drop
-       (br_if $label$1
-        (unreachable)
-        (i32.eqz
-         (br $label$2)
-        )
+  (drop
+   (block $label$1 (result i32)
+    (block $label$2
+     (drop
+      (br_if $label$1
+       (unreachable)
+       (i32.eqz
+        (br $label$2)
        )
       )
      )
-     (i32.const 1)
     )
+    (i32.const 1)
    )
   )
  )
@@ -133,7 +121,7 @@
   (block $label
    (if
     (i32.const 1)
-    (block $block
+    (block
      (drop
       (i32.const 2)
      )
@@ -148,7 +136,7 @@
   (block $label
    (if
     (br $label)
-    (block $block
+    (block
      (drop
       (i32.const 2)
      )
@@ -250,7 +238,7 @@
   (if
    (i32.const 1)
    (nop)
-   (block $block
+   (block
     (drop
      (loop $label$3 (result i64)
       (br_if $label$3

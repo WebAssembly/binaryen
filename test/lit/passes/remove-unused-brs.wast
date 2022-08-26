@@ -4,16 +4,11 @@
 
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-  (type $i32_=>_none (func (param i32)))
-
   ;; Regression test in which we need to calculate a proper LUB.
   ;; CHECK:      (func $selectify-fresh-lub (param $x i32) (result anyref)
-  ;; CHECK-NEXT:  (select (result funcref)
-  ;; CHECK-NEXT:   (ref.null $none_=>_i32)
-  ;; CHECK-NEXT:   (ref.null $i32_=>_none)
+  ;; CHECK-NEXT:  (select (result eqref)
+  ;; CHECK-NEXT:   (ref.null i31)
+  ;; CHECK-NEXT:   (ref.null data)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -21,10 +16,10 @@
     (if
       (local.get $x)
       (return
-        (ref.null $none_=>_i32)
+        (ref.null i31)
       )
       (return
-        (ref.null $i32_=>_none)
+        (ref.null data)
       )
     )
   )
@@ -109,7 +104,7 @@
 
   ;; CHECK:      (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -142,7 +137,7 @@
 
   ;; CHECK:      (func $restructure-br_if-value-effectful (param $x i32) (result i32)
   ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:   )
@@ -153,7 +148,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 300)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block0 (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -186,11 +181,11 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block $block1 (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -231,11 +226,11 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block $block2 (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -270,7 +265,7 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )
@@ -303,7 +298,7 @@
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $nothing)
   ;; CHECK-NEXT:      (i32.const 100)
   ;; CHECK-NEXT:     )

@@ -1,0 +1,39 @@
+total
+ [exports]      : 1       
+ [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 4       
+ [vars]         : 8194    
+ Block          : 1       
+ Const          : 1       
+ LocalGet       : 1       
+ LocalSet       : 1       
+total
+ [exports]      : 1       
+ [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 4       
+ [vars]         : 1          -8193
+ Block          : 1       
+ Const          : 1       
+ LocalGet       : 1       
+ LocalSet       : 1       
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (export "foo" (func $0))
+ (func $0 (result i32)
+  (local $0 i32)
+  (local.set $0
+   (i32.const 0)
+  )
+  (local.get $0)
+ )
+)

@@ -17,7 +17,7 @@
 //
 // Loads wasm plus a list of functions that are global ctors, i.e.,
 // are to be executed. It then executes as many of them as it can,
-// applying their changes to memory as needed, then writes it. In
+// applying their changes to memory etc as needed, then writes it. In
 // other words, this executes code at compile time to speed up
 // startup later.
 //
@@ -33,6 +33,7 @@
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/small_set.h"
 #include "support/string.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
@@ -53,90 +54,23 @@ struct FailToEvalException {
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
 
-// We do not have access to imported globals
-class EvallingGlobalManager {
-  // values of globals
-  std::map<Name, Literals> globals;
-
-  // globals that are dangerous to modify in the module
-  std::set<Name> dangerousGlobals;
-
-  // whether we are done adding new globals
-  bool sealed = false;
-
+class EvallingModuleRunner : public ModuleRunnerBase<EvallingModuleRunner> {
 public:
-  void addDangerous(Name name) { dangerousGlobals.insert(name); }
+  EvallingModuleRunner(
+    Module& wasm,
+    ExternalInterface* externalInterface,
+    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ = {})
+    : ModuleRunnerBase(wasm, externalInterface, linkedInstances_) {}
 
-  void seal() { sealed = true; }
-
-  Literals& operator[](Name name) {
-    if (dangerousGlobals.count(name) > 0) {
-      std::string extra;
-      if (name == "___dso_handle") {
-        extra = RECOMMENDATION
-          "build with -s NO_EXIT_RUNTIME=1 so that "
-          "calls to atexit that use ___dso_handle are not emitted";
-      }
-      throw FailToEvalException(
-        std::string(
-          "tried to access a dangerous (import-initialized) global: ") +
-        name.str + extra);
+  Flow visitGlobalGet(GlobalGet* curr) {
+    // Error on reads of imported globals.
+    auto* global = wasm.getGlobal(curr->name);
+    if (global->imported()) {
+      throw FailToEvalException(std::string("read from imported global ") +
+                                global->module.str + "." + global->base.str);
     }
-    return globals[name];
-  }
 
-  struct Iterator {
-    Name first;
-    Literals second;
-    bool found;
-
-    Iterator() : found(false) {}
-    Iterator(Name name, Literals value)
-      : first(name), second(value), found(true) {}
-
-    bool operator==(const Iterator& other) {
-      return first == other.first && second == other.second &&
-             found == other.found;
-    }
-    bool operator!=(const Iterator& other) { return !(*this == other); }
-  };
-
-  Iterator find(Name name) {
-    if (globals.find(name) == globals.end()) {
-      return end();
-    }
-    return Iterator(name, globals[name]);
-  }
-
-  Iterator end() { return Iterator(); }
-
-  // Receives a module and applies the state of globals here into the globals
-  // in that module.
-  void applyToModule(Module& wasm) {
-    Builder builder(wasm);
-    for (const auto& [name, value] : globals) {
-      wasm.getGlobal(name)->init = builder.makeConstantExpression(value);
-    }
-  }
-};
-
-class EvallingModuleInstance
-  : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
-public:
-  EvallingModuleInstance(Module& wasm,
-                         ExternalInterface* externalInterface,
-                         std::map<Name, std::shared_ptr<EvallingModuleInstance>>
-                           linkedInstances_ = {})
-    : ModuleInstanceBase(wasm, externalInterface, linkedInstances_) {
-    // if any global in the module has a non-const constructor, it is using a
-    // global import, which we don't have, and is illegal to use
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      if (!global->init->is<Const>()) {
-        // this global is dangerously initialized by an import, so if it is
-        // used, we must fail
-        globals.addDangerous(global->name);
-      }
-    });
+    return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 };
 
@@ -188,14 +122,11 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
     if (memory->module == env->name) {
-      env->memory.name = wasm.memory.name;
-      env->memory.exists = true;
-      env->memory.initial = memory->initial;
-      env->memory.max = memory->max;
-      env->memory.shared = memory->shared;
-      env->memory.indexType = memory->indexType;
+      auto* copied = ModuleUtils::copyMemory(memory, *env);
+      copied->module = Name();
+      copied->base = Name();
       env->addExport(Builder(*env).makeExport(
-        wasm.memory.base, wasm.memory.name, ExternalKind::Memory));
+        memory->base, copied->name, ExternalKind::Memory));
     }
   });
 
@@ -207,16 +138,16 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
 // that there are not arguments passed to main, etc.
 static bool ignoreExternalInput = false;
 
-struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
+struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   Module* wasm;
-  EvallingModuleInstance* instance;
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+  EvallingModuleRunner* instance;
+  std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
   // A representation of the contents of wasm memory as we execute.
-  std::vector<char> memory;
+  std::unordered_map<Name, std::vector<char>> memories;
 
   CtorEvalExternalInterface(
-    std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
+    std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
       {}) {
     linkedInstances.swap(linkedInstances_);
   }
@@ -224,20 +155,28 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   // Called when we want to apply the current state of execution to the Module.
   // Until this is called the Module is never changed.
   void applyToModule() {
-    // If nothing was ever written to memory then there is nothing to update.
-    if (!memory.empty()) {
+    clearApplyState();
+
+    // If nothing was ever written to memories then there is nothing to update.
+    if (!memories.empty()) {
       applyMemoryToModule();
     }
 
-    instance->globals.applyToModule(*wasm);
+    applyGlobalsToModule();
   }
 
-  void init(Module& wasm_, EvallingModuleInstance& instance_) override {
+  void init(Module& wasm_, EvallingModuleRunner& instance_) override {
     wasm = &wasm_;
     instance = &instance_;
+    for (auto& memory : wasm->memories) {
+      if (!memory->imported()) {
+        std::vector<char> data;
+        memories[memory->name] = data;
+      }
+    }
   }
 
-  void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
+  void importGlobals(GlobalValueSet& globals, Module& wasm_) override {
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
       auto it = linkedInstances.find(global->module);
       if (it != linkedInstances.end()) {
@@ -268,7 +207,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
           }
 
           // Write out a count of i32(0) and return __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0);
+          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
           return {Literal(int32_t(0))};
         }
 
@@ -289,7 +228,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
           }
 
           // Write out an argc of i32(0) and return a __WASI_ERRNO_SUCCESS (0).
-          store32(arguments[0].geti32(), 0);
+          store32(arguments[0].geti32(), 0, wasm->memories[0]->name);
           return {Literal(int32_t(0))};
         }
 
@@ -326,7 +265,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                      HeapType sig,
                      Literals& arguments,
                      Type result,
-                     EvallingModuleInstance& instance) override {
+                     EvallingModuleRunner& instance) override {
 
     std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
 
@@ -400,29 +339,47 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   // called during initialization
   void tableStore(Name tableName, Index index, const Literal& value) override {}
 
-  int8_t load8s(Address addr) override { return doLoad<int8_t>(addr); }
-  uint8_t load8u(Address addr) override { return doLoad<uint8_t>(addr); }
-  int16_t load16s(Address addr) override { return doLoad<int16_t>(addr); }
-  uint16_t load16u(Address addr) override { return doLoad<uint16_t>(addr); }
-  int32_t load32s(Address addr) override { return doLoad<int32_t>(addr); }
-  uint32_t load32u(Address addr) override { return doLoad<uint32_t>(addr); }
-  int64_t load64s(Address addr) override { return doLoad<int64_t>(addr); }
-  uint64_t load64u(Address addr) override { return doLoad<uint64_t>(addr); }
+  int8_t load8s(Address addr, Name memoryName) override {
+    return doLoad<int8_t>(addr, memoryName);
+  }
+  uint8_t load8u(Address addr, Name memoryName) override {
+    return doLoad<uint8_t>(addr, memoryName);
+  }
+  int16_t load16s(Address addr, Name memoryName) override {
+    return doLoad<int16_t>(addr, memoryName);
+  }
+  uint16_t load16u(Address addr, Name memoryName) override {
+    return doLoad<uint16_t>(addr, memoryName);
+  }
+  int32_t load32s(Address addr, Name memoryName) override {
+    return doLoad<int32_t>(addr, memoryName);
+  }
+  uint32_t load32u(Address addr, Name memoryName) override {
+    return doLoad<uint32_t>(addr, memoryName);
+  }
+  int64_t load64s(Address addr, Name memoryName) override {
+    return doLoad<int64_t>(addr, memoryName);
+  }
+  uint64_t load64u(Address addr, Name memoryName) override {
+    return doLoad<uint64_t>(addr, memoryName);
+  }
 
-  void store8(Address addr, int8_t value) override {
-    doStore<int8_t>(addr, value);
+  void store8(Address addr, int8_t value, Name memoryName) override {
+    doStore<int8_t>(addr, value, memoryName);
   }
-  void store16(Address addr, int16_t value) override {
-    doStore<int16_t>(addr, value);
+  void store16(Address addr, int16_t value, Name memoryName) override {
+    doStore<int16_t>(addr, value, memoryName);
   }
-  void store32(Address addr, int32_t value) override {
-    doStore<int32_t>(addr, value);
+  void store32(Address addr, int32_t value, Name memoryName) override {
+    doStore<int32_t>(addr, value, memoryName);
   }
-  void store64(Address addr, int64_t value) override {
-    doStore<int64_t>(addr, value);
+  void store64(Address addr, int64_t value, Name memoryName) override {
+    doStore<int64_t>(addr, value, memoryName);
   }
 
-  bool growMemory(Address /*oldSize*/, Address /*newSize*/) override {
+  bool growMemory(Name memoryName,
+                  Address /*oldSize*/,
+                  Address /*newSize*/) override {
     throw FailToEvalException("grow memory");
   }
 
@@ -449,8 +406,12 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
 private:
   // TODO: handle unaligned too, see shell-interface
-
-  template<typename T> T* getMemory(Address address) {
+  template<typename T> T* getMemory(Address address, Name memoryName) {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      Fatal() << "memory not found: " << memoryName;
+    }
+    auto& memory = it->second;
     // resize the memory buffer as needed.
     auto max = address + sizeof(T);
     if (max > memory.size()) {
@@ -459,33 +420,203 @@ private:
     return (T*)(&memory[address]);
   }
 
-  template<typename T> void doStore(Address address, T value) {
+  template<typename T> void doStore(Address address, T value, Name memoryName) {
     // do a memcpy to avoid undefined behavior if unaligned
-    memcpy(getMemory<T>(address), &value, sizeof(T));
+    memcpy(getMemory<T>(address, memoryName), &value, sizeof(T));
   }
 
-  template<typename T> T doLoad(Address address) {
+  template<typename T> T doLoad(Address address, Name memoryName) {
     // do a memcpy to avoid undefined behavior if unaligned
     T ret;
-    memcpy(&ret, getMemory<T>(address), sizeof(T));
+    memcpy(&ret, getMemory<T>(address, memoryName), sizeof(T));
     return ret;
+  }
+
+  // Clear the state of the operation of applying the interpreter's runtime
+  // information into the module.
+  //
+  // This happens each time we apply contents to the module, which is basically
+  // once per ctor function, but can be more fine-grained also if we execute a
+  // line at a time.
+  void clearApplyState() {
+    // The process of allocating "defining globals" begins here, from scratch
+    // each time (things live before may no longer be).
+    definingGlobals.clear();
+
+    // When we start to apply the state there should be no previous state left
+    // over.
+    assert(seenDataStack.empty());
   }
 
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
-    if (wasm->memory.segments.empty()) {
+    if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
-      std::vector<char> empty;
-      wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(int32_t(0)), empty));
+      auto curr = builder.makeDataSegment();
+      curr->offset = builder.makeConst(int32_t(0));
+      curr->setName(Name::fromInt(0), false);
+      curr->memory = wasm->memories[0]->name;
+      wasm->addDataSegment(std::move(curr));
     }
-    auto& segment = wasm->memory.segments[0];
-    assert(segment.offset->cast<Const>()->value.getInteger() == 0);
+    auto& segment = wasm->dataSegments[0];
+    assert(segment->offset->cast<Const>()->value.getInteger() == 0);
 
     // Copy the current memory contents after execution into the Module's
     // memory.
-    segment.data = memory;
+    segment->data = memories[wasm->memories[0]->name];
+  }
+
+  // Serializing GC data requires more work than linear memory, because
+  // allocations have an identity, and they are created using struct.new /
+  // array.new, which we must emit in a proper location in the wasm. This
+  // affects how we serialize globals, which can contain GC data, and also, we
+  // use globals to store GC data, so overall the process of computing the
+  // globals is where most of the GC logic ends up.
+  //
+  // The general idea for handling GC data is as follows: After evaluating the
+  // code, we end up with some live allocations in the interpreter, which we
+  // need to somehow serialize into the wasm module. We will put each such live
+  // GC data item into its own "defining global", a global whose purpose is to
+  // create and store that data. Each such global is immutable, and has the
+  // exact type of the data, for simplicity. Every other reference to that GC
+  // data in the interpreter's memory can then be serialized by simply emitting
+  // a global.get of that defining global.
+  void applyGlobalsToModule() {
+    Builder builder(*wasm);
+
+    if (!wasm->features.hasGC()) {
+      // Without GC, we can simply serialize the globals in place as they are.
+      for (const auto& [name, values] : instance->globals) {
+        wasm->getGlobal(name)->init = getSerialization(values);
+      }
+      return;
+    }
+
+    // We need to emit the "defining globals" of GC data before the existing
+    // globals, as the normal ones may refer to them. We do this by removing all
+    // the existing globals, and then adding them one by one, during which time
+    // we call getSerialization() for their init expressions. If their init
+    // refes to GC data, then we will allocate a defining global for that data,
+    // and refer to it. Put another way, we place the existing globals back into
+    // the module one at a time, adding their dependencies as we go.
+    auto oldGlobals = std::move(wasm->globals);
+    wasm->updateMaps();
+
+    for (auto& oldGlobal : oldGlobals) {
+      // Serialize the global's value. While doing so, pass in the name of this
+      // global, as we may be able to reuse the global as the defining global
+      // for the value. See getSerialization() for more details.
+      Name name;
+      if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
+        // This has the properties we need of a defining global - immutable and
+        // of the precise type - so use it.
+        name = oldGlobal->name;
+      }
+
+      // If there is a value here to serialize, do so. (If there is no value,
+      // then this global was added after the interpreter initialized the
+      // module, which means it is a new global we've added since; we don't need
+      // to do anything for such a global - if it is needed it will show up as a
+      // dependency of something, and be emitted at the right time and place.)
+      auto iter = instance->globals.find(oldGlobal->name);
+      if (iter != instance->globals.end()) {
+        oldGlobal->init = getSerialization(iter->second, name);
+        wasm->addGlobal(std::move(oldGlobal));
+      }
+    }
+  }
+
+public:
+  // Maps each GC data in the interpreter to its defining global: the global in
+  // which it is created, and then all other users of it can just global.get
+  // that.
+  std::unordered_map<GCData*, Name> definingGlobals;
+
+  // The data we have seen so far on the stack. This is used to guard against
+  // infinite recursion, which would otherwise happen if there is a cycle among
+  // the live objects, which we don't handle yet.
+  //
+  // Pick a constant of 2 here to handle the common case of an object with a
+  // reference to another object that is already in a defining global.
+  SmallSet<GCData*, 2> seenDataStack;
+
+  // If |possibleDefiningGlobal| is provided, it is the name of a global that we
+  // are in the init expression of, and which can be reused as defining global,
+  // if the other conditions are suitable.
+  Expression* getSerialization(const Literal& value,
+                               Name possibleDefiningGlobal = Name()) {
+    Builder builder(*wasm);
+
+    if (!value.isData()) {
+      // This can be handled normally.
+      return builder.makeConstantExpression(value);
+    }
+
+    // This is GC data, which we must handle in a more careful way.
+    auto* data = value.getGCData().get();
+    if (!data) {
+      // This is a null, so simply emit one.
+      return builder.makeRefNull(value.type);
+    }
+
+    // There was actual GC data allocated here.
+    auto type = value.type;
+    auto& definingGlobal = definingGlobals[data];
+    if (!definingGlobal.is()) {
+      // This is the first usage of this allocation. Generate a struct.new /
+      // array.new for it.
+      auto& values = value.getGCData()->values;
+      std::vector<Expression*> args;
+
+      // The initial values for this allocation may themselves be GC
+      // allocations. Recurse and add globals as necessary.
+      // TODO: Handle cycles. That will require code in the start function. For
+      //       now, just error if we detect an infinite recursion.
+      if (seenDataStack.count(data)) {
+        Fatal() << "Cycle in live GC data, which we cannot serialize yet.";
+      }
+      seenDataStack.insert(data);
+      for (auto& value : values) {
+        args.push_back(getSerialization(value));
+      }
+      seenDataStack.erase(data);
+
+      Expression* init;
+      auto heapType = type.getHeapType();
+      if (heapType.isStruct()) {
+        init = builder.makeStructNew(heapType, args);
+      } else if (heapType.isArray()) {
+        // TODO: for repeated identical values, can use ArrayNew
+        init = builder.makeArrayInit(heapType, args);
+      } else {
+        WASM_UNREACHABLE("bad gc type");
+      }
+
+      if (possibleDefiningGlobal.is()) {
+        // No need to allocate a new global, as we are in the definition of
+        // one. Just return the initialization expression, which will be
+        // placed in that global's |init| field, and first note this as the
+        // defining global.
+        definingGlobal = possibleDefiningGlobal;
+        return init;
+      }
+
+      // Allocate a new defining global.
+      auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
+      wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
+      definingGlobal = name;
+    }
+
+    // Refer to this GC allocation by reading from the global that is
+    // designated to contain it.
+    return builder.makeGlobalGet(definingGlobal, value.type);
+  }
+
+  Expression* getSerialization(const Literals& values,
+                               Name possibleDefiningGlobal = Name()) {
+    assert(values.size() == 1);
+    return getSerialization(values[0], possibleDefiningGlobal);
   }
 };
 
@@ -503,7 +634,7 @@ using EvalCtorOutcome = std::optional<Literals>;
 // evaluate the ctor (which means that the caller can proceed to try to eval
 // further ctors if there are any), and if we did, the results if the function
 // returns any.
-EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
+EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
                          CtorEvalExternalInterface& interface,
                          Name funcName,
                          Name exportName) {
@@ -557,23 +688,20 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
   if (auto* block = func->body->dynCast<Block>()) {
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
-    EvallingModuleInstance::FunctionScope scope(func, params);
-
-    EvallingModuleInstance::RuntimeExpressionRunner expressionRunner(
-      instance, scope, instance.maxDepth);
+    EvallingModuleRunner::FunctionScope scope(func, params, instance);
 
     // After we successfully eval a line we will apply the changes here. This is
     // the same idea as applyToModule() - we must only do it after an entire
     // atomic "chunk" has been processed, we do not want partial updates from
     // an item in the block that we only partially evalled.
-    EvallingModuleInstance::FunctionScope appliedScope(func, params);
+    std::vector<Literals> appliedLocals;
 
     Literals results;
     Index successes = 0;
     for (auto* curr : block->list) {
       Flow flow;
       try {
-        flow = expressionRunner.visit(curr);
+        flow = instance.visit(curr);
       } catch (FailToEvalException& fail) {
         if (successes == 0) {
           std::cout << "  ...stopping (in block) since could not eval: "
@@ -588,7 +716,7 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
 
       // So far so good! Apply the results.
       interface.applyToModule();
-      appliedScope = scope;
+      appliedLocals = scope.locals;
       successes++;
 
       // Note the values here, if any. If we are exiting the function now then
@@ -634,9 +762,9 @@ EvalCtorOutcome evalCtor(EvallingModuleInstance& instance,
       // unnecessary operations.
       std::vector<Expression*> localSets;
       for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
-        auto value = appliedScope.locals[i];
+        auto value = appliedLocals[i];
         localSets.push_back(
-          builder.makeLocalSet(i, builder.makeConstantExpression(value)));
+          builder.makeLocalSet(i, interface.getSerialization(value)));
       }
 
       // Put the local sets at the front of the block. We know there must be a
@@ -685,22 +813,19 @@ void evalCtors(Module& wasm,
   std::unordered_set<std::string> keptExportsSet(keptExports.begin(),
                                                  keptExports.end());
 
-  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances;
 
   // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
   auto envInstance =
-    std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
+    std::make_shared<EvallingModuleRunner>(*envModule, &envInterface);
   linkedInstances[envModule->name] = envInstance;
 
   CtorEvalExternalInterface interface(linkedInstances);
   try {
     // create an instance for evalling
-    EvallingModuleInstance instance(wasm, &interface, linkedInstances);
-    // we should not add new globals from here on; as a result, using
-    // an imported global will fail, as it is missing and so looks new
-    instance.globals.seal();
+    EvallingModuleRunner instance(wasm, &interface, linkedInstances);
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
@@ -732,7 +857,7 @@ void evalCtors(Module& wasm,
         if (func->getResults() == Type::none) {
           copyFunc->body = Builder(wasm).makeNop();
         } else {
-          copyFunc->body = Builder(wasm).makeConstantExpression(*outcome);
+          copyFunc->body = interface.getSerialization(*outcome);
         }
         wasm.getExport(exp->name)->value = copyName;
       }
@@ -771,8 +896,7 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmCtorEvalOption = "wasm-ctor-eval options";
 
-  ToolOptions options("wasm-ctor-eval",
-                      "Execute C++ global constructors ahead of time");
+  ToolOptions options("wasm-ctor-eval", "Execute code at compile time");
   options
     .add("--output",
          "-o",

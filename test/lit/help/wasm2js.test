@@ -128,7 +128,18 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-refining                             refine the types of globals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gsi                                         globally optimize struct values
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gto                                         globally optimize GC types
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --gufa                                        Grand Unified Flow Analysis:
+;; CHECK-NEXT:                                                 optimize the entire program
+;; CHECK-NEXT:                                                 using information about what
+;; CHECK-NEXT:                                                 content can actually appear in
+;; CHECK-NEXT:                                                 each location
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --gufa-optimizing                             GUFA plus local optimizations in
+;; CHECK-NEXT:                                                 functions we modified
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
@@ -186,6 +197,9 @@
 ;; CHECK-NEXT:   --merge-blocks                                merges blocks to their parents
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-locals                                merges locals when beneficial
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --merge-similar-functions                     merges similar functions when
+;; CHECK-NEXT:                                                 benefical
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --metrics                                     reports metrics
 ;; CHECK-NEXT:
@@ -305,6 +319,9 @@
 ;; CHECK-NEXT:   --set-globals                                 sets specified globals to
 ;; CHECK-NEXT:                                                 specified values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --signature-pruning                           remove params from function
+;; CHECK-NEXT:                                                 signature types where possible
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --signature-refining                          apply more specific subtypes to
 ;; CHECK-NEXT:                                                 signature types where possible
 ;; CHECK-NEXT:
@@ -337,6 +354,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --souperify-single-use                        emit Souper IR in text form
 ;; CHECK-NEXT:                                                 (single-use nodes only)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --spill-pointers                              spill pointers to the C stack
+;; CHECK-NEXT:                                                 (useful for Boehm-style GC)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --ssa                                         ssa-ify variables so that they
 ;; CHECK-NEXT:                                                 have a single assignment
@@ -384,7 +404,7 @@
 ;; CHECK-NEXT: ---------------------
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O                                           execute default optimization
-;; CHECK-NEXT:                                                 passes
+;; CHECK-NEXT:                                                 passes (equivalent to -Os)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:    -O0                                          execute no optimization passes
 ;; CHECK-NEXT:
@@ -551,6 +571,20 @@
 ;; CHECK-NEXT:   --enable-relaxed-simd                         Enable relaxed SIMD
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd                        Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const                       Enable extended const
+;; CHECK-NEXT:                                                 expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const                      Disable extended const
+;; CHECK-NEXT:                                                 expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-strings                              Enable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-strings                             Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories                       Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories                      Disable multi-memories
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct

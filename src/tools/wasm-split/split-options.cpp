@@ -67,6 +67,9 @@ std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
     case WasmSplitOptions::Mode::MergeProfiles:
       o << "merge-profiles";
       break;
+    case WasmSplitOptions::Mode::PrintProfile:
+      o << "print-profile";
+      break;
   }
   return o;
 }
@@ -104,6 +107,16 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) {
            mode = Mode::MergeProfiles;
+         })
+    .add("--print-profile",
+         "",
+         "Print profile contents in a human-readable format.",
+         WasmSplitOption,
+         {Mode::PrintProfile},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           mode = Mode::PrintProfile;
+           profileFile = argument;
          })
     .add(
       "--profile",
@@ -191,6 +204,15 @@ WasmSplitOptions::WasmSplitOptions()
            placeholderNamespace = argument;
          })
     .add(
+      "--asyncify",
+      "",
+      "Transform the module to support unwinding the stack from placeholder "
+      "functions and rewinding it once the secondary module has been loaded.",
+      WasmSplitOption,
+      {Mode::Split},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { asyncify = true; })
+    .add(
       "--export-prefix",
       "",
       "An identifying prefix to prepend to new export names created "
@@ -269,6 +291,12 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Instrument, Mode::MergeProfiles},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { output = argument; })
+    .add("--unescape",
+         "-u",
+         "Un-escape function names (in print-profile output)",
+         WasmSplitOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { unescape = true; })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "
@@ -352,6 +380,11 @@ bool WasmSplitOptions::validate() {
       break;
     case Mode::MergeProfiles:
       // Any number >= 1 allowed.
+      break;
+    case Mode::PrintProfile:
+      if (inputFiles.size() != 1) {
+        fail("Must have exactly one profile path.");
+      }
       break;
   }
 

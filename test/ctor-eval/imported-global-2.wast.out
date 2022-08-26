@@ -1,0 +1,26 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (import "env" "imported" (global $imported i32))
+ (memory $0 256 256)
+ (export "test1" (func $0))
+ (export "keepalive" (func $1))
+ (func $0 (result i32)
+  (local $temp i32)
+  (local.set $temp
+   (global.get $imported)
+  )
+  (i32.store8
+   (i32.const 13)
+   (i32.const 115)
+  )
+  (local.get $temp)
+ )
+ (func $1 (result i32)
+  (drop
+   (i32.load
+    (i32.const 13)
+   )
+  )
+  (global.get $imported)
+ )
+)

@@ -248,7 +248,7 @@
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 1)
@@ -258,7 +258,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block0
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 2)
@@ -664,10 +664,9 @@
   ;; Create an immutable vtable in an immutable global, but using an array
   ;; instead of a struct.
 
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
-
   ;; CHECK:      (type $vtable (array_subtype funcref data))
   (type $vtable (array_subtype funcref data))
+  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
   (type $object (struct_subtype (ref $vtable) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (array.init_static $vtable
@@ -736,7 +735,7 @@
   ;; data that is filled with vtables of different types. On usage, we do a
   ;; cast of the vtable type.
 
-  ;; CHECK:      (type $itable (array_subtype (ref null data) data))
+  ;; CHECK:      (type $itable (array_subtype dataref data))
   (type $itable (array_subtype (ref null data) data))
 
   ;; CHECK:      (type $object (struct_subtype (field (ref $itable)) data))

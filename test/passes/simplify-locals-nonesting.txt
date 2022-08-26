@@ -17,7 +17,7 @@
   (local $15 i32)
   (local $16 i32)
   (local $17 i32)
-  (block $block
+  (block
    (nop)
    (nop)
    (nop)
@@ -76,7 +76,7 @@
   (local $16 i32)
   (local $17 i32)
   (local $18 i32)
-  (block $block
+  (block
    (nop)
    (nop)
    (local.set $8
@@ -87,7 +87,7 @@
    )
    (if
     (local.get $8)
-    (block $block0
+    (block
      (block $block1
       (nop)
       (nop)
@@ -127,7 +127,7 @@
      )
      (unreachable)
     )
-    (block $block2
+    (block
      (unreachable)
      (unreachable)
     )
@@ -146,8 +146,8 @@
   (local $8 i32)
   (local $9 i32)
   (local $10 i32)
-  (block $block
-   (block $block3
+  (block
+   (block
     (nop)
     (local.set $2
      (i32.and
@@ -157,7 +157,7 @@
     )
     (if
      (local.get $2)
-     (block $block4
+     (block
       (nop)
       (nop)
       (local.set $x
@@ -168,7 +168,7 @@
       )
       (nop)
      )
-     (block $block5
+     (block
       (nop)
       (nop)
       (local.set $x

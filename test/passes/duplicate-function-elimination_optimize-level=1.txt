@@ -212,7 +212,7 @@
  (memory $0 0)
  (func $keep2
   (block $foo
-   (block $block
+   (block
     (drop
      (i32.const 0)
     )
@@ -222,7 +222,7 @@
  )
  (func $other
   (block $bar
-   (block $block
+   (block
     (drop
      (i32.const 1)
     )

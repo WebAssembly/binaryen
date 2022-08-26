@@ -16,6 +16,7 @@
 
 #include "module-utils.h"
 #include "support/insert_ordered.h"
+#include "support/topological_sort.h"
 
 namespace wasm::ModuleUtils {
 
@@ -33,70 +34,69 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
       note(ht);
     }
   }
+  // Ensure a type is included without increasing its count.
+  void include(HeapType type) {
+    if (!type.isBasic()) {
+      (*this)[type];
+    }
+  }
+};
+
+struct CodeScanner
+  : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
+  Counts& counts;
+
+  CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+    setModule(&wasm);
+  }
+
+  void visitExpression(Expression* curr) {
+    if (auto* call = curr->dynCast<CallIndirect>()) {
+      counts.note(call->heapType);
+    } else if (curr->is<RefNull>()) {
+      counts.note(curr->type);
+    } else if (auto* make = curr->dynCast<StructNew>()) {
+      handleMake(make);
+    } else if (auto* make = curr->dynCast<ArrayNew>()) {
+      handleMake(make);
+    } else if (auto* make = curr->dynCast<ArrayInit>()) {
+      handleMake(make);
+    } else if (auto* cast = curr->dynCast<RefCast>()) {
+      counts.note(cast->intendedType);
+    } else if (auto* cast = curr->dynCast<RefTest>()) {
+      counts.note(cast->intendedType);
+    } else if (auto* cast = curr->dynCast<BrOn>()) {
+      if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
+        counts.note(cast->intendedType);
+      }
+    } else if (auto* get = curr->dynCast<StructGet>()) {
+      counts.note(get->ref->type);
+    } else if (auto* set = curr->dynCast<StructSet>()) {
+      counts.note(set->ref->type);
+    } else if (Properties::isControlFlowStructure(curr)) {
+      if (curr->type.isTuple()) {
+        // TODO: Allow control flow to have input types as well
+        counts.note(Signature(Type::none, curr->type));
+      } else {
+        counts.note(curr->type);
+      }
+    }
+  }
+
+  template<typename T> void handleMake(T* curr) {
+    if (curr->type != Type::unreachable) {
+      counts.note(curr->type.getHeapType());
+    }
+  }
 };
 
 Counts getHeapTypeCounts(Module& wasm) {
-  struct CodeScanner
-    : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
-    Counts& counts;
-
-    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
-      setModule(&wasm);
-    }
-
-    void visitExpression(Expression* curr) {
-      if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->heapType);
-      } else if (curr->is<RefNull>()) {
-        counts.note(curr->type);
-      } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-        counts.note(curr->type.getRtt().heapType);
-      } else if (auto* make = curr->dynCast<StructNew>()) {
-        // Some operations emit a HeapType in the binary format, if they are
-        // static and not dynamic (if dynamic, the RTT provides the heap type).
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayNew>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayInit>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* cast = curr->dynCast<RefCast>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<RefTest>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<BrOn>()) {
-        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-          if (!cast->rtt && cast->type != Type::unreachable) {
-            counts.note(cast->getIntendedType());
-          }
-        }
-      } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.note(get->ref->type);
-      } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.note(set->ref->type);
-      } else if (Properties::isControlFlowStructure(curr)) {
-        if (curr->type.isTuple()) {
-          // TODO: Allow control flow to have input types as well
-          counts.note(Signature(Type::none, curr->type));
-        } else {
-          counts.note(curr->type);
-        }
-      }
-    }
-  };
-
   // Collect module-level info.
   Counts counts;
   CodeScanner(wasm, counts).walkModuleCode(&wasm);
+  for (auto& curr : wasm.globals) {
+    counts.note(curr->type);
+  }
   for (auto& curr : wasm.tags) {
     counts.note(curr->sig);
   }
@@ -108,8 +108,8 @@ Counts getHeapTypeCounts(Module& wasm) {
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
-    wasm, [&](Function* func, Counts& counts) {
+  ModuleUtils::ParallelFunctionAnalysis<Counts, Immutable, InsertOrderedMap>
+    analysis(wasm, [&](Function* func, Counts& counts) {
       counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
@@ -128,14 +128,16 @@ Counts getHeapTypeCounts(Module& wasm) {
 
   // Recursively traverse each reference type, which may have a child type that
   // is itself a reference type. This reflects an appearance in the binary
-  // format that is in the type section itself.
-  // As we do this we may find more and more types, as nested children of
-  // previous ones. Each such type will appear in the type section once, so
-  // we just need to visit it once.
+  // format that is in the type section itself. As we do this we may find more
+  // and more types, as nested children of previous ones. Each such type will
+  // appear in the type section once, so we just need to visit it once. Also
+  // track which recursion groups we've already processed to avoid quadratic
+  // behavior when there is a single large group.
   InsertOrderedSet<HeapType> newTypes;
   for (auto& [type, _] : counts) {
     newTypes.insert(type);
   }
+  std::unordered_set<RecGroup> includedGroups;
   while (!newTypes.empty()) {
     auto iter = newTypes.begin();
     auto ht = *iter;
@@ -156,46 +158,23 @@ Counts getHeapTypeCounts(Module& wasm) {
         // is in flux, skip counting them to keep the type orderings in nominal
         // test outputs more similar to the orderings in the equirecursive
         // outputs. FIXME
-        counts.note(*super);
+        counts.include(*super);
       }
     }
 
     // Make sure we've noted the complete recursion group of each type as well.
     auto recGroup = ht.getRecGroup();
-    for (auto type : recGroup) {
-      if (!counts.count(type)) {
-        newTypes.insert(type);
-        counts.note(type);
+    if (includedGroups.insert(recGroup).second) {
+      for (auto type : recGroup) {
+        if (!counts.count(type)) {
+          newTypes.insert(type);
+          counts.include(type);
+        }
       }
     }
   }
 
   return counts;
-}
-
-void coalesceRecGroups(IndexedHeapTypes& indexedTypes) {
-  if (getTypeSystem() != TypeSystem::Isorecursive) {
-    // No rec groups to coalesce.
-    return;
-  }
-
-  // TODO: Perform a topological sort of the recursion groups to create a valid
-  // ordering rather than this hack that just gets all the types in a group to
-  // be adjacent.
-  assert(indexedTypes.indices.empty());
-  std::unordered_set<HeapType> seen;
-  std::vector<HeapType> grouped;
-  grouped.reserve(indexedTypes.types.size());
-  for (auto type : indexedTypes.types) {
-    if (seen.insert(type).second) {
-      for (auto member : type.getRecGroup()) {
-        grouped.push_back(member);
-        seen.insert(member);
-      }
-    }
-  }
-  assert(grouped.size() == indexedTypes.types.size());
-  indexedTypes.types = grouped;
 }
 
 void setIndices(IndexedHeapTypes& indexedTypes) {
@@ -216,37 +195,134 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-IndexedHeapTypes getIndexedHeapTypes(Module& wasm) {
-  Counts counts = getHeapTypeCounts(wasm);
-  IndexedHeapTypes indexedTypes;
-  for (auto& [type, _] : counts) {
-    indexedTypes.types.push_back(type);
-  }
-
-  coalesceRecGroups(indexedTypes);
-  setIndices(indexedTypes);
-  return indexedTypes;
-}
-
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+  TypeSystem system = getTypeSystem();
   Counts counts = getHeapTypeCounts(wasm);
 
-  // Sort by frequency and then original insertion order.
-  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
-  std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    return a.second > b.second;
-  });
+  if (system == TypeSystem::Equirecursive) {
+    // Sort by frequency and then original insertion order.
+    std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
+                                                    counts.end());
+    std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
+      return a.second > b.second;
+    });
 
-  // Collect the results.
-  IndexedHeapTypes indexedTypes;
-  for (Index i = 0; i < sorted.size(); ++i) {
-    indexedTypes.types.push_back(sorted[i].first);
+    // Collect the results.
+    IndexedHeapTypes indexedTypes;
+    for (Index i = 0; i < sorted.size(); ++i) {
+      indexedTypes.types.push_back(sorted[i].first);
+    }
+
+    setIndices(indexedTypes);
+    return indexedTypes;
   }
 
-  // TODO: Explicitly construct a linear extension of the partial order of
-  // recursion groups by adding edges between unrelated groups according to
-  // their use counts.
-  coalesceRecGroups(indexedTypes);
+  // Types have to be arranged into topologically ordered recursion groups.
+  // Under isorecrsive typing, the topological sort has to take all referenced
+  // rec groups into account but under nominal typing it only has to take
+  // supertypes into account. First, sort the groups by average use count among
+  // their members so that the later topological sort will place frequently used
+  // types first.
+  struct GroupInfo {
+    size_t index;
+    double useCount = 0;
+    std::unordered_set<RecGroup> preds;
+    std::vector<RecGroup> sortedPreds;
+    GroupInfo(size_t index) : index(index) {}
+    bool operator<(const GroupInfo& other) const {
+      if (useCount != other.useCount) {
+        return useCount < other.useCount;
+      }
+      return index > other.index;
+    }
+  };
+
+  struct GroupInfoMap : std::unordered_map<RecGroup, GroupInfo> {
+    void sort(std::vector<RecGroup>& groups) {
+      std::sort(groups.begin(), groups.end(), [&](auto& a, auto& b) {
+        return this->at(a) < this->at(b);
+      });
+    }
+  };
+
+  // Collect the information that will be used to sort the recursion groups.
+  GroupInfoMap groupInfos;
+  for (auto& [type, _] : counts) {
+    RecGroup group = type.getRecGroup();
+    // Try to initialize a new info or get the existing info.
+    auto& info = groupInfos.insert({group, {groupInfos.size()}}).first->second;
+    // Update the reference count.
+    info.useCount += counts.at(type);
+    // Collect predecessor groups.
+    switch (system) {
+      case TypeSystem::Isorecursive:
+        for (auto child : type.getReferencedHeapTypes()) {
+          if (!child.isBasic()) {
+            RecGroup otherGroup = child.getRecGroup();
+            if (otherGroup != group) {
+              info.preds.insert(otherGroup);
+            }
+          }
+        }
+        break;
+      case TypeSystem::Nominal:
+        if (auto super = type.getSuperType()) {
+          info.preds.insert(super->getRecGroup());
+        }
+        break;
+      case TypeSystem::Equirecursive:
+        WASM_UNREACHABLE(
+          "Equirecursive types should already have been handled");
+    }
+  }
+
+  // Fix up the use counts to be averages to ensure groups are used comensurate
+  // with the amount of index space they occupy. Skip this for nominal types
+  // since their internal group size is always 1.
+  if (system != TypeSystem::Nominal) {
+    for (auto& [group, info] : groupInfos) {
+      info.useCount /= group.size();
+    }
+  }
+
+  // Sort the predecessors so the most used will be visited first.
+  for (auto& [group, info] : groupInfos) {
+    info.sortedPreds.insert(
+      info.sortedPreds.end(), info.preds.begin(), info.preds.end());
+    groupInfos.sort(info.sortedPreds);
+    info.preds.clear();
+  }
+
+  struct RecGroupSort : TopologicalSort<RecGroup, RecGroupSort> {
+    GroupInfoMap& groupInfos;
+    RecGroupSort(GroupInfoMap& groupInfos) : groupInfos(groupInfos) {
+      // Sort all the groups so the topological sort visits the most used first.
+      std::vector<RecGroup> sortedGroups;
+      sortedGroups.reserve(groupInfos.size());
+      for (auto& [group, _] : groupInfos) {
+        sortedGroups.push_back(group);
+      }
+      groupInfos.sort(sortedGroups);
+      for (auto group : sortedGroups) {
+        push(group);
+      }
+    }
+
+    void pushPredecessors(RecGroup group) {
+      for (auto pred : groupInfos.at(group).sortedPreds) {
+        push(pred);
+      }
+    }
+  };
+
+  // Perform the topological sort and collect the types.
+  IndexedHeapTypes indexedTypes;
+  indexedTypes.types.reserve(counts.size());
+  for (auto group : RecGroupSort(groupInfos)) {
+    for (auto member : group) {
+      indexedTypes.types.push_back(member);
+    }
+  }
   setIndices(indexedTypes);
   return indexedTypes;
 }

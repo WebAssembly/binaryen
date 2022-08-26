@@ -7,10 +7,7 @@ include_directories(
   googletest/googletest/include
 )
 
-add_library(gtest STATIC
-  googletest/googletest/src/gtest-all.cc
-)
-
-add_library(gtest_main STATIC
-  googletest/googletest/src/gtest_main.cc
-)
+if(BUILD_TESTS)
+  add_library(gtest STATIC googletest/googletest/src/gtest-all.cc)
+  add_library(gtest_main STATIC googletest/googletest/src/gtest_main.cc)
+endif()

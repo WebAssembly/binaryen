@@ -4,11 +4,12 @@
 
 (module
  ;; CHECK:      (type ${i32} (struct (field i32)))
+ ;; NOMNL:      (type ${} (struct_subtype  data))
+
  ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
  ;; CHECK:      (type ${} (struct ))
- ;; NOMNL:      (type ${} (struct_subtype  data))
  (type ${} (struct))
 
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
@@ -27,34 +28,36 @@
 
  ;; CHECK:      (func $call-various-params-no
  ;; CHECK-NEXT:  (call $various-params-no
- ;; CHECK-NEXT:   (ref.null ${})
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (call $get_{})
+ ;; CHECK-NEXT:   (call $get_{i32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-no
- ;; CHECK-NEXT:   (ref.null ${i32})
- ;; CHECK-NEXT:   (ref.null ${f64})
+ ;; CHECK-NEXT:   (call $get_{i32})
+ ;; CHECK-NEXT:   (call $get_{f64})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-various-params-no (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $various-params-no
- ;; NOMNL-NEXT:   (ref.null ${})
- ;; NOMNL-NEXT:   (ref.null ${i32})
+ ;; NOMNL-NEXT:   (call $get_{})
+ ;; NOMNL-NEXT:   (call $get_{i32})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $various-params-no
- ;; NOMNL-NEXT:   (ref.null ${i32})
- ;; NOMNL-NEXT:   (ref.null ${f64})
+ ;; NOMNL-NEXT:   (call $get_{i32})
+ ;; NOMNL-NEXT:   (call $get_{f64})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-various-params-no
   ;; The first argument gets {} and {i32}; the second {i32} and {f64}; none of
-  ;; those pairs can be optimized.
+  ;; those pairs can be optimized. Note that we do not pass in all nulls, as
+  ;; all nulls are identical and we could do other optimization work due to
+  ;; that.
   (call $various-params-no
-   (ref.null ${})
-   (ref.null ${i32})
+   (call $get_{})
+   (call $get_{i32})
   )
   (call $various-params-no
-   (ref.null ${i32})
-   (ref.null ${f64})
+   (call $get_{i32})
+   (call $get_{f64})
   )
  )
  ;; This function is called in ways that do not allow us to alter the types of
@@ -79,6 +82,34 @@
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   (drop (local.get $y))
+ )
+
+ ;; CHECK:      (func $get_{} (result (ref null ${}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $get_{} (type $none_=>_ref?|${}|) (result (ref null ${}))
+ ;; NOMNL-NEXT:  (unreachable)
+ ;; NOMNL-NEXT: )
+ (func $get_{} (result (ref null ${}))
+  (unreachable)
+ )
+ ;; CHECK:      (func $get_{i32} (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $get_{i32} (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
+ ;; NOMNL-NEXT:  (unreachable)
+ ;; NOMNL-NEXT: )
+ (func $get_{i32} (result (ref null ${i32}))
+  (unreachable)
+ )
+ ;; CHECK:      (func $get_{f64} (result (ref null ${f64}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $get_{f64} (type $none_=>_ref?|${f64}|) (result (ref null ${f64}))
+ ;; NOMNL-NEXT:  (unreachable)
+ ;; NOMNL-NEXT: )
+ (func $get_{f64} (result (ref null ${f64}))
+  (unreachable)
  )
 
  ;; CHECK:      (func $call-various-params-yes
@@ -279,7 +310,7 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $block (result (ref null ${i32}))
+ ;; CHECK-NEXT:   (block (result (ref null ${i32}))
  ;; CHECK-NEXT:    (local.tee $x
  ;; CHECK-NEXT:     (call $get_null_{i32_i64})
  ;; CHECK-NEXT:    )
@@ -291,7 +322,7 @@
  ;; NOMNL-NEXT:   (local.get $x)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (block $block (result (ref null ${i32}))
+ ;; NOMNL-NEXT:   (block (result (ref null ${i32}))
  ;; NOMNL-NEXT:    (local.tee $x
  ;; NOMNL-NEXT:     (call $get_null_{i32_i64})
  ;; NOMNL-NEXT:    )
@@ -435,11 +466,11 @@
  )
 
  ;; CHECK:      (func $unused-and-refinable
- ;; CHECK-NEXT:  (local $0 (ref null data))
+ ;; CHECK-NEXT:  (local $0 dataref)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $unused-and-refinable (type $none_=>_none)
- ;; NOMNL-NEXT:  (local $0 (ref null data))
+ ;; NOMNL-NEXT:  (local $0 dataref)
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $unused-and-refinable (param $0 dataref)
@@ -467,25 +498,21 @@
  )
 
  ;; CHECK:      (func $non-nullable-fixup (param $0 (ref ${}))
- ;; CHECK-NEXT:  (local $1 (ref null data))
+ ;; CHECK-NEXT:  (local $1 dataref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $non-nullable-fixup (type $ref|${}|_=>_none) (param $0 (ref ${}))
- ;; NOMNL-NEXT:  (local $1 (ref null data))
+ ;; NOMNL-NEXT:  (local $1 dataref)
  ;; NOMNL-NEXT:  (local.set $1
  ;; NOMNL-NEXT:   (local.get $0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (local.set $1
- ;; NOMNL-NEXT:   (ref.as_non_null
- ;; NOMNL-NEXT:    (local.get $1)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (local.get $1)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $non-nullable-fixup (param $0 dataref)

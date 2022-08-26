@@ -8,10 +8,12 @@
  ;; CHECK:      (global $global (ref null $array) (ref.null $array))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (func $test-dead-get-non-nullable (param $0 dataref)
+ ;; CHECK:      (func $test-dead-get-non-nullable (param $0 (ref data))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (block (result (ref data))
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test-dead-get-non-nullable (param $func (ref data))

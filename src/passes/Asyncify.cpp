@@ -794,7 +794,9 @@ static bool doesCall(Expression* curr) {
 
 class AsyncifyBuilder : public Builder {
 public:
-  AsyncifyBuilder(Module& wasm) : Builder(wasm) {}
+  Module& wasm;
+
+  AsyncifyBuilder(Module& wasm) : Builder(wasm), wasm(wasm) {}
 
   Expression* makeGetStackPos() {
     return makeLoad(4,
@@ -802,7 +804,8 @@ public:
                     int32_t(DataOffset::BStackPos),
                     4,
                     makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                    Type::i32);
+                    Type::i32,
+                    wasm.memories[0]->name);
   }
 
   Expression* makeIncStackPos(int32_t by) {
@@ -815,7 +818,8 @@ public:
       4,
       makeGlobalGet(ASYNCIFY_DATA, Type::i32),
       makeBinary(AddInt32, makeGetStackPos(), makeConst(Literal(by))),
-      Type::i32);
+      Type::i32,
+      wasm.memories[0]->name);
   }
 
   Expression* makeStateCheck(State value) {
@@ -1222,8 +1226,13 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
-          builder->makeLoad(
-            4, false, 0, 4, builder->makeGetStackPos(), Type::i32))));
+          builder->makeLoad(4,
+                            false,
+                            0,
+                            4,
+                            builder->makeGetStackPos(),
+                            Type::i32,
+                            getModule()->memories[0]->name))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
@@ -1344,14 +1353,6 @@ private:
 
     RelevantLiveLocalsWalker walker;
     walker.setFunction(func);
-    if (!walker.canRun(func)) {
-      // We can proceed without this optimization, which will cause more
-      // spilling - assume all locals are relevant.
-      for (Index i = 0; i < func->getNumLocals(); i++) {
-        relevantLiveLocals.insert(i);
-      }
-      return;
-    }
     walker.walkFunctionInModule(func, getModule());
     // The relevant live locals are ones that are alive at an unwind/rewind
     // location. TODO look more precisely inside basic blocks, as one might stop
@@ -1400,7 +1401,8 @@ private:
                             offset,
                             STACK_ALIGN,
                             builder->makeLocalGet(tempIndex, Type::i32),
-                            type));
+                            type,
+                            getModule()->memories[0]->name));
         offset += size;
       }
       Expression* load;
@@ -1448,7 +1450,8 @@ private:
                              STACK_ALIGN,
                              builder->makeLocalGet(tempIndex, Type::i32),
                              localGet,
-                             type));
+                             type,
+                             getModule()->memories[0]->name));
         offset += size;
         ++j;
       }
@@ -1466,7 +1469,8 @@ private:
                          4,
                          builder->makeGetStackPos(),
                          builder->makeLocalGet(tempIndex, Type::i32),
-                         Type::i32),
+                         Type::i32,
+                         getModule()->memories[0]->name),
       builder->makeIncStackPos(4));
   }
 
@@ -1491,7 +1495,7 @@ struct Asyncify : public Pass {
     bool optimize = runner->options.optimizeLevel > 0;
 
     // Ensure there is a memory, as we need it.
-    MemoryUtils::ensureExists(module->memory);
+    MemoryUtils::ensureExists(module);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
@@ -1531,8 +1535,8 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
-    auto sideModule =
-      runner->options.getArgumentOrDefault("asyncify-side-module", "") != "";
+    auto relocatable =
+      runner->options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1567,7 +1571,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module, sideModule);
+    addGlobals(module, relocatable);
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
@@ -1667,14 +1671,16 @@ private:
                          int32_t(DataOffset::BStackPos),
                          4,
                          builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                         Type::i32);
+                         Type::i32,
+                         module->memories[0]->name);
       auto* stackEnd =
         builder.makeLoad(4,
                          false,
                          int32_t(DataOffset::BStackEnd),
                          4,
                          builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                         Type::i32);
+                         Type::i32,
+                         module->memories[0]->name);
       body->list.push_back(
         builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
                        builder.makeUnreachable()));

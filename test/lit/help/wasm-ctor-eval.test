@@ -2,7 +2,7 @@
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-ctor-eval INFILE
 ;; CHECK-NEXT:
-;; CHECK-NEXT: Execute C++ global constructors ahead of time
+;; CHECK-NEXT: Execute code at compile time
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
@@ -103,6 +103,18 @@
 ;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-strings                     Enable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-strings                    Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
 ;; CHECK-NEXT:                                        correct

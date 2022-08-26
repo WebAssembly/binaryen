@@ -101,7 +101,7 @@ struct PassOptions {
   // Whether to run the validator to check for errors.
   bool validate = true;
   // When validating validate globally and not just locally
-  bool validateGlobally = false;
+  bool validateGlobally = true;
   // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int optimizeLevel = 0;
   // 0, 1, 2 correspond to -O0, -Os, -Oz
@@ -166,10 +166,13 @@ struct PassOptions {
   // passes.
   std::map<std::string, std::string> arguments;
 
+  // -Os is our default
+  static constexpr const int DEFAULT_OPTIMIZE_LEVEL = 2;
+  static constexpr const int DEFAULT_SHRINK_LEVEL = 1;
+
   void setDefaultOptimizationOptions() {
-    // -Os is our default
-    optimizeLevel = 2;
-    shrinkLevel = 1;
+    optimizeLevel = DEFAULT_OPTIMIZE_LEVEL;
+    shrinkLevel = DEFAULT_SHRINK_LEVEL;
   }
 
   static PassOptions getWithDefaultOptimizationOptions() {

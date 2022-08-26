@@ -47,7 +47,6 @@ int main(int argc, const char* argv[]) {
   std::string outputSourceMapUrl;
   std::string dataSegmentFile;
   bool emitBinary = true;
-  bool emitMetadata = true;
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
@@ -95,13 +94,6 @@ int main(int argc, const char* argv[]) {
          WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&emitBinary](Options*, const std::string&) { emitBinary = false; })
-    .add(
-      "--no-emit-metadata",
-      "-n",
-      "Skip the writing to emscripten metadata JSON to stdout.",
-      WasmEmscriptenFinalizeOption,
-      Options::Arguments::Zero,
-      [&emitMetadata](Options*, const std::string&) { emitMetadata = false; })
     .add("--global-base",
          "",
          "The address at which static globals were placed",
@@ -110,14 +102,6 @@ int main(int argc, const char* argv[]) {
          [&globalBase](Options*, const std::string& argument) {
            globalBase = std::stoull(argument);
          })
-    // TODO(sbc): Remove this one this argument is no longer passed by
-    // emscripten. See https://github.com/emscripten-core/emscripten/issues/8905
-    .add("--initial-stack-pointer",
-         "",
-         "ignored - will be removed in a future release",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::One,
-         [](Options*, const std::string& argument) {})
     .add("--side-module",
          "",
          "Input is an emscripten side module",
@@ -126,12 +110,6 @@ int main(int argc, const char* argv[]) {
          [&sideModule](Options* o, const std::string& argument) {
            sideModule = true;
          })
-    .add("--new-pic-abi",
-         "",
-         "Use new/llvm PIC abi",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) {})
     .add("--input-source-map",
          "-ism",
          "Consume source map from the specified file",
@@ -242,9 +220,8 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
   ModuleReader reader;
   // If we are not writing output then we definitely don't need to read debug
-  // info, as it does not affect the metadata we will emit. (However, if we
-  // emit output then definitely load the names section so that we roundtrip
-  // names properly.)
+  // info. However, if we emit output then definitely load the names section so
+  // that we roundtrip names properly.
   reader.setDebugInfo(writeOutput);
   reader.setDWARF(DWARF && writeOutput);
   if (!writeOutput) {
@@ -280,12 +257,6 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  if (!standaloneWasm) {
-    // This is also not needed in standalone mode since standalone mode uses
-    // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
-    generator.renameMainArgcArgv();
-  }
-
   PassRunner passRunner(&wasm, options.passOptions);
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
@@ -316,7 +287,6 @@ int main(int argc, const char* argv[]) {
                             : ABI::LegalizationLevel::Minimal));
   }
 
-  // Strip target features section (its information is in the metadata)
   passRunner.add("strip-target-features");
 
   // If DWARF is unused, strip it out. This avoids us keeping it alive
@@ -327,15 +297,7 @@ int main(int argc, const char* argv[]) {
 
   passRunner.run();
 
-  BYN_TRACE("generated metadata\n");
-  // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata;
-  if (emitMetadata) {
-    metadata = generator.generateEmscriptenMetadata();
-  }
-
-  // Finally, separate out data segments if relevant (they may have been needed
-  // for metadata).
+  // Finally, separate out data segments if relevant
   if (!dataSegmentFile.empty()) {
     Output memInitFile(dataSegmentFile, Flags::Binary);
     if (globalBase == INVALID_BASE) {
@@ -358,16 +320,6 @@ int main(int argc, const char* argv[]) {
       writer.setSourceMapUrl(outputSourceMapUrl);
     }
     writer.write(wasm, output);
-    if (emitMetadata && !emitBinary) {
-      output << "(;\n";
-      output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
-      output << ";)\n";
-    }
-  }
-  // If we emit text then we emitted the metadata together with that text
-  // earlier. Otherwise emit it to stdout.
-  if (emitMetadata && emitBinary) {
-    std::cout << metadata;
   }
   return 0;
 }

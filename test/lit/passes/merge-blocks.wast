@@ -17,7 +17,7 @@
  ;; CHECK:      (func $br_on_to_drop
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $label$1 (result (ref null i31))
+ ;; CHECK-NEXT:   (block $label$1 (result i31ref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br_on_i31 $label$1
  ;; CHECK-NEXT:      (ref.null any)

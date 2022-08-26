@@ -19,5 +19,6 @@
 ;; RUN: wasm-split %s --profile=%t.prof -o1 %t.1.wasm -o2 %t.2.wasm
 
 (module
+ (memory 0 0)
  (export "memory" (memory 0 0))
 )

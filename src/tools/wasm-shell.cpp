@@ -88,16 +88,16 @@ protected:
   std::map<Name, std::shared_ptr<Module>> modules;
   std::map<Name, std::shared_ptr<SExpressionWasmBuilder>> builders;
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
-  std::map<Name, std::shared_ptr<ModuleInstance>> instances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> instances;
   // used for imports
-  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   Name lastModule;
 
   void instantiate(Module* wasm) {
     auto tempInterface =
       std::make_shared<ShellExternalInterface>(linkedInstances);
-    auto tempInstance = std::make_shared<ModuleInstance>(
+    auto tempInstance = std::make_shared<ModuleRunner>(
       *wasm, tempInterface.get(), linkedInstances);
     interfaces[wasm->name].swap(tempInterface);
     instances[wasm->name].swap(tempInstance);
@@ -173,7 +173,7 @@ protected:
     if (s[i]->dollared()) {
       moduleName = s[i++]->str();
     }
-    ModuleInstance* instance = instances[moduleName].get();
+    ModuleRunner* instance = instances[moduleName].get();
     assert(instance);
 
     Name base = s[i++]->str();
@@ -208,7 +208,7 @@ protected:
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       trapped = true;
     }
-
+    WASM_UNUSED(trapped);
     assert(trapped);
   }
 
@@ -228,6 +228,7 @@ protected:
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       trapped = true;
     }
+    WASM_UNUSED(trapped);
     assert(!trapped);
     std::cerr << "seen " << actual << ", expected " << expected << '\n';
     if (expected != actual) {
@@ -283,9 +284,7 @@ protected:
           }
         }
       });
-      if (wasm.memory.imported()) {
-        reportUnknownImport(&wasm.memory);
-      }
+      ModuleUtils::iterImportedMemories(wasm, reportUnknownImport);
     }
 
     if (!invalid && id == ASSERT_TRAP) {
@@ -346,16 +345,15 @@ protected:
     spectest->addExport(
       builder.makeExport("global_f64", Name::fromInt(3), ExternalKind::Global));
 
-    spectest->addTable(
-      builder.makeTable(Name::fromInt(0), Type::funcref, 10, 20));
+    spectest->addTable(builder.makeTable(
+      Name::fromInt(0), Type(HeapType::func, Nullable), 10, 20));
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
-    spectest->memory.exists = true;
-    spectest->memory.initial = 1;
-    spectest->memory.max = 2;
-    spectest->addExport(builder.makeExport(
-      "memory", spectest->memory.name, ExternalKind::Memory));
+    Memory* memory =
+      spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
+    spectest->addExport(
+      builder.makeExport("memory", memory->name, ExternalKind::Memory));
 
     modules["spectest"].swap(spectest);
     modules["spectest"]->features = FeatureSet::All;

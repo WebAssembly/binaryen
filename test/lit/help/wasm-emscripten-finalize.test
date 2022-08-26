@@ -20,18 +20,10 @@
 ;; CHECK-NEXT:                                        output file. In this mode if no output
 ;; CHECK-NEXT:                                        file is specified, we write to stdout.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-emit-metadata,-n                Skip the writing to emscripten metadata
-;; CHECK-NEXT:                                        JSON to stdout.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-base                        The address at which static globals were
 ;; CHECK-NEXT:                                        placed
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --initial-stack-pointer              ignored - will be removed in a future
-;; CHECK-NEXT:                                        release
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --side-module                        Input is an emscripten side module
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --new-pic-abi                        Use new/llvm PIC abi
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
 ;; CHECK-NEXT:                                        file
@@ -147,6 +139,18 @@
 ;; CHECK-NEXT:   --enable-relaxed-simd                Enable relaxed SIMD
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd               Disable relaxed SIMD
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-extended-const              Enable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-extended-const             Disable extended const expressions
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-strings                     Enable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-strings                    Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
 ;; CHECK-NEXT:                                        correct

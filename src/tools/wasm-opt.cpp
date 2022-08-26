@@ -228,6 +228,12 @@ int main(int argc, const char* argv[]) {
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
          })
+    .add("--new-wat-parser",
+         "",
+         "Use the experimental new WAT parser",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [](Options*, const std::string&) { useNewWATParser = true; })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
@@ -308,7 +314,7 @@ int main(int argc, const char* argv[]) {
     runner.run();
   }
 
-  ExecutionResults results(options.passOptions);
+  ExecutionResults results;
   if (fuzzExecBefore) {
     results.get(wasm);
   }

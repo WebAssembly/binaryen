@@ -36,7 +36,7 @@
  (func $foo
   (drop
    ;; a tuple type with a non-nullable element, that must be carefully handled
-   (block (result funcref (ref $none))
+   (block $block (result funcref (ref $none))
     (tuple.make
      (ref.null func)
      (ref.func $foo)

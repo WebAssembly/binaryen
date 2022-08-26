@@ -26,11 +26,20 @@ namespace wasm {
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() {
-  indexedTypes = ModuleUtils::getIndexedHeapTypes(wasm);
+  indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(wasm);
   if (indexedTypes.types.empty()) {
     return;
   }
   typeBuilder.grow(indexedTypes.types.size());
+
+  // All the input types are distinct, so we need to make sure the output types
+  // are distinct as well. Further, the new types may have more recursions than
+  // the original types, so the old recursion groups may not be sufficient any
+  // more. Both of these problems are solved by putting all the new types into a
+  // single large recursion group.
+  // TODO: When we properly analyze which types are external and which are
+  // internal to the module, only optimize internal types.
+  typeBuilder.createRecGroup(0, typeBuilder.size());
 
   // Create the temporary heap types.
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
@@ -75,6 +84,12 @@ void GlobalTypeRewriter::update() {
   }
 
   auto buildResults = typeBuilder.build();
+#ifndef NDEBUG
+  if (auto* err = buildResults.getError()) {
+    Fatal() << "Internal GlobalTypeRewriter build error: " << err->reason
+            << " at index " << err->index;
+  }
+#endif
   auto& newTypes = *buildResults;
 
   // Map the old types to the new ones. This uses the fact that type indices
@@ -102,9 +117,6 @@ void GlobalTypeRewriter::update() {
       if (type.isRef()) {
         return Type(getNew(type.getHeapType()), type.getNullability());
       }
-      if (type.isRtt()) {
-        return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
-      }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
         for (auto& t : tuple.types) {
@@ -131,6 +143,26 @@ void GlobalTypeRewriter::update() {
     }
 
     void visitExpression(Expression* curr) {
+      // local.get and local.tee are special in that their type is tied to the
+      // type of the local in the function, which is tied to the signature. That
+      // means we must update it based on the signature, and not on the old type
+      // in the local.
+      //
+      // We have already updated function signatures by the time we get here,
+      // which means we can just apply the current local type that we see (there
+      // is no need to call getNew(), which we already did on the function's
+      // signature itself).
+      if (auto* get = curr->dynCast<LocalGet>()) {
+        curr->type = getFunction()->getLocalType(get->index);
+        return;
+      } else if (auto* tee = curr->dynCast<LocalSet>()) {
+        // Rule out a local.set and unreachable code.
+        if (tee->type != Type::none && tee->type != Type::unreachable) {
+          curr->type = getFunction()->getLocalType(tee->index);
+        }
+        return;
+      }
+
       // Update the type to the new one.
       curr->type = getNew(curr->type);
 
@@ -166,6 +198,16 @@ void GlobalTypeRewriter::update() {
 
   CodeUpdater updater(oldToNewTypes);
   PassRunner runner(&wasm);
+
+  // Update functions first, so that we see the updated types for locals (which
+  // can change if the function signature changes).
+  for (auto& func : wasm.functions) {
+    func->type = updater.getNew(func->type);
+    for (auto& var : func->vars) {
+      var = updater.getNew(var);
+    }
+  }
+
   updater.run(&runner, &wasm);
   updater.walkModuleCode(&wasm);
 
@@ -178,12 +220,6 @@ void GlobalTypeRewriter::update() {
   }
   for (auto& global : wasm.globals) {
     global->type = updater.getNew(global->type);
-  }
-  for (auto& func : wasm.functions) {
-    func->type = updater.getNew(func->type);
-    for (auto& var : func->vars) {
-      var = updater.getNew(var);
-    }
   }
   for (auto& tag : wasm.tags) {
     tag->sig = updater.getNew(tag->sig);
@@ -211,18 +247,6 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     return typeBuilder.getTempRefType(
       typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
       type.getNullability());
-  }
-  if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    auto newRtt = rtt;
-    auto heapType = type.getHeapType();
-    if (!indexedTypes.indices.count(heapType)) {
-      // See above with references.
-      return type;
-    }
-    newRtt.heapType =
-      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]);
-    return typeBuilder.getTempRttType(newRtt);
   }
   if (type.isTuple()) {
     auto& tuple = type.getTuple();
@@ -317,7 +341,8 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
 
 void updateParamTypes(Function* func,
                       const std::vector<Type>& newParamTypes,
-                      Module& wasm) {
+                      Module& wasm,
+                      LocalUpdatingMode localUpdating) {
   // Before making this update, we must be careful if the param was "reused",
   // specifically, if it is assigned a less-specific type in the body then
   // we'd get a validation error when we refine it. To handle that, if a less-
@@ -363,7 +388,11 @@ void updateParamTypes(Function* func,
       if (iter != paramFixups.end()) {
         auto fixup = iter->second;
         contents.push_back(builder.makeLocalSet(
-          fixup, builder.makeLocalGet(index, newParamTypes[index])));
+          fixup,
+          builder.makeLocalGet(index,
+                               localUpdating == Update
+                                 ? newParamTypes[index]
+                                 : func->getLocalType(index))));
       }
     }
     contents.push_back(func->body);
@@ -385,17 +414,19 @@ void updateParamTypes(Function* func,
   }
 
   // Update local.get/local.tee operations that use the modified param type.
-  for (auto* get : gets.list) {
-    auto index = get->index;
-    if (func->isParam(index)) {
-      get->type = newParamTypes[index];
+  if (localUpdating == Update) {
+    for (auto* get : gets.list) {
+      auto index = get->index;
+      if (func->isParam(index)) {
+        get->type = newParamTypes[index];
+      }
     }
-  }
-  for (auto* set : sets.list) {
-    auto index = set->index;
-    if (func->isParam(index) && set->isTee()) {
-      set->type = newParamTypes[index];
-      set->finalize();
+    for (auto* set : sets.list) {
+      auto index = set->index;
+      if (func->isParam(index) && set->isTee()) {
+        set->type = newParamTypes[index];
+        set->finalize();
+      }
     }
   }
 
