@@ -9,7 +9,7 @@
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
-  ;; CHECK:      (rec
+  ;; CHECK:      (rec 
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
   (type $s0 (sub (struct)))
   ;; CHECK:       (type $s1 (struct_subtype  data))
