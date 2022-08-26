@@ -85,56 +85,38 @@ static bool maybePrintRefShorthand(std::ostream& o, Type type) {
     return false;
   }
   auto heapType = type.getHeapType();
-  if (heapType.isBasic()) {
-    if (type.isNullable()) {
-      switch (heapType.getBasic()) {
-        case HeapType::ext:
-          o << "externref";
-          return true;
-        case HeapType::func:
-          o << "funcref";
-          return true;
-        case HeapType::any:
-          o << "anyref";
-          return true;
-        case HeapType::eq:
-          o << "eqref";
-          return true;
-        case HeapType::i31:
-        case HeapType::data:
-          break;
-        case HeapType::string:
-          o << "stringref";
-          return true;
-        case HeapType::stringview_wtf8:
-          o << "stringview_wtf8";
-          return true;
-        case HeapType::stringview_wtf16:
-          o << "stringview_wtf16";
-          return true;
-        case HeapType::stringview_iter:
-          o << "stringview_iter";
-          return true;
-      }
-    } else {
-      switch (heapType.getBasic()) {
-        case HeapType::ext:
-        case HeapType::func:
-        case HeapType::any:
-        case HeapType::eq:
-          break;
-        case HeapType::i31:
-          o << "i31ref";
-          return true;
-        case HeapType::data:
-          o << "dataref";
-          return true;
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          break;
-      }
+  if (heapType.isBasic() && type.isNullable()) {
+    switch (heapType.getBasic()) {
+      case HeapType::ext:
+        o << "externref";
+        return true;
+      case HeapType::func:
+        o << "funcref";
+        return true;
+      case HeapType::any:
+        o << "anyref";
+        return true;
+      case HeapType::eq:
+        o << "eqref";
+        return true;
+      case HeapType::i31:
+        o << "i31ref";
+        return true;
+      case HeapType::data:
+        o << "dataref";
+        return true;
+      case HeapType::string:
+        o << "stringref";
+        return true;
+      case HeapType::stringview_wtf8:
+        o << "stringview_wtf8";
+        return true;
+      case HeapType::stringview_wtf16:
+        o << "stringview_wtf16";
+        return true;
+      case HeapType::stringview_iter:
+        o << "stringview_iter";
+        return true;
     }
   }
   return false;

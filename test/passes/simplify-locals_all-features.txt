@@ -1900,11 +1900,11 @@
  )
 )
 (module
- (type $eqref_ref?|i31|_=>_i32 (func (param eqref (ref null i31)) (result i32)))
+ (type $eqref_i31ref_=>_i32 (func (param eqref i31ref) (result i32)))
  (export "test" (func $0))
- (func $0 (param $0 eqref) (param $1 (ref null i31)) (result i32)
+ (func $0 (param $0 eqref) (param $1 i31ref) (result i32)
   (local $2 eqref)
-  (local $3 (ref null i31))
+  (local $3 i31ref)
   (local.set $2
    (local.get $0)
   )

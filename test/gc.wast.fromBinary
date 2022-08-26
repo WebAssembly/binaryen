@@ -1,6 +1,6 @@
 (module
  (type $i31ref_dataref_=>_none (func (param i31ref dataref)))
- (type $ref?|i31|_i31ref_ref?|data|_dataref_=>_none (func (param (ref null i31) i31ref (ref null data) dataref)))
+ (type $i31ref_ref|i31|_dataref_ref|data|_=>_none (func (param i31ref (ref i31) dataref (ref data))))
  (global $global_anyref (mut anyref) (ref.null any))
  (global $global_eqref (mut eqref) (ref.null eq))
  (global $global_i31ref (mut i31ref) (i31.new
@@ -148,7 +148,7 @@
    )
   )
  )
- (func $test-variants (param $local_i31refnull (ref null i31)) (param $local_i31refnonnull i31ref) (param $local_datarefnull (ref null data)) (param $local_datarefnonnull dataref)
+ (func $test-variants (param $local_i31refnull i31ref) (param $local_i31refnonnull (ref i31)) (param $local_datarefnull dataref) (param $local_datarefnonnull (ref data))
   (nop)
  )
 )

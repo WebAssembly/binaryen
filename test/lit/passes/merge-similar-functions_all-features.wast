@@ -5,7 +5,7 @@
   ;; CHECK:      (type $[i8] (array i8))
   (type $[i8] (array i8))
 
-  ;; CHECK:      (func $take-ref-null-data (param $0 (ref null data))
+  ;; CHECK:      (func $take-ref-null-data (param $0 dataref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $take-ref-null-data (param (ref null data))

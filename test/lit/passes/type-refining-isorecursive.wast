@@ -9,7 +9,7 @@
  (type $0 (struct_subtype (ref null any) anyref data))
  ;; CHECK:       (type $1 (struct_subtype (field eqref) (field (ref $2)) data))
  (type $1 (struct_subtype (ref null eq) anyref data))
- ;; CHECK:       (type $2 (struct_subtype (field (ref null i31)) (field (ref $0)) data))
+ ;; CHECK:       (type $2 (struct_subtype (field i31ref) (field (ref $0)) data))
  (type $2 (struct_subtype (ref null i31) anyref data))
 
  ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func_subtype (param (ref $0) (ref $1) (ref $2)) func))
@@ -69,7 +69,7 @@
  (type $0 (struct_subtype (ref null any) anyref anyref data))
  ;; CHECK:       (type $1 (struct_subtype (field eqref) (field (ref null $all)) (field (ref $0)) $0))
  (type $1 (struct_subtype (ref null eq) anyref anyref $0))
- ;; CHECK:       (type $2 (struct_subtype (field (ref null i31)) (field (ref null $all)) (field (ref $0)) $1))
+ ;; CHECK:       (type $2 (struct_subtype (field i31ref) (field (ref null $all)) (field (ref $0)) $1))
  (type $2 (struct_subtype (ref null i31) anyref anyref $1))
 
  ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func_subtype (param (ref $0) (ref $1) (ref $2)) func))

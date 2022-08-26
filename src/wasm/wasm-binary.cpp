@@ -1849,10 +1849,10 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
       out = Type(HeapType::eq, Nullable);
       return true;
     case BinaryConsts::EncodedType::i31ref:
-      out = Type(HeapType::i31, NonNullable);
+      out = Type(HeapType::i31, Nullable);
       return true;
     case BinaryConsts::EncodedType::dataref:
-      out = Type(HeapType::data, NonNullable);
+      out = Type(HeapType::data, Nullable);
       return true;
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);

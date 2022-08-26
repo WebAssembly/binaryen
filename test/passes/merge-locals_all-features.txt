@@ -459,8 +459,8 @@
  )
  (func $subtype-test
   (local $0 anyref)
-  (local $1 (ref null i31))
-  (local $2 (ref null i31))
+  (local $1 i31ref)
+  (local $2 i31ref)
   (local.set $0
    (local.get $1)
   )

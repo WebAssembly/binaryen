@@ -531,7 +531,7 @@
  ;; CHECK:      (type $none_=>_none (func))
 
  ;; CHECK:      (func $0
- ;; CHECK-NEXT:  (local $0 (ref null i31))
+ ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $0 (param $x i31ref)
