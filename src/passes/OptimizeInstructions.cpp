@@ -2206,14 +2206,14 @@ private:
       // Prefer compare to unsigned max (u_max) instead of u_max - 1.
       // (unsigned)x <= u_max - 1   ==>   x != u_max
       if (binary->op == Abstract::getBinary(c->type, Abstract::LeU) &&
-          c->value.getInteger() == -2LL) {
+          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
         binary->op = Abstract::getBinary(c->type, Abstract::Ne);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
       }
       // (unsigned)x > u_max - 1   ==>   x == u_max
       if (binary->op == Abstract::getBinary(c->type, Abstract::GtU) &&
-          c->value.getInteger() == -2LL) {
+          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
         binary->op = Abstract::getBinary(c->type, Abstract::Eq);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
