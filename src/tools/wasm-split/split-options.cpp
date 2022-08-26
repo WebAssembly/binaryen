@@ -246,6 +246,19 @@ WasmSplitOptions::WasmSplitOptions()
         storageKind = StorageKind::InMemory;
       })
     .add(
+      "--in-secondary-memory",
+      "",
+      "Store profile information in a separate memory. rather than globals (the default) so that "
+      "it can be shared between multiple threads. Users are responsible for "
+      "ensuring that the module does not use the initial memory region for "
+      "anything else.",
+      WasmSplitOption,
+      {Mode::Instrument},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) {
+        storageKind = StorageKind::InSecondaryMemory;
+      })
+    .add(
       "--emit-module-names",
       "",
       "Emit module names, even if not emitting the rest of the names section. "

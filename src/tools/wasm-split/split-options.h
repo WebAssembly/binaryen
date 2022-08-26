@@ -37,6 +37,7 @@ struct WasmSplitOptions : ToolOptions {
   enum class StorageKind : unsigned {
     InGlobals, // Store profile data in WebAssembly Globals
     InMemory,  // Store profile data in memory, accessible from all threads
+    InSecondaryMemory, // Store profile data in memory separate from main memory
   };
   StorageKind storageKind = StorageKind::InGlobals;
 
