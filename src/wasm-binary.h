@@ -454,6 +454,7 @@ enum Subsection {
   NameData = 9,
   // see: https://github.com/WebAssembly/gc/issues/193
   NameField = 10,
+  NameTag = 11,
 
   DylinkMemInfo = 1,
   DylinkNeeded = 2,
@@ -1551,6 +1552,9 @@ public:
   std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
   std::map<Index, std::vector<Name*>> globalRefs;
+
+  // at index i we have all refs to the tag i
+  std::map<Index, std::vector<Name*>> tagRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
