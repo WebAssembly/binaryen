@@ -281,9 +281,11 @@ struct GlobalType {
   Type type;
 };
 
+// A signature type and parameter names (possibly empty), used for parsing
+// function types.
 struct TypeUse {
   HeapType type;
-  std::vector<NameType> ids;
+  std::vector<Name> names;
 };
 
 struct ImportNames {
@@ -864,9 +866,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                                ParamsT* params,
                                ResultsT* results,
                                ParseInput& in) {
-    std::vector<NameType> ids;
+    std::vector<Name> ids;
     if (params) {
-      ids = *params;
+      ids.reserve(params->size());
+      for (auto& p : *params) {
+        ids.push_back(p.name);
+      }
     }
 
     if (type) {
@@ -893,9 +898,9 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ParseInput&) {
     auto& f = wasm.functions[index];
     f->type = type.type;
-    for (Index i = 0; i < type.ids.size(); ++i) {
-      if (auto name = type.ids[i].name; name.is()) {
-        f->setLocalName(i, name);
+    for (Index i = 0; i < type.names.size(); ++i) {
+      if (type.names[i].is()) {
+        f->setLocalName(i, type.names[i]);
       }
     }
     if (locals) {
