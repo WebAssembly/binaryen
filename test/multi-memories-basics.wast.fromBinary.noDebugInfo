@@ -1,0 +1,117 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (import "env" "memory" (memory $mimport$0 1 1))
+ (memory $0 1 500)
+ (memory $1 1 800)
+ (memory $2 1 400)
+ (data (i32.const 0) "abcd")
+ (func $0
+  (memory.fill $1
+   (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
+ )
+ (func $1
+  (memory.copy $1 $2
+   (i32.const 512)
+   (i32.const 0)
+   (i32.const 12)
+  )
+ )
+ (func $2
+  (memory.init $0 0
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 45)
+  )
+ )
+ (func $3 (result i32)
+  (memory.grow $2
+   (i32.const 10)
+  )
+ )
+ (func $4 (result i32)
+  (memory.size $2)
+ )
+ (func $5
+  (drop
+   (i32.load $0
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load $2
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load16_s $1
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load16_s $1
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load8_s $2
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load8_s $2
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load16_u $0
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load16_u $0
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load8_u $1
+    (i32.const 12)
+   )
+  )
+  (drop
+   (i32.load8_u $1
+    (i32.const 12)
+   )
+  )
+ )
+ (func $6
+  (i32.store $0
+   (i32.const 12)
+   (i32.const 115)
+  )
+  (i32.store $0
+   (i32.const 12)
+   (i32.const 115)
+  )
+  (i32.store16 $1
+   (i32.const 20)
+   (i32.const 31353)
+  )
+  (i32.store16 $mimport$0
+   (i32.const 20)
+   (i32.const 31353)
+  )
+  (i32.store8 $2
+   (i32.const 23)
+   (i32.const 120)
+  )
+  (i32.store8 $2
+   (i32.const 23)
+   (i32.const 120)
+  )
+ )
+)
+

@@ -42,9 +42,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace ModuleSplitting {
+namespace wasm::ModuleSplitting {
 
 struct Config {
   // The set of functions to keep in the primary module. All others are split
@@ -76,8 +74,6 @@ struct Results {
 // Returns the new secondary module and modifies the `primary` module in place.
 Results splitFunctions(Module& primary, const Config& config);
 
-} // namespace ModuleSplitting
-
-} // namespace wasm
+} // namespace wasm::ModuleSplitting
 
 #endif // wasm_ir_module_splitting_h

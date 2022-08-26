@@ -35,6 +35,7 @@
 
 #include <cfg/cfg-traversal.h>
 #include <ir/literal-utils.h>
+#include <ir/numbering.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
@@ -44,11 +45,9 @@
 
 namespace wasm {
 
-// We do a very simple numbering of local values, just a unique
-// number for constants so far, enough to see
-// trivial duplication. LocalValues maps each local index to
-// its current value
-typedef std::vector<Index> LocalValues;
+// Map each local index to its current value number (which is computed in
+// ValueNumbering).
+using LocalValues = std::vector<Index>;
 
 namespace {
 
@@ -68,6 +67,9 @@ struct RedundantSetElimination
 
   Index numLocals;
 
+  // In rare cases we make a change to a type that requires a refinalize.
+  bool refinalize = false;
+
   // cfg traversal work
 
   static void doVisitLocalSet(RedundantSetElimination* self,
@@ -84,6 +86,10 @@ struct RedundantSetElimination
     if (numLocals == 0) {
       return; // nothing to do
     }
+
+    // Create a unique value for use to mark unseen locations.
+    unseenValue = valueNumbering.getUniqueValue();
+
     // create the CFG by walking the IR
     CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::
       doWalkFunction(func);
@@ -91,49 +97,36 @@ struct RedundantSetElimination
     flowValues(func);
     // remove redundant sets
     optimize();
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
   }
 
-  // numbering
+  // Use a value numbering for the values of expressions.
+  ValueNumbering valueNumbering;
 
-  Index nextValue = 1; // 0 is reserved for the "unseen value"
-  // each constant has a value
-  std::unordered_map<Literals, Index> literalValues;
-  // each value can have a value
-  std::unordered_map<Expression*, Index> expressionValues;
-  // each block has values for each merge
+  // In additon to valueNumbering, each block has values for each merge.
   std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>>
     blockMergeValues;
 
-  Index getUnseenValue() { // we haven't seen this location yet
-    return 0;
-  }
+  // A value that indicates we haven't seen this location yet.
+  Index unseenValue;
+
   Index getUniqueValue() {
+    auto value = valueNumbering.getUniqueValue();
 #ifdef RSE_DEBUG
-    std::cout << "new unique value " << nextValue << '\n';
+    std::cout << "new unique value " << value << '\n';
 #endif
-    return nextValue++;
+    return value;
   }
 
-  Index getLiteralValue(Literals lit) {
-    auto iter = literalValues.find(lit);
-    if (iter != literalValues.end()) {
-      return iter->second;
-    }
+  Index getValue(Literals lit) {
+    auto value = valueNumbering.getValue(lit);
 #ifdef RSE_DEBUG
-    std::cout << "new literal value for " << lit << '\n';
+    std::cout << "lit value " << value << '\n';
 #endif
-    return literalValues[lit] = getUniqueValue();
-  }
-
-  Index getExpressionValue(Expression* expr) {
-    auto iter = expressionValues.find(expr);
-    if (iter != expressionValues.end()) {
-      return iter->second;
-    }
-#ifdef RSE_DEBUG
-    std::cout << "new expr value for " << expr << '\n';
-#endif
-    return expressionValues[expr] = getUniqueValue();
+    return value;
   }
 
   Index getBlockMergeValue(BasicBlock* block, Index index) {
@@ -162,17 +155,16 @@ struct RedundantSetElimination
     return value == iter2->second;
   }
 
-  Index getValue(Expression* value, LocalValues& currValues) {
-    if (Properties::isConstantExpression(value)) {
-      // a constant
-      return getLiteralValue(Properties::getLiterals(value));
-    } else if (auto* get = value->dynCast<LocalGet>()) {
+  Index getValue(Expression* expr, LocalValues& currValues) {
+    if (auto* get = expr->dynCast<LocalGet>()) {
       // a copy of whatever that was
       return currValues[get->index];
-    } else {
-      // get the value's own unique value
-      return getExpressionValue(value);
     }
+    auto value = valueNumbering.getValue(expr);
+#ifdef RSE_DEBUG
+    std::cout << "expr value " << value << '\n';
+#endif
+    return value;
   }
 
   // flowing
@@ -190,26 +182,26 @@ struct RedundantSetElimination
             std::cout << "new param value for " << i << '\n';
 #endif
             start[i] = getUniqueValue();
-          } else if (type.isNonNullable()) {
+          } else if (!LiteralUtils::canMakeZero(type)) {
 #ifdef RSE_DEBUG
-            std::cout << "new unique value for non-nullable " << i << '\n';
+            std::cout << "new unique value for non-zeroable " << i << '\n';
 #endif
             start[i] = getUniqueValue();
           } else {
-            start[i] = getLiteralValue(Literal::makeZeros(type));
+            start[i] = getValue(Literal::makeZeros(type));
           }
         }
       } else {
         // other blocks have all unseen values to begin with
         for (Index i = 0; i < numLocals; i++) {
-          start[i] = getUnseenValue();
+          start[i] = unseenValue;
         }
       }
       // the ends all begin unseen
       LocalValues& end = block->contents.end;
       end.resize(numLocals);
       for (Index i = 0; i < numLocals; i++) {
-        end[i] = getUnseenValue();
+        end[i] = unseenValue;
       }
     }
     // keep working while stuff is flowing. we use a unique deferred queue
@@ -280,9 +272,9 @@ struct RedundantSetElimination
             iter++;
             while (iter != in.end()) {
               auto otherValue = (*iter)->contents.end[i];
-              if (value == getUnseenValue()) {
+              if (value == unseenValue) {
                 value = otherValue;
-              } else if (otherValue == getUnseenValue()) {
+              } else if (otherValue == unseenValue) {
                 // nothing to do, other has no information
               } else if (value != otherValue) {
                 // 2 different values, this is a merged value
@@ -361,6 +353,20 @@ struct RedundantSetElimination
       drop->value = value;
       drop->finalize();
     } else {
+      // If we are replacing the set with something of a more specific type,
+      // then we need to refinalize, for example:
+      //
+      //  (struct.get $X 0
+      //    (local.tee $x
+      //      (..something of type $Y, a subtype of $X..)
+      //    )
+      //  )
+      //
+      // After the replacement the struct.get will read from $Y, whose field may
+      // have a more refined type.
+      if (value->type != set->type) {
+        refinalize = true;
+      }
       *setp = value;
     }
   }

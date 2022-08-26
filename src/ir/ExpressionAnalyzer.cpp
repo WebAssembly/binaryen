@@ -192,7 +192,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 #define DELEGATE_FIELD_INT(id, field) COMPARE_FIELD(field)
 #define DELEGATE_FIELD_LITERAL(id, field) COMPARE_FIELD(field)
 #define DELEGATE_FIELD_NAME(id, field) COMPARE_FIELD(field)
-#define DELEGATE_FIELD_SIGNATURE(id, field) COMPARE_FIELD(field)
 #define DELEGATE_FIELD_TYPE(id, field) COMPARE_FIELD(field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field) COMPARE_FIELD(field)
 #define DELEGATE_FIELD_ADDRESS(id, field) COMPARE_FIELD(field)
@@ -263,7 +262,10 @@ struct Hasher {
   std::map<Name, Index> internalNames;
   ExpressionStack stack;
 
-  Hasher(Expression* curr, bool visitChildren) : visitChildren(visitChildren) {
+  Hasher(Expression* curr,
+         bool visitChildren,
+         ExpressionAnalyzer::ExprHasher custom)
+    : visitChildren(visitChildren) {
     stack.push_back(curr);
     // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
     // the caller. Add it here to prevent the unknown name error.
@@ -288,7 +290,11 @@ struct Hasher {
       // call_imports type, etc. The simplest thing is just to hash the
       // type for all of them.
       rehash(digest, curr->type.getID());
-      // Hash the contents of the expression.
+      // If the custom hasher handled this expr, then we have nothing to do.
+      if (custom(curr, digest)) {
+        continue;
+      }
+      // Hash the contents of the expression normally.
       hashExpression(curr);
     }
   }
@@ -314,7 +320,6 @@ struct Hasher {
 
 #define DELEGATE_FIELD_INT(id, field) HASH_FIELD(field)
 #define DELEGATE_FIELD_LITERAL(id, field) HASH_FIELD(field)
-#define DELEGATE_FIELD_SIGNATURE(id, field) HASH_FIELD(field)
 
 #define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field)
 #define DELEGATE_FIELD_TYPE(id, field) visitType(cast->field);
@@ -367,12 +372,13 @@ struct Hasher {
 
 } // anonymous namespace
 
-size_t ExpressionAnalyzer::hash(Expression* curr) {
-  return Hasher(curr, true).digest;
+size_t ExpressionAnalyzer::flexibleHash(Expression* curr,
+                                        ExpressionAnalyzer::ExprHasher custom) {
+  return Hasher(curr, true, custom).digest;
 }
 
 size_t ExpressionAnalyzer::shallowHash(Expression* curr) {
-  return Hasher(curr, false).digest;
+  return Hasher(curr, false, ExpressionAnalyzer::nothingHasher).digest;
 }
 
 } // namespace wasm

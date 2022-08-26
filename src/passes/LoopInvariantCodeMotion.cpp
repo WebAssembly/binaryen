@@ -75,7 +75,6 @@ struct LoopInvariantCodeMotion
     // FIXME: also the loop tail issue from above.
     auto numLocals = getFunction()->getNumLocals();
     std::vector<Index> numSetsForIndex(numLocals);
-    std::fill(numSetsForIndex.begin(), numSetsForIndex.end(), 0);
     LoopSets loopSets;
     {
       FindAll<LocalSet> finder(loop);
@@ -120,11 +119,12 @@ struct LoopInvariantCodeMotion
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        bool unsafeToMove =
-          effects.writesGlobalState() || effectsSoFar.invalidates(effects) ||
-          (effects.readsGlobalState() && loopEffects.writesGlobalState());
+        bool unsafeToMove = effects.writesGlobalState() ||
+                            effectsSoFar.invalidates(effects) ||
+                            (effects.readsMutableGlobalState() &&
+                             loopEffects.writesGlobalState());
         // TODO: look into optimizing this with exceptions. for now, disallow
-        if (effects.throws || loopEffects.throws) {
+        if (effects.throws() || loopEffects.throws()) {
           unsafeToMove = true;
         }
         if (!unsafeToMove) {

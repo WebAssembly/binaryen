@@ -27,6 +27,10 @@
 
 namespace wasm {
 
+// TODO: Remove this after switching to the new WAT parser by default and
+// removing the old one.
+extern bool useNewWATParser;
+
 class ModuleIOBase {
 protected:
   bool debugInfo;

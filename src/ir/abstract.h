@@ -21,9 +21,7 @@
 
 #include <wasm.h>
 
-namespace wasm {
-
-namespace Abstract {
+namespace wasm::Abstract {
 
 enum Op {
   // Unary
@@ -61,11 +59,15 @@ enum Op {
   GeU
 };
 
-inline bool hasAnyShift(BinaryOp op) {
-  return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
-         op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
-         op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
+inline bool hasAnyRotateShift(BinaryOp op) {
+  return op == RotLInt32 || op == RotRInt32 || op == RotLInt64 ||
          op == RotRInt64;
+}
+
+inline bool hasAnyShift(BinaryOp op) {
+  return hasAnyRotateShift(op) || op == ShlInt32 || op == ShrSInt32 ||
+         op == ShrUInt32 || op == ShlInt64 || op == ShrSInt64 ||
+         op == ShrUInt64;
 }
 
 inline bool hasAnyReinterpret(UnaryOp op) {
@@ -123,12 +125,6 @@ inline UnaryOp getUnary(Type type, Op op) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -296,12 +292,6 @@ inline BinaryOp getBinary(Type type, Op op) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;
@@ -310,8 +300,6 @@ inline BinaryOp getBinary(Type type, Op op) {
   WASM_UNREACHABLE("invalid type");
 }
 
-} // namespace Abstract
-
-} // namespace wasm
+} // namespace wasm::Abstract
 
 #endif // wasm_ir_abstract_h

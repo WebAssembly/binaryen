@@ -24,7 +24,7 @@
 // a less beneficial position for compression, that is, mutually-compressible
 // functions are no longer together (when they were before, in the original
 // order, the has some natural tendency one way or the other). TODO: investigate
-// similarity ordering here.
+// similarity ordering here (see #4322)
 //
 
 #include <memory>
@@ -39,6 +39,8 @@ typedef std::unordered_map<Name, std::atomic<Index>> NameCountMap;
 
 struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
   bool isFunctionParallel() override { return true; }
+
+  bool modifiesBinaryenIR() override { return false; }
 
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
 

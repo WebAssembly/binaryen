@@ -18,26 +18,23 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Names {
+namespace wasm::Names {
 
 // Add explicit names for function locals not yet named, and do not
 // modify existing names
 inline void ensureNames(Function* func) {
   std::unordered_set<Name> seen;
-  for (auto& pair : func->localNames) {
-    seen.insert(pair.second);
+  for (auto& [_, name] : func->localNames) {
+    seen.insert(name);
   }
   Index nameIndex = seen.size();
   for (Index i = 0; i < func->getNumLocals(); i++) {
     if (!func->hasLocalName(i)) {
       while (1) {
         auto name = Name::fromInt(nameIndex++);
-        if (seen.count(name) == 0) {
+        if (seen.emplace(name).second) {
           func->localNames[i] = name;
           func->localIndices[name] = i;
-          seen.insert(name);
           break;
         }
       }
@@ -95,8 +92,6 @@ public:
   std::string getName();
 };
 
-} // namespace Names
-
-} // namespace wasm
+} // namespace wasm::Names
 
 #endif // wasm_ir_names_h

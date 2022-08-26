@@ -377,7 +377,7 @@
                 )
                )
               )
-              (block $block
+              (block
                (br_if $label$11
                 (i32.eqz
                  (local.tee $var$3
@@ -671,7 +671,7 @@
     (block $label$13
      (if
       (local.get $var$2)
-      (block $block3
+      (block
        (local.set $var$8
         (i64.add
          (local.get $var$1)
@@ -831,7 +831,7 @@
      (f32.const 0.5)
     )
    )
-   (block $block
+   (block
     (local.set $var$0
      (f32.ceil
       (local.get $var$0)
@@ -889,7 +889,7 @@
      (f64.const 0.5)
     )
    )
-   (block $block
+   (block
     (local.set $var$0
      (f64.ceil
       (local.get $var$0)

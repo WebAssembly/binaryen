@@ -54,7 +54,7 @@
            )
            (i32.const 1)
           )
-          (block $block (result i32)
+          (block (result i32)
            (loop $label$15
             (if
              (i32.const 0)
@@ -70,10 +70,8 @@
                )
               )
              )
-             (block $block4
-              (br_if $label$15
-               (i32.const 0)
-              )
+             (br_if $label$15
+              (i32.const 0)
              )
             )
             (br_if $label$15

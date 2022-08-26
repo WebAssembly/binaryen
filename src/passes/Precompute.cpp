@@ -190,7 +190,7 @@ public:
     } else {
       *canonical = *newGCData;
     }
-    return Literal(canonical, curr->type);
+    return Literal(canonical, curr->type.getHeapType());
   }
 };
 
@@ -249,7 +249,8 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::funcref) {
+        } else if (singleValue.type.isRef() &&
+                   singleValue.type.getHeapType() == HeapType::func) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();
@@ -271,17 +272,8 @@ struct Precompute
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
-    // Until engines implement v128.const and we have SIMD-aware optimizations
-    // that can break large v128.const instructions into smaller consts and
-    // splats, do not try to precompute v128 expressions.
-    if (curr->type.isVector()) {
-      return;
-    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (flow.getType().hasVector()) {
-      return;
-    }
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
@@ -381,8 +373,7 @@ private:
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     UniqueDeferredQueue<Expression*> work;
-    for (auto& pair : localGraph.locations) {
-      auto* curr = pair.first;
+    for (auto& [curr, _] : localGraph.locations) {
       work.push(curr);
     }
     // the constant value, or none if not a constant
@@ -523,9 +514,8 @@ private:
     if (type.isRef()) {
       return false;
     }
-    // For now, don't try to precompute an Rtt. TODO figure out when that would
-    // be safe and useful.
-    return !type.isRtt();
+
+    return true;
   }
 };
 

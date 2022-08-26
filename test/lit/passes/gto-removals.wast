@@ -12,7 +12,7 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
@@ -22,17 +22,21 @@
 (module
   ;; A write does not keep a field from being removed.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
-
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
@@ -53,7 +57,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -76,7 +80,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -98,7 +102,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (func $func (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (local.get $x)
@@ -132,18 +136,20 @@
 
   ;; CHECK:      (type $ref|$imm-struct|_=>_none (func_subtype (param (ref $imm-struct)) func))
 
-  ;; CHECK:      (func $func-mut (param $x (ref $mut-struct))
+  ;; CHECK:      (func $func-mut (type $ref|$mut-struct|_=>_none) (param $x (ref $mut-struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $mut-struct $r
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $mut-struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $mut-struct $rw
@@ -160,12 +166,14 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $mut-struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $mut-struct $rw-2
@@ -221,7 +229,7 @@
     )
   )
 
-  ;; CHECK:      (func $func-imm (param $x (ref $imm-struct))
+  ;; CHECK:      (func $func-imm (type $ref|$imm-struct|_=>_none) (param $x (ref $imm-struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $imm-struct
   ;; CHECK-NEXT:    (i32.const 1)
@@ -284,7 +292,7 @@
     (ref.func $func-4)
   ))
 
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $vtable $v1
   ;; CHECK-NEXT:    (global.get $vtable)
@@ -313,23 +321,23 @@
     ;; one before it.
   )
 
-  ;; CHECK:      (func $func-0
+  ;; CHECK:      (func $func-0 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-0)
-  ;; CHECK:      (func $func-1
+  ;; CHECK:      (func $func-1 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1)
-  ;; CHECK:      (func $func-2
+  ;; CHECK:      (func $func-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2)
-  ;; CHECK:      (func $func-3
+  ;; CHECK:      (func $func-3 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-3)
-  ;; CHECK:      (func $func-4
+  ;; CHECK:      (func $func-4 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-4)
@@ -358,7 +366,7 @@
     (ref.null data)
   ))
 
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $i64 i64)
   ;; CHECK-NEXT:  (local $f32 f32)
   ;; CHECK-NEXT:  (local.set $i64
@@ -385,5 +393,488 @@
         (global.get $vtable)
       )
     )
+  )
+)
+
+(module
+  ;; A new with side effects
+
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct i32 f64 (ref any)))
+
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref|any|_=>_none (func_subtype (param (ref any)) func))
+
+  ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
+
+  ;; CHECK:      (type $i32_=>_f64 (func_subtype (param i32) (result f64) func))
+
+  ;; CHECK:      (type $i32_=>_ref|any| (func_subtype (param i32) (result (ref any)) func))
+
+  ;; CHECK:      (global $imm-i32 i32 (i32.const 1234))
+  (global $imm-i32 i32 (i32.const 1234))
+
+  ;; CHECK:      (global $mut-i32 (mut i32) (i32.const 5678))
+  (global $mut-i32 (mut i32) (i32.const 5678))
+
+  ;; CHECK:      (func $gets (type $ref|any|_=>_none) (param $x (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gets (param $x (ref any))
+    ;; Gets to keep certain fields alive.
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-side-effect (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (call $helper0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper1
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-side-effect
+    ;; The 2nd&3rd fields here will be removed, since those fields have no
+    ;; reads. They have side effects, though, so the operands will be saved in
+    ;; locals. Note that one of the fields is non-nullable, and we need to use a
+    ;; nullable local for it.
+    (drop
+      (struct.new $struct
+        (call $helper0 (i32.const 0))
+        (call $helper1 (i32.const 1))
+        (call $helper2 (i32.const 2))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-side-effect-global-imm (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 f64)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (call $helper1
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (global.get $imm-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-side-effect-global-imm
+    ;; As above, the 2nd&3rd fields here will be removed. The first field does
+    ;; a global.get, which has effects, but those effects do not interact with
+    ;; anything else (since it is an immutable global), so we do not need a
+    ;; local for it.
+    (drop
+      (struct.new $struct
+        (global.get $imm-i32)
+        (call $helper1 (i32.const 0))
+        (call $helper2 (i32.const 1))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-side-effect-global-mut (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (global.get $mut-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper1
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-side-effect-global-mut
+    ;; As above, but the global is mutable, so we will use a local: the calls
+    ;; might alter that global, in theory.
+    (drop
+      (struct.new $struct
+        (global.get $mut-i32)
+        (call $helper1 (i32.const 0))
+        (call $helper2 (i32.const 1))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-unreachable (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $helper2
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-unreachable
+    ;; Another case with side effects. We stop at the unreachable param before
+    ;; it, however.
+    (drop
+      (struct.new $struct
+        (i32.const 2)
+        (unreachable)
+        (call $helper2 (i32.const 3))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $new-side-effect-in-kept (type $ref|any|_=>_none) (param $any (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (call $helper0
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-side-effect-in-kept (param $any (ref any))
+    ;; Side effects appear in fields that we do *not* remove. In that case,
+    ;; we do not need to use locals.
+    (drop
+      (struct.new $struct
+        (call $helper0 (i32.const 0))
+        (f64.const 3.14159)
+        (local.get $any)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper0 (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper0 (param $x i32) (result i32)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $helper1 (type $i32_=>_f64) (param $x i32) (result f64)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper1 (param $x i32) (result f64)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $helper2 (type $i32_=>_ref|any|) (param $x i32) (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper2 (param $x i32) (result (ref any))
+    (unreachable)
+  )
+)
+
+;; We can remove fields from the end if they are only used in subtypes, because
+;; the subtypes can always add fields at the end (and only at the end).
+(module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+  (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+
+  (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; The parent has fields 0, 1, 2, 3 and the child adds 4.
+    ;; Use fields only 1 in the parent, and all the rest in the child. We can
+    ;; only remove from the end in the child, which means we can remove 2 and 3
+    ;; in the parent, but not 0.
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)
+
+(module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field (mut f32)) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field (mut f32)) (field f64) (field anyref) $parent))
+  (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
+
+  (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
+
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (struct.set $parent 2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 4
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; As above, but add a write in the parent of field 2. That prevents us from
+    ;; removing it from the parent.
+    (struct.set $parent 2 (local.get $x) (f32.const 0))
+
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)
+
+;; A parent with two children, and there are only reads of the parent. Those
+;; reads might be of data of either child, of course (as a refernce to the
+;; parent might point to them), so we cannot optimize here.
+(module
+  ;; CHECK:      (type $parent (struct_subtype (field i32) data))
+  (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+
+  ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
+  (type $child1 (struct_subtype (field i32) $parent))
+  ;; CHECK:      (type $child2 (struct_subtype (field i32) $parent))
+  (type $child2 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none) (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+    (drop (struct.get $parent 0 (local.get $parent)))
+  )
+)
+
+;; As above, but now the read is just of one child. We can remove the field
+;; from the parent and the other child.
+(module
+  ;; CHECK:      (type $parent (struct_subtype  data))
+
+  ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
+  (type $child1 (struct_subtype (field i32) $parent))
+
+  (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+
+  ;; CHECK:      (type $child2 (struct_subtype  $parent))
+  (type $child2 (struct_subtype (field i32) $parent))
+
+  ;; CHECK:      (func $func (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none) (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child1 0
+  ;; CHECK-NEXT:    (local.get $child1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $parent (ref $parent)) (param $child1 (ref $child1)) (param $child2 (ref $child2))
+    (drop (struct.get $child1 0 (local.get $child1)))
+  )
+)
+
+(module
+  ;; CHECK:      (type ${mut:i8} (struct_subtype  data))
+  (type ${mut:i8} (struct_subtype (field (mut i8)) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $none_=>_ref|${mut:i8}| (func_subtype (result (ref ${mut:i8})) func))
+
+  ;; CHECK:      (func $unreachable-set (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref null ${mut:i8}))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $helper-i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null ${mut:i8})
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-set
+    ;; The struct type has no reads, so we want to remove all of the sets of it.
+    ;; This struct.set will trap on null, but first the call must run. When we
+    ;; optimize here we should be careful to not emit something with different
+    ;; ordering (naively emitting ref.as_non_null on the reference would trap
+    ;; before the call, so we must reorder).
+    (struct.set ${mut:i8} 0
+      (ref.null ${mut:i8})
+      (call $helper-i32)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-set-2 (type $none_=>_none)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (block (result (ref null ${mut:i8}))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (br $block)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null ${mut:i8})
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-set-2
+    ;; As above, but the side effects now are a br. Again, the br must happen
+    ;; before the trap (in fact, the br will skip the trap here).
+    (block
+      (struct.set ${mut:i8} 0
+        (ref.null ${mut:i8})
+        (br $block)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-set-3 (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 (ref null ${mut:i8}))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref ${mut:i8}))
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (call $helper-ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $helper-i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-set-3
+    ;; As above, but now we have side effects in both children.
+    (block
+      (struct.set ${mut:i8} 0
+        (call $helper-ref)
+        (call $helper-i32)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper-i32 (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $helper-i32 (result i32)
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $helper-ref (type $none_=>_ref|${mut:i8}|) (result (ref ${mut:i8}))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper-ref (result (ref ${mut:i8}))
+    (unreachable)
   )
 )

@@ -319,7 +319,7 @@ private:
         // conservative approximation because there can be cases that 'try' is
         // within the expression that may throw so it is safe to take the
         // expression out.
-        if (effects.throws && !FindAll<Try>(outOf).list.empty()) {
+        if (effects.throws() && !FindAll<Try>(outOf).list.empty()) {
           return false;
         }
       }
@@ -617,10 +617,10 @@ private:
       for (auto& tail : next) {
         auto* item = getItem(tail, num);
         auto digest = hashes[item];
-        if (seen.count(digest)) {
+        if (!seen.emplace(digest).second) {
           continue;
         }
-        seen.insert(digest);
+
         auto& items = hashed[digest];
         if (items.size() == 1) {
           continue;

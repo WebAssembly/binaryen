@@ -22,6 +22,8 @@
 
 namespace wasm {
 
+namespace StructUtils {
+
 // A vector of a template type's values. One such vector will be used per struct
 // type, where each element in the vector represents a field. We always assume
 // that the vectors are pre-initialized to the right length before accessing any
@@ -57,9 +59,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   }
 
   void combineInto(StructValuesMap<T>& combinedInfos) const {
-    for (auto& kv : *this) {
-      auto type = kv.first;
-      auto& info = kv.second;
+    for (auto& [type, info] : *this) {
       for (Index i = 0; i < info.size(); i++) {
         combinedInfos[type][i].combine(info[i]);
       }
@@ -68,9 +68,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
 
   void dump(std::ostream& o) {
     o << "dump " << this << '\n';
-    for (auto& kv : (*this)) {
-      auto type = kv.first;
-      auto& vec = kv.second;
+    for (auto& [type, vec] : (*this)) {
       o << "dump " << type << " " << &vec << ' ';
       for (auto x : vec) {
         x.dump(o);
@@ -128,11 +126,14 @@ struct FunctionStructValuesMap
 // type being written to, and not just that it is of a subtype of the
 // instruction's type, which helps later.
 template<typename T, typename SubType>
-struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
+struct StructScanner
+  : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
   bool isFunctionParallel() override { return true; }
 
-  Scanner(FunctionStructValuesMap<T>& functionNewInfos,
-          FunctionStructValuesMap<T>& functionSetGetInfos)
+  bool modifiesBinaryenIR() override { return false; }
+
+  StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
+                FunctionStructValuesMap<T>& functionSetGetInfos)
     : functionNewInfos(functionNewInfos),
       functionSetGetInfos(functionSetGetInfos) {}
 
@@ -190,7 +191,10 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
     // (otherwise, we'd need to consider both the type actually written and the
     // type of the fallthrough, somehow).
     auto* fallthrough = Properties::getFallthrough(
-      expr, this->getPassOptions(), *this->getModule());
+      expr,
+      this->getPassOptions(),
+      *this->getModule(),
+      static_cast<SubType*>(this)->getFallthroughBehavior());
     if (fallthrough->type == expr->type) {
       expr = fallthrough;
     }
@@ -202,6 +206,11 @@ struct Scanner : public WalkerPass<PostWalker<Scanner<T, SubType>>> {
       }
     }
     static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
+  }
+
+  Properties::FallthroughBehavior getFallthroughBehavior() {
+    // By default, look at and use tee&br_if fallthrough values.
+    return Properties::FallthroughBehavior::AllowTeeBrIf;
   }
 
   FunctionStructValuesMap<T>& functionNewInfos;
@@ -222,31 +231,38 @@ public:
   SubTypes subTypes;
 
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
-    propagate(infos, false);
+    propagate(infos, false, true);
+  }
+
+  void propagateToSubTypes(StructValuesMap<T>& infos) {
+    propagate(infos, true, false);
   }
 
   void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true);
+    propagate(infos, true, true);
   }
 
 private:
-  void propagate(StructValuesMap<T>& combinedInfos, bool toSubTypes) {
+  void propagate(StructValuesMap<T>& combinedInfos,
+                 bool toSubTypes,
+                 bool toSuperTypes) {
     UniqueDeferredQueue<HeapType> work;
-    for (auto& kv : combinedInfos) {
-      auto type = kv.first;
+    for (auto& [type, _] : combinedInfos) {
       work.push(type);
     }
     while (!work.empty()) {
       auto type = work.pop();
       auto& infos = combinedInfos[type];
 
-      // Propagate shared fields to the supertype.
-      if (auto superType = type.getSuperType()) {
-        auto& superInfos = combinedInfos[*superType];
-        auto& superFields = superType->getStruct().fields;
-        for (Index i = 0; i < superFields.size(); i++) {
-          if (superInfos[i].combine(infos[i])) {
-            work.push(*superType);
+      if (toSuperTypes) {
+        // Propagate shared fields to the supertype.
+        if (auto superType = type.getSuperType()) {
+          auto& superInfos = combinedInfos[*superType];
+          auto& superFields = superType->getStruct().fields;
+          for (Index i = 0; i < superFields.size(); i++) {
+            if (superInfos[i].combine(infos[i])) {
+              work.push(*superType);
+            }
           }
         }
       }
@@ -254,7 +270,7 @@ private:
       if (toSubTypes) {
         // Propagate shared fields to the subtypes.
         auto numFields = type.getStruct().fields.size();
-        for (auto subType : subTypes.getSubTypes(type)) {
+        for (auto subType : subTypes.getStrictSubTypes(type)) {
           auto& subInfos = combinedInfos[subType];
           for (Index i = 0; i < numFields; i++) {
             if (subInfos[i].combine(infos[i])) {
@@ -266,6 +282,8 @@ private:
     }
   }
 };
+
+} // namespace StructUtils
 
 } // namespace wasm
 

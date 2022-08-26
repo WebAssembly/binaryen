@@ -19,6 +19,7 @@
 
 #include <array>
 #include <iostream>
+#include <variant>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -31,12 +32,14 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
   // can have their signalling bit set, for example.
   union {
+    // Note: i31 is stored in the |i32| field, with the lower 31 bits containing
+    // the value if there is one, and the highest bit containing whether there
+    // is a value. Thus, a null is |i32 === 0|.
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
@@ -47,26 +50,8 @@ class Literal {
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type.
     std::shared_ptr<GCData> gcData;
-    // RTT values are "structural" in that the MVP doc says that multiple
-    // invocations of ref.canon return things that are observably identical, and
-    // the same is true for ref.sub. That is, what matters is the types; there
-    // is no unique identifier created in each ref.canon/sub. To track the
-    // types, we maintain a simple vector of the supertypes. Thus, an rtt.canon
-    // of type A will have an empty vector; an rtt.sub of type B of that initial
-    // canon would have a vector of size 1 containing A; a subsequent rtt.sub
-    // would have A, B, and so forth.
-    // (This encoding is very inefficient and not at all what a production VM
-    // would do, but it is simple.)
-    // The unique_ptr here is to avoid increasing the size of the union as well
-    // as the Literal class itself.
-    // To support the experimental RttFreshSub instruction, we not only store
-    // the type, but also a reference to an allocation.
-    // The above describes dynamic data, that is with an actual RTT. The static
-    // case just has a static type in its GCData.
-    // See struct RttSuper below for more details.
-    std::unique_ptr<RttSupers> rttSupers;
-    // TODO: Literals of type `externref` can only be `null` currently but we
-    // will need to represent extern values eventually, to
+    // TODO: Literals of type `anyref` can only be `null` currently but we
+    // will need to represent external values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
     // 2) avoid bailing out when seeing a reference typed value in precompute
   };
@@ -93,9 +78,9 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func, Type type) : func(func), type(type) {}
-  explicit Literal(std::shared_ptr<GCData> gcData, Type type);
-  explicit Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type);
+  explicit Literal(Name func, HeapType type)
+    : func(func), type(type, NonNullable) {}
+  explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
@@ -112,6 +97,9 @@ public:
       }
       if (isData()) {
         return !gcData;
+      }
+      if (type.getHeapType() == HeapType::i31) {
+        return i32 == 0;
       }
       return true;
     }
@@ -250,16 +238,15 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  static Literal makeNull(Type type) {
-    assert(type.isNullable());
-    return Literal(type);
+  static Literal makeNull(HeapType type) {
+    return Literal(Type(type, Nullable));
   }
-  static Literal makeFunc(Name func, Type type = Type::funcref) {
+  static Literal makeFunc(Name func, HeapType type) {
     return Literal(func, type);
   }
   static Literal makeI31(int32_t value) {
-    auto lit = Literal(Type::i31ref);
-    lit.i32 = value & 0x7fffffff;
+    auto lit = Literal(Type(HeapType::i31, NonNullable));
+    lit.i32 = value | 0x80000000;
     return lit;
   }
 
@@ -274,7 +261,8 @@ public:
   }
   int32_t geti31(bool signed_ = true) const {
     assert(type.getHeapType() == HeapType::i31);
-    return signed_ ? (i32 << 1) >> 1 : i32;
+    // Cast to unsigned for the left shift to avoid undefined behavior.
+    return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
   int64_t geti64() const {
     assert(type == Type::i64);
@@ -294,7 +282,6 @@ public:
     return func;
   }
   std::shared_ptr<GCData> getGCData() const;
-  const RttSupers& getRttSupers() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -422,6 +409,11 @@ public:
   Literal pmin(const Literal& other) const;
   Literal pmax(const Literal& other) const;
   Literal copysign(const Literal& other) const;
+
+  // Fused multiply add and subtract.
+  // Computes this + (left * right) to infinite precision then round once.
+  Literal fma(const Literal& left, const Literal& right) const;
+  Literal fms(const Literal& left, const Literal& right) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
@@ -565,6 +557,8 @@ public:
   Literal minUI32x4(const Literal& other) const;
   Literal maxSI32x4(const Literal& other) const;
   Literal maxUI32x4(const Literal& other) const;
+  Literal dotSI8x16toI16x8(const Literal& other) const;
+  Literal dotUI8x16toI16x8(const Literal& other) const;
   Literal dotSI16x8toI32x4(const Literal& other) const;
   Literal extMulLowSI32x4(const Literal& other) const;
   Literal extMulHighSI32x4(const Literal& other) const;
@@ -645,11 +639,10 @@ public:
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
-
-  // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
-  // with this object's RTT can be successfuly cast using the other RTT
-  // according to the wasm rules for that.
-  bool isSubRtt(const Literal& other) const;
+  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
 private:
   Literal addSatSI8(const Literal& other) const;
@@ -682,6 +675,12 @@ public:
   Literals(size_t initialSize) : SmallVector(initialSize) {}
 
   Type getType() {
+    if (empty()) {
+      return Type::none;
+    }
+    if (size() == 1) {
+      return (*this)[0].type;
+    }
     std::vector<Type> types;
     for (auto& val : *this) {
       types.push_back(val.type);
@@ -695,62 +694,24 @@ public:
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
-// A GC Struct or Array is a set of values with a run-time type saying what it
-// is. In the case of static (rtt-free) typing, the rtt is not present and
-// instead we have a static type.
+// A GC Struct or Array is a set of values with a type saying how it should be
+// interpreted.
 struct GCData {
-  // Either the RTT or the type must be present, but not both.
-  Literal rtt;
+  // The type of this struct or array.
   HeapType type;
 
+  // The element or field values.
   Literals values;
 
   GCData(HeapType type, Literals values) : type(type), values(values) {}
-  GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
-
-struct RttSuper {
-  // The type of the super.
-  Type type;
-  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
-  // normal sub, and for a fresh one we allocate a value here, which can then be
-  // used to differentiate rtts. (The allocation is shared so that when copying
-  // an rtt we remain equal.)
-  // TODO: Remove or optimize this when the spec stabilizes.
-  std::shared_ptr<size_t> freshPtr;
-
-  RttSuper(Type type) : type(type) {}
-
-  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
-
-  bool operator==(const RttSuper& other) const {
-    return type == other.type && freshPtr == other.freshPtr;
-  }
-  bool operator!=(const RttSuper& other) const { return !(*this == other); }
-};
-
-struct RttSupers : std::vector<RttSuper> {};
 
 } // namespace wasm
 
 namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
-    auto digest = wasm::hash(a.type.getID());
-    auto hashRef = [&]() {
-      assert(a.type.isRef());
-      if (a.isNull()) {
-        return digest;
-      }
-      if (a.type.isFunction()) {
-        wasm::rehash(digest, a.getFunc());
-        return digest;
-      }
-      // other non-null reference type literals cannot represent concrete
-      // values, i.e. there is no concrete externref, anyref or eqref other than
-      // null.
-      WASM_UNREACHABLE("unexpected type");
-    };
+    auto digest = wasm::hash(a.type);
     if (a.type.isBasic()) {
       switch (a.type.getBasic()) {
         case wasm::Type::i32:
@@ -771,29 +732,25 @@ template<> struct hash<wasm::Literal> {
           wasm::rehash(digest, chunks[0]);
           wasm::rehash(digest, chunks[1]);
           return digest;
-        case wasm::Type::funcref:
-        case wasm::Type::externref:
-        case wasm::Type::anyref:
-        case wasm::Type::eqref:
-        case wasm::Type::dataref:
-          return hashRef();
-        case wasm::Type::i31ref:
-          wasm::rehash(digest, a.geti31(true));
-          return digest;
         case wasm::Type::none:
         case wasm::Type::unreachable:
           break;
       }
     } else if (a.type.isRef()) {
-      return hashRef();
-    } else if (a.type.isRtt()) {
-      const auto& supers = a.getRttSupers();
-      wasm::rehash(digest, supers.size());
-      for (auto super : supers) {
-        wasm::rehash(digest, super.type.getID());
-        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
+      if (a.isNull()) {
+        return digest;
       }
-      return digest;
+      if (a.type.isFunction()) {
+        wasm::rehash(digest, a.getFunc());
+        return digest;
+      }
+      if (a.type.getHeapType() == wasm::HeapType::i31) {
+        wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      // other non-null reference type literals cannot represent concrete
+      // values, i.e. there is no concrete anyref or eqref other than null.
+      WASM_UNREACHABLE("unexpected type");
     }
     WASM_UNREACHABLE("unexpected type");
   }

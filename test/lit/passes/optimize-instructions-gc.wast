@@ -18,24 +18,26 @@
   ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct (field i32)))
 
+  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
+
   ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+
   ;; NOMNL:      (type $array (array_subtype (mut i8) data))
   (type $array (array (mut i8)))
 
-  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)))
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
-  ;; CHECK:      (type $empty (struct ))
+  ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+
   ;; NOMNL:      (type $empty (struct_subtype  data))
   (type $empty (struct))
 
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
-  ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -45,38 +47,38 @@
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
   ;; CHECK:      (func $if-arms-subtype-fold (result anyref)
-  ;; CHECK-NEXT:  (ref.null extern)
+  ;; CHECK-NEXT:  (ref.null eq)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $if-arms-subtype-fold (result anyref)
-  ;; NOMNL-NEXT:  (ref.null extern)
+  ;; NOMNL:      (func $if-arms-subtype-fold (type $none_=>_anyref) (result anyref)
+  ;; NOMNL-NEXT:  (ref.null eq)
   ;; NOMNL-NEXT: )
   (func $if-arms-subtype-fold (result anyref)
     (if (result anyref)
       (i32.const 0)
-      (ref.null extern)
-      (ref.null extern)
+      (ref.null eq)
+      (ref.null eq)
     )
   )
   ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
   ;; CHECK:      (func $if-arms-subtype-nofold (result anyref)
   ;; CHECK-NEXT:  (if (result anyref)
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (ref.null extern)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null data)
+  ;; CHECK-NEXT:   (ref.null i31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $if-arms-subtype-nofold (result anyref)
+  ;; NOMNL:      (func $if-arms-subtype-nofold (type $none_=>_anyref) (result anyref)
   ;; NOMNL-NEXT:  (if (result anyref)
   ;; NOMNL-NEXT:   (i32.const 0)
-  ;; NOMNL-NEXT:   (ref.null extern)
-  ;; NOMNL-NEXT:   (ref.null func)
+  ;; NOMNL-NEXT:   (ref.null data)
+  ;; NOMNL-NEXT:   (ref.null i31)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $if-arms-subtype-nofold (result anyref)
     (if (result anyref)
       (i32.const 0)
-      (ref.null extern)
-      (ref.null func)
+      (ref.null data)
+      (ref.null i31)
     )
   )
 
@@ -95,7 +97,7 @@
   ;; CHECK-NEXT:   (call $get-i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $store-trunc (param $x (ref null $struct))
+  ;; NOMNL:      (func $store-trunc (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
   ;; NOMNL-NEXT:  (struct.set $struct $i8
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:   (i32.const 35)
@@ -135,7 +137,7 @@
   ;; CHECK-NEXT:   (i32.const 35)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $store-trunc2 (param $x (ref null $array))
+  ;; NOMNL:      (func $store-trunc2 (type $ref?|$array|_=>_none) (param $x (ref null $array))
   ;; NOMNL-NEXT:  (array.set $array
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:   (i32.const 0)
@@ -186,7 +188,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; NOMNL:      (func $unneeded_is (type $ref|$struct|_ref|func|_dataref_i31ref_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
@@ -269,7 +271,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_is_null (type $ref?|$struct|_funcref_ref?|data|_ref?|i31|_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (local.get $struct)
@@ -374,7 +376,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_is_bad_kinds (type $funcref_ref?|data|_ref?|i31|_=>_none) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
@@ -471,7 +473,7 @@
   ;; CHECK-NEXT:   (local.get $i31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; NOMNL:      (func $unneeded_as (type $ref|$struct|_ref|func|_dataref_i31ref_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.get $struct)
   ;; NOMNL-NEXT:  )
@@ -528,7 +530,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_as_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_as_null (type $ref?|$struct|_funcref_ref?|data|_ref?|i31|_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
   ;; NOMNL-NEXT:    (local.get $struct)
@@ -621,7 +623,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_as_bad_kinds (type $funcref_ref?|data|_ref?|i31|_=>_none) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref func))
   ;; NOMNL-NEXT:    (drop
@@ -708,7 +710,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_unreachability
+  ;; NOMNL:      (func $unneeded_unreachability (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.is_func
   ;; NOMNL-NEXT:    (unreachable)
@@ -762,7 +764,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $redundant-non-null-casts (param $x (ref null $struct)) (param $y (ref null $array))
+  ;; NOMNL:      (func $redundant-non-null-casts (type $ref?|$struct|_ref?|$array|_=>_none) (param $x (ref null $struct)) (param $y (ref null $array))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
   ;; NOMNL-NEXT:    (local.get $x)
@@ -844,7 +846,7 @@
   ;; CHECK:      (func $get-eqref (result eqref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $get-eqref (result eqref)
+  ;; NOMNL:      (func $get-eqref (type $none_=>_eqref) (result eqref)
   ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
   (func $get-eqref (result eqref)
@@ -873,7 +875,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-eq (param $x eqref) (param $y eqref)
+  ;; NOMNL:      (func $ref-eq (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
   ;; NOMNL-NEXT:  (local $lx eqref)
   ;; NOMNL-NEXT:  (local $ly eqref)
   ;; NOMNL-NEXT:  (drop
@@ -945,7 +947,7 @@
   ;; CHECK:      (func $nothing
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $nothing
+  ;; NOMNL:      (func $nothing (type $none_=>_none)
   ;; NOMNL-NEXT:  (nop)
   ;; NOMNL-NEXT: )
   (func $nothing)
@@ -966,19 +968,25 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:     (rtt.canon $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct
-  ;; CHECK-NEXT:     (rtt.canon $struct)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-eq-corner-cases (param $x eqref)
+  ;; NOMNL:      (func $ref-eq-corner-cases (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.eq
   ;; NOMNL-NEXT:    (block (result eqref)
@@ -993,16 +1001,22 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.eq
-  ;; NOMNL-NEXT:    (struct.new_default_with_rtt $struct
-  ;; NOMNL-NEXT:     (rtt.canon $struct)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (struct.new_default_with_rtt $struct
-  ;; NOMNL-NEXT:     (rtt.canon $struct)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (struct.new_default $struct)
+  ;; NOMNL-NEXT:    (struct.new_default $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.tee $x
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-eq-corner-cases (param $x eqref)
@@ -1022,12 +1036,8 @@
     ;; allocation prevents optimization
     (drop
       (ref.eq
-        (struct.new_default_with_rtt $struct
-          (rtt.canon $struct)
-        )
-        (struct.new_default_with_rtt $struct
-          (rtt.canon $struct)
-        )
+        (struct.new_default $struct)
+        (struct.new_default $struct)
       )
     )
     ;; but irrelevant allocations do not prevent optimization
@@ -1036,17 +1046,13 @@
         (block (result eqref)
           ;; an allocation that does not trouble us
           (drop
-            (struct.new_default_with_rtt $struct
-              (rtt.canon $struct)
-            )
+            (struct.new_default $struct)
           )
           (local.get $x)
         )
         (block (result eqref)
           (drop
-            (struct.new_default_with_rtt $struct
-              (rtt.canon $struct)
-            )
+            (struct.new_default $struct)
           )
           ;; add a nop to make the two inputs to ref.eq not structurally equal,
           ;; but in a way that does not matter (since only the value falling
@@ -1056,26 +1062,33 @@
         )
       )
     )
+    ;; a tee does not prevent optimization, as we can fold the tee and the get.
+    (drop
+      (ref.eq
+        (local.tee $x
+          (local.get $x)
+        )
+        (local.get $x)
+      )
+    )
   )
 
   ;; CHECK:      (func $ref-eq-ref-cast (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:    (ref.cast_static $struct
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; NOMNL:      (func $ref-eq-ref-cast (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.eq
   ;; NOMNL-NEXT:    (local.get $x)
-  ;; NOMNL-NEXT:    (ref.cast
+  ;; NOMNL-NEXT:    (ref.cast_static $struct
   ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:     (rtt.canon $struct)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -1086,9 +1099,8 @@
     (drop
       (ref.eq
         (local.get $x)
-        (ref.cast
+        (ref.cast_static $struct
           (local.get $x)
-          (rtt.canon $struct)
         )
       )
     )
@@ -1097,132 +1109,117 @@
   ;; CHECK:      (func $flip-cast-of-as-non-null (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:    (ref.cast_static $struct
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get_u $struct $i8
-  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:    (ref.cast_static $struct
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (ref.as_func
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (ref.as_data
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (ref.as_i31
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $flip-cast-of-as-non-null (param $x anyref)
+  ;; NOMNL:      (func $flip-cast-of-as-non-null (type $anyref_=>_none) (param $x anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (ref.cast
+  ;; NOMNL-NEXT:    (ref.cast_static $struct
   ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:     (rtt.canon $struct)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.get_u $struct $i8
-  ;; NOMNL-NEXT:    (ref.cast
+  ;; NOMNL-NEXT:    (ref.cast_static $struct
   ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:     (rtt.canon $struct)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (ref.as_func
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (ref.as_data
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (ref.as_i31
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $flip-cast-of-as-non-null (param $x anyref)
     (drop
-      (ref.cast
+      (ref.cast_static $struct
         ;; this can be moved through the ref.cast outward.
         (ref.as_non_null
           (local.get $x)
         )
-        (rtt.canon $struct)
       )
     )
     (drop
       ;; an example of how this helps: the struct.get will trap on null anyhow
       (struct.get_u $struct 0
-        (ref.cast
+        (ref.cast_static $struct
           ;; this can be moved through the ref.cast outward.
           (ref.as_non_null
             (local.get $x)
           )
-          (rtt.canon $struct)
         )
       )
     )
     ;; other ref.as* operations are ignored for now
     (drop
-      (ref.cast
+      (ref.cast_static $struct
         (ref.as_func
           (local.get $x)
         )
-        (rtt.canon $struct)
       )
     )
     (drop
-      (ref.cast
+      (ref.cast_static $struct
         (ref.as_data
           (local.get $x)
         )
-        (rtt.canon $struct)
       )
     )
     (drop
-      (ref.cast
+      (ref.cast_static $struct
         (ref.as_i31
           (local.get $x)
         )
-        (rtt.canon $struct)
       )
     )
   )
@@ -1235,7 +1232,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $flip-tee-of-as-non-null (param $x anyref)
+  ;; NOMNL:      (func $flip-tee-of-as-non-null (type $anyref_=>_none) (param $x anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
   ;; NOMNL-NEXT:    (local.tee $x
@@ -1264,7 +1261,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.tee $x
   ;; NOMNL-NEXT:    (ref.as_non_null
@@ -1296,7 +1293,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ternary-identical-arms (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
+  ;; NOMNL:      (func $ternary-identical-arms (type $i32_ref?|$struct|_ref?|$struct|_=>_none) (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (if (result (ref null $struct))
@@ -1329,7 +1326,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $select-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; NOMNL:      (func $select-identical-arms-but-side-effect (type $ref?|$struct|_ref?|$struct|_i32_=>_none) (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (select
   ;; NOMNL-NEXT:    (struct.get_u $struct $i8
@@ -1367,7 +1364,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ternary-identical-arms-no-side-effect (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
+  ;; NOMNL:      (func $ternary-identical-arms-no-side-effect (type $ref|$struct|_ref|$struct|_i32_=>_none) (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.get_u $struct $i8
   ;; NOMNL-NEXT:    (select (result (ref $struct))
@@ -1403,7 +1400,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $if-identical-arms-with-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; NOMNL:      (func $if-identical-arms-with-side-effect (type $ref?|$struct|_ref?|$struct|_i32_=>_none) (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.get_u $struct $i8
   ;; NOMNL-NEXT:    (if (result (ref null $struct))
@@ -1432,48 +1429,46 @@
 
   ;; CHECK:      (func $ref-cast-squared (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-squared (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-squared (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (local.get $x)
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-squared (param $x eqref)
     ;; Identical ref.casts can be folded together.
     (drop
-      (ref.cast
-        (ref.cast
+      (ref.cast_static $struct
+        (ref.cast_static $struct
           (local.get $x)
-          (rtt.canon $struct)
         )
-        (rtt.canon $struct)
       )
     )
   )
   ;; CHECK:      (func $ref-cast-squared-fallthrough (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.cast
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (ref.cast_static $struct
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-squared-fallthrough (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-squared-fallthrough (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (local.tee $x
-  ;; NOMNL-NEXT:    (ref.cast
-  ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:     (rtt.canon $struct)
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
+  ;; NOMNL-NEXT:    (local.tee $x
+  ;; NOMNL-NEXT:     (ref.cast_static $struct
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -1481,126 +1476,66 @@
   (func $ref-cast-squared-fallthrough (param $x eqref)
     ;; A fallthrough in the middle does not prevent this optimization.
     (drop
-      (ref.cast
+      (ref.cast_static $struct
         (local.tee $x
-          (ref.cast
+          (ref.cast_static $struct
             (local.get $x)
-            (rtt.canon $struct)
           )
         )
-        (rtt.canon $struct)
       )
     )
   )
   ;; CHECK:      (func $ref-cast-cubed (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-cubed (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-cubed (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (local.get $x)
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-cubed (param $x eqref)
     ;; Three and more also work.
     (drop
-      (ref.cast
-        (ref.cast
-          (ref.cast
+      (ref.cast_static $struct
+        (ref.cast_static $struct
+          (ref.cast_static $struct
             (local.get $x)
-            (rtt.canon $struct)
           )
-          (rtt.canon $struct)
         )
-        (rtt.canon $struct)
       )
     )
   )
   ;; CHECK:      (func $ref-cast-squared-different (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (ref.cast
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $empty)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-squared-different (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-squared-different (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
-  ;; NOMNL-NEXT:    (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
+  ;; NOMNL-NEXT:    (ref.cast_static $empty
   ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:     (rtt.canon $empty)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-squared-different (param $x eqref)
     ;; Different casts cannot be folded.
     (drop
-      (ref.cast
-        (ref.cast
+      (ref.cast_static $struct
+        (ref.cast_static $empty
           (local.get $x)
-          (rtt.canon $empty)
         )
-        (rtt.canon $struct)
       )
     )
-  )
-  ;; CHECK:      (func $ref-cast-squared-effects (param $x eqref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (ref.cast
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (call $get-rtt)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $get-rtt)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-squared-effects (param $x eqref)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
-  ;; NOMNL-NEXT:    (ref.cast
-  ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:     (call $get-rtt)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (call $get-rtt)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
-  (func $ref-cast-squared-effects (param $x eqref)
-    ;; The rtts are equal but have side effects, preventing optimization.
-    (drop
-      (ref.cast
-        (ref.cast
-          (local.get $x)
-          (call $get-rtt)
-        )
-        (call $get-rtt)
-      )
-    )
-  )
-
-  ;; Helper function for above.
-  ;; CHECK:      (func $get-rtt (result (rtt $empty))
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $get-rtt (result (rtt $empty))
-  ;; NOMNL-NEXT:  (unreachable)
-  ;; NOMNL-NEXT: )
-  (func $get-rtt (result (rtt $empty))
-    (unreachable)
   )
 
   ;; CHECK:      (func $ref-eq-null (param $x eqref)
@@ -1618,7 +1553,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-eq-null (param $x eqref)
+  ;; NOMNL:      (func $ref-eq-null (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (local.get $x)
@@ -1659,6 +1594,294 @@
     )
   )
 
+  ;; CHECK:      (func $ref-eq-possible (param $x eqref) (param $y eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.cast_static $struct
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast_static $array
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-eq-possible (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (ref.cast_static $struct
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.cast_static $array
+  ;; NOMNL-NEXT:     (local.get $y)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-eq-possible (param $x eqref) (param $y eqref)
+    ;; These casts are to types that are incompatible. However, it is possible
+    ;; they are both null, so we cannot optimize here.
+    (drop
+      (ref.eq
+        (ref.cast_static $struct
+          (local.get $x)
+        )
+        (ref.cast_static $array
+          (local.get $y)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-impossible (param $x eqref) (param $y eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.cast_static $struct
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast_static $array
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast_static $struct
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.cast_static $array
+  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.cast_static $struct
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.cast_static $array
+  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-eq-impossible (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.cast_static $struct
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.cast_static $array
+  ;; NOMNL-NEXT:      (local.get $y)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.cast_static $struct
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.cast_static $array
+  ;; NOMNL-NEXT:       (local.get $y)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.cast_static $struct
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.cast_static $array
+  ;; NOMNL-NEXT:       (local.get $y)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-eq-impossible (param $x eqref) (param $y eqref)
+    ;; As above but cast one of them to non-null, which proves they cannot be
+    ;; equal, and the result must be 0.
+    (drop
+      (ref.eq
+        (ref.cast_static $struct
+          (ref.as_non_null
+            (local.get $x)
+          )
+        )
+        (ref.cast_static $array
+          (local.get $y)
+        )
+      )
+    )
+    ;; As above but the cast is on the other one.
+    (drop
+      (ref.eq
+        (ref.cast_static $struct
+          (local.get $x)
+        )
+        (ref.cast_static $array
+          (ref.as_non_null
+            (local.get $y)
+          )
+        )
+      )
+    )
+    ;; As above but the cast is both.
+    (drop
+      (ref.eq
+        (ref.cast_static $struct
+          (ref.as_non_null
+            (local.get $x)
+          )
+        )
+        (ref.cast_static $array
+          (ref.as_non_null
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-possible-b (param $x eqref) (param $y eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast_static $A
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-eq-possible-b (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $A
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $y)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (ref.cast_static $A
+  ;; NOMNL-NEXT:      (local.get $y)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-eq-possible-b (param $x eqref) (param $y eqref)
+    ;; As above but the casts are to things that are compatible, since B is a
+    ;; subtype of A, so we cannot optimize.
+    (drop
+      (ref.eq
+        (ref.cast_static $A
+          (ref.as_non_null
+            (local.get $x)
+          )
+        )
+        (ref.cast_static $B
+          (ref.as_non_null
+            (local.get $y)
+          )
+        )
+      )
+    )
+    ;; As above but flipped.
+    (drop
+      (ref.eq
+        (ref.cast_static $B
+          (ref.as_non_null
+            (local.get $x)
+          )
+        )
+        (ref.cast_static $A
+          (ref.as_non_null
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $hoist-LUB-danger (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $x)
@@ -1670,7 +1893,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $hoist-LUB-danger (param $x i32) (result i32)
+  ;; NOMNL:      (func $hoist-LUB-danger (type $i32_=>_i32) (param $x i32) (result i32)
   ;; NOMNL-NEXT:  (if (result i32)
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:   (struct.get $B 1
@@ -1707,21 +1930,15 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (rtt.canon $array)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $incompatible-cast-of-non-null (param $struct (ref $struct))
+  ;; NOMNL:      (func $incompatible-cast-of-non-null (type $ref|$struct|_=>_none) (param $struct (ref $struct))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $array))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $struct)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (rtt.canon $array)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
@@ -1729,9 +1946,8 @@
   ;; NOMNL-NEXT: )
   (func $incompatible-cast-of-non-null (param $struct (ref $struct))
     (drop
-      (ref.cast
+      (ref.cast_static $array
         (local.get $struct)
-        (rtt.canon $array)
       )
     )
   )
@@ -1741,9 +1957,6 @@
   ;; CHECK-NEXT:   (block (result (ref null $array))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (rtt.canon $array)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null $array)
   ;; CHECK-NEXT:   )
@@ -1756,22 +1969,16 @@
   ;; CHECK-NEXT:       (ref.null $struct)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (rtt.canon $array)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (ref.null $array)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $incompatible-cast-of-null
+  ;; NOMNL:      (func $incompatible-cast-of-null (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref null $array))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (ref.null $struct)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (rtt.canon $array)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (ref.null $array)
   ;; NOMNL-NEXT:   )
@@ -1784,9 +1991,6 @@
   ;; NOMNL-NEXT:       (ref.null $struct)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (drop
-  ;; NOMNL-NEXT:      (rtt.canon $array)
-  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:     (ref.null $array)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
@@ -1794,45 +1998,40 @@
   ;; NOMNL-NEXT: )
   (func $incompatible-cast-of-null
     (drop
-      (ref.cast
+      (ref.cast_static $array
         (ref.null $struct)
-        (rtt.canon $array)
       )
     )
     (drop
-      (ref.cast
+      (ref.cast_static $array
         ;; The fallthrough is null, but the node's child's type is non-nullable,
         ;; so we must add a ref.as_non_null on the outside to keep the type
         ;; identical.
         (ref.as_non_null
           (ref.null $struct)
         )
-        (rtt.canon $array)
       )
     )
   )
 
   ;; CHECK:      (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $array
   ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:    (rtt.canon $array)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
+  ;; NOMNL:      (func $incompatible-cast-of-unknown (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $array
   ;; NOMNL-NEXT:    (local.get $struct)
-  ;; NOMNL-NEXT:    (rtt.canon $array)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
     (drop
-      (ref.cast
+      (ref.cast_static $array
         (local.get $struct)
-        (rtt.canon $array)
       )
     )
   )
@@ -1843,21 +2042,15 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (rtt.canon $array)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $incompatible-test (param $struct (ref null $struct))
+  ;; NOMNL:      (func $incompatible-test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $struct)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (rtt.canon $array)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (i32.const 0)
   ;; NOMNL-NEXT:   )
@@ -1866,70 +2059,61 @@
   (func $incompatible-test (param $struct (ref null $struct))
     (drop
       ;; This test will definitely fail, so we can turn it into 0.
-      (ref.test
+      (ref.test_static $array
         (local.get $struct)
-        (rtt.canon $array)
       )
     )
   )
 
   ;; CHECK:      (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:   (ref.test_static $B
   ;; CHECK-NEXT:    (local.get $A)
-  ;; CHECK-NEXT:    (rtt.canon $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:   (ref.test_static $A
   ;; CHECK-NEXT:    (local.get $B)
-  ;; CHECK-NEXT:    (rtt.canon $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+  ;; NOMNL:      (func $subtype-compatible (type $ref?|$A|_ref?|$B|_=>_none) (param $A (ref null $A)) (param $B (ref null $B))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:   (ref.test_static $B
   ;; NOMNL-NEXT:    (local.get $A)
-  ;; NOMNL-NEXT:    (rtt.canon $B)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:   (ref.test_static $A
   ;; NOMNL-NEXT:    (local.get $B)
-  ;; NOMNL-NEXT:    (rtt.canon $A)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
     (drop
       ;; B is a subtype of A, so this can work.
-      (ref.test
+      (ref.test_static $B
         (local.get $A)
-        (rtt.canon $B)
       )
     )
     (drop
       ;; The other direction works too.
-      (ref.test
+      (ref.test_static $A
         (local.get $B)
-        (rtt.canon $A)
       )
     )
   )
   ;; CHECK:      (func $ref.test-unreachable (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:   (ref.test_static $A
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (rtt.canon $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref.test-unreachable (param $A (ref null $A))
+  ;; NOMNL:      (func $ref.test-unreachable (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:   (ref.test_static $A
   ;; NOMNL-NEXT:    (unreachable)
-  ;; NOMNL-NEXT:    (rtt.canon $A)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -1937,42 +2121,39 @@
     (drop
       ;; We should ignore unreachable ref.tests and not try to compare their
       ;; HeapTypes.
-      (ref.test
+      (ref.test_static $A
         (unreachable)
-        (rtt.canon $A)
       )
     )
   )
 
   ;; CHECK:      (func $consecutive-opts-with-unreachable (param $func funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (block (result dataref)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (local.get $func)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $consecutive-opts-with-unreachable (param $func funcref)
+  ;; NOMNL:      (func $consecutive-opts-with-unreachable (type $funcref_=>_none) (param $func funcref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast
+  ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (block (result dataref)
   ;; NOMNL-NEXT:     (drop
   ;; NOMNL-NEXT:      (local.get $func)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:     (unreachable)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (rtt.canon $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $consecutive-opts-with-unreachable (param $func funcref)
    (drop
-     (ref.cast
+     (ref.cast_static $struct
        ;; Casting a funcref to data will definitely fail, so this will be
        ;; replaced with an unreachable. But it should be enclosed in a block of
        ;; the previous type, so that the outside ref.cast is not confused. This
@@ -1985,7 +2166,6 @@
        (ref.as_data
          (local.get $func)
        )
-       (rtt.canon $struct)
      )
    )
   )
@@ -2027,7 +2207,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-null
+  ;; NOMNL:      (func $ref-cast-static-null (type $none_=>_none)
   ;; NOMNL-NEXT:  (local $a (ref null $A))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref null $A))
@@ -2102,7 +2282,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-impossible (param $func (ref func))
+  ;; NOMNL:      (func $ref-cast-static-impossible (type $ref|func|_=>_none) (param $func (ref func))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $struct))
   ;; NOMNL-NEXT:    (drop
@@ -2139,7 +2319,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-general (param $a (ref null $A)) (param $b (ref null $B))
+  ;; NOMNL:      (func $ref-cast-static-general (type $ref?|$A|_ref?|$B|_=>_none) (param $a (ref null $A)) (param $b (ref null $B))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.get $a)
   ;; NOMNL-NEXT:  )
@@ -2203,7 +2383,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-squared (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-static-squared (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $A
   ;; NOMNL-NEXT:    (local.get $x)
@@ -2278,7 +2458,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-many (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-static-many (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $B-child
   ;; NOMNL-NEXT:    (local.get $x)
@@ -2376,7 +2556,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-very-many (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-static-very-many (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $B-child
   ;; NOMNL-NEXT:    (local.get $x)
@@ -2414,6 +2594,199 @@
     )
   )
 
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $B))
+  ;; CHECK-NEXT:    (call $ref-cast-static-fallthrough-remaining
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast_static $B
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining (type $eqref_=>_none) (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref null $B))
+  ;; NOMNL-NEXT:    (call $ref-cast-static-fallthrough-remaining
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.cast_static $B
+  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining (param $x eqref)
+    (drop
+      (ref.cast_static $A
+        (block (result (ref null $B))
+          ;; Additional contents in between redundant casts must be preserved.
+          ;; That is, when we see that the casts are redundant, by seeing that
+          ;; the fallthrough value reaching the outer cast is already cast, we
+          ;; can avoid a duplicate cast, but we do still need to keep any code
+          ;; in the middle, as it may have side effects.
+          ;;
+          ;; In this first testcase, the outer cast is not needed as the inside
+          ;; is already a more specific type.
+          (call $ref-cast-static-fallthrough-remaining
+            (local.get $x)
+          )
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-child (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $B
+  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining-child
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.cast_static $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-child (type $eqref_=>_none) (param $x eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $B
+  ;; NOMNL-NEXT:    (block (result eqref)
+  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining-child
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.cast_static $A
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-child (param $x eqref)
+    (drop
+      ;; As above, but with $A and $B flipped. Now the inner cast is not needed.
+      ;; However, we do not remove it, as it may be necessary for validation,
+      ;; and we hope other opts help out here.
+      (ref.cast_static $B
+        (block (result (eqref))
+          (call $ref-cast-static-fallthrough-remaining-child
+            (local.get $x)
+          )
+          (ref.cast_static $A
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-impossible (param $x (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref eq))
+  ;; CHECK-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.cast_static $struct
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-impossible (type $ref|eq|_=>_none) (param $x (ref eq))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref $array))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result (ref eq))
+  ;; NOMNL-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (ref.cast_static $struct
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-impossible (param $x (ref eq))
+    (drop
+      ;; As above, but with an impossible cast of an array to a struct. The
+      ;; block with the side effects and the inner cast must be kept around and
+      ;; dropped, and then we replace the outer cast with an unreachable.
+      (ref.cast_static $array
+        (block (result (ref eq))
+          (call $ref-cast-static-fallthrough-remaining-impossible
+            (local.get $x)
+          )
+          (ref.cast_static $struct
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (block (result (ref eq))
+  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (type $ref|eq|_=>_none) (param $x (ref eq))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast_static $A
+  ;; NOMNL-NEXT:    (block (result (ref eq))
+  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
+    ;; The input is non-nullable here, and the middle block is of a simpler
+    ;; type than either the parent or the child. This checks that we do not
+    ;; mis-optimize this case: In general the outer cast is not needed, but
+    ;; the middle block prevents us from seeing that (after other opts run,
+    ;; however, we would).
+    (drop
+      (ref.cast_static $A
+        (block (result (ref eq))
+          (call $ref-cast-static-fallthrough-remaining
+            (local.get $x)
+          )
+          (ref.cast_static $B
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $ref-cast-static-squared-impossible (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
@@ -2425,13 +2798,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.cast_static $array
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-squared-impossible (param $x eqref)
+  ;; NOMNL:      (func $ref-cast-static-squared-impossible (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $struct
   ;; NOMNL-NEXT:    (ref.cast_static $array
@@ -2442,7 +2819,11 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $struct))
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.cast_static $array
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
@@ -2481,7 +2862,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+  ;; NOMNL:      (func $ref-test-static-same-type (type $ref?|$A|_ref|$A|_=>_none) (param $nullable (ref null $A)) (param $non-nullable (ref $A))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.test_static $A
   ;; NOMNL-NEXT:    (local.get $nullable)
@@ -2527,7 +2908,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-test-static-subtype (param $nullable (ref null $B)) (param $non-nullable (ref $B))
+  ;; NOMNL:      (func $ref-test-static-subtype (type $ref?|$B|_ref|$B|_=>_none) (param $nullable (ref null $B)) (param $non-nullable (ref $B))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.test_static $A
   ;; NOMNL-NEXT:    (local.get $nullable)
@@ -2568,7 +2949,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-test-static-supertype (param $nullable (ref null $A)) (param $non-nullable (ref $A))
+  ;; NOMNL:      (func $ref-test-static-supertype (type $ref?|$A|_ref|$A|_=>_none) (param $nullable (ref null $A)) (param $non-nullable (ref $A))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.test_static $B
   ;; NOMNL-NEXT:    (local.get $nullable)
@@ -2613,7 +2994,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-test-static-impossible (param $nullable (ref null $array)) (param $non-nullable (ref $array))
+  ;; NOMNL:      (func $ref-test-static-impossible (type $ref?|$array|_ref|$array|_=>_none) (param $nullable (ref null $array)) (param $non-nullable (ref $array))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
@@ -2641,6 +3022,72 @@
     (drop
       (ref.test_static $struct
         (local.get $non-nullable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-boolean (param $x eqref) (param $y eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_func
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-boolean (type $eqref_eqref_=>_none) (param $x eqref) (param $y eqref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.eq
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:    (local.get $y)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.is_func
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test_static $A
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-boolean (param $x eqref) (param $y eqref)
+    ;; ref.eq returns a boolean, so &1 on it is not needed.
+    (drop
+      (i32.and
+        (ref.eq
+          (local.get $x)
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+    ;; likewise ref.is and ref.test
+    (drop
+      (i32.and
+        (ref.is_func
+          (local.get $x)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.and
+        (ref.test_static $A
+          (local.get $x)
+        )
+        (i32.const 1)
       )
     )
   )

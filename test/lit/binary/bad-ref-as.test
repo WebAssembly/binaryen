@@ -1,0 +1,6 @@
+;; Test that we error properly on a file with a ref.as of a non-ref type.
+
+;; RUN: not wasm-opt %s.wasm 2>&1 | filecheck %s
+
+;; CHECK: parse exception: bad input type for ref.as: i32
+

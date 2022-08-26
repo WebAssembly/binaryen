@@ -235,11 +235,8 @@ struct MetaDCEGraph {
         });
       rooter.walk(segment->offset);
     });
-    for (auto& segment : wasm.memory.segments) {
-      if (!segment.isPassive) {
-        rooter.walk(segment.offset);
-      }
-    }
+    ModuleUtils::iterActiveDataSegments(
+      wasm, [&](DataSegment* segment) { rooter.walk(segment->offset); });
 
     // A parallel scanner for function bodies
     struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -334,8 +331,7 @@ public:
       queue.pop_back();
       auto& node = nodes[name];
       for (auto target : node.reaches) {
-        if (reached.find(target) == reached.end()) {
-          reached.insert(target);
+        if (reached.emplace(target).second) {
           queue.push_back(target);
         }
       }
@@ -368,8 +364,7 @@ public:
   // removed, including on the outside
   void printAllUnused() {
     std::set<std::string> unused;
-    for (auto& pair : nodes) {
-      auto name = pair.first;
+    for (auto& [name, _] : nodes) {
       if (reached.find(name) == reached.end()) {
         unused.insert(name.str);
       }
@@ -386,14 +381,10 @@ public:
       std::cout << "root: " << root << '\n';
     }
     std::map<Name, ImportId> importMap;
-    for (auto& pair : importIdToDCENode) {
-      auto& id = pair.first;
-      auto dceName = pair.second;
+    for (auto& [id, dceName] : importIdToDCENode) {
       importMap[dceName] = id;
     }
-    for (auto& pair : nodes) {
-      auto name = pair.first;
-      auto& node = pair.second;
+    for (auto& [name, node] : nodes) {
       std::cout << "node: " << name << '\n';
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
@@ -430,6 +421,8 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   std::string graphFile;
   bool dump = false;
+
+  const std::string WasmMetaDCEOption = "wasm-opt options";
 
   ToolOptions options(
     "wasm-metadce",
@@ -480,6 +473,7 @@ int main(int argc, const char* argv[]) {
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         WasmMetaDCEOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -488,21 +482,25 @@ int main(int argc, const char* argv[]) {
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
+         WasmMetaDCEOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",
          "-g",
          "Emit names section and debug info",
+         WasmMetaDCEOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; })
     .add("--graph-file",
          "-f",
          "Filename of the graph description file",
+         WasmMetaDCEOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { graphFile = argument; })
     .add("--dump",
          "-d",
          "Dump the combined graph file (useful for debugging)",
+         WasmMetaDCEOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { dump = true; })
     .add_positional("INFILE",

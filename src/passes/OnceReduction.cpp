@@ -84,6 +84,8 @@ struct OptInfo {
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   Scanner(OptInfo& optInfo) : optInfo(optInfo) {}
 
   Scanner* create() override { return new Scanner(optInfo); }
@@ -130,9 +132,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       }
     }
 
-    for (auto& kv : readGlobals) {
-      auto global = kv.first;
-      auto count = kv.second;
+    for (auto& [global, count] : readGlobals) {
       if (count > 0) {
         // This global has reads we cannot reason about, so do not optimize it.
         optInfo.onceGlobals.at(global) = false;
@@ -287,7 +287,8 @@ struct Optimizer
         // instruction, optimize.
         auto optimizeOnce = [&](Name globalName) {
           assert(optInfo.onceGlobals.at(globalName));
-          if (onceGlobalsWritten.count(globalName)) {
+          auto res = onceGlobalsWritten.emplace(globalName);
+          if (!res.second) {
             // This global has already been written, so this expr is not needed,
             // regardless of whether it is a global.set or a call.
             //
@@ -297,7 +298,6 @@ struct Optimizer
           } else {
             // From here on, this global is set, hopefully allowing us to
             // optimize away others.
-            onceGlobalsWritten.insert(globalName);
           }
         };
 
@@ -379,8 +379,7 @@ struct OnceReduction : public Pass {
     // Combine the information. We found which globals appear to be "once", but
     // other information may have proven they are not so, in fact. Specifically,
     // for a function to be "once" we need its global to also be such.
-    for (auto& kv : optInfo.onceFuncs) {
-      Name& onceGlobal = kv.second;
+    for (auto& [_, onceGlobal] : optInfo.onceFuncs) {
       if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
         onceGlobal = Name();
       }
@@ -428,8 +427,7 @@ struct OnceReduction : public Pass {
       // Count how many once globals are set, and see if we have any more work
       // to do.
       Index currOnceGlobalsSet = 0;
-      for (auto& kv : optInfo.onceGlobalsSetInFuncs) {
-        auto& globals = kv.second;
+      for (auto& [_, globals] : optInfo.onceGlobalsSetInFuncs) {
         currOnceGlobalsSet += globals.size();
       }
       assert(currOnceGlobalsSet >= lastOnceGlobalsSet);

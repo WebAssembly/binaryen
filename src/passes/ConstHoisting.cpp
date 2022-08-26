@@ -54,9 +54,7 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
 
   void visitFunction(Function* curr) {
     std::vector<Expression*> prelude;
-    for (auto& pair : uses) {
-      auto value = pair.first;
-      auto& vec = pair.second;
+    for (auto& [value, vec] : uses) {
       auto num = vec.size();
       if (worthHoisting(value, num)) {
         prelude.push_back(hoist(vec));
@@ -91,16 +89,9 @@ private:
         size = value.type.getByteSize();
         break;
       }
-        // not implemented yet
+      // not implemented yet
       case Type::v128:
-      case Type::funcref:
-      case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref: {
         return false;
-      }
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");

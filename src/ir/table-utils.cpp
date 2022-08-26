@@ -19,9 +19,7 @@
 #include "find_all.h"
 #include "module-utils.h"
 
-namespace wasm {
-
-namespace TableUtils {
+namespace wasm::TableUtils {
 
 std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Without reference types there are no ref.funcs or elem declare.
@@ -78,11 +76,10 @@ bool usesExpressions(ElementSegment* curr, Module* module) {
   // declare a type that is a subtype of that, so it must use the post-MVP form
   // of using expressions.
   bool hasTableOfSpecializedType =
-    curr->table.is() && module->getTable(curr->table)->type != Type::funcref;
+    curr->table.is() &&
+    module->getTable(curr->table)->type != Type(HeapType::func, Nullable);
 
   return !allElementsRefFunc || hasTableOfSpecializedType;
 }
 
-} // namespace TableUtils
-
-} // namespace wasm
+} // namespace wasm::TableUtils

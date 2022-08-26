@@ -19,9 +19,7 @@
 
 #include <wasm-traversal.h>
 
-namespace wasm {
-
-namespace debug {
+namespace wasm::debug {
 
 // Given an expression and a copy of it in another function, copy the debug
 // info into the second function.
@@ -52,8 +50,6 @@ inline void copyDebugInfo(Expression* origin,
   }
 };
 
-} // namespace debug
-
-} // namespace wasm
+} // namespace wasm::debug
 
 #endif // wasm_ir_debug_h

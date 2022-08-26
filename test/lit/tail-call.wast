@@ -22,7 +22,7 @@
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (return_call $bar)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $foo
+  ;; NOMNL:      (func $foo (type $void)
   ;; NOMNL-NEXT:  (return_call $bar)
   ;; NOMNL-NEXT: )
   (func $foo
@@ -34,7 +34,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $bar
+  ;; NOMNL:      (func $bar (type $void)
   ;; NOMNL-NEXT:  (return_call_indirect $t (type $void)
   ;; NOMNL-NEXT:   (i32.const 0)
   ;; NOMNL-NEXT:  )
@@ -73,7 +73,7 @@
   ;; CHECK:      (func $caller (result (ref null $A))
   ;; CHECK-NEXT:  (return_call $callee)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $caller (result (ref null $A))
+  ;; NOMNL:      (func $caller (type $return-A) (result (ref null $A))
   ;; NOMNL-NEXT:  (return_call $callee)
   ;; NOMNL-NEXT: )
   (func $caller (type $return-A)
@@ -85,7 +85,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $caller-indirect (result (ref $B))
+  ;; NOMNL:      (func $caller-indirect (type $return-B) (result (ref $B))
   ;; NOMNL-NEXT:  (return_call_indirect $t (type $return-B)
   ;; NOMNL-NEXT:   (i32.const 0)
   ;; NOMNL-NEXT:  )
@@ -97,7 +97,7 @@
   ;; CHECK:      (func $callee (result (ref $B))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $callee (result (ref $B))
+  ;; NOMNL:      (func $callee (type $return-B) (result (ref $B))
   ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
   (func $callee (type $return-B)

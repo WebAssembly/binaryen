@@ -10,6 +10,7 @@
  (tag $tag$3 (param i32 f32))
  (tag $tag$4 (param i32 f32))
  (tag $tag$5 (param i32))
+ (export "ex0" (tag $tag$5))
  (export "ex1" (tag $tag$1))
 )
 

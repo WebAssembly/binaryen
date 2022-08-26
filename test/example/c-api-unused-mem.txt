@@ -36,7 +36,7 @@
   (call $main)
  )
 )
-145
+133
 (module
  (type $none_=>_none (func))
  (memory $0 1024 1024)
@@ -53,20 +53,13 @@
      (i32.const 0)
     )
    )
-   (block $label$2
-    (br $label$1)
-   )
+   (br $label$1)
   )
-  (block $label$3
-   (block $label$4
-    (i32.store
-     (i32.const 0)
-     (local.get $0)
-    )
-    (return)
-   )
-   (unreachable)
+  (i32.store
+   (i32.const 0)
+   (local.get $0)
   )
+  (return)
  )
  (func $__wasm_start
   (i32.store

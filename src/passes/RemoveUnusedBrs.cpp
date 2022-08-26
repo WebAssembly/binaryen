@@ -85,6 +85,9 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 // It can be tuned more later.
 const Index TooCostlyToRunUnconditionally = 9;
 
+static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
+              "We never run code unconditionally if it has unacceptable cost");
+
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
 // only one of the two might have executed. We assume here that
@@ -200,11 +203,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (skip > 0) {
           flows.resize(size - skip);
         }
-        // drop a nop at the end of a block, which prevents a value flowing
-        while (list.size() > 0 && list.back()->is<Nop>()) {
-          list.resize(list.size() - 1);
-          self->anotherCycle = true;
-        }
+      }
+      // Drop a nop at the end of a block, which prevents a value flowing. Note
+      // that this is worth doing regardless of whether we have a name on this
+      // block or not (which the if right above us checks) - such a nop is
+      // always unneeded and can limit later optimizations.
+      while (list.size() > 0 && list.back()->is<Nop>()) {
+        list.resize(list.size() - 1);
+        self->anotherCycle = true;
       }
       // A value flowing is only valid if it is a value that the block actually
       // flows out. If it is never reached, it does not flow out, and may be
@@ -694,8 +700,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool worked = false;
 
       void visitBrOn(BrOn* curr) {
-        // Ignore unreachable BrOns which we cannot improve anyhow.
-        if (curr->type == Type::unreachable) {
+        // Ignore unreachable BrOns which we cannot improve anyhow. Note that
+        // we must check the ref field manually, as we may be changing types as
+        // we go here. (Another option would be to use a TypeUpdater here
+        // instead of calling ReFinalize at the very end, but that would be more
+        // complex and slower.)
+        if (curr->type == Type::unreachable ||
+            curr->ref->type == Type::unreachable) {
           return;
         }
 

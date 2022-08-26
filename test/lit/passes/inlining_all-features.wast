@@ -25,7 +25,7 @@
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $foo
+  ;; NOMNL:      (func $foo (type $none_=>_none)
   ;; NOMNL-NEXT:  (nop)
   ;; NOMNL-NEXT: )
   (func $foo)
@@ -38,7 +38,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref_func_test (result funcref)
+  ;; NOMNL:      (func $ref_func_test (type $none_=>_funcref) (result funcref)
   ;; NOMNL-NEXT:  (block
   ;; NOMNL-NEXT:   (block $__inlined_func$foo
   ;; NOMNL-NEXT:    (nop)
@@ -66,7 +66,7 @@
  ;; CHECK:      (func $0 (result i32)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $0 (result i32)
+ ;; NOMNL:      (func $0 (type $none_=>_i32) (result i32)
  ;; NOMNL-NEXT:  (i32.const 1337)
  ;; NOMNL-NEXT: )
  (func $0 (result i32)
@@ -78,7 +78,7 @@
  ;; CHECK-NEXT:   (i32.const 1337)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $1 (result i32)
+ ;; NOMNL:      (func $1 (type $none_=>_i32) (result i32)
  ;; NOMNL-NEXT:  (block $__inlined_func$0 (result i32)
  ;; NOMNL-NEXT:   (i32.const 1337)
  ;; NOMNL-NEXT:  )
@@ -102,7 +102,7 @@
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $0
+ ;; NOMNL:      (func $0 (type $none_=>_none)
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $0
@@ -114,7 +114,7 @@
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $1
+ ;; NOMNL:      (func $1 (type $none_=>_none)
  ;; NOMNL-NEXT:  (block $__inlined_func$0
  ;; NOMNL-NEXT:   (nop)
  ;; NOMNL-NEXT:  )
@@ -150,7 +150,7 @@
  ;; CHECK-NEXT:   (br $__inlined_func$0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $1
+ ;; NOMNL:      (func $1 (type $none_=>_none)
  ;; NOMNL-NEXT:  (block $__inlined_func$0
  ;; NOMNL-NEXT:   (block
  ;; NOMNL-NEXT:    (call_ref
@@ -191,7 +191,7 @@
 
  ;; NOMNL:      (elem declare func $1)
 
- ;; NOMNL:      (func $1 (result (ref func))
+ ;; NOMNL:      (func $1 (type $none_=>_ref|func|) (result (ref func))
  ;; NOMNL-NEXT:  (local $0 funcref)
  ;; NOMNL-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; NOMNL-NEXT:   (local.set $0
@@ -205,44 +205,6 @@
  (func $1 (result (ref func))
   (call $0
    (ref.func $1)
-  )
- )
-)
-
-;; never inline an rtt parameter, as those cannot be handled as locals
-(module
- ;; CHECK:      (type $struct (struct ))
- ;; NOMNL:      (type $struct (struct_subtype  data))
- (type $struct (struct))
- ;; CHECK:      (type $rtt_$struct_=>_none (func (param (rtt $struct))))
-
- ;; CHECK:      (type $none_=>_none (func))
-
- ;; CHECK:      (func $0 (param $rtt (rtt $struct))
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT: )
- ;; NOMNL:      (type $rtt_$struct_=>_none (func_subtype (param (rtt $struct)) func))
-
- ;; NOMNL:      (type $none_=>_none (func_subtype func))
-
- ;; NOMNL:      (func $0 (param $rtt (rtt $struct))
- ;; NOMNL-NEXT:  (nop)
- ;; NOMNL-NEXT: )
- (func $0 (param $rtt (rtt $struct))
- )
- ;; CHECK:      (func $1
- ;; CHECK-NEXT:  (call $0
- ;; CHECK-NEXT:   (rtt.canon $struct)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $1
- ;; NOMNL-NEXT:  (call $0
- ;; NOMNL-NEXT:   (rtt.canon $struct)
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $1
-  (call $0
-   (rtt.canon $struct)
   )
  )
 )

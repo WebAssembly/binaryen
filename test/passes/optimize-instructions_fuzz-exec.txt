@@ -253,6 +253,10 @@
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
+[fuzz-exec] comparing ignore
+[fuzz-exec] comparing just-one-nan
+[fuzz-exec] comparing test32
+[fuzz-exec] comparing test64
 [fuzz-exec] calling foo
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 1]
@@ -381,3 +385,5 @@
 [fuzz-exec] note result: call-compare-maybe-signed-ne => 1
 [fuzz-exec] comparing call-compare-maybe-signed-eq
 [fuzz-exec] comparing call-compare-maybe-signed-ne
+[fuzz-exec] comparing do-shift
+[fuzz-exec] comparing foo

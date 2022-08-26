@@ -250,6 +250,9 @@ void test_signature_composition() {
 }
 
 void test_signature_subtype() {
+  Type eqref = Type(HeapType::eq, Nullable);
+  Type anyref = Type(HeapType::any, Nullable);
+
   std::cout << ";; Test stack signature subtyping\n";
   // Differences in unreachability only
   {
@@ -260,15 +263,15 @@ void test_signature_subtype() {
   }
   // Covariance of results
   {
-    StackSignature a(Type::none, Type::funcref, StackSignature::Fixed);
-    StackSignature b(Type::none, Type::anyref, StackSignature::Fixed);
+    StackSignature a(Type::none, eqref, StackSignature::Fixed);
+    StackSignature b(Type::none, anyref, StackSignature::Fixed);
     assert(StackSignature::isSubType(a, b));
     assert(!StackSignature::isSubType(b, a));
   }
   // Contravariance of params
   {
-    StackSignature a(Type::anyref, Type::none, StackSignature::Fixed);
-    StackSignature b(Type::funcref, Type::none, StackSignature::Fixed);
+    StackSignature a(anyref, Type::none, StackSignature::Fixed);
+    StackSignature b(eqref, Type::none, StackSignature::Fixed);
     assert(StackSignature::isSubType(a, b));
     assert(!StackSignature::isSubType(b, a));
   }
@@ -355,6 +358,9 @@ void test_signature_subtype() {
 }
 
 void test_signature_lub() {
+  Type eqref = Type(HeapType::eq, Nullable);
+  Type anyref = Type(HeapType::any, Nullable);
+
   std::cout << ";; Test stack signature lub\n";
   {
     StackSignature a{Type::none, Type::none, StackSignature::Fixed};
@@ -392,30 +398,27 @@ void test_signature_lub() {
            (StackSignature{Type::i32, Type::i32, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::none, Type::externref, StackSignature::Polymorphic};
-    StackSignature b{Type::none, Type::funcref, StackSignature::Polymorphic};
+    StackSignature a{Type::none, anyref, StackSignature::Polymorphic};
+    StackSignature b{Type::none, eqref, StackSignature::Polymorphic};
     assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(
-      StackSignature::getLeastUpperBound(a, b) ==
-      (StackSignature{Type::none, Type::anyref, StackSignature::Polymorphic}));
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, anyref, StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{Type::anyref, Type::none, StackSignature::Polymorphic};
-    StackSignature b{Type::funcref, Type::none, StackSignature::Polymorphic};
+    StackSignature a{anyref, Type::none, StackSignature::Polymorphic};
+    StackSignature b{eqref, Type::none, StackSignature::Polymorphic};
     // assert(StackSignature::haveLeastUpperBound(a, b));
     // assert(StackSignature::getLeastUpperBound(a, b) ==
-    //        (StackSignature{Type::funcref, Type::none,
+    //        (StackSignature{eqref, Type::none,
     //        StackSignature::Polymorphic}));
   }
   {
-    StackSignature a{
-      {Type::i32, Type::funcref}, Type::funcref, StackSignature::Polymorphic};
-    StackSignature b{
-      Type::funcref, {Type::f32, Type::externref}, StackSignature::Polymorphic};
+    StackSignature a{{Type::i32, eqref}, eqref, StackSignature::Polymorphic};
+    StackSignature b{eqref, {Type::f32, anyref}, StackSignature::Polymorphic};
     assert(StackSignature::haveLeastUpperBound(a, b));
     assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{{Type::i32, Type::funcref},
-                           {Type::f32, Type::anyref},
+           (StackSignature{{Type::i32, eqref},
+                           {Type::f32, anyref},
                            StackSignature::Polymorphic}));
   }
   // No LUB

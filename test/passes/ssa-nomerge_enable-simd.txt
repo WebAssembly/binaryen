@@ -115,7 +115,7 @@
    (local.set $x
     (i32.const 6)
    )
-   (block $block
+   (block
     (local.set $3
      (i32.const 7)
     )
@@ -131,7 +131,7 @@
  (func $if2 (param $x i32)
   (if
    (i32.const 1)
-   (block $block
+   (block
     (local.set $x
      (i32.const 1)
     )

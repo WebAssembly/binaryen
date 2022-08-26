@@ -2,8 +2,8 @@
  (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
  (type $i32_i32_i64_=>_none (func (param i32 i32 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $none_=>_none (func))
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
  (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
  (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
@@ -13,13 +13,31 @@
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 1 1)
- (start $foo)
+ (start $mystart)
+ (func $mystart
+  (i32.store
+   (i32.load
+    (i32.const 42)
+   )
+   (i32.const 43)
+  )
+  (call $foo)
+ )
  (func $foo
   (i32.store
    (i32.load
     (i32.const 1234)
    )
    (i32.const 5678)
+  )
+  (call $foo2)
+ )
+ (func $foo2
+  (i32.store
+   (i32.load
+    (i32.const 98)
+   )
+   (i32.const 99)
   )
  )
  (func $bar

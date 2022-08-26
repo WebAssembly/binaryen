@@ -28,7 +28,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $non-nullable
+  ;; NOMNL:      (func $non-nullable (type $none_=>_none)
   ;; NOMNL-NEXT:  (local $x (ref $struct))
   ;; NOMNL-NEXT:  (local $y (ref $none_=>_i32))
   ;; NOMNL-NEXT:  (local.set $x
@@ -45,7 +45,7 @@
   ;; NOMNL-NEXT: )
   (func $non-nullable
     (local $x (ref null $struct))
-    (local $y anyref)
+    (local $y funcref)
     ;; x is assigned a value that is non-nullable.
     (local.set $x
       (ref.as_non_null (ref.null $struct))
@@ -75,7 +75,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $uses-default (param $i i32)
+  ;; NOMNL:      (func $uses-default (type $i32_=>_none) (param $i i32)
   ;; NOMNL-NEXT:  (local $x (ref null $struct))
   ;; NOMNL-NEXT:  (if
   ;; NOMNL-NEXT:   (local.get $i)

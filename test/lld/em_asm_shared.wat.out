@@ -4,28 +4,31 @@
  (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 1))
- (data $.data (global.get $__memory_base) "\00ii\00i\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__stack_pointer" (global $__stack_pointer (mut i32)))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
- (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $__em_asm_sig_builder<__em_asm_type_tuple<>\20>::buffer (mut i32)))
- (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $__em_asm_sig_builder<__em_asm_type_tuple<int\2c\20int>\20>::buffer (mut i32)))
- (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $__em_asm_sig_builder<__em_asm_type_tuple<int>\20>::buffer (mut i32)))
+ (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $__em_asm_sig_builder<__em_asm_type_tuple<>>::buffer (mut i32)))
+ (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $__em_asm_sig_builder<__em_asm_type_tuple<int\2c\20int>>::buffer (mut i32)))
+ (import "GOT.mem" "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $__em_asm_sig_builder<__em_asm_type_tuple<int>>::buffer (mut i32)))
  (import "env" "emscripten_asm_const_int" (func $emscripten_asm_const_int (param i32 i32 i32) (result i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 1))
  (global $global$2 i32 (i32.const 4))
  (global $global$3 i32 (i32.const 6))
  (global $global$4 i32 (i32.const 90))
+ (data $.data (global.get $__memory_base) "\00ii\00i\00{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "__wasm_apply_data_relocs" (func $__wasm_apply_data_relocs))
  (export "__original_main" (func $__original_main))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $global$0))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $global$1))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" (global $global$2))
  (export "main" (func $main))
+ (export "__start_em_asm" (global $global$3))
+ (export "__stop_em_asm" (global $global$4))
  (func $__wasm_call_ctors
-  (call $__wasm_apply_data_relocs)
+  (nop)
  )
  (func $__wasm_apply_data_relocs
   (nop)
@@ -49,7 +52,7 @@
      )
      (i32.const 6)
     )
-    (global.get $__em_asm_sig_builder<__em_asm_type_tuple<>\20>::buffer)
+    (global.get $__em_asm_sig_builder<__em_asm_type_tuple<>>::buffer)
     (i32.const 0)
    )
   )
@@ -64,7 +67,7 @@
      (local.get $1)
      (i32.const 39)
     )
-    (global.get $__em_asm_sig_builder<__em_asm_type_tuple<int\2c\20int>\20>::buffer)
+    (global.get $__em_asm_sig_builder<__em_asm_type_tuple<int\2c\20int>>::buffer)
     (i32.add
      (local.get $0)
      (i32.const 16)
@@ -77,7 +80,7 @@
      (local.get $1)
      (i32.const 59)
     )
-    (global.get $__em_asm_sig_builder<__em_asm_type_tuple<int>\20>::buffer)
+    (global.get $__em_asm_sig_builder<__em_asm_type_tuple<int>>::buffer)
     (local.get $0)
    )
   )
@@ -93,41 +96,3 @@
   (call $__original_main)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "asmConsts": {
-    "6": "{ Module.print(\"Hello world\"); }",
-    "39": "{ return $0 + $1; }",
-    "59": "{ Module.print(\"Got \" + $0); }"
-  },
-  "tableSize": 0,
-  "declares": [
-    "emscripten_asm_const_int"
-  ],
-  "globalImports": [
-    "__stack_pointer",
-    "__memory_base",
-    "__table_base",
-    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
-    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
-    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "__original_main",
-    "main"
-  ],
-  "namedGlobals": {
-    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" : "0",
-    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" : "1",
-    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE" : "4"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

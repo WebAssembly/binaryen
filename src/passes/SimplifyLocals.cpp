@@ -53,6 +53,7 @@
 #include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -119,6 +120,9 @@ struct SimplifyLocals
 
   // local => # of local.gets for it
   LocalGetCounter getCounter;
+
+  // In rare cases we make a change to a type that requires a refinalize.
+  bool refinalize = false;
 
   static void
   doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
@@ -254,6 +258,23 @@ struct SimplifyLocals
       if (oneUse) {
         // with just one use, we can sink just the value
         this->replaceCurrent(set->value);
+
+        // We are replacing a local.get with the value of the local.set. That
+        // may require a refinalize in certain cases, like this:
+        //
+        //  (struct.get $X 0
+        //    (local.get $x)
+        //  )
+        //
+        // If we replace the local.get with a more refined type then the
+        // struct.get may read a more refined type (if the subtype has a more
+        // refined type for that particular field). Note that this cannot happen
+        // in the other arm of this if-else, where we replace the local.get with
+        // a tee, since tees have the type of the local, so no types change
+        // there.
+        if (set->value->type != curr->type) {
+          refinalize = true;
+        }
       } else {
         this->replaceCurrent(set);
         assert(!set->isTee());
@@ -280,9 +301,9 @@ struct SimplifyLocals
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
     std::vector<Index> invalidated;
-    for (auto& sinkable : sinkables) {
-      if (effects.invalidates(sinkable.second.effects)) {
-        invalidated.push_back(sinkable.first);
+    for (auto& [index, info] : sinkables) {
+      if (effects.invalidates(info.effects)) {
+        invalidated.push_back(index);
       }
     }
     for (auto index : invalidated) {
@@ -299,13 +320,60 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Expressions that may throw cannot be sinked into 'try'. At the start of
-    // 'try', we drop all sinkables that may throw.
+    // Certain expressions cannot be sinked into 'try', and so at the start of
+    // 'try' we forget about them.
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
-      for (auto& sinkable : self->sinkables) {
-        if (sinkable.second.effects.throws) {
-          invalidated.push_back(sinkable.first);
+      for (auto& [index, info] : self->sinkables) {
+        // Expressions that may throw cannot be moved into a try (which might
+        // catch them, unlike before the move).
+        if (info.effects.throws()) {
+          invalidated.push_back(index);
+          continue;
+        }
+
+        // Non-nullable local.sets cannot be moved into a try, as that may
+        // change dominance from the perspective of the spec
+        //
+        //  (local.set $x X)
+        //  (try
+        //    ..
+        //    (Y
+        //      (local.get $x))
+        //  (catch
+        //    (Z
+        //      (local.get $x)))
+        //
+        // =>
+        //
+        //  (try
+        //    ..
+        //    (Y
+        //      (local.tee $x X))
+        //  (catch
+        //    (Z
+        //      (local.get $x)))
+        //
+        // After sinking the set, the tee does not dominate the get in the
+        // catch, at least not in the simple way the spec defines it, see
+        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
+        // We have more refined information about control flow and dominance
+        // than the spec, and so we would see if ".." can throw or not (only if
+        // it can throw is there a branch to the catch, which can change
+        // dominance). To stay compliant with the spec, however, we must not
+        // move code regardless of whether ".." can throw - we must simply keep
+        // the set outside of the try.
+        //
+        // The problem described can also occur on the *value* and not the set
+        // itself. For example, |X| above could be a local.set of a non-nullable
+        // local. For that reason we must scan it all.
+        if (self->getModule()->features.hasGCNNLocals()) {
+          for (auto* set : FindAll<LocalSet>(*info.item).list) {
+            if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
+              invalidated.push_back(index);
+              break;
+            }
+          }
         }
       }
       for (auto index : invalidated) {
@@ -407,9 +475,9 @@ struct SimplifyLocals
     if (set && self->canSink(set)) {
       Index index = set->index;
       assert(self->sinkables.count(index) == 0);
-      self->sinkables.emplace(std::make_pair(
+      self->sinkables.emplace(std::pair{
         index,
-        SinkableInfo(currp, self->getPassOptions(), *self->getModule())));
+        SinkableInfo(currp, self->getPassOptions(), *self->getModule())});
     }
 
     if (!allowNesting) {
@@ -493,8 +561,7 @@ struct SimplifyLocals
     // look for a local.set that is present in them all
     bool found = false;
     Index sharedIndex = -1;
-    for (auto& sinkable : sinkables) {
-      Index index = sinkable.first;
+    for (auto& [index, _] : sinkables) {
       bool inAll = true;
       for (size_t j = 0; j < breaks.size(); j++) {
         if (breaks[j].sinkables.count(index) == 0) {
@@ -648,8 +715,7 @@ struct SimplifyLocals
       }
     } else {
       // Look for a shared index.
-      for (auto& sinkable : ifTrue) {
-        Index index = sinkable.first;
+      for (auto& [index, _] : ifTrue) {
         if (ifFalse.count(index) > 0) {
           goodIndex = index;
           found = true;
@@ -844,6 +910,10 @@ struct SimplifyLocals
         }
       }
     } while (anotherCycle);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
   }
 
   bool runMainOptimizations(Function* func) {

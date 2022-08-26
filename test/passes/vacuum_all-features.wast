@@ -805,9 +805,7 @@
     ;; nullable reference type and we don't have a type to put in its place, so
     ;; don't try to replace it. (later operations will remove all the body of
     ;; this function; this test verifies we don't crash along the way)
-    (struct.new_default_with_rtt $A
-     (rtt.canon $A)
-    )
+    (struct.new_default $A)
    )
   )
  )

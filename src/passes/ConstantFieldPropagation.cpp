@@ -28,11 +28,10 @@
 //
 
 #include "ir/module-utils.h"
-#include "ir/properties.h"
+#include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -41,99 +40,9 @@ namespace wasm {
 
 namespace {
 
-// Represents data about what constant values are possible in a particular
-// place. There may be no values, or one, or many, or if a non-constant value is
-// possible, then all we can say is that the value is "unknown" - it can be
-// anything.
-//
-// Currently this just looks for a single constant value, and even two constant
-// values are treated as unknown. It may be worth optimizing more than that TODO
-struct PossibleConstantValues {
-  // Note a written value as we see it, and update our internal knowledge based
-  // on it and all previous values noted.
-  void note(Literal curr) {
-    if (!noted) {
-      // This is the first value.
-      value = curr;
-      noted = true;
-      return;
-    }
-
-    // This is a subsequent value. Check if it is different from all previous
-    // ones.
-    if (curr != value) {
-      noteUnknown();
-    }
-  }
-
-  // Notes a value that is unknown - it can be anything. We have failed to
-  // identify a constant value here.
-  void noteUnknown() {
-    value = Literal(Type::none);
-    noted = true;
-  }
-
-  // Combine the information in a given PossibleConstantValues to this one. This
-  // is the same as if we have called note*() on us with all the history of
-  // calls to that other object.
-  //
-  // Returns whether we changed anything.
-  bool combine(const PossibleConstantValues& other) {
-    if (!other.noted) {
-      return false;
-    }
-    if (!noted) {
-      *this = other;
-      return other.noted;
-    }
-    if (!isConstant()) {
-      return false;
-    }
-    if (!other.isConstant() || getConstantValue() != other.getConstantValue()) {
-      noteUnknown();
-      return true;
-    }
-    return false;
-  }
-
-  // Check if all the values are identical and constant.
-  bool isConstant() const { return noted && value.type.isConcrete(); }
-
-  // Returns the single constant value.
-  Literal getConstantValue() const {
-    assert(isConstant());
-    return value;
-  }
-
-  // Returns whether we have ever noted a value.
-  bool hasNoted() const { return noted; }
-
-  void dump(std::ostream& o) {
-    o << '[';
-    if (!hasNoted()) {
-      o << "unwritten";
-    } else if (!isConstant()) {
-      o << "unknown";
-    } else {
-      o << value;
-    }
-    o << ']';
-  }
-
-private:
-  // Whether we have noted any values at all.
-  bool noted = false;
-
-  // The one value we have seen, if there is one. If we realize there is no
-  // single constant value here, we make this have a non-concrete (impossible)
-  // type to indicate that. Otherwise, a concrete type indicates we have a
-  // constant value.
-  Literal value;
-};
-
-using PCVStructValuesMap = StructValuesMap<PossibleConstantValues>;
+using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
-  FunctionStructValuesMap<PossibleConstantValues>;
+  StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -190,9 +99,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
+    Expression* value = info.makeExpression(*getModule());
     replaceCurrent(builder.makeSequence(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-      builder.makeConstantExpression(info.getConstantValue())));
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
   }
 
@@ -212,26 +121,24 @@ private:
   bool changed = false;
 };
 
-struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
+struct PCVScanner
+  : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   Pass* create() override {
     return new PCVScanner(functionNewInfos, functionSetGetInfos);
   }
 
-  PCVScanner(FunctionStructValuesMap<PossibleConstantValues>& functionNewInfos,
-             FunctionStructValuesMap<PossibleConstantValues>& functionSetInfos)
-    : Scanner<PossibleConstantValues, PCVScanner>(functionNewInfos,
-                                                  functionSetInfos) {}
+  PCVScanner(StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+               functionNewInfos,
+             StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+               functionSetInfos)
+    : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
+        functionNewInfos, functionSetInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
-
-    if (!Properties::isConstantExpression(expr)) {
-      info.noteUnknown();
-    } else {
-      info.note(Properties::getLiteral(expr));
-    }
+    info.note(expr, *getModule());
   }
 
   void noteDefault(Type fieldType,
@@ -269,6 +176,9 @@ struct PCVScanner : public Scanner<PossibleConstantValues, PCVScanner> {
 
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "ConstantFieldPropagation requires nominal typing";
     }
@@ -317,7 +227,8 @@ struct ConstantFieldPropagation : public Pass {
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
 
-    TypeHierarchyPropagator<PossibleConstantValues> propagator(*module);
+    StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
+      *module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 

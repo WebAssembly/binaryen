@@ -37,10 +37,13 @@ RUN_LINE_RE = re.compile(r'^\s*;;\s*RUN:\s*(.*)$')
 CHECK_PREFIX_RE = re.compile(r'.*--check-prefix[= ](\S+).*')
 MODULE_RE = re.compile(r'^\(module.*$', re.MULTILINE)
 
-items = ['type', 'import', 'global', 'memory', 'data', 'table', 'elem', 'tag',
-         'export', 'start', 'func']
-ITEM_RE = re.compile(r'(^\s*)\((' + '|'.join(items) + r')\s+(\$?[^\s()]*).*$',
+ALL_ITEMS = '|'.join(['type', 'import', 'global', 'memory', 'data', 'table',
+                      'elem', 'tag', 'export', 'start', 'func'])
+ITEM_NAME = r'\$?[^\s()]*|"[^\s()]*"'
+ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
                      re.MULTILINE)
+
+FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] calling (?P<name>\S*)$')
 
 
 def warn(msg):
@@ -121,9 +124,9 @@ def split_modules(text):
     return modules
 
 
-def parse_output(text):
+def parse_output_modules(text):
     # Return a list containing, for each module in the text, a list of
-    # (name, [line]) for module items.
+    # ((kind, name), [line]) for module items.
     modules = []
     for module in split_modules(text):
         items = []
@@ -136,7 +139,24 @@ def parse_output(text):
     return modules
 
 
-def get_command_output(args, test, lines, tmp):
+def parse_output_fuzz_exec(text):
+    # Returns the same data as `parse_output_modules`, but can't tell where
+    # module boundaries are, so always just returns items for a single module.
+    items = []
+    for line in text.split('\n'):
+        func = FUZZ_EXEC_FUNC.match(line)
+        if func:
+            # Add quotes around the name because that is how it will be parsed
+            # in the input.
+            name = f'"{func.group("name")}"'
+            items.append((('func', name), [line]))
+        elif line:
+            assert items, 'unexpected non-invocation line'
+            items[-1][1].append(line)
+    return [items]
+
+
+def get_command_output(args, kind, test, lines, tmp):
     # Return list of maps from prefixes to lists of module items of the form
     # ((kind, name), [line]). The outer list has an entry for each module.
     command_output = []
@@ -160,7 +180,12 @@ def get_command_output(args, test, lines, tmp):
 
         output = run_command(args, test, tmp, commands[0])
         if prefix:
-            module_outputs = parse_output(output)
+            if kind == 'wat':
+                module_outputs = parse_output_modules(output)
+            elif kind == 'fuzz-exec':
+                module_outputs = parse_output_fuzz_exec(output)
+            else:
+                assert False, "unknown output kind"
             for i in range(len(module_outputs)):
                 if len(command_output) == i:
                     command_output.append({})
@@ -170,15 +195,21 @@ def get_command_output(args, test, lines, tmp):
 
 
 def update_test(args, test, lines, tmp):
+    # Do not update `args` directly because the changes should only apply to the
+    # current test.
     all_items = args.all_items
+    output_kind = args.output
     if lines and script_name in lines[0]:
         # Apply previously used options for this file
         if '--all-items' in lines[0]:
             all_items = True
+        output = re.search(r'--output=(?P<kind>\S*)', lines[0])
+        if output:
+            output_kind = output.group('kind')
         # Skip the notice if it is already in the output
         lines = lines[1:]
 
-    command_output = get_command_output(args, test, lines, tmp)
+    command_output = get_command_output(args, output_kind, test, lines, tmp)
 
     prefixes = set(prefix
                    for module_output in command_output
@@ -206,12 +237,16 @@ def update_test(args, test, lines, tmp):
     script = script_name
     if all_items:
         script += ' --all-items'
+    if output_kind != 'wat':
+        script += f' --output={output_kind}'
     output_lines = [NOTICE.format(script=script)]
 
     def emit_checks(indent, prefix, lines):
-        output_lines.append(f'{indent};; {prefix}:     {lines[0]}')
+        def pad(line):
+            return line if not line or line.startswith(' ') else ' ' + line
+        output_lines.append(f'{indent};; {prefix}:     {pad(lines[0])}')
         for line in lines[1:]:
-            output_lines.append(f'{indent};; {prefix}-NEXT:{line}')
+            output_lines.append(f'{indent};; {prefix}-NEXT:{pad(line)}')
 
     input_modules = [m.split('\n') for m in split_modules('\n'.join(lines))]
     if len(input_modules) > len(command_output):
@@ -288,6 +323,9 @@ def main():
         '--all-items', action='store_true',
         help=('Emit checks for all module items, even those that do not appear'
               ' in the input.'))
+    parser.add_argument(
+        '--output', choices=['wat', 'fuzz-exec'], default='wat',
+        help=('The kind of output test commands are expected to produce.'))
     parser.add_argument(
         '-f', '--force', action='store_true',
         help=('Generate FileCheck patterns even for test files whose existing '

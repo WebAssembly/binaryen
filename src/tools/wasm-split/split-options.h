@@ -28,10 +28,11 @@ struct WasmSplitOptions : ToolOptions {
     Split,
     Instrument,
     MergeProfiles,
+    PrintProfile,
   };
   Mode mode = Mode::Split;
   constexpr static size_t NumModes =
-    static_cast<unsigned>(Mode::MergeProfiles) + 1;
+    static_cast<unsigned>(Mode::PrintProfile) + 1;
 
   enum class StorageKind : unsigned {
     InGlobals, // Store profile data in WebAssembly Globals
@@ -39,10 +40,12 @@ struct WasmSplitOptions : ToolOptions {
   };
   StorageKind storageKind = StorageKind::InGlobals;
 
+  bool unescape = false;
   bool verbose = false;
   bool emitBinary = true;
   bool symbolMap = false;
   bool placeholderMap = false;
+  bool asyncify = false;
 
   // TODO: Remove this. See the comment in wasm-binary.h.
   bool emitModuleNames = false;
@@ -75,12 +78,14 @@ struct WasmSplitOptions : ToolOptions {
   WasmSplitOptions& add(const std::string& longName,
                         const std::string& shortName,
                         const std::string& description,
+                        const std::string& category,
                         std::vector<Mode>&& modes,
                         Arguments arguments,
                         const Action& action);
   WasmSplitOptions& add(const std::string& longName,
                         const std::string& shortName,
                         const std::string& description,
+                        const std::string& category,
                         Arguments arguments,
                         const Action& action);
   bool validate();

@@ -21,7 +21,7 @@ namespace wasm {
 
 class Pass;
 
-// All passes:
+// Normal passes:
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
 Pass* createAvoidReinterpretsPass();
@@ -51,6 +51,11 @@ Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
+Pass* createGlobalRefiningPass();
+Pass* createGlobalStructInferencePass();
+Pass* createGlobalTypeOptimizationPass();
+Pass* createGUFAPass();
+Pass* createGUFAOptimizingPass();
 Pass* createHeap2LocalPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
@@ -69,6 +74,7 @@ Pass* createLoopInvariantCodeMotionPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
+Pass* createMergeSimilarFunctionsPass();
 Pass* createMergeLocalsPass();
 Pass* createMinifiedPrinterPass();
 Pass* createMinifyImportsPass();
@@ -77,7 +83,6 @@ Pass* createMinifyImportsAndExportsAndModulesPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();
 Pass* createNameTypesPass();
-Pass* createNoExitRuntimePass();
 Pass* createOnceReductionPass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
@@ -110,6 +115,8 @@ Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
 Pass* createSafeHeapPass();
 Pass* createSetGlobalsPass();
+Pass* createSignaturePruningPass();
+Pass* createSignatureRefiningPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyGlobalsPass();
 Pass* createSimplifyGlobalsOptimizingPass();
@@ -124,14 +131,18 @@ Pass* createStripProducersPass();
 Pass* createStripTargetFeaturesPass();
 Pass* createSouperifyPass();
 Pass* createSouperifySingleUsePass();
+Pass* createSpillPointersPass();
 Pass* createStubUnsupportedJSOpsPass();
 Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
+Pass* createTypeRefiningPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
-Pass* createGlobalTypeOptimizationPass();
+
+// Test passes:
+Pass* createCatchPopFixupPass();
 
 } // namespace wasm
 

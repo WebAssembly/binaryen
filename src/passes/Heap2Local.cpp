@@ -43,9 +43,8 @@
 //
 //     ;; Allocate a boxed integer of 42 and save the reference to it.
 //     (local.set $ref
-//      (struct.new_with_rtt $boxed-int
+//      (struct.new $boxed-int
 //       (i32.const 42)
-//       (rtt.canon $boxed-int)
 //      )
 //     )
 //
@@ -274,12 +273,14 @@ struct Heap2LocalOptimizer {
     // left to other passes, like getting rid of dropped code without side
     // effects.
 
-    void visitBlock(Block* curr) {
+    // Adjust the type that flows through an expression, updating that type as
+    // necessary.
+    void adjustTypeFlowingThrough(Expression* curr) {
       if (!reached.count(curr)) {
         return;
       }
 
-      // Our allocation passes through this block. We must turn its type into a
+      // Our allocation passes through this expr. We must turn its type into a
       // nullable one, because we will remove things like RefAsNonNull of it,
       // which means we may no longer have a non-nullable value as our input,
       // and we could fail to validate. It is safe to make this change in terms
@@ -289,6 +290,10 @@ struct Heap2LocalOptimizer {
       assert(curr->type.isRef());
       curr->type = Type(curr->type.getHeapType(), Nullable);
     }
+
+    void visitBlock(Block* curr) { adjustTypeFlowingThrough(curr); }
+
+    void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
     void visitLocalSet(LocalSet* curr) {
       if (!reached.count(curr)) {
@@ -401,10 +406,6 @@ struct Heap2LocalOptimizer {
         }
       }
 
-      // Drop the RTT (as it may have side effects; leave it to other passes).
-      if (allocation->rtt) {
-        contents.push_back(builder.makeDrop(allocation->rtt));
-      }
       // Replace the allocation with a null reference. This changes the type
       // from non-nullable to nullable, but as we optimize away the code that
       // the allocation reaches, we will handle that.
@@ -500,10 +501,9 @@ struct Heap2LocalOptimizer {
       // look at something that another allocation reached, which would be in a
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
-      if (seen.count(parent)) {
+      if (!seen.emplace(parent).second) {
         return false;
       }
-      seen.insert(parent);
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {

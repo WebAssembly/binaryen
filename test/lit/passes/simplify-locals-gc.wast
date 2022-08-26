@@ -13,6 +13,17 @@
   ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
   (type $struct-immutable (struct (field i32)))
 
+  ;; CHECK:      (type $B (struct (field dataref)))
+
+  ;; CHECK:      (type $A (struct (field (ref null data))))
+  ;; NOMNL:      (type $A (struct_subtype (field (ref null data)) data))
+  (type $A (struct_subtype (field (ref null data)) data))
+
+  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
+  ;; nullable).
+  ;; NOMNL:      (type $B (struct_subtype (field dataref) $A))
+  (type $B (struct_subtype (field (ref data)) $A))
+
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
@@ -27,7 +38,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $temp)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
+  ;; NOMNL:      (func $no-reorder-past-write (type $ref|$struct|_=>_i32) (param $x (ref $struct)) (result i32)
   ;; NOMNL-NEXT:  (local $temp i32)
   ;; NOMNL-NEXT:  (local.set $temp
   ;; NOMNL-NEXT:   (struct.get $struct 0
@@ -65,7 +76,7 @@
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; NOMNL:      (func $reorder-past-write-if-immutable (type $ref|$struct|_ref|$struct-immutable|_=>_i32) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; NOMNL-NEXT:  (local $temp i32)
   ;; NOMNL-NEXT:  (nop)
   ;; NOMNL-NEXT:  (struct.set $struct 0
@@ -105,7 +116,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $temp)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; NOMNL:      (func $unreachable-struct.get (type $ref|$struct|_ref|$struct-immutable|_=>_i32) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; NOMNL-NEXT:  (local $temp i32)
   ;; NOMNL-NEXT:  (local.tee $temp
   ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
@@ -160,7 +171,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $no-block-values-if-br_on
+  ;; NOMNL:      (func $no-block-values-if-br_on (type $none_=>_none)
   ;; NOMNL-NEXT:  (local $temp anyref)
   ;; NOMNL-NEXT:  (block $block
   ;; NOMNL-NEXT:   (drop
@@ -213,5 +224,32 @@
      (local.get $temp)
     )
    )
+  )
+
+  ;; CHECK:      (func $needs-refinalize (param $b (ref $B)) (result anyref)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $needs-refinalize (type $ref|$B|_=>_anyref) (param $b (ref $B)) (result anyref)
+  ;; NOMNL-NEXT:  (local $a (ref null $A))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (struct.get $B 0
+  ;; NOMNL-NEXT:   (local.get $b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $needs-refinalize (param $b (ref $B)) (result anyref)
+    (local $a (ref null $A))
+    (local.set $a
+      (local.get $b)
+    )
+    ;; This begins as a struct.get of $A, but after we move the set's value onto
+    ;; the get, we'll be reading from $B. $B's field has a more refined type, so
+    ;; we must update the type of the struct.get using refinalize.
+    (struct.get $A 0
+      (local.get $a)
+    )
   )
 )

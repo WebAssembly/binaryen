@@ -62,14 +62,6 @@ static Expression* toABI(Expression* value, Module* module) {
     case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref: {
-      WASM_UNREACHABLE("reference types cannot be converted to i64");
-    }
     case Type::none: {
       // the value is none, but we need a value here
       value =
@@ -108,14 +100,6 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     case Type::v128: {
       WASM_UNREACHABLE("v128 not implemented yet");
     }
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref: {
-      WASM_UNREACHABLE("reference types cannot be converted from i64");
-    }
     case Type::none: {
       value = builder.makeDrop(value);
       break;
@@ -136,7 +120,7 @@ struct ParallelFuncCastEmulation
     return new ParallelFuncCastEmulation(ABIType, numParams);
   }
 
-  ParallelFuncCastEmulation(Signature ABIType, Index numParams)
+  ParallelFuncCastEmulation(HeapType ABIType, Index numParams)
     : ABIType(ABIType), numParams(numParams) {}
 
   void visitCallIndirect(CallIndirect* curr) {
@@ -152,7 +136,7 @@ struct ParallelFuncCastEmulation
       curr->operands.push_back(LiteralUtils::makeZero(Type::i64, *getModule()));
     }
     // Set the new types
-    curr->sig = ABIType;
+    curr->heapType = ABIType;
     auto oldType = curr->type;
     curr->type = Type::i64;
     curr->finalize(); // may be unreachable
@@ -162,7 +146,7 @@ struct ParallelFuncCastEmulation
 
 private:
   // The signature of a call with the right params and return
-  Signature ABIType;
+  HeapType ABIType;
   Index numParams;
 };
 
@@ -171,7 +155,8 @@ struct FuncCastEmulation : public Pass {
     Index numParams =
       std::stoul(runner->options.getArgumentOrDefault("max-func-params", "16"));
     // we just need the one ABI function type for all indirect calls
-    Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)), Type::i64);
+    HeapType ABIType(
+      Signature(Type(std::vector<Type>(numParams, Type::i64)), Type::i64));
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
     ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {

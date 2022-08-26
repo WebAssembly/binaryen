@@ -18,8 +18,6 @@
 #include "pass.h"
 #include "wasm.h"
 
-using namespace std;
-
 namespace wasm {
 
 struct LimitSegments : public Pass {
