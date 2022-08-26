@@ -2288,7 +2288,6 @@ void WasmBinaryBuilder::readImports() {
         auto curr = builder.makeFunction(name, type, {});
         curr->module = module;
         curr->base = base;
-        functionImports.push_back(curr.get());
         wasm.addFunction(std::move(curr));
         break;
       }
@@ -2420,8 +2419,9 @@ Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
 
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
+  auto numImports = wasm.functions.size();
   size_t total = getU32LEB();
-  if (total != functionTypes.size() - functionImports.size()) {
+  if (total != functionTypes.size() - numImports) {
     throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
@@ -2435,7 +2435,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->type = getTypeByFunctionIndex(functionImports.size() + i);
+    func->type = getTypeByFunctionIndex(numImports + i);
     currFunction = func;
 
     if (DWARF) {
@@ -2470,7 +2470,7 @@ void WasmBinaryBuilder::readFunctions() {
       // the form of pthread-related segment initializations. As this is just
       // one function, it doesn't add significant time, so the optimization of
       // skipping bodies is still very useful.
-      auto currFunctionIndex = functionImports.size() + functions.size();
+      auto currFunctionIndex = wasm.functions.size();
       bool isStart = startIndex == currFunctionIndex;
       if (!skipFunctionBodies || isStart) {
         func->body = getBlockOrSingleton(func->getResults());
@@ -2503,7 +2503,7 @@ void WasmBinaryBuilder::readFunctions() {
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    functions.push_back(func);
+    wasm.addFunction(func);
   }
   BYN_TRACE(" end function bodies\n");
 }
@@ -2961,9 +2961,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto* func : functions) {
-    wasm.addFunction(func);
-  }
   for (auto& global : globals) {
     wasm.addGlobal(std::move(global));
   }
@@ -3277,11 +3274,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numFunctionImports = functionImports.size();
-        if (index < numFunctionImports) {
-          functionImports[index]->setExplicitName(name);
-        } else if (index - numFunctionImports < functions.size()) {
-          functions[index - numFunctionImports]->setExplicitName(name);
+        if (index < wasm.functions.size()) {
+          wasm.functions[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: function index out of bounds in name section, "
                        "function subsection: "
@@ -3291,14 +3285,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameLocal) {
       auto numFuncs = getU32LEB();
-      auto numFunctionImports = functionImports.size();
       for (size_t i = 0; i < numFuncs; i++) {
         auto funcIndex = getU32LEB();
         Function* func = nullptr;
-        if (funcIndex < numFunctionImports) {
-          func = functionImports[funcIndex];
-        } else if (funcIndex - numFunctionImports < functions.size()) {
-          func = functions[funcIndex - numFunctionImports];
+        if (funcIndex < wasm.functions.size()) {
+          func = wasm.functions[funcIndex].get();
         } else {
           std::cerr
             << "warning: function index out of bounds in name section, local "
