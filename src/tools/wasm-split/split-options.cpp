@@ -247,11 +247,10 @@ WasmSplitOptions::WasmSplitOptions()
       })
     .add("--in-secondary-memory",
          "",
-         "Store profile information in a separate memory. rather than globals "
-         "(the default) so that "
-         "it can be shared between multiple threads. Users are responsible for "
-         "ensuring that the module does not use the initial memory region for "
-         "anything else.",
+         "Store profile information in a separate memory, rather than in module "
+         "main memory or globals (the default). With this option, users do not "
+         "need to reserve the initial memory region for profile data and the "
+         "data can be shared between multiple threads.",
          WasmSplitOption,
          {Mode::Instrument},
          Options::Arguments::Zero,
