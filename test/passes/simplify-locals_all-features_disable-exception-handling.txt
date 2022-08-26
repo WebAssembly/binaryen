@@ -1866,7 +1866,7 @@
 (module
  (type $none_=>_anyref (func (result anyref)))
  (func $subtype-test (result anyref)
-  (local $0 (ref null i31))
+  (local $0 i31ref)
   (local $1 anyref)
   (local $2 anyref)
   (block
