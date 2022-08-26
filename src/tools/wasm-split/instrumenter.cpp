@@ -225,12 +225,17 @@ void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
       }
       break;
     }
-    case WasmSplitOptions::StorageKind::InMemory: {
+    case WasmSplitOptions::StorageKind::InMemory:
+    case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       Index funcIdxVar =
         Builder::addVar(writeProfile.get(), "funcIdx", Type::i32);
       auto getFuncIdx = [&]() {
         return builder.makeLocalGet(funcIdxVar, Type::i32);
       };
+      Name loadMemoryName =
+        options.storageKind == WasmSplitOptions::StorageKind::InMemory
+          ? wasm->memories[0]->name
+          : secondaryMemory;
       // (block $outer
       //   (loop $l
       //     (br_if $outer (i32.eq (local.get $fucIdx) (i32.const numFuncs))
@@ -270,7 +275,7 @@ void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
                 builder.makeAtomicLoad(
-                  1, 0, getFuncIdx(), Type::i32, wasm->memories[0]->name),
+                  1, 0, getFuncIdx(), Type::i32, loadMemoryName),
                 Type::i32,
                 wasm->memories[0]->name),
               builder.makeLocalSet(
@@ -278,18 +283,6 @@ void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
                 builder.makeBinary(
                   AddInt32, getFuncIdx(), builder.makeConst(uint32_t(1)))),
               builder.makeBreak("l")))));
-      break;
-    }
-    case WasmSplitOptions::StorageKind::InSecondaryMemory: {
-      // Copy the secondary memory into main memory for exporting the profile to
-      // the user provided buffer
-      writeData =
-        builder.blockify(writeData,
-                         builder.makeMemoryCopy(builder.makeConst(8),
-                                                builder.makeConst(0),
-                                                builder.makeConst(numFuncs),
-                                                wasm->memories[0]->name,
-                                                secondaryMemory));
       break;
     }
   }
