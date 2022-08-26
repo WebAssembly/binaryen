@@ -21,6 +21,13 @@ Current Trunk
 - Change constant values of some reference types in the C and JS APIs. This is
   only observable if you hardcode specific values instead of calling the
   relevant methods (like `BinaryenTypeDataref()`). (#4755)
+- `BinaryenModulePrintStackIR`, `BinaryenModuleWriteStackIR` and
+  `BinaryenModuleAllocateAndWriteStackIR` now have an extra boolean
+  argument `optimize`. (#4832)
+- Remove support for the `let` instruction that has been removed from the typed
+  function references spec.
+- HeapType::ext has been restored but is no longer a subtype of HeapType::any to
+  match the latest updates in the GC spec. (#4898)
 - `i31ref` and `dataref` are now nullable to match the latest GC spec. (#4843)
 
 v109
