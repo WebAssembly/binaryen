@@ -78,7 +78,7 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
   secondaryMemory = Names::getValidMemoryName(*wasm, "split_data");
   // Create a memory with enough pages to write into
   size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
-  wasm->addMemory(Builder::makeMemory(secondaryMemory, pages, pages));
+  wasm->addMemory(Builder::makeMemory(secondaryMemory, pages, pages, true));
 }
 
 void Instrumenter::instrumentFuncs() {
