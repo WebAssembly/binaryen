@@ -128,8 +128,9 @@ void Instrumenter::instrumentFuncs() {
     case WasmSplitOptions::StorageKind::InMemory:
     case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       if (!wasm->features.hasAtomics()) {
-        Fatal() << "error: --in-memory and --in-secondary-memory requires "
-                   "atomics to be enabled";
+        const char* command = options.storageKind == WasmSplitOptions::StorageKind::InMemory ? "in-memory" : "in-secondary-memory";
+        Fatal() << "error: --" << command <<
+                   " requires atomics to be enabled";
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
