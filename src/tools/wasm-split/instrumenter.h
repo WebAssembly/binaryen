@@ -44,9 +44,9 @@ struct Instrumenter : public Pass {
 
 private:
   void addGlobals(size_t numFuncs);
-  void addSecondaryMemory(size_t profileSize);
+  void addSecondaryMemory(size_t numFuncs);
   void instrumentFuncs();
-  void addProfileExport(size_t numFuncs, size_t profileSize);
+  void addProfileExport(size_t numFuncs);
 };
 
 } // namespace wasm

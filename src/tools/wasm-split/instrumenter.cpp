@@ -30,14 +30,10 @@ void Instrumenter::run(PassRunner* runner, Module* wasm) {
   this->wasm = wasm;
   size_t numFuncs = 0;
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
-  // Calculate the size of the profile:
-  //   8 bytes module hash +
-  //   4 bytes for the timestamp for each function
-  const size_t profileSize = 8 + 4 * numFuncs;
   addGlobals(numFuncs);
-  addSecondaryMemory(profileSize);
+  addSecondaryMemory(numFuncs);
   instrumentFuncs();
-  addProfileExport(numFuncs, profileSize);
+  addProfileExport(numFuncs);
 }
 
 void Instrumenter::addGlobals(size_t numFuncs) {
@@ -69,7 +65,7 @@ void Instrumenter::addGlobals(size_t numFuncs) {
   }
 }
 
-void Instrumenter::addSecondaryMemory(size_t profileSize) {
+void Instrumenter::addSecondaryMemory(size_t numFuncs) {
   if (options.storageKind != WasmSplitOptions::StorageKind::InSecondaryMemory) {
     // Don't need secondary memory
     return;
@@ -81,7 +77,7 @@ void Instrumenter::addSecondaryMemory(size_t profileSize) {
 
   secondaryMemory = Names::getValidMemoryName(*wasm, "split_data");
   // Create a memory with enough pages to write into
-  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
+  size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
   wasm->addMemory(Builder::makeMemory(secondaryMemory, pages, pages));
 }
 
@@ -171,7 +167,7 @@ void Instrumenter::instrumentFuncs() {
 // otherwise. Functions with smaller non-zero timestamps were called earlier in
 // the instrumented run than funtions with larger timestamps.
 
-void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
+void Instrumenter::addProfileExport(size_t numFuncs) {
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
@@ -182,6 +178,11 @@ void Instrumenter::addProfileExport(size_t numFuncs, size_t profileSize) {
   writeProfile->hasExplicitName = true;
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
+
+  // Calculate the size of the profile:
+  //   8 bytes module hash +
+  //   4 bytes for the timestamp for each function
+  const size_t profileSize = 8 + 4 * numFuncs;
 
   // Create the function body
   Builder builder(*wasm);
