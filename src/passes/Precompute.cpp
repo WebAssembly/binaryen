@@ -33,13 +33,40 @@
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
 #include <wasm.h>
 
 namespace wasm {
 
-typedef std::unordered_map<LocalGet*, Literals> GetValues;
+using GetValues = std::unordered_map<LocalGet*, Literals>;
+
+// A map of values on the heap. This maps the expressions that create the
+// heap data (struct.new, array.new, etc.) to the data they are created with.
+// Each such expression gets its own GCData created for it. This allows
+// computing identity between locals referring to the same GCData, by seeing
+// if they point to the same thing.
+//
+// Note that a source expression may create different data each time it is
+// reached in a loop,
+//
+// (loop
+//  (if ..
+//   (local.set $x
+//    (struct.new ..
+//   )
+//  )
+//  ..compare $x to something..
+// )
+//
+// Just like in SSA form, this is not a problem because the loop entry must
+// have a merge, if a value entering the loop might be noticed. In SSA form
+// that means a phi is created, and identity is set there. In our
+// representation, the merge will cause a local.get of $x to have more
+// possible input values than that struct.new, which means we will not infer
+// a value for it, and not attempt to say anything about comparisons of $x.
+using HeapValues = std::unordered_map<Expression*, std::shared_ptr<GCData>>;
 
 // Precomputes an expression. Errors if we hit anything that can't be
 // precomputed. Inherits most of its functionality from
@@ -48,9 +75,13 @@ typedef std::unordered_map<LocalGet*, Literals> GetValues;
 class PrecomputingExpressionRunner
   : public ConstantExpressionRunner<PrecomputingExpressionRunner> {
 
+  using Super = ConstantExpressionRunner<PrecomputingExpressionRunner>;
+
   // Concrete values of gets computed during the pass, which the runner does not
   // know about since it only records values of sets it visits.
   GetValues& getValues;
+
+  HeapValues& heapValues;
 
   // Limit evaluation depth for 2 reasons: first, it is highly unlikely
   // that we can do anything useful to precompute a hugely nested expression
@@ -67,6 +98,7 @@ class PrecomputingExpressionRunner
 public:
   PrecomputingExpressionRunner(Module* module,
                                GetValues& getValues,
+                               HeapValues& heapValues,
                                bool replaceExpression)
     : ConstantExpressionRunner<PrecomputingExpressionRunner>(
         module,
@@ -74,7 +106,7 @@ public:
                           : FlagValues::DEFAULT,
         MAX_DEPTH,
         MAX_LOOP_ITERATIONS),
-      getValues(getValues) {}
+      getValues(getValues), heapValues(heapValues) {}
 
   Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
@@ -88,15 +120,78 @@ public:
       PrecomputingExpressionRunner>::visitLocalGet(curr);
   }
 
-  // Heap data may be modified in ways we do not see. We would need escape
-  // analysis to avoid that risk. For now, disallow all heap operations.
-  // TODO: immutability might also be good enough
-  Flow visitStructNew(StructNew* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitArrayNew(ArrayNew* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  // TODO: Use immutability for values
+  Flow visitStructNew(StructNew* curr) {
+    auto flow = Super::visitStructNew(curr);
+    if (flow.breaking()) {
+      return flow;
+    }
+    return getHeapCreationFlow(flow, curr);
+  }
+  Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructGet(StructGet* curr) {
+    if (curr->ref->type != Type::unreachable) {
+      // If this field is immutable then we may be able to precompute this, as
+      // if we also created the data in this function (or it was created in an
+      // immutable global) then we know the value in the field. If it is
+      // immutable, call the super method which will do the rest here. That
+      // includes checking for the data being properly created, as if it was
+      // not then we will not have a constant value for it, which means the
+      // local.get of that value will stop us.
+      auto& field =
+        curr->ref->type.getHeapType().getStruct().fields[curr->index];
+      if (field.mutable_ == Immutable) {
+        return Super::visitStructGet(curr);
+      }
+    }
+
+    // Otherwise, we've failed to precompute.
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayNew(ArrayNew* curr) {
+    auto flow = Super::visitArrayNew(curr);
+    if (flow.breaking()) {
+      return flow;
+    }
+    return getHeapCreationFlow(flow, curr);
+  }
+  Flow visitArrayInit(ArrayInit* curr) {
+    auto flow = Super::visitArrayInit(curr);
+    if (flow.breaking()) {
+      return flow;
+    }
+    return getHeapCreationFlow(flow, curr);
+  }
+  Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayGet(ArrayGet* curr) {
+    if (curr->ref->type != Type::unreachable) {
+      // See above with struct.get
+      auto element = curr->ref->type.getHeapType().getArray().element;
+      if (element.mutable_ == Immutable) {
+        return Super::visitArrayGet(curr);
+      }
+    }
+
+    // Otherwise, we've failed to precompute.
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+
+  // Generates heap info for a heap-allocating expression.
+  template<typename T> Flow getHeapCreationFlow(Flow flow, T* curr) {
+    // We must return a literal that refers to the canonical location for this
+    // source expression, so that each time we compute a specific struct.new
+    // we get the same identity.
+    std::shared_ptr<GCData>& canonical = heapValues[curr];
+    std::shared_ptr<GCData> newGCData = flow.getSingleValue().getGCData();
+    if (!canonical) {
+      canonical = std::make_shared<GCData>(*newGCData);
+    } else {
+      *canonical = *newGCData;
+    }
+    return Literal(canonical, curr->type.getHeapType());
+  }
 };
 
 struct Precompute
@@ -111,25 +206,29 @@ struct Precompute
   Precompute(bool propagate) : propagate(propagate) {}
 
   GetValues getValues;
-
-  bool worked;
+  HeapValues heapValues;
 
   void doWalkFunction(Function* func) {
-    // if propagating, we may need multiple rounds: each propagation can
-    // lead to the main walk removing code, which might open up more
-    // propagation opportunities
-    do {
-      getValues.clear();
-      // with extra effort, we can utilize the get-set graph to precompute
-      // things that use locals that are known to be constant. otherwise,
-      // we just look at what is immediately before us
-      if (propagate) {
-        optimizeLocals(func);
-      }
-      // do the main walk over everything
-      worked = false;
+    // Walk the function and precompute things.
+    super::doWalkFunction(func);
+    if (!propagate) {
+      return;
+    }
+    // When propagating, we can utilize the graph of local operations to
+    // precompute the values from a local.set to a local.get. This populates
+    // getValues which is then used by a subsequent walk that applies those
+    // values.
+    bool propagated = propagateLocals(func);
+    if (propagated) {
+      // We found constants to propagate and entered them in getValues. Do
+      // another walk to apply them and perhaps other optimizations that are
+      // unlocked.
       super::doWalkFunction(func);
-    } while (propagate && worked);
+    }
+    // Note that in principle even more cycles could find further work here, in
+    // very rare cases. To avoid constructing a LocalGraph again just for that
+    // unlikely chance, we leave such things for later runs of this pass and for
+    // --converge.
   }
 
   template<typename T> void reuseConstantNode(T* curr, Flow flow) {
@@ -150,7 +249,8 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::funcref) {
+        } else if (singleValue.type.isRef() &&
+                   singleValue.type.getHeapType() == HeapType::func) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();
@@ -172,17 +272,8 @@ struct Precompute
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
-    // Until engines implement v128.const and we have SIMD-aware optimizations
-    // that can break large v128.const instructions into smaller consts and
-    // splats, do not try to precompute v128 expressions.
-    if (curr->type.isVector()) {
-      return;
-    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (flow.getType().hasVector()) {
-      return;
-    }
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
@@ -221,7 +312,6 @@ struct Precompute
     // this was precomputed
     if (flow.values.isConcrete()) {
       replaceCurrent(flow.getConstExpression(*getModule()));
-      worked = true;
     } else {
       ExpressionManipulator::nop(curr);
     }
@@ -238,9 +328,9 @@ private:
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     Flow flow;
     try {
-      flow =
-        PrecomputingExpressionRunner(getModule(), getValues, replaceExpression)
-          .visit(curr);
+      flow = PrecomputingExpressionRunner(
+               getModule(), getValues, heapValues, replaceExpression)
+               .visit(curr);
     } catch (PrecomputingExpressionRunner::NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
@@ -271,7 +361,8 @@ private:
   }
 
   // Propagates values around. Returns whether we propagated.
-  void optimizeLocals(Function* func) {
+  bool propagateLocals(Function* func) {
+    bool propagated = false;
     // using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
     // compute other sets as locals (since some of the gets they read may be
@@ -279,21 +370,17 @@ private:
     // compute all dependencies
     LocalGraph localGraph(func);
     localGraph.computeInfluences();
-    localGraph.computeSSAIndexes();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
-    std::unordered_set<Expression*> work;
-    for (auto& pair : localGraph.locations) {
-      auto* curr = pair.first;
-      work.insert(curr);
+    UniqueDeferredQueue<Expression*> work;
+    for (auto& [curr, _] : localGraph.locations) {
+      work.push(curr);
     }
     // the constant value, or none if not a constant
     std::unordered_map<LocalSet*, Literals> setValues;
     // propagate constant values
     while (!work.empty()) {
-      auto iter = work.begin();
-      auto* curr = *iter;
-      work.erase(iter);
+      auto* curr = work.pop();
       // see if this set or get is actually a constant value, and if so,
       // mark it as such and add everything it influences to the work list,
       // as they may be constant too.
@@ -306,10 +393,8 @@ private:
         // repeating side effects if those side effects are expressed *in the
         // value*. A case where that can happen is GC data (each struct.new
         // creates a new, unique struct, even if the data is equal), and so
-        // PrecomputingExpressionRunner will return a nonconstant flow for all
-        // GC heap operations. (We could also have used
-        // Properties::isIntrinsicallyNondeterministic here, but that would be
-        // less efficient to re-scan the entire expression.)
+        // PrecomputingExpressionRunner has special logic to make sure that
+        // reference identity is preserved properly.
         //
         // (Other side effects are fine; if an expression does a call and we
         // somehow know the entire expression precomputes to a 42, then we can
@@ -338,7 +423,7 @@ private:
         setValues[set] = values;
         if (values.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
-            work.insert(get);
+            work.push(get);
           }
         }
       } else {
@@ -389,11 +474,13 @@ private:
           // we did!
           getValues[get] = values;
           for (auto* set : localGraph.getInfluences[get]) {
-            work.insert(set);
+            work.push(set);
           }
+          propagated = true;
         }
       }
     }
+    return propagated;
   }
 
   bool canEmitConstantFor(const Literals& values) {
@@ -422,14 +509,13 @@ private:
     }
     // All other reference types cannot be precomputed. Even an immutable GC
     // reference is not currently something this pass can handle, as it will
-    // evaluate and reevaluate code multiple times in e.g. optimizeLocals, see
+    // evaluate and reevaluate code multiple times in e.g. propagateLocals, see
     // the comment above.
     if (type.isRef()) {
       return false;
     }
-    // For now, don't try to precompute an Rtt. TODO figure out when that would
-    // be safe and useful.
-    return !type.isRtt();
+
+    return true;
   }
 };
 

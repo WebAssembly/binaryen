@@ -8,29 +8,26 @@
 
 (module
  ;; CHECK:      (type $A (struct (field (ref $C))))
- ;; NOMNL:      (type $A (struct (field (ref $C))))
+ ;; NOMNL:      (type $A (struct_subtype (field (ref $C)) data))
  (type $A (struct (field (ref $C))))
  ;; CHECK:      (type $C (struct (field (mut (ref $B)))))
 
  ;; CHECK:      (type $B (func (param (ref $A)) (result (ref $B))))
- ;; NOMNL:      (type $C (struct (field (mut (ref $B)))))
+ ;; NOMNL:      (type $C (struct_subtype (field (mut (ref $B))) data))
 
- ;; NOMNL:      (type $B (func (param (ref $A)) (result (ref $B))))
+ ;; NOMNL:      (type $B (func_subtype (param (ref $A)) (result (ref $B)) func))
  (type $B (func (param (ref $A)) (result (ref $B))))
  (type $C (struct (field (mut (ref $B)))))
  ;; CHECK:      (type $D (struct (field (ref $C)) (field (ref $A))))
- ;; NOMNL:      (type $D (struct (field (ref $C)) (field (ref $A))) (extends $A))
- (type $D (struct (field (ref $C)) (field (ref $A))) (extends $A))
- ;; CHECK:      (global $g0 (rtt 0 $A) (rtt.canon $A))
- ;; NOMNL:      (global $g0 (rtt 0 $A) (rtt.canon $A))
- (global $g0 (rtt 0 $A) (rtt.canon $A))
- ;; CHECK:      (global $g1 (rtt 1 $D) (rtt.sub $D
- ;; CHECK-NEXT:  (global.get $g0)
- ;; CHECK-NEXT: ))
- ;; NOMNL:      (global $g1 (rtt 1 $D) (rtt.sub $D
- ;; NOMNL-NEXT:  (global.get $g0)
- ;; NOMNL-NEXT: ))
- (global $g1 (rtt 1 $D) (rtt.sub $D
-  (global.get $g0)
- ))
+ ;; NOMNL:      (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+ (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+ ;; CHECK:      (func $use-types (param $0 (ref $A)) (param $1 (ref $D))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $use-types (type $ref|$A|_ref|$D|_=>_none) (param $0 (ref $A)) (param $1 (ref $D))
+ ;; NOMNL-NEXT:  (nop)
+ ;; NOMNL-NEXT: )
+ (func $use-types (param (ref $A) (ref $D))
+  (nop)
+ )
 )

@@ -20,6 +20,7 @@
 #include "ir/utils.h"
 #include "support/hash.h"
 #include "wasm.h"
+#include <functional>
 
 namespace wasm {
 
@@ -28,11 +29,18 @@ namespace wasm {
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   struct Map : public std::map<Function*, size_t> {};
 
-  FunctionHasher(Map* output) : output(output) {}
+  FunctionHasher(Map* output, ExpressionAnalyzer::ExprHasher customHasher)
+    : output(output), customHasher(customHasher) {}
+  FunctionHasher(Map* output)
+    : output(output), customHasher(ExpressionAnalyzer::nothingHasher) {}
 
-  FunctionHasher* create() override { return new FunctionHasher(output); }
+  FunctionHasher* create() override {
+    return new FunctionHasher(output, customHasher);
+  }
 
   static Map createMap(Module* module) {
     Map hashes;
@@ -44,19 +52,29 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     return hashes;
   }
 
-  void doWalkFunction(Function* func) { output->at(func) = hashFunction(func); }
+  void doWalkFunction(Function* func) {
+    output->at(func) = flexibleHashFunction(func, customHasher);
+  }
 
-  static size_t hashFunction(Function* func) {
+  static size_t
+  flexibleHashFunction(Function* func,
+                       ExpressionAnalyzer::ExprHasher customHasher) {
     auto digest = hash(func->type);
     for (auto type : func->vars) {
       rehash(digest, type.getID());
     }
-    hash_combine(digest, ExpressionAnalyzer::hash(func->body));
+    hash_combine(digest,
+                 ExpressionAnalyzer::flexibleHash(func->body, customHasher));
     return digest;
+  }
+
+  static size_t hashFunction(Function* func) {
+    return flexibleHashFunction(func, ExpressionAnalyzer::nothingHasher);
   }
 
 private:
   Map* output;
+  ExpressionAnalyzer::ExprHasher customHasher;
 };
 
 } // namespace wasm

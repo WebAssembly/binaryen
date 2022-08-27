@@ -47,7 +47,7 @@
   )
   (nop)
   (drop
-   (block $block (result i32)
+   (block (result i32)
     (i32.const 5)
    )
   )
@@ -70,7 +70,7 @@
    (block $val (result i32)
     (if
      (i32.const 10)
-     (block $block4
+     (block
       (nop)
       (br $val
        (i32.const 11)
@@ -293,8 +293,8 @@
    (call $waka)
    (nop)
    (local.set $a
-    (block $block (result i32)
-     (block $block5
+    (block (result i32)
+     (block
       (nop)
       (i32.store
        (i32.const 104)
@@ -308,8 +308,8 @@
    )
    (call $waka)
    (local.set $a
-    (block $block6 (result i32)
-     (block $block7
+    (block (result i32)
+     (block
       (nop)
       (i32.store
        (i32.const 106)
@@ -327,8 +327,8 @@
    )
    (call $waka)
    (local.set $a
-    (block $block8 (result i32)
-     (block $block9
+    (block (result i32)
+     (block
       (nop)
       (i32.store
        (i32.const 108)
@@ -350,8 +350,8 @@
    )
    (call $waka)
    (local.set $a
-    (block $block10 (result i32)
-     (block $block11
+    (block (result i32)
+     (block
       (nop)
       (i32.store
        (i32.const 110)
@@ -765,7 +765,7 @@
   (local.set $x
    (loop $moar (result i32)
     (nop)
-    (block $block (result i32)
+    (block (result i32)
      (br_if $moar
       (local.get $x)
      )
@@ -775,7 +775,7 @@
   )
   (block $moar18
    (local.set $y
-    (block $block19 (result i32)
+    (block (result i32)
      (br_if $moar18
       (local.get $y)
      )
@@ -1098,7 +1098,7 @@
    )
    (if (result f64)
     (global.get $global$0)
-    (block $block
+    (block
      (global.set $global$0
       (i32.sub
        (global.get $global$0)
@@ -1269,7 +1269,7 @@
   (block $outside
    (loop $loop
     (br_if $outside
-     (block $block (result i32)
+     (block (result i32)
       (br_if $loop
        (local.get $temp)
       )
@@ -1300,7 +1300,7 @@
        (local.tee $temp
         (i32.const -1)
        )
-       (block $block (result i32)
+       (block (result i32)
         (nop)
         (i32.const 0)
        )
@@ -1357,18 +1357,14 @@
     (if (result i32)
      (i32.const 1)
      (block
-      (block $block
-       (nop)
-       (nop)
-       (br $out)
-      )
+      (nop)
+      (nop)
+      (br $out)
       (nop)
      )
      (block (result i32)
-      (block $block2
-       (nop)
-       (nop)
-      )
+      (nop)
+      (nop)
       (i32.const 4)
      )
     )
@@ -1377,30 +1373,26 @@
     (if (result i32)
      (i32.const 6)
      (block (result i32)
-      (block $block4
-       (nop)
-       (nop)
-      )
+      (nop)
+      (nop)
       (i32.const 7)
      )
      (block
-      (block $block5
-       (nop)
-       (nop)
-       (br $out)
-      )
+      (nop)
+      (nop)
+      (br $out)
       (nop)
      )
     )
    )
    (if
     (i32.const 11)
-    (block $block7
+    (block
      (nop)
      (nop)
      (br $out)
     )
-    (block $block8
+    (block
      (nop)
      (nop)
      (br $out)
@@ -1616,10 +1608,8 @@
      (i32.const 2)
     )
     (block (result i32)
-     (block $block
-      (nop)
-      (nop)
-     )
+     (nop)
+     (nop)
      (local.get $x)
     )
    )
@@ -1675,12 +1665,10 @@
        (f32.const -2048)
       )
       (block
-       (block $block
-        (call $fimport$1
-         (i32.const -25732)
-        )
-        (br $label$2)
+       (call $fimport$1
+        (i32.const -25732)
        )
+       (br $label$2)
        (nop)
       )
      )
@@ -1746,7 +1734,7 @@
  (func $memory-init-store
   (local $x i32)
   (local.set $x
-   (block $block (result i32)
+   (block (result i32)
     (i32.store
      (i32.const 0)
      (i32.const 42)
@@ -1782,7 +1770,7 @@
  (func $memory-copy-store
   (local $x i32)
   (local.set $x
-   (block $block (result i32)
+   (block (result i32)
     (i32.store
      (i32.const 0)
      (i32.const 42)
@@ -1818,7 +1806,7 @@
  (func $memory-fill-store
   (local $x i32)
   (local.set $x
-   (block $block (result i32)
+   (block (result i32)
     (i32.store
      (i32.const 0)
      (i32.const 42)
@@ -1850,7 +1838,7 @@
  (func $data-drop-store
   (local $x i32)
   (local.set $x
-   (block $block (result i32)
+   (block (result i32)
     (i32.store
      (i32.const 0)
      (i32.const 42)
@@ -1866,7 +1854,7 @@
  (func $data-drop-memory-init
   (local $x i32)
   (local.set $x
-   (block $block (result i32)
+   (block (result i32)
     (memory.init 0
      (i32.const 0)
      (i32.const 0)
@@ -1884,10 +1872,10 @@
 (module
  (type $none_=>_anyref (func (result anyref)))
  (func $subtype-test (result anyref)
-  (local $0 externref)
+  (local $0 eqref)
   (local $1 anyref)
   (local $2 anyref)
-  (block $block
+  (block
    (nop)
   )
   (nop)
@@ -1901,24 +1889,22 @@
  (export "foo" (func $0))
  (func $0 (result i32)
   (local $0 i32)
-  (block $block (result i32)
-   (local.set $0
-    (i32.rem_u
-     (i32.const 0)
-     (i32.const 0)
-    )
+  (local.set $0
+   (i32.rem_u
+    (i32.const 0)
+    (i32.const 0)
    )
-   (data.drop 0)
-   (local.get $0)
   )
+  (data.drop 0)
+  (local.get $0)
  )
 )
 (module
- (type $eqref_ref?|i31|_=>_i32 (func (param eqref (ref null i31)) (result i32)))
+ (type $eqref_i31ref_=>_i32 (func (param eqref i31ref) (result i32)))
  (export "test" (func $0))
- (func $0 (param $0 eqref) (param $1 (ref null i31)) (result i32)
+ (func $0 (param $0 eqref) (param $1 i31ref) (result i32)
   (local $2 eqref)
-  (local $3 (ref null i31))
+  (local $3 i31ref)
   (local.set $2
    (local.get $0)
   )

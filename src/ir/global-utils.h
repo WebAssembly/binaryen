@@ -25,9 +25,8 @@
 #include "literal.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::GlobalUtils {
 
-namespace GlobalUtils {
 // find a global initialized to the value of an import, or null if no such
 // global
 inline Global*
@@ -54,20 +53,18 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
   return ret;
 }
 
-inline bool canInitializeGlobal(Expression* curr) {
+inline bool canInitializeGlobal(Expression* curr, FeatureSet features) {
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!canInitializeGlobal(op)) {
+      if (!canInitializeGlobal(op, features)) {
         return false;
       }
     }
     return true;
   }
-  if (Properties::isSingleConstantExpression(curr) || curr->is<GlobalGet>() ||
-      curr->is<RttCanon>() || curr->is<RttSub>() || curr->is<StructNew>() ||
-      curr->is<ArrayNew>() || curr->is<I31New>()) {
+  if (Properties::isValidInConstantExpression(curr, features)) {
     for (auto* child : ChildIterator(curr)) {
-      if (!canInitializeGlobal(child)) {
+      if (!canInitializeGlobal(child, features)) {
         return false;
       }
     }
@@ -76,8 +73,6 @@ inline bool canInitializeGlobal(Expression* curr) {
   return false;
 }
 
-} // namespace GlobalUtils
-
-} // namespace wasm
+} // namespace wasm::GlobalUtils
 
 #endif // wasm_ir_global_h

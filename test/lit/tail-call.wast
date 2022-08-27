@@ -8,7 +8,7 @@
 (module
 
   ;; CHECK:      (type $void (func))
-  ;; NOMNL:      (type $void (func))
+  ;; NOMNL:      (type $void (func_subtype func))
   (type $void (func))
 
   ;; CHECK:      (table $t 1 1 funcref)
@@ -22,7 +22,7 @@
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (return_call $bar)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $foo
+  ;; NOMNL:      (func $foo (type $void)
   ;; NOMNL-NEXT:  (return_call $bar)
   ;; NOMNL-NEXT: )
   (func $foo
@@ -34,7 +34,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $bar
+  ;; NOMNL:      (func $bar (type $void)
   ;; NOMNL-NEXT:  (return_call_indirect $t (type $void)
   ;; NOMNL-NEXT:   (i32.const 0)
   ;; NOMNL-NEXT:  )
@@ -47,20 +47,20 @@
 ;; Check GC types and subtyping
 (module
   ;; CHECK:      (type $return-B (func (result (ref $B))))
-  ;; NOMNL:      (type $return-B (func (result (ref $B))))
+  ;; NOMNL:      (type $return-B (func_subtype (result (ref $B)) func))
   (type $return-B (func (result (ref $B))))
 
   ;; CHECK:      (type $return-A (func (result (ref null $A))))
-  ;; NOMNL:      (type $return-A (func (result (ref null $A))))
+  ;; NOMNL:      (type $return-A (func_subtype (result (ref null $A)) func))
   (type $return-A (func (result (ref null $A))))
 
   ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct i32))
 
   ;; CHECK:      (type $B (struct (field i32) (field i32)))
-  ;; NOMNL:      (type $B (struct (field i32) (field i32)) (extends $A))
-  (type $B (struct i32 i32) (extends $A))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) $A))
+  (type $B (struct_subtype i32 i32 $A))
 
   ;; CHECK:      (table $t 1 1 funcref)
   ;; NOMNL:      (table $t 1 1 funcref)
@@ -73,7 +73,7 @@
   ;; CHECK:      (func $caller (result (ref null $A))
   ;; CHECK-NEXT:  (return_call $callee)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $caller (result (ref null $A))
+  ;; NOMNL:      (func $caller (type $return-A) (result (ref null $A))
   ;; NOMNL-NEXT:  (return_call $callee)
   ;; NOMNL-NEXT: )
   (func $caller (type $return-A)
@@ -85,7 +85,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $caller-indirect (result (ref $B))
+  ;; NOMNL:      (func $caller-indirect (type $return-B) (result (ref $B))
   ;; NOMNL-NEXT:  (return_call_indirect $t (type $return-B)
   ;; NOMNL-NEXT:   (i32.const 0)
   ;; NOMNL-NEXT:  )
@@ -97,7 +97,7 @@
   ;; CHECK:      (func $callee (result (ref $B))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $callee (result (ref $B))
+  ;; NOMNL:      (func $callee (type $return-B) (result (ref $B))
   ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
   (func $callee (type $return-B)

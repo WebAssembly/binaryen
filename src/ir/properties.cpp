@@ -17,26 +17,23 @@
 #include "ir/properties.h"
 #include "wasm-traversal.h"
 
-namespace wasm {
+namespace wasm::Properties {
 
-namespace Properties {
-
-bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features) {
-  // Practically no wasm instructions are intrinsically nondeterministic.
-  // Exceptions occur only in GC atm.
+bool isGenerative(Expression* curr, FeatureSet features) {
+  // Practically no wasm instructions are generative. Exceptions occur only in
+  // GC atm.
   if (!features.hasGC()) {
     return false;
   }
 
   struct Scanner : public PostWalker<Scanner> {
-    bool deterministic = true;
-    void visitStructNew(StructNew* curr) { deterministic = false; }
-    void visitArrayNew(ArrayNew* curr) { deterministic = false; }
+    bool generative = false;
+    void visitStructNew(StructNew* curr) { generative = true; }
+    void visitArrayNew(ArrayNew* curr) { generative = true; }
+    void visitArrayInit(ArrayInit* curr) { generative = true; }
   } scanner;
   scanner.walk(curr);
-  return !scanner.deterministic;
+  return scanner.generative;
 }
 
-} // namespace Properties
-
-} // namespace wasm
+} // namespace wasm::Properties

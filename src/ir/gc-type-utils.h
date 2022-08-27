@@ -19,9 +19,7 @@
 
 #include "wasm.h"
 
-namespace wasm {
-
-namespace GCTypeUtils {
+namespace wasm::GCTypeUtils {
 
 // Helper code to evaluate a reference at compile time and check if it is of a
 // certain kind. Various wasm instructions check if something is a function or
@@ -54,9 +52,16 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       // We don't check nullability here.
       case BrOnNull:
       case BrOnNonNull:
-      // Casts can only be known at runtime using RTTs.
-      case BrOnCast:
       case BrOnCastFail:
+        flip = true;
+        [[fallthrough]];
+      case BrOnCast:
+        // Note that the type must be non-nullable for us to succeed since a
+        // null would make us fail.
+        if (Type::isSubType(br->ref->type,
+                            Type(br->intendedType, NonNullable))) {
+          return flip ? Failure : Success;
+        }
         return Unknown;
       case BrOnNonFunc:
         flip = true;
@@ -141,8 +146,6 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   return success ? Success : Failure;
 }
 
-} // namespace GCTypeUtils
-
-} // namespace wasm
+} // namespace wasm::GCTypeUtils
 
 #endif // wasm_ir_gc_type_utils_h

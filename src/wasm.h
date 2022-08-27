@@ -34,6 +34,7 @@
 
 #include "literal.h"
 #include "mixed_arena.h"
+#include "support/index.h"
 #include "support/name.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
@@ -48,8 +49,8 @@ struct Address {
   typedef uint32_t address32_t;
   typedef uint64_t address64_t;
   address64_t addr;
-  Address() : addr(0) {}
-  Address(uint64_t a) : addr(a) {}
+  constexpr Address() : addr(0) {}
+  constexpr Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
     addr = a;
     return *this;
@@ -218,6 +219,12 @@ enum UnaryOp {
   TruncSatZeroUVecF64x2ToVecI32x4,
   DemoteZeroVecF64x2ToVecF32x4,
   PromoteLowVecF32x4ToVecF64x2,
+
+  // Relaxed SIMD
+  RelaxedTruncSVecF32x4ToVecI32x4,
+  RelaxedTruncUVecF32x4ToVecI32x4,
+  RelaxedTruncZeroSVecF64x2ToVecI32x4,
+  RelaxedTruncZeroUVecF64x2ToVecI32x4,
 
   InvalidUnary
 };
@@ -457,7 +464,16 @@ enum BinaryOp {
   NarrowUVecI32x4ToVecI16x8,
 
   // SIMD Swizzle
-  SwizzleVec8x16,
+  SwizzleVecI8x16,
+
+  // Relaxed SIMD
+  RelaxedSwizzleVecI8x16,
+  RelaxedMinVecF32x4,
+  RelaxedMaxVecF32x4,
+  RelaxedMinVecF64x2,
+  RelaxedMaxVecF64x2,
+  RelaxedQ15MulrSVecI16x8,
+  DotI8x16I7x16SToVecI16x8,
 
   InvalidBinary
 };
@@ -527,6 +543,17 @@ enum SIMDLoadStoreLaneOp {
 
 enum SIMDTernaryOp {
   Bitselect,
+
+  // Relaxed SIMD
+  RelaxedFmaVecF32x4,
+  RelaxedFmsVecF32x4,
+  RelaxedFmaVecF64x2,
+  RelaxedFmsVecF64x2,
+  LaneselectI8x16,
+  LaneselectI16x8,
+  LaneselectI32x4,
+  LaneselectI64x2,
+  DotI8x16I7x16AddSToVecI32x4,
 };
 
 enum RefIsOp {
@@ -554,6 +581,52 @@ enum BrOnOp {
   BrOnNonData,
   BrOnI31,
   BrOnNonI31,
+};
+
+enum StringNewOp {
+  // Linear memory
+  StringNewUTF8,
+  StringNewWTF8,
+  StringNewReplace,
+  StringNewWTF16,
+  // GC
+  StringNewUTF8Array,
+  StringNewWTF8Array,
+  StringNewReplaceArray,
+  StringNewWTF16Array,
+};
+
+enum StringMeasureOp {
+  StringMeasureUTF8,
+  StringMeasureWTF8,
+  StringMeasureWTF16,
+  StringMeasureIsUSV,
+  StringMeasureWTF16View,
+};
+
+enum StringEncodeOp {
+  StringEncodeUTF8,
+  StringEncodeWTF8,
+  StringEncodeWTF16,
+  StringEncodeUTF8Array,
+  StringEncodeWTF8Array,
+  StringEncodeWTF16Array,
+};
+
+enum StringAsOp {
+  StringAsWTF8,
+  StringAsWTF16,
+  StringAsIter,
+};
+
+enum StringIterMoveOp {
+  StringIterMoveAdvance,
+  StringIterMoveRewind,
+};
+
+enum StringSliceWTFOp {
+  StringSliceWTF8,
+  StringSliceWTF16,
 };
 
 //
@@ -624,6 +697,10 @@ public:
     RefIsId,
     RefFuncId,
     RefEqId,
+    TableGetId,
+    TableSetId,
+    TableSizeId,
+    TableGrowId,
     TryId,
     ThrowId,
     RethrowId,
@@ -635,17 +712,29 @@ public:
     RefTestId,
     RefCastId,
     BrOnId,
-    RttCanonId,
-    RttSubId,
     StructNewId,
     StructGetId,
     StructSetId,
     ArrayNewId,
+    ArrayInitId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
     ArrayCopyId,
     RefAsId,
+    StringNewId,
+    StringConstId,
+    StringMeasureId,
+    StringEncodeId,
+    StringConcatId,
+    StringEqId,
+    StringAsId,
+    StringWTF8AdvanceId,
+    StringWTF16GetId,
+    StringIterNextId,
+    StringIterMoveId,
+    StringSliceWTFId,
+    StringSliceIterId,
     NumExpressionIds
   };
   Id _id;
@@ -818,7 +907,7 @@ public:
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-  Signature sig;
+  HeapType heapType;
   ExpressionList operands;
   Expression* target;
   Name table;
@@ -880,6 +969,7 @@ public:
   Address align;
   bool isAtomic;
   Expression* ptr;
+  Name memory;
 
   // type must be set during creation, cannot be inferred
 
@@ -898,6 +988,7 @@ public:
   Expression* ptr;
   Expression* value;
   Type valueType;
+  Name memory;
 
   void finalize();
 };
@@ -912,6 +1003,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* value;
+  Name memory;
 
   void finalize();
 };
@@ -926,6 +1018,7 @@ public:
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
+  Name memory;
 
   void finalize();
 };
@@ -940,6 +1033,7 @@ public:
   Expression* expected;
   Expression* timeout;
   Type expectedType;
+  Name memory;
 
   void finalize();
 };
@@ -952,6 +1046,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* notifyCount;
+  Name memory;
 
   void finalize();
 };
@@ -1040,6 +1135,7 @@ public:
   Address offset;
   Address align;
   Expression* ptr;
+  Name memory;
 
   Index getMemBytes();
   void finalize();
@@ -1057,6 +1153,7 @@ public:
   uint8_t index;
   Expression* ptr;
   Expression* vec;
+  Name memory;
 
   bool isStore();
   bool isLoad() { return !isStore(); }
@@ -1073,6 +1170,7 @@ public:
   Expression* dest;
   Expression* offset;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1095,6 +1193,8 @@ public:
   Expression* dest;
   Expression* source;
   Expression* size;
+  Name destMemory;
+  Name sourceMemory;
 
   void finalize();
 };
@@ -1107,6 +1207,7 @@ public:
   Expression* dest;
   Expression* value;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1190,6 +1291,7 @@ public:
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1202,6 +1304,7 @@ public:
 
   Expression* delta = nullptr;
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1259,6 +1362,51 @@ public:
 
   Expression* left;
   Expression* right;
+
+  void finalize();
+};
+
+class TableGet : public SpecificExpression<Expression::TableGetId> {
+public:
+  TableGet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+
+  void finalize();
+};
+
+class TableSet : public SpecificExpression<Expression::TableSetId> {
+public:
+  TableSet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
+
+  void finalize();
+};
+
+class TableGrow : public SpecificExpression<Expression::TableGrowId> {
+public:
+  TableGrow() { type = Type::i32; }
+  TableGrow(MixedArena& allocator) : TableGrow() {}
+
+  Name table;
+  Expression* value;
+  Expression* delta;
 
   void finalize();
 };
@@ -1355,7 +1503,8 @@ public:
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  HeapType intendedType;
 
   void finalize();
 };
@@ -1365,7 +1514,13 @@ public:
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
-  Expression* rtt;
+
+  HeapType intendedType;
+
+  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
+  // measurements.
+  enum Safety { Safe, Unsafe };
+  Safety safety = Safe;
 
   void finalize();
 };
@@ -1378,14 +1533,7 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has an rtt that is used in the cast.
-  Expression* rtt;
-
-  // TODO: BrOnNull also has an optional extra value in the spec, which we do
-  //       not support. See also the discussion on
-  //       https://github.com/WebAssembly/function-references/issues/45
-  //       - depending on the decision there, we may want to move BrOnNull into
-  //       Break or a new class of its own.
+  HeapType intendedType;
 
   void finalize();
 
@@ -1393,32 +1541,10 @@ public:
   Type getSentType();
 };
 
-class RttCanon : public SpecificExpression<Expression::RttCanonId> {
-public:
-  RttCanon(MixedArena& allocator) {}
-
-  void finalize();
-};
-
-class RttSub : public SpecificExpression<Expression::RttSubId> {
-public:
-  RttSub(MixedArena& allocator) {}
-
-  Expression* parent;
-
-  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
-  // it always returns a fresh RTT, non-identical to any other RTT in the
-  // system).
-  bool fresh = false;
-
-  void finalize();
-};
-
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  Expression* rtt;
   // A struct.new_with_default has empty operands. This does leave the case of a
   // struct with no fields ambiguous, but it doesn't make a difference in that
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
@@ -1461,9 +1587,17 @@ public:
   // used.
   Expression* init = nullptr;
   Expression* size;
-  Expression* rtt;
 
   bool isWithDefault() { return !init; }
+
+  void finalize();
+};
+
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
+
+  ExpressionList values;
 
   void finalize();
 };
@@ -1520,6 +1654,169 @@ public:
   RefAsOp op;
 
   Expression* value;
+
+  void finalize();
+};
+
+class StringNew : public SpecificExpression<Expression::StringNewId> {
+public:
+  StringNew(MixedArena& allocator) {}
+
+  StringNewOp op;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
+  Expression* ptr;
+
+  // Used only in linear memory variations.
+  Expression* length = nullptr;
+
+  // Used only in GC variations.
+  Expression* start = nullptr;
+  Expression* end = nullptr;
+
+  void finalize();
+};
+
+class StringConst : public SpecificExpression<Expression::StringConstId> {
+public:
+  StringConst(MixedArena& allocator) {}
+
+  // TODO: Use a different type to allow null bytes in the middle -
+  //       ArenaVector<char> perhaps? However, Name has the benefit of being
+  //       interned and immutable (which is appropriate here).
+  Name string;
+
+  void finalize();
+};
+
+class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
+public:
+  StringMeasure(MixedArena& allocator) {}
+
+  StringMeasureOp op;
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
+public:
+  StringEncode(MixedArena& allocator) {}
+
+  StringEncodeOp op;
+
+  Expression* ref;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
+  Expression* ptr;
+
+  // Used only in GC variations, where it is the index in |ptr| to start
+  // encoding from.
+  Expression* start = nullptr;
+
+  void finalize();
+};
+
+class StringConcat : public SpecificExpression<Expression::StringConcatId> {
+public:
+  StringConcat(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class StringEq : public SpecificExpression<Expression::StringEqId> {
+public:
+  StringEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class StringAs : public SpecificExpression<Expression::StringAsId> {
+public:
+  StringAs(MixedArena& allocator) {}
+
+  StringAsOp op;
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringWTF8Advance
+  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
+public:
+  StringWTF8Advance(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+  Expression* bytes;
+
+  void finalize();
+};
+
+class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
+public:
+  StringWTF16Get(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+
+  void finalize();
+};
+
+class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
+public:
+  StringIterNext(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
+public:
+  StringIterMove(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringIterMoveOp op;
+
+  Expression* ref;
+
+  // How many codepoints to advance or reverse.
+  Expression* num;
+
+  void finalize();
+};
+
+class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
+public:
+  StringSliceWTF(MixedArena& allocator) {}
+
+  StringSliceWTFOp op;
+
+  Expression* ref;
+  Expression* start;
+  Expression* end;
+
+  void finalize();
+};
+
+class StringSliceIter
+  : public SpecificExpression<Expression::StringSliceIterId> {
+public:
+  StringSliceIter(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* num;
 
   void finalize();
 };
@@ -1708,11 +2005,13 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
-  Type type = Type::funcref;
+  Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
   ElementSegment() = default;
-  ElementSegment(Name table, Expression* offset, Type type = Type::funcref)
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type = Type(HeapType::func, Nullable))
     : table(table), offset(offset), type(type) {}
   ElementSegment(Name table,
                  Expression* offset,
@@ -1732,7 +2031,7 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
-  Type type = Type::funcref;
+  Type type = Type(HeapType::func, Nullable);
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {
@@ -1740,6 +2039,14 @@ public:
     initial = 0;
     max = kMaxSize;
   }
+};
+
+class DataSegment : public Named {
+public:
+  Name memory;
+  bool isPassive = false;
+  Expression* offset = nullptr;
+  std::vector<char> data; // TODO: optimize
 };
 
 class Memory : public Importable {
@@ -1750,50 +2057,18 @@ public:
   static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
-  struct Segment {
-    // For use in name section only
-    Name name;
-    bool isPassive = false;
-    Expression* offset = nullptr;
-    std::vector<char> data; // TODO: optimize
-    Segment() = default;
-    Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, const char* init, Address size)
-      : offset(offset) {
-      data.resize(size);
-      std::copy_n(init, size, data.begin());
-    }
-    Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
-      data.swap(init);
-    }
-    Segment(Name name,
-            bool isPassive,
-            Expression* offset,
-            const char* init,
-            Address size)
-      : name(name), isPassive(isPassive), offset(offset) {
-      data.resize(size);
-      std::copy_n(init, size, data.begin());
-    }
-  };
-
-  bool exists = false;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
-  std::vector<Segment> segments;
 
   bool shared = false;
   Type indexType = Type::i32;
 
-  Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return indexType == Type::i64; }
   void clear() {
-    exists = false;
     name = "";
     initial = 0;
     max = kMaxSize32;
-    segments.clear();
     shared = false;
     indexType = Type::i32;
   }
@@ -1822,6 +2097,7 @@ public:
 // The optional "dylink" section is used in dynamic linking.
 class DylinkSection {
 public:
+  bool isLegacy = false;
   Index memorySize, memoryAlignment, tableSize, tableAlignment;
   std::vector<Name> neededDynlibs;
   std::vector<char> tail;
@@ -1836,9 +2112,10 @@ public:
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<Memory>> memories;
+  std::vector<std::unique_ptr<DataSegment>> dataSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
-  Memory memory;
   Name start;
 
   std::vector<UserSection> userSections;
@@ -1859,14 +2136,6 @@ public:
   // Module name, if specified. Serves a documentary role only.
   Name name;
 
-  // Optional type name information, used in printing only. Note that Types are
-  // globally interned, but type names are specific to a module.
-  struct TypeNames {
-    // The name of the type.
-    Name name;
-    // For a Struct, names of fields.
-    std::unordered_map<Index, Name> fieldNames;
-  };
   std::unordered_map<HeapType, TypeNames> typeNames;
 
   MixedArena allocator;
@@ -1878,7 +2147,9 @@ private:
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, Memory*> memoriesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
+  std::unordered_map<Name, DataSegment*> dataSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
   std::unordered_map<Name, Tag*> tagsMap;
 
@@ -1889,12 +2160,16 @@ public:
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
+  Memory* getMemory(Name name);
+  DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
+  Memory* getMemoryOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
+  DataSegment* getDataSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Tag* getTagOrNull(Name name);
@@ -1908,6 +2183,8 @@ public:
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  Memory* addMemory(std::unique_ptr<Memory>&& curr);
+  DataSegment* addDataSegment(std::unique_ptr<DataSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Tag* addTag(std::unique_ptr<Tag>&& curr);
 
@@ -1917,6 +2194,8 @@ public:
   void removeFunction(Name name);
   void removeTable(Name name);
   void removeElementSegment(Name name);
+  void removeMemory(Name name);
+  void removeDataSegment(Name name);
   void removeGlobal(Name name);
   void removeTag(Name name);
 
@@ -1924,9 +2203,12 @@ public:
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
+  void removeMemories(std::function<bool(Memory*)> pred);
+  void removeDataSegments(std::function<bool(DataSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);
 
+  void updateDataSegmentsMap();
   void updateMaps();
 
   void clearDebugInfo();

@@ -17,6 +17,8 @@
 // wasm-split: Split a module in two or instrument a module to inform future
 // splitting.
 
+#include <fstream>
+
 #include "ir/module-splitting.h"
 #include "ir/names.h"
 #include "support/file.h"
@@ -149,6 +151,34 @@ ProfileData readProfile(const std::string& file) {
   return {hash, timestamps};
 }
 
+void getFunctionsToKeepAndSplit(Module& wasm,
+                                uint64_t wasmHash,
+                                const std::string& profileFile,
+                                std::set<Name>& keepFuncs,
+                                std::set<Name>& splitFuncs) {
+  ProfileData profile = readProfile(profileFile);
+  if (profile.hash != wasmHash) {
+    Fatal() << "error: checksum in profile does not match module checksum. "
+            << "The split module must be the original module that was "
+            << "instrumented to generate the profile.";
+  }
+
+  size_t i = 0;
+  ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+    if (i >= profile.timestamps.size()) {
+      Fatal() << "Unexpected end of profile data";
+    }
+    if (profile.timestamps[i++] > 0) {
+      keepFuncs.insert(func->name);
+    } else {
+      splitFuncs.insert(func->name);
+    }
+  });
+  if (i != profile.timestamps.size()) {
+    Fatal() << "Unexpected extra profile data";
+  }
+}
+
 void writeSymbolMap(Module& wasm, std::string filename) {
   PassOptions options;
   options.arguments["symbolmap"] = filename;
@@ -161,8 +191,8 @@ void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
                          std::string filename) {
   Output output(filename, Flags::Text);
   auto& o = output.getStream();
-  for (auto pair : placeholderMap) {
-    o << pair.first << ':' << pair.second << '\n';
+  for (auto& [index, func] : placeholderMap) {
+    o << index << ':' << func << '\n';
   }
 }
 
@@ -173,49 +203,37 @@ void splitModule(const WasmSplitOptions& options) {
   std::set<Name> keepFuncs;
 
   if (options.profileFile.size()) {
-    // Use the profile to initialize `keepFuncs`.
+    // Use the profile to set `keepFuncs`.
     uint64_t hash = hashFile(options.inputFiles[0]);
-    ProfileData profile = readProfile(options.profileFile);
-    if (profile.hash != hash) {
-      Fatal() << "error: checksum in profile does not match module checksum. "
-              << "The split module must be the original module that was "
-              << "instrumented to generate the profile.";
-    }
-    size_t i = 0;
-    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-      if (i >= profile.timestamps.size()) {
-        Fatal() << "Unexpected end of profile data";
+    std::set<Name> splitFuncs;
+    getFunctionsToKeepAndSplit(
+      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
+  } else if (options.keepFuncs.size()) {
+    // Use the explicitly provided `keepFuncs`.
+    for (auto& func : options.keepFuncs) {
+      if (!options.quiet && wasm.getFunctionOrNull(func) == nullptr) {
+        std::cerr << "warning: function " << func << " does not exist\n";
       }
-      if (profile.timestamps[i++] > 0) {
-        keepFuncs.insert(func->name);
+      keepFuncs.insert(func);
+    }
+  } else if (options.splitFuncs.size()) {
+    // Use the explicitly provided `splitFuncs`.
+    for (auto& func : wasm.functions) {
+      keepFuncs.insert(func->name);
+    }
+    for (auto& func : options.splitFuncs) {
+      auto* function = wasm.getFunctionOrNull(func);
+      if (!options.quiet && function == nullptr) {
+        std::cerr << "warning: function " << func << " does not exist\n";
       }
-    });
-    if (i != profile.timestamps.size()) {
-      Fatal() << "Unexpected extra profile data";
-    }
-  }
-
-  // Add in the functions specified with --keep-funcs
-  for (auto& func : options.keepFuncs) {
-    if (!options.quiet && wasm.getFunctionOrNull(func) == nullptr) {
-      std::cerr << "warning: function " << func << " does not exist\n";
-    }
-    keepFuncs.insert(func);
-  }
-
-  // Remove the functions specified with --remove-funcs
-  for (auto& func : options.splitFuncs) {
-    auto* function = wasm.getFunctionOrNull(func);
-    if (!options.quiet && function == nullptr) {
-      std::cerr << "warning: function " << func << " does not exist\n";
-    }
-    if (function && function->imported()) {
-      if (!options.quiet) {
-        std::cerr << "warning: cannot split out imported function " << func
-                  << "\n";
+      if (function && function->imported()) {
+        if (!options.quiet) {
+          std::cerr << "warning: cannot split out imported function " << func
+                    << "\n";
+        }
+      } else {
+        keepFuncs.erase(func);
       }
-    } else {
-      keepFuncs.erase(func);
     }
   }
 
@@ -276,6 +294,16 @@ void splitModule(const WasmSplitOptions& options) {
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
+
+  // Run asyncify on the primary module
+  if (options.asyncify) {
+    PassOptions passOptions;
+    passOptions.optimizeLevel = 1;
+    passOptions.arguments.insert({"asyncify-ignore-imports", ""});
+    PassRunner runner(&wasm, passOptions);
+    runner.add("asyncify");
+    runner.run();
+  }
 
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.primaryOutput + ".symbols");
@@ -372,6 +400,61 @@ void mergeProfiles(const WasmSplitOptions& options) {
   buffer.writeTo(out.getStream());
 }
 
+std::string unescape(std::string input) {
+  std::string output;
+  for (size_t i = 0; i < input.length(); i++) {
+    if ((input[i] == '\\') && (i + 2 < input.length()) &&
+        isxdigit(input[i + 1]) && isxdigit(input[i + 2])) {
+      std::string byte = input.substr(i + 1, 2);
+      i += 2;
+      char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
+      output.push_back(chr);
+    } else {
+      output.push_back(input[i]);
+    }
+  }
+  return output;
+}
+
+void checkExists(const std::string& path) {
+  std::ifstream infile(path);
+  if (!infile.is_open()) {
+    Fatal() << "File not found: " << path;
+  }
+}
+
+void printReadableProfile(const WasmSplitOptions& options) {
+  const std::string wasmFile(options.inputFiles[0]);
+  checkExists(options.profileFile);
+  checkExists(wasmFile);
+
+  Module wasm;
+  parseInput(wasm, options);
+
+  std::set<Name> keepFuncs;
+  std::set<Name> splitFuncs;
+
+  uint64_t hash = hashFile(wasmFile);
+  getFunctionsToKeepAndSplit(
+    wasm, hash, options.profileFile, keepFuncs, splitFuncs);
+
+  auto printFnSet = [&](auto funcs, std::string prefix) {
+    for (auto it = funcs.begin(); it != funcs.end(); ++it) {
+      std::cout << prefix << " "
+                << (options.unescape ? unescape(it->c_str()) : it->c_str())
+                << std::endl;
+    }
+  };
+
+  std::cout << "Keeping functions: " << std::endl;
+  printFnSet(keepFuncs, "+");
+  std::cout << std::endl;
+
+  std::cout << "Splitting out functions: " << std::endl;
+  printFnSet(splitFuncs, "-");
+  std::cout << std::endl;
+}
+
 } // anonymous namespace
 
 int main(int argc, const char* argv[]) {
@@ -391,6 +474,9 @@ int main(int argc, const char* argv[]) {
       break;
     case WasmSplitOptions::Mode::MergeProfiles:
       mergeProfiles(options);
+      break;
+    case WasmSplitOptions::Mode::PrintProfile:
+      printReadableProfile(options);
       break;
   }
 }

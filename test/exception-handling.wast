@@ -2,12 +2,13 @@
   (tag $e-i32 (param i32))
   (tag $e-i64 (param i64))
   (tag $e-i32-i64 (param i32 i64))
+  (tag $e-eqref (param (ref null eq)))
   (tag $e-empty)
 
   (func $foo)
   (func $bar)
 
-  (func $eh_test (local $x (i32 i64))
+  (func $eh-test (local $x (i32 i64))
     ;; Simple try-catch
     (try
       (do
@@ -310,5 +311,58 @@
         )
       )
     )
+  )
+
+  (func $pop-test
+    (try
+      (do)
+      (catch $e-i32
+        (throw $e-i32
+          (if (result i32)
+            ;; pop is within an if condition, so this is OK.
+            (pop i32)
+            (i32.const 0)
+            (i32.const 3)
+          )
+        )
+      )
+    )
+
+    (try
+      (do)
+      (catch $e-eqref
+        (drop
+          (pop anyref) ;; pop can be supertype
+        )
+      )
+    )
+  )
+
+  (func $catchless-try-with-inner-delegate
+    (try $label$0
+      (do
+        (try
+          (do
+            (throw $e-i32
+              (i32.const 0)
+            )
+          )
+          (delegate $label$0)
+        )
+      )
+    )
+  )
+
+  ;; When 'delegate' is next to a nested block, make sure its delegate argument
+  ;; is parsed correctly.
+  (func $nested-block-and-try
+    (block $l0
+      (block $l1)
+      (try
+        (do)
+        (delegate 1) ;; to caller
+      )
+    )
+    (nop)
   )
 )

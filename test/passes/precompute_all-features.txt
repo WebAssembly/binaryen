@@ -2,8 +2,8 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_f64 (func (result f64)))
- (type $none_=>_v128 (func (result v128)))
  (type $0 (func (param i32)))
+ (type $none_=>_v128 (func (result v128)))
  (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_externref (func (result externref)))
  (global $global i32 (i32.const 1))
@@ -171,7 +171,7 @@
     (block
      (select
       (i64.const 1)
-      (block $block
+      (block
        (global.set $global-mut
         (i32.const 1)
        )
@@ -217,17 +217,8 @@
    (i32.const 2)
   )
  )
- (func $no-simd-precompute (result v128)
-  (i32x4.splat
-   (i32.const 0)
-  )
- )
- (func $no-simd-precompute-if (result v128)
-  (return
-   (i32x4.splat
-    (i32.const 0)
-   )
-  )
+ (func $simd-precompute (result v128)
+  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
  )
  (func $no-memory-init-precompute
   (memory.init 0

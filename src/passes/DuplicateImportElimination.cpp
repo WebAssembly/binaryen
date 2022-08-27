@@ -34,7 +34,7 @@ struct DuplicateImportElimination : public Pass {
     std::map<std::pair<Name, Name>, Name> seen;
     std::vector<Name> toRemove;
     for (auto* func : imports.importedFunctions) {
-      auto pair = std::make_pair(func->module, func->base);
+      auto pair = std::pair{func->module, func->base};
       auto iter = seen.find(pair);
       if (iter != seen.end()) {
         auto previousName = iter->second;

@@ -360,7 +360,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   void visitTry(Try* curr) {
     // If try's body does not throw, the whole try-catch can be replaced with
     // the try's body.
-    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws) {
+    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
       replaceCurrent(curr->body);
       for (auto* catchBody : curr->catchBodies) {
         typeUpdater.noteRecursiveRemoval(catchBody);

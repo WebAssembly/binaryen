@@ -3,13 +3,13 @@
 # `dylink.test.wasm` was generated using emscripten to build a side
 # module with two TLS exports (which adds extra information to the
 # dylink section) using:
-#  `emcc -s SIDE_MODULE side.c`
+#  `emcc -s USE_PTHREAD -s SIDE_MODULE side.c`
 #
 # side.c:
 #   _Thread_local int foo = 10;
 #   _Thread_local int bar = 11;
 #
-# and then removing all sections except the dylink section using:
-#  `llvm-objcopy --only-section=dylink`
+# and then removing all sections except the dylink.0 section using:
+#  `llvm-objcopy --only-section=dylink.0`
 RUN: wasm-opt -O1 %s.wasm -o %t.o
 RUN: cmp %s.wasm %t.o

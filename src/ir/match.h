@@ -27,9 +27,7 @@
 #include "ir/abstract.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Match {
+namespace wasm::Match {
 
 // The available matchers are:
 //
@@ -39,12 +37,12 @@ namespace Match {
 //    argument can be a specific value to match or it can be a pointer to a
 //    value, Literal, or Const* at which to store the matched entity.
 //
-//  ival, fval
+//  bval, ival, fval
 //
-//    Match any integer constant or any floating point constant. Takes neither,
-//    either, or both of two possible arguments: first, a pointer to a value,
-//    Literal, or Const* at which to store the matched entity and second, a
-//    specific value to match.
+//    Match any boolean, any integer or any floating point constant. Takes
+//    neither, either, or both of two possible arguments: first, a pointer to a
+//    value, Literal, or Const* at which to store the matched entity and second,
+//    a specific value to match.
 //
 //  constant
 //
@@ -395,7 +393,14 @@ template<class T> inline decltype(auto) Exact(T* binder, T data) {
   return Matcher<ExactKind<T>>(binder, data);
 }
 
-// {I32,I64,Int,F32,F64,Float,Number}Lit: match `Literal` of the expected `Type`
+// {Bool,I32,I64,Int,F32,F64,Float,Number}Lit:
+// match `Literal` of the expected `Type`
+struct BoolLK {
+  static bool matchType(Literal lit) {
+    return lit.type == Type::i32 && (uint32_t)lit.geti32() <= 1U;
+  }
+  static int32_t getVal(Literal lit) { return lit.geti32(); }
+};
 struct I32LK {
   static bool matchType(Literal lit) { return lit.type == Type::i32; }
   static int32_t getVal(Literal lit) { return lit.geti32(); }
@@ -434,6 +439,9 @@ template<class T> struct NumComponents<LitKind<T>> {
 template<class T> struct GetComponent<LitKind<T>, 0> {
   decltype(auto) operator()(Literal lit) { return T::getVal(lit); }
 };
+template<class S> inline decltype(auto) BoolLit(Literal* binder, S&& s) {
+  return Matcher<LitKind<BoolLK>, S>(binder, {}, s);
+}
 template<class S> inline decltype(auto) I32Lit(Literal* binder, S&& s) {
   return Matcher<LitKind<I32LK>, S>(binder, {}, s);
 }
@@ -600,6 +608,27 @@ SelectMatcher(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
 } // namespace Internal
 
 // Public matching API
+
+inline decltype(auto) bval() {
+  return Internal::ConstMatcher(
+    nullptr, Internal::BoolLit(nullptr, Internal::Any<bool>(nullptr)));
+}
+inline decltype(auto) bval(bool x) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::BoolLit(nullptr, Internal::Exact<bool>(nullptr, x)));
+}
+inline decltype(auto) bval(bool* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::BoolLit(nullptr, Internal::Any(binder)));
+}
+inline decltype(auto) bval(Literal* binder) {
+  return Internal::ConstMatcher(
+    nullptr, Internal::BoolLit(binder, Internal::Any<bool>(nullptr)));
+}
+inline decltype(auto) bval(Const** binder) {
+  return Internal::ConstMatcher(
+    binder, Internal::BoolLit(nullptr, Internal::Any<bool>(nullptr)));
+}
 
 inline decltype(auto) i32() {
   return Internal::ConstMatcher(
@@ -841,8 +870,6 @@ inline decltype(auto) select(Select** binder, S1&& s1, S2&& s2, S3&& s3) {
   return Internal::SelectMatcher(binder, s1, s2, s3);
 }
 
-} // namespace Match
-
-} // namespace wasm
+} // namespace wasm::Match
 
 #endif // wasm_ir_match_h

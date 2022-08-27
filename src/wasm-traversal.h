@@ -50,6 +50,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
+  ReturnType visitDataSegment(DataSegment* curr) { return ReturnType(); }
   ReturnType visitTag(Tag* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
@@ -204,12 +205,15 @@ struct Walker : public VisitorType {
     static_cast<SubType*>(this)->visitTable(table);
   }
 
-  void walkMemory(Memory* memory) {
-    for (auto& segment : memory->segments) {
-      if (!segment.isPassive) {
-        walk(segment.offset);
-      }
+  void walkDataSegment(DataSegment* segment) {
+    if (!segment->isPassive) {
+      walk(segment->offset);
     }
+    static_cast<SubType*>(this)->visitDataSegment(segment);
+  }
+
+  void walkMemory(Memory* memory) {
+    // TODO: This method and walkTable should walk children too, or be renamed.
     static_cast<SubType*>(this)->visitMemory(memory);
   }
 
@@ -254,7 +258,12 @@ struct Walker : public VisitorType {
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    self->walkMemory(&module->memory);
+    for (auto& curr : module->memories) {
+      self->walkMemory(curr.get());
+    }
+    for (auto& curr : module->dataSegments) {
+      self->walkDataSegment(curr.get());
+    }
   }
 
   // Walks module-level code, that is, code that is not in functions.
@@ -355,25 +364,25 @@ struct PostWalker : public Walker<SubType, VisitorType> {
   auto* cast = curr->cast<id>();                                               \
   WASM_UNUSED(cast);
 
-#define DELEGATE_GET_FIELD(id, name) cast->name
+#define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_CHILD(id, name)                                         \
-  self->pushTask(SubType::scan, &cast->name);
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  self->pushTask(SubType::scan, &cast->field);
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
-  self->maybePushTask(SubType::scan, &cast->name);
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  self->maybePushTask(SubType::scan, &cast->field);
 
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
 
 #include "wasm-delegations-fields.def"
   }

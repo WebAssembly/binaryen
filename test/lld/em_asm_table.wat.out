@@ -29,28 +29,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 159609,
-  "declares": [
-    "emscripten_log",
-    "emscripten_asm_const_int"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "dynCall_vii",
-    "dynCall_iiii"
-  ],
-  "namedGlobals": {
-    "__data_end" : "1048"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

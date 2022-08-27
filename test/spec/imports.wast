@@ -489,19 +489,6 @@
 (assert_return (invoke "load" (i32.const 8)) (i32.const 0x100000))
 (assert_trap (invoke "load" (i32.const 1000000)) "out of bounds memory access")
 
-(assert_invalid
-  (module (import "" "" (memory 1)) (import "" "" (memory 1)))
-  "multiple memories"
-)
-(assert_invalid
-  (module (import "" "" (memory 1)) (memory 0))
-  "multiple memories"
-)
-(assert_invalid
-  (module (memory 0) (memory 0))
-  "multiple memories"
-)
-
 (module (import "test" "memory-2-inf" (memory 2)))
 (module (import "test" "memory-2-inf" (memory 1)))
 (module (import "test" "memory-2-inf" (memory 0)))

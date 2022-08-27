@@ -13,12 +13,10 @@
  (func $foo (result (ref null $struct))
   (if (result (ref null $struct))
    (i32.const 1)
-   (struct.new_with_rtt $struct
-    (array.new_default_with_rtt $vector
+   (struct.new $struct
+    (array.new_default $vector
      (i32.const 1)
-     (rtt.canon $vector)
     )
-    (rtt.canon $struct)
    )
    (ref.null $struct)
   )
@@ -88,18 +86,16 @@
    (block $data (result (ref $vector))
     (drop
      (br $data
-      (array.new_default_with_rtt $vector
+      (array.new_default $vector
        (i32.const 1)
-       (rtt.canon $vector)
       )
      )
     )
     (call $log
      (i32.const 5)
     )
-    (array.new_default_with_rtt $vector
+    (array.new_default $vector
      (i32.const 2)
-     (rtt.canon $vector)
     )
    )
   )
@@ -107,7 +103,7 @@
    (i32.const 6)
   )
   (drop
-   (block $i31 (result i31ref)
+   (block $i31 (result (ref i31))
     (drop
      (br $i31
       (i31.new
@@ -140,7 +136,7 @@
  )
  (func $br_on-to-flow
   (drop
-   (block $data (result (ref null data))
+   (block $data (result dataref)
     (drop
      (ref.func $br_on-to-flow)
     )
@@ -148,7 +144,7 @@
    )
   )
   (drop
-   (block $datab (result (ref null data))
+   (block $datab (result dataref)
     (drop
      (i31.new
       (i32.const 1337)
@@ -160,9 +156,8 @@
   (drop
    (block $func (result funcref)
     (drop
-     (array.new_default_with_rtt $vector
+     (array.new_default $vector
       (i32.const 2)
-      (rtt.canon $vector)
      )
     )
     (ref.null func)
@@ -179,18 +174,17 @@
    )
   )
   (drop
-   (block $i31 (result (ref null i31))
+   (block $i31 (result i31ref)
     (drop
-     (array.new_default_with_rtt $vector
+     (array.new_default $vector
       (i32.const 2)
-      (rtt.canon $vector)
      )
     )
     (ref.null i31)
    )
   )
   (drop
-   (block $i31b (result (ref null i31))
+   (block $i31b (result i31ref)
     (drop
      (ref.func $br_on-to-flow)
     )

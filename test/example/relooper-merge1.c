@@ -12,59 +12,95 @@ int main() {
   // check()
 
   // if the end, halt
-  BinaryenExpressionRef halter = BinaryenIf(module,
-    BinaryenBinary(module,
+  BinaryenExpressionRef halter = BinaryenIf(
+    module,
+    BinaryenBinary(
+      module,
       BinaryenGeUInt32(),
-      BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
-                   BinaryenConst(module, BinaryenLiteralInt32(4))),
+      BinaryenLoad(module,
+                   4,
+                   0,
+                   0,
+                   0,
+                   BinaryenTypeInt32(),
+                   BinaryenConst(module, BinaryenLiteralInt32(4)),
+                   "0"),
       BinaryenConst(module, BinaryenLiteralInt32(4 * 12)) // jumps of 4 bytes
-    ),
+      ),
     BinaryenUnreachable(module),
-    NULL
-  );
+    NULL);
   // increment index
-  BinaryenExpressionRef incer = BinaryenStore(module,
-    4, 0, 0,
+  BinaryenExpressionRef incer = BinaryenStore(
+    module,
+    4,
+    0,
+    0,
     BinaryenConst(module, BinaryenLiteralInt32(4)),
     BinaryenBinary(module,
-      BinaryenAddInt32(),
-      BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+                   BinaryenAddInt32(),
+                   BinaryenLoad(module,
+                                4,
+                                0,
+                                0,
+                                0,
+                                BinaryenTypeInt32(),
+                                BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                "0"),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
-      BinaryenConst(module, BinaryenLiteralInt32(4))
-    ),
-    BinaryenTypeInt32()
-  );
+    BinaryenTypeInt32(),
+    "0");
 
   // optionally, print the return value
-  BinaryenExpressionRef args[] = {
-    BinaryenBinary(module,
-      BinaryenSubInt32(),
-      BinaryenConst(module, BinaryenLiteralInt32(0)),
-      BinaryenLoad(module,
-        4, 0, 4, 0, BinaryenTypeInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4)))
-      )
-    )
-  };
+  BinaryenExpressionRef args[] = {BinaryenBinary(
+    module,
+    BinaryenSubInt32(),
+    BinaryenConst(module, BinaryenLiteralInt32(0)),
+    BinaryenLoad(module,
+                 4,
+                 0,
+                 4,
+                 0,
+                 BinaryenTypeInt32(),
+                 BinaryenLoad(module,
+                              4,
+                              0,
+                              0,
+                              0,
+                              BinaryenTypeInt32(),
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0"))};
   BinaryenExpressionRef debugger;
-  if (1) debugger = BinaryenCall(module, "print", args, 1,
-                                 BinaryenTypeNone());
-  else debugger = BinaryenNop(module);
+  if (1)
+    debugger = BinaryenCall(module, "print", args, 1, BinaryenTypeNone());
+  else
+    debugger = BinaryenNop(module);
 
   // return the decision. need to subtract 4 that we just added,
   // and add 8 since that's where we start, so overall offset 4
-  BinaryenExpressionRef returner = BinaryenLoad(module,
-    4, 0, 4, 0, BinaryenTypeInt32(),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
-    BinaryenConst(module, BinaryenLiteralInt32(4)))
-  );
-  BinaryenExpressionRef checkBodyList[] = { halter, incer, debugger,
-                                            returner };
-  BinaryenExpressionRef checkBody = BinaryenBlock(module,
-    NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef),
-    BinaryenTypeInt32()
-  );
+  BinaryenExpressionRef returner =
+    BinaryenLoad(module,
+                 4,
+                 0,
+                 4,
+                 0,
+                 BinaryenTypeInt32(),
+                 BinaryenLoad(module,
+                              4,
+                              0,
+                              0,
+                              0,
+                              BinaryenTypeInt32(),
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0");
+  BinaryenExpressionRef checkBodyList[] = {halter, incer, debugger, returner};
+  BinaryenExpressionRef checkBody =
+    BinaryenBlock(module,
+                  NULL,
+                  checkBodyList,
+                  sizeof(checkBodyList) / sizeof(BinaryenExpressionRef),
+                  BinaryenTypeInt32());
   BinaryenAddFunction(module,
                       "check",
                       BinaryenTypeNone(),
@@ -77,100 +113,99 @@ int main() {
 
   RelooperRef relooper = RelooperCreate(module);
 
-
   RelooperBlockRef b0;
   {
     BinaryenExpressionRef args[] = {
-      BinaryenConst(module, BinaryenLiteralInt32(0))
-    };
+      BinaryenConst(module, BinaryenLiteralInt32(0))};
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
-                                               BinaryenTypeInt32()))
-    };
+      BinaryenLocalSet(
+        module,
+        0,
+        BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))};
 
-    b0 = RelooperAddBlockWithSwitch(relooper,
+    b0 = RelooperAddBlockWithSwitch(
+      relooper,
       BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()),
       BinaryenBinary(module,
-        BinaryenRemUInt32(),
-        BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
-        BinaryenConst(module, BinaryenLiteralInt32(1))
-      )
-    );
-
+                     BinaryenRemUInt32(),
+                     BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
+                     BinaryenConst(module, BinaryenLiteralInt32(1))));
   }
 
   RelooperBlockRef b1;
   {
     BinaryenExpressionRef args[] = {
-      BinaryenConst(module, BinaryenLiteralInt32(1))
-    };
+      BinaryenConst(module, BinaryenLiteralInt32(1))};
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
-                                               BinaryenTypeInt32()))
-    };
+      BinaryenLocalSet(
+        module,
+        0,
+        BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))};
 
-    b1 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
-
+    b1 = RelooperAddBlock(
+      relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
   }
 
   RelooperBlockRef b2;
   {
     BinaryenExpressionRef args[] = {
-      BinaryenConst(module, BinaryenLiteralInt32(1))
-    };
+      BinaryenConst(module, BinaryenLiteralInt32(1))};
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
-                                               BinaryenTypeInt32()))
-    };
+      BinaryenLocalSet(
+        module,
+        0,
+        BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))};
 
-    b2 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
-
+    b2 = RelooperAddBlock(
+      relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
   }
 
   RelooperBlockRef b3;
   {
     BinaryenExpressionRef args[] = {
-      BinaryenConst(module, BinaryenLiteralInt32(1))
-    };
+      BinaryenConst(module, BinaryenLiteralInt32(1))};
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
-                                               BinaryenTypeInt32()))
-    };
+      BinaryenLocalSet(
+        module,
+        0,
+        BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))};
 
-    b3 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
+    b3 = RelooperAddBlock(
+      relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
   }
 
   RelooperBlockRef b4;
   {
     BinaryenExpressionRef args[] = {
-      BinaryenConst(module, BinaryenLiteralInt32(1))
-    };
+      BinaryenConst(module, BinaryenLiteralInt32(1))};
     BinaryenExpressionRef list[] = {
       BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
-      BinaryenLocalSet(module, 0, BinaryenCall(module, "check", NULL, 0,
-                                               BinaryenTypeInt32()))
-    };
+      BinaryenLocalSet(
+        module,
+        0,
+        BinaryenCall(module, "check", NULL, 0, BinaryenTypeInt32()))};
 
-    b4 = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
+    b4 = RelooperAddBlock(
+      relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
   }
 
   // Separate branch for each.
   // In this testcase, target blocks have identical contents (print 1),
   // and branches have no phi codes, and no loops.
   {
-    BinaryenIndex indexes[] = { 1, 4, 9 };
+    BinaryenIndex indexes[] = {1, 4, 9};
     RelooperAddBranchForSwitch(b0, b1, indexes, 3, NULL);
   }
   {
-    BinaryenIndex indexes[] = { 3, 6 };
+    BinaryenIndex indexes[] = {3, 6};
     RelooperAddBranchForSwitch(b0, b2, indexes, 2, NULL);
   }
   {
-    BinaryenIndex indexes[] = { 5, 25, 125 };
+    BinaryenIndex indexes[] = {5, 25, 125};
     RelooperAddBranchForSwitch(b0, b3, indexes, 3, NULL);
   }
   RelooperAddBranchForSwitch(b0, b4, NULL, 0, NULL);
@@ -178,7 +213,7 @@ int main() {
   BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1);
 
   // locals: state, free-for-label
-  BinaryenType localTypes[] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
+  BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
   BinaryenFunctionRef theMain = BinaryenAddFunction(module,
                                                     "main",
                                                     BinaryenTypeNone(),
@@ -197,10 +232,11 @@ int main() {
                             BinaryenTypeNone());
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL,  NULL, NULL, 0, 0);
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0, "0");
 
   // optionally, optimize
-  if (0) BinaryenModuleOptimize(module);
+  if (0)
+    BinaryenModuleOptimize(module);
 
   assert(BinaryenModuleValidate(module));
 

@@ -22,6 +22,7 @@
 
 #include "asmjs/shared-constants.h"
 #include "ir/bits.h"
+#include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
 #include "pass.h"
@@ -63,70 +64,99 @@ static Name getStoreName(Store* curr) {
 }
 
 struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
-  // If the getSbrkPtr function is implemented in the wasm, we must not
-  // instrument that, as it would lead to infinite recursion of it calling
-  // SAFE_HEAP_LOAD that calls it and so forth.
-  // As well as the getSbrkPtr function we also avoid instrumenting the
-  // module start function.  This is because this function is used in
-  // shared memory builds to load the passive memory segments, which in
-  // turn means that value of sbrk() is not available.
-  Name getSbrkPtr;
+  // A set of function that we should ignore (not instrument).
+  std::set<Name> ignoreFunctions;
 
   bool isFunctionParallel() override { return true; }
 
   AccessInstrumenter* create() override {
-    return new AccessInstrumenter(getSbrkPtr);
+    return new AccessInstrumenter(ignoreFunctions);
   }
 
-  AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
+  AccessInstrumenter(std::set<Name> ignoreFunctions)
+    : ignoreFunctions(ignoreFunctions) {}
 
   void visitLoad(Load* curr) {
-    // As well as the getSbrkPtr function we also avoid insturmenting the
-    // module start function.  This is because this function is used in
-    // shared memory builds to load the passive memory segments, which in
-    // turn means that value of sbrk() is not available.
-    if (getFunction()->name == getModule()->start ||
-        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (ignoreFunctions.count(getFunction()->name) != 0 ||
+        curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
-    replaceCurrent(
-      builder.makeCall(getLoadName(curr),
-                       {curr->ptr, builder.makeConstPtr(curr->offset.addr)},
-                       curr->type));
+    auto memory = getModule()->getMemory(curr->memory);
+    replaceCurrent(builder.makeCall(
+      getLoadName(curr),
+      {curr->ptr, builder.makeConstPtr(curr->offset.addr, memory->indexType)},
+      curr->type));
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == getModule()->start ||
-        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (ignoreFunctions.count(getFunction()->name) != 0 ||
+        curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
+    auto memory = getModule()->getMemory(curr->memory);
     replaceCurrent(builder.makeCall(
       getStoreName(curr),
-      {curr->ptr, builder.makeConstPtr(curr->offset.addr), curr->value},
+      {curr->ptr,
+       builder.makeConstPtr(curr->offset.addr, memory->indexType),
+       curr->value},
       Type::none));
   }
 };
+
+static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
+  std::set<Name> called;
+  std::vector<Name> toVisit;
+
+  auto addFunction = [&](Name name) {
+    if (called.insert(name).second) {
+      toVisit.push_back(name);
+    }
+  };
+
+  if (startFunc.is()) {
+    addFunction(startFunc);
+    while (!toVisit.empty()) {
+      auto next = toVisit.back();
+      toVisit.pop_back();
+      auto* func = module->getFunction(next);
+      for (auto* call : FindAll<Call>(func->body).list) {
+        addFunction(call->target);
+      }
+    }
+  }
+
+  return called;
+}
 
 struct SafeHeap : public Pass {
   PassOptions options;
 
   void run(PassRunner* runner, Module* module) override {
     options = runner->options;
+    assert(!module->memories.empty());
     // add imports
     addImports(module);
     // instrument loads and stores
-    AccessInstrumenter(getSbrkPtr).run(runner, module);
+    // We avoid instrumenting the module start function of any function that it
+    // directly calls.  This is because in some cases the linker generates
+    // `__wasm_init_memory` (either as the start function or a function directly
+    // called from it) and this function is used in shared memory builds to load
+    // the passive memory segments, which in turn means that value of sbrk() is
+    // not available until after it has run.
+    std::set<Name> ignoreFunctions = findCalledFunctions(module, module->start);
+    ignoreFunctions.insert(getSbrkPtr);
+    AccessInstrumenter(ignoreFunctions).run(runner, module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
 
-  Name dynamicTopPtr, getSbrkPtr, sbrk, segfault, alignfault;
+  Name getSbrkPtr, dynamicTopPtr, sbrk, segfault, alignfault;
 
   void addImports(Module* module) {
     ImportInfo info(*module);
-    auto indexType = module->memory.indexType;
+    auto indexType = module->memories[0]->indexType;
     if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
@@ -177,6 +207,7 @@ struct SafeHeap : public Pass {
         continue;
       }
       load.type = type;
+      load.memory = module->memories[0]->name;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         load.bytes = bytes;
         if (bytes > type.getByteSize() || (type == Type::f32 && bytes != 4) ||
@@ -196,8 +227,9 @@ struct SafeHeap : public Pass {
             }
             for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
-              if (isAtomic && !isPossibleAtomicOperation(
-                                align, bytes, module->memory.shared, type)) {
+              if (isAtomic &&
+                  !isPossibleAtomicOperation(
+                    align, bytes, module->memories[0]->shared, type)) {
                 continue;
               }
               addLoadFunc(load, module);
@@ -215,6 +247,7 @@ struct SafeHeap : public Pass {
       }
       store.valueType = valueType;
       store.type = Type::none;
+      store.memory = module->memories[0]->name;
       for (Index bytes : {1, 2, 4, 8, 16}) {
         store.bytes = bytes;
         if (bytes > valueType.getByteSize() ||
@@ -230,8 +263,9 @@ struct SafeHeap : public Pass {
           }
           for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
-            if (isAtomic && !isPossibleAtomicOperation(
-                              align, bytes, module->memory.shared, valueType)) {
+            if (isAtomic &&
+                !isPossibleAtomicOperation(
+                  align, bytes, module->memories[0]->shared, valueType)) {
               continue;
             }
             addStoreFunc(store, module);
@@ -248,22 +282,30 @@ struct SafeHeap : public Pass {
       return;
     }
     // pointer, offset
-    auto indexType = module->memory.indexType;
+    auto memory = module->getMemory(style.memory);
+    auto indexType = memory->indexType;
     auto funcSig = Signature({indexType, indexType}, style.type);
     auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       2,
-      builder.makeBinary(module->memory.is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(memory->is64() ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.type, builder, 2, style.bytes, module));
+    block->list.push_back(makeBoundsCheck(style.type,
+                                          builder,
+                                          2,
+                                          style.bytes,
+                                          module,
+                                          memory->indexType,
+                                          memory->is64(),
+                                          memory->name));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 2, module));
+      block->list.push_back(
+        makeAlignCheck(style.align, builder, 2, module, memory->name));
     }
     // do the load
     auto* load = module->allocator.alloc<Load>();
@@ -287,7 +329,9 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto indexType = module->memory.indexType;
+    auto memory = module->getMemory(style.memory);
+    auto indexType = memory->indexType;
+    bool is64 = memory->is64();
     // pointer, offset, value
     auto funcSig =
       Signature({indexType, indexType, style.valueType}, Type::none);
@@ -296,19 +340,27 @@ struct SafeHeap : public Pass {
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
       3,
-      builder.makeBinary(module->memory.is64() ? AddInt64 : AddInt32,
+      builder.makeBinary(is64 ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3, style.bytes, module));
+    block->list.push_back(makeBoundsCheck(style.valueType,
+                                          builder,
+                                          3,
+                                          style.bytes,
+                                          module,
+                                          indexType,
+                                          is64,
+                                          memory->name));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(makeAlignCheck(style.align, builder, 3, module));
+      block->list.push_back(
+        makeAlignCheck(style.align, builder, 3, module, memory->name));
     }
     // do the store
     auto* store = module->allocator.alloc<Store>();
     *store = style; // basically the same as the template we are given!
+    store->memory = memory->name;
     store->ptr = builder.makeLocalGet(3, indexType);
     store->value = builder.makeLocalGet(2, style.valueType);
     block->list.push_back(store);
@@ -317,11 +369,15 @@ struct SafeHeap : public Pass {
     module->addFunction(std::move(func));
   }
 
-  Expression*
-  makeAlignCheck(Address align, Builder& builder, Index local, Module* module) {
-    auto indexType = module->memory.indexType;
+  Expression* makeAlignCheck(Address align,
+                             Builder& builder,
+                             Index local,
+                             Module* module,
+                             Name memoryName) {
+    auto memory = module->getMemory(memoryName);
+    auto indexType = memory->indexType;
     Expression* ptrBits = builder.makeLocalGet(local, indexType);
-    if (module->memory.is64()) {
+    if (memory->is64()) {
       ptrBits = builder.makeUnary(WrapInt64, ptrBits);
     }
     return builder.makeIf(
@@ -330,17 +386,21 @@ struct SafeHeap : public Pass {
       builder.makeCall(alignfault, {}, Type::none));
   }
 
-  Expression* makeBoundsCheck(
-    Type type, Builder& builder, Index local, Index bytes, Module* module) {
-    auto indexType = module->memory.indexType;
-    auto upperOp = module->memory.is64()
-                     ? options.lowMemoryUnused ? LtUInt64 : EqInt64
-                     : options.lowMemoryUnused ? LtUInt32 : EqInt32;
+  Expression* makeBoundsCheck(Type type,
+                              Builder& builder,
+                              Index local,
+                              Index bytes,
+                              Module* module,
+                              Type indexType,
+                              bool is64,
+                              Name memory) {
+    auto upperOp = is64 ? options.lowMemoryUnused ? LtUInt64 : EqInt64
+                        : options.lowMemoryUnused ? LtUInt32 : EqInt32;
     auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
       brkLocation =
-        builder.makeCall(sbrk, {builder.makeConstPtr(0)}, indexType);
+        builder.makeCall(sbrk, {builder.makeConstPtr(0, indexType)}, indexType);
     } else {
       Expression* sbrkPtr;
       if (dynamicTopPtr.is()) {
@@ -348,22 +408,23 @@ struct SafeHeap : public Pass {
       } else {
         sbrkPtr = builder.makeCall(getSbrkPtr, {}, indexType);
       }
-      auto size = module->memory.is64() ? 8 : 4;
-      brkLocation = builder.makeLoad(size, false, 0, size, sbrkPtr, indexType);
+      auto size = is64 ? 8 : 4;
+      brkLocation =
+        builder.makeLoad(size, false, 0, size, sbrkPtr, indexType, memory);
     }
-    auto gtuOp = module->memory.is64() ? GtUInt64 : GtUInt32;
-    auto addOp = module->memory.is64() ? AddInt64 : AddInt32;
+    auto gtuOp = is64 ? GtUInt64 : GtUInt32;
+    auto addOp = is64 ? AddInt64 : AddInt32;
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         builder.makeBinary(upperOp,
                            builder.makeLocalGet(local, indexType),
-                           builder.makeConstPtr(upperBound)),
+                           builder.makeConstPtr(upperBound, indexType)),
         builder.makeBinary(
           gtuOp,
           builder.makeBinary(addOp,
                              builder.makeLocalGet(local, indexType),
-                             builder.makeConstPtr(bytes)),
+                             builder.makeConstPtr(bytes, indexType)),
           brkLocation)),
       builder.makeCall(segfault, {}, Type::none));
   }

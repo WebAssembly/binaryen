@@ -884,12 +884,16 @@ void AssertionEmitter::emit() {
 
 int main(int argc, const char* argv[]) {
   Wasm2JSBuilder::Flags flags;
+
+  const std::string Wasm2JSOption = "wasm2js options";
+
   OptimizationOptions options("wasm2js",
                               "Transform .wasm/.wat files to asm.js");
   options
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         Wasm2JSOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -898,6 +902,7 @@ int main(int argc, const char* argv[]) {
     .add("--allow-asserts",
          "",
          "Allow compilation of .wast testing asserts",
+         Wasm2JSOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) {
            flags.allowAsserts = true;
@@ -907,6 +912,7 @@ int main(int argc, const char* argv[]) {
       "--pedantic",
       "",
       "Emulate WebAssembly trapping behavior",
+      Wasm2JSOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.pedantic = true; })
     .add(
@@ -914,6 +920,7 @@ int main(int argc, const char* argv[]) {
       "",
       "Emulate the glue in emscripten-compatible form (and not ES6 module "
       "form)",
+      Wasm2JSOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.emscripten = true; })
     .add(
@@ -924,6 +931,7 @@ int main(int argc, const char* argv[]) {
       "out of bounds or integer divide by zero; with this flag, we try to be "
       "deterministic at least in what happens, which might or might not be "
       "to trap like wasm, but at least should not vary)",
+      Wasm2JSOption,
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) {
         flags.deterministic = true;
@@ -932,6 +940,7 @@ int main(int argc, const char* argv[]) {
       "--symbols-file",
       "",
       "Emit a symbols file that maps function indexes to their original names",
+      Wasm2JSOption,
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) {
         flags.symbolsFile = argument;

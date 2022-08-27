@@ -69,6 +69,7 @@ total
  [funcs]        : 3       
  [globals]      : 1       
  [imports]      : 0       
+ [memories]     : 0       
  [tables]       : 0       
  [tags]         : 0       
  [total]        : 37      

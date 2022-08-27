@@ -82,7 +82,7 @@
  )
  (func $untaken-break-should-have-value (result i32)
   (block $x (result i32)
-   (block $block
+   (block
     (br_if $x
      (i32.const 0)
      (unreachable)

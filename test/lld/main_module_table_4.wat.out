@@ -12,28 +12,3 @@
   (nop)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 1,
-  "declares": [
-  ],
-  "globalImports": [
-    "__stack_pointer",
-    "__stdio_write",
-    "__table_base"
-  ],
-  "exports": [
-    "__stdio_write"
-  ],
-  "namedGlobals": {
-    "__data_end" : "42"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

@@ -12,41 +12,73 @@
 
 // kitchen sink, tests the full API
 
-
 // helpers
 
-static const uint8_t v128_bytes[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const uint8_t v128_bytes[] = {
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenType inputType) {
-  if (inputType == BinaryenTypeInt32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)));
-  if (inputType == BinaryenTypeInt64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)));
-  if (inputType == BinaryenTypeFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)));
-  if (inputType == BinaryenTypeFloat64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)));
-  if (inputType == BinaryenTypeVec128()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralVec128(v128_bytes)));
+BinaryenExpressionRef
+makeUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenType inputType) {
+  if (inputType == BinaryenTypeInt32())
+    return BinaryenUnary(
+      module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)));
+  if (inputType == BinaryenTypeInt64())
+    return BinaryenUnary(
+      module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)));
+  if (inputType == BinaryenTypeFloat32())
+    return BinaryenUnary(
+      module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)));
+  if (inputType == BinaryenTypeFloat64())
+    return BinaryenUnary(
+      module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)));
+  if (inputType == BinaryenTypeVec128())
+    return BinaryenUnary(
+      module, op, BinaryenConst(module, BinaryenLiteralVec128(v128_bytes)));
   abort();
 }
 
-BinaryenExpressionRef makeBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
+BinaryenExpressionRef
+makeBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
   if (type == BinaryenTypeInt32()) {
-    // use temp vars to ensure optimization doesn't change the order of operation in our trace recording
-    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralInt32(-11));
-    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), temp);
+    // use temp vars to ensure optimization doesn't change the order of
+    // operation in our trace recording
+    BinaryenExpressionRef temp =
+      BinaryenConst(module, BinaryenLiteralInt32(-11));
+    return BinaryenBinary(
+      module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), temp);
   }
   if (type == BinaryenTypeInt64()) {
-    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralInt64(-23));
-    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), temp);
+    BinaryenExpressionRef temp =
+      BinaryenConst(module, BinaryenLiteralInt64(-23));
+    return BinaryenBinary(
+      module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), temp);
   }
   if (type == BinaryenTypeFloat32()) {
-    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralFloat32(-62.5f));
-    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)), temp);
+    BinaryenExpressionRef temp =
+      BinaryenConst(module, BinaryenLiteralFloat32(-62.5f));
+    return BinaryenBinary(
+      module,
+      op,
+      BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)),
+      temp);
   }
   if (type == BinaryenTypeFloat64()) {
-    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralFloat64(-9007.333));
-    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)), temp);
+    BinaryenExpressionRef temp =
+      BinaryenConst(module, BinaryenLiteralFloat64(-9007.333));
+    return BinaryenBinary(
+      module,
+      op,
+      BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)),
+      temp);
   }
   if (type == BinaryenTypeVec128()) {
-    BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralVec128(v128_bytes));
-    return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralVec128(v128_bytes)), temp);
+    BinaryenExpressionRef temp =
+      BinaryenConst(module, BinaryenLiteralVec128(v128_bytes));
+    return BinaryenBinary(
+      module,
+      op,
+      BinaryenConst(module, BinaryenLiteralVec128(v128_bytes)),
+      temp);
   }
   abort();
 }
@@ -67,7 +99,8 @@ BinaryenExpressionRef makeFloat64(BinaryenModuleRef module, double x) {
   return BinaryenConst(module, BinaryenLiteralFloat64(x));
 }
 
-BinaryenExpressionRef makeVec128(BinaryenModuleRef module, uint8_t const *bytes) {
+BinaryenExpressionRef makeVec128(BinaryenModuleRef module,
+                                 uint8_t const* bytes) {
   return BinaryenConst(module, BinaryenLiteralVec128(bytes));
 }
 
@@ -83,7 +116,8 @@ BinaryenExpressionRef makeSIMDExtract(BinaryenModuleRef module, BinaryenOp op) {
   return BinaryenSIMDExtract(module, op, makeVec128(module, v128_bytes), 0);
 }
 
-BinaryenExpressionRef makeSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
+BinaryenExpressionRef
+makeSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
   BinaryenExpressionRef val;
   if (type == BinaryenTypeInt32()) {
     val = makeInt32(module, 42);
@@ -100,13 +134,14 @@ BinaryenExpressionRef makeSIMDReplace(BinaryenModuleRef module, BinaryenOp op, B
   if (!val) {
     abort();
   }
-  return BinaryenSIMDReplace(module, op, makeVec128(module, v128_bytes), 0, val);
+  return BinaryenSIMDReplace(
+    module, op, makeVec128(module, v128_bytes), 0, val);
 }
 
 BinaryenExpressionRef makeSIMDShuffle(BinaryenModuleRef module) {
   BinaryenExpressionRef left = makeVec128(module, v128_bytes);
   BinaryenExpressionRef right = makeVec128(module, v128_bytes);
-  return BinaryenSIMDShuffle(module, left, right, (uint8_t[16]) {});
+  return BinaryenSIMDShuffle(module, left, right, (uint8_t[16]){});
 }
 
 BinaryenExpressionRef makeSIMDTernary(BinaryenModuleRef module, BinaryenOp op) {
@@ -125,7 +160,7 @@ BinaryenExpressionRef makeMemoryInit(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 1024);
   BinaryenExpressionRef offset = makeInt32(module, 0);
   BinaryenExpressionRef size = makeInt32(module, 12);
-  return BinaryenMemoryInit(module, 0, dest, offset, size);
+  return BinaryenMemoryInit(module, 0, dest, offset, size, "0");
 };
 
 BinaryenExpressionRef makeDataDrop(BinaryenModuleRef module) {
@@ -136,14 +171,14 @@ BinaryenExpressionRef makeMemoryCopy(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 2048);
   BinaryenExpressionRef source = makeInt32(module, 1024);
   BinaryenExpressionRef size = makeInt32(module, 12);
-  return BinaryenMemoryCopy(module, dest, source, size);
+  return BinaryenMemoryCopy(module, dest, source, size, "0", "0");
 };
 
 BinaryenExpressionRef makeMemoryFill(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 0);
   BinaryenExpressionRef value = makeInt32(module, 42);
   BinaryenExpressionRef size = makeInt32(module, 1024);
-  return BinaryenMemoryFill(module, dest, value, size);
+  return BinaryenMemoryFill(module, dest, value, size, "0");
 };
 
 // tests
@@ -152,84 +187,114 @@ void test_types() {
   BinaryenType valueType = 0xdeadbeef;
 
   BinaryenType none = BinaryenTypeNone();
-  printf("  // BinaryenTypeNone: %d\n", none);
+  printf("BinaryenTypeNone: %zd\n", none);
   assert(BinaryenTypeArity(none) == 0);
   BinaryenTypeExpand(none, &valueType);
   assert(valueType == 0xdeadbeef);
 
   BinaryenType unreachable = BinaryenTypeUnreachable();
-  printf("  // BinaryenTypeUnreachable: %d\n", unreachable);
+  printf("BinaryenTypeUnreachable: %zd\n", unreachable);
   assert(BinaryenTypeArity(unreachable) == 1);
   BinaryenTypeExpand(unreachable, &valueType);
   assert(valueType == unreachable);
 
   BinaryenType i32 = BinaryenTypeInt32();
-  printf("  // BinaryenTypeInt32: %d\n", i32);
+  printf("BinaryenTypeInt32: %zd\n", i32);
   assert(BinaryenTypeArity(i32) == 1);
   BinaryenTypeExpand(i32, &valueType);
   assert(valueType == i32);
 
   BinaryenType i64 = BinaryenTypeInt64();
-  printf("  // BinaryenTypeInt64: %d\n", i64);
+  printf("BinaryenTypeInt64: %zd\n", i64);
   assert(BinaryenTypeArity(i64) == 1);
   BinaryenTypeExpand(i64, &valueType);
   assert(valueType == i64);
 
   BinaryenType f32 = BinaryenTypeFloat32();
-  printf("  // BinaryenTypeFloat32: %d\n", f32);
+  printf("BinaryenTypeFloat32: %zd\n", f32);
   assert(BinaryenTypeArity(f32) == 1);
   BinaryenTypeExpand(f32, &valueType);
   assert(valueType == f32);
 
   BinaryenType f64 = BinaryenTypeFloat64();
-  printf("  // BinaryenTypeFloat64: %d\n", f64);
+  printf("BinaryenTypeFloat64: %zd\n", f64);
   assert(BinaryenTypeArity(f64) == 1);
   BinaryenTypeExpand(f64, &valueType);
   assert(valueType == f64);
 
   BinaryenType v128 = BinaryenTypeVec128();
-  printf("  // BinaryenTypeVec128: %d\n", v128);
+  printf("BinaryenTypeVec128: %zd\n", v128);
   assert(BinaryenTypeArity(v128) == 1);
   BinaryenTypeExpand(v128, &valueType);
   assert(valueType == v128);
 
   BinaryenType funcref = BinaryenTypeFuncref();
-  printf("  // BinaryenTypeFuncref: %d\n", funcref);
+  printf("BinaryenTypeFuncref: (ptr)\n");
+  assert(funcref == BinaryenTypeFuncref());
   assert(BinaryenTypeArity(funcref) == 1);
   BinaryenTypeExpand(funcref, &valueType);
   assert(valueType == funcref);
 
   BinaryenType externref = BinaryenTypeExternref();
-  printf("  // BinaryenTypeExternref: %d\n", externref);
+  printf("BinaryenTypeExternref: (ptr)\n");
+  assert(externref == BinaryenTypeExternref());
   assert(BinaryenTypeArity(externref) == 1);
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
   BinaryenType anyref = BinaryenTypeAnyref();
-  printf("  // BinaryenTypeAnyref: %d\n", anyref);
+  printf("BinaryenTypeAnyref: (ptr)\n");
+  assert(anyref == BinaryenTypeAnyref());
   assert(BinaryenTypeArity(anyref) == 1);
   BinaryenTypeExpand(anyref, &valueType);
   assert(valueType == anyref);
 
   BinaryenType eqref = BinaryenTypeEqref();
-  printf("  // BinaryenTypeEqref: %d\n", eqref);
+  printf("BinaryenTypeEqref: (ptr)\n");
+  assert(eqref == BinaryenTypeEqref());
   assert(BinaryenTypeArity(eqref) == 1);
   BinaryenTypeExpand(eqref, &valueType);
   assert(valueType == eqref);
 
   BinaryenType i31ref = BinaryenTypeI31ref();
-  printf("  // BinaryenTypeI31ref: %d\n", i31ref);
+  printf("BinaryenTypeI31ref: (ptr)\n");
+  assert(i31ref == BinaryenTypeI31ref());
   assert(BinaryenTypeArity(i31ref) == 1);
   BinaryenTypeExpand(i31ref, &valueType);
   assert(valueType == i31ref);
 
   BinaryenType dataref = BinaryenTypeDataref();
-  printf("  // BinaryenTypeDataref: %d\n", dataref);
+  printf("BinaryenTypeDataref: (ptr)\n");
+  assert(dataref == BinaryenTypeDataref());
   assert(BinaryenTypeArity(dataref) == 1);
   BinaryenTypeExpand(dataref, &valueType);
   assert(valueType == dataref);
 
-  printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
+  BinaryenType stringref = BinaryenTypeStringref();
+  printf("BinaryenTypeStringref: (ptr)\n");
+  assert(BinaryenTypeArity(stringref) == 1);
+  BinaryenTypeExpand(stringref, &valueType);
+  assert(valueType == stringref);
+
+  BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWTF8();
+  printf("BinaryenTypeStringviewWTF8: (ptr)\n");
+  assert(BinaryenTypeArity(stringview_wtf8_) == 1);
+  BinaryenTypeExpand(stringview_wtf8_, &valueType);
+  assert(valueType == stringview_wtf8_);
+
+  BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWTF16();
+  printf("BinaryenTypeStringviewWTF16: (ptr)\n");
+  assert(BinaryenTypeArity(stringview_wtf16_) == 1);
+  BinaryenTypeExpand(stringview_wtf16_, &valueType);
+  assert(valueType == stringview_wtf16_);
+
+  BinaryenType stringview_iter_ = BinaryenTypeStringviewIter();
+  printf("BinaryenTypeStringviewIter: (ptr)\n");
+  assert(BinaryenTypeArity(stringview_iter_) == 1);
+  BinaryenTypeExpand(stringview_iter_, &valueType);
+  assert(valueType == stringview_iter_);
+
+  printf("BinaryenTypeAuto: %zd\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
 
@@ -245,24 +310,61 @@ void test_types() {
   pair[0] = pair[1] = f32;
   BinaryenType float_pair = BinaryenTypeCreate(pair, 2);
   assert(float_pair != i32_pair);
+
+  BinaryenPackedType notPacked = BinaryenPackedTypeNotPacked();
+  printf("BinaryenPackedTypeNotPacked: %d\n", notPacked);
+  BinaryenPackedType i8 = BinaryenPackedTypeInt8();
+  printf("BinaryenPackedTypeInt8: %d\n", i8);
+  BinaryenPackedType i16 = BinaryenPackedTypeInt16();
+  printf("BinaryenPackedTypeInt16: %d\n", i16);
+
+  printf("BinaryenHeapTypeExt: %zd\n", BinaryenHeapTypeExt());
+  printf("BinaryenHeapTypeFunc: %zd\n", BinaryenHeapTypeFunc());
+  printf("BinaryenHeapTypeAny: %zd\n", BinaryenHeapTypeAny());
+  printf("BinaryenHeapTypeEq: %zd\n", BinaryenHeapTypeEq());
+  printf("BinaryenHeapTypeI31: %zd\n", BinaryenHeapTypeI31());
+  printf("BinaryenHeapTypeData: %zd\n", BinaryenHeapTypeData());
+  printf("BinaryenHeapTypeString: %zd\n", BinaryenHeapTypeString());
+  printf("BinaryenHeapTypeStringviewWTF8: %zd\n",
+         BinaryenHeapTypeStringviewWTF8());
+  printf("BinaryenHeapTypeStringviewWTF16: %zd\n",
+         BinaryenHeapTypeStringviewWTF16());
+  printf("BinaryenHeapTypeStringviewIter: %zd\n",
+         BinaryenHeapTypeStringviewIter());
+
+  BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
+  assert(eq == BinaryenHeapTypeEq());
+  BinaryenType ref_null_eq = BinaryenTypeFromHeapType(eq, true);
+  assert(BinaryenTypeGetHeapType(ref_null_eq) == eq);
+  assert(BinaryenTypeIsNullable(ref_null_eq));
+  BinaryenType ref_eq = BinaryenTypeFromHeapType(eq, false);
+  assert(ref_eq != ref_null_eq);
+  assert(BinaryenTypeGetHeapType(ref_eq) == eq);
+  assert(!BinaryenTypeIsNullable(ref_eq));
 }
 
 void test_features() {
   printf("BinaryenFeatureMVP: %d\n", BinaryenFeatureMVP());
   printf("BinaryenFeatureAtomics: %d\n", BinaryenFeatureAtomics());
   printf("BinaryenFeatureBulkMemory: %d\n", BinaryenFeatureBulkMemory());
-  printf("BinaryenFeatureMutableGlobals: %d\n", BinaryenFeatureMutableGlobals());
-  printf("BinaryenFeatureNontrappingFPToInt: %d\n", BinaryenFeatureNontrappingFPToInt());
+  printf("BinaryenFeatureMutableGlobals: %d\n",
+         BinaryenFeatureMutableGlobals());
+  printf("BinaryenFeatureNontrappingFPToInt: %d\n",
+         BinaryenFeatureNontrappingFPToInt());
   printf("BinaryenFeatureSignExt: %d\n", BinaryenFeatureSignExt());
   printf("BinaryenFeatureSIMD128: %d\n", BinaryenFeatureSIMD128());
-  printf("BinaryenFeatureExceptionHandling: %d\n", BinaryenFeatureExceptionHandling());
+  printf("BinaryenFeatureExceptionHandling: %d\n",
+         BinaryenFeatureExceptionHandling());
   printf("BinaryenFeatureTailCall: %d\n", BinaryenFeatureTailCall());
-  printf("BinaryenFeatureReferenceTypes: %d\n", BinaryenFeatureReferenceTypes());
+  printf("BinaryenFeatureReferenceTypes: %d\n",
+         BinaryenFeatureReferenceTypes());
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
   printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
   printf("BinaryenFeatureTypedFunctionReferences: %d\n",
          BinaryenFeatureTypedFunctionReferences());
+  printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
+  printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -274,20 +376,30 @@ void test_core() {
 
   // Literals and consts
 
-  BinaryenExpressionRef constI32 = BinaryenConst(module, BinaryenLiteralInt32(1)),
-                        constI64 = BinaryenConst(module, BinaryenLiteralInt64(2)),
-                        constF32 = BinaryenConst(module, BinaryenLiteralFloat32(3.14f)),
-                        constF64 = BinaryenConst(module, BinaryenLiteralFloat64(2.1828)),
-                        constF32Bits = BinaryenConst(module, BinaryenLiteralFloat32Bits(0xffff1234)),
-                        constF64Bits = BinaryenConst(module, BinaryenLiteralFloat64Bits(0xffff12345678abcdLL)),
-                        constV128 = BinaryenConst(module, BinaryenLiteralVec128(v128_bytes));
+  BinaryenExpressionRef
+    constI32 = BinaryenConst(module, BinaryenLiteralInt32(1)),
+    constI64 = BinaryenConst(module, BinaryenLiteralInt64(2)),
+    constF32 = BinaryenConst(module, BinaryenLiteralFloat32(3.14f)),
+    constF64 = BinaryenConst(module, BinaryenLiteralFloat64(2.1828)),
+    constF32Bits =
+      BinaryenConst(module, BinaryenLiteralFloat32Bits(0xffff1234)),
+    constF64Bits =
+      BinaryenConst(module, BinaryenLiteralFloat64Bits(0xffff12345678abcdLL)),
+    constV128 = BinaryenConst(module, BinaryenLiteralVec128(v128_bytes));
 
-  const char* switchValueNames[] = { "the-value" };
-  const char* switchBodyNames[] = { "the-nothing" };
+  const char* switchValueNames[] = {"the-value"};
+  const char* switchBodyNames[] = {"the-nothing"};
 
-  BinaryenExpressionRef callOperands2[] = { makeInt32(module, 13), makeFloat64(module, 3.7) };
-  BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
-  BinaryenExpressionRef callOperands4b[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
+  BinaryenExpressionRef callOperands2[] = {makeInt32(module, 13),
+                                           makeFloat64(module, 3.7)};
+  BinaryenExpressionRef callOperands4[] = {makeInt32(module, 13),
+                                           makeInt64(module, 37),
+                                           makeFloat32(module, 1.3f),
+                                           makeFloat64(module, 3.7)};
+  BinaryenExpressionRef callOperands4b[] = {makeInt32(module, 13),
+                                            makeInt64(module, 37),
+                                            makeFloat32(module, 1.3f),
+                                            makeFloat64(module, 3.7)};
   BinaryenExpressionRef tupleElements4a[] = {makeInt32(module, 13),
                                              makeInt64(module, 37),
                                              makeFloat32(module, 1.3f),
@@ -303,18 +415,30 @@ void test_core() {
                            BinaryenTypeFloat64()};
   BinaryenType iIfF = BinaryenTypeCreate(iIfF_, 4);
 
-  BinaryenExpressionRef temp1 = makeInt32(module, 1), temp2 = makeInt32(module, 2), temp3 = makeInt32(module, 3),
-                        temp4 = makeInt32(module, 4), temp5 = makeInt32(module, 5),
-                        temp6 = makeInt32(module, 0), temp7 = makeInt32(module, 1),
-                        temp8 = makeInt32(module, 0), temp9 = makeInt32(module, 1),
-                        temp10 = makeInt32(module, 1), temp11 = makeInt32(module, 3), temp12 = makeInt32(module, 5),
-                        temp13 = makeInt32(module, 10), temp14 = makeInt32(module, 11),
-                        temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
-  BinaryenExpressionRef externrefExpr = BinaryenRefNull(module, BinaryenTypeExternref());
-  BinaryenExpressionRef funcrefExpr = BinaryenRefNull(module, BinaryenTypeFuncref());
+  BinaryenExpressionRef temp1 = makeInt32(module, 1),
+                        temp2 = makeInt32(module, 2),
+                        temp3 = makeInt32(module, 3),
+                        temp4 = makeInt32(module, 4),
+                        temp5 = makeInt32(module, 5),
+                        temp6 = makeInt32(module, 0),
+                        temp7 = makeInt32(module, 1),
+                        temp8 = makeInt32(module, 0),
+                        temp9 = makeInt32(module, 1),
+                        temp10 = makeInt32(module, 1),
+                        temp11 = makeInt32(module, 3),
+                        temp12 = makeInt32(module, 5),
+                        temp13 = makeInt32(module, 10),
+                        temp14 = makeInt32(module, 11),
+                        temp15 = makeInt32(module, 110),
+                        temp16 = makeInt64(module, 111);
+  BinaryenExpressionRef externrefExpr =
+    BinaryenRefNull(module, BinaryenTypeExternref());
+  BinaryenExpressionRef funcrefExpr =
+    BinaryenRefNull(module, BinaryenTypeFuncref());
   funcrefExpr =
     BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
-  BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
+  BinaryenExpressionRef i31refExpr =
+    BinaryenI31New(module, makeInt32(module, 1));
 
   // Tags
   BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
@@ -348,6 +472,25 @@ void test_core() {
   BinaryenType f32 = BinaryenTypeFloat32();
   BinaryenType f64 = BinaryenTypeFloat64();
   BinaryenType v128 = BinaryenTypeVec128();
+
+  // Memory. Add it before creating any memory-using instructions.
+
+  const char* segments[] = {"hello, world", "I am passive"};
+  bool segmentPassive[] = {false, true};
+  BinaryenExpressionRef segmentOffsets[] = {
+    BinaryenConst(module, BinaryenLiteralInt32(10)), NULL};
+  BinaryenIndex segmentSizes[] = {12, 12};
+  BinaryenSetMemory(module,
+                    1,
+                    256,
+                    "mem",
+                    segments,
+                    segmentPassive,
+                    segmentOffsets,
+                    segmentSizes,
+                    2,
+                    1,
+                    "0");
 
   BinaryenExpressionRef valueList[] = {
     // Unary
@@ -612,7 +755,7 @@ void test_core() {
     makeBinary(module, BinaryenNarrowUVecI16x8ToVecI8x16(), v128),
     makeBinary(module, BinaryenNarrowSVecI32x4ToVecI16x8(), v128),
     makeBinary(module, BinaryenNarrowUVecI32x4ToVecI16x8(), v128),
-    makeBinary(module, BinaryenSwizzleVec8x16(), v128),
+    makeBinary(module, BinaryenSwizzleVecI8x16(), v128),
     // SIMD lane manipulation
     makeSIMDExtract(module, BinaryenExtractLaneSVecI8x16()),
     makeSIMDExtract(module, BinaryenExtractLaneUVecI8x16()),
@@ -643,29 +786,29 @@ void test_core() {
     makeSIMDShift(module, BinaryenShrUVecI64x2()),
     // SIMD load
     BinaryenSIMDLoad(
-      module, BinaryenLoad8SplatVec128(), 0, 1, makeInt32(module, 128)),
+      module, BinaryenLoad8SplatVec128(), 0, 1, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad16SplatVec128(), 16, 1, makeInt32(module, 128)),
+      module, BinaryenLoad16SplatVec128(), 16, 1, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32SplatVec128(), 16, 4, makeInt32(module, 128)),
+      module, BinaryenLoad32SplatVec128(), 16, 4, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad64SplatVec128(), 0, 4, makeInt32(module, 128)),
+      module, BinaryenLoad64SplatVec128(), 0, 4, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad8x8SVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad8x8SVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad8x8UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad8x8UVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad16x4SVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad16x4SVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad16x4UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad16x4UVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32x2SVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad32x2SVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32x2UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad32x2UVec128(), 0, 8, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad32ZeroVec128(), 0, 4, makeInt32(module, 128)),
+      module, BinaryenLoad32ZeroVec128(), 0, 4, makeInt32(module, 128), "0"),
     BinaryenSIMDLoad(
-      module, BinaryenLoad64ZeroVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad64ZeroVec128(), 0, 8, makeInt32(module, 128), "0"),
     // SIMD load/store lane
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad8LaneVec128(),
@@ -673,57 +816,64 @@ void test_core() {
                               1,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad16LaneVec128(),
                               0,
                               2,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad32LaneVec128(),
                               0,
                               4,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenLoad64LaneVec128(),
                               0,
                               8,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
-
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore8LaneVec128(),
                               0,
                               1,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore16LaneVec128(),
                               0,
                               2,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore32LaneVec128(),
                               0,
                               4,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     BinaryenSIMDLoadStoreLane(module,
                               BinaryenStore64LaneVec128(),
                               0,
                               8,
                               0,
                               makeInt32(module, 128),
-                              makeVec128(module, v128_bytes)),
+                              makeVec128(module, v128_bytes),
+                              "0"),
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDTernary(module, BinaryenBitselectVec128()),
@@ -773,14 +923,16 @@ void test_core() {
     BinaryenDrop(
       module,
       BinaryenLocalTee(module, 0, makeInt32(module, 102), BinaryenTypeInt32())),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
-    BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
     BinaryenLoad(
-      module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
+      module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1), "0"),
     BinaryenLoad(
-      module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9)),
-    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32()),
-    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64()),
+      module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8), "0"),
+    BinaryenLoad(
+      module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2), "0"),
+    BinaryenLoad(
+      module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9), "0"),
+    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32(), "0"),
+    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64(), "0"),
     BinaryenSelect(module, temp10, temp11, temp12, BinaryenTypeAuto()),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // Tail call
@@ -861,12 +1013,13 @@ void test_core() {
       4,
       0,
       temp6,
-      BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6),
-      BinaryenTypeInt32()),
-    BinaryenDrop(
-      module,
-      BinaryenAtomicWait(module, temp6, temp6, temp16, BinaryenTypeInt32())),
-    BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6)),
+      BinaryenAtomicLoad(module, 4, 0, BinaryenTypeInt32(), temp6, "0"),
+      BinaryenTypeInt32(),
+      "0"),
+    BinaryenDrop(module,
+                 BinaryenAtomicWait(
+                   module, temp6, temp6, temp16, BinaryenTypeInt32(), "0")),
+    BinaryenDrop(module, BinaryenAtomicNotify(module, temp6, temp6, "0")),
     BinaryenAtomicFence(module),
     // Tuples
     BinaryenTupleMake(module, tupleElements4a, 4),
@@ -881,8 +1034,8 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeExternref()),
     BinaryenPop(module, iIfF),
     // Memory
-    BinaryenMemorySize(module),
-    BinaryenMemoryGrow(module, makeInt32(module, 0)),
+    BinaryenMemorySize(module, "0", false),
+    BinaryenMemoryGrow(module, makeInt32(module, 0), "0", false),
     // GC
     BinaryenI31New(module, makeInt32(module, 0)),
     BinaryenI31Get(module, i31refExpr, 1),
@@ -892,9 +1045,11 @@ void test_core() {
     BinaryenUnreachable(module),
   };
 
-  BinaryenExpressionPrint(valueList[3]); // test printing a standalone expression
+  BinaryenExpressionPrint(
+    valueList[3]); // test printing a standalone expression
 
-  // Make the main body of the function. and one block with a return value, one without
+  // Make the main body of the function. and one block with a return value, one
+  // without
   BinaryenExpressionRef value =
     BinaryenBlock(module,
                   "the-value",
@@ -902,8 +1057,9 @@ void test_core() {
                   sizeof(valueList) / sizeof(BinaryenExpressionRef),
                   BinaryenTypeAuto());
   BinaryenExpressionRef droppedValue = BinaryenDrop(module, value);
-  BinaryenExpressionRef nothing = BinaryenBlock(module, "the-nothing", &droppedValue, 1, -1);
-  BinaryenExpressionRef bodyList[] = { nothing, makeInt32(module, 42) };
+  BinaryenExpressionRef nothing =
+    BinaryenBlock(module, "the-nothing", &droppedValue, 1, -1);
+  BinaryenExpressionRef bodyList[] = {nothing, makeInt32(module, 42)};
   BinaryenExpressionRef body =
     BinaryenBlock(module, "the-body", bodyList, 2, BinaryenTypeAuto());
 
@@ -914,8 +1070,13 @@ void test_core() {
 
   // Globals
 
-  BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 7));
-  BinaryenAddGlobal(module, "a-mutable-global", BinaryenTypeFloat32(), 1, makeFloat32(module, 7.5));
+  BinaryenAddGlobal(
+    module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 7));
+  BinaryenAddGlobal(module,
+                    "a-mutable-global",
+                    BinaryenTypeFloat32(),
+                    1,
+                    makeFloat32(module, 7.5));
 
   // Imports
 
@@ -929,7 +1090,7 @@ void test_core() {
   BinaryenAddFunctionExport(module, "kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
-  const char* funcNames[] = { BinaryenFunctionGetName(sinker) };
+  const char* funcNames[] = {BinaryenFunctionGetName(sinker)};
   BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
   BinaryenAddActiveElementSegment(
     module,
@@ -942,13 +1103,32 @@ void test_core() {
   BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
   BinaryenRemoveElementSegment(module, "p2");
 
-  // Memory. One per module
+  BinaryenExpressionRef funcrefExpr1 =
+    BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
 
-  const char* segments[] = { "hello, world", "I am passive" };
-  bool segmentPassive[] = {false, true};
-  BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)), NULL };
-  BinaryenIndex segmentSizes[] = { 12, 12 };
-  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
+  BinaryenExpressionPrint(BinaryenTableSet(
+    module, "0", BinaryenConst(module, BinaryenLiteralInt32(0)), funcrefExpr1));
+
+  BinaryenExpressionRef funcrefExpr2 =
+    BinaryenTableGet(module,
+                     "0",
+                     BinaryenConst(module, BinaryenLiteralInt32(0)),
+                     BinaryenTypeFuncref());
+
+  BinaryenExpressionPrint(funcrefExpr2);
+
+  BinaryenExpressionRef tablesize = BinaryenTableSize(module, "0");
+  BinaryenExpressionPrint(tablesize);
+
+  const char* table = BinaryenTableSizeGetTable(tablesize);
+  BinaryenTableSizeSetTable(tablesize, table);
+
+  BinaryenExpressionRef valueExpr =
+    BinaryenRefNull(module, BinaryenTypeFuncref());
+  BinaryenExpressionRef sizeExpr = makeInt32(module, 0);
+  BinaryenExpressionRef growExpr =
+    BinaryenTableGrow(module, "0", valueExpr, sizeExpr);
+  BinaryenExpressionPrint(growExpr);
 
   // Start function. One per module
 
@@ -1001,13 +1181,13 @@ void test_unreachable() {
 }
 
 BinaryenExpressionRef makeCallCheck(BinaryenModuleRef module, int x) {
-  BinaryenExpressionRef callOperands[] = { makeInt32(module, x) };
+  BinaryenExpressionRef callOperands[] = {makeInt32(module, x)};
   return BinaryenCall(module, "check", callOperands, 1, BinaryenTypeNone());
 }
 
 void test_relooper() {
   BinaryenModuleRef module = BinaryenModuleCreate();
-  BinaryenType localTypes[] = { BinaryenTypeInt32() };
+  BinaryenType localTypes[] = {BinaryenTypeInt32()};
 
   BinaryenAddFunctionImport(module,
                             "check",
@@ -1018,7 +1198,8 @@ void test_relooper() {
 
   { // trivial: just one block
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block = RelooperAddBlock(relooper, makeCallCheck(module, 1337));
+    RelooperBlockRef block =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1337));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block, 0);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module,
                                                      "just-one-block",
@@ -1030,9 +1211,12 @@ void test_relooper() {
   }
   { // two blocks
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module, 0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperAddBranch(block0, block1, NULL, NULL); // no condition, no code on branch
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperAddBranch(
+      block0, block1, NULL, NULL); // no condition, no code on branch
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module,
                                                      "two-blocks",
@@ -1044,9 +1228,12 @@ void test_relooper() {
   }
   { // two blocks with code between them
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperAddBranch(block0, block1, NULL, makeDroppedInt32(module, 77)); // code on branch
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperAddBranch(
+      block0, block1, NULL, makeDroppedInt32(module, 77)); // code on branch
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module,
                                                      "two-blocks-plus-code",
@@ -1058,8 +1245,10 @@ void test_relooper() {
   }
   { // two blocks in a loop
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
     RelooperAddBranch(block0, block1, NULL, NULL);
     RelooperAddBranch(block1, block0, NULL, NULL);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0);
@@ -1073,8 +1262,10 @@ void test_relooper() {
   }
   { // two blocks in a loop with codes
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
     RelooperAddBranch(block0, block1, NULL, makeDroppedInt32(module, 33));
     RelooperAddBranch(block1, block0, NULL, makeDroppedInt32(module, -66));
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0);
@@ -1088,9 +1279,12 @@ void test_relooper() {
   }
   { // split
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
     RelooperAddBranch(block0, block1, makeInt32(module, 55), NULL);
     RelooperAddBranch(block0, block2, NULL, NULL);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0);
@@ -1104,9 +1298,12 @@ void test_relooper() {
   }
   { // split + code
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
     BinaryenExpressionRef temp = makeDroppedInt32(module, 10);
     RelooperAddBranch(block0, block1, makeInt32(module, 55), temp);
     RelooperAddBranch(block0, block2, NULL, makeDroppedInt32(module, 20));
@@ -1121,9 +1318,12 @@ void test_relooper() {
   }
   { // if
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
     RelooperAddBranch(block0, block1, makeInt32(module, 55), NULL);
     RelooperAddBranch(block0, block2, NULL, NULL);
     RelooperAddBranch(block1, block2, NULL, NULL);
@@ -1138,9 +1338,12 @@ void test_relooper() {
   }
   { // if + code
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
     BinaryenExpressionRef temp = makeDroppedInt32(module, -1);
     RelooperAddBranch(block0, block1, makeInt32(module, 55), temp);
     RelooperAddBranch(block0, block2, NULL, makeDroppedInt32(module, -2));
@@ -1156,10 +1359,14 @@ void test_relooper() {
   }
   { // if-else
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
-    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck(module,  3));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
+    RelooperBlockRef block3 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 3));
     RelooperAddBranch(block0, block1, makeInt32(module, 55), NULL);
     RelooperAddBranch(block0, block2, NULL, NULL);
     RelooperAddBranch(block1, block3, NULL, NULL);
@@ -1175,9 +1382,12 @@ void test_relooper() {
   }
   { // loop+tail
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
     RelooperAddBranch(block0, block1, NULL, NULL);
     RelooperAddBranch(block1, block0, makeInt32(module, 10), NULL);
     RelooperAddBranch(block1, block2, NULL, NULL);
@@ -1192,13 +1402,20 @@ void test_relooper() {
   }
   { // nontrivial loop + phi to head
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
-    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck(module,  3));
-    RelooperBlockRef block4 = RelooperAddBlock(relooper, makeCallCheck(module,  4));
-    RelooperBlockRef block5 = RelooperAddBlock(relooper, makeCallCheck(module,  5));
-    RelooperBlockRef block6 = RelooperAddBlock(relooper, makeCallCheck(module,  6));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
+    RelooperBlockRef block3 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 3));
+    RelooperBlockRef block4 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 4));
+    RelooperBlockRef block5 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 5));
+    RelooperBlockRef block6 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 6));
     RelooperAddBranch(block0, block1, NULL, makeDroppedInt32(module, 10));
     RelooperAddBranch(block1, block2, makeInt32(module, -2), NULL);
     RelooperAddBranch(block1, block6, NULL, makeDroppedInt32(module, 20));
@@ -1221,17 +1438,24 @@ void test_relooper() {
   { // switch
     RelooperRef relooper = RelooperCreate(module);
     BinaryenExpressionRef temp = makeInt32(module, -99);
-    RelooperBlockRef block0 = RelooperAddBlockWithSwitch(relooper, makeCallCheck(module,  0), temp);
-    // TODO: this example is not very good, the blocks should end in a |return| as otherwise they
-    //       fall through to each other. A relooper block should end in something that stops control
-    //       flow, if it doesn't have branches going out
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
-    RelooperBlockRef block3 = RelooperAddBlock(relooper, makeCallCheck(module,  3));
-    BinaryenIndex to_block1[] = { 2, 5 };
+    RelooperBlockRef block0 =
+      RelooperAddBlockWithSwitch(relooper, makeCallCheck(module, 0), temp);
+    // TODO: this example is not very good, the blocks should end in a |return|
+    // as otherwise they
+    //       fall through to each other. A relooper block should end in
+    //       something that stops control flow, if it doesn't have branches
+    //       going out
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
+    RelooperBlockRef block3 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 3));
+    BinaryenIndex to_block1[] = {2, 5};
     RelooperAddBranchForSwitch(block0, block1, to_block1, 2, NULL);
-    BinaryenIndex to_block2[] = { 4 };
-    RelooperAddBranchForSwitch(block0, block2, to_block2, 1, makeDroppedInt32(module, 55));
+    BinaryenIndex to_block2[] = {4};
+    RelooperAddBranchForSwitch(
+      block0, block2, to_block2, 1, makeDroppedInt32(module, 55));
     RelooperAddBranchForSwitch(block0, block3, NULL, 0, NULL);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 0);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module,
@@ -1244,15 +1468,25 @@ void test_relooper() {
   }
   { // duff's device
     RelooperRef relooper = RelooperCreate(module);
-    RelooperBlockRef block0 = RelooperAddBlock(relooper, makeCallCheck(module,  0));
-    RelooperBlockRef block1 = RelooperAddBlock(relooper, makeCallCheck(module,  1));
-    RelooperBlockRef block2 = RelooperAddBlock(relooper, makeCallCheck(module,  2));
+    RelooperBlockRef block0 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 0));
+    RelooperBlockRef block1 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 1));
+    RelooperBlockRef block2 =
+      RelooperAddBlock(relooper, makeCallCheck(module, 2));
     RelooperAddBranch(block0, block1, makeInt32(module, 10), NULL);
     RelooperAddBranch(block0, block2, NULL, NULL);
     RelooperAddBranch(block1, block2, NULL, NULL);
     RelooperAddBranch(block2, block1, NULL, NULL);
-    BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 3); // use $3 as the helper var
-    BinaryenType localTypes[] = { BinaryenTypeInt32(), BinaryenTypeInt32(), BinaryenTypeInt64(), BinaryenTypeInt32(), BinaryenTypeFloat32(), BinaryenTypeFloat64(), BinaryenTypeInt32() };
+    BinaryenExpressionRef body =
+      RelooperRenderAndDispose(relooper, block0, 3); // use $3 as the helper var
+    BinaryenType localTypes[] = {BinaryenTypeInt32(),
+                                 BinaryenTypeInt32(),
+                                 BinaryenTypeInt64(),
+                                 BinaryenTypeInt32(),
+                                 BinaryenTypeFloat32(),
+                                 BinaryenTypeFloat64(),
+                                 BinaryenTypeInt32()};
     BinaryenFunctionRef sinker =
       BinaryenAddFunction(module,
                           "duffs-device",
@@ -1265,8 +1499,11 @@ void test_relooper() {
 
   { // return in a block
     RelooperRef relooper = RelooperCreate(module);
-    BinaryenExpressionRef listList[] = { makeCallCheck(module,  42), BinaryenReturn(module, makeInt32(module, 1337)) };
-    BinaryenExpressionRef list = BinaryenBlock(module, "the-list", listList, 2, -1);
+    BinaryenExpressionRef listList[] = {
+      makeCallCheck(module, 42),
+      BinaryenReturn(module, makeInt32(module, 1337))};
+    BinaryenExpressionRef list =
+      BinaryenBlock(module, "the-list", listList, 2, -1);
     RelooperBlockRef block = RelooperAddBlock(relooper, list);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block, 0);
     BinaryenFunctionRef sinker = BinaryenAddFunction(module,
@@ -1303,10 +1540,11 @@ void test_binaries() {
     BinaryenType ii = BinaryenTypeCreate(ii_, 2);
     BinaryenExpressionRef x = BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
                           y = BinaryenLocalGet(module, 1, BinaryenTypeInt32());
-    BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
+    BinaryenExpressionRef add =
+      BinaryenBinary(module, BinaryenAddInt32(), x, y);
     BinaryenFunctionRef adder = BinaryenAddFunction(
       module, "adder", ii, BinaryenTypeInt32(), NULL, 0, add);
-    BinaryenSetDebugInfo(1); // include names section
+    BinaryenSetDebugInfo(1);                          // include names section
     size = BinaryenModuleWrite(module, buffer, 1024); // write out the module
     BinaryenSetDebugInfo(0);
     BinaryenModuleDispose(module);
@@ -1327,22 +1565,21 @@ void test_binaries() {
   BinaryenModuleWriteText(module, buffer, 1024);
   printf("module s-expr printed (in memory):\n%s\n", buffer);
 
-
   // writ the s-expr representation to a pointer which is managed by the
   // caller
-  char *text = BinaryenModuleAllocateAndWriteText(module);
+  char* text = BinaryenModuleAllocateAndWriteText(module);
   printf("module s-expr printed (in memory, caller-owned):\n%s\n", text);
   free(text);
-
 
   BinaryenModuleDispose(module);
 }
 
 void test_interpret() {
-  // create a simple module with a start method that prints a number, and interpret it, printing that number.
+  // create a simple module with a start method that prints a number, and
+  // interpret it, printing that number.
   BinaryenModuleRef module = BinaryenModuleCreate();
 
-  BinaryenType iparams[2] = { BinaryenTypeInt32() };
+  BinaryenType iparams[2] = {BinaryenTypeInt32()};
   BinaryenAddFunctionImport(module,
                             "print-i32",
                             "spectest",
@@ -1350,8 +1587,9 @@ void test_interpret() {
                             BinaryenTypeInt32(),
                             BinaryenTypeNone());
 
-  BinaryenExpressionRef callOperands[] = { makeInt32(module, 1234) };
-  BinaryenExpressionRef call = BinaryenCall(module, "print-i32", callOperands, 1, BinaryenTypeNone());
+  BinaryenExpressionRef callOperands[] = {makeInt32(module, 1234)};
+  BinaryenExpressionRef call =
+    BinaryenCall(module, "print-i32", callOperands, 1, BinaryenTypeNone());
   BinaryenFunctionRef starter = BinaryenAddFunction(
     module, "starter", BinaryenTypeNone(), BinaryenTypeNone(), NULL, 0, call);
   BinaryenSetStart(module, starter);
@@ -1367,7 +1605,7 @@ void test_nonvalid() {
   {
     BinaryenModuleRef module = BinaryenModuleCreate();
 
-    BinaryenType localTypes[] = { BinaryenTypeInt32() };
+    BinaryenType localTypes[] = {BinaryenTypeInt32()};
     BinaryenFunctionRef func = BinaryenAddFunction(
       module,
       "func",
@@ -1386,18 +1624,18 @@ void test_nonvalid() {
 }
 
 void test_color_status() {
-    int i;
+  int i;
 
-    // save old state
-    const int old_state = BinaryenAreColorsEnabled();
+  // save old state
+  const int old_state = BinaryenAreColorsEnabled();
 
-    // Check that we can set the state to both {0, 1}
-    for(i = 0; i <= 1; i++){
-        BinaryenSetColorsEnabled(i);
-        assert(BinaryenAreColorsEnabled() == i);
-    }
+  // Check that we can set the state to both {0, 1}
+  for (i = 0; i <= 1; i++) {
+    BinaryenSetColorsEnabled(i);
+    assert(BinaryenAreColorsEnabled() == i);
+  }
 
-    BinaryenSetColorsEnabled(old_state);
+  BinaryenSetColorsEnabled(old_state);
 }
 
 void test_for_each() {
@@ -1427,7 +1665,7 @@ void test_for_each() {
                                0,
                                BinaryenNop(module));
   {
-    for (i = 0; i < BinaryenGetNumFunctions(module) ; i++) {
+    for (i = 0; i < BinaryenGetNumFunctions(module); i++) {
       assert(BinaryenGetFunctionByIndex(module, i) == fns[i]);
     }
 
@@ -1436,37 +1674,50 @@ void test_for_each() {
     exps[1] = BinaryenAddFunctionExport(module, "fn1", "export1");
     exps[2] = BinaryenAddFunctionExport(module, "fn2", "export2");
 
-    for (i = 0; i < BinaryenGetNumExports(module) ; i++) {
+    for (i = 0; i < BinaryenGetNumExports(module); i++) {
       assert(BinaryenGetExportByIndex(module, i) == exps[i]);
     }
 
-    const char* segments[] = { "hello, world", "segment data 2" };
-    const uint32_t expected_offsets[] = { 10, 125 };
+    const char* segments[] = {"hello, world", "segment data 2"};
+    const uint32_t expected_offsets[] = {10, 125};
     bool segmentPassive[] = {false, false};
-    BinaryenIndex segmentSizes[] = { 12, 14 };
+    BinaryenIndex segmentSizes[] = {12, 14};
 
     BinaryenExpressionRef segmentOffsets[] = {
       BinaryenConst(module, BinaryenLiteralInt32(expected_offsets[0])),
-      BinaryenGlobalGet(module, "a-global", BinaryenTypeInt32())
-    };
-    BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 0);
-    BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, expected_offsets[1]));
+      BinaryenGlobalGet(module, "a-global", BinaryenTypeInt32())};
+    BinaryenSetMemory(module,
+                      1,
+                      256,
+                      "mem",
+                      segments,
+                      segmentPassive,
+                      segmentOffsets,
+                      segmentSizes,
+                      2,
+                      0,
+                      "0");
+    BinaryenAddGlobal(module,
+                      "a-global",
+                      BinaryenTypeInt32(),
+                      0,
+                      makeInt32(module, expected_offsets[1]));
 
-    for (i = 0; i < BinaryenGetNumMemorySegments(module) ; i++) {
+    for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
-      assert(BinaryenGetMemorySegmentByteOffset(module, i) == expected_offsets[i]);
+      assert(BinaryenGetMemorySegmentByteOffset(module, i) ==
+             expected_offsets[i]);
       assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
       BinaryenCopyMemorySegmentData(module, i, out);
       assert(0 == strcmp(segments[i], out));
     }
   }
   {
-    const char* funcNames[] = {
-      BinaryenFunctionGetName(fns[0]),
-      BinaryenFunctionGetName(fns[1]),
-      BinaryenFunctionGetName(fns[2])
-    };
-    BinaryenExpressionRef constExprRef = BinaryenConst(module, BinaryenLiteralInt32(0));
+    const char* funcNames[] = {BinaryenFunctionGetName(fns[0]),
+                               BinaryenFunctionGetName(fns[1]),
+                               BinaryenFunctionGetName(fns[2])};
+    BinaryenExpressionRef constExprRef =
+      BinaryenConst(module, BinaryenLiteralInt32(0));
     BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
     BinaryenAddActiveElementSegment(
       module, "0", "0", funcNames, 3, constExprRef);
@@ -1508,6 +1759,170 @@ void test_func_opt() {
   BinaryenModuleDispose(module);
 }
 
+void test_typesystem() {
+  BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
+  assert(defaultTypeSystem == BinaryenTypeSystemEquirecursive());
+  printf("BinaryenTypeSystemEquirecursive: %d\n",
+         BinaryenTypeSystemEquirecursive());
+  BinaryenSetTypeSystem(BinaryenTypeSystemNominal());
+  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemNominal());
+  printf("BinaryenTypeSystemNominal: %d\n", BinaryenTypeSystemNominal());
+  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
+  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemIsorecursive());
+  printf("BinaryenTypeSystemIsorecursive: %d\n",
+         BinaryenTypeSystemIsorecursive());
+  BinaryenSetTypeSystem(defaultTypeSystem);
+}
+
+void test_typebuilder() {
+  BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
+  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
+
+  printf("TypeBuilderErrorReasonSelfSupertype: %d\n",
+         TypeBuilderErrorReasonSelfSupertype());
+  printf("TypeBuilderErrorReasonInvalidSupertype: %d\n",
+         TypeBuilderErrorReasonInvalidSupertype());
+  printf("TypeBuilderErrorReasonForwardSupertypeReference: %d\n",
+         TypeBuilderErrorReasonForwardSupertypeReference());
+  printf("TypeBuilderErrorReasonForwardChildReference: %d\n",
+         TypeBuilderErrorReasonForwardChildReference());
+
+  TypeBuilderRef builder = TypeBuilderCreate(0);
+  assert(TypeBuilderGetSize(builder) == 0);
+  TypeBuilderGrow(builder, 5);
+  assert(TypeBuilderGetSize(builder) == 5);
+
+  // Create a recursive array of its own type
+  const BinaryenIndex tempArrayIndex = 0;
+  BinaryenHeapType tempArrayHeapType =
+    TypeBuilderGetTempHeapType(builder, tempArrayIndex);
+  BinaryenType tempArrayType =
+    TypeBuilderGetTempRefType(builder, tempArrayHeapType, true);
+  TypeBuilderSetArrayType(builder,
+                          tempArrayIndex,
+                          tempArrayType,
+                          BinaryenPackedTypeNotPacked(),
+                          true);
+
+  // Create a recursive struct with a field of its own type
+  const BinaryenIndex tempStructIndex = 1;
+  BinaryenHeapType tempStructHeapType =
+    TypeBuilderGetTempHeapType(builder, tempStructIndex);
+  BinaryenType tempStructType =
+    TypeBuilderGetTempRefType(builder, tempStructHeapType, true);
+  {
+    BinaryenType fieldTypes[] = {tempStructType};
+    BinaryenPackedType fieldPackedTypes[] = {BinaryenPackedTypeNotPacked()};
+    bool fieldMutables[] = {true};
+    TypeBuilderSetStructType(
+      builder, tempStructIndex, fieldTypes, fieldPackedTypes, fieldMutables, 1);
+  }
+
+  // Create a recursive signature with parameter and result including its own
+  // type
+  const BinaryenIndex tempSignatureIndex = 2;
+  BinaryenHeapType tempSignatureHeapType =
+    TypeBuilderGetTempHeapType(builder, tempSignatureIndex);
+  BinaryenType tempSignatureType =
+    TypeBuilderGetTempRefType(builder, tempSignatureHeapType, true);
+  {
+    BinaryenType paramTypes[] = {tempSignatureType, tempArrayType};
+    TypeBuilderSetSignatureType(
+      builder,
+      tempSignatureIndex,
+      TypeBuilderGetTempTupleType(builder, &paramTypes, 2),
+      tempSignatureType);
+  }
+
+  // Create a basic heap type
+  const BinaryenIndex tempBasicIndex = 3;
+  TypeBuilderSetBasicHeapType(
+    builder, 3, BinaryenTypeGetHeapType(BinaryenTypeEqref()));
+  assert(TypeBuilderIsBasic(builder, tempBasicIndex));
+  assert(TypeBuilderGetBasic(builder, tempBasicIndex) ==
+         BinaryenTypeGetHeapType(BinaryenTypeEqref()));
+  assert(!TypeBuilderIsBasic(builder, tempArrayIndex));
+  assert(!TypeBuilderIsBasic(builder, tempStructIndex));
+  assert(!TypeBuilderIsBasic(builder, tempSignatureIndex));
+
+  // Create a subtype (with an additional packed field)
+  const BinaryenIndex tempSubStructIndex = 4;
+  BinaryenHeapType tempSubStructHeapType =
+    TypeBuilderGetTempHeapType(builder, tempSubStructIndex);
+  BinaryenType tempSubStructType =
+    TypeBuilderGetTempRefType(builder, tempSubStructHeapType, true);
+  {
+    BinaryenType fieldTypes[] = {
+      tempStructType, BinaryenTypeInt32()}; // must repeat existing fields
+    BinaryenPackedType fieldPackedTypes[] = {BinaryenPackedTypeNotPacked(),
+                                             BinaryenPackedTypeInt8()};
+    bool fieldMutables[] = {true, true};
+    TypeBuilderSetStructType(builder,
+                             tempSubStructIndex,
+                             fieldTypes,
+                             fieldPackedTypes,
+                             fieldMutables,
+                             2);
+  }
+  TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructIndex);
+
+  // TODO: Rtts (post-MVP?)
+
+  // Build the type hierarchy and dispose the builder
+  BinaryenHeapType heapTypes[5];
+  BinaryenIndex errorIndex;
+  TypeBuilderErrorReason errorReason;
+  bool didBuildAndDispose = TypeBuilderBuildAndDispose(
+    builder, (BinaryenHeapType*)&heapTypes, &errorIndex, &errorReason);
+  assert(didBuildAndDispose);
+  BinaryenType arrayType =
+    BinaryenTypeFromHeapType(heapTypes[tempArrayIndex], true);
+  BinaryenType structType =
+    BinaryenTypeFromHeapType(heapTypes[tempStructIndex], true);
+  BinaryenType signatureType =
+    BinaryenTypeFromHeapType(heapTypes[tempSignatureIndex], true);
+  BinaryenType basicType =
+    BinaryenTypeFromHeapType(heapTypes[tempBasicIndex], true);
+  BinaryenType subStructType =
+    BinaryenTypeFromHeapType(heapTypes[tempSubStructIndex], true);
+
+  // Build a simple test module, validate and print it
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetTypeName(module, heapTypes[tempArrayIndex], "SomeArray");
+  BinaryenModuleSetTypeName(module, heapTypes[tempStructIndex], "SomeStruct");
+  BinaryenModuleSetFieldName(
+    module, heapTypes[tempStructIndex], 0, "SomeField");
+  BinaryenModuleSetTypeName(
+    module, heapTypes[tempSignatureIndex], "SomeSignature");
+  BinaryenModuleSetTypeName(module, heapTypes[tempBasicIndex], "does-nothing");
+  BinaryenModuleSetTypeName(
+    module, heapTypes[tempSubStructIndex], "SomeSubStruct");
+  BinaryenModuleSetFieldName(
+    module, heapTypes[tempSubStructIndex], 0, "SomeField");
+  BinaryenModuleSetFieldName(
+    module, heapTypes[tempSubStructIndex], 1, "SomePackedField");
+  BinaryenModuleSetFeatures(
+    module, BinaryenFeatureReferenceTypes() | BinaryenFeatureGC());
+  {
+    BinaryenType varTypes[] = {
+      arrayType, structType, signatureType, basicType, subStructType};
+    BinaryenAddFunction(module,
+                        "test",
+                        BinaryenNone(),
+                        BinaryenNone(),
+                        varTypes,
+                        5,
+                        BinaryenNop(module));
+  }
+  bool didValidate = BinaryenModuleValidate(module);
+  assert(didValidate);
+  printf("module with recursive GC types:\n");
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+
+  BinaryenSetTypeSystem(defaultTypeSystem);
+}
+
 int main() {
   test_types();
   test_features();
@@ -1520,6 +1935,8 @@ int main() {
   test_color_status();
   test_for_each();
   test_func_opt();
+  test_typesystem();
+  test_typebuilder();
 
   return 0;
 }

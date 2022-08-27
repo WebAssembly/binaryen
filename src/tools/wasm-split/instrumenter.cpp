@@ -108,13 +108,15 @@ void Instrumenter::instrumentFuncs() {
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
+      assert(!wasm->memories.empty());
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
                                   funcIdx,
-                                  builder.makeConstPtr(0),
+                                  builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
-                                  Type::i32),
+                                  Type::i32,
+                                  wasm->memories[0]->name),
           func->body,
           func->body->type);
         ++funcIdx;
@@ -168,9 +170,22 @@ void Instrumenter::addProfileExport() {
     return builder.makeConst(int32_t(profileSize));
   };
 
+  // Also make sure there is a memory with enough pages to write into
+  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
+  if (wasm->memories.empty()) {
+    wasm->addMemory(Builder::makeMemory("0"));
+    wasm->memories[0]->initial = pages;
+    wasm->memories[0]->max = pages;
+  } else if (wasm->memories[0]->initial < pages) {
+    wasm->memories[0]->initial = pages;
+    if (wasm->memories[0]->max < pages) {
+      wasm->memories[0]->max = pages;
+    }
+  }
+
   // Write the hash followed by all the time stamps
-  Expression* writeData =
-    builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64);
+  Expression* writeData = builder.makeStore(
+    8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
 
   switch (options.storageKind) {
@@ -183,7 +198,8 @@ void Instrumenter::addProfileExport() {
                             1,
                             getAddr(),
                             builder.makeGlobalGet(global, Type::i32),
-                            Type::i32));
+                            Type::i32,
+                            wasm->memories[0]->name));
         offset += 4;
       }
       break;
@@ -232,8 +248,10 @@ void Instrumenter::addProfileExport() {
                   getAddr(),
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
-                builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32),
-                Type::i32),
+                builder.makeAtomicLoad(
+                  1, 0, getFuncIdx(), Type::i32, wasm->memories[0]->name),
+                Type::i32,
+                wasm->memories[0]->name),
               builder.makeLocalSet(
                 funcIdxVar,
                 builder.makeBinary(
@@ -253,20 +271,22 @@ void Instrumenter::addProfileExport() {
   wasm->addExport(
     Builder::makeExport(options.profileExport, name, ExternalKind::Function));
 
-  // Also make sure there is a memory with enough pages to write into
-  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
-  if (!wasm->memory.exists) {
-    wasm->memory.exists = true;
-    wasm->memory.initial = pages;
-    wasm->memory.max = pages;
-  } else if (wasm->memory.initial < pages) {
-    wasm->memory.initial = pages;
-    if (wasm->memory.max < pages) {
-      wasm->memory.max = pages;
+  // Export the memory if it is not already exported or imported.
+  if (!wasm->memories[0]->imported()) {
+    bool memoryExported = false;
+    for (auto& ex : wasm->exports) {
+      if (ex->kind == ExternalKind::Memory) {
+        memoryExported = true;
+        break;
+      }
+    }
+    if (!memoryExported) {
+      wasm->addExport(Builder::makeExport(
+        "profile-memory",
+        Names::getValidExportName(*wasm, wasm->memories[0]->name),
+        ExternalKind::Memory));
     }
   }
-
-  // TODO: export the memory if it is not already exported.
 }
 
 } // namespace wasm

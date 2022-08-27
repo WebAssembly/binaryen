@@ -232,18 +232,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
-    // Even if the instruction can possibly throw, we don't end the current
-    // basic block unless the instruction is within a try-catch, because the CFG
-    // will have too many blocks that way, and if an exception is thrown, the
-    // function will be exited anyway.
-    if (self->throwingInstsStack.empty()) {
-      return;
-    }
-
-    // Exception thrown. Note outselves so that we will create a link to each
-    // catch within the innermost try when we get there.
-    self->throwingInstsStack.back().push_back(self->currBasicBlock);
-
     // If the innermost try does not have a catch_all clause, an exception
     // thrown can be caught by any of its outer catch block. And if that outer
     // try-catch also does not have a catch_all, this continues until we
@@ -269,11 +257,41 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // catch $e3
     //   ...
     // end
-    for (int i = self->throwingInstsStack.size() - 1; i > 0; i--) {
-      if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
+    assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
+    for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
+      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
+      if (tryy->isDelegate()) {
+        // If this delegates to the caller, there is no possibility that this
+        // instruction can throw to outer catches.
+        if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
+          break;
+        }
+        // If this delegates to an outer try, we skip catches between this try
+        // and the target try.
+        bool found = false;
+        for (int j = i - 1; j >= 0; j--) {
+          if (self->unwindExprStack[j]->template cast<Try>()->name ==
+              tryy->delegateTarget) {
+            i = j;
+            found = true;
+            break;
+          }
+        }
+        WASM_UNUSED(found);
+        assert(found);
+        continue;
+      }
+
+      // Exception thrown. Note outselves so that we will create a link to each
+      // catch within the try when we get there.
+      self->throwingInstsStack[i].push_back(self->currBasicBlock);
+
+      // If this try has catch_all, there is no possibility that this
+      // instruction can throw to outer catches. Stop here.
+      if (tryy->hasCatchAll()) {
         break;
       }
-      self->throwingInstsStack[i - 1].push_back(self->currBasicBlock);
+      i--;
     }
   }
 
@@ -375,7 +393,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallId:
-      case Expression::Id::CallIndirectId: {
+      case Expression::Id::CallIndirectId:
+      case Expression::Id::CallRefId: {
         self->pushTask(SubType::doEndCall, currp);
         break;
       }
@@ -519,8 +538,8 @@ private:
   void checkDuplicates(std::vector<BasicBlock*>& list) {
     std::unordered_set<BasicBlock*> seen;
     for (auto* curr : list) {
-      assert(seen.count(curr) == 0);
-      seen.insert(curr);
+      auto res = seen.emplace(curr);
+      assert(res.second);
     }
   }
 

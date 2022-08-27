@@ -121,7 +121,6 @@ digraph call {
  (type $FUNCSIG$v (func))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $0 256 256))
- (data (global.get $memoryBase) "\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\02\00\00\00\b0\04\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\04")
  (import "env" "table" (table $timport$0 9 9 funcref))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
@@ -161,6 +160,7 @@ digraph call {
  (global $tempRet0 (mut i32) (i32.const 0))
  (global $tempFloat (mut f32) (f32.const 0))
  (global $f0 (mut f32) (f32.const 0))
+ (data (global.get $memoryBase) "\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\02\00\00\00\b0\04\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\04")
  (elem (i32.const 0) $b0 $___stdio_close $b1 $___stdout_write $___stdio_seek $___stdio_write $b2 $_cleanup_387 $b3)
  (export "_fflush" (func $_fflush))
  (export "_main" (func $_main))
@@ -225,7 +225,7 @@ digraph call {
    (i32.eqz
     (global.get $__THREW__)
    )
-   (block $block
+   (block
     (global.set $__THREW__
      (local.get $0)
     )
@@ -404,7 +404,7 @@ digraph call {
            (i32.load
             (i32.const 1140)
            )
-           (block $block (result i32)
+           (block (result i32)
             (call $_pthread_cleanup_push
              (i32.const 1)
              (local.get $0)
@@ -436,7 +436,7 @@ digraph call {
             )
             (local.get $3)
            )
-           (block $block0 (result i32)
+           (block (result i32)
             (i32.store
              (local.get $8)
              (i32.load
@@ -484,7 +484,7 @@ digraph call {
            )
           )
          )
-         (block $block2 (result i32)
+         (block (result i32)
           (i32.store
            (local.get $6)
            (local.tee $3
@@ -524,7 +524,7 @@ digraph call {
            (local.get $5)
            (i32.const 2)
           )
-          (block $block4 (result i32)
+          (block (result i32)
            (i32.store
             (local.get $6)
             (i32.add
@@ -542,7 +542,7 @@ digraph call {
            )
            (local.get $12)
           )
-          (block $block5 (result i32)
+          (block (result i32)
            (local.set $3
             (local.get $1)
            )
@@ -693,7 +693,7 @@ digraph call {
      )
      (i32.const 0)
     )
-    (block $block (result i32)
+    (block (result i32)
      (i32.store
       (local.get $0)
       (i32.const -1)
@@ -716,7 +716,7 @@ digraph call {
     (local.get $0)
     (i32.const -4096)
    )
-   (block $block (result i32)
+   (block (result i32)
     (i32.store
      (call $___errno_location)
      (i32.sub
@@ -787,7 +787,7 @@ digraph call {
      (i32.const 64)
     )
    )
-   (block $block
+   (block
     (i32.store
      (local.get $3)
      (i32.load offset=60
@@ -832,7 +832,7 @@ digraph call {
   (block $do-once (result i32)
    (if (result i32)
     (local.get $0)
-    (block $block (result i32)
+    (block (result i32)
      (if
       (i32.le_s
        (i32.load offset=76
@@ -861,7 +861,7 @@ digraph call {
      (if (result i32)
       (local.get $2)
       (local.get $1)
-      (block $block9 (result i32)
+      (block (result i32)
        (call $_free
         (local.get $0)
        )
@@ -869,7 +869,7 @@ digraph call {
       )
      )
     )
-    (block $block10 (result i32)
+    (block (result i32)
      (local.set $0
       (if (result i32)
        (i32.load
@@ -1091,7 +1091,7 @@ digraph call {
      (local.tee $0
       (call $__ZSt15get_new_handlerv)
      )
-     (block $block
+     (block
       (call_indirect (type $FUNCSIG$v)
        (i32.add
         (i32.and
@@ -1145,7 +1145,7 @@ digraph call {
     (local.get $2)
     (i32.const 20)
    )
-   (block $block
+   (block
     (local.set $5
      (i32.or
       (i32.or
@@ -1185,7 +1185,7 @@ digraph call {
        (i32.const 3)
       )
      )
-     (block $block17
+     (block
       (local.set $3
        (i32.sub
         (i32.add
@@ -1201,7 +1201,7 @@ digraph call {
          (local.get $0)
          (local.get $3)
         )
-        (block $block19
+        (block
          (i32.store8
           (local.get $0)
           (local.get $1)
@@ -1224,7 +1224,7 @@ digraph call {
        (local.get $0)
        (local.get $6)
       )
-      (block $block21
+      (block
        (i32.store
         (local.get $0)
         (local.get $5)
@@ -1247,7 +1247,7 @@ digraph call {
      (local.get $0)
      (local.get $4)
     )
-    (block $block23
+    (block
      (i32.store8
       (local.get $0)
       (local.get $1)
@@ -1296,7 +1296,7 @@ digraph call {
      (i32.const 3)
     )
    )
-   (block $block
+   (block
     (loop $while-in
      (block $while-out
       (br_if $while-out
@@ -1348,7 +1348,7 @@ digraph call {
        (local.get $2)
        (i32.const 4)
       )
-      (block $block27
+      (block
        (i32.store
         (local.get $0)
         (i32.load
@@ -1385,7 +1385,7 @@ digraph call {
      (local.get $2)
      (i32.const 0)
     )
-    (block $block29
+    (block
      (i32.store8
       (local.get $0)
       (i32.load8_s

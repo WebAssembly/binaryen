@@ -7,6 +7,7 @@
 (module
   (import "env" "foo" (func $foo))
   (export "bar" (func $bar))
+  (memory $0 1 1)
   (func $bar
     (call $foo)
   )

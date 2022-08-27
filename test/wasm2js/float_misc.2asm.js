@@ -227,14 +227,12 @@ function asmFunc(env) {
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
   if (!(var$2 < Math_fround(.5))) {
-   block : {
-    var$0 = Math_fround(Math_ceil(var$0));
-    if (var$2 > Math_fround(.5)) {
-     return Math_fround(var$0)
-    }
-    var$2 = Math_fround(var$1 * Math_fround(.5));
-    var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
+   var$0 = Math_fround(Math_ceil(var$0));
+   if (var$2 > Math_fround(.5)) {
+    return Math_fround(var$0)
    }
+   var$2 = Math_fround(var$1 * Math_fround(.5));
+   var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
   }
   return Math_fround(var$1);
  }
@@ -245,14 +243,12 @@ function asmFunc(env) {
   var$1 = Math_floor(var$0);
   var$2 = var$0 - var$1;
   if (!(var$2 < .5)) {
-   block : {
-    var$0 = Math_ceil(var$0);
-    if (var$2 > .5) {
-     return +var$0
-    }
-    var$2 = var$1 * .5;
-    var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
+   var$0 = Math_ceil(var$0);
+   if (var$2 > .5) {
+    return +var$0
    }
+   var$2 = var$1 * .5;
+   var$1 = var$2 - Math_floor(var$2) == 0.0 ? var$1 : var$0;
   }
   return +var$1;
  }

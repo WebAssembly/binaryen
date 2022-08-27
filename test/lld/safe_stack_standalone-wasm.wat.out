@@ -171,28 +171,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 1,
-  "declares": [
-    "printf"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "main",
-    "__set_stack_limits"
-  ],
-  "namedGlobals": {
-    "__heap_base" : "66128",
-    "__data_end" : "587"
-  },
-  "invokeFuncs": [
-  ],
-  "features": [
-  ]
-}
--- END METADATA --
-;)

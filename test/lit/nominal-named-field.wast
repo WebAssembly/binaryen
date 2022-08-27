@@ -6,14 +6,14 @@
 ;; RUN: wasm-opt %s -all --nominal --roundtrip -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32)) (field f32) (field $named f64)))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) (field f32) (field $named f64) data))
   (type $struct (struct
     (field (mut i32))
     (field f32)
     (field $named f64)
   ))
 
-  ;; CHECK:      (func $foo (param $0 (ref $struct))
+  ;; CHECK:      (func $foo (type $ref|$struct|_=>_none) (param $0 (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct $named
   ;; CHECK-NEXT:    (local.get $0)

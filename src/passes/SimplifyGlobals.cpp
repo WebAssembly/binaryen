@@ -25,6 +25,7 @@
 //  * Apply the constant values of previous global.sets, in a linear
 //    execution trace.
 //  * Remove writes to globals that are never read from.
+//  * Remove writes to globals that are always assigned the same value.
 //  * Remove writes to globals that are only read from in order to write (see
 //    below, "readOnlyToWrite").
 //
@@ -60,14 +61,19 @@ struct GlobalInfo {
   std::atomic<Index> written{0};
   std::atomic<Index> read{0};
 
+  // Whether the global is written a value different from its initial value.
+  std::atomic<bool> nonInitWritten{false};
+
   // How many times the global is "read, but only to write", that is, is used in
-  // this pattern:
+  // something like this pattern:
   //
   //   if (global == X) { global = Y }
   //
-  // where X and Y have no side effects. If all we have are such reads only to
-  // write then the global is really not necessary, even though there are both
-  // reads and writes of it.
+  // The if's condition only uses |global| in order to decide to write to that
+  // same global, so it is "read, but only to write." If all we have are such
+  // reads only to write then the global is really not necessary, even though
+  // there are both reads and writes of it, and regardless of what the written
+  // values are etc.
   //
   // This pattern can show up in global initialization code, where in the block
   // alongside "global = Y" there was some useful code, but the optimizer
@@ -93,7 +99,20 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
   GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
 
-  void visitGlobalSet(GlobalSet* curr) { (*infos)[curr->name].written++; }
+  void visitGlobalSet(GlobalSet* curr) {
+    (*infos)[curr->name].written++;
+
+    // Check if there is a write of a value that may differ from the initial
+    // one. If there is anything but identical constants in both the initial
+    // value and the written value then we must assume that.
+    auto* global = getModule()->getGlobal(curr->name);
+    if (global->imported() || !Properties::isConstantExpression(curr->value) ||
+        !Properties::isConstantExpression(global->init) ||
+        Properties::getLiterals(curr->value) !=
+          Properties::getLiterals(global->init)) {
+      (*infos)[curr->name].nonInitWritten = true;
+    }
+  }
 
   void visitGlobalGet(GlobalGet* curr) { (*infos)[curr->name].read++; }
 
@@ -107,36 +126,172 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
       return;
     }
 
-    // See if reading a specific global is the only effect the condition has.
-    EffectAnalyzer condition(getPassOptions(), *getModule(), curr->condition);
+    auto global = readsGlobalOnlyToWriteIt(curr->condition, curr->ifTrue);
+    if (global.is()) {
+      // This is exactly the pattern we sought!
+      (*infos)[global].readOnlyToWrite++;
+    }
+  }
 
-    if (condition.globalsRead.size() != 1) {
-      return;
+  // Given a condition and some code that is executed based on the condition,
+  // check if the condition reads from some global in order to make the decision
+  // whether to run that code, and that code only writes to that global, which
+  // means the global is "read, but only to be written."
+  //
+  // The condition may also do other things than read from that global - it may
+  // compare it to a value, or negate it, or anything else, so long as the value
+  // of the global is only used to decide to run the code, like this:
+  //
+  //  if (global % 17 < 4) { global = 1 }
+  //
+  // What we want to disallow is using the global to actually do something that
+  // is noticeeable *aside* from writing the global, like this:
+  //
+  //  if (global ? foo() : bar()) { .. }
+  //
+  // Here ? : is another nested if, and we end up running different code based
+  // on global, which is noticeable: the global is *not* only read in order to
+  // write that global, but also for other reasons.
+  //
+  // Returns the global name if things like up, or a null name otherwise.
+  Name readsGlobalOnlyToWriteIt(Expression* condition, Expression* code) {
+    // See if writing a global is the only effect the code has. (Note that we
+    // don't need to care about the case where the code has no effects at
+    // all - other passes would handle that trivial situation.)
+    EffectAnalyzer codeEffects(getPassOptions(), *getModule(), code);
+    if (codeEffects.globalsWritten.size() != 1) {
+      return Name();
     }
-    auto global = *condition.globalsRead.begin();
-    condition.globalsRead.clear();
-    if (condition.hasAnything()) {
+    auto writtenGlobal = *codeEffects.globalsWritten.begin();
+    codeEffects.globalsWritten.clear();
+    if (codeEffects.hasAnything()) {
+      return Name();
+    }
+
+    // See if we read that global in the condition expression.
+    EffectAnalyzer conditionEffects(getPassOptions(), *getModule(), condition);
+    if (!conditionEffects.mutableGlobalsRead.count(writtenGlobal)) {
+      return Name();
+    }
+
+    // If the condition has no other (non-removable) effects other than reading
+    // that global then we have found what we looked for.
+    if (!conditionEffects.hasUnremovableSideEffects()) {
+      return writtenGlobal;
+    }
+
+    // There are unremovable side effects of some form. However, they may not
+    // be related to the reading of the global, that is, the global's value may
+    // not flow to anything that uses it in a dangerous way. It *would* be
+    // dangerous for the global's value to flow into a nested if condition, as
+    // mentioned in the comment earlier, but if it flows into an if arm for
+    // example then that is safe, so long as the final place it flows out to is
+    // the condition.
+    //
+    // To check this, find the get of the global in the condition, and look up
+    // through its parents to see how the global's value is used.
+    struct FlowScanner
+      : public ExpressionStackWalker<FlowScanner,
+                                     UnifiedExpressionVisitor<FlowScanner>> {
+      GlobalUseScanner& globalUseScanner;
+      Name writtenGlobal;
+      PassOptions& passOptions;
+      Module& wasm;
+
+      FlowScanner(GlobalUseScanner& globalUseScanner,
+                  Name writtenGlobal,
+                  PassOptions& passOptions,
+                  Module& wasm)
+        : globalUseScanner(globalUseScanner), writtenGlobal(writtenGlobal),
+          passOptions(passOptions), wasm(wasm) {}
+
+      bool ok = true;
+
+      void visitExpression(Expression* curr) {
+        if (auto* get = curr->dynCast<GlobalGet>()) {
+          if (get->name == writtenGlobal) {
+            // We found the get of the global. Check where its value flows to,
+            // and how it is used there.
+            assert(expressionStack.back() == get);
+            for (int i = int(expressionStack.size()) - 2; i >= 0; i--) {
+              // Consider one pair of parent->child, and check if the parent
+              // causes any problems when the child's value reaches it.
+              auto* parent = expressionStack[i];
+              auto* child = expressionStack[i + 1];
+              EffectAnalyzer parentEffects(passOptions, wasm);
+              parentEffects.visit(parent);
+              if (parentEffects.hasUnremovableSideEffects()) {
+                // The parent has some side effect, and the child's value may
+                // be used to determine its manner, so this is dangerous.
+                ok = false;
+                break;
+              }
+
+              if (auto* iff = parent->dynCast<If>()) {
+                if (iff->condition == child) {
+                  // The child is used to decide what code to run, which is
+                  // dangerous: check what effects it causes. If it is a nested
+                  // appearance of the pattern, that is one case that we know is
+                  // actually safe.
+                  if (!iff->ifFalse &&
+                      globalUseScanner.readsGlobalOnlyToWriteIt(
+                        iff->condition, iff->ifTrue) == writtenGlobal) {
+                    // This is safe, and we can stop here: the value does not
+                    // flow any further.
+                    break;
+                  }
+
+                  // Otherwise, we found a problem, and can stop.
+                  ok = false;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    FlowScanner scanner(*this, writtenGlobal, getPassOptions(), *getModule());
+    scanner.walk(condition);
+    return scanner.ok ? writtenGlobal : Name();
+  }
+
+  void visitFunction(Function* curr) {
+    // We are looking for a function body like this:
+    //
+    //   if (global == X) return;
+    //   global = Y;
+    //
+    // And nothing else at all. Note that this does not overlap with the if
+    // pattern above (the assignment is in the if body) so we will never have
+    // overlapping matchings (which would each count as 1, leading to a
+    // miscount).
+
+    if (curr->body->type != Type::none) {
       return;
     }
 
-    // See if writing the same global is the only effect the body has. (Note
-    // that we don't need to care about the case where the body has no effects
-    // at all - other pass would handle that trivial situation.)
-    EffectAnalyzer ifTrue(getPassOptions(), *getModule(), curr->ifTrue);
-    if (ifTrue.globalsWritten.size() != 1) {
-      return;
-    }
-    auto writtenGlobal = *ifTrue.globalsWritten.begin();
-    if (writtenGlobal != global) {
-      return;
-    }
-    ifTrue.globalsWritten.clear();
-    if (ifTrue.hasAnything()) {
+    auto* block = curr->body->dynCast<Block>();
+    if (!block) {
       return;
     }
 
-    // This is exactly the pattern we sought!
-    (*infos)[global].readOnlyToWrite++;
+    auto& list = block->list;
+    if (list.size() != 2) {
+      return;
+    }
+
+    auto* iff = list[0]->dynCast<If>();
+    if (!iff || iff->ifFalse || !iff->ifTrue->is<Return>()) {
+      return;
+    }
+
+    auto global = readsGlobalOnlyToWriteIt(iff->condition, list[1]);
+    if (global.is()) {
+      // This is exactly the pattern we sought!
+      (*infos)[global].readOnlyToWrite++;
+    }
   }
 
 private:
@@ -336,10 +491,11 @@ struct SimplifyGlobals : public Pass {
   bool removeUnneededWrites() {
     bool more = false;
 
-    // Globals that are not exports and not read from are unnecessary (even if
-    // they are written to). Likewise, globals that are only read from in order
-    // to write to themselves are unnecessary. First, find such globals.
-    NameSet unnecessaryGlobals;
+    // Globals that are not exports and not read from do not need their sets.
+    // Likewise, globals that only write their initial value later also do not
+    // need those writes. And, globals that are only read from in order to write
+    // to themselves as well. First, find such globals.
+    NameSet globalsNotNeedingSets;
     for (auto& global : module->globals) {
       auto& info = map[global->name];
 
@@ -373,15 +529,15 @@ struct SimplifyGlobals : public Pass {
       // our logic is wrong somewhere.
       assert(info.written >= info.readOnlyToWrite);
 
-      if (!info.read || onlyReadOnlyToWrite) {
-        unnecessaryGlobals.insert(global->name);
+      if (!info.read || !info.nonInitWritten || onlyReadOnlyToWrite) {
+        globalsNotNeedingSets.insert(global->name);
 
         // We can now mark this global as immutable, and un-written, since we
-        // are about to remove all the operations on it.
+        // are about to remove all the sets on it.
         global->mutable_ = false;
         info.written = 0;
 
-        // Nested old-read-to-write expressions require another full iteration
+        // Nested only-read-to-write expressions require another full iteration
         // to optimize, as we have:
         //
         //   if (a) {
@@ -394,6 +550,10 @@ struct SimplifyGlobals : public Pass {
         // The first iteration can only optimize b, as the outer if's body has
         // more effects than we understand. After finishing the first iteration,
         // b will no longer exist, removing those effects.
+        //
+        // TODO: In principle other situations exist as well where more
+        //       iterations help, like if we remove a set that turns something
+        //       into a read-only-to-write.
         if (onlyReadOnlyToWrite) {
           more = true;
         }
@@ -404,7 +564,7 @@ struct SimplifyGlobals : public Pass {
     // then see that since the global has no writes, it is a constant, which
     // will lead to removal of gets, and after removing them, the global itself
     // will be removed as well.
-    GlobalSetRemover(&unnecessaryGlobals, optimize).run(runner, module);
+    GlobalSetRemover(&globalsNotNeedingSets, optimize).run(runner, module);
 
     return more;
   }

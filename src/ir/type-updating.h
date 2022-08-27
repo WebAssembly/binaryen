@@ -18,17 +18,35 @@
 #define wasm_ir_type_updating_h
 
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
 
-// a class that tracks type dependencies between nodes, letting you
-// update types efficiently when removing and altering code.
-// altering code can alter types in the following way:
-//   * removing a break can make a block unreachable, if nothing else
-//     reaches it
-//   * altering the type of a child to unreachable can make the parent
-//     unreachable
+//
+// A class that tracks type dependencies between nodes, letting you update types
+// efficiently when removing and altering code incrementally.
+//
+// Altering code can alter types beyond the current node in the following ways:
+//
+//  1. Removing a break can make a block unreachable, if nothing else reaches
+//     it.
+//  2. Altering the type of a child to unreachable can make the parent
+//     unreachable.
+//
+// Most passes don't do either of the above and can just do replaceCurrent when
+// replacing one thing with another, which is fine as no types need to be
+// updated outside of the item being replaced. Passes that do one of the two
+// things mentioned need to update types in the IR affected by the change (which
+// can include any of the parent nodes, in general) and they have two main ways
+// to do so:
+//
+//  * Call ReFinalize() after making all their changes. The IR will be in an
+//    invalid state while making the changes, and only fixed up at the end by
+//    ReFinalize(), but often that is good enough.
+//  * Use this class, TypeUpdater. This lets you update the IR after each
+//    incremental change that you perform, keeping the IR valid constantly.
+//
 struct TypeUpdater
   : public ExpressionStackWalker<TypeUpdater,
                                  UnifiedExpressionVisitor<TypeUpdater>> {
@@ -305,6 +323,69 @@ struct TypeUpdater
   }
 };
 
+// Rewrites global heap types across an entire module, allowing changes to be
+// made while doing so.
+class GlobalTypeRewriter {
+public:
+  Module& wasm;
+
+  GlobalTypeRewriter(Module& wasm);
+  virtual ~GlobalTypeRewriter() {}
+
+  // Main entry point. This performs the entire process of creating new heap
+  // types and calling the hooks below, then applies the new types throughout
+  // the module.
+  void update();
+
+  // Subclasses can implement these methods to modify the new set of types that
+  // we map to. By default, we simply copy over the types, and these functions
+  // are the hooks to apply changes through. The methods receive as input the
+  // old type, and a structure that they can modify. That structure is the one
+  // used to define the new type in the TypeBuilder.
+  virtual void modifyStruct(HeapType oldType, Struct& struct_) {}
+  virtual void modifyArray(HeapType oldType, Array& array) {}
+  virtual void modifySignature(HeapType oldType, Signature& sig) {}
+
+  // Map an old type to a temp type. This can be called from the above hooks,
+  // so that they can use a proper temp type of the TypeBuilder while modifying
+  // things.
+  Type getTempType(Type type);
+
+  using SignatureUpdates = std::unordered_map<HeapType, Signature>;
+
+  // Helper for the repeating pattern of just updating Signature types using a
+  // map of old heap type => new Signature.
+  static void updateSignatures(const SignatureUpdates& updates, Module& wasm) {
+    if (updates.empty()) {
+      return;
+    }
+
+    class SignatureRewriter : public GlobalTypeRewriter {
+      const SignatureUpdates& updates;
+
+    public:
+      SignatureRewriter(Module& wasm, const SignatureUpdates& updates)
+        : GlobalTypeRewriter(wasm), updates(updates) {
+        update();
+      }
+
+      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
+        auto iter = updates.find(oldSignatureType);
+        if (iter != updates.end()) {
+          sig.params = getTempType(iter->second.params);
+          sig.results = getTempType(iter->second.results);
+        }
+      }
+    } rewriter(wasm, updates);
+  }
+
+private:
+  TypeBuilder typeBuilder;
+
+  // The old types and their indices.
+  ModuleUtils::IndexedHeapTypes indexedTypes;
+};
+
 namespace TypeUpdating {
 
 // Checks whether a type is valid as a local, or whether
@@ -325,6 +406,25 @@ Type getValidLocalType(Type type, FeatureSet features);
 // the extra work we need to do to handle non-defaultable values (e.g., add a
 // ref.as_non_null around it, if the local should be non-nullable but is not).
 Expression* fixLocalGet(LocalGet* get, Module& wasm);
+
+// Applies new types of parameters to a function. This does all the necessary
+// changes aside from altering the function type, which the caller is expected
+// to do (the caller might simply change the type, but in other cases the caller
+// might be rewriting the types and need to preserve their identity in terms of
+// nominal typing, so we don't change the type here). The specific things this
+// function does are to update the types of local.get/tee operations,
+// refinalize, etc., basically all operations necessary to ensure validation
+// with the new types.
+//
+// While doing so, we can either update or not update the types of local.get and
+// local.tee operations. (We do not update them here if we'll be doing an update
+// later in the caller, which is the case if we are rewriting function types).
+enum LocalUpdatingMode { Update, DoNotUpdate };
+
+void updateParamTypes(Function* func,
+                      const std::vector<Type>& newParamTypes,
+                      Module& wasm,
+                      LocalUpdatingMode localUpdating = Update);
 
 } // namespace TypeUpdating
 

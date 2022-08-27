@@ -135,6 +135,10 @@ void ReFinalize::visitRefFunc(RefFunc* curr) {
   // this class has been meant to do.
 }
 void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
+void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
+void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
+void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
+void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -156,17 +160,33 @@ void ReFinalize::visitBrOn(BrOn* curr) {
     updateBreakValueType(curr->name, curr->getSentType());
   }
 }
-void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
-void ReFinalize::visitRttSub(RttSub* curr) { curr->finalize(); }
 void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
+void ReFinalize::visitArrayInit(ArrayInit* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
+void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
+void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }
+void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
+void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
+void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
+void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
+void ReFinalize::visitStringAs(StringAs* curr) { curr->finalize(); }
+void ReFinalize::visitStringWTF8Advance(StringWTF8Advance* curr) {
+  curr->finalize();
+}
+void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
+void ReFinalize::visitStringIterNext(StringIterNext* curr) { curr->finalize(); }
+void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
+void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
+void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
+  curr->finalize();
+}
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
@@ -184,6 +204,9 @@ void ReFinalize::visitElementSegment(ElementSegment* curr) {
   WASM_UNREACHABLE("unimp");
 }
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitDataSegment(DataSegment* curr) {
+  WASM_UNREACHABLE("unimp");
+}
 void ReFinalize::visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 

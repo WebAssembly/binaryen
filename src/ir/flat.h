@@ -67,9 +67,7 @@
 #include "pass.h"
 #include "wasm-traversal.h"
 
-namespace wasm {
-
-namespace Flat {
+namespace wasm::Flat {
 
 inline void verifyFlatness(Function* func) {
   struct VerifyFlatness
@@ -118,6 +116,8 @@ inline void verifyFlatness(Module* module) {
         PostWalker<VerifyFlatness, UnifiedExpressionVisitor<VerifyFlatness>>> {
     bool isFunctionParallel() override { return true; }
 
+    bool modifiesBinaryenIR() override { return false; }
+
     VerifyFlatness* create() override { return new VerifyFlatness(); }
 
     void doVisitFunction(Function* func) { verifyFlatness(func); }
@@ -127,8 +127,6 @@ inline void verifyFlatness(Module* module) {
   VerifyFlatness().run(&runner, module);
 }
 
-} // namespace Flat
-
-} // namespace wasm
+} // namespace wasm::Flat
 
 #endif // wasm_ir_flat_h

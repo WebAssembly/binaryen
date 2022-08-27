@@ -22,15 +22,15 @@ function asmFunc(env) {
   label$4 : while (1) {
    label$5 : {
     bar();
-    block : {
+    label$7 : {
      switch (123 | 0) {
      case 0:
-      bar();
-      break;
+      break label$7;
      default:
       break label$5;
      };
     }
+    bar();
     return;
    }
    abort();

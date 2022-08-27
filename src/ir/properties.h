@@ -22,18 +22,7 @@
 #include "ir/match.h"
 #include "wasm.h"
 
-namespace wasm {
-
-namespace Properties {
-
-inline bool emitsBoolean(Expression* curr) {
-  if (auto* unary = curr->dynCast<Unary>()) {
-    return unary->isRelational();
-  } else if (auto* binary = curr->dynCast<Binary>()) {
-    return binary->isRelational();
-  }
-  return false;
-}
+namespace wasm::Properties {
 
 inline bool isSymmetric(Binary* binary) {
   switch (binary->op) {
@@ -86,8 +75,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 // at compile time, and passes that propagate constants can try to propagate it.
 // Constant expressions are also allowed in global initializers in wasm. Also
 // when two constant expressions compare equal at compile time, their values at
-// runtime will be equal as well.
-// TODO: look into adding more things here like RttCanon.
+// runtime will be equal as well. TODO: combine this with
+// isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
 }
@@ -117,7 +106,7 @@ inline Literal getLiteral(const Expression* curr) {
   } else if (auto* n = curr->dynCast<RefNull>()) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal(r->func, r->type);
+    return Literal(r->func, r->type.getHeapType());
   } else if (auto* i = curr->dynCast<I31New>()) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
@@ -251,17 +240,29 @@ inline Index getZeroExtBits(Expression* curr) {
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
 //
+// Behavior wrt tee/br_if is customizable, since in some cases we do not want to
+// look through them (for example, the type of a tee is related to the local,
+// not the value, so if we returned the fallthrough of the tee we'd have a
+// possible difference between the type in the IR and the type of the value,
+// which some cases care about; the same for a br_if, whose type is related to
+// the branch target).
+//
 // TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
-inline Expression* getImmediateFallthrough(Expression* curr,
-                                           const PassOptions& passOptions,
-                                           Module& module) {
+
+enum class FallthroughBehavior { AllowTeeBrIf, NoTeeBrIf };
+
+inline Expression* getImmediateFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
     return curr;
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
-    if (set->isTee()) {
+    if (set->isTee() && behavior == FallthroughBehavior::AllowTeeBrIf) {
       return set->value;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
@@ -281,11 +282,12 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
-    if (br->condition && br->value) {
+    if (br->condition && br->value &&
+        behavior == FallthroughBehavior::AllowTeeBrIf) {
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
-    if (!EffectAnalyzer(passOptions, module, tryy->body).throws) {
+    if (!EffectAnalyzer(passOptions, module, tryy->body).throws()) {
       return tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
@@ -300,11 +302,13 @@ inline Expression* getImmediateFallthrough(Expression* curr,
 
 // Similar to getImmediateFallthrough, but looks through multiple children to
 // find the final value that falls through.
-inline Expression* getFallthrough(Expression* curr,
-                                  const PassOptions& passOptions,
-                                  Module& module) {
+inline Expression* getFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
   while (1) {
-    auto* next = getImmediateFallthrough(curr, passOptions, module);
+    auto* next = getImmediateFallthrough(curr, passOptions, module, behavior);
     if (next == curr) {
       return curr;
     }
@@ -321,26 +325,26 @@ inline Index getNumChildren(Expression* curr) {
   auto* cast = curr->cast<id>();                                               \
   WASM_UNUSED(cast);
 
-#define DELEGATE_GET_FIELD(id, name) cast->name
+#define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_CHILD(id, name) ret++;
+#define DELEGATE_FIELD_CHILD(id, field) ret++;
 
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
-  if (cast->name) {                                                            \
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  if (cast->field) {                                                           \
     ret++;                                                                     \
   }
 
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
 
 #include "wasm-delegations-fields.def"
 
@@ -372,11 +376,10 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
-// An intrinsically-nondeterministic expression is one that can return different
-// results for the same inputs, and that difference is *not* explained by
-// other expressions that interact with this one. Hence the cause of
-// nondeterminism can be said to be "intrinsic" - it is internal and inherent in
-// the expression.
+// A "generative" expression is one that can generate different results for the
+// same inputs, and that difference is *not* explained by other expressions that
+// interact with this one. This is an intrinsic/internal property of the
+// expression.
 //
 // To see the issue more concretely, consider these:
 //
@@ -396,29 +399,47 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // allocations, though, it doesn't matter what is in "..": there is nothing
 // in the wasm that we can check to find out if the results are the same or
 // not. (In fact, in this case they are always not the same.) So the
-// nondeterminism is "intrinsic."
+// generativity is "intrinsic" to the expression and it is because each call to
+// struct.new generates a new value.
 //
-// Thus, loads are nondeterministic but not intrinsically so, while GC
-// allocations are actual examples of intrinsically nondeterministic
-// instructions. If wasm were to add "get current time" or "get a random number"
-// instructions then those would also be intrinsically nondeterministic.
+// Thus, loads are nondeterministic but not generative, while GC allocations
+// are in fact generative. Note that "generative" need not mean "allocation" as
+// if wasm were to add "get current time" or "get a random number" instructions
+// then those would also be generative - generating a new current time value or
+// a new random number on each execution, respectively.
 //
-//  * Note that NaN nondeterminism is ignored here. Technically that allows e.g.
-//    an f32.add to be nondeterministic, but it is a valid wasm implementation
-//    to have deterministic NaN behavior, and we optimize under that assumption.
-//    So NaN nondeterminism does not cause anything to be intrinsically
-//    nondeterministic.
+//  * Note that NaN nondeterminism is ignored here. It is a valid wasm
+//    implementation to have deterministic NaN behavior, and we optimize under
+//    that simplifying assumption.
 //  * Note that calls are ignored here. In theory this concept could be defined
-//    either way for them (that is, we could potentially define them as either
-//    intrinsically nondeterministic, or not, and each could make sense in its
-//    own way). It is simpler to ignore them here, which means we only consider
-//    the behavior of the expression provided here (including its chldren), and
-//    not external code.
+//    either way for them - that is, we could potentially define them as
+//    generative, as they might contain such an instruction, or we could define
+//    this property as only looking at code in the current function. We choose
+//    the latter because calls are already handled best in other manners (using
+//    EffectAnalyzer).
 //
-bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features);
+bool isGenerative(Expression* curr, FeatureSet features);
 
-} // namespace Properties
+inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
+  if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
+      expr->is<StructNew>() || expr->is<ArrayNew>() || expr->is<ArrayInit>() ||
+      expr->is<I31New>() || expr->is<StringConst>()) {
+    return true;
+  }
 
-} // namespace wasm
+  if (features.hasExtendedConst()) {
+    if (expr->is<Binary>()) {
+      auto bin = static_cast<Binary*>(expr);
+      if (bin->op == AddInt64 || bin->op == SubInt64 || bin->op == MulInt64 ||
+          bin->op == AddInt32 || bin->op == SubInt32 || bin->op == MulInt32) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+} // namespace wasm::Properties
 
 #endif // wasm_ir_properties_h

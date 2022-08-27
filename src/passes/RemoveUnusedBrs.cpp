@@ -80,6 +80,14 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
 
+// This leads to similar choices as LLVM does.
+// See https://github.com/WebAssembly/binaryen/pull/4228
+// It can be tuned more later.
+const Index TooCostlyToRunUnconditionally = 9;
+
+static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
+              "We never run code unconditionally if it has unacceptable cost");
+
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
 // only one of the two might have executed. We assume here that
@@ -92,9 +100,18 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
     return false;
   }
   // Consider the cost of executing all the code unconditionally.
-  const auto TOO_MUCH = 7;
   auto total = CostAnalyzer(one).cost + CostAnalyzer(two).cost;
-  return total >= TOO_MUCH;
+  return total >= TooCostlyToRunUnconditionally;
+}
+
+// As above, but a single expression that we are considering moving to a place
+// where it executes unconditionally.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* curr) {
+  if (passOptions.shrinkLevel) {
+    return false;
+  }
+  return CostAnalyzer(curr).cost >= TooCostlyToRunUnconditionally;
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -186,11 +203,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (skip > 0) {
           flows.resize(size - skip);
         }
-        // drop a nop at the end of a block, which prevents a value flowing
-        while (list.size() > 0 && list.back()->is<Nop>()) {
-          list.resize(list.size() - 1);
-          self->anotherCycle = true;
-        }
+      }
+      // Drop a nop at the end of a block, which prevents a value flowing. Note
+      // that this is worth doing regardless of whether we have a name on this
+      // block or not (which the if right above us checks) - such a nop is
+      // always unneeded and can limit later optimizations.
+      while (list.size() > 0 && list.back()->is<Nop>()) {
+        list.resize(list.size() - 1);
+        self->anotherCycle = true;
       }
       // A value flowing is only valid if it is a value that the block actually
       // flows out. If it is never reached, it does not flow out, and may be
@@ -373,6 +393,34 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
+      }
+
+      // if (condition-A) { if (condition-B) .. }
+      //   =>
+      // if (condition-A ? condition-B : 0) { .. }
+      //
+      // This replaces an if, which is 3 bytes, with a select plus a zero, which
+      // is also 3 bytes. The benefit is that the select may be faster, and also
+      // further optimizations may be possible on the select.
+      if (auto* child = curr->ifTrue->dynCast<If>()) {
+        if (child->ifFalse) {
+          return;
+        }
+        // If running the child's condition unconditionally is too expensive,
+        // give up.
+        if (tooCostlyToRunUnconditionally(getPassOptions(), child->condition)) {
+          return;
+        }
+        // Of course we can't do this if the inner if's condition has side
+        // effects, as we would then execute those unconditionally.
+        if (EffectAnalyzer(getPassOptions(), *getModule(), child->condition)
+              .hasSideEffects()) {
+          return;
+        }
+        Builder builder(*getModule());
+        curr->condition = builder.makeSelect(
+          child->condition, curr->condition, builder.makeConst(int32_t(0)));
+        curr->ifTrue = child->ifTrue;
       }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is
@@ -652,8 +700,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       bool worked = false;
 
       void visitBrOn(BrOn* curr) {
-        // Ignore unreachable BrOns which we cannot improve anyhow.
-        if (curr->type == Type::unreachable) {
+        // Ignore unreachable BrOns which we cannot improve anyhow. Note that
+        // we must check the ref field manually, as we may be changing types as
+        // we go here. (Another option would be to use a TypeUpdater here
+        // instead of calling ReFinalize at the very end, but that would be more
+        // complex and slower.)
+        if (curr->type == Type::unreachable ||
+            curr->ref->type == Type::unreachable) {
           return;
         }
 
@@ -1316,7 +1369,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // dce will clean it up
             return nullptr;
           }
-          auto* binary = br->condition->dynCast<Binary>();
+          auto* condition = br->condition;
+          // Also support eqz, which is the same as == 0.
+          if (auto* unary = condition->dynCast<Unary>()) {
+            if (unary->op == EqZInt32) {
+              return br;
+            }
+            return nullptr;
+          }
+          auto* binary = condition->dynCast<Binary>();
           if (!binary) {
             return nullptr;
           }
@@ -1342,16 +1403,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!br) {
             return nullptr;
           }
-          return br->condition->cast<Binary>()->left;
+          auto* condition = br->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->left;
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return unary->value;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
 
         // returns the constant value, as a uint32_t
         auto getProperBrIfConstant =
           [&getProperBrIf](Expression* curr) -> uint32_t {
-          return getProperBrIf(curr)
-            ->condition->cast<Binary>()
-            ->right->cast<Const>()
-            ->value.geti32();
+          auto* condition = getProperBrIf(curr)->condition;
+          if (auto* binary = condition->dynCast<Binary>()) {
+            return binary->right->cast<Const>()->value.geti32();
+          } else if (auto* unary = condition->dynCast<Unary>()) {
+            assert(unary->op == EqZInt32);
+            return 0;
+          } else {
+            WASM_UNREACHABLE("invalid br_if condition");
+          }
         };
         Index start = 0;
         while (start < list.size() - 1) {
@@ -1359,6 +1433,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (!conditionValue) {
             start++;
             continue;
+          }
+          // If the first condition value is a tee, that is ok, so long as the
+          // others afterwards are gets of the value that is tee'd.
+          LocalGet get;
+          if (auto* tee = conditionValue->dynCast<LocalSet>()) {
+            get.index = tee->index;
+            get.type = getFunction()->getLocalType(get.index);
+            conditionValue = &get;
           }
           // if the condition has side effects, we can't replace many
           // appearances of it with a single one
@@ -1427,13 +1509,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
+              auto* newCondition = getProperBrIfConditionValue(list[start]);
+
               if (min != 0) {
-                conditionValue = builder.makeBinary(
-                  SubInt32, conditionValue, builder.makeConst(int32_t(min)));
+                newCondition = builder.makeBinary(
+                  SubInt32, newCondition, builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,
-                builder.makeSwitch(table, defaultName, conditionValue));
+                builder.makeSwitch(table, defaultName, newCondition));
               for (Index i = start; i < end - 1; i++) {
                 ExpressionManipulator::nop(list[i]);
               }
