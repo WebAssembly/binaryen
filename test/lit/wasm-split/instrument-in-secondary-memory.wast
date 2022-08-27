@@ -18,7 +18,7 @@
 
 ;; Check that a memory has been added
 ;; CHECK: (memory $0 1 1)
-;; CHECK: (memory $split_data 1 1)
+;; CHECK: (memory $split_data (shared 1 1))
 
 ;; And the profiling function exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
