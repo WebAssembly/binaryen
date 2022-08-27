@@ -424,6 +424,7 @@ public:
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIs(RefIs* curr);
+  void visitRefAs(RefAs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
@@ -452,7 +453,6 @@ public:
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
-  void visitExternConversion(ExternConversion* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2126,6 +2126,39 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
                "ref.is_*'s argument should be a reference type");
 }
 
+void FunctionValidator::visitRefAs(RefAs* curr) {
+  switch (curr->op) {
+    default:
+      // TODO: validate all the other ref.as_*
+      break;
+    case ExternInternalize: {
+      shouldBeTrue(getModule()->features.hasGC(),
+                   curr,
+                   "extern.internalize requries GC to be enabled");
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      shouldBeEqual(curr->type,
+                    Type(HeapType::any, curr->value->type.getNullability()),
+                    curr,
+                    "extern.internalize should have correct type");
+      break;
+      case ExternExternalize:
+        shouldBeTrue(getModule()->features.hasGC(),
+                     curr,
+                     "extern.externalize requries GC to be enabled");
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+        shouldBeEqual(curr->type,
+                      Type(HeapType::ext, curr->value->type.getNullability()),
+                      curr,
+                      "extern.internalize should have correct type");
+        break;
+    }
+  }
+}
+
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
   // If we are not in a function, this is a global location like a table. We
   // allow RefFunc there as we represent tables that way regardless of what
@@ -2708,28 +2741,6 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
                   curr,
                   "array.copy must have the proper types");
   shouldBeTrue(destElement.mutable_, curr, "array.copy type must be mutable");
-}
-
-void FunctionValidator::visitExternConversion(ExternConversion* curr) {
-  shouldBeTrue(getModule()->features.hasGC(),
-               curr,
-               "extern conversions require gc to be enabled");
-  if (curr->type == Type::unreachable) {
-    return;
-  }
-  HeapType expected;
-  switch (curr->op) {
-    case Externalize:
-      expected = HeapType::ext;
-      break;
-    case Internalize:
-      expected = HeapType::any;
-      break;
-  }
-  shouldBeEqual(curr->type,
-                Type(expected, curr->value->type.getNullability()),
-                curr,
-                "extern conversion must have the proper type");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

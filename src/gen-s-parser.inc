@@ -193,10 +193,10 @@ switch (op[0]) {
       case 'x': {
         switch (op[7]) {
           case 'e':
-            if (strcmp(op, "extern.externalize") == 0) { return makeExternConversion(s, Externalize); }
+            if (strcmp(op, "extern.externalize") == 0) { return makeRefAs(s, ExternExternalize); }
             goto parse_error;
           case 'i':
-            if (strcmp(op, "extern.internalize") == 0) { return makeExternConversion(s, Internalize); }
+            if (strcmp(op, "extern.internalize") == 0) { return makeRefAs(s, ExternInternalize); }
             goto parse_error;
           default: goto parse_error;
         }
@@ -3845,14 +3845,14 @@ switch (op[0]) {
         switch (op[7]) {
           case 'e':
             if (op == "extern.externalize"sv) {
-              auto ret = makeExternConversion(ctx, in, Externalize);
+              auto ret = makeRefAs(ctx, in, ExternExternalize);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'i':
             if (op == "extern.internalize"sv) {
-              auto ret = makeExternConversion(ctx, in, Internalize);
+              auto ret = makeRefAs(ctx, in, ExternInternalize);
               CHECK_ERR(ret);
               return *ret;
             }

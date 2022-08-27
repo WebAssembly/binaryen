@@ -1874,13 +1874,13 @@ public:
           trap("not an i31");
         }
         break;
+      case ExternInternalize:
+      case ExternExternalize:
+        WASM_UNREACHABLE("unimplemented extern conversion");
       default:
         WASM_UNREACHABLE("unimplemented ref.as_*");
     }
     return value;
-  }
-  Flow visitExternConversion(ExternConversion* curr) {
-    WASM_UNREACHABLE("unimp");
   }
   Flow visitStringNew(StringNew* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConst(StringConst* curr) { WASM_UNREACHABLE("unimp"); }

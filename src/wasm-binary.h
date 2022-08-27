@@ -1717,7 +1717,6 @@ public:
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
-  bool maybeVisitExternConversion(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
   bool maybeVisitStringConst(Expression*& out, uint32_t code);
   bool maybeVisitStringMeasure(Expression*& out, uint32_t code);

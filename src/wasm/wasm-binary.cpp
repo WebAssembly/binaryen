@@ -3948,9 +3948,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayCopy(curr, opcode)) {
         break;
       }
-      if (maybeVisitExternConversion(curr, opcode)) {
-        break;
-      }
       if (maybeVisitStringNew(curr, opcode)) {
         break;
       }
@@ -3998,7 +3995,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       }
       if (opcode == BinaryConsts::RefAsFunc ||
           opcode == BinaryConsts::RefAsData ||
-          opcode == BinaryConsts::RefAsI31) {
+          opcode == BinaryConsts::RefAsI31 ||
+          opcode == BinaryConsts::ExternInternalize ||
+          opcode == BinaryConsts::ExternExternalize) {
         visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), opcode);
         break;
       }
@@ -7103,20 +7102,6 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitExternConversion(Expression*& out,
-                                                   uint32_t code) {
-  ExternConversionOp op;
-  if (code == BinaryConsts::ExternExternalize) {
-    op = Externalize;
-  } else if (code == BinaryConsts::ExternInternalize) {
-    op = Internalize;
-  } else {
-    return false;
-  }
-  out = Builder(wasm).makeExternConversion(op, popNonVoidExpression());
-  return true;
-}
-
 bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   StringNewOp op;
   Expression* length = nullptr;
@@ -7399,6 +7384,12 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
       break;
     case BinaryConsts::RefAsI31:
       curr->op = RefAsI31;
+      break;
+    case BinaryConsts::ExternInternalize:
+      curr->op = ExternInternalize;
+      break;
+    case BinaryConsts::ExternExternalize:
+      curr->op = ExternExternalize;
       break;
     default:
       WASM_UNREACHABLE("invalid code for ref.as_*");

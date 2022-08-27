@@ -726,6 +726,10 @@ private:
       parent.implicitTrap = true;
     }
     void visitRefAs(RefAs* curr) {
+      if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+        // These conversions are infallible.
+        return;
+      }
       // traps when the arg is not valid
       parent.implicitTrap = true;
       // Note: We could be more precise here and report the lack of a possible
@@ -737,7 +741,6 @@ private:
       // we keep the code here simpler, but it does mean another optimization
       // cycle may be needed in some cases.
     }
-    void visitExternConversion(ExternConversion* curr) {}
     void visitStringNew(StringNew* curr) {
       // traps when out of bounds in linear memory or ref is null
       parent.implicitTrap = true;

@@ -302,7 +302,6 @@ private:
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
-  Expression* makeExternConversion(Element& s, ExternConversionOp op);
   Expression* makeStringNew(Element& s, StringNewOp op);
   Expression* makeStringConst(Element& s);
   Expression* makeStringMeasure(Element& s, StringMeasureOp op);

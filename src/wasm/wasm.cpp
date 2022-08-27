@@ -1122,25 +1122,14 @@ void RefAs::finalize() {
     case RefAsI31:
       type = Type(HeapType::i31, NonNullable);
       break;
-    default:
-      WASM_UNREACHABLE("invalid ref.as_*");
-  }
-}
-
-void ExternConversion::finalize() {
-  if (value->type == Type::unreachable) {
-    type = Type::unreachable;
-    return;
-  }
-  switch (op) {
-    case Externalize:
-      type = Type(HeapType::ext, value->type.getNullability());
-      break;
-    case Internalize:
+    case ExternInternalize:
       type = Type(HeapType::any, value->type.getNullability());
       break;
+    case ExternExternalize:
+      type = Type(HeapType::ext, value->type.getNullability());
+      break;
     default:
-      WASM_UNREACHABLE("invalid extern conversion");
+      WASM_UNREACHABLE("invalid ref.as_*");
   }
 }
 

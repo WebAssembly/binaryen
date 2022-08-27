@@ -2214,20 +2214,14 @@ struct PrintExpressionContents
       case RefAsI31:
         printMedium(o, "ref.as_i31");
         break;
-      default:
-        WASM_UNREACHABLE("invalid ref.is_*");
-    }
-  }
-  void visitExternConversion(ExternConversion* curr) {
-    switch (curr->op) {
-      case Externalize:
-        printMedium(o, "extern.externalize");
-        break;
-      case Internalize:
+      case ExternInternalize:
         printMedium(o, "extern.internalize");
         break;
+      case ExternExternalize:
+        printMedium(o, "extern.externalize");
+        break;
       default:
-        WASM_UNREACHABLE("invalid extern conversion");
+        WASM_UNREACHABLE("invalid ref.is_*");
     }
   }
   void visitStringNew(StringNew* curr) {

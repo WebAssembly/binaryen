@@ -568,11 +568,8 @@ enum RefAsOp {
   RefAsFunc,
   RefAsData,
   RefAsI31,
-};
-
-enum ExternConversionOp {
-  Externalize,
-  Internalize,
+  ExternInternalize,
+  ExternExternalize,
 };
 
 enum BrOnOp {
@@ -727,7 +724,6 @@ public:
     ArrayLenId,
     ArrayCopyId,
     RefAsId,
-    ExternConversionId,
     StringNewId,
     StringConstId,
     StringMeasureId,
@@ -1658,18 +1654,6 @@ public:
   RefAs(MixedArena& allocator) {}
 
   RefAsOp op;
-
-  Expression* value;
-
-  void finalize();
-};
-
-class ExternConversion
-  : public SpecificExpression<Expression::ExternConversionId> {
-public:
-  ExternConversion(MixedArena& allocator) {}
-
-  ExternConversionOp op;
 
   Expression* value;
 

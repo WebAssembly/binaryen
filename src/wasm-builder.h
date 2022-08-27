@@ -987,14 +987,6 @@ public:
     ret->finalize();
     return ret;
   }
-  ExternConversion* makeExternConversion(ExternConversionOp op,
-                                         Expression* value) {
-    auto* ret = wasm.allocator.alloc<ExternConversion>();
-    ret->op = op;
-    ret->value = value;
-    ret->finalize();
-    return ret;
-  }
   StringNew*
   makeStringNew(StringNewOp op, Expression* ptr, Expression* length) {
     auto* ret = wasm.allocator.alloc<StringNew>();

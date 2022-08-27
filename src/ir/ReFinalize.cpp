@@ -170,9 +170,6 @@ void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
-void ReFinalize::visitExternConversion(ExternConversion* curr) {
-  curr->finalize();
-}
 void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
 void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }
 void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
