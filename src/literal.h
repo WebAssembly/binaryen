@@ -18,6 +18,7 @@
 #define wasm_literal_h
 
 #include <array>
+#include <cmath>
 #include <iostream>
 #include <variant>
 

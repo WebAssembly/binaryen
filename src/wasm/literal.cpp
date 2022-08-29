@@ -17,7 +17,6 @@
 #include "literal.h"
 
 #include <cassert>
-#include <cmath>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "ir/bits.h"

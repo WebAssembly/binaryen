@@ -10503,7 +10503,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.div
@@ -10835,55 +10835,55 @@
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.abs
