@@ -55,10 +55,14 @@ inline std::vector<std::vector<Index>> makeAllPermutations(Index size) {
   std::vector<std::vector<Index>> ret;
   std::vector<Index> curr;
   curr.resize(size);
-  for (auto& x : curr) x = 0;
+  for (auto& x : curr) {
+    x = 0;
+  }
   while (1) {
     std::set<Index> set;
-    for (auto x : curr) set.insert(x);
+    for (auto x : curr) {
+      set.insert(x);
+    }
     if (set.size() == size) {
       ret.push_back(curr); // this is indeed a permutation
     }
@@ -66,9 +70,13 @@ inline std::vector<std::vector<Index>> makeAllPermutations(Index size) {
     Index toBump = size - 1;
     while (1) {
       curr[toBump]++;
-      if (curr[toBump] < size) break;
+      if (curr[toBump] < size) {
+        break;
+      }
       // an overflow
-      if (toBump == 0) return ret; // all done
+      if (toBump == 0) {
+        return ret; // all done
+      }
       curr[toBump] = 0;
       toBump--;
     }
