@@ -138,10 +138,10 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       // For now, we only handle math-type expressions: having a return value
       // and no side effects
       // TODO: do more stuff, modeling side effects etc.
-      if (!isConcreteWasmType(curr->type)) {
+      if (!curr->type.isConcrete()) {
         return builder.makeUnreachable();
       }
-      if (auto* get = curr->dynCast<GetLocal>()) {
+      if (auto* get = curr->dynCast<LocalGet>()) {
         Index newIndex;
         auto iter = localMap.find(get->index);
         if (iter == localMap.end()) {
@@ -150,19 +150,19 @@ static Expression* normalize(Expression* expr, Module& wasm) {
         } else {
           newIndex = iter->second;
         }
-        return builder.makeGetLocal(newIndex, get->type);
+        return builder.makeLocalGet(newIndex, get->type);
       }
-      if (curr->is<SetLocal>()) {
+      if (curr->is<LocalSet>()) {
         assert(curr->type != none); // this is a tee
         // look through the tee
-        return parentCopy(curr->cast<SetLocal>()->value);
+        return parentCopy(curr->cast<LocalSet>()->value);
       }
       if (curr->is<Load>()) {
         // consider the general case of an arbitrary expression here
-        return builder.makeGetLocal(nextLocal++, curr->type);
+        return builder.makeLocalGet(nextLocal++, curr->type);
       }
       if (curr->is<Host>() || curr->is<Call>() || curr->is<CallImport>() ||
-          curr->is<CallIndirect>() || curr->is<GetGlobal>() ||
+          curr->is<CallIndirect>() || curr->is<GlobalGet>() ||
           curr->is<Load>() || curr->is<Return>() || curr->is<Break>() ||
           curr->is<Switch>()) {
         return builder.makeUnreachable();
@@ -193,7 +193,7 @@ struct ScanLocals
     walk(expr);
   }
 
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     assert(curr->index < MAX_LOCAL);
     localTypes[curr->index] = curr->type;
   }
@@ -209,12 +209,12 @@ struct RemapLocals
     walk(expr);
   }
 
-  void visitGetLocal(GetLocal* curr) {
+  void visitLocalGet(LocalGet* curr) {
     curr->index = mapping[curr->index];
     assert(curr->index < MAX_LOCAL);
   }
 
-  void visitSetLocal(SetLocal* curr) {
+  void visitLocalSet(LocalSet* curr) {
     curr->index = mapping[curr->index];
     assert(curr->index < MAX_LOCAL);
   }
@@ -396,25 +396,22 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) {
     abort(); // we should not see this
   }
-  Flow visitGetLocal(GetLocal* curr) {
+  Flow visitLocalGet(LocalGet* curr) {
     return Flow(localGenerator.get(curr->index, curr->type));
   }
-  Flow visitSetLocal(SetLocal* curr) {
+  Flow visitLocalSet(LocalSet* curr) {
     abort(); // we should not see this
   }
-  Flow visitGetGlobal(GetGlobal* curr) {
+  Flow visitGlobalGet(GlobalGet* curr) {
     abort(); // we should not see this
   }
-  Flow visitSetGlobal(SetGlobal* curr) {
+  Flow visitGlobalSet(GlobalSet* curr) {
     abort(); // we should not see this
   }
   Flow visitLoad(Load* curr) {
     abort(); // we should not see this
   }
   Flow visitStore(Store* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitHost(Host* curr) {
     abort(); // we should not see this
   }
 
