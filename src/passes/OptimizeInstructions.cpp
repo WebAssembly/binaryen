@@ -3461,12 +3461,13 @@ private:
     {
       //   x !=  NaN   ==>   1
       //   x <=> NaN   ==>   0
-      //   x op  NaN'  ==>   NaN',  iff `op` != `copysign`
+      //   x op  NaN'  ==>   NaN',  iff `op` != `copysign` and `x` != C
       Const* c;
       Binary* bin;
       Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
-          std::isnan(c->value.getFloat()) && bin->op != CopySignFloat32 &&
+          std::isnan(c->value.getFloat()) && !x->is<Const>() &&
+          bin->op != CopySignFloat32 &&
           bin->op != CopySignFloat64) {
         if (bin->isRelational()) {
           // reuse "c" (nan) constant
