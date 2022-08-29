@@ -28,6 +28,7 @@
 #include "support/file.h"
 #include "support/hash.h"
 #include "support/permutations.h"
+#include "tool-options.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
@@ -588,7 +589,7 @@ int main(int argc, const char* argv[]) {
   // receive arguments
   std::vector<std::string> filenames;
   const std::string WasmAnalyzeOption = "wasm-ctor-eval options";
-  Options options(
+  ToolOptions options(
     "wasm-analyze",
     "Analyze a set of wasm modules. Provide a set of input files, optionally "
     "split by 'advice:' (in which case files afterwards are just advice, used "
