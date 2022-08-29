@@ -30,7 +30,7 @@
 #include "support/permutations.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
-#Include "wasm-type.h"
+#include "wasm-type.h"
 #include "wasm-s-parser.h"
 #include "wasm-traversal.h"
 
@@ -348,17 +348,17 @@ public:
     // a general "random"/deterministic value
     auto base = seed;
     rehash(base, index);
+    rehash(base, std::hash<wasm::Type>{}(type));
     if (type == Type::i32 || type == Type::f32) {
-      auto ret = Literal(rehash(base, std::hash(type)));
-      if (type == f32) {
+      auto ret = Literal(int32_t(base));
+      if (type == Type::f32) {
         ret = ret.castToF32();
       }
       return ret;
     }
     if (type == Type::i64 || type == Type::f64) {
-      auto ret = Literal(rehash(base, Index(type)) |
-                         (int64_t(rehash(base, std::hash(type) + 1000)) << 32));
-      if (type == f64) {
+      auto ret = Literal(int64_t(base));
+      if (type == Type::f64) {
         ret = ret.castToF64();
       }
       return ret;
