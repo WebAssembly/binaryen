@@ -21,16 +21,15 @@
 // 2006): "Automatic Generation of Peephole Superoptimizers".
 //
 
-#include "ast/cost.h"
-#include "ast_utils.h"
+#include "ir/cost.h"
+#include "ir/utils.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "support/hash.h"
-#include "support/permutation.h"
+#include "support/permutations.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-traversal.h"
 
