@@ -859,40 +859,6 @@ Literal Literal::demote() const {
   return Literal(float(getf64()));
 }
 
-// Wasm has nondeterministic rules for NaN propagation in some operations. For
-// example. f32.neg is deterministic and just flips the sign, even of a NaN, but
-// f32.add is nondeterministic, and if one or more of the inputs is a NaN, then
-//
-//  * if all NaNs are canonical NaNs, the output is some arbitrary canonical NaN
-//  * otherwise the output is some arbitrary arithmetic NaN
-//
-// (canonical = NaN payload is 1000..000; arithmetic: 1???..???, that is, the
-// high bit is 1 and all others can be 0 or 1)
-//
-// For many things we don't need to care, and can just do a normal C++ add for
-// an f32.add, for example - the wasm rules are specified so that things like
-// that just work (in order for such math to be fast). However, for our
-// optimizer, it is useful to "standardize" NaNs when there is nondeterminism.
-// That is, when there are multiple valid outputs, it's nice to emit the same
-// one consistently, so that it doesn't look like the optimization changed
-// something. In other words, if the valid output of an expression is a set of
-// valid NaNs, and after optimization the output is still that same set, then
-// the optimization is valid. And if the interpreter picks the same NaN in both
-// cases from that identical set then nothing looks wrong to the fuzzer.
-template<typename T> static Literal standardizeNaN(T result) {
-  if (!std::isnan(result)) {
-    return Literal(result);
-  }
-  // Pick a simple canonical payload, and positive.
-  if (sizeof(T) == 4) {
-    return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
-  } else if (sizeof(T) == 8) {
-    return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
-  } else {
-    WASM_UNREACHABLE("invalid float");
-  }
-}
-
 Literal Literal::add(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:

@@ -3461,15 +3461,13 @@ private:
     {
       //   x !=  NaN   ==>   1
       //   x <=> NaN   ==>   0
-      //   x op  NaN'  ==>   NaN'
-      // where `x` != C and pure
-      // `op` != `copysign`
+      //   x op  NaN'  ==>   NaN',  iff `op` != `copysign`
       Const* c;
       Binary* bin;
       Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
-          std::isnan(c->value.getFloat()) && !x->is<Const>() &&
-          bin->op != CopySignFloat32 && bin->op != CopySignFloat64) {
+          std::isnan(c->value.getFloat()) && bin->op != CopySignFloat32 &&
+          bin->op != CopySignFloat64) {
         if (bin->isRelational()) {
           // reuse "c" (nan) constant
           c->type = Type::i32;
@@ -3483,8 +3481,14 @@ private:
             // x .. NaN  ==>  0
             c->value = Literal::makeZero(Type::i32);
           }
+          return c;
         }
-        // propagate NaN of RHS or return 1 / 0 for relationals
+        // propagate NaN of RHS but canonicalize it
+        if (c->type == Type::f32) {
+          c->value = standardizeNaN(c->value.getf32());
+        } else {
+          c->value = standardizeNaN(c->value.getf64());
+        }
         return c;
       }
     }
