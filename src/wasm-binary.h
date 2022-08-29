@@ -1528,12 +1528,6 @@ public:
   // names
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
 
-  // we store memories here after being read from binary, before we know their
-  // names
-  std::vector<std::unique_ptr<Memory>> memories;
-  // we store memory imports here before wasm.addMemoryImport after we know
-  // their names
-  std::vector<Memory*> memoryImports;
   // at index i we have all references to the memory i
   std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 

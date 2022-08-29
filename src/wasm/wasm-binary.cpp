@@ -2247,11 +2247,8 @@ Name WasmBinaryBuilder::getTagName(Index index) {
 }
 
 Memory* WasmBinaryBuilder::getMemory(Index index) {
-  Index numMemoryImports = memoryImports.size();
-  if (index < numMemoryImports) {
-    return memoryImports[index];
-  } else if (index - numMemoryImports < memories.size()) {
-    return memories[index - numMemoryImports].get();
+  if (index < wasm.memories.size()) {
+    return wasm.memories[index].get();
   }
   throwError("Memory index out of range.");
 }
@@ -2347,7 +2344,6 @@ void WasmBinaryBuilder::readImports() {
                            memory->shared,
                            memory->indexType,
                            Memory::kUnlimitedSize);
-        memoryImports.push_back(memory.get());
         wasm.addMemory(std::move(memory));
         break;
       }
@@ -2984,9 +2980,6 @@ void WasmBinaryBuilder::processNames() {
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
-  for (auto& memory : memories) {
-    wasm.addMemory(std::move(memory));
-  }
   for (auto& segment : dataSegments) {
     wasm.addDataSegment(std::move(segment));
   }
@@ -3392,11 +3385,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numMemoryImports = memoryImports.size();
-        if (index < numMemoryImports) {
-          memoryImports[index]->setExplicitName(name);
-        } else if (index - numMemoryImports < memories.size()) {
-          memories[index - numMemoryImports]->setExplicitName(name);
+        if (index < wasm.memories.size()) {
+          wasm.memories[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
@@ -4379,16 +4369,10 @@ Index WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   if (hasMemIdx) {
     memIdx = getU32LEB();
   }
-  Memory* memory = nullptr;
-  auto numMemoryImports = memoryImports.size();
-  if (memIdx < numMemoryImports) {
-    memory = memoryImports[memIdx];
-  } else if (memIdx - numMemoryImports < memories.size()) {
-    memory = memories[memIdx - numMemoryImports].get();
-  }
-  if (!memory) {
+  if (memIdx >= wasm.memories.size()) {
     throwError("Memory index out of range while reading memory alignment.");
   }
+  auto* memory = wasm.memories[memIdx].get();
   offset = memory->indexType == Type::i32 ? getU32LEB() : getU64LEB();
 
   return memIdx;
