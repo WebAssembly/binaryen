@@ -174,21 +174,6 @@ def run_wasm_reduce_tests():
         # output sufficiently
         assert after < 0.85 * before, [before, after]
 
-def run_wasm_analyze_tests():
-    print '\n[ checking wasm-analyze testcases... ]\n'
-
-    for t in sorted(os.listdir(os.path.join('test', 'analyze'))):
-        if t.endswith('.wast'):
-            print '..', t
-            wast = os.path.join('test', 'analyze', t)
-            cmd = [os.path.join('bin', 'wasm-analyze'), wast]
-            actual = run_command(cmd, stderr=None)
-            out = wast.replace('.wast', '.txt')
-            with open(out) as f:
-                expected = f.read()
-                if actual != expected:
-                    fail(actual, expected)
-
 
 def run_spec_tests():
     print('\n[ checking wasm-shell spec testcases... ]\n')
@@ -370,6 +355,22 @@ def run_gtest():
     shared.with_pass_debug(run)
 
 
+def run_wasm_analyze_tests():
+    print '\n[ checking wasm-analyze testcases... ]\n'
+
+    for t in sorted(os.listdir(os.path.join('test', 'analyze'))):
+        if t.endswith('.wast'):
+            print '..', t
+            wast = os.path.join('test', 'analyze', t)
+            cmd = [os.path.join('bin', 'wasm-analyze'), wast]
+            actual = run_command(cmd, stderr=None)
+            out = wast.replace('.wast', '.txt')
+            with open(out) as f:
+                expected = f.read()
+                if actual != expected:
+                    fail(actual, expected)
+
+
 TEST_SUITES = OrderedDict([
     ('version', run_version_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
@@ -379,7 +380,6 @@ TEST_SUITES = OrderedDict([
     ('ctor-eval', run_ctor_eval_tests),
     ('wasm-metadce', run_wasm_metadce_tests),
     ('wasm-reduce', run_wasm_reduce_tests),
-    ('wasm-analyze', run_wasm_analyze_tests),
     ('spec', run_spec_tests),
     ('lld', lld.test_wasm_emscripten_finalize),
     ('wasm2js', wasm2js.test_wasm2js),
@@ -390,6 +390,7 @@ TEST_SUITES = OrderedDict([
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
     ('gtest', run_gtest),
+    ('wasm-analyze', run_wasm_analyze_tests),
 ])
 
 

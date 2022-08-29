@@ -163,6 +163,19 @@ def update_lit_tests():
                              '--binaryen-bin=' + shared.options.binaryen_bin])
 
 
+def update_wasm_analyze_tests():
+    print '\n[ checking wasm-analyze testcases... ]\n'
+
+    for t in sorted(os.listdir(os.path.join('test', 'analyze'))):
+        if t.endswith('.wast'):
+            print '..', t
+            wast = os.path.join('test', 'analyze', t)
+            cmd = [os.path.join('bin', 'wasm-analyze'), wast]
+            actual = run_command(cmd, stderr=open('/dev/null', 'w'))
+            out = wast.replace('.wast', '.txt')
+            with open(out, 'w') as o: o.write(actual)
+
+
 TEST_SUITES = OrderedDict([
     ('wasm-opt', wasm_opt.update_wasm_opt_tests),
     ('wasm-dis', update_wasm_dis_tests),
@@ -175,6 +188,7 @@ TEST_SUITES = OrderedDict([
     ('wasm2js', wasm2js.update_wasm2js_tests),
     ('binaryenjs', binaryenjs.update_binaryen_js_tests),
     ('lit', update_lit_tests),
+    ('wasm-analyze', update_wasm_analyze_tests),
 ])
 
 
