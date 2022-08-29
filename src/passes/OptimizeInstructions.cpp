@@ -3440,14 +3440,32 @@ private:
       }
     }
     {
+      // copysign(x, +C)   ==>   abs(x)
+      // copysign(x, -C)   ==>   neg(abs(x))
+      Const* c;
+      Binary* bin;
+      Expression* x;
+      if (matches(curr, binary(&bin, any(&x), fval(&c))) &&
+          (bin->op == CopySignFloat32 || bin->op == CopySignFloat64)) {
+        Builder builder(*getModule());
+        if (std::signbit(c->value.getFloat())) {
+          // copysign(x, -nan)   ==>   neg(abs(x))
+          return builder.makeUnary(getUnary(type, Neg), builder.makeUnary(getUnary(type, Abs), x));
+        } else {
+          // copysign(x, +nan)   ==>   abs(x)
+          return builder.makeUnary(getUnary(type, Abs), x);
+        }
+      }
+    }
+    {
       //   x !=  NaN   ==>   1
       //   x <=> NaN   ==>   0
       //   x op  NaN'  ==>   NaN'
       // where `x` != C and pure
-      // `op` != 'copysign'
+      // `op` != `copysign`
       Const* c;
-      Expression* x;
       Binary* bin;
+      Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
           std::isnan(c->value.getFloat()) && !x->is<Const>() &&
           bin->op != CopySignFloat32 &&

@@ -10511,6 +10511,78 @@
   ;; CHECK-NEXT:    (local.get $fy)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.neg
+  ;; CHECK-NEXT:    (f32.abs
+  ;; CHECK-NEXT:     (local.get $fx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $fy)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.neg
+  ;; CHECK-NEXT:    (f32.abs
+  ;; CHECK-NEXT:     (local.get $fx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $fy)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.neg
+  ;; CHECK-NEXT:    (f32.abs
+  ;; CHECK-NEXT:     (local.get $fx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $fy)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $rhs-is-const (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     ;; signed divs
@@ -10739,6 +10811,24 @@
         (local.get $fy)
       )
     ))
+    ;; copysign(x, -0.0)  ->  neg(abs(x))
+    (drop (f32.copysign (local.get $fx) (f32.const -0)))
+    (drop (f64.copysign (local.get $fy) (f64.const -0)))
+    ;; copysign(x, +0.0)  ->  abs(x)
+    (drop (f32.copysign (local.get $fx) (f32.const 0)))
+    (drop (f64.copysign (local.get $fy) (f64.const 0)))
+    ;; copysign(x, -inf)  ->  neg(abs(x))
+    (drop (f32.copysign (local.get $fx) (f32.const -inf)))
+    (drop (f64.copysign (local.get $fy) (f64.const -inf)))
+    ;; copysign(x, +inf)  ->  abs(x)
+    (drop (f32.copysign (local.get $fx) (f32.const inf)))
+    (drop (f64.copysign (local.get $fy) (f64.const inf)))
+    ;; copysign(x, -0.5)  ->  neg(abs(x))
+    (drop (f32.copysign (local.get $fx) (f32.const -0.5)))
+    (drop (f64.copysign (local.get $fy) (f64.const -0.5)))
+    ;; copysign(x, +0.5)  ->  abs(x)
+    (drop (f32.copysign (local.get $fx) (f32.const 0.5)))
+    (drop (f64.copysign (local.get $fy) (f64.const 0.5)))
   )
   ;; CHECK:      (func $rhs-is-const-nan (param $x f32) (param $y f64)
   ;; CHECK-NEXT:  (drop
@@ -10796,21 +10886,20 @@
   ;; CHECK-NEXT:   (f64.const -nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:   (f32.abs
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f32.const nan:0x400000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:   (f32.abs
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f32.const nan:0x200000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.copysign
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
