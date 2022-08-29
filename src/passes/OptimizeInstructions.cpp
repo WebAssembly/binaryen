@@ -3439,6 +3439,37 @@ private:
         return left;
       }
     }
+    {
+      //   x !=  NaN   ==>   1
+      //   x <=> NaN   ==>   0
+      //   x op  NaN'  ==>   NaN'
+      // where `x` != C and pure
+      // `op` != 'copysign'
+      Const* c;
+      Expression* x;
+      Binary* bin;
+      if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
+          std::isnan(c->value.getFloat()) && !x->is<Const>() &&
+          bin->op != CopySignFloat32 &&
+          bin->op != CopySignFloat64) {
+        if (bin->isRelational()) {
+          // reuse "c" (nan) constant
+          c->type = Type::i32;
+          if (bin->op == getBinary(x->type, Ne)) {
+            // x != NaN  ==>  1
+            c->value = Literal::makeOne(Type::i32);
+          } else {
+            // x == NaN,
+            // x >  NaN,
+            // x <= NaN
+            // x .. NaN  ==>  0
+            c->value = Literal::makeZero(Type::i32);
+          }
+        }
+        // propagate NaN of RHS or return 1 / 0 for relationals
+        return c;
+      }
+    }
     return nullptr;
   }
 
