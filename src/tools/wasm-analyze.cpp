@@ -584,14 +584,15 @@ int main(int argc, const char* argv[]) {
                          [&](Options* o, const std::string& argument) {
                            filenames.push_back(argument);
                          });
-  options.add("--show-already-optimizable",
-         "-sao",
-         "Show rules the optimizer already handles (used in internal testing).",
-         WasmAnalyzeOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) {
-           showAlreadyOptimizable = true;
-         });
+  options.add(
+    "--show-already-optimizable",
+    "-sao",
+    "Show rules the optimizer already handles (used in internal testing).",
+    WasmAnalyzeOption,
+    Options::Arguments::Zero,
+    [&](Options* o, const std::string& argument) {
+      showAlreadyOptimizable = true;
+    });
   options.parse(argc, argv);
 
   Index totalExpressions = 0;
