@@ -1,0 +1,9 @@
+(module
+ (type $0 (func))
+ (import "env" "table" (table $timport$0 1 1 funcref))
+ (memory $0 0)
+ (elem (i32.const 0) $foo)
+ (func $foo
+  (nop)
+ )
+)

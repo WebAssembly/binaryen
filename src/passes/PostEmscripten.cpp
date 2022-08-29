@@ -19,79 +19,308 @@
 // emscripten output.
 //
 
-#include <wasm.h>
+#include <asmjs/shared-constants.h>
+#include <ir/import-utils.h>
+#include <ir/localize.h>
+#include <ir/memory-utils.h>
+#include <ir/module-utils.h>
+#include <ir/table-utils.h>
 #include <pass.h>
+#include <shared-constants.h>
+#include <wasm-builder.h>
+#include <wasm-emscripten.h>
+#include <wasm.h>
+
+#define DEBUG_TYPE "post-emscripten"
 
 namespace wasm {
 
-struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten, Visitor<PostEmscripten>>> {
+namespace {
+
+static bool isInvoke(Function* F) {
+  return F->imported() && F->module == ENV && F->base.startsWith("invoke_");
+}
+
+struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
+  SegmentRemover(Index segment) : segment(segment) {}
+
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new PostEmscripten; }
+  Pass* create() override { return new SegmentRemover(segment); }
 
-  // When we have a Load from a local value (typically a GetLocal) plus a constant offset,
-  // we may be able to fold it in.
-  // The semantics of the Add are to wrap, while wasm offset semantics purposefully do
-  // not wrap. So this is not always safe to do. For example, a load may depend on
-  // wrapping via
-  //      (2^32 - 10) + 100   =>  wrap and load from address 90
-  // Without wrapping, we get something too large, and an error. *However*, for
-  // asm2wasm output coming from Emscripten, we allocate the lowest 1024 for mapped
-  // globals. Mapped globals are simple types (i32, float or double), always
-  // accessed directly by a single constant. Therefore if we see (..) + K where
-  // K is less then 1024, then if it wraps, it wraps into [0, 1024) which is at best
-  // a mapped global, but it can't be because they are accessed directly (at worst,
-  // it's 0 or an unused section of memory that was reserved for mapped globlas).
-  // Thus it is ok to optimize such small constants into Load offsets.
-
-  #define SAFE_MAX 1024
-
-  void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
-    while (1) {
-      auto* add = ptr->dynCast<Binary>();
-      if (!add) break;
-      if (add->op != AddInt32) break;
-      auto* left = add->left->dynCast<Const>();
-      auto* right = add->right->dynCast<Const>();
-      // note: in optimized code, we shouldn't see an add of two constants, so don't worry about that much
-      // (precompute would optimize that)
-      if (left) {
-        auto value = left->value.geti32();
-        if (value >= 0 && value < SAFE_MAX) {
-          offset = offset + value;
-          ptr = add->right;
-          continue;
-        }
-      }
-      if (right) {
-        auto value = right->value.geti32();
-        if (value >= 0 && value < SAFE_MAX) {
-          offset = offset + value;
-          ptr = add->left;
-          continue;
-        }
-      }
-      break;
-    }
-    // finally ptr may be a const, but it isn't worth folding that in (we still have a const); in fact,
-    // it's better to do the opposite for gzip purposes as well as for readability.
-    auto* last = ptr->dynCast<Const>();
-    if (last) {
-      last->value = Literal(int32_t(last->value.geti32() + offset));
-      offset = 0;
+  void visitMemoryInit(MemoryInit* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
+                                      builder.makeDrop(curr->offset),
+                                      builder.makeDrop(curr->size)));
     }
   }
 
-  void visitLoad(Load* curr) {
-    optimizeMemoryAccess(curr->ptr, curr->offset);
+  void visitDataDrop(DataDrop* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeNop());
+    }
   }
-  void visitStore(Store* curr) {
-    optimizeMemoryAccess(curr->ptr, curr->offset);
+
+  Index segment;
+};
+
+static void calcSegmentOffsets(Module& wasm,
+                               std::vector<Address>& segmentOffsets) {
+  const Address UNKNOWN_OFFSET(uint32_t(-1));
+
+  std::unordered_map<Index, Address> passiveOffsets;
+  if (wasm.features.hasBulkMemory()) {
+    // Fetch passive segment offsets out of memory.init instructions
+    struct OffsetSearcher : PostWalker<OffsetSearcher> {
+      std::unordered_map<Index, Address>& offsets;
+      OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
+        : offsets(offsets) {}
+      void visitMemoryInit(MemoryInit* curr) {
+        // The desitination of the memory.init is either a constant
+        // or the result of an addition with __memory_base in the
+        // case of PIC code.
+        auto* dest = curr->dest->dynCast<Const>();
+        if (!dest) {
+          auto* add = curr->dest->dynCast<Binary>();
+          if (!add) {
+            return;
+          }
+          dest = add->left->dynCast<Const>();
+          if (!dest) {
+            return;
+          }
+        }
+        auto it = offsets.find(curr->segment);
+        if (it != offsets.end()) {
+          Fatal() << "Cannot get offset of passive segment initialized "
+                     "multiple times";
+        }
+        offsets[curr->segment] = dest->value.getInteger();
+      }
+    } searcher(passiveOffsets);
+    searcher.walkModule(&wasm);
+  }
+  for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
+    auto& segment = wasm.dataSegments[i];
+    if (segment->isPassive) {
+      auto it = passiveOffsets.find(i);
+      if (it != passiveOffsets.end()) {
+        segmentOffsets.push_back(it->second);
+      } else {
+        // This was a non-constant offset (perhaps TLS)
+        segmentOffsets.push_back(UNKNOWN_OFFSET);
+      }
+    } else if (auto* addrConst = segment->offset->dynCast<Const>()) {
+      auto address = addrConst->value.getUnsigned();
+      segmentOffsets.push_back(address);
+    } else {
+      // TODO(sbc): Wasm shared libraries have data segments with non-const
+      // offset.
+      segmentOffsets.push_back(0);
+    }
+  }
+}
+
+static void removeSegment(Module& wasm, Index segment) {
+  PassRunner runner(&wasm);
+  SegmentRemover(segment).run(&runner, &wasm);
+  // Resize the segment to zero.  In theory we should completely remove it
+  // but that would mean re-numbering the segments that follow which is
+  // non-trivial.
+  wasm.dataSegments[segment]->data.resize(0);
+}
+
+static Address getExportedAddress(Module& wasm, Export* export_) {
+  Global* g = wasm.getGlobal(export_->value);
+  auto* addrConst = g->init->dynCast<Const>();
+  return addrConst->value.getUnsigned();
+}
+
+static void removeData(Module& wasm,
+                       const std::vector<Address>& segmentOffsets,
+                       Name start_sym,
+                       Name end_sym) {
+  Export* start = wasm.getExportOrNull(start_sym);
+  Export* end = wasm.getExportOrNull(end_sym);
+  if (!start && !end) {
+    BYN_TRACE("removeData: start/stop symbols not found (" << start_sym << ", "
+                                                           << end_sym << ")\n");
+    return;
+  }
+
+  if (!start || !end) {
+    Fatal() << "Found only one of " << start_sym << " and " << end_sym;
+  }
+
+  Address startAddress = getExportedAddress(wasm, start);
+  Address endAddress = getExportedAddress(wasm, end);
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    Address segmentStart = segmentOffsets[i];
+    size_t segmentSize = wasm.dataSegments[i]->data.size();
+    if (segmentStart <= startAddress &&
+        segmentStart + segmentSize >= endAddress) {
+
+      if (segmentStart == startAddress &&
+          segmentStart + segmentSize == endAddress) {
+        BYN_TRACE("removeData: removing whole segment\n");
+        removeSegment(wasm, i);
+      } else {
+        // If we can't remove the whole segment then just set the string
+        // data to zero.
+        BYN_TRACE("removeData: removing part of segment\n");
+        size_t segmentOffset = startAddress - segmentStart;
+        char* startElem = &wasm.dataSegments[i]->data[segmentOffset];
+        memset(startElem, 0, endAddress - startAddress);
+      }
+      return;
+    }
+  }
+  Fatal() << "Segment data not found between symbols " << start_sym << " ("
+          << startAddress << ") and " << end_sym << " (" << endAddress << ")";
+}
+
+cashew::IString EM_JS_PREFIX("__em_js__");
+
+struct EmJsWalker : public PostWalker<EmJsWalker> {
+  std::vector<Export> toRemove;
+
+  void visitExport(Export* curr) {
+    if (curr->name.startsWith(EM_JS_PREFIX.str)) {
+      toRemove.push_back(*curr);
+    }
   }
 };
 
-Pass *createPostEmscriptenPass() {
-  return new PostEmscripten();
-}
+} // namespace
+
+struct PostEmscripten : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    removeExports(runner, *module);
+    removeEmJsExports(runner, *module);
+    // Optimize exceptions
+    optimizeExceptions(runner, module);
+  }
+
+  void removeExports(PassRunner* runner, Module& module) {
+    std::vector<Address> segmentOffsets; // segment index => address offset
+    calcSegmentOffsets(module, segmentOffsets);
+
+    removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
+    removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
+    module.removeExport("__start_em_asm");
+    module.removeExport("__stop_em_asm");
+    module.removeExport("__start_em_js");
+    module.removeExport("__stop_em_js");
+  }
+
+  void removeEmJsExports(PassRunner* runner, Module& module) {
+    EmJsWalker walker;
+    walker.walkModule(&module);
+    for (const Export& exp : walker.toRemove) {
+      if (exp.kind == ExternalKind::Function) {
+        module.removeFunction(exp.value);
+      } else {
+        module.removeGlobal(exp.value);
+      }
+      module.removeExport(exp.name);
+    }
+  }
+
+  // Optimize exceptions (and setjmp) by removing unnecessary invoke* calls.
+  // An invoke is a call to JS with a function pointer; JS does a try-catch
+  // and calls the pointer, catching and reporting any error. If we know no
+  // exception will be thrown, we can simply skip the invoke.
+  void optimizeExceptions(PassRunner* runner, Module* module) {
+    // First, check if this code even uses invokes.
+    bool hasInvokes = false;
+    for (auto& imp : module->functions) {
+      if (isInvoke(imp.get())) {
+        hasInvokes = true;
+      }
+    }
+    if (!hasInvokes || module->tables.empty()) {
+      return;
+    }
+    // Next, see if the Table is flat, which we need in order to see where
+    // invokes go statically. (In dynamic linking, the table is not flat,
+    // and we can't do this.)
+    TableUtils::FlatTable flatTable(*module, *module->tables[0]);
+    if (!flatTable.valid) {
+      return;
+    }
+    // This code has exceptions. Find functions that definitely cannot throw,
+    // and remove invokes to them.
+    struct Info
+      : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
+      bool canThrow = false;
+    };
+    ModuleUtils::CallGraphPropertyAnalysis<Info> analyzer(
+      *module, [&](Function* func, Info& info) {
+        if (func->imported()) {
+          // Assume any import can throw. We may want to reduce this to just
+          // longjmp/cxa_throw/etc.
+          info.canThrow = true;
+        }
+      });
+
+    // Assume a non-direct call might throw.
+    analyzer.propagateBack(
+      [](const Info& info) { return info.canThrow; },
+      [](const Info& info) { return true; },
+      [](Info& info, Function* reason) { info.canThrow = true; },
+      analyzer.NonDirectCallsHaveProperty);
+
+    // Apply the information.
+    struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
+      bool isFunctionParallel() override { return true; }
+
+      Pass* create() override { return new OptimizeInvokes(map, flatTable); }
+
+      std::map<Function*, Info>& map;
+      TableUtils::FlatTable& flatTable;
+
+      OptimizeInvokes(std::map<Function*, Info>& map,
+                      TableUtils::FlatTable& flatTable)
+        : map(map), flatTable(flatTable) {}
+
+      void visitCall(Call* curr) {
+        auto* target = getModule()->getFunction(curr->target);
+        if (!isInvoke(target)) {
+          return;
+        }
+        // The first operand is the function pointer index, which must be
+        // constant if we are to optimize it statically.
+        if (auto* index = curr->operands[0]->dynCast<Const>()) {
+          size_t indexValue = index->value.geti32();
+          if (indexValue >= flatTable.names.size()) {
+            // UB can lead to indirect calls to invalid pointers.
+            return;
+          }
+          auto actualTarget = flatTable.names[indexValue];
+          if (actualTarget.isNull()) {
+            // UB can lead to an indirect call of 0 or an index in which there
+            // is no function name.
+            return;
+          }
+          if (map[getModule()->getFunction(actualTarget)].canThrow) {
+            return;
+          }
+          // This invoke cannot throw! Make it a direct call.
+          curr->target = actualTarget;
+          for (Index i = 0; i < curr->operands.size() - 1; i++) {
+            curr->operands[i] = curr->operands[i + 1];
+          }
+          curr->operands.resize(curr->operands.size() - 1);
+        }
+      }
+    };
+    OptimizeInvokes(analyzer.map, flatTable).run(runner, module);
+  }
+};
+
+Pass* createPostEmscriptenPass() { return new PostEmscripten(); }
 
 } // namespace wasm

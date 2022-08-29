@@ -23,19 +23,21 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
 
+#include "compiler-support.h"
+
 namespace wasm {
 
 // The work state of a helper thread - is there more to do,
 // or are we finished for now.
-enum class ThreadWorkState {
-  More,
-  Finished
-};
+enum class ThreadWorkState { More, Finished };
+
+class ThreadPool;
 
 //
 // A helper thread.
@@ -44,22 +46,23 @@ enum class ThreadWorkState {
 //
 
 class Thread {
+  ThreadPool* parent;
   std::unique_ptr<std::thread> thread;
   std::mutex mutex;
   std::condition_variable condition;
   bool done = false;
-  std::function<ThreadWorkState ()> doWork = nullptr;
+  std::function<ThreadWorkState()> doWork = nullptr;
 
 public:
-  Thread();
+  Thread(ThreadPool* parent);
   ~Thread();
 
   // Start to do work, calling doWork() until
   // it returns false.
-  void work(std::function<ThreadWorkState ()> doWork);
+  void work(std::function<ThreadWorkState()> doWork);
 
 private:
-  static void mainLoop(void *self);
+  static void mainLoop(void* self);
 };
 
 //
@@ -71,9 +74,16 @@ private:
 class ThreadPool {
   std::vector<std::unique_ptr<Thread>> threads;
   bool running = false;
-  std::mutex mutex;
   std::condition_variable condition;
   std::atomic<size_t> ready;
+
+  // A mutex for creating the pool safely
+  static std::mutex creationMutex;
+  // A mutex for work() so that the pool can only work on one
+  // thing at a time
+  static std::mutex workMutex;
+  // A mutex for communication with the worker threads
+  static std::mutex threadMutex;
 
 private:
   void initialize(size_t num);
@@ -82,19 +92,18 @@ public:
   // Get the number of cores we can use.
   static size_t getNumCores();
 
-  // Get the singleton threadpool. This can return null
-  // if there is just one thread available.
+  // Get the singleton threadpool.
   static ThreadPool* get();
 
   // Execute a bunch of tasks by the pool. This calls
   // getTask() (in a thread-safe manner) to get tasks, and
   // sends them to workers to be executed. This method
   // blocks until all tasks are complete.
-  void work(std::vector<std::function<ThreadWorkState ()>>& doWorkers);
+  void work(std::vector<std::function<ThreadWorkState()>>& doWorkers);
 
   size_t size();
 
-  static bool isRunning();
+  bool isRunning();
 
   // Called by helper threads when they are free and ready.
   void notifyThreadIsReady();
@@ -113,16 +122,15 @@ class OnlyOnce {
   std::atomic<int> created;
 
 public:
-  OnlyOnce() {
-    created.store(0);
-  }
+  OnlyOnce() { created.store(0); }
 
   void verify() {
     auto before = created.fetch_add(1);
+    WASM_UNUSED(before);
     assert(before == 0);
   }
 };
 
 } // namespace wasm
 
-#endif  // wasm_support_threads_h
+#endif // wasm_support_threads_h

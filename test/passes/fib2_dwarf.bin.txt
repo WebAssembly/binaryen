@@ -1,0 +1,722 @@
+DWARF debug info
+================
+
+Contains section .debug_info (168 bytes)
+Contains section .debug_loc (143 bytes)
+Contains section .debug_ranges (24 bytes)
+Contains section .debug_abbrev (131 bytes)
+Contains section .debug_line (106 bytes)
+Contains section .debug_str (180 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_ranges	DW_FORM_sec_offset
+
+[2] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_prototyped	DW_FORM_flag_present
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[3] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[4] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_location	DW_FORM_sec_offset
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[5] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[6] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[7] DW_TAG_GNU_call_site	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+
+[8] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x000000a4 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x000000a8)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 11.0.0 (https://github.com/llvm/llvm-project.git 313d89724ce3ccf66c1c51849903e1e6d184dd85)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000069] = "fib2.c")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x00000070] = "/usr/local/google/home/azakai/Dev/2-binaryen")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+              DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
+                 [0x00000005, 0x0000003d)
+                 [0x0000003e, 0x00000048))
+
+0x00000026:   DW_TAG_subprogram [2] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000038)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000009d] = "fib")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_prototyped [DW_FORM_flag_present]	(true)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000003e:     DW_TAG_formal_parameter [3]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000aa] = "n")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(1)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000049:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
+                     [0xffffffff,  0x00000005): 
+                     [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
+                     [0x0000001e,  0x00000033): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ac] = "a")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000058:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x0000002b: 
+                     [0xffffffff,  0x00000005): 
+                     [0x00000007,  0x00000010): DW_OP_consts +1, DW_OP_stack_value
+                     [0x0000001e,  0x00000023): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+                     [0x00000023,  0x00000033): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ae] = "b")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000067:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000064: 
+                     [0xffffffff,  0x00000005): 
+                     [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
+                     [0x0000002e,  0x00000033): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b0] = "i")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000076:     DW_TAG_variable [5]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b2] = "t")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000081:     NULL
+
+0x00000082:   DW_TAG_subprogram [6] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x000000000000003e)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000000a)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a5] = "main")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                DW_AT_decl_line [DW_FORM_data1]	(11)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000009a:     DW_TAG_GNU_call_site [7]  
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000047)
+
+0x0000009f:     NULL
+
+0x000000a0:   DW_TAG_base_type [8]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a1] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x000000a7:   NULL
+
+.debug_loc contents:
+0x00000000: 
+            [0xffffffff,  0x00000005): 
+            [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
+            [0x0000001e,  0x00000033): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+
+0x0000002b: 
+            [0xffffffff,  0x00000005): 
+            [0x00000007,  0x00000010): DW_OP_consts +1, DW_OP_stack_value
+            [0x0000001e,  0x00000023): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+            [0x00000023,  0x00000033): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+
+0x00000064: 
+            [0xffffffff,  0x00000005): 
+            [0x00000007,  0x00000010): DW_OP_consts +0, DW_OP_stack_value
+            [0x0000002e,  0x00000033): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x00000066
+         version: 4
+ prologue_length: 0x0000001e
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "fib2.c"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000028: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000002f: 01 DW_LNS_copy
+            0x0000000000000005      1      0      1   0             0  is_stmt
+
+
+0x00000030: 05 DW_LNS_set_column (17)
+0x00000032: 0a DW_LNS_set_prologue_end
+0x00000033: 92 address += 9,  line += 2
+            0x000000000000000e      3     17      1   0             0  is_stmt prologue_end
+
+0x00000034: 05 DW_LNS_set_column (3)
+0x00000036: 06 DW_LNS_negate_stmt
+0x00000037: 58 address += 5,  line += 0
+            0x0000000000000013      3      3      1   0             0 
+
+0x00000038: 2b address += 2,  line += -3
+            0x0000000000000015      0      3      1   0             0 
+
+0x00000039: 05 DW_LNS_set_column (7)
+0x0000003b: 06 DW_LNS_negate_stmt
+0x0000003c: c0 address += 12,  line += 6
+            0x0000000000000021      6      7      1   0             0  is_stmt
+
+0x0000003d: 06 DW_LNS_negate_stmt
+0x0000003e: 03 DW_LNS_advance_line (0)
+0x00000040: 74 address += 7,  line += 0
+            0x0000000000000028      0      7      1   0             0 
+
+0x00000041: 05 DW_LNS_set_column (23)
+0x00000043: 06 DW_LNS_negate_stmt
+0x00000044: 4d address += 4,  line += 3
+            0x000000000000002c      3     23      1   0             0  is_stmt
+
+0x00000045: 05 DW_LNS_set_column (17)
+0x00000047: 06 DW_LNS_negate_stmt
+0x00000048: 58 address += 5,  line += 0
+            0x0000000000000031      3     17      1   0             0 
+
+0x00000049: 05 DW_LNS_set_column (3)
+0x0000004b: 58 address += 5,  line += 0
+            0x0000000000000036      3      3      1   0             0 
+
+0x0000004c: 06 DW_LNS_negate_stmt
+0x0000004d: 4f address += 4,  line += 5
+            0x000000000000003a      8      3      1   0             0  is_stmt
+
+0x0000004e: 02 DW_LNS_advance_pc (3)
+0x00000050: 00 DW_LNE_end_sequence
+            0x000000000000003d      8      3      1   0             0  is_stmt end_sequence
+
+0x00000053: 00 DW_LNE_set_address (0x000000000000003e)
+0x0000005a: 03 DW_LNS_advance_line (11)
+0x0000005c: 01 DW_LNS_copy
+            0x000000000000003e     11      0      1   0             0  is_stmt
+
+
+0x0000005d: 05 DW_LNS_set_column (10)
+0x0000005f: 0a DW_LNS_set_prologue_end
+0x00000060: 3d address += 3,  line += 1
+            0x0000000000000041     12     10      1   0             0  is_stmt prologue_end
+
+0x00000061: 05 DW_LNS_set_column (3)
+0x00000063: 06 DW_LNS_negate_stmt
+0x00000064: 66 address += 6,  line += 0
+            0x0000000000000047     12      3      1   0             0 
+
+0x00000065: 02 DW_LNS_advance_pc (1)
+0x00000067: 00 DW_LNE_end_sequence
+            0x0000000000000048     12      3      1   0             0  end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 11.0.0 (https://github.com/llvm/llvm-project.git 313d89724ce3ccf66c1c51849903e1e6d184dd85)"
+0x00000069: "fib2.c"
+0x00000070: "/usr/local/google/home/azakai/Dev/2-binaryen"
+0x0000009d: "fib"
+0x000000a1: "int"
+0x000000a5: "main"
+0x000000aa: "n"
+0x000000ac: "a"
+0x000000ae: "b"
+0x000000b0: "i"
+0x000000b2: "t"
+
+.debug_ranges contents:
+00000000 00000005 0000003d
+00000000 0000003e 00000048
+00000000 <End of list>
+DWARF debug info
+================
+
+Contains section .debug_info (168 bytes)
+Contains section .debug_loc (143 bytes)
+Contains section .debug_ranges (24 bytes)
+Contains section .debug_abbrev (131 bytes)
+Contains section .debug_line (183 bytes)
+Contains section .debug_str (180 bytes)
+
+.debug_abbrev contents:
+Abbrev table for offset: 0x00000000
+[1] DW_TAG_compile_unit	DW_CHILDREN_yes
+	DW_AT_producer	DW_FORM_strp
+	DW_AT_language	DW_FORM_data2
+	DW_AT_name	DW_FORM_strp
+	DW_AT_stmt_list	DW_FORM_sec_offset
+	DW_AT_comp_dir	DW_FORM_strp
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_ranges	DW_FORM_sec_offset
+
+[2] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_prototyped	DW_FORM_flag_present
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[3] DW_TAG_formal_parameter	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[4] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_location	DW_FORM_sec_offset
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[5] DW_TAG_variable	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+
+[6] DW_TAG_subprogram	DW_CHILDREN_yes
+	DW_AT_low_pc	DW_FORM_addr
+	DW_AT_high_pc	DW_FORM_data4
+	DW_AT_frame_base	DW_FORM_exprloc
+	DW_AT_GNU_all_call_sites	DW_FORM_flag_present
+	DW_AT_name	DW_FORM_strp
+	DW_AT_decl_file	DW_FORM_data1
+	DW_AT_decl_line	DW_FORM_data1
+	DW_AT_type	DW_FORM_ref4
+	DW_AT_external	DW_FORM_flag_present
+
+[7] DW_TAG_GNU_call_site	DW_CHILDREN_no
+	DW_AT_low_pc	DW_FORM_addr
+
+[8] DW_TAG_base_type	DW_CHILDREN_no
+	DW_AT_name	DW_FORM_strp
+	DW_AT_encoding	DW_FORM_data1
+	DW_AT_byte_size	DW_FORM_data1
+
+
+.debug_info contents:
+0x00000000: Compile Unit: length = 0x000000a4 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x000000a8)
+
+0x0000000b: DW_TAG_compile_unit [1] *
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 11.0.0 (https://github.com/llvm/llvm-project.git 313d89724ce3ccf66c1c51849903e1e6d184dd85)")
+              DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000069] = "fib2.c")
+              DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x00000070] = "/usr/local/google/home/azakai/Dev/2-binaryen")
+              DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+              DW_AT_ranges [DW_FORM_sec_offset]	(0x00000000
+                 [0x00000005, 0x00000043)
+                 [0x00000044, 0x0000004a))
+
+0x00000026:   DW_TAG_subprogram [2] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
+                DW_AT_high_pc [DW_FORM_data4]	(0x0000003e)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000009d] = "fib")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                DW_AT_decl_line [DW_FORM_data1]	(1)
+                DW_AT_prototyped [DW_FORM_flag_present]	(true)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000003e:     DW_TAG_formal_parameter [3]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000aa] = "n")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(1)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000049:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000000: 
+                     [0xffffffff,  0x00000012): 
+                     [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+                     [0x00000017,  0x0000002c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ac] = "a")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000058:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x0000002b: 
+                     [0xffffffff,  0x00000012): 
+                     [0x00000000,  0x00000009): DW_OP_consts +1, DW_OP_stack_value
+                     [0x00000017,  0x0000001c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+                     [0x0000001c,  0x0000002c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000ae] = "b")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000067:     DW_TAG_variable [4]  
+                  DW_AT_location [DW_FORM_sec_offset]	(0x00000064: 
+                     [0xffffffff,  0x00000012): 
+                     [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+                     [0x00000027,  0x0000002c): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value)
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b0] = "i")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000076:     DW_TAG_variable [5]  
+                  DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b2] = "t")
+                  DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                  DW_AT_decl_line [DW_FORM_data1]	(2)
+                  DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+
+0x00000081:     NULL
+
+0x00000082:   DW_TAG_subprogram [6] *
+                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000044)
+                DW_AT_high_pc [DW_FORM_data4]	(0x00000006)
+                DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x1 +0, DW_OP_stack_value)
+                DW_AT_GNU_all_call_sites [DW_FORM_flag_present]	(true)
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a5] = "main")
+                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/azakai/Dev/2-binaryen/fib2.c")
+                DW_AT_decl_line [DW_FORM_data1]	(11)
+                DW_AT_type [DW_FORM_ref4]	(cu + 0x00a0 => {0x000000a0} "int")
+                DW_AT_external [DW_FORM_flag_present]	(true)
+
+0x0000009a:     DW_TAG_GNU_call_site [7]  
+                  DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+
+0x0000009f:     NULL
+
+0x000000a0:   DW_TAG_base_type [8]  
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000a1] = "int")
+                DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+                DW_AT_byte_size [DW_FORM_data1]	(0x04)
+
+0x000000a7:   NULL
+
+.debug_loc contents:
+0x00000000: 
+            [0xffffffff,  0x00000012): 
+            [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+            [0x00000017,  0x0000002c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+
+0x0000002b: 
+            [0xffffffff,  0x00000012): 
+            [0x00000000,  0x00000009): DW_OP_consts +1, DW_OP_stack_value
+            [0x00000017,  0x0000001c): DW_OP_WASM_location 0x0 +4, DW_OP_stack_value
+            [0x0000001c,  0x0000002c): DW_OP_WASM_location 0x0 +1, DW_OP_stack_value
+
+0x00000064: 
+            [0xffffffff,  0x00000012): 
+            [0x00000000,  0x00000009): DW_OP_consts +0, DW_OP_stack_value
+            [0x00000027,  0x0000002c): DW_OP_WASM_location 0x0 +3, DW_OP_stack_value
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x000000b3
+         version: 4
+ prologue_length: 0x0000001e
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+file_names[  1]:
+           name: "fib2.c"
+      dir_index: 0
+       mod_time: 0x00000000
+         length: 0x00000000
+0x00000028: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000002f: 01 DW_LNS_copy
+            0x0000000000000005      1      0      1   0             0  is_stmt
+
+
+0x00000030: 00 DW_LNE_set_address (0x0000000000000014)
+0x00000037: 03 DW_LNS_advance_line (3)
+0x00000039: 05 DW_LNS_set_column (17)
+0x0000003b: 0a DW_LNS_set_prologue_end
+0x0000003c: 01 DW_LNS_copy
+            0x0000000000000014      3     17      1   0             0  is_stmt prologue_end
+
+
+0x0000003d: 00 DW_LNE_set_address (0x0000000000000019)
+0x00000044: 05 DW_LNS_set_column (3)
+0x00000046: 06 DW_LNS_negate_stmt
+0x00000047: 01 DW_LNS_copy
+            0x0000000000000019      3      3      1   0             0 
+
+
+0x00000048: 00 DW_LNE_set_address (0x0000000000000027)
+0x0000004f: 03 DW_LNS_advance_line (6)
+0x00000051: 05 DW_LNS_set_column (7)
+0x00000053: 06 DW_LNS_negate_stmt
+0x00000054: 01 DW_LNS_copy
+            0x0000000000000027      6      7      1   0             0  is_stmt
+
+
+0x00000055: 00 DW_LNE_set_address (0x0000000000000032)
+0x0000005c: 03 DW_LNS_advance_line (3)
+0x0000005e: 05 DW_LNS_set_column (23)
+0x00000060: 01 DW_LNS_copy
+            0x0000000000000032      3     23      1   0             0  is_stmt
+
+
+0x00000061: 00 DW_LNE_set_address (0x0000000000000037)
+0x00000068: 05 DW_LNS_set_column (17)
+0x0000006a: 06 DW_LNS_negate_stmt
+0x0000006b: 01 DW_LNS_copy
+            0x0000000000000037      3     17      1   0             0 
+
+
+0x0000006c: 00 DW_LNE_set_address (0x000000000000003c)
+0x00000073: 05 DW_LNS_set_column (3)
+0x00000075: 01 DW_LNS_copy
+            0x000000000000003c      3      3      1   0             0 
+
+
+0x00000076: 00 DW_LNE_set_address (0x0000000000000040)
+0x0000007d: 03 DW_LNS_advance_line (8)
+0x0000007f: 06 DW_LNS_negate_stmt
+0x00000080: 01 DW_LNS_copy
+            0x0000000000000040      8      3      1   0             0  is_stmt
+
+
+0x00000081: 00 DW_LNE_set_address (0x0000000000000043)
+0x00000088: 00 DW_LNE_end_sequence
+            0x0000000000000043      8      3      1   0             0  is_stmt end_sequence
+
+0x0000008b: 00 DW_LNE_set_address (0x0000000000000044)
+0x00000092: 03 DW_LNS_advance_line (11)
+0x00000094: 01 DW_LNS_copy
+            0x0000000000000044     11      0      1   0             0  is_stmt
+
+
+0x00000095: 00 DW_LNE_set_address (0x0000000000000047)
+0x0000009c: 03 DW_LNS_advance_line (12)
+0x0000009e: 05 DW_LNS_set_column (10)
+0x000000a0: 0a DW_LNS_set_prologue_end
+0x000000a1: 01 DW_LNS_copy
+            0x0000000000000047     12     10      1   0             0  is_stmt prologue_end
+
+
+0x000000a2: 00 DW_LNE_set_address (0x0000000000000049)
+0x000000a9: 05 DW_LNS_set_column (3)
+0x000000ab: 06 DW_LNS_negate_stmt
+0x000000ac: 01 DW_LNS_copy
+            0x0000000000000049     12      3      1   0             0 
+
+
+0x000000ad: 00 DW_LNE_set_address (0x000000000000004a)
+0x000000b4: 00 DW_LNE_end_sequence
+            0x000000000000004a     12      3      1   0             0  end_sequence
+
+
+.debug_str contents:
+0x00000000: "clang version 11.0.0 (https://github.com/llvm/llvm-project.git 313d89724ce3ccf66c1c51849903e1e6d184dd85)"
+0x00000069: "fib2.c"
+0x00000070: "/usr/local/google/home/azakai/Dev/2-binaryen"
+0x0000009d: "fib"
+0x000000a1: "int"
+0x000000a5: "main"
+0x000000aa: "n"
+0x000000ac: "a"
+0x000000ae: "b"
+0x000000b0: "i"
+0x000000b2: "t"
+
+.debug_ranges contents:
+00000000 00000005 00000043
+00000000 00000044 0000004a
+00000000 <End of list>
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (import "env" "memory" (memory $mimport$0 256 256))
+ (import "env" "__indirect_function_table" (table $timport$0 1 funcref))
+ (global $global$0 (mut i32) (i32.const 5243904))
+ (global $global$1 i32 (i32.const 1024))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
+ (export "__data_end" (global $global$1))
+ (func $__wasm_call_ctors
+ )
+ (func $fib (param $0 i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  ;; code offset: 0x10
+  (local.set $1
+   ;; code offset: 0xe
+   (i32.const 1)
+  )
+  ;; code offset: 0x12
+  (block $label$1
+   ;; code offset: 0x19
+   (br_if $label$1
+    ;; code offset: 0x18
+    (i32.lt_s
+     ;; code offset: 0x14
+     (local.get $0)
+     ;; code offset: 0x16
+     (i32.const 1)
+    )
+   )
+   ;; code offset: 0x1d
+   (local.set $2
+    ;; code offset: 0x1b
+    (i32.const 0)
+   )
+   ;; code offset: 0x21
+   (local.set $3
+    ;; code offset: 0x1f
+    (i32.const 0)
+   )
+   ;; code offset: 0x23
+   (loop $label$2
+    ;; code offset: 0x2c
+    (local.set $1
+     ;; code offset: 0x2b
+     (i32.add
+      ;; code offset: 0x27
+      (local.tee $4
+       ;; code offset: 0x25
+       (local.get $1)
+      )
+      ;; code offset: 0x29
+      (local.get $2)
+     )
+    )
+    ;; code offset: 0x30
+    (local.set $2
+     ;; code offset: 0x2e
+     (local.get $4)
+    )
+    ;; code offset: 0x3c
+    (br_if $label$2
+     ;; code offset: 0x3b
+     (i32.ne
+      ;; code offset: 0x37
+      (local.tee $3
+       ;; code offset: 0x36
+       (i32.add
+        ;; code offset: 0x32
+        (local.get $3)
+        ;; code offset: 0x34
+        (i32.const 1)
+       )
+      )
+      ;; code offset: 0x39
+      (local.get $0)
+     )
+    )
+   )
+  )
+  ;; code offset: 0x40
+  (local.get $1)
+ )
+ (func $__original_main (result i32)
+  ;; code offset: 0x47
+  (call $fib
+   ;; code offset: 0x45
+   (i32.const 6)
+  )
+ )
+ (func $main (param $0 i32) (param $1 i32) (result i32)
+  ;; code offset: 0x4c
+  (call $__original_main)
+ )
+ ;; custom section ".debug_info", size 168
+ ;; custom section ".debug_loc", size 143
+ ;; custom section ".debug_ranges", size 24
+ ;; custom section ".debug_abbrev", size 131
+ ;; custom section ".debug_line", size 183
+ ;; custom section ".debug_str", size 180
+ ;; custom section "producers", size 127
+)

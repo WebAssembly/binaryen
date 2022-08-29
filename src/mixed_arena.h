@@ -19,11 +19,13 @@
 
 #include <atomic>
 #include <cassert>
-#include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <type_traits>
 #include <vector>
+
+#include <support/alloc.h>
 
 //
 // Arena allocation for mixed-type data.
@@ -58,9 +60,15 @@
 
 struct MixedArena {
   // fast bump allocation
-  std::vector<char*> chunks;
-  size_t chunkSize = 32768;
-  size_t index; // in last chunk
+
+  static const size_t CHUNK_SIZE = 32768;
+  static const size_t MAX_ALIGN = 16; // allow 128bit SIMD
+
+  // Each pointer in chunks is to a multiple of CHUNK_SIZE - typically 1,
+  // but possibly more.
+  std::vector<void*> chunks;
+
+  size_t index = 0; // in last chunk
 
   std::thread::id threadId;
 
@@ -74,8 +82,10 @@ struct MixedArena {
     next.store(nullptr);
   }
 
-  void* allocSpace(size_t size) {
-    // the bump allocator data should not be modified by multiple threads at once.
+  // Allocate an amount of space with a guaranteed alignment
+  void* allocSpace(size_t size, size_t align) {
+    // the bump allocator data should not be modified by multiple threads at
+    // once.
     auto myId = std::this_thread::get_id();
     if (myId != threadId) {
       MixedArena* curr = this;
@@ -94,7 +104,7 @@ struct MixedArena {
         if (!allocated) {
           allocated = new MixedArena(); // has our thread id
         }
-        if (curr->next.compare_exchange_weak(seen, allocated)) {
+        if (curr->next.compare_exchange_strong(seen, allocated)) {
           // we replaced it, so we are the next in the chain
           // we can forget about allocated, it is owned by the chain now
           allocated = nullptr;
@@ -103,56 +113,65 @@ struct MixedArena {
         // otherwise, the cmpxchg updated seen, and we continue to loop
         curr = seen;
       }
-      if (allocated) delete allocated;
-      return curr->allocSpace(size);
+      if (allocated) {
+        delete allocated;
+      }
+      return curr->allocSpace(size, align);
     }
-    size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
-    bool mustAllocate = false;
-    while (chunkSize <= size) {
-      chunkSize *= 2;
-      mustAllocate = true;
-    }
-    if (chunks.size() == 0 || index + size >= chunkSize || mustAllocate) {
-      chunks.push_back(new char[chunkSize]);
+    // First, move the current index in the last chunk to an aligned position.
+    index = (index + align - 1) & (-align);
+    if (index + size > CHUNK_SIZE || chunks.size() == 0) {
+      // Allocate a new chunk.
+      auto numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+      assert(size <= numChunks * CHUNK_SIZE);
+      auto* allocation =
+        wasm::aligned_malloc(MAX_ALIGN, numChunks * CHUNK_SIZE);
+      if (!allocation) {
+        abort();
+      }
+      chunks.push_back(allocation);
       index = 0;
     }
-    auto* ret = chunks.back() + index;
-    index += size;
+    uint8_t* ret = static_cast<uint8_t*>(chunks.back());
+    ret += index;
+    index += size; // TODO: if we allocated more than 1 chunk, reuse the
+                   // remainder, right now we allocate another next time
     return static_cast<void*>(ret);
   }
 
-  template<class T>
-  T* alloc() {
-    auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
-    new (ret) T(*this); // allocated objects receive the allocator, so they can allocate more later if necessary
+  template<class T> T* alloc() {
+    static_assert(alignof(T) <= MAX_ALIGN,
+                  "maximum alignment not large enough");
+    auto* ret = static_cast<T*>(allocSpace(sizeof(T), alignof(T)));
+    new (ret) T(*this); // allocated objects receive the allocator, so they can
+                        // allocate more later if necessary
     return ret;
   }
 
   void clear() {
-    for (char* chunk : chunks) {
-      delete[] chunk;
+    for (auto* chunk : chunks) {
+      wasm::aligned_free(chunk);
     }
     chunks.clear();
   }
 
   ~MixedArena() {
     clear();
-    if (next.load()) delete next.load();
+    if (next.load()) {
+      delete next.load();
+    }
   }
 };
-
 
 //
 // A vector that allocates in an arena.
 //
 // TODO: specialize on the initial size of the array
 
-template <typename SubType, typename T>
-class ArenaVectorBase {
+template<typename SubType, typename T> class ArenaVectorBase {
 protected:
   T* data = nullptr;
-  size_t usedElements = 0,
-         allocatedElements = 0;
+  size_t usedElements = 0, allocatedElements = 0;
 
   void reallocate(size_t size) {
     T* old = data;
@@ -163,14 +182,16 @@ protected:
   }
 
 public:
+  struct Iterator;
+
   T& operator[](size_t index) const {
     assert(index < usedElements);
     return data[index];
   }
 
-  size_t size() const {
-    return usedElements;
-  }
+  size_t size() const { return usedElements; }
+
+  bool empty() const { return size() == 0; }
 
   void resize(size_t size) {
     if (size > allocatedElements) {
@@ -202,9 +223,24 @@ public:
     usedElements++;
   }
 
-  void clear() {
-    usedElements = 0;
+  T& front() const {
+    assert(usedElements > 0);
+    return data[0];
   }
+
+  void erase(Iterator start_it, Iterator end_it) {
+    assert(start_it.parent == end_it.parent && start_it.parent == this);
+    assert(start_it.index <= end_it.index && end_it.index <= usedElements);
+    size_t size = end_it.index - start_it.index;
+    for (size_t cur = start_it.index; cur + size < usedElements; ++cur) {
+      data[cur] = data[cur + size];
+    }
+    usedElements -= size;
+  }
+
+  void erase(Iterator it) { erase(it, it + 1); }
+
+  void clear() { usedElements = 0; }
 
   void reserve(size_t size) {
     if (size > allocatedElements) {
@@ -212,8 +248,7 @@ public:
     }
   }
 
-  template<typename ListType>
-  void set(const ListType& list) {
+  template<typename ListType> void set(const ListType& list) {
     size_t size = list.size();
     if (allocatedElements < size) {
       static_cast<SubType*>(this)->allocate(size);
@@ -224,9 +259,7 @@ public:
     usedElements = size;
   }
 
-  void operator=(SubType& other) {
-    set(other);
-  }
+  void operator=(SubType& other) { set(other); }
 
   void swap(SubType& other) {
     data = other.data;
@@ -240,22 +273,85 @@ public:
   // iteration
 
   struct Iterator {
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T*;
+    using reference = T&;
+
     const SubType* parent;
     size_t index;
 
-    Iterator(const SubType* parent, size_t index) : parent(parent), index(index) {}
+    Iterator() : parent(nullptr), index(0) {}
+    Iterator(const SubType* parent, size_t index)
+      : parent(parent), index(index) {}
 
-    bool operator!=(const Iterator& other) const {
-      return index != other.index || parent != other.parent;
+    bool operator==(const Iterator& other) const {
+      return index == other.index && parent == other.parent;
     }
 
-    void operator++() {
+    bool operator!=(const Iterator& other) const { return !(*this == other); }
+
+    bool operator<(const Iterator& other) const {
+      assert(parent == other.parent);
+      return index < other.index;
+    }
+
+    bool operator>(const Iterator& other) const { return other < *this; }
+
+    bool operator<=(const Iterator& other) const { return !(other < *this); }
+
+    bool operator>=(const Iterator& other) const { return !(*this < other); }
+
+    Iterator& operator++() {
       index++;
+      return *this;
     }
 
-    T& operator*() {
-      return (*parent)[index];
+    Iterator& operator--() {
+      index--;
+      return *this;
     }
+
+    Iterator operator++(int) {
+      Iterator it = *this;
+      ++*this;
+      return it;
+    }
+
+    Iterator operator--(int) {
+      Iterator it = *this;
+      --*this;
+      return it;
+    }
+
+    Iterator& operator+=(std::ptrdiff_t off) {
+      index += off;
+      return *this;
+    }
+
+    Iterator& operator-=(std::ptrdiff_t off) { return *this += -off; }
+
+    Iterator operator+(std::ptrdiff_t off) const {
+      return Iterator(*this) += off;
+    }
+
+    Iterator operator-(std::ptrdiff_t off) const { return *this + -off; }
+
+    std::ptrdiff_t operator-(const Iterator& other) const {
+      assert(parent == other.parent);
+      return index - other.index;
+    }
+
+    friend Iterator operator+(std::ptrdiff_t off, const Iterator& it) {
+      return it + off;
+    }
+
+    T& operator*() const { return (*parent)[index]; }
+
+    T& operator[](std::ptrdiff_t off) const { return (*parent)[index + off]; }
+
+    T* operator->() const { return &(*parent)[index]; }
   };
 
   Iterator begin() const {
@@ -268,6 +364,27 @@ public:
   void allocate(size_t size) {
     abort(); // must be implemented in children
   }
+
+  // C-API
+
+  void insertAt(size_t index, T item) {
+    assert(index <= size()); // appending is ok
+    resize(size() + 1);
+    for (auto i = size() - 1; i > index; --i) {
+      data[i] = data[i - 1];
+    }
+    data[index] = item;
+  }
+
+  T removeAt(size_t index) {
+    assert(index < size());
+    auto item = data[index];
+    for (auto i = index; i < size() - 1; ++i) {
+      data[i] = data[i + 1];
+    }
+    resize(size() - 1);
+    return item;
+  }
 };
 
 // A vector that has an allocator for arena allocation
@@ -276,7 +393,7 @@ public:
 //       passed in when needed, would make this (and thus Blocks etc.
 //       smaller)
 
-template <typename T>
+template<typename T>
 class ArenaVector : public ArenaVectorBase<ArenaVector<T>, T> {
 private:
   MixedArena& allocator;
@@ -290,7 +407,8 @@ public:
 
   void allocate(size_t size) {
     this->allocatedElements = size;
-    this->data = static_cast<T*>(allocator.allocSpace(sizeof(T) * this->allocatedElements));
+    this->data = static_cast<T*>(
+      allocator.allocSpace(sizeof(T) * this->allocatedElements, alignof(T)));
   }
 };
 

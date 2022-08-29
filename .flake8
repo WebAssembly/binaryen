@@ -1,0 +1,6 @@
+[flake8]
+ignore =
+  E501, # line too long
+  E241, # space after comma (ignored for list in gen-s-parser.py)
+  W504  # line break after binary operator
+exclude = third_party,./test/emscripten,./test/spec,./test/wasm-install,./test/lit

@@ -1,0 +1,4 @@
+(module
+ (memory $0 0)
+ (table $0 0 0 funcref)
+)

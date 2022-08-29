@@ -1,11 +1,15 @@
-SET(support_SOURCES
+FILE(GLOB support_HEADERS *.h)
+set(support_SOURCES
   archive.cpp
   bits.cpp
   colors.cpp
   command-line.cpp
+  debug.cpp
   file.cpp
+  path.cpp
   safe_integer.cpp
   threads.cpp
+  utilities.cpp
+  ${support_HEADERS}
 )
-ADD_LIBRARY(support STATIC ${support_SOURCES})
-TARGET_LINK_LIBRARIES(support ${CMAKE_THREAD_LIBS_INIT})
+add_library(support OBJECT ${support_SOURCES})

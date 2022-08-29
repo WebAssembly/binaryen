@@ -1,0 +1,51 @@
+import { table } from 'env';
+
+function asmFunc(env) {
+ var FUNCTION_TABLE = env.table;
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
+ function main() {
+  FUNCTION_TABLE[1](1) | 0;
+  FUNCTION_TABLE[4](1) | 0;
+  FUNCTION_TABLE[2](1) | 0;
+  FUNCTION_TABLE[8](7) | 0;
+ }
+ 
+ function foo($0) {
+  $0 = $0 | 0;
+  return 1;
+ }
+ 
+ function bar($0) {
+  $0 = $0 | 0;
+  return 2;
+ }
+ 
+ function baz($0) {
+  $0 = $0 | 0;
+  return 3;
+ }
+ 
+ FUNCTION_TABLE[1] = foo;
+ FUNCTION_TABLE[2] = bar;
+ FUNCTION_TABLE[3] = baz;
+ return {
+  "main": main
+ };
+}
+
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
+    table
+  });
+export var main = retasmFunc.main;

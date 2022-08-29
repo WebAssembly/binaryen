@@ -1,5 +1,8 @@
-SET(asmjs_SOURCES
+FILE(GLOB asmjs_HEADERS *.h)
+set(asmjs_SOURCES
   asm_v_wasm.cpp
+  asmangle.cpp
   shared-constants.cpp
+  ${asmjs_HEADERS}
 )
-ADD_LIBRARY(asmjs STATIC ${asmjs_SOURCES})
+add_library(asmjs OBJECT ${asmjs_SOURCES})

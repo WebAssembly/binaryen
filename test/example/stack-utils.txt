@@ -1,0 +1,18 @@
+;; Test removeNops
+(block (result i32 i64)
+ (nop)
+ (i32.const 0)
+ (nop)
+ (i64.const 0)
+ (nop)
+ (nop)
+)
+(block (result i32 i64)
+ (i32.const 0)
+ (i64.const 0)
+)
+;; Test stack signatures
+;; Test stack signature composition
+;; Test stack signature subtyping
+;; Test stack signature lub
+;; Test stack flow

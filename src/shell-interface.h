@@ -21,17 +21,28 @@
 #ifndef wasm_shell_interface_h
 #define wasm_shell_interface_h
 
-#include "shared-constants.h"
 #include "asmjs/shared-constants.h"
-#include "wasm.h"
+#include "ir/module-utils.h"
+#include "shared-constants.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-interpreter.h"
+#include "wasm.h"
 
 namespace wasm {
 
+// An exception emitted when exit() is called.
 struct ExitException {};
+
+// An exception emitted when a wasm trap occurs.
 struct TrapException {};
 
-struct ShellExternalInterface : ModuleInstance::ExternalInterface {
+// An exception emitted when a host limitation is hit. (These are not wasm traps
+// as they are not in the spec; for example, the spec has no limit on how much
+// GC memory may be allocated, but hosts have limits.)
+struct HostLimitException {};
+
+struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
   // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
   // properly. Avoid emitting unaligned load/store by checking for alignment
@@ -42,16 +53,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   class Memory {
     // Use char because it doesn't run afoul of aliasing rules.
     std::vector<char> memory;
-    template <typename T>
-    static bool aligned(const char* address) {
+    template<typename T> static bool aligned(const char* address) {
       static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
       return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
     }
-    Memory(Memory&) = delete;
-    Memory& operator=(const Memory&) = delete;
 
-   public:
-    Memory() {}
+  public:
+    Memory() = default;
     void resize(size_t newSize) {
       // Ensure the smallest allocation is large enough that most allocators
       // will provide page-aligned storage. This hopefully allows the
@@ -66,16 +74,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         std::memset(&memory[newSize], 0, minSize - newSize);
       }
     }
-    template <typename T>
-    void set(size_t address, T value) {
+    template<typename T> void set(size_t address, T value) {
       if (aligned<T>(&memory[address])) {
         *reinterpret_cast<T*>(&memory[address]) = value;
       } else {
         std::memcpy(&memory[address], &value, sizeof(T));
       }
     }
-    template <typename T>
-    T get(size_t address) {
+    template<typename T> T get(size_t address) {
       if (aligned<T>(&memory[address])) {
         return *reinterpret_cast<T*>(&memory[address]);
       } else {
@@ -84,145 +90,296 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         return loaded;
       }
     }
-  } memory;
+  };
 
-  std::vector<Name> table;
+  std::map<Name, Memory> memories;
+  std::unordered_map<Name, std::vector<Literal>> tables;
+  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
-  ShellExternalInterface() : memory() {}
+  ShellExternalInterface(
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {}) {
+    linkedInstances.swap(linkedInstances_);
+  }
+  virtual ~ShellExternalInterface() = default;
 
-  void init(Module& wasm, ModuleInstance& instance) override {
-    memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-    // apply memory segments
-    for (auto& segment : wasm.memory.segments) {
-      Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
-      assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
-      for (size_t i = 0; i != segment.data.size(); ++i) {
-        memory.set(offset + i, segment.data[i]);
-      }
+  ModuleRunner* getImportInstance(Importable* import) {
+    auto it = linkedInstances.find(import->module);
+    if (it == linkedInstances.end()) {
+      Fatal() << "importGlobals: unknown import: " << import->module.str << "."
+              << import->base.str;
     }
-
-    table.resize(wasm.table.initial);
-    for (auto& segment : wasm.table.segments) {
-      Address offset = ConstantExpressionRunner(instance.globals).visit(segment.offset).value.geti32();
-      assert(offset + segment.data.size() <= wasm.table.initial);
-      for (size_t i = 0; i != segment.data.size(); ++i) {
-        table[offset + i] = segment.data[i];
-      }
-    }
+    return it->second.get();
   }
 
-  void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
-    // add spectest globals
-    for (auto& import : wasm.imports) {
-      if (import->kind == ExternalKind::Global && import->module == SPECTEST && import->base == GLOBAL) {
-        switch (import->globalType) {
-          case i32: globals[import->name] = Literal(int32_t(666)); break;
-          case i64: globals[import->name] = Literal(int64_t(666)); break;
-          case f32: globals[import->name] = Literal(float(666.6)); break;
-          case f64: globals[import->name] = Literal(double(666.6)); break;
-          default: WASM_UNREACHABLE();
-        }
-      } else if (import->kind == ExternalKind::Memory && import->module == SPECTEST && import->base == MEMORY) {
-        // imported memory has initial 1 and max 2
-        wasm.memory.initial = 1;
-        wasm.memory.max = 2;
-      }
-    }
+  void init(Module& wasm, ModuleRunner& instance) override {
+    ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
+      auto shellMemory = Memory();
+      shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
+      memories[memory->name] = shellMemory;
+    });
+    ModuleUtils::iterDefinedTables(
+      wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
   }
 
-  Literal callImport(Import *import, LiteralList& arguments) override {
-    if (import->module == SPECTEST && import->base == PRINT) {
+  void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+      auto inst = getImportInstance(import);
+      auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
+      if (!exportedGlobal) {
+        Fatal() << "importGlobals: unknown import: " << import->module.str
+                << "." << import->name.str;
+      }
+      globals[import->name] = inst->globals[exportedGlobal->value];
+    });
+  }
+
+  Literals callImport(Function* import, Literals& arguments) override {
+    if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
-        std::cout << argument << '\n';
+        std::cout << argument << " : " << argument.type << '\n';
       }
-      return Literal();
+      return {};
     } else if (import->module == ENV && import->base == EXIT) {
       // XXX hack for torture tests
       std::cout << "exit()\n";
       throw ExitException();
+    } else if (auto* inst = getImportInstance(import)) {
+      return inst->callExport(import->base, arguments);
     }
-    std::cout << "callImport " << import->name.str << "\n";
-    abort();
+    Fatal() << "callImport: unknown import: " << import->module.str << "."
+            << import->name.str;
   }
 
-  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
-    if (index >= table.size()) trap("callTable overflow");
-    auto* func = instance.wasm.checkFunction(table[index]);
-    if (!func) trap("uninitialized table element");
-    if (func->params.size() != arguments.size()) trap("callIndirect: bad # of arguments");
-    for (size_t i = 0; i < func->params.size(); i++) {
-      if (func->params[i] != arguments[i].type) {
+  Literals callTable(Name tableName,
+                     Index index,
+                     HeapType sig,
+                     Literals& arguments,
+                     Type results,
+                     ModuleRunner& instance) override {
+
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("callTable on non-existing table");
+    }
+
+    auto& table = it->second;
+    if (index >= table.size()) {
+      trap("callTable overflow");
+    }
+    Function* func = nullptr;
+    if (table[index].isFunction() && !table[index].isNull()) {
+      func = instance.wasm.getFunctionOrNull(table[index].getFunc());
+    }
+    if (!func) {
+      trap("uninitialized table element");
+    }
+    if (sig != func->type) {
+      trap("callIndirect: function types don't match");
+    }
+    if (func->getParams().size() != arguments.size()) {
+      trap("callIndirect: bad # of arguments");
+    }
+    size_t i = 0;
+    for (const auto& param : func->getParams()) {
+      if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }
     }
-    return instance.callFunctionInternal(func->name, arguments);
-  }
-
-  Literal load(Load* load, Address addr) override {
-    switch (load->type) {
-      case i32: {
-        switch (load->bytes) {
-          case 1: return load->signed_ ? Literal((int32_t)memory.get<int8_t>(addr)) : Literal((int32_t)memory.get<uint8_t>(addr));
-          case 2: return load->signed_ ? Literal((int32_t)memory.get<int16_t>(addr)) : Literal((int32_t)memory.get<uint16_t>(addr));
-          case 4: return load->signed_ ? Literal((int32_t)memory.get<int32_t>(addr)) : Literal((int32_t)memory.get<uint32_t>(addr));
-          default: abort();
-        }
-        break;
-      }
-      case i64: {
-        switch (load->bytes) {
-          case 1: return load->signed_ ? Literal((int64_t)memory.get<int8_t>(addr)) : Literal((int64_t)memory.get<uint8_t>(addr));
-          case 2: return load->signed_ ? Literal((int64_t)memory.get<int16_t>(addr)) : Literal((int64_t)memory.get<uint16_t>(addr));
-          case 4: return load->signed_ ? Literal((int64_t)memory.get<int32_t>(addr)) : Literal((int64_t)memory.get<uint32_t>(addr));
-          case 8: return load->signed_ ? Literal((int64_t)memory.get<int64_t>(addr)) : Literal((int64_t)memory.get<uint64_t>(addr));
-          default: abort();
-        }
-        break;
-      }
-      case f32: return Literal(memory.get<float>(addr));
-      case f64: return Literal(memory.get<double>(addr));
-      default: abort();
+    if (func->getResults() != results) {
+      trap("callIndirect: bad result type");
+    }
+    if (func->imported()) {
+      return callImport(func, arguments);
+    } else {
+      return instance.callFunctionInternal(func->name, arguments);
     }
   }
 
-  void store(Store* store, Address addr, Literal value) override {
-    switch (store->valueType) {
-      case i32: {
-        switch (store->bytes) {
-          case 1: memory.set<int8_t>(addr, value.geti32()); break;
-          case 2: memory.set<int16_t>(addr, value.geti32()); break;
-          case 4: memory.set<int32_t>(addr, value.geti32()); break;
-          default: abort();
-        }
-        break;
-      }
-      case i64: {
-        switch (store->bytes) {
-          case 1: memory.set<int8_t>(addr, (int8_t)value.geti64()); break;
-          case 2: memory.set<int16_t>(addr, (int16_t)value.geti64()); break;
-          case 4: memory.set<int32_t>(addr, (int32_t)value.geti64()); break;
-          case 8: memory.set<int64_t>(addr, value.geti64()); break;
-          default: abort();
-        }
-        break;
-      }
-      // write floats carefully, ensuring all bits reach memory
-      case f32: memory.set<int32_t>(addr, value.reinterpreti32()); break;
-      case f64: memory.set<int64_t>(addr, value.reinterpreti64()); break;
-      default: abort();
+  int8_t load8s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load8s on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<int8_t>(addr);
+  }
+  uint8_t load8u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load8u on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<uint8_t>(addr);
+  }
+  int16_t load16s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load16s on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<int16_t>(addr);
+  }
+  uint16_t load16u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load16u on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<uint16_t>(addr);
+  }
+  int32_t load32s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load32s on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<int32_t>(addr);
+  }
+  uint32_t load32u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load32u on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<uint32_t>(addr);
+  }
+  int64_t load64s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load64s on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<int64_t>(addr);
+  }
+  uint64_t load64u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load64u on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<uint64_t>(addr);
+  }
+  std::array<uint8_t, 16> load128(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("load128 on non-existing memory");
+    }
+    auto& memory = it->second;
+    return memory.get<std::array<uint8_t, 16>>(addr);
+  }
+
+  void store8(Address addr, int8_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("store8 on non-existing memory");
+    }
+    auto& memory = it->second;
+    memory.set<int8_t>(addr, value);
+  }
+  void store16(Address addr, int16_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("store16 on non-existing memory");
+    }
+    auto& memory = it->second;
+    memory.set<int16_t>(addr, value);
+  }
+  void store32(Address addr, int32_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("store32 on non-existing memory");
+    }
+    auto& memory = it->second;
+    memory.set<int32_t>(addr, value);
+  }
+  void store64(Address addr, int64_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("store64 on non-existing memory");
+    }
+    auto& memory = it->second;
+    memory.set<int64_t>(addr, value);
+  }
+  void store128(Address addr,
+                const std::array<uint8_t, 16>& value,
+                Name memoryName) override {
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("store128 on non-existing memory");
+    }
+    auto& memory = it->second;
+    memory.set<std::array<uint8_t, 16>>(addr, value);
+  }
+
+  Index tableSize(Name tableName) override {
+    return (Index)tables[tableName].size();
+  }
+
+  void tableStore(Name tableName, Index index, const Literal& entry) override {
+    auto& table = tables[tableName];
+    if (index >= table.size()) {
+      trap("out of bounds table access");
+    } else {
+      table[index] = entry;
     }
   }
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
+  Literal tableLoad(Name tableName, Index index) override {
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("tableGet on non-existing table");
+    }
+
+    auto& table = it->second;
+    if (index >= table.size()) {
+      trap("out of bounds table access");
+    }
+
+    return table[index];
+  }
+
+  bool
+  growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
+    // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize > 1024 * 1024 * 1024) {
+      return false;
+    }
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("growMemory on non-existing memory");
+    }
+    auto& memory = it->second;
     memory.resize(newSize);
+    return true;
+  }
+
+  bool growTable(Name name,
+                 const Literal& value,
+                 Index /*oldSize*/,
+                 Index newSize) override {
+    // Apply a reasonable limit on table size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize > 1024 * 1024 * 1024) {
+      return false;
+    }
+    tables[name].resize(newSize, value);
+    return true;
   }
 
   void trap(const char* why) override {
-    std::cerr << "[trap " << why << "]\n";
+    std::cout << "[trap " << why << "]\n";
     throw TrapException();
   }
+
+  void hostLimit(const char* why) override {
+    std::cout << "[host limit " << why << "]\n";
+    throw HostLimitException();
+  }
+
+  void throwException(const WasmException& exn) override { throw exn; }
 };
 
-}
+} // namespace wasm
 
 #endif // wasm_shell_interface_h

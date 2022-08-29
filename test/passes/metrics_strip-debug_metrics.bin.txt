@@ -1,0 +1,31 @@
+total
+ [exports]      : 1       
+ [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 1       
+ [vars]         : 0       
+ Nop            : 1       
+total
+ [exports]      : 1       
+ [funcs]        : 1       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 1       
+ [vars]         : 0       
+ Nop            : 1       
+(module
+ (type $none_=>_none (func))
+ (export "a" (func $0))
+ (func $0
+  (nop)
+ )
+ ;; custom section "emscripten_metadata", size 7
+ ;; custom section "producers", size 187
+)

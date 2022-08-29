@@ -15,21 +15,26 @@
  */
 
 //
-// Prints the call graph in .dot format. You can use http://www.graphviz.org/ to view .dot files.
+// Prints the call graph in .dot format. You can use http://www.graphviz.org/ to
+// view .dot files.
 //
 
-
-#include <memory>
 #include <iomanip>
-#include "wasm.h"
+#include <memory>
+
+#include "ir/element-utils.h"
+#include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "wasm.h"
 
 namespace wasm {
 
 struct PrintCallGraph : public Pass {
+  bool modifiesBinaryenIR() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
-    std::ostream &o = std::cout;
+    std::ostream& o = std::cout;
     o << "digraph call {\n"
          "  rankdir = LR;\n"
          "  subgraph cluster_key {\n"
@@ -38,73 +43,68 @@ struct PrintCallGraph : public Pass {
          "    label = \"Key\";\n"
          "    \"Import\" [style=\"filled\", fillcolor=\"turquoise\"];\n"
          "    \"Export\" [style=\"filled\", fillcolor=\"gray\"];\n"
-         "    \"Indirect Target\" [style=\"filled, rounded\", fillcolor=\"white\"];\n"
-         "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct Call\"];\n"
+         "    \"Indirect Target\" [style=\"filled, rounded\", "
+         "fillcolor=\"white\"];\n"
+         "    \"A\" -> \"B\" [style=\"filled, rounded\", label = \"Direct "
+         "Call\"];\n"
          "  }\n\n"
          "  node [shape=box, fontname=courier, fontsize=10];\n";
 
-    // All Functions
-    for (auto& func : module->functions) {
-      std::cout << "  \"" << func.get()->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
-    }
+    // Defined functions
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
+      std::cout << "  \"" << curr->name
+                << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+    });
 
-    // Imports Nodes
-    for (auto& curr : module->imports) {
-      if (curr->kind == ExternalKind::Function) {
-        o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
-      }
-    }
+    // Imported functions
+    ModuleUtils::iterImportedFunctions(*module, [&](Function* curr) {
+      o << "  \"" << curr->name
+        << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
+    });
 
-    // Exports Nodes
+    // Exports
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         Function* func = module->getFunction(curr->value);
-        o << "  \"" << func->name << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
+        o << "  \"" << func->name
+          << "\" [style=\"filled\", fillcolor=\"gray\"];\n";
       }
     }
 
-    struct CallPrinter : public PostWalker<CallPrinter, Visitor<CallPrinter>> {
-      Module *module;
-      Function *currFunction;
+    struct CallPrinter : public PostWalker<CallPrinter> {
+      Module* module;
+      Function* currFunction;
       std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.
       std::vector<Function*> allIndirectTargets;
-      CallPrinter(Module *module) : module(module) {
+      CallPrinter(Module* module) : module(module) {
         // Walk function bodies.
-        for (auto& func : module->functions) {
-          currFunction = func.get();
+        ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
+          currFunction = curr;
           visitedTargets.clear();
-          walk(func.get()->body);
-        }
+          walk(curr->body);
+        });
       }
-      void visitCall(Call *curr) {
+      void visitCall(Call* curr) {
         auto* target = module->getFunction(curr->target);
-        if (visitedTargets.count(target->name) > 0) return;
-        visitedTargets.insert(target->name);
-        std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
-      }
-      void visitCallImport(CallImport *curr) {
-        auto name = curr->target;
-        if (visitedTargets.count(name) > 0) return;
-        visitedTargets.insert(name);
-        std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
+        if (!visitedTargets.emplace(target->name).second) {
+          return;
+        }
+        std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name
+                  << "\"; // call\n";
       }
     };
     CallPrinter printer(module);
 
     // Indirect Targets
-    for (auto& segment : module->table.segments) {
-      for (auto& curr : segment.data) {
-        auto* func = module->getFunction(curr);
-        o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      auto* func = module->getFunction(name);
+      o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
+    });
 
     o << "}\n";
   }
 };
 
-Pass *createPrintCallGraphPass() {
-  return new PrintCallGraph();
-}
+Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
 
 } // namespace wasm

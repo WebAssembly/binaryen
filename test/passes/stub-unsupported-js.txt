@@ -1,0 +1,50 @@
+(module
+ (type $none_=>_f32 (func (result f32)))
+ (type $i64_=>_f32 (func (param i64) (result f32)))
+ (type $i32_=>_f32 (func (param i32) (result f32)))
+ (func $yes (param $x i64) (result f32)
+  (drop
+   (local.get $x)
+  )
+  (f32.const 0)
+ )
+ (func $no (param $x i32) (result f32)
+  (f32.convert_i32_u
+   (local.get $x)
+  )
+ )
+ (func $yes-unreach (result f32)
+  (unreachable)
+ )
+ (func $no-unreach (result f32)
+  (f32.convert_i32_u
+   (unreachable)
+  )
+ )
+)
+(module
+ (type $none_=>_f32 (func (result f32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (table $0 2 2 funcref)
+ (elem (i32.const 1) $return-f32)
+ (func $return-f32 (result f32)
+  (f32.const 3.141590118408203)
+ )
+ (func $bad-indirect-call
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $bad-indirect-call-2 (result i32)
+  (block
+   (drop
+    (i64.const 1234)
+   )
+   (drop
+    (i32.const 1)
+   )
+  )
+  (i32.const 0)
+ )
+)

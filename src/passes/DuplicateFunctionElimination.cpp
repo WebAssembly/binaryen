@@ -20,164 +20,88 @@
 // identical when finally lowered into concrete wasm code.
 //
 
-#include "wasm.h"
+#include "ir/function-utils.h"
+#include "ir/hashed.h"
+#include "ir/module-utils.h"
+#include "ir/utils.h"
+#include "opt-utils.h"
 #include "pass.h"
-#include "ast_utils.h"
-#include "support/hash.h"
+#include "wasm.h"
 
 namespace wasm {
 
-struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher, Visitor<FunctionHasher>>> {
-  bool isFunctionParallel() override { return true; }
-
-  FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
-
-  FunctionHasher* create() override {
-    return new FunctionHasher(output);
-  }
-
-  void doWalkFunction(Function* func) {
-    assert(digest == 0);
-    hash(func->getNumParams());
-    for (auto type : func->params) hash(type);
-    hash(func->getNumVars());
-    for (auto type : func->vars) hash(type);
-    hash(func->result);
-    hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
-    hash(ExpressionAnalyzer::hash(func->body));
-    output->at(func) = digest;
-  }
-
-private:
-  std::map<Function*, uint32_t>* output;
-  uint32_t digest = 0;
-
-  void hash(uint32_t hash) {
-    digest = rehash(digest, hash);
-  }
-  void hash64(uint64_t hash) {
-    digest = rehash(rehash(digest, hash >> 32), uint32_t(hash));
-  };
-};
-
-struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer, Visitor<FunctionReplacer>>> {
-  bool isFunctionParallel() override { return true; }
-
-  FunctionReplacer(std::map<Name, Name>* replacements) : replacements(replacements) {}
-
-  FunctionReplacer* create() override {
-    return new FunctionReplacer(replacements);
-  }
-
-  void visitCall(Call* curr) {
-    auto iter = replacements->find(curr->target);
-    if (iter != replacements->end()) {
-      curr->target = iter->second;
-    }
-  }
-
-private:
-  std::map<Name, Name>* replacements;
-};
-
 struct DuplicateFunctionElimination : public Pass {
+  // FIXME Merge DWARF info
+  bool invalidatesDWARF() override { return true; }
+
   void run(PassRunner* runner, Module* module) override {
-    while (1) {
+    // Multiple iterations may be necessary: A and B may be identical only after
+    // we see the functions C1 and C2 that they call are in fact identical.
+    // Rarely, such "chains" can be very long, so we limit how many we do.
+    auto& options = runner->options;
+    Index limit;
+    if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+      limit = module->functions.size(); // no limit
+    } else if (options.optimizeLevel >= 2) {
+      // 10 passes usually does most of the work, as this is typically
+      // logarithmic
+      limit = 10;
+    } else {
+      limit = 1;
+    }
+    while (limit > 0) {
+      limit--;
       // Hash all the functions
-      hashes.clear();
-      for (auto& func : module->functions) {
-        hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
-      }
-      PassRunner hasherRunner(module);
-      hasherRunner.add<FunctionHasher>(&hashes);
-      hasherRunner.run();
+      auto hashes = FunctionHasher::createMap(module);
+      FunctionHasher(&hashes).run(runner, module);
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
-      for (auto& func : module->functions) {
-        hashGroups[hashes[func.get()]].push_back(func.get());
-      }
+      ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+        hashGroups[hashes[func]].push_back(func);
+      });
       // Find actually equal functions and prepare to replace them
       std::map<Name, Name> replacements;
       std::set<Name> duplicates;
-      for (auto& pair : hashGroups) {
-        auto& group = pair.second;
-        if (group.size() == 1) continue;
-        // pick a base for each group, and try to replace everyone else to it. TODO: multiple bases per hash group, for collisions
-#if 0
-        // for comparison purposes, pick in a deterministic way based on the names
-        Function* base = nullptr;
-        for (auto* func : group) {
-          if (!base || strcmp(func->name.str, base->name.str) < 0) {
-            base = func;
-          }
+      for (auto& [_, group] : hashGroups) {
+        Index size = group.size();
+        if (size == 1) {
+          continue;
         }
-#else
-        Function* base = group[0];
-#endif
-        for (auto* func : group) {
-          if (func != base && equal(func, base)) {
-            replacements[func->name] = base->name;
-            duplicates.insert(func->name);
+        // The groups should be fairly small, and even if a group is large we
+        // should have almost all of them identical, so we should not hit actual
+        // O(N^2) here unless the hash is quite poor.
+        for (Index i = 0; i < size - 1; i++) {
+          auto* first = group[i];
+          if (duplicates.count(first->name)) {
+            continue;
+          }
+          for (Index j = i + 1; j < size; j++) {
+            auto* second = group[j];
+            if (duplicates.count(second->name)) {
+              continue;
+            }
+            if (FunctionUtils::equal(first, second)) {
+              // great, we can replace the second with the first!
+              replacements[second->name] = first->name;
+              duplicates.insert(second->name);
+            }
           }
         }
       }
       // perform replacements
       if (replacements.size() > 0) {
         // remove the duplicates
-        auto& v = module->functions;
-        v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
-          return duplicates.count(curr->name) > 0;
-        }), v.end());
-        module->updateMaps();
-        // replace direct calls
-        PassRunner replacerRunner(module);
-        replacerRunner.add<FunctionReplacer>(&replacements);
-        replacerRunner.run();
-        // replace in table
-        for (auto& segment : module->table.segments) {
-          for (auto& name : segment.data) {
-            auto iter = replacements.find(name);
-            if (iter != replacements.end()) {
-              name = iter->second;
-            }
-          }
-        }
-        // replace in start
-        if (module->start.is()) {
-          auto iter = replacements.find(module->start);
-          if (iter != replacements.end()) {
-            module->start = iter->second;
-          }
-        }
-        // replace in exports
-        for (auto& exp : module->exports) {
-          auto iter = replacements.find(exp->value);
-          if (iter != replacements.end()) {
-            exp->value = iter->second;
-          }
-        }
+        module->removeFunctions(
+          [&](Function* func) { return duplicates.count(func->name) > 0; });
+        OptUtils::replaceFunctions(runner, *module, replacements);
       } else {
         break;
       }
     }
   }
-
-private:
-  std::map<Function*, uint32_t> hashes;
-
-  bool equal(Function* left, Function* right) {
-    if (left->getNumParams() != right->getNumParams()) return false;
-    if (left->getNumVars() != right->getNumVars()) return false;
-    for (Index i = 0; i < left->getNumLocals(); i++) {
-      if (left->getLocalType(i) != right->getLocalType(i)) return false;
-    }
-    if (left->result != right->result) return false;
-    if (left->type != right->type) return false;
-    return ExpressionAnalyzer::equal(left->body, right->body);
-  }
 };
 
-Pass *createDuplicateFunctionEliminationPass() {
+Pass* createDuplicateFunctionEliminationPass() {
   return new DuplicateFunctionElimination();
 }
 

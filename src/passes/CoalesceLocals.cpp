@@ -14,192 +14,44 @@
  * limitations under the License.
  */
 
-
 //
 // Coalesce locals, in order to reduce the total number of locals. This
 // is similar to register allocation, however, there is never any
 // spilling, and there isn't a fixed number of locals.
 //
-
+// NB: This pass is nonlinear in the number of locals. It is best to run it
+//     after the number of locals has been somewhat reduced by other passes,
+//     for example by simplify-locals (to remove unneeded uses of locals) and
+//     reorder-locals (to sort them by # of uses and remove all unneeded ones).
+//
 
 #include <algorithm>
 #include <memory>
 #include <unordered_set>
 
-#include "wasm.h"
+#include "cfg/liveness-traversal.h"
+#include "ir/numbering.h"
+#include "ir/utils.h"
 #include "pass.h"
-#include "ast_utils.h"
-#include "cfg/cfg-traversal.h"
-#include "wasm-builder.h"
-#include "support/permutation.h"
 #include "support/learning.h"
+#include "support/permutations.h"
+#include "support/sparse_square_matrix.h"
+#include "wasm.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
 #endif
 
 namespace wasm {
 
-// A set of locals. This is optimized for comparisons,
-// mergings, and iteration on elements, assuming that there
-// may be a great many potential elements but actual sets
-// may be fairly small. Specifically, we use a sorted
-// vector.
-struct LocalSet : std::vector<Index> {
-  LocalSet() {}
-
-  LocalSet merge(const LocalSet& other) const {
-    LocalSet ret;
-    ret.resize(size() + other.size());
-    Index i = 0, j = 0, t = 0;
-    while (i < size() && j < other.size()) {
-      auto left = (*this)[i];
-      auto right = other[j];
-      if (left < right) {
-        ret[t++] = left;
-        i++;
-      } else if (left > right) {
-        ret[t++] = right;
-        j++;
-      } else {
-        ret[t++] = left;
-        i++;
-        j++;
-      }
-    }
-    while (i < size()) {
-      ret[t++] = (*this)[i];
-      i++;
-    }
-    while (j < other.size()) {
-      ret[t++] = other[j];
-      j++;
-    }
-    ret.resize(t);
-    return ret;
-  }
-
-  void insert(Index x) {
-    auto it = std::lower_bound(begin(), end(), x);
-    if (it == end()) push_back(x);
-    else if (*it > x) {
-      Index i = it - begin();
-      resize(size() + 1);
-      std::move_backward(begin() + i, begin() + size() - 1, end());
-      (*this)[i] = x;
-    }
-  }
-
-  bool erase(Index x) {
-    auto it = std::lower_bound(begin(), end(), x);
-    if (it != end() && *it == x) {
-      std::move(it + 1, end(), it);
-      resize(size() - 1);
-      return true;
-    }
-    return false;
-  }
-
-  bool has(Index x) {
-    auto it = std::lower_bound(begin(), end(), x);
-    return it != end() && *it == x;
-  }
-
-  void verify() const {
-    for (Index i = 1; i < size(); i++) {
-      assert((*this)[i - 1] < (*this)[i]);
-    }
-  }
-
-  void dump(const char* str = nullptr) const {
-    std::cout << "LocalSet " << (str ? str : "") << ": ";
-    for (auto x : *this) std::cout << x << " ";
-    std::cout << '\n';
-  }
-};
-
-// a liveness-relevant action
-struct Action {
-  enum What {
-    Get, Set
-  };
-  What what;
-  Index index; // the local index read or written
-  Expression** origin; // the origin
-  bool effective; // whether a store is actually effective, i.e., may be read
-
-  Action(What what, Index index, Expression** origin) : what(what), index(index), origin(origin), effective(false) {}
-
-  bool isGet() { return what == Get; }
-  bool isSet() { return what == Set; }
-};
-
-// information about liveness in a basic block
-struct Liveness {
-  LocalSet start, end; // live locals at the start and end
-  std::vector<Action> actions; // actions occurring in this block
-
-  void dump(Function* func) {
-    if (actions.empty()) return;
-    std::cout << "    actions:\n";
-    for (auto& action : actions) {
-      std::cout << "      " << (action.isGet() ? "get" : "set") << " " << func->getLocalName(action.index) << "\n";
-    }
-  }
-};
-
-struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>> {
+struct CoalesceLocals
+  : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor<CoalesceLocals>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass merges locals, mapping the originals to new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new CoalesceLocals; }
-
-  Index numLocals;
-
-  // cfg traversal work
-
-  static void doVisitGetLocal(CoalesceLocals* self, Expression** currp) {
-    auto* curr = (*currp)->cast<GetLocal>();
-     // if in unreachable code, ignore
-    if (!self->currBasicBlock) {
-      ExpressionManipulator::convert<GetLocal, Unreachable>(curr);
-      return;
-    }
-    self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, currp);
-  }
-
-  static void doVisitSetLocal(CoalesceLocals* self, Expression** currp) {
-    auto* curr = (*currp)->cast<SetLocal>();
-    // if in unreachable code, ignore
-    if (!self->currBasicBlock) {
-      if (curr->isTee()) {
-        ExpressionManipulator::convert<SetLocal, Unreachable>(curr);
-      } else {
-        ExpressionManipulator::nop(curr);
-      }
-      return;
-    }
-    self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
-    // if this is a copy, note it
-    if (auto* get = self->getCopy(curr)) {
-      // add 2 units, so that backedge prioritization can decide ties, but not much more
-      self->addCopy(curr->index, get->index);
-      self->addCopy(curr->index, get->index);
-    }
-  }
-
-  // A simple copy is a set of a get. A more interesting copy
-  // is a set of an if with a value, where one side a get.
-  // That can happen when we create an if value in simplify-locals. TODO: recurse into
-  // nested ifs, and block return values? Those cases are trickier, need to
-  // count to see if worth it.
-  // TODO: an if can have two copies
-  GetLocal* getCopy(SetLocal* set) {
-    if (auto* get = set->value->dynCast<GetLocal>()) return get;
-    if (auto* iff = set->value->dynCast<If>()) {
-      if (auto* get = iff->ifTrue->dynCast<GetLocal>()) return get;
-      if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
-    }
-    return nullptr;
-  }
 
   // main entry point
 
@@ -207,87 +59,52 @@ struct CoalesceLocals : public WalkerPass<CFGWalker<CoalesceLocals, Visitor<Coal
 
   void increaseBackEdgePriorities();
 
-  void flowLiveness();
-
+  // Calculate interferences between locals. This will will fill
+  // the data structure |interferences|.
   void calculateInterferences();
 
-  void calculateInterferences(const LocalSet& locals);
+  void pickIndicesFromOrder(std::vector<Index>& order,
+                            std::vector<Index>& indices);
+  void pickIndicesFromOrder(std::vector<Index>& order,
+                            std::vector<Index>& indices,
+                            Index& removedCopies);
 
-  // merge starts of a list of blocks, adding new interferences as necessary. return
-  // whether anything changed vs an old state (which indicates further processing is necessary).
-  bool mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, LocalSet& old, LocalSet& ret);
-
-  void scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live);
-
-  void pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices);
-  void pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices, Index& removedCopies);
-
-  virtual void pickIndices(std::vector<Index>& indices); // returns a vector of oldIndex => newIndex
+  // returns a vector of oldIndex => newIndex
+  virtual void pickIndices(std::vector<Index>& indices);
 
   void applyIndices(std::vector<Index>& indices, Expression* root);
 
   // interference state
 
-  std::vector<bool> interferences; // canonicalized - accesses should check (low, high)
-  std::unordered_set<BasicBlock*> liveBlocks;
+  // canonicalized - accesses should check (low, high)
+  sparse_square_matrix<bool> interferences;
 
   void interfere(Index i, Index j) {
-    if (i == j) return;
-    interferences[std::min(i, j) * numLocals + std::max(i, j)] = 1;
+    if (i == j) {
+      return;
+    }
+    interferences.set(std::min(i, j), std::max(i, j), true);
   }
 
-  void interfereLowHigh(Index low, Index high) { // optimized version where you know that low < high
+  // optimized version where you know that low < high
+  void interfereLowHigh(Index low, Index high) {
     assert(low < high);
-    interferences[low * numLocals + high] = 1;
+    interferences.set(low, high, true);
+  }
+
+  void unInterfere(Index i, Index j) {
+    interferences.set(std::min(i, j), std::max(i, j), false);
   }
 
   bool interferes(Index i, Index j) {
-    return interferences[std::min(i, j) * numLocals + std::max(i, j)];
-  }
-
-  // copying state
-
-  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high) TODO: use a map for high N, as this tends to be sparse? or don't look at copies at all for big N?
-  std::vector<Index> totalCopies; // total # of copies for each local, with all others
-
-  void addCopy(Index i, Index j) {
-    auto k = std::min(i, j) * numLocals + std::max(i, j);
-    copies[k] = std::min(copies[k], uint8_t(254)) + 1;
-    totalCopies[i]++;
-    totalCopies[j]++;
-  }
-
-  uint8_t getCopies(Index i, Index j) {
-    return copies[std::min(i, j) * numLocals + std::max(i, j)];
+    return interferences.get(std::min(i, j), std::max(i, j));
   }
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
-  numLocals = func->getNumLocals();
-  copies.resize(numLocals * numLocals);
-  std::fill(copies.begin(), copies.end(), 0);
-  totalCopies.resize(numLocals);
-  std::fill(totalCopies.begin(), totalCopies.end(), 0);
-  // collect initial liveness info
-  WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>>::doWalkFunction(func);
-  // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
-  liveBlocks = findLiveBlocks();
-  unlinkDeadBlocks(liveBlocks);
-  // increase the cost of costly backedges
+  super::doWalkFunction(func);
+  // prioritize back edges
   increaseBackEdgePriorities();
-#ifdef CFG_DEBUG
-  dumpCFG("the cfg");
-#endif
-  // flow liveness across blocks
-#ifdef CFG_PROFILE
-  static Timer timer("flow");
-  timer.start();
-#endif
-  flowLiveness();
-#ifdef CFG_PROFILE
-  timer.stop();
-  timer.dump();
-#endif
   // use liveness to find interference
   calculateInterferences();
   // pick new indices
@@ -297,20 +114,26 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   applyIndices(indices, func->body);
 }
 
-// A copy on a backedge can be especially costly, forcing us to branch just to do that copy.
-// Add weight to such copies, so we prioritize getting rid of them.
+// A copy on a backedge can be especially costly, forcing us to branch just to
+// do that copy. Add weight to such copies, so we prioritize getting rid of
+// them.
 void CoalesceLocals::increaseBackEdgePriorities() {
   for (auto* loopTop : loopTops) {
     // ignore the first edge, it is the initial entry, we just want backedges
     auto& in = loopTop->in;
     for (Index i = 1; i < in.size(); i++) {
       auto* arrivingBlock = in[i];
-      if (arrivingBlock->out.size() > 1) continue; // we just want unconditional branches to the loop top, true phi fragments
+      if (arrivingBlock->out.size() > 1) {
+        // we just want unconditional branches to the loop top, true phi
+        // fragments
+        continue;
+      }
       for (auto& action : arrivingBlock->contents.actions) {
-        if (action.what == Action::Set) {
-          auto* set = (*action.origin)->cast<SetLocal>();
+        if (action.isSet()) {
+          auto* set = (*action.origin)->cast<LocalSet>();
           if (auto* get = getCopy(set)) {
-            // this is indeed a copy, add to the cost (default cost is 2, so this adds 50%, and can mostly break ties)
+            // this is indeed a copy, add to the cost (default cost is 2, so
+            // this adds 50%, and can mostly break ties)
             addCopy(set->index, get->index);
           }
         }
@@ -319,138 +142,210 @@ void CoalesceLocals::increaseBackEdgePriorities() {
   }
 }
 
-void CoalesceLocals::flowLiveness() {
-  interferences.resize(numLocals * numLocals);
-  std::fill(interferences.begin(), interferences.end(), 0);
-  // keep working while stuff is flowing
-  std::unordered_set<BasicBlock*> queue;
-  for (auto& curr : basicBlocks) {
-    if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
-    queue.insert(curr.get());
-    // do the first scan through the block, starting with nothing live at the end, and updating the liveness at the start
-    scanLivenessThroughActions(curr->contents.actions, curr->contents.start);
-  }
-  // at every point in time, we assume we already noted interferences between things already known alive at the end, and scanned back through the block using that
-  while (queue.size() > 0) {
-    auto iter = queue.begin();
-    auto* curr = *iter;
-    queue.erase(iter);
-    LocalSet live;
-    if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) continue;
-#ifdef CFG_DEBUG
-    std::cout << "change noticed at end of " << debugIds[curr] << " from " << curr->contents.end.size() << " to " << live.size() << " (out of " << numLocals << ")\n";
-#endif
-    assert(curr->contents.end.size() < live.size());
-    curr->contents.end = live;
-    scanLivenessThroughActions(curr->contents.actions, live);
-    // liveness is now calculated at the start. if something
-    // changed, all predecessor blocks need recomputation
-    if (curr->contents.start == live) continue;
-#ifdef CFG_DEBUG
-    std::cout << "change noticed at start of " << debugIds[curr] << " from " << curr->contents.start.size() << " to " << live.size() << ", more work to do\n";
-#endif
-    assert(curr->contents.start.size() < live.size());
-    curr->contents.start = live;
-    for (auto* in : curr->in) {
-      queue.insert(in);
-    }
-  }
-#ifdef CFG_DEBUG
-  std::hash<std::vector<bool>> hasher;
-  std::cout << getFunction()->name << ": interference hash: " << hasher(*(std::vector<bool>*)&interferences) << "\n";
-  for (Index i = 0; i < numLocals; i++) {
-    std::cout << "int for " << getFunction()->getLocalName(i) << " [" << i << "]: ";
-    for (Index j = 0; j < numLocals; j++) {
-      if (interferes(i, j)) std::cout << getFunction()->getLocalName(j) << " ";
-    }
-    std::cout << "\n";
-  }
-#endif
-}
-
-// merge starts of a list of blocks. return
-// whether anything changed vs an old state (which indicates further processing is necessary).
-bool CoalesceLocals::mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, LocalSet& old, LocalSet& ret) {
-  if (blocks.size() == 0) return false;
-  ret = blocks[0]->contents.start;
-  if (blocks.size() > 1) {
-    // more than one, so we must merge
-    for (Index i = 1; i < blocks.size(); i++) {
-      ret = ret.merge(blocks[i]->contents.start);
-    }
-  }
-  return old != ret;
-}
-
-void CoalesceLocals::scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live) {
-  // move towards the front
-  for (int i = int(actions.size()) - 1; i >= 0; i--) {
-    auto& action = actions[i];
-    if (action.isGet()) {
-      live.insert(action.index);
-    } else {
-      live.erase(action.index);
-    }
-  }
-}
-
 void CoalesceLocals::calculateInterferences() {
+  interferences.recreate(numLocals);
+
+  // We will track the values in each local, using a numbering where each index
+  // represents a unique different value. This array maps a local index to the
+  // value index it contains.
+  //
+  // To avoid reallocating this array all the time, allocate it once outside the
+  // loop.
+  std::vector<Index> values(numLocals);
+
+  ValueNumbering valueNumbering;
+
+  auto* func = getFunction();
+
   for (auto& curr : basicBlocks) {
-    if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
-    // everything coming in might interfere, as it might come from a different block
-    auto live = curr->contents.end;
-    calculateInterferences(live);
-    // scan through the block itself
+    if (liveBlocks.count(curr.get()) == 0) {
+      continue; // ignore dead blocks
+    }
+
+    // First, find which gets end a live range. While doing so, also calculate
+    // the effectiveness of sets.
     auto& actions = curr->contents.actions;
+    std::vector<bool> endsLiveRange(actions.size(), false);
+    auto live = curr->contents.end;
     for (int i = int(actions.size()) - 1; i >= 0; i--) {
       auto& action = actions[i];
       auto index = action.index;
       if (action.isGet()) {
-        // new live local, interferes with all the rest
-        live.insert(index);
-        for (auto i : live) {
-          interfere(i, index);
+        if (!live.has(index)) {
+          // The local is not live after us, so its liveness ends here.
+          endsLiveRange[i] = true;
+          live.insert(index);
         }
       } else {
+        // This is a set. Check if the local is alive after it; if it is then
+        // the set if effective as there is some get that can read the value.
         if (live.erase(index)) {
           action.effective = true;
         }
       }
     }
+
+    // We have processed from the end of the block to the start, updating |live|
+    // as we go, and now it must be equal to the state at the start of the
+    // block. We will also use |live| in the next loop, and assume it begins
+    // in that state.
+    assert(live == curr->contents.start);
+
+    // Now that we know live ranges, check if locals interfere in this block.
+    // Locals interfere if they might contain different values on areas where
+    // their live ranges overlap. To evaluate that, we do an analysis inside
+    // the block that gives each set a unique value number, and as those flow
+    // around through copies between sets we can see when sets are guaranteed to
+    // be equal.
+
+    if (curr.get() == entry) {
+      // Each parameter is assumed to have a different value on entry.
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        values[i] = valueNumbering.getUniqueValue();
+      }
+
+      for (Index i = func->getNumParams(); i < func->getNumLocals(); i++) {
+        auto type = func->getLocalType(i);
+        if (!LiteralUtils::canMakeZero(type)) {
+          // The default value for a type for which we can't make a zero cannot
+          // be used anyhow, but we must give it some value in this analysis. A
+          // unique one seems least likely to result in surprise during
+          // debugging.
+          values[i] = valueNumbering.getUniqueValue();
+        } else {
+          values[i] = valueNumbering.getValue(Literal::makeZeros(type));
+        }
+      }
+    } else {
+      // In any block but the entry, assume that each live local might have a
+      // different value at the start.
+      // TODO: Propagating value IDs across blocks could identify more copies,
+      //       however, it would also be nonlinear.
+      for (auto index : curr->contents.start) {
+        values[index] = valueNumbering.getUniqueValue();
+      }
+    }
+
+    // Traverse through the block from start to finish. We keep track of both
+    // liveness (in |live|) and the value IDs in each local (in |values|)
+    // while doing so.
+    for (Index i = 0; i < actions.size(); i++) {
+      auto& action = actions[i];
+      auto index = action.index;
+      if (action.isGet()) {
+        if (endsLiveRange[i]) {
+          bool erased = live.erase(action.index);
+          assert(erased);
+          WASM_UNUSED(erased);
+        }
+        continue;
+      }
+
+      // This is a set. Find the value being assigned to the local.
+      auto* set = (*action.origin)->cast<LocalSet>();
+      Index newValue;
+      if (set->value->is<LocalGet>() || set->value->is<LocalSet>()) {
+        // This is a copy: Either it is a get or a tee, that occurs right
+        // before us. Set our new value to theirs.
+        assert(i > 0 && set->value == *actions[i - 1].origin);
+        newValue = values[actions[i - 1].index];
+      } else {
+        // This is not a copy.
+        newValue = valueNumbering.getValue(set->value);
+      }
+      values[index] = newValue;
+
+      // If this set has no gets that read from it, then it does not start a
+      // live range, and it cannot cause interference.
+      if (!action.effective) {
+        continue;
+      }
+
+      // Update interferences: This will interfere with any other local that
+      // is currently live and contains a different value.
+      for (auto other : live) {
+        // This index cannot have been live before this set (as we would be
+        // trampling some other set before us, if so; and then that set would
+        // have been ineffective). We will mark this index as live right after
+        // this loop).
+        assert(other != index);
+        if (values[other] != newValue) {
+          interfere(other, index);
+        }
+      }
+      live.insert(action.index);
+    }
+
+    // Note that we do not need to do anything for merges: while in general an
+    // interference can happen either in a block or when control flow merges,
+    // in wasm we have default values for all locals. As a result, if a local is
+    // live at the beginning of a block, it will be live at the ends of *all*
+    // the blocks reaching it: there is no possibility of an "unset local." That
+    // is, imagine we have this merge with a conflict:
+    //
+    //  [a is set to some value] ->-
+    //                              |
+    //                              |->- [merge block where a and b are used]
+    //                              |
+    //  [b is set to some value] ->-
+    //
+    // It is true that a conflict happens in the merge block, and if we had
+    // unset locals then the top block would have b unset, and the bottom block
+    // would have a unset, and so there would be no conflict there and the
+    // problem would only appear in the merge. But in wasm, that a and b are
+    // used in the merge block means that they are live at the end of both the
+    // top and bottom block, and that liveness will extend all the way back to
+    // *some* set of those values, possibly only the zero-initialization at the
+    // function start. Therefore a conflict will be noticed in both the top and
+    // bottom blocks, and that merge block does not need to reason about merging
+    // its inputs. In other words, a conflict will appear in the middle of a
+    // block, somewhere, and therefore we leave it to that block to identify,
+    // and so blocks only need to reason about their own contents and not what
+    // arrives to them.
+    //
+    // The one exception here is the entry to the function, see below.
   }
-  // Params have a value on entry, so mark them as live, as variables
-  // live at the entry expect their zero-init value.
-  LocalSet start = entry->contents.start;
+
+  // We must not try to coalesce parameters as they are fixed. Mark them as
+  // "interfering" so that we do not need to special-case them later.
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
-    start.insert(i);
+    for (Index j = i + 1; j < numParams; j++) {
+      interfereLowHigh(i, j);
+    }
   }
-  calculateInterferences(start);
-}
 
-void CoalesceLocals::calculateInterferences(const LocalSet& locals) {
-  Index size = locals.size();
-  for (Index i = 0; i < size; i++) {
-    for (Index j = i + 1; j < size; j++) {
-      interfereLowHigh(locals[i], locals[j]);
+  // We must handle interference between uses of the zero-init value and
+  // parameters manually. A zero initialization represents a set (to a default
+  // value), and that set would be what alerts us to a conflict, but there is no
+  // actual set in the IR since the zero-init value is applied implicitly.
+  for (auto i : entry->contents.start) {
+    if (i >= numParams) {
+      for (Index j = 0; j < numParams; j++) {
+        interfereLowHigh(j, i);
+      }
     }
   }
 }
 
 // Indices decision making
 
-void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices) {
+void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
+                                          std::vector<Index>& indices) {
   Index removedCopies;
   pickIndicesFromOrder(order, indices, removedCopies);
 }
 
-void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector<Index>& indices, Index& removedCopies) {
-  // mostly-simple greedy coloring
+void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order,
+                                          std::vector<Index>& indices,
+                                          Index& removedCopies) {
+// mostly-simple greedy coloring
 #if CFG_DEBUG
   std::cerr << "\npickIndicesFromOrder on " << getFunction()->name << '\n';
   std::cerr << getFunction()->body << '\n';
   std::cerr << "order:\n";
-  for (auto i : order) std::cerr << i << ' ';
+  for (auto i : order)
+    std::cerr << i << ' ';
   std::cerr << '\n';
   std::cerr << "interferences:\n";
   for (Index i = 0; i < numLocals; i++) {
@@ -477,17 +372,23 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     std::cerr << " $" << i << ": " << totalCopies[i] << '\n';
   }
 #endif
-  // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
-  std::vector<WasmType> types;
-  std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
-  std::vector<uint8_t> newCopies; // new index * numLocals => list of all copies of locals merged to it
+  // TODO: take into account distribution (99-1 is better than 50-50 with two
+  // registers, for gzip)
+  std::vector<Type> types;
+  // new index * numLocals => list of all interferences of locals merged to it
+  sparse_square_matrix<bool> newInterferences;
+
+  // new index * numLocals => list of all copies of locals merged to it
+  sparse_square_matrix<uint8_t> newCopies;
+
   indices.resize(numLocals);
   types.resize(numLocals);
-  newInterferences.resize(numLocals * numLocals);
-  std::fill(newInterferences.begin(), newInterferences.end(), 0);
+
   auto numParams = getFunction()->getNumParams();
-  newCopies.resize(numParams * numLocals); // start with enough room for the params
-  std::fill(newCopies.begin(), newCopies.end(), 0);
+
+  newInterferences.recreate(numLocals);
+  newCopies.recreate(numLocals);
+
   Index nextFree = 0;
   removedCopies = 0;
   // we can't reorder parameters, they are fixed in order, and cannot coalesce
@@ -497,8 +398,8 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     indices[i] = i;
     types[i] = getFunction()->getLocalType(i);
     for (Index j = numParams; j < numLocals; j++) {
-      newInterferences[numLocals * i + j] = interferes(i, j);
-      newCopies[numLocals * i + j] = getCopies(i, j);
+      newInterferences.set(i, j, interferes(i, j));
+      newCopies.set(i, j, getCopies(i, j));
     }
     nextFree++;
   }
@@ -507,10 +408,13 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
     Index found = -1;
     uint8_t foundCopies = -1;
     for (Index j = 0; j < nextFree; j++) {
-      if (!newInterferences[j * numLocals + actual] && getFunction()->getLocalType(actual) == types[j]) {
-        // this does not interfere, so it might be what we want. but pick the one eliminating the most copies
-        // (we could stop looking forward when there are no more items that have copies anyhow, but it doesn't seem to help)
-        auto currCopies = newCopies[j * numLocals + actual];
+      if (!newInterferences.get(j, actual) &&
+          getFunction()->getLocalType(actual) == types[j]) {
+        // this does not interfere, so it might be what we want. but pick the
+        // one eliminating the most copies (we could stop looking forward when
+        // there are no more items that have copies anyhow, but it doesn't seem
+        // to help)
+        auto currCopies = newCopies.get(j, actual);
         if (found == Index(-1) || currCopies > foundCopies) {
           indices[actual] = found = j;
           foundCopies = currCopies;
@@ -522,7 +426,6 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
       types[found] = getFunction()->getLocalType(actual);
       nextFree++;
       removedCopies += getCopies(found, actual);
-      newCopies.resize(nextFree * numLocals);
     } else {
       removedCopies += foundCopies;
     }
@@ -531,52 +434,55 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
 #endif
     // merge new interferences and copies for the new index
     for (Index k = i + 1; k < numLocals; k++) {
-      auto j = order[k]; // go in the order, we only need to update for those we will see later
-      newInterferences[found * numLocals + j] = newInterferences[found * numLocals + j] | interferes(actual, j);
-      newCopies[found * numLocals + j] += getCopies(actual, j);
+      // go in the order, we only need to update for those we will see later
+      auto j = order[k];
+      newInterferences.set(
+        found, j, newInterferences.get(found, j) || interferes(actual, j));
+      newCopies.set(found, j, newCopies.get(found, j) + getCopies(actual, j));
     }
   }
 }
 
-// given a baseline order, adjust it based on an important order of priorities (higher values
-// are higher priority). The priorities take precedence, unless they are equal and then
-// the original order should be kept.
-std::vector<Index> adjustOrderByPriorities(std::vector<Index>& baseline, std::vector<Index>& priorities) {
+// given a baseline order, adjust it based on an important order of priorities
+// (higher values are higher priority). The priorities take precedence, unless
+// they are equal and then the original order should be kept.
+std::vector<Index> adjustOrderByPriorities(std::vector<Index>& baseline,
+                                           std::vector<Index>& priorities) {
   std::vector<Index> ret = baseline;
-  std::vector<Index> reversed = Permutation::makeReversed(baseline);
+  std::vector<Index> reversed = makeReversed(baseline);
   std::sort(ret.begin(), ret.end(), [&priorities, &reversed](Index x, Index y) {
-    return priorities[x] > priorities[y] || (priorities[x] == priorities[y] && reversed[x] < reversed[y]);
+    return priorities[x] > priorities[y] ||
+           (priorities[x] == priorities[y] && reversed[x] < reversed[y]);
   });
   return ret;
-};
+}
 
 void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
-  if (numLocals == 0) return;
+  if (numLocals == 0) {
+    return;
+  }
   if (numLocals == 1) {
     indices.push_back(0);
     return;
   }
-  if (getFunction()->getNumVars() <= 1) {
-    // nothing to think about here, since we can't reorder params
-    indices = Permutation::makeIdentity(numLocals);
-    return;
-  }
-  // take into account total copies. but we must keep params in place, so give them max priority
+  // take into account total copies. but we must keep params in place, so give
+  // them max priority
   auto adjustedTotalCopies = totalCopies;
   auto numParams = getFunction()->getNumParams();
   for (Index i = 0; i < numParams; i++) {
     adjustedTotalCopies[i] = std::numeric_limits<Index>::max();
   }
-  // first try the natural order. this is less arbitrary than it seems, as the program
-  // may have a natural order of locals inherent in it.
-  auto order = Permutation::makeIdentity(numLocals);
+  // first try the natural order. this is less arbitrary than it seems, as the
+  // program may have a natural order of locals inherent in it.
+  auto order = makeIdentity(numLocals);
   order = adjustOrderByPriorities(order, adjustedTotalCopies);
   Index removedCopies;
   pickIndicesFromOrder(order, indices, removedCopies);
   auto maxIndex = *std::max_element(indices.begin(), indices.end());
-  // next try the reverse order. this both gives us another chance at something good,
-  // and also the very naturalness of the simple order may be quite suboptimal
-  Permutation::setIdentity(order);
+  // next try the reverse order. this both gives us another chance at something
+  // good, and also the very naturalness of the simple order may be quite
+  // suboptimal
+  setIdentity(order);
   for (Index i = numParams; i < numLocals; i++) {
     order[i] = numParams + numLocals - 1 - i;
   }
@@ -584,74 +490,72 @@ void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
   std::vector<Index> reverseIndices;
   Index reverseRemovedCopies;
   pickIndicesFromOrder(order, reverseIndices, reverseRemovedCopies);
-  auto reverseMaxIndex = *std::max_element(reverseIndices.begin(), reverseIndices.end());
-  // prefer to remove copies foremost, as it matters more for code size (minus gzip), and
-  // improves throughput.
-  if (reverseRemovedCopies > removedCopies || (reverseRemovedCopies == removedCopies && reverseMaxIndex < maxIndex)) {
+  auto reverseMaxIndex =
+    *std::max_element(reverseIndices.begin(), reverseIndices.end());
+  // prefer to remove copies foremost, as it matters more for code size (minus
+  // gzip), and improves throughput.
+  if (reverseRemovedCopies > removedCopies ||
+      (reverseRemovedCopies == removedCopies && reverseMaxIndex < maxIndex)) {
     indices.swap(reverseIndices);
   }
 }
 
-// Remove a copy from a set of an if, where one if arm is a get of the same set
-static void removeIfCopy(Expression** origin, SetLocal* set, If* iff, Expression*& copy, Expression*& other, Module* module) {
-  // replace the origin with the if, and sink the set into the other non-copying arm
-  *origin = iff;
-  set->value = other;
-  other = set;
-  if (!set->isTee()) {
-    // we don't need the copy at all
-    copy = nullptr;
-    if (!iff->ifTrue) {
-      Builder(*module).flip(iff);
-    }
-    iff->finalize();
-  }
-}
-
-void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root) {
+void CoalesceLocals::applyIndices(std::vector<Index>& indices,
+                                  Expression* root) {
   assert(indices.size() == numLocals);
   for (auto& curr : basicBlocks) {
     auto& actions = curr->contents.actions;
     for (auto& action : actions) {
       if (action.isGet()) {
-        auto* get = (*action.origin)->cast<GetLocal>();
+        auto* get = (*action.origin)->cast<LocalGet>();
         get->index = indices[get->index];
-      } else {
-        auto* set = (*action.origin)->cast<SetLocal>();
+      } else if (action.isSet()) {
+        auto* set = (*action.origin)->cast<LocalSet>();
         set->index = indices[set->index];
-        // in addition, we can optimize out redundant copies and ineffective sets
-        GetLocal* get;
-        if ((get = set->value->dynCast<GetLocal>()) && get->index == set->index) {
-          if (set->isTee()) {
-            *action.origin = get;
-          } else {
-            ExpressionManipulator::nop(set);
+        // in addition, we can optimize out redundant copies and ineffective
+        // sets
+        if (auto* get = set->value->dynCast<LocalGet>()) {
+          if (get->index == set->index) {
+            action.removeCopy();
+            continue;
           }
-          continue;
         }
+        if (auto* subSet = set->value->dynCast<LocalSet>()) {
+          if (subSet->index == set->index) {
+            set->value = subSet->value;
+            continue;
+          }
+        }
+
+        // Remove ineffective actions, that is, dead stores.
+        //
+        // Note that this may have downsides for non-nullable locals:
+        //
+        //   x = whatever; // dead set for validation
+        //   if (..) {
+        //     x = value1;
+        //   } else {
+        //     x = value2;
+        //   }
+        //
+        // The dead set ensures validation, at the cost of extra code size and
+        // slower speed in some tiers (the optimizing tier, at least, will
+        // remove such dead sets anyhow). In theory keeping such a dead set may
+        // be worthwhile, as it may save code size (by keeping the local
+        // non-nullable and avoiding ref.as_non_nulls later). But the tradeoff
+        // here isn't clear, so do the simple thing for now and remove all dead
+        // sets.
         if (!action.effective) {
-          *action.origin = set->value; // value may have no side effects, further optimizations can eliminate it
+          // value may have no side effects, further optimizations can eliminate
+          // it
+          *action.origin = set->value;
           if (!set->isTee()) {
             // we need to drop it
-            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(set);
+            Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
             drop->value = *action.origin;
             *action.origin = drop;
           }
           continue;
-        }
-        if (auto* iff = set->value->dynCast<If>()) {
-          if (auto* get = iff->ifTrue->dynCast<GetLocal>()) {
-            if (get->index == set->index) {
-              removeIfCopy(action.origin, set, iff, iff->ifTrue, iff->ifFalse, getModule());
-              continue;
-            }
-          }
-          if (auto* get = iff->ifFalse->dynCast<GetLocal>()) {
-            if (get->index == set->index) {
-              removeIfCopy(action.origin, set, iff, iff->ifFalse, iff->ifTrue, getModule());
-              continue;
-            }
-          }
         }
       }
     }
@@ -693,10 +597,13 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
     double getFitness() { return fitness; }
     void dump(std::string text) {
       std::cout << text + ": ( ";
-      for (Index i = 0; i < size(); i++) std::cout << (*this)[i] << " ";
+      for (Index i = 0; i < size(); i++) {
+        std::cout << (*this)[i] << " ";
+      }
       std::cout << ")\n";
       std::cout << "of quality: " << getFitness() << "\n";
     }
+
   private:
     double fitness;
   };
@@ -716,9 +623,12 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
       // secondarily, it is nice to not reorder locals unnecessarily
       double fragment = 1.0 / (2.0 * parent->numLocals);
       for (Index i = 0; i < parent->numLocals; i++) {
-        if ((*order)[i] == i) fitness += fragment; // boost for each that wasn't moved
+        if ((*order)[i] == i) {
+          fitness += fragment; // boost for each that wasn't moved
+        }
       }
-      fitness = (100 * fitness) + removedCopies; // removing copies is a secondary concern
+      // removing copies is a secondary concern
+      fitness = (100 * fitness) + removedCopies;
       order->setFitness(fitness);
     }
 
@@ -729,16 +639,19 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
         (*ret)[i] = i;
       }
       if (first) {
-        // as the first guess, use the natural order. this is not arbitrary for two reasons.
-        // first, there may be an inherent order in the input (frequent indices are lower,
-        // etc.). second, by ensuring we start with the natural order, we ensure we are at
-        // least as good as the non-learning variant.
-        // TODO: use ::pickIndices from the parent, so we literally get the simpler approach
-        //       as our first option
+        // as the first guess, use the natural order. this is not arbitrary for
+        // two reasons. first, there may be an inherent order in the input
+        // (frequent indices are lower, etc.). second, by ensuring we start with
+        // the natural order, we ensure we are at least as good as the
+        // non-learning variant.
+        // TODO: use ::pickIndices from the parent, so we literally get the
+        //       simpler approach as our first option
         first = false;
       } else {
         // leave params alone, shuffle the rest
-        std::shuffle(ret->begin() + parent->getFunction()->getNumParams(), ret->end(), noise);
+        std::shuffle(ret->begin() + parent->getFunction()->getNumParams(),
+                     ret->end(),
+                     noise);
       }
       calculateFitness(ret);
 #ifdef CFG_LEARN_DEBUG
@@ -766,7 +679,9 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
         // if (i, i + 1) is in reverse order in right, flip them
         if (reverseRight[(*ret)[i]] > reverseRight[(*ret)[i + 1]]) {
           std::swap((*ret)[i], (*ret)[i + 1]);
-          i++; // if we don't skip, we might end up pushing an element all the way to the end, which is not very perturbation-y
+          // if we don't skip, we might end up pushing an element all the way to
+          // the end, which is not very perturbation-y
+          i++;
         }
       }
       calculateFitness(ret);
@@ -786,7 +701,8 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
   std::cout << "[learning for " << getFunction()->name << "]\n";
 #endif
   auto numVars = this->getFunction()->getNumVars();
-  const int GENERATION_SIZE = std::min(Index(numVars * (numVars - 1)), Index(20));
+  const int GENERATION_SIZE =
+    std::min(Index(numVars * (numVars - 1)), Index(20));
   Generator generator(this);
   GeneticLearner<Order, double, Generator> learner(generator, GENERATION_SIZE);
 #ifdef CFG_LEARN_DEBUG
@@ -797,7 +713,9 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
   while (1) {
     learner.runGeneration();
     auto newBest = learner.getBest()->getFitness();
-    if (newBest == oldBest) break; // unlikely we can improve
+    if (newBest == oldBest) {
+      break; // unlikely we can improve
+    }
     oldBest = newBest;
 #ifdef CFG_LEARN_DEBUG
     learner.getBest()->dump("current best");
@@ -806,16 +724,15 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
 #ifdef CFG_LEARN_DEBUG
   learner.getBest()->dump("the best");
 #endif
-  this->pickIndicesFromOrder(*learner.getBest(), indices); // TODO: cache indices in Orders, at the cost of more memory?
+  // TODO: cache indices in Orders, at the cost of more memory?
+  this->pickIndicesFromOrder(*learner.getBest(), indices);
 }
 
 // declare passes
 
-Pass *createCoalesceLocalsPass() {
-  return new CoalesceLocals();
-}
+Pass* createCoalesceLocalsPass() { return new CoalesceLocals(); }
 
-Pass *createCoalesceLocalsWithLearningPass() {
+Pass* createCoalesceLocalsWithLearningPass() {
   return new CoalesceLocalsWithLearning();
 }
 

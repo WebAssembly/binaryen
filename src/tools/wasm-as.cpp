@@ -19,80 +19,140 @@
 //
 
 #include "support/colors.h"
-#include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-binary.h"
+#include "wasm-io.h"
 #include "wasm-s-parser.h"
+#include "wasm-validator.h"
+
+#include "tool-options.h"
+#include "tool-utils.h"
 
 using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   std::string symbolMap;
-  Options options("wasm-as", "Assemble a .wast (WebAssembly text format) into a .wasm (WebAssembly binary format)");
+  std::string sourceMapFilename;
+  std::string sourceMapUrl;
+
+  const std::string WasmAsOption = "wasm-as options";
+
+  ToolOptions options("wasm-as",
+                      "Assemble a .wat (WebAssembly text format) into a .wasm "
+                      "(WebAssembly binary format)");
   options.extra["validate"] = "wasm";
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--validate", "-v", "Control validation of the output module",
-           Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             if (argument != "web" && argument != "none" && argument != "wasm") {
-               std::cerr << "Valid arguments for --validate flag are 'wasm', 'web', and 'none'.\n";
-               exit(1);
-             }
-             o->extra["validate"] = argument;
-           })
-      .add("--debuginfo", "-g", "Emit names section and debug info",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { debugInfo = true; })
-      .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
-           Options::Arguments::One,
-           [&](Options *o, const std::string &argument) { symbolMap = argument; })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string &argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output",
+         "-o",
+         "Output file (stdout if not specified)",
+         WasmAsOption,
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["output"] = argument;
+           Colors::setEnabled(false);
+         })
+    .add("--validate",
+         "-v",
+         "Control validation of the output module",
+         WasmAsOption,
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           if (argument != "web" && argument != "none" && argument != "wasm") {
+             Fatal() << "Valid arguments for --validate flag are 'wasm', "
+                        "'web', and 'none'.\n";
+           }
+           o->extra["validate"] = argument;
+         })
+    .add("--debuginfo",
+         "-g",
+         "Emit names section and debug info",
+         WasmAsOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { debugInfo = true; })
+    .add("--source-map",
+         "-sm",
+         "Emit source map to the specified file",
+         WasmAsOption,
+         Options::Arguments::One,
+         [&sourceMapFilename](Options* o, const std::string& argument) {
+           sourceMapFilename = argument;
+         })
+    .add("--source-map-url",
+         "-su",
+         "Use specified string as source map URL",
+         WasmAsOption,
+         Options::Arguments::One,
+         [&sourceMapUrl](Options* o, const std::string& argument) {
+           sourceMapUrl = argument;
+         })
+    .add("--symbolmap",
+         "-s",
+         "Emit a symbol map (indexes => names)",
+         WasmAsOption,
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { symbolMap = argument; })
+    .add_positional("INFILE",
+                    Options::Arguments::One,
+                    [](Options* o, const std::string& argument) {
+                      o->extra["infile"] = argument;
+                    });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
+  // default output is infile with changed suffix
+  if (options.extra.find("output") == options.extra.end()) {
+    options.extra["output"] =
+      removeSpecificSuffix(options.extra["infile"], ".wat") + ".wasm";
+  }
+
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
+  options.applyFeatures(wasm);
 
   try {
-    if (options.debug) std::cerr << "s-parsing..." << std::endl;
+    if (options.debug) {
+      std::cerr << "s-parsing..." << std::endl;
+    }
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
-    if (options.debug) std::cerr << "w-parsing..." << std::endl;
-    SExpressionWasmBuilder builder(wasm, *root[0]);
+    if (options.debug) {
+      std::cerr << "w-parsing..." << std::endl;
+    }
+    SExpressionWasmBuilder builder(wasm, *root[0], options.profile);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   }
 
   if (options.extra["validate"] != "none") {
-    if (options.debug) std::cerr << "Validating..." << std::endl;
-    if (!wasm::WasmValidator().validate(wasm,
-        options.extra["validate"] == "web")) {
+    if (options.debug) {
+      std::cerr << "Validating..." << std::endl;
+    }
+    if (!wasm::WasmValidator().validate(
+          wasm,
+          WasmValidator::Globally |
+            (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
       Fatal() << "Error: input module is not valid.\n";
     }
   }
 
-  if (options.debug) std::cerr << "binarification..." << std::endl;
-  BufferWithRandomAccess buffer(options.debug);
-  WasmBinaryWriter writer(&wasm, buffer, options.debug);
+  if (options.debug) {
+    std::cerr << "writing..." << std::endl;
+  }
+  ModuleWriter writer;
+  writer.setBinary(true);
   writer.setDebugInfo(debugInfo);
-  if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
-  writer.write();
+  if (sourceMapFilename.size()) {
+    writer.setSourceMapFilename(sourceMapFilename);
+    writer.setSourceMapUrl(sourceMapUrl);
+  }
+  if (symbolMap.size() > 0) {
+    writer.setSymbolMap(symbolMap);
+  }
+  writer.write(wasm, options.extra["output"]);
 
-  if (options.debug) std::cerr << "writing to output..." << std::endl;
-  Output output(options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
-  buffer.writeTo(output);
-
-  if (options.debug) std::cerr << "Done." << std::endl;
+  if (options.debug) {
+    std::cerr << "Done." << std::endl;
+  }
 }

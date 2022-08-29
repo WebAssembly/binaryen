@@ -1,0 +1,16 @@
+(module
+ (type $i32_=>_none (func (param i32)))
+ (func $func (param $x i32)
+  (loop $loop
+   (block $out
+    (block
+     (br_if $out
+      (local.get $x)
+     )
+     (nop)
+     (br $loop)
+    )
+   )
+  )
+ )
+)

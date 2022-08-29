@@ -1,0 +1,84 @@
+(module
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
+ (type $i32_f32_f64_=>_none (func (param i32 f32 f64)))
+ (type $i32_f32_f64_=>_i64 (func (param i32 f32 f64) (result i64)))
+ (type $i32_i32_i32_f32_f64_=>_none (func (param i32 i32 i32 f32 f64)))
+ (type $i32_f32_f64_=>_i32 (func (param i32 f32 f64) (result i32)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (memory $0 256 256)
+ (export "add" (func $add))
+ (export "no_return" (func $no-return))
+ (export "types" (func $legalstub$types))
+ (export "types2" (func $types2))
+ (export "types3" (func $legalstub$types3))
+ (func $add (param $x i32) (param $y i32) (result i32)
+  (i32.add
+   (local.get $x)
+   (local.get $y)
+  )
+ )
+ (func $unexported (param $x i32) (param $y i32) (result i32)
+  (i32.add
+   (local.get $x)
+   (local.get $y)
+  )
+ )
+ (func $no-return (param $x i32)
+  (drop
+   (i32.add
+    (local.get $x)
+    (local.get $x)
+   )
+  )
+ )
+ (func $types (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+  (nop)
+ )
+ (func $types2 (param $x i32) (param $z f32) (param $w f64)
+  (nop)
+ )
+ (func $types3 (param $x i32) (param $z f32) (param $w f64) (result i64)
+  (i64.const 1)
+ )
+ (func $legalstub$types (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f32) (param $4 f64)
+  (call $types
+   (local.get $0)
+   (i64.or
+    (i64.extend_i32_u
+     (local.get $1)
+    )
+    (i64.shl
+     (i64.extend_i32_u
+      (local.get $2)
+     )
+     (i64.const 32)
+    )
+   )
+   (local.get $3)
+   (local.get $4)
+  )
+ )
+ (func $legalstub$types3 (param $0 i32) (param $1 f32) (param $2 f64) (result i32)
+  (local $3 i64)
+  (local.set $3
+   (call $types3
+    (local.get $0)
+    (local.get $1)
+    (local.get $2)
+   )
+  )
+  (call $setTempRet0
+   (i32.wrap_i64
+    (i64.shr_u
+     (local.get $3)
+     (i64.const 32)
+    )
+   )
+  )
+  (i32.wrap_i64
+   (local.get $3)
+  )
+ )
+)

@@ -1,0 +1,79 @@
+(module
+ (type $none_=>_none (func))
+ (func $a
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $b
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $a-block
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $b-block
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $a-prepost
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (nop)
+ )
+ (func $b-prepost
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $a-block-prepost
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (nop)
+ )
+ (func $b-block-prepost
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $recurse
+  (nop)
+  (block $label$1
+   (nop)
+   (br $label$1)
+  )
+  (nop)
+ )
+ (func $recurse-b
+  (block $label$1
+   (nop)
+   (block $label$2
+    (nop)
+    (br $label$1)
+   )
+  )
+ )
+)
+

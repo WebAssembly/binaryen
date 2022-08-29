@@ -1,0 +1,6 @@
+[wasm-validator error in function test] unexpected false: global.get name must be valid, on 
+(global.get $missing)
+0
+[wasm-validator error in function test] unexpected false: local.get index must be small enough, on 
+(local.get $0)
+0

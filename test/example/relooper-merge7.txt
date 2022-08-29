@@ -1,0 +1,37 @@
+(block
+ (block $block$3$break
+  (loop $shape$0$continue
+   (block $block$2$break
+    (call $print
+     (i32.const 0)
+    )
+    (if
+     (i32.const -10)
+     (br $block$3$break)
+     (br $block$2$break)
+    )
+   )
+   (block
+    (call $print
+     (i32.const 1)
+    )
+    (block
+     (br $shape$0$continue)
+    )
+   )
+  )
+ )
+ (block
+  (block
+   (call $print
+    (i32.const 2)
+   )
+   (block
+    (call $print
+     (i32.const 3)
+    )
+    (return)
+   )
+  )
+ )
+)

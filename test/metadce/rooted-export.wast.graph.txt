@@ -1,0 +1,13 @@
+[
+  {
+    "name": "rooted-export-func",
+    "root": true,
+    "export": "wasm_func_b"
+  },
+  {
+    "name": "rooted-export-tag",
+    "root": true,
+    "export": "wasm_tag_b"
+  }
+]
+

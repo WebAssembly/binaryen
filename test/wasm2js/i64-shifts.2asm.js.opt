@@ -1,0 +1,51 @@
+
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
+ function legalstub$1($0, $1, $2, $3, $4, $5) {
+  $3 = $0;
+  $0 = $2 & 31;
+  if (($2 & 63) >>> 0 >= 32) {
+   $1 = $3 << $0;
+   $0 = 0;
+  } else {
+   $1 = (1 << $0) - 1 & $3 >>> 32 - $0 | $1 << $0;
+   $0 = $3 << $0;
+  }
+  return ($0 | 0) == ($4 | 0) & ($1 | 0) == ($5 | 0);
+ }
+ 
+ function legalstub$2($0, $1, $2, $3, $4, $5) {
+  $3 = $0;
+  $0 = $2 & 31;
+  if (($2 & 63) >>> 0 >= 32) {
+   $2 = $1 >> 31;
+   $0 = $1 >> $0;
+  } else {
+   $2 = $1 >> $0;
+   $0 = ((1 << $0) - 1 & $1) << 32 - $0 | $3 >>> $0;
+  }
+  return ($0 | 0) == ($4 | 0) & ($2 | 0) == ($5 | 0);
+ }
+ 
+ return {
+  "shl_i64": legalstub$1, 
+  "shr_i64": legalstub$2
+ };
+}
+
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+export var shl_i64 = retasmFunc.shl_i64;
+export var shr_i64 = retasmFunc.shr_i64;

@@ -1,0 +1,81 @@
+
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
+ function legalstub$1($0, $1, $2, $3) {
+  return ($0 | 0) == ($2 | 0) & ($1 | 0) == ($3 | 0);
+ }
+ 
+ function legalstub$2($0, $1, $2, $3) {
+  return ($0 | 0) != ($2 | 0) | ($1 | 0) != ($3 | 0);
+ }
+ 
+ function legalstub$3($0, $1, $2, $3) {
+  return ($1 | 0) >= ($3 | 0) & $0 >>> 0 >= $2 >>> 0 | ($1 | 0) > ($3 | 0);
+ }
+ 
+ function legalstub$4($0, $1, $2, $3) {
+  return $0 >>> 0 > $2 >>> 0 & ($1 | 0) >= ($3 | 0) | ($1 | 0) > ($3 | 0);
+ }
+ 
+ function legalstub$5($0, $1, $2, $3) {
+  return ($1 | 0) <= ($3 | 0) & $0 >>> 0 <= $2 >>> 0 | ($1 | 0) < ($3 | 0);
+ }
+ 
+ function legalstub$6($0, $1, $2, $3) {
+  return $0 >>> 0 < $2 >>> 0 & ($1 | 0) <= ($3 | 0) | ($1 | 0) < ($3 | 0);
+ }
+ 
+ function legalstub$7($0, $1, $2, $3) {
+  return ($1 | 0) == ($3 | 0) & $0 >>> 0 >= $2 >>> 0 | $1 >>> 0 > $3 >>> 0;
+ }
+ 
+ function legalstub$8($0, $1, $2, $3) {
+  return ($1 | 0) == ($3 | 0) & $0 >>> 0 > $2 >>> 0 | $1 >>> 0 > $3 >>> 0;
+ }
+ 
+ function legalstub$9($0, $1, $2, $3) {
+  return ($1 | 0) == ($3 | 0) & $0 >>> 0 <= $2 >>> 0 | $1 >>> 0 < $3 >>> 0;
+ }
+ 
+ function legalstub$10($0, $1, $2, $3) {
+  return ($1 | 0) == ($3 | 0) & $0 >>> 0 < $2 >>> 0 | $1 >>> 0 < $3 >>> 0;
+ }
+ 
+ return {
+  "eq_i64": legalstub$1, 
+  "ne_i64": legalstub$2, 
+  "ge_s_i64": legalstub$3, 
+  "gt_s_i64": legalstub$4, 
+  "le_s_i64": legalstub$5, 
+  "lt_s_i64": legalstub$6, 
+  "ge_u_i64": legalstub$7, 
+  "gt_u_i64": legalstub$8, 
+  "le_u_i64": legalstub$9, 
+  "lt_u_i64": legalstub$10
+ };
+}
+
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+export var eq_i64 = retasmFunc.eq_i64;
+export var ne_i64 = retasmFunc.ne_i64;
+export var ge_s_i64 = retasmFunc.ge_s_i64;
+export var gt_s_i64 = retasmFunc.gt_s_i64;
+export var le_s_i64 = retasmFunc.le_s_i64;
+export var lt_s_i64 = retasmFunc.lt_s_i64;
+export var ge_u_i64 = retasmFunc.ge_u_i64;
+export var gt_u_i64 = retasmFunc.gt_u_i64;
+export var le_u_i64 = retasmFunc.le_u_i64;
+export var lt_u_i64 = retasmFunc.lt_u_i64;

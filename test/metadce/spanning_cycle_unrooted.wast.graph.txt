@@ -1,0 +1,12 @@
+[
+  {
+    "name": "wasm_export",
+    "export": "wasm_func_a"
+  },
+  {
+    "name": "outside_js_function",
+    "reaches": ["wasm_export"],
+    "import": ["env", "js_func"]
+  }
+]
+

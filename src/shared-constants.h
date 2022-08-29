@@ -14,43 +14,57 @@
  * limitations under the License.
  */
 
+#ifndef wasm_shared_constants_h
+#define wasm_shared_constants_h
+
+#include "wasm.h"
+
 namespace wasm {
 
-extern Name GROW_WASM_MEMORY,
-            NEW_SIZE,
-            MODULE,
-            START,
-            FUNC,
-            PARAM,
-            RESULT,
-            MEMORY,
-            DATA,
-            SEGMENT,
-            EXPORT,
-            IMPORT,
-            TABLE,
-            ELEM,
-            LOCAL,
-            TYPE,
-            CALL,
-            CALL_IMPORT,
-            CALL_INDIRECT,
-            BLOCK,
-            BR_IF,
-            THEN,
-            ELSE,
-            _NAN,
-            _INFINITY,
-            NEG_INFINITY,
-            NEG_NAN,
-            CASE,
-            BR,
-            ANYFUNC,
-            FAKE_RETURN,
-            MUT,
-            SPECTEST,
-            PRINT,
-            EXIT;
+extern Name MEMORY_BASE;
+extern Name TABLE_BASE;
+extern Name STACK_POINTER;
+extern Name NEW_SIZE;
+extern Name MODULE;
+extern Name START;
+extern Name FUNC;
+extern Name PARAM;
+extern Name RESULT;
+extern Name MEMORY;
+extern Name DATA;
+extern Name PASSIVE;
+extern Name EXPORT;
+extern Name IMPORT;
+extern Name TABLE;
+extern Name GLOBAL;
+extern Name ELEM;
+extern Name LOCAL;
+extern Name TYPE;
+extern Name REF;
+extern Name NULL_;
+extern Name CALL;
+extern Name CALL_IMPORT;
+extern Name CALL_INDIRECT;
+extern Name BLOCK;
+extern Name BR_IF;
+extern Name THEN;
+extern Name ELSE;
+extern Name _NAN;
+extern Name _INFINITY;
+extern Name NEG_INFINITY;
+extern Name NEG_NAN;
+extern Name CASE;
+extern Name BR;
+extern Name FUNCREF;
+extern Name FAKE_RETURN;
+extern Name DELEGATE_CALLER_TARGET;
+extern Name MUT;
+extern Name SPECTEST;
+extern Name PRINT;
+extern Name EXIT;
+extern Name SHARED;
+extern Name TAG;
 
 } // namespace wasm
 
+#endif // wasm_shared_constants_h

@@ -1,0 +1,13 @@
+(module
+ (type $i32_=>_f64 (func (param i32) (result f64)))
+ (global $global$3 (mut f64) (f64.const 0))
+ (func $1 (param $x i32) (result f64)
+  (local $var$0 f64)
+  (block $label$0 (result f64)
+   (local.set $var$0
+    (f64.const 0)
+   )
+   (f64.const -3.4)
+  )
+ )
+)

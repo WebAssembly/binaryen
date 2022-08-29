@@ -19,12 +19,16 @@
 // merge names when possible (by merging their blocks)
 //
 
-#include <wasm.h>
+#include <ir/branch-utils.h>
 #include <pass.h>
+#include <shared-constants.h>
+#include <wasm.h>
 
 namespace wasm {
 
-struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visitor<RemoveUnusedNames>>> {
+struct RemoveUnusedNames
+  : public WalkerPass<PostWalker<RemoveUnusedNames,
+                                 UnifiedExpressionVisitor<RemoveUnusedNames>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RemoveUnusedNames; }
@@ -33,15 +37,12 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visit
   // a parent block, we know if it was branched to
   std::map<Name, std::set<Expression*>> branchesSeen;
 
-  void visitBreak(Break *curr) {
-    branchesSeen[curr->name].insert(curr);
-  }
-
-  void visitSwitch(Switch *curr) {
-    for (auto name : curr->targets) {
-      branchesSeen[name].insert(curr);
-    }
-    branchesSeen[curr->default_].insert(curr);
+  void visitExpression(Expression* curr) {
+    BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+      if (name.is()) {
+        branchesSeen[name].insert(curr);
+      }
+    });
   }
 
   void handleBreakTarget(Name& name) {
@@ -54,44 +55,44 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, Visit
     }
   }
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     if (curr->name.is() && curr->list.size() == 1) {
       auto* child = curr->list[0]->dynCast<Block>();
-      if (child && child->name.is()) {
-        // we have just one child, this block, so breaking out of it goes to the same place as breaking out of us, we just need one name (and block)
+      if (child && child->name.is() && child->type == curr->type) {
+        // we have just one child, this block, so breaking out of it goes to the
+        // same place as breaking out of us, we just need one name (and block)
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {
-          if (Break* br = branch->dynCast<Break>()) {
-            if (br->name == curr->name) br->name = child->name;
-          } else if (Switch* sw = branch->dynCast<Switch>()) {
-            for (auto& target : sw->targets) {
-              if (target == curr->name) target = child->name;
-            }
-            if (sw->default_ == curr->name) sw->default_ = child->name;
-          } else {
-            WASM_UNREACHABLE();
-          }
+          BranchUtils::replacePossibleTarget(branch, curr->name, child->name);
         }
+        child->finalize(child->type);
         replaceCurrent(child);
       }
     }
     handleBreakTarget(curr->name);
   }
 
-  void visitLoop(Loop *curr) {
+  void visitLoop(Loop* curr) {
     handleBreakTarget(curr->name);
-    if (!curr->name.is()) {
+    if (!curr->name.is() && curr->body->type == curr->type) {
       replaceCurrent(curr->body);
     }
   }
 
-  void visitFunction(Function *curr) {
+  void visitTry(Try* curr) {
+    handleBreakTarget(curr->name);
+    // Try has not just a break target but also an optional delegate with a
+    // target name, so call the generic visitor as well to handle that.
+    visitExpression(curr);
+  }
+
+  void visitFunction(Function* curr) {
+    // When we reach the function body we can erase delegations to the caller.
+    branchesSeen.erase(DELEGATE_CALLER_TARGET);
     assert(branchesSeen.empty());
   }
 };
 
-Pass *createRemoveUnusedNamesPass() {
-  return new RemoveUnusedNames();
-}
+Pass* createRemoveUnusedNamesPass() { return new RemoveUnusedNames(); }
 
 } // namespace wasm

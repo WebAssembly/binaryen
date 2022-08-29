@@ -15,833 +15,629 @@
  */
 
 //
-// wasm.h: WebAssembly representation and processing library, in one
-//         header file.
+// wasm.h: Define Binaryen IR, a representation for WebAssembly, with
+//         all core parts in one simple header file.
 //
-// This represents WebAssembly in an AST format, with a focus on making
-// it easy to not just inspect but also to process. For example, some
-// things that this enables are:
-//
-//  * Interpreting: See wasm-interpreter.h.
-//  * Optimizing: See asm2wasm.h, which performs some optimizations
-//                after code generation.
-//  * Validation: See wasm-validator.h.
-//  * Pretty-printing: See Print.cpp.
-//
-
-//
-// wasm.js internal WebAssembly representation design:
-//
-//  * Unify where possible. Where size isn't a concern, combine
-//    classes, so binary ops and relational ops are joined. This
-//    simplifies that AST and makes traversals easier.
-//  * Optimize for size? This might justify separating if and if_else
-//    (so that if doesn't have an always-empty else; also it avoids
-//    a branch).
+// For more overview, see README.md
 //
 
 #ifndef wasm_wasm_h
 #define wasm_wasm_h
 
+#include <algorithm>
+#include <array>
 #include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <fstream>
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
-#include "compiler-support.h"
-#include "emscripten-optimizer/simple_ast.h"
+#include "literal.h"
 #include "mixed_arena.h"
-#include "pretty_printing.h"
-#include "support/bits.h"
-#include "support/utilities.h"
+#include "support/index.h"
+#include "support/name.h"
+#include "wasm-features.h"
+#include "wasm-type.h"
 
 namespace wasm {
-
-// We use a Name for all of the identifiers. These are IStrings, so they are
-// all interned - comparisons etc are just pointer comparisons, so there is no
-// perf loss. Having names everywhere makes using the AST much nicer (for
-// example, block names are strings and not offsets, which makes composition
-// - adding blocks, removing blocks - easy). One exception is local variables,
-// where we do use indices, as they are a large proportion of the AST,
-// perf matters a lot there, and compositionality is not a problem.
-// TODO: as an optimization, IString values < some threshold could be considered
-//       numerical indices directly.
-
-struct Name : public cashew::IString {
-  Name() : cashew::IString() {}
-  Name(const char* str) : cashew::IString(str, false) {}
-  Name(cashew::IString str) : cashew::IString(str) {}
-  Name(const std::string& str) : cashew::IString(str.c_str(), false) {}
-
-  friend std::ostream& operator<<(std::ostream& o, Name name) {
-    assert(name.str);
-    return o << '$' << name.str; // reference interpreter requires we prefix all names
-  }
-
-  static Name fromInt(size_t i) {
-    return cashew::IString(std::to_string(i).c_str(), false);
-  }
-};
 
 // An index in a wasm module
 typedef uint32_t Index;
 
-// An address in linear memory. For now only wasm32
+// An address in linear memory.
 struct Address {
-  typedef uint32_t address_t;
-  address_t addr;
-  Address() : addr(0) {}
-  Address(uint64_t a) : addr(static_cast<address_t>(a)) {
-    assert(a <= std::numeric_limits<address_t>::max());
-  }
+  typedef uint32_t address32_t;
+  typedef uint64_t address64_t;
+  address64_t addr;
+  constexpr Address() : addr(0) {}
+  constexpr Address(uint64_t a) : addr(a) {}
   Address& operator=(uint64_t a) {
-    assert(a <= std::numeric_limits<address_t>::max());
-    addr = static_cast<address_t>(a);
+    addr = a;
     return *this;
   }
-  operator address_t() const { return addr; }
-  Address& operator++() { ++addr; return *this; }
+  operator address64_t() const { return addr; }
+  Address& operator++(int) {
+    ++addr;
+    return *this;
+  }
 };
 
-// An offset into memory
-typedef int32_t Offset;
-
-// Types
-
-enum WasmType {
-  none,
-  i32,
-  i64,
-  f32,
-  f64,
-  unreachable // none means no type, e.g. a block can have no return type. but
-              // unreachable is different, as it can be "ignored" when doing
-              // type checking across branches
-};
-
-inline const char* printWasmType(WasmType type) {
-  switch (type) {
-    case WasmType::none: return "none";
-    case WasmType::i32: return "i32";
-    case WasmType::i64: return "i64";
-    case WasmType::f32: return "f32";
-    case WasmType::f64: return "f64";
-    case WasmType::unreachable: return "unreachable";
-    default: WASM_UNREACHABLE();
-  }
-}
-
-inline unsigned getWasmTypeSize(WasmType type) {
-  switch (type) {
-    case WasmType::none: abort();
-    case WasmType::i32: return 4;
-    case WasmType::i64: return 8;
-    case WasmType::f32: return 4;
-    case WasmType::f64: return 8;
-    default: WASM_UNREACHABLE();
-  }
-}
-
-inline bool isWasmTypeFloat(WasmType type) {
-  switch (type) {
-    case f32:
-    case f64: return true;
-    default: return false;
-  }
-}
-
-inline WasmType getWasmType(unsigned size, bool float_) {
-  if (size < 4) return WasmType::i32;
-  if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
-  if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
-  abort();
-}
-
-inline WasmType getReachableWasmType(WasmType a, WasmType b) {
-  return a != unreachable ? a : b;
-}
-
-inline bool isConcreteWasmType(WasmType type) {
-  return type != none && type != unreachable;
-}
-
-// Literals
-
-class Literal {
-public:
-  WasmType type;
-
-private:
-  // store only integers, whose bits are deterministic. floats
-  // can have their signalling bit set, for example.
-  union {
-    int32_t i32;
-    int64_t i64;
-  };
-
-  // The RHS of shl/shru/shrs must be masked by bitwidth.
-  template <typename T>
-  static T shiftMask(T val) {
-    return val & (sizeof(T) * 8 - 1);
-  }
-
- public:
-  Literal() : type(WasmType::none), i64(0) {}
-  explicit Literal(WasmType type) : type(type), i64(0) {}
-  explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
-  explicit Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
-  explicit Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(float    init) : type(WasmType::f32), i32(bit_cast<int32_t>(init)) {}
-  explicit Literal(double   init) : type(WasmType::f64), i64(bit_cast<int64_t>(init)) {}
-
-  Literal castToF32() {
-    assert(type == WasmType::i32);
-    Literal ret(i32);
-    ret.type = WasmType::f32;
-    return ret;
-  }
-  Literal castToF64() {
-    assert(type == WasmType::i64);
-    Literal ret(i64);
-    ret.type = WasmType::f64;
-    return ret;
-  }
-  Literal castToI32() {
-    assert(type == WasmType::f32);
-    Literal ret(i32);
-    ret.type = WasmType::i32;
-    return ret;
-  }
-  Literal castToI64() {
-    assert(type == WasmType::f64);
-    Literal ret(i64);
-    ret.type = WasmType::i64;
-    return ret;
-  }
-
-  int32_t geti32() const { assert(type == WasmType::i32); return i32; }
-  int64_t geti64() const { assert(type == WasmType::i64); return i64; }
-  float   getf32() const { assert(type == WasmType::f32); return bit_cast<float>(i32); }
-  double  getf64() const { assert(type == WasmType::f64); return bit_cast<double>(i64); }
-
-  int32_t* geti32Ptr() { assert(type == WasmType::i32); return &i32; } // careful!
-
-  int32_t reinterpreti32() const { assert(type == WasmType::f32); return i32; }
-  int64_t reinterpreti64() const { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() const { assert(type == WasmType::i32); return bit_cast<float>(i32); }
-  double  reinterpretf64() const { assert(type == WasmType::i64); return bit_cast<double>(i64); }
-
-  int64_t getInteger() {
-    switch (type) {
-      case WasmType::i32: return i32;
-      case WasmType::i64: return i64;
-      default: abort();
-    }
-  }
-
-  double getFloat() {
-    switch (type) {
-      case WasmType::f32: return getf32();
-      case WasmType::f64: return getf64();
-      default: abort();
-    }
-  }
-
-  int64_t getBits() {
-    switch (type) {
-      case WasmType::i32: case WasmType::f32: return i32;
-      case WasmType::i64: case WasmType::f64: return i64;
-      default: abort();
-    }
-  }
-
-  bool operator==(const Literal& other) const {
-    if (type != other.type) return false;
-    switch (type) {
-      case WasmType::none: return true;
-      case WasmType::i32: return i32 == other.i32;
-      case WasmType::f32: return getf32() == other.getf32();
-      case WasmType::i64: return i64 == other.i64;
-      case WasmType::f64: return getf64() == other.getf64();
-      default: abort();
-    }
-  }
-
-  bool operator!=(const Literal& other) const {
-    return !(*this == other);
-  }
-
-  static uint32_t NaNPayload(float f) {
-    assert(std::isnan(f) && "expected a NaN");
-    // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF
-    // NaN has all-one exponent and non-zero fraction.
-    return ~0xff800000u & bit_cast<uint32_t>(f);
-  }
-
-  static uint64_t NaNPayload(double f) {
-    assert(std::isnan(f) && "expected a NaN");
-    // SEEEEEEE EEEEFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-    // NaN has all-one exponent and non-zero fraction.
-    return ~0xfff0000000000000ull & bit_cast<uint64_t>(f);
-  }
-
-  static float setQuietNaN(float f) {
-    assert(std::isnan(f) && "expected a NaN");
-    // An SNaN is a NaN with the most significant fraction bit clear.
-    return bit_cast<float>(0x00400000u | bit_cast<uint32_t>(f));
-  }
-
-  static double setQuietNaN(double f) {
-    assert(std::isnan(f) && "expected a NaN");
-    // An SNaN is a NaN with the most significant fraction bit clear.
-    return bit_cast<double>(0x0008000000000000ull | bit_cast<uint64_t>(f));
-  }
-
-  static void printFloat(std::ostream &o, float f) {
-    if (std::isnan(f)) {
-      const char* sign = std::signbit(f) ? "-" : "";
-      o << sign << "nan";
-      if (uint32_t payload = NaNPayload(f)) {
-        o << ":0x" << std::hex << payload << std::dec;
-      }
-      return;
-    }
-    printDouble(o, f);
-  }
-
-  static void printDouble(std::ostream& o, double d) {
-    if (d == 0 && std::signbit(d)) {
-      o << "-0";
-      return;
-    }
-    if (std::isnan(d)) {
-      const char* sign = std::signbit(d) ? "-" : "";
-      o << sign << "nan";
-      if (uint64_t payload = NaNPayload(d)) {
-        o << ":0x" << std::hex << payload << std::dec;
-      }
-      return;
-    }
-    if (!std::isfinite(d)) {
-      o << (std::signbit(d) ? "-infinity" : "infinity");
-      return;
-    }
-    const char* text = cashew::JSPrinter::numToString(d);
-    // spec interpreter hates floats starting with '.'
-    if (text[0] == '.') {
-      o << '0';
-    } else if (text[0] == '-' && text[1] == '.') {
-      o << "-0";
-      text++;
-    }
-    o << text;
-  }
-
-  friend std::ostream& operator<<(std::ostream& o, Literal literal) {
-    o << '(';
-    prepareMinorColor(o) << printWasmType(literal.type) << ".const ";
-    switch (literal.type) {
-      case none: o << "?"; break;
-      case WasmType::i32: o << literal.i32; break;
-      case WasmType::i64: o << literal.i64; break;
-      case WasmType::f32: literal.printFloat(o, literal.getf32()); break;
-      case WasmType::f64: literal.printDouble(o, literal.getf64()); break;
-      default: WASM_UNREACHABLE();
-    }
-    restoreNormalColor(o);
-    return o << ')';
-  }
-
-  Literal countLeadingZeroes() const {
-    if (type == WasmType::i32) return Literal((int32_t)CountLeadingZeroes(i32));
-    if (type == WasmType::i64) return Literal((int64_t)CountLeadingZeroes(i64));
-    WASM_UNREACHABLE();
-  }
-  Literal countTrailingZeroes() const {
-    if (type == WasmType::i32) return Literal((int32_t)CountTrailingZeroes(i32));
-    if (type == WasmType::i64) return Literal((int64_t)CountTrailingZeroes(i64));
-    WASM_UNREACHABLE();
-  }
-  Literal popCount() const {
-    if (type == WasmType::i32) return Literal((int32_t)PopCount(i32));
-    if (type == WasmType::i64) return Literal((int64_t)PopCount(i64));
-    WASM_UNREACHABLE();
-  }
-
-  Literal extendToSI64() const {
-    assert(type == WasmType::i32);
-    return Literal((int64_t)i32);
-  }
-  Literal extendToUI64() const {
-    assert(type == WasmType::i32);
-    return Literal((uint64_t)(uint32_t)i32);
-  }
-  Literal extendToF64() const {
-    assert(type == WasmType::f32);
-    return Literal(double(getf32()));
-  }
-  Literal truncateToI32() const {
-    assert(type == WasmType::i64);
-    return Literal((int32_t)i64);
-  }
-  Literal truncateToF32() const {
-    assert(type == WasmType::f64);
-    return Literal(float(getf64()));
-  }
-
-  Literal convertSToF32() const {
-    if (type == WasmType::i32) return Literal(float(i32));
-    if (type == WasmType::i64) return Literal(float(i64));
-    WASM_UNREACHABLE();
-  }
-  Literal convertUToF32() const {
-    if (type == WasmType::i32) return Literal(float(uint32_t(i32)));
-    if (type == WasmType::i64) return Literal(float(uint64_t(i64)));
-    WASM_UNREACHABLE();
-  }
-  Literal convertSToF64() const {
-    if (type == WasmType::i32) return Literal(double(i32));
-    if (type == WasmType::i64) return Literal(double(i64));
-    WASM_UNREACHABLE();
-  }
-  Literal convertUToF64() const {
-    if (type == WasmType::i32) return Literal(double(uint32_t(i32)));
-    if (type == WasmType::i64) return Literal(double(uint64_t(i64)));
-    WASM_UNREACHABLE();
-  }
-
-  Literal neg() const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 ^ 0x80000000);
-      case WasmType::i64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL));
-      case WasmType::f32: return Literal(i32 ^ 0x80000000).castToF32();
-      case WasmType::f64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal abs() const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 & 0x7fffffff);
-      case WasmType::i64: return Literal(int64_t(i64 & 0x7fffffffffffffffULL));
-      case WasmType::f32: return Literal(i32 & 0x7fffffff).castToF32();
-      case WasmType::f64: return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal ceil() const {
-    switch (type) {
-      case WasmType::f32: return Literal(std::ceil(getf32()));
-      case WasmType::f64: return Literal(std::ceil(getf64()));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal floor() const {
-    switch (type) {
-      case WasmType::f32: return Literal(std::floor(getf32()));
-      case WasmType::f64: return Literal(std::floor(getf64()));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal trunc() const {
-    switch (type) {
-      case WasmType::f32: return Literal(std::trunc(getf32()));
-      case WasmType::f64: return Literal(std::trunc(getf64()));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal nearbyint() const {
-    switch (type) {
-      case WasmType::f32: return Literal(std::nearbyint(getf32()));
-      case WasmType::f64: return Literal(std::nearbyint(getf64()));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal sqrt() const {
-    switch (type) {
-      case WasmType::f32: return Literal(std::sqrt(getf32()));
-      case WasmType::f64: return Literal(std::sqrt(getf64()));
-      default: WASM_UNREACHABLE();
-    }
-  }
-
-  Literal add(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) + uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) + uint64_t(other.i64));
-      case WasmType::f32: return Literal(getf32() + other.getf32());
-      case WasmType::f64: return Literal(getf64() + other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal sub(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) - uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) - uint64_t(other.i64));
-      case WasmType::f32: return Literal(getf32() - other.getf32());
-      case WasmType::f64: return Literal(getf64() - other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal mul(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) * uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) * uint64_t(other.i64));
-      case WasmType::f32: return Literal(getf32() * other.getf32());
-      case WasmType::f64: return Literal(getf64() * other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal div(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: {
-        float lhs = getf32(), rhs = other.getf32();
-        float sign = std::signbit(lhs) == std::signbit(rhs) ? 0.f : -0.f;
-        switch (std::fpclassify(rhs)) {
-          case FP_ZERO:
-          switch (std::fpclassify(lhs)) {
-            case FP_NAN: return Literal(setQuietNaN(lhs));
-            case FP_ZERO: return Literal(std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
-            case FP_NORMAL: // fallthrough
-            case FP_SUBNORMAL: // fallthrough
-            case FP_INFINITE: return Literal(std::copysign(std::numeric_limits<float>::infinity(), sign));
-            default: WASM_UNREACHABLE();
-          }
-          case FP_NAN: // fallthrough
-          case FP_INFINITE: // fallthrough
-          case FP_NORMAL: // fallthrough
-          case FP_SUBNORMAL: return Literal(lhs / rhs);
-          default: WASM_UNREACHABLE();
-        }
-      }
-      case WasmType::f64: {
-        double lhs = getf64(), rhs = other.getf64();
-        double sign = std::signbit(lhs) == std::signbit(rhs) ? 0. : -0.;
-        switch (std::fpclassify(rhs)) {
-          case FP_ZERO:
-          switch (std::fpclassify(lhs)) {
-            case FP_NAN: return Literal(setQuietNaN(lhs));
-            case FP_ZERO: return Literal(std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
-            case FP_NORMAL: // fallthrough
-            case FP_SUBNORMAL: // fallthrough
-            case FP_INFINITE: return Literal(std::copysign(std::numeric_limits<double>::infinity(), sign));
-            default: WASM_UNREACHABLE();
-          }
-          case FP_NAN: // fallthrough
-          case FP_INFINITE: // fallthrough
-          case FP_NORMAL: // fallthrough
-          case FP_SUBNORMAL: return Literal(lhs / rhs);
-          default: WASM_UNREACHABLE();
-        }
-      }
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal divS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 / other.i32);
-      case WasmType::i64: return Literal(i64 / other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal divU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) / uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) / uint64_t(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal remS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 % other.i32);
-      case WasmType::i64: return Literal(i64 % other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal remU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) % uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) % uint64_t(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal and_(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 & other.i32);
-      case WasmType::i64: return Literal(i64 & other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal or_(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 | other.i32);
-      case WasmType::i64: return Literal(i64 | other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal xor_(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 ^ other.i32);
-      case WasmType::i64: return Literal(i64 ^ other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal shl(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) << shiftMask(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) << shiftMask(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal shrS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 >> shiftMask(other.i32));
-      case WasmType::i64: return Literal(i64 >> shiftMask(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal shrU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) >> shiftMask(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) >> shiftMask(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal rotL(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(RotateLeft(uint32_t(i32), uint32_t(other.i32)));
-      case WasmType::i64: return Literal(RotateLeft(uint64_t(i64), uint64_t(other.i64)));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal rotR(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(RotateRight(uint32_t(i32), uint32_t(other.i32)));
-      case WasmType::i64: return Literal(RotateRight(uint64_t(i64), uint64_t(other.i64)));
-      default: WASM_UNREACHABLE();
-    }
-  }
-
-  Literal eq(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 == other.i32);
-      case WasmType::i64: return Literal(i64 == other.i64);
-      case WasmType::f32: return Literal(getf32() == other.getf32());
-      case WasmType::f64: return Literal(getf64() == other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal ne(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 != other.i32);
-      case WasmType::i64: return Literal(i64 != other.i64);
-      case WasmType::f32: return Literal(getf32() != other.getf32());
-      case WasmType::f64: return Literal(getf64() != other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal ltS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 < other.i32);
-      case WasmType::i64: return Literal(i64 < other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal ltU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) < uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) < uint64_t(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal lt(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: return Literal(getf32() < other.getf32());
-      case WasmType::f64: return Literal(getf64() < other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal leS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 <= other.i32);
-      case WasmType::i64: return Literal(i64 <= other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal leU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) <= uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) <= uint64_t(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal le(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: return Literal(getf32() <= other.getf32());
-      case WasmType::f64: return Literal(getf64() <= other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-
-  Literal gtS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 > other.i32);
-      case WasmType::i64: return Literal(i64 > other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal gtU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) > uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) > uint64_t(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal gt(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: return Literal(getf32() > other.getf32());
-      case WasmType::f64: return Literal(getf64() > other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal geS(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(i32 >= other.i32);
-      case WasmType::i64: return Literal(i64 >= other.i64);
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal geU(const Literal& other) const {
-    switch (type) {
-      case WasmType::i32: return Literal(uint32_t(i32) >= uint32_t(other.i32));
-      case WasmType::i64: return Literal(uint64_t(i64) >= uint64_t(other.i64));
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal ge(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: return Literal(getf32() >= other.getf32());
-      case WasmType::f64: return Literal(getf64() >= other.getf64());
-      default: WASM_UNREACHABLE();
-    }
-  }
-
-  Literal min(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: {
-        auto l = getf32(), r = other.getf32();
-        if (l == r && l == 0) return Literal(std::signbit(l) ? l : r);
-        auto result = std::min(l, r);
-        bool lnan = std::isnan(l), rnan = std::isnan(r);
-        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
-        if (!lnan && !rnan) return Literal((int32_t)0x7fc00000).castToF32();
-        return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
-      }
-      case WasmType::f64: {
-        auto l = getf64(), r = other.getf64();
-        if (l == r && l == 0) return Literal(std::signbit(l) ? l : r);
-        auto result = std::min(l, r);
-        bool lnan = std::isnan(l), rnan = std::isnan(r);
-        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
-        if (!lnan && !rnan) return Literal((int64_t)0x7ff8000000000000LL).castToF64();
-        return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
-      }
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal max(const Literal& other) const {
-    switch (type) {
-      case WasmType::f32: {
-        auto l = getf32(), r = other.getf32();
-        if (l == r && l == 0) return Literal(std::signbit(l) ? r : l);
-        auto result = std::max(l, r);
-        bool lnan = std::isnan(l), rnan = std::isnan(r);
-        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
-        if (!lnan && !rnan) return Literal((int32_t)0x7fc00000).castToF32();
-        return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
-      }
-      case WasmType::f64: {
-        auto l = getf64(), r = other.getf64();
-        if (l == r && l == 0) return Literal(std::signbit(l) ? r : l);
-        auto result = std::max(l, r);
-        bool lnan = std::isnan(l), rnan = std::isnan(r);
-        if (!std::isnan(result) && !lnan && !rnan) return Literal(result);
-        if (!lnan && !rnan) return Literal((int64_t)0x7ff8000000000000LL).castToF64();
-        return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
-      }
-      default: WASM_UNREACHABLE();
-    }
-  }
-  Literal copysign(const Literal& other) const {
-    // operate on bits directly, to avoid signalling bit being set on a float
-    switch (type) {
-      case WasmType::f32: return Literal((i32 & 0x7fffffff) | (other.i32 & 0x80000000)).castToF32(); break;
-      case WasmType::f64: return Literal((i64 & 0x7fffffffffffffffUL) | (other.i64 & 0x8000000000000000UL)).castToF64(); break;
-      default: WASM_UNREACHABLE();
-    }
-  }
-};
+enum class IRProfile { Normal, Poppy };
 
 // Operators
 
 enum UnaryOp {
-  ClzInt32, ClzInt64, CtzInt32, CtzInt64, PopcntInt32, PopcntInt64, // int
-  NegFloat32, NegFloat64, AbsFloat32, AbsFloat64, CeilFloat32, CeilFloat64, FloorFloat32, FloorFloat64, TruncFloat32, TruncFloat64, NearestFloat32, NearestFloat64, SqrtFloat32, SqrtFloat64, // float
+  // int
+  ClzInt32,
+  ClzInt64,
+  CtzInt32,
+  CtzInt64,
+  PopcntInt32,
+  PopcntInt64,
+
+  // float
+  NegFloat32,
+  NegFloat64,
+  AbsFloat32,
+  AbsFloat64,
+  CeilFloat32,
+  CeilFloat64,
+  FloorFloat32,
+  FloorFloat64,
+  TruncFloat32,
+  TruncFloat64,
+  NearestFloat32,
+  NearestFloat64,
+  SqrtFloat32,
+  SqrtFloat64,
+
   // relational
-  EqZInt32, EqZInt64,
+  EqZInt32,
+  EqZInt64,
+
   // conversions
-  ExtendSInt32, ExtendUInt32, // extend i32 to i64
-  WrapInt64, // i64 to i32
-  TruncSFloat32ToInt32, TruncSFloat32ToInt64, TruncUFloat32ToInt32, TruncUFloat32ToInt64, TruncSFloat64ToInt32, TruncSFloat64ToInt64, TruncUFloat64ToInt32, TruncUFloat64ToInt64, // float to int
-  ReinterpretFloat32, ReinterpretFloat64, // reintepret bits to int
-  ConvertSInt32ToFloat32, ConvertSInt32ToFloat64, ConvertUInt32ToFloat32, ConvertUInt32ToFloat64, ConvertSInt64ToFloat32, ConvertSInt64ToFloat64, ConvertUInt64ToFloat32, ConvertUInt64ToFloat64, // int to float
-  PromoteFloat32, // f32 to f64
-  DemoteFloat64, // f64 to f32
-  ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
+  // extend i32 to i64
+  ExtendSInt32,
+  ExtendUInt32,
+  // i64 to i32
+  WrapInt64,
+  // float to int
+  TruncSFloat32ToInt32,
+  TruncSFloat32ToInt64,
+  TruncUFloat32ToInt32,
+  TruncUFloat32ToInt64,
+  TruncSFloat64ToInt32,
+  TruncSFloat64ToInt64,
+  TruncUFloat64ToInt32,
+  TruncUFloat64ToInt64,
+  // reintepret bits to int
+  ReinterpretFloat32,
+  ReinterpretFloat64,
+  // int to float
+  ConvertSInt32ToFloat32,
+  ConvertSInt32ToFloat64,
+  ConvertUInt32ToFloat32,
+  ConvertUInt32ToFloat64,
+  ConvertSInt64ToFloat32,
+  ConvertSInt64ToFloat64,
+  ConvertUInt64ToFloat32,
+  ConvertUInt64ToFloat64,
+  // f32 to f64
+  PromoteFloat32,
+  // f64 to f32
+  DemoteFloat64,
+  // reinterpret bits to float
+  ReinterpretInt32,
+  ReinterpretInt64,
+
+  // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
+  // because the input integer is in an i64 value insetad of an i32 value.
+  ExtendS8Int32,
+  ExtendS16Int32,
+  ExtendS8Int64,
+  ExtendS16Int64,
+  ExtendS32Int64,
+
+  // Saturating float-to-int
+  TruncSatSFloat32ToInt32,
+  TruncSatUFloat32ToInt32,
+  TruncSatSFloat64ToInt32,
+  TruncSatUFloat64ToInt32,
+  TruncSatSFloat32ToInt64,
+  TruncSatUFloat32ToInt64,
+  TruncSatSFloat64ToInt64,
+  TruncSatUFloat64ToInt64,
+
+  // SIMD splats
+  SplatVecI8x16,
+  SplatVecI16x8,
+  SplatVecI32x4,
+  SplatVecI64x2,
+  SplatVecF32x4,
+  SplatVecF64x2,
+
+  // SIMD arithmetic
+  NotVec128,
+  AnyTrueVec128,
+  AbsVecI8x16,
+  NegVecI8x16,
+  AllTrueVecI8x16,
+  BitmaskVecI8x16,
+  PopcntVecI8x16,
+  AbsVecI16x8,
+  NegVecI16x8,
+  AllTrueVecI16x8,
+  BitmaskVecI16x8,
+  AbsVecI32x4,
+  NegVecI32x4,
+  AllTrueVecI32x4,
+  BitmaskVecI32x4,
+  AbsVecI64x2,
+  NegVecI64x2,
+  AllTrueVecI64x2,
+  BitmaskVecI64x2,
+  AbsVecF32x4,
+  NegVecF32x4,
+  SqrtVecF32x4,
+  CeilVecF32x4,
+  FloorVecF32x4,
+  TruncVecF32x4,
+  NearestVecF32x4,
+  AbsVecF64x2,
+  NegVecF64x2,
+  SqrtVecF64x2,
+  CeilVecF64x2,
+  FloorVecF64x2,
+  TruncVecF64x2,
+  NearestVecF64x2,
+  ExtAddPairwiseSVecI8x16ToI16x8,
+  ExtAddPairwiseUVecI8x16ToI16x8,
+  ExtAddPairwiseSVecI16x8ToI32x4,
+  ExtAddPairwiseUVecI16x8ToI32x4,
+
+  // SIMD conversions
+  TruncSatSVecF32x4ToVecI32x4,
+  TruncSatUVecF32x4ToVecI32x4,
+  ConvertSVecI32x4ToVecF32x4,
+  ConvertUVecI32x4ToVecF32x4,
+  ExtendLowSVecI8x16ToVecI16x8,
+  ExtendHighSVecI8x16ToVecI16x8,
+  ExtendLowUVecI8x16ToVecI16x8,
+  ExtendHighUVecI8x16ToVecI16x8,
+  ExtendLowSVecI16x8ToVecI32x4,
+  ExtendHighSVecI16x8ToVecI32x4,
+  ExtendLowUVecI16x8ToVecI32x4,
+  ExtendHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI32x4ToVecI64x2,
+  ExtendHighSVecI32x4ToVecI64x2,
+  ExtendLowUVecI32x4ToVecI64x2,
+  ExtendHighUVecI32x4ToVecI64x2,
+
+  ConvertLowSVecI32x4ToVecF64x2,
+  ConvertLowUVecI32x4ToVecF64x2,
+  TruncSatZeroSVecF64x2ToVecI32x4,
+  TruncSatZeroUVecF64x2ToVecI32x4,
+  DemoteZeroVecF64x2ToVecF32x4,
+  PromoteLowVecF32x4ToVecF64x2,
+
+  // Relaxed SIMD
+  RelaxedTruncSVecF32x4ToVecI32x4,
+  RelaxedTruncUVecF32x4ToVecI32x4,
+  RelaxedTruncZeroSVecF64x2ToVecI32x4,
+  RelaxedTruncZeroUVecF64x2ToVecI32x4,
+
+  InvalidUnary
 };
 
 enum BinaryOp {
-  AddInt32, SubInt32, MulInt32, // int or float
-  DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, // int
-  // relational ops
-  EqInt32, NeInt32, // int or float
-  LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32, // int
+  // int or float
+  AddInt32,
+  SubInt32,
+  MulInt32,
 
-  AddInt64, SubInt64, MulInt64, // int or float
-  DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64, // int
-  // relational ops
-  EqInt64, NeInt64, // int or float
-  LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64, // int
+  // int
+  DivSInt32,
+  DivUInt32,
+  RemSInt32,
+  RemUInt32,
+  AndInt32,
+  OrInt32,
+  XorInt32,
+  ShlInt32,
+  ShrSInt32,
+  ShrUInt32,
+  RotLInt32,
+  RotRInt32,
 
-  AddFloat32, SubFloat32, MulFloat32, // int or float
-  DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32, // float
   // relational ops
-  EqFloat32, NeFloat32, // int or float
-  LtFloat32, LeFloat32, GtFloat32, GeFloat32, // float
+  // int or float
+  EqInt32,
+  NeInt32,
+  // int
+  LtSInt32,
+  LtUInt32,
+  LeSInt32,
+  LeUInt32,
+  GtSInt32,
+  GtUInt32,
+  GeSInt32,
+  GeUInt32,
 
-  AddFloat64, SubFloat64, MulFloat64, // int or float
-  DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64, // float
+  // int or float
+  AddInt64,
+  SubInt64,
+  MulInt64,
+
+  // int
+  DivSInt64,
+  DivUInt64,
+  RemSInt64,
+  RemUInt64,
+  AndInt64,
+  OrInt64,
+  XorInt64,
+  ShlInt64,
+  ShrSInt64,
+  ShrUInt64,
+  RotLInt64,
+  RotRInt64,
+
   // relational ops
-  EqFloat64, NeFloat64, // int or float
-  LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
+  // int or float
+  EqInt64,
+  NeInt64,
+  // int
+  LtSInt64,
+  LtUInt64,
+  LeSInt64,
+  LeUInt64,
+  GtSInt64,
+  GtUInt64,
+  GeSInt64,
+  GeUInt64,
+
+  // int or float
+  AddFloat32,
+  SubFloat32,
+  MulFloat32,
+
+  // float
+  DivFloat32,
+  CopySignFloat32,
+  MinFloat32,
+  MaxFloat32,
+
+  // relational ops
+  // int or float
+  EqFloat32,
+  NeFloat32,
+  // float
+  LtFloat32,
+  LeFloat32,
+  GtFloat32,
+  GeFloat32,
+
+  // int or float
+  AddFloat64,
+  SubFloat64,
+  MulFloat64,
+
+  // float
+  DivFloat64,
+  CopySignFloat64,
+  MinFloat64,
+  MaxFloat64,
+
+  // relational ops
+  // int or float
+  EqFloat64,
+  NeFloat64,
+  // float
+  LtFloat64,
+  LeFloat64,
+  GtFloat64,
+  GeFloat64,
+
+  // SIMD relational ops (return vectors)
+  EqVecI8x16,
+  NeVecI8x16,
+  LtSVecI8x16,
+  LtUVecI8x16,
+  GtSVecI8x16,
+  GtUVecI8x16,
+  LeSVecI8x16,
+  LeUVecI8x16,
+  GeSVecI8x16,
+  GeUVecI8x16,
+  EqVecI16x8,
+  NeVecI16x8,
+  LtSVecI16x8,
+  LtUVecI16x8,
+  GtSVecI16x8,
+  GtUVecI16x8,
+  LeSVecI16x8,
+  LeUVecI16x8,
+  GeSVecI16x8,
+  GeUVecI16x8,
+  EqVecI32x4,
+  NeVecI32x4,
+  LtSVecI32x4,
+  LtUVecI32x4,
+  GtSVecI32x4,
+  GtUVecI32x4,
+  LeSVecI32x4,
+  LeUVecI32x4,
+  GeSVecI32x4,
+  GeUVecI32x4,
+  EqVecI64x2,
+  NeVecI64x2,
+  LtSVecI64x2,
+  GtSVecI64x2,
+  LeSVecI64x2,
+  GeSVecI64x2,
+  EqVecF32x4,
+  NeVecF32x4,
+  LtVecF32x4,
+  GtVecF32x4,
+  LeVecF32x4,
+  GeVecF32x4,
+  EqVecF64x2,
+  NeVecF64x2,
+  LtVecF64x2,
+  GtVecF64x2,
+  LeVecF64x2,
+  GeVecF64x2,
+
+  // SIMD arithmetic
+  AndVec128,
+  OrVec128,
+  XorVec128,
+  AndNotVec128,
+  AddVecI8x16,
+  AddSatSVecI8x16,
+  AddSatUVecI8x16,
+  SubVecI8x16,
+  SubSatSVecI8x16,
+  SubSatUVecI8x16,
+  MinSVecI8x16,
+  MinUVecI8x16,
+  MaxSVecI8x16,
+  MaxUVecI8x16,
+  AvgrUVecI8x16,
+  AddVecI16x8,
+  AddSatSVecI16x8,
+  AddSatUVecI16x8,
+  SubVecI16x8,
+  SubSatSVecI16x8,
+  SubSatUVecI16x8,
+  MulVecI16x8,
+  MinSVecI16x8,
+  MinUVecI16x8,
+  MaxSVecI16x8,
+  MaxUVecI16x8,
+  AvgrUVecI16x8,
+  Q15MulrSatSVecI16x8,
+  ExtMulLowSVecI16x8,
+  ExtMulHighSVecI16x8,
+  ExtMulLowUVecI16x8,
+  ExtMulHighUVecI16x8,
+  AddVecI32x4,
+  SubVecI32x4,
+  MulVecI32x4,
+  MinSVecI32x4,
+  MinUVecI32x4,
+  MaxSVecI32x4,
+  MaxUVecI32x4,
+  DotSVecI16x8ToVecI32x4,
+  ExtMulLowSVecI32x4,
+  ExtMulHighSVecI32x4,
+  ExtMulLowUVecI32x4,
+  ExtMulHighUVecI32x4,
+  AddVecI64x2,
+  SubVecI64x2,
+  MulVecI64x2,
+  ExtMulLowSVecI64x2,
+  ExtMulHighSVecI64x2,
+  ExtMulLowUVecI64x2,
+  ExtMulHighUVecI64x2,
+  AddVecF32x4,
+  SubVecF32x4,
+  MulVecF32x4,
+  DivVecF32x4,
+  MinVecF32x4,
+  MaxVecF32x4,
+  PMinVecF32x4,
+  PMaxVecF32x4,
+  AddVecF64x2,
+  SubVecF64x2,
+  MulVecF64x2,
+  DivVecF64x2,
+  MinVecF64x2,
+  MaxVecF64x2,
+  PMinVecF64x2,
+  PMaxVecF64x2,
+
+  // SIMD Conversion
+  NarrowSVecI16x8ToVecI8x16,
+  NarrowUVecI16x8ToVecI8x16,
+  NarrowSVecI32x4ToVecI16x8,
+  NarrowUVecI32x4ToVecI16x8,
+
+  // SIMD Swizzle
+  SwizzleVecI8x16,
+
+  // Relaxed SIMD
+  RelaxedSwizzleVecI8x16,
+  RelaxedMinVecF32x4,
+  RelaxedMaxVecF32x4,
+  RelaxedMinVecF64x2,
+  RelaxedMaxVecF64x2,
+  RelaxedQ15MulrSVecI16x8,
+  DotI8x16I7x16SToVecI16x8,
+
+  InvalidBinary
 };
 
-enum HostOp {
-  PageSize, CurrentMemory, GrowMemory, HasFeature
+enum AtomicRMWOp { RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg };
+
+enum SIMDExtractOp {
+  ExtractLaneSVecI8x16,
+  ExtractLaneUVecI8x16,
+  ExtractLaneSVecI16x8,
+  ExtractLaneUVecI16x8,
+  ExtractLaneVecI32x4,
+  ExtractLaneVecI64x2,
+  ExtractLaneVecF32x4,
+  ExtractLaneVecF64x2
+};
+
+enum SIMDReplaceOp {
+  ReplaceLaneVecI8x16,
+  ReplaceLaneVecI16x8,
+  ReplaceLaneVecI32x4,
+  ReplaceLaneVecI64x2,
+  ReplaceLaneVecF32x4,
+  ReplaceLaneVecF64x2,
+};
+
+enum SIMDShiftOp {
+  ShlVecI8x16,
+  ShrSVecI8x16,
+  ShrUVecI8x16,
+  ShlVecI16x8,
+  ShrSVecI16x8,
+  ShrUVecI16x8,
+  ShlVecI32x4,
+  ShrSVecI32x4,
+  ShrUVecI32x4,
+  ShlVecI64x2,
+  ShrSVecI64x2,
+  ShrUVecI64x2
+};
+
+enum SIMDLoadOp {
+  Load8SplatVec128,
+  Load16SplatVec128,
+  Load32SplatVec128,
+  Load64SplatVec128,
+  Load8x8SVec128,
+  Load8x8UVec128,
+  Load16x4SVec128,
+  Load16x4UVec128,
+  Load32x2SVec128,
+  Load32x2UVec128,
+  Load32ZeroVec128,
+  Load64ZeroVec128,
+};
+
+enum SIMDLoadStoreLaneOp {
+  Load8LaneVec128,
+  Load16LaneVec128,
+  Load32LaneVec128,
+  Load64LaneVec128,
+  Store8LaneVec128,
+  Store16LaneVec128,
+  Store32LaneVec128,
+  Store64LaneVec128,
+};
+
+enum SIMDTernaryOp {
+  Bitselect,
+
+  // Relaxed SIMD
+  RelaxedFmaVecF32x4,
+  RelaxedFmsVecF32x4,
+  RelaxedFmaVecF64x2,
+  RelaxedFmsVecF64x2,
+  LaneselectI8x16,
+  LaneselectI16x8,
+  LaneselectI32x4,
+  LaneselectI64x2,
+  DotI8x16I7x16AddSToVecI32x4,
+};
+
+enum RefIsOp {
+  RefIsNull,
+  RefIsFunc,
+  RefIsData,
+  RefIsI31,
+};
+
+enum RefAsOp {
+  RefAsNonNull,
+  RefAsFunc,
+  RefAsData,
+  RefAsI31,
+  ExternInternalize,
+  ExternExternalize,
+};
+
+enum BrOnOp {
+  BrOnNull,
+  BrOnNonNull,
+  BrOnCast,
+  BrOnCastFail,
+  BrOnFunc,
+  BrOnNonFunc,
+  BrOnData,
+  BrOnNonData,
+  BrOnI31,
+  BrOnNonI31,
+};
+
+enum StringNewOp {
+  // Linear memory
+  StringNewUTF8,
+  StringNewWTF8,
+  StringNewReplace,
+  StringNewWTF16,
+  // GC
+  StringNewUTF8Array,
+  StringNewWTF8Array,
+  StringNewReplaceArray,
+  StringNewWTF16Array,
+};
+
+enum StringMeasureOp {
+  StringMeasureUTF8,
+  StringMeasureWTF8,
+  StringMeasureWTF16,
+  StringMeasureIsUSV,
+  StringMeasureWTF16View,
+};
+
+enum StringEncodeOp {
+  StringEncodeUTF8,
+  StringEncodeWTF8,
+  StringEncodeWTF16,
+  StringEncodeUTF8Array,
+  StringEncodeWTF8Array,
+  StringEncodeWTF16Array,
+};
+
+enum StringAsOp {
+  StringAsWTF8,
+  StringAsWTF16,
+  StringAsIter,
+};
+
+enum StringIterMoveOp {
+  StringIterMoveAdvance,
+  StringIterMoveRewind,
+};
+
+enum StringSliceWTFOp {
+  StringSliceWTF8,
+  StringSliceWTF16,
 };
 
 //
 // Expressions
 //
-// Note that little is provided in terms of constructors for these. The rationale
-// is that writing  new Something(a, b, c, d, e)  is not the clearest, and it would
-// be better to write   new Something(name=a, leftOperand=b...  etc., but C++
-// lacks named operands, so in asm2wasm etc. you will see things like
+// Note that little is provided in terms of constructors for these. The
+// rationale is that writing `new Something(a, b, c, d, e)` is not the clearest,
+// and it would be better to write new `Something(name=a, leftOperand=b...`
+// etc., but C++ lacks named operands so you will see things like
 //   auto x = new Something();
 //   x->name = a;
 //   x->leftOperand = b;
@@ -865,12 +661,11 @@ public:
     BreakId,
     SwitchId,
     CallId,
-    CallImportId,
     CallIndirectId,
-    GetLocalId,
-    SetLocalId,
-    GetGlobalId,
-    SetGlobalId,
+    LocalGetId,
+    LocalSetId,
+    GlobalGetId,
+    GlobalSetId,
     LoadId,
     StoreId,
     ConstId,
@@ -879,70 +674,124 @@ public:
     SelectId,
     DropId,
     ReturnId,
-    HostId,
+    MemorySizeId,
+    MemoryGrowId,
     NopId,
     UnreachableId,
+    AtomicRMWId,
+    AtomicCmpxchgId,
+    AtomicWaitId,
+    AtomicNotifyId,
+    AtomicFenceId,
+    SIMDExtractId,
+    SIMDReplaceId,
+    SIMDShuffleId,
+    SIMDTernaryId,
+    SIMDShiftId,
+    SIMDLoadId,
+    SIMDLoadStoreLaneId,
+    MemoryInitId,
+    DataDropId,
+    MemoryCopyId,
+    MemoryFillId,
+    PopId,
+    RefNullId,
+    RefIsId,
+    RefFuncId,
+    RefEqId,
+    TableGetId,
+    TableSetId,
+    TableSizeId,
+    TableGrowId,
+    TryId,
+    ThrowId,
+    RethrowId,
+    TupleMakeId,
+    TupleExtractId,
+    I31NewId,
+    I31GetId,
+    CallRefId,
+    RefTestId,
+    RefCastId,
+    BrOnId,
+    StructNewId,
+    StructGetId,
+    StructSetId,
+    ArrayNewId,
+    ArrayInitId,
+    ArrayGetId,
+    ArraySetId,
+    ArrayLenId,
+    ArrayCopyId,
+    RefAsId,
+    StringNewId,
+    StringConstId,
+    StringMeasureId,
+    StringEncodeId,
+    StringConcatId,
+    StringEqId,
+    StringAsId,
+    StringWTF8AdvanceId,
+    StringWTF16GetId,
+    StringIterNextId,
+    StringIterMoveId,
+    StringSliceWTFId,
+    StringSliceIterId,
     NumExpressionIds
   };
   Id _id;
 
-  WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
+  // the type of the expression: its *output*, not necessarily its input(s)
+  Type type = Type::none;
 
-  Expression(Id id) : _id(id), type(none) {}
+  Expression(Id id) : _id(id) {}
 
   void finalize() {}
 
-  template<class T>
-  bool is() {
+  template<class T> bool is() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId);
   }
 
-  template<class T>
-  T* dynCast() {
+  template<class T> T* dynCast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
   }
 
-  template<class T>
-  T* cast() {
+  template<class T> const T* dynCast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
+    return int(_id) == int(T::SpecificId) ? (const T*)this : nullptr;
+  }
+
+  template<class T> T* cast() {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
   }
+
+  template<class T> const T* cast() const {
+    static_assert(std::is_base_of<Expression, T>::value,
+                  "Expression is not a base of destination type T");
+    assert(int(_id) == int(T::SpecificId));
+    return (const T*)this;
+  }
+
+  // Print the expression to stderr. Meant for use while debugging.
+  void dump();
 };
 
-inline const char* getExpressionName(Expression* curr) {
-  switch (curr->_id) {
-    case Expression::Id::InvalidId: abort();
-    case Expression::Id::BlockId: return "block";
-    case Expression::Id::IfId: return "if";
-    case Expression::Id::LoopId: return "loop";
-    case Expression::Id::BreakId: return "break";
-    case Expression::Id::SwitchId: return "switch";
-    case Expression::Id::CallId: return "call";
-    case Expression::Id::CallImportId: return "call_import";
-    case Expression::Id::CallIndirectId: return "call_indirect";
-    case Expression::Id::GetLocalId: return "get_local";
-    case Expression::Id::SetLocalId: return "set_local";
-    case Expression::Id::GetGlobalId: return "get_global";
-    case Expression::Id::SetGlobalId: return "set_global";
-    case Expression::Id::LoadId: return "load";
-    case Expression::Id::StoreId: return "store";
-    case Expression::Id::ConstId: return "const";
-    case Expression::Id::UnaryId: return "unary";
-    case Expression::Id::BinaryId: return "binary";
-    case Expression::Id::SelectId: return "select";
-    case Expression::Id::DropId: return "drop";
-    case Expression::Id::ReturnId: return "return";
-    case Expression::Id::HostId: return "host";
-    case Expression::Id::NopId: return "nop";
-    case Expression::Id::UnreachableId: return "unreachable";
-    default: WASM_UNREACHABLE();
-  }
-}
+const char* getExpressionName(Expression* curr);
+
+Literal getLiteralFromConstExpression(Expression* curr);
+Literals getLiteralsFromConstExpression(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
-template<Expression::Id SID>
-class SpecificExpression : public Expression {
+template<Expression::Id SID> class SpecificExpression : public Expression {
 public:
   enum {
     SpecificId = SID // compile-time access to the type for the class
@@ -953,7 +802,7 @@ public:
 
 class Nop : public SpecificExpression<Expression::NopId> {
 public:
-  Nop() {}
+  Nop() = default;
   Nop(MixedArena& allocator) {}
 };
 
@@ -964,13 +813,23 @@ public:
   Name name;
   ExpressionList list;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
-
-  // set the type purely based on its contents. this scans the block, so it is not fast
+  // set the type purely based on its contents. this scans the block, so it is
+  // not fast.
   void finalize();
+
+  // set the type given you know its type, which is the case when parsing
+  // s-expression or binary, as explicit types are given. the only additional
+  // work this does is to set the type to unreachable in the cases that is
+  // needed (which may require scanning the block)
+  void finalize(Type type_);
+
+  enum Breakability { Unknown, HasBreak, NoBreak };
+
+  // set the type given you know its type, and you know if there is a break to
+  // this block. this avoids the need to scan the contents of the block in the
+  // case that it might be unreachable, so it is recommended if you already know
+  // the type and breakability anyhow.
+  void finalize(Type type_, Breakability breakability);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -983,9 +842,10 @@ public:
   Expression* ifFalse;
 
   // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  // s-expression or binary, as explicit types are given. the only additional
+  // work this does is to set the type to unreachable in the cases that is
+  // needed.
+  void finalize(Type type_);
 
   // set the type purely based on its contents.
   void finalize();
@@ -993,16 +853,17 @@ public:
 
 class Loop : public SpecificExpression<Expression::LoopId> {
 public:
-  Loop() {}
+  Loop() = default;
   Loop(MixedArena& allocator) {}
 
   Name name;
   Expression* body;
 
   // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  // s-expression or binary, as explicit types are given. the only additional
+  // work this does is to set the type to unreachable in the cases that is
+  // needed.
+  void finalize(Type type_);
 
   // set the type purely based on its contents.
   void finalize();
@@ -1011,37 +872,27 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() {
-    type = unreachable;
-  }
+  Break(MixedArena& allocator) : Break() { type = Type::unreachable; }
 
   Name name;
   Expression* value;
   Expression* condition;
 
-  void finalize() {
-    if (condition) {
-      if (value) {
-        type = value->type;
-      } else {
-        type = none;
-      }
-    } else {
-      type = unreachable;
-    }
-  }
+  void finalize();
 };
 
 class Switch : public SpecificExpression<Expression::SwitchId> {
 public:
-  Switch(MixedArena& allocator) : targets(allocator), condition(nullptr), value(nullptr) {
-    type = unreachable;
+  Switch(MixedArena& allocator) : targets(allocator) {
+    type = Type::unreachable;
   }
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition;
-  Expression* value;
+  Expression* value = nullptr;
+  Expression* condition = nullptr;
+
+  void finalize();
 };
 
 class Call : public SpecificExpression<Expression::CallId> {
@@ -1050,205 +901,347 @@ public:
 
   ExpressionList operands;
   Name target;
-};
+  bool isReturn = false;
 
-class CallImport : public SpecificExpression<Expression::CallImportId> {
-public:
-  CallImport(MixedArena& allocator) : operands(allocator) {}
-
-  ExpressionList operands;
-  Name target;
-};
-
-class FunctionType {
-public:
-  Name name;
-  WasmType result;
-  std::vector<WasmType> params;
-
-  FunctionType() : result(none) {}
-
-  bool structuralComparison(FunctionType& b) {
-    if (result != b.result) return false;
-    if (params.size() != b.params.size()) return false;
-    for (size_t i = 0; i < params.size(); i++) {
-      if (params[i] != b.params[i]) return false;
-    }
-    return true;
-  }
-
-  bool operator==(FunctionType& b) {
-    if (name != b.name) return false;
-    return structuralComparison(b);
-  }
-  bool operator!=(FunctionType& b) {
-    return !(*this == b);
-  }
+  void finalize();
 };
 
 class CallIndirect : public SpecificExpression<Expression::CallIndirectId> {
 public:
   CallIndirect(MixedArena& allocator) : operands(allocator) {}
-
+  HeapType heapType;
   ExpressionList operands;
-  Name fullType;
   Expression* target;
+  Name table;
+  bool isReturn = false;
+
+  void finalize();
 };
 
-class GetLocal : public SpecificExpression<Expression::GetLocalId> {
+class LocalGet : public SpecificExpression<Expression::LocalGetId> {
 public:
-  GetLocal() {}
-  GetLocal(MixedArena& allocator) {}
+  LocalGet() = default;
+  LocalGet(MixedArena& allocator) {}
 
   Index index;
 };
 
-class SetLocal : public SpecificExpression<Expression::SetLocalId> {
+class LocalSet : public SpecificExpression<Expression::LocalSetId> {
 public:
-  SetLocal() {}
-  SetLocal(MixedArena& allocator) {}
+  LocalSet() = default;
+  LocalSet(MixedArena& allocator) {}
+
+  void finalize();
 
   Index index;
   Expression* value;
 
-  bool isTee() {
-    return type != none;
-  }
-
-  void setTee(bool is) {
-    if (is) type = value->type;
-    else type = none;
-  }
+  bool isTee() const;
+  void makeTee(Type type);
+  void makeSet();
 };
 
-class GetGlobal : public SpecificExpression<Expression::GetGlobalId> {
+class GlobalGet : public SpecificExpression<Expression::GlobalGetId> {
 public:
-  GetGlobal() {}
-  GetGlobal(MixedArena& allocator) {}
+  GlobalGet() = default;
+  GlobalGet(MixedArena& allocator) {}
 
   Name name;
 };
 
-class SetGlobal : public SpecificExpression<Expression::SetGlobalId> {
+class GlobalSet : public SpecificExpression<Expression::GlobalSetId> {
 public:
-  SetGlobal() {}
-  SetGlobal(MixedArena& allocator) {}
+  GlobalSet() = default;
+  GlobalSet(MixedArena& allocator) {}
 
   Name name;
   Expression* value;
+
+  void finalize();
 };
 
 class Load : public SpecificExpression<Expression::LoadId> {
 public:
-  Load() {}
+  Load() = default;
   Load(MixedArena& allocator) {}
 
   uint8_t bytes;
-  bool signed_;
+  bool signed_ = false;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
+  Name memory;
 
   // type must be set during creation, cannot be inferred
+
+  void finalize();
 };
 
 class Store : public SpecificExpression<Expression::StoreId> {
 public:
-  Store() : valueType(none) {}
+  Store() = default;
   Store(MixedArena& allocator) : Store() {}
 
   uint8_t bytes;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
   Expression* value;
-  WasmType valueType; // the store never returns a value
+  Type valueType;
+  Name memory;
 
-  void finalize() {
-    assert(valueType != none); // must be set
-  }
+  void finalize();
+};
+
+class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
+public:
+  AtomicRMW() = default;
+  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
+
+  AtomicRMWOp op;
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* value;
+  Name memory;
+
+  void finalize();
+};
+
+class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
+public:
+  AtomicCmpxchg() = default;
+  AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
+
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* expected;
+  Expression* replacement;
+  Name memory;
+
+  void finalize();
+};
+
+class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
+public:
+  AtomicWait() = default;
+  AtomicWait(MixedArena& allocator) : AtomicWait() {}
+
+  Address offset;
+  Expression* ptr;
+  Expression* expected;
+  Expression* timeout;
+  Type expectedType;
+  Name memory;
+
+  void finalize();
+};
+
+class AtomicNotify : public SpecificExpression<Expression::AtomicNotifyId> {
+public:
+  AtomicNotify() = default;
+  AtomicNotify(MixedArena& allocator) : AtomicNotify() {}
+
+  Address offset;
+  Expression* ptr;
+  Expression* notifyCount;
+  Name memory;
+
+  void finalize();
+};
+
+class AtomicFence : public SpecificExpression<Expression::AtomicFenceId> {
+public:
+  AtomicFence() = default;
+  AtomicFence(MixedArena& allocator) : AtomicFence() {}
+
+  // Current wasm threads only supports sequentialy consistent atomics, but
+  // other orderings may be added in the future. This field is reserved for
+  // that, and currently set to 0.
+  uint8_t order = 0;
+
+  void finalize();
+};
+
+class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
+public:
+  SIMDExtract() = default;
+  SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
+
+  SIMDExtractOp op;
+  Expression* vec;
+  uint8_t index;
+
+  void finalize();
+};
+
+class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
+public:
+  SIMDReplace() = default;
+  SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
+
+  SIMDReplaceOp op;
+  Expression* vec;
+  uint8_t index;
+  Expression* value;
+
+  void finalize();
+};
+
+class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
+public:
+  SIMDShuffle() = default;
+  SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
+
+  Expression* left;
+  Expression* right;
+  std::array<uint8_t, 16> mask;
+
+  void finalize();
+};
+
+class SIMDTernary : public SpecificExpression<Expression::SIMDTernaryId> {
+public:
+  SIMDTernary() = default;
+  SIMDTernary(MixedArena& allocator) : SIMDTernary() {}
+
+  SIMDTernaryOp op;
+  Expression* a;
+  Expression* b;
+  Expression* c;
+
+  void finalize();
+};
+
+class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
+public:
+  SIMDShift() = default;
+  SIMDShift(MixedArena& allocator) : SIMDShift() {}
+
+  SIMDShiftOp op;
+  Expression* vec;
+  Expression* shift;
+
+  void finalize();
+};
+
+class SIMDLoad : public SpecificExpression<Expression::SIMDLoadId> {
+public:
+  SIMDLoad() = default;
+  SIMDLoad(MixedArena& allocator) {}
+
+  SIMDLoadOp op;
+  Address offset;
+  Address align;
+  Expression* ptr;
+  Name memory;
+
+  Index getMemBytes();
+  void finalize();
+};
+
+class SIMDLoadStoreLane
+  : public SpecificExpression<Expression::SIMDLoadStoreLaneId> {
+public:
+  SIMDLoadStoreLane() = default;
+  SIMDLoadStoreLane(MixedArena& allocator) {}
+
+  SIMDLoadStoreLaneOp op;
+  Address offset;
+  Address align;
+  uint8_t index;
+  Expression* ptr;
+  Expression* vec;
+  Name memory;
+
+  bool isStore();
+  bool isLoad() { return !isStore(); }
+  Index getMemBytes();
+  void finalize();
+};
+
+class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
+public:
+  MemoryInit() = default;
+  MemoryInit(MixedArena& allocator) : MemoryInit() {}
+
+  Index segment;
+  Expression* dest;
+  Expression* offset;
+  Expression* size;
+  Name memory;
+
+  void finalize();
+};
+
+class DataDrop : public SpecificExpression<Expression::DataDropId> {
+public:
+  DataDrop() = default;
+  DataDrop(MixedArena& allocator) : DataDrop() {}
+
+  Index segment;
+
+  void finalize();
+};
+
+class MemoryCopy : public SpecificExpression<Expression::MemoryCopyId> {
+public:
+  MemoryCopy() = default;
+  MemoryCopy(MixedArena& allocator) : MemoryCopy() {}
+
+  Expression* dest;
+  Expression* source;
+  Expression* size;
+  Name destMemory;
+  Name sourceMemory;
+
+  void finalize();
+};
+
+class MemoryFill : public SpecificExpression<Expression::MemoryFillId> {
+public:
+  MemoryFill() = default;
+  MemoryFill(MixedArena& allocator) : MemoryFill() {}
+
+  Expression* dest;
+  Expression* value;
+  Expression* size;
+  Name memory;
+
+  void finalize();
 };
 
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
-  Const() {}
+  Const() = default;
   Const(MixedArena& allocator) {}
 
   Literal value;
 
-  Const* set(Literal value_) {
-    value = value_;
-    type = value.type;
-    return this;
-  }
+  Const* set(Literal value_);
+
+  void finalize();
 };
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
 public:
-  Unary() {}
+  Unary() = default;
   Unary(MixedArena& allocator) {}
 
   UnaryOp op;
   Expression* value;
 
-  bool isRelational() { return op == EqZInt32 || op == EqZInt64; }
+  bool isRelational();
 
-  void finalize() {
-    switch (op) {
-      case ClzInt32:
-      case CtzInt32:
-      case PopcntInt32:
-      case NegFloat32:
-      case AbsFloat32:
-      case CeilFloat32:
-      case FloorFloat32:
-      case TruncFloat32:
-      case NearestFloat32:
-      case SqrtFloat32:
-      case ClzInt64:
-      case CtzInt64:
-      case PopcntInt64:
-      case NegFloat64:
-      case AbsFloat64:
-      case CeilFloat64:
-      case FloorFloat64:
-      case TruncFloat64:
-      case NearestFloat64:
-      case SqrtFloat64: type = value->type; break;
-      case EqZInt32:
-      case EqZInt64: type = i32; break;
-      case ExtendSInt32: case ExtendUInt32: type = i64; break;
-      case WrapInt64: type = i32; break;
-      case PromoteFloat32: type = f64; break;
-      case DemoteFloat64: type = f32; break;
-      case TruncSFloat32ToInt32:
-      case TruncUFloat32ToInt32:
-      case TruncSFloat64ToInt32:
-      case TruncUFloat64ToInt32:
-      case ReinterpretFloat32: type = i32; break;
-      case TruncSFloat32ToInt64:
-      case TruncUFloat32ToInt64:
-      case TruncSFloat64ToInt64:
-      case TruncUFloat64ToInt64:
-      case ReinterpretFloat64: type = i64; break;
-      case ReinterpretInt32:
-      case ConvertSInt32ToFloat32:
-      case ConvertUInt32ToFloat32:
-      case ConvertSInt64ToFloat32:
-      case ConvertUInt64ToFloat32: type = f32; break;
-      case ReinterpretInt64:
-      case ConvertSInt32ToFloat64:
-      case ConvertUInt32ToFloat64:
-      case ConvertSInt64ToFloat64:
-      case ConvertUInt64ToFloat64: type = f64; break;
-      default: std::cerr << "waka " << op << '\n'; WASM_UNREACHABLE();
-    }
-  }
+  void finalize();
 };
 
 class Binary : public SpecificExpression<Expression::BinaryId> {
 public:
-  Binary() {}
+  Binary() = default;
   Binary(MixedArena& allocator) {}
 
   BinaryOp op;
@@ -1258,392 +1251,988 @@ public:
   // the type is always the type of the operands,
   // except for relationals
 
-  bool isRelational() {
-    switch (op) {
-      case EqFloat64:
-      case NeFloat64:
-      case LtFloat64:
-      case LeFloat64:
-      case GtFloat64:
-      case GeFloat64:
-      case EqInt32:
-      case NeInt32:
-      case LtSInt32:
-      case LtUInt32:
-      case LeSInt32:
-      case LeUInt32:
-      case GtSInt32:
-      case GtUInt32:
-      case GeSInt32:
-      case GeUInt32:
-      case EqInt64:
-      case NeInt64:
-      case LtSInt64:
-      case LtUInt64:
-      case LeSInt64:
-      case LeUInt64:
-      case GtSInt64:
-      case GtUInt64:
-      case GeSInt64:
-      case GeUInt64:
-      case EqFloat32:
-      case NeFloat32:
-      case LtFloat32:
-      case LeFloat32:
-      case GtFloat32:
-      case GeFloat32: return true;
-      default: return false;
-    }
-  }
+  bool isRelational();
 
-  void finalize() {
-    assert(left && right);
-    if (isRelational()) {
-      type = i32;
-    } else {
-      type = getReachableWasmType(left->type, right->type);
-    }
-  }
+  void finalize();
 };
 
 class Select : public SpecificExpression<Expression::SelectId> {
 public:
-  Select() {}
+  Select() = default;
   Select(MixedArena& allocator) {}
 
   Expression* ifTrue;
   Expression* ifFalse;
   Expression* condition;
 
-  void finalize() {
-    assert(ifTrue && ifFalse);
-    type = getReachableWasmType(ifTrue->type, ifFalse->type);
-  }
+  void finalize();
+  void finalize(Type type_);
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {
 public:
-  Drop() {}
+  Drop() = default;
   Drop(MixedArena& allocator) {}
 
   Expression* value;
+
+  void finalize();
 };
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() : value(nullptr) {
-    type = unreachable;
-  }
+  Return() { type = Type::unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
-  Expression* value;
+  Expression* value = nullptr;
 };
 
-class Host : public SpecificExpression<Expression::HostId> {
+class MemorySize : public SpecificExpression<Expression::MemorySizeId> {
 public:
-  Host(MixedArena& allocator) : operands(allocator) {}
+  MemorySize() { type = Type::i32; }
+  MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  HostOp op;
-  Name nameOperand;
-  ExpressionList operands;
+  Type ptrType = Type::i32;
+  Name memory;
 
-  void finalize() {
-    switch (op) {
-      case PageSize: case CurrentMemory: case HasFeature: {
-        type = i32;
-        break;
-      }
-      case GrowMemory: {
-        type = i32;
-        break;
-      }
-      default: abort();
-    }
-  }
+  void make64();
+  void finalize();
+};
+
+class MemoryGrow : public SpecificExpression<Expression::MemoryGrowId> {
+public:
+  MemoryGrow() { type = Type::i32; }
+  MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
+
+  Expression* delta = nullptr;
+  Type ptrType = Type::i32;
+  Name memory;
+
+  void make64();
+  void finalize();
 };
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() {
-    type = unreachable;
-  }
+  Unreachable() { type = Type::unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
+};
+
+// Represents a pop of a value that arrives as an implicit argument to the
+// current block. Currently used in exception handling.
+class Pop : public SpecificExpression<Expression::PopId> {
+public:
+  Pop() = default;
+  Pop(MixedArena& allocator) {}
+};
+
+class RefNull : public SpecificExpression<Expression::RefNullId> {
+public:
+  RefNull() = default;
+  RefNull(MixedArena& allocator) {}
+
+  void finalize();
+  void finalize(HeapType heapType);
+  void finalize(Type type);
+};
+
+class RefIs : public SpecificExpression<Expression::RefIsId> {
+public:
+  RefIs(MixedArena& allocator) {}
+
+  // RefIs can represent ref.is_null, ref.is_func, ref.is_data, and ref.is_i31.
+  RefIsOp op;
+
+  Expression* value;
+
+  void finalize();
+};
+
+class RefFunc : public SpecificExpression<Expression::RefFuncId> {
+public:
+  RefFunc(MixedArena& allocator) {}
+
+  Name func;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
+class RefEq : public SpecificExpression<Expression::RefEqId> {
+public:
+  RefEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class TableGet : public SpecificExpression<Expression::TableGetId> {
+public:
+  TableGet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+
+  void finalize();
+};
+
+class TableSet : public SpecificExpression<Expression::TableSetId> {
+public:
+  TableSet(MixedArena& allocator) {}
+
+  Name table;
+
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
+class TableSize : public SpecificExpression<Expression::TableSizeId> {
+public:
+  TableSize() { type = Type::i32; }
+  TableSize(MixedArena& allocator) : TableSize() {}
+
+  Name table;
+
+  void finalize();
+};
+
+class TableGrow : public SpecificExpression<Expression::TableGrowId> {
+public:
+  TableGrow() { type = Type::i32; }
+  TableGrow(MixedArena& allocator) : TableGrow() {}
+
+  Name table;
+  Expression* value;
+  Expression* delta;
+
+  void finalize();
+};
+
+class Try : public SpecificExpression<Expression::TryId> {
+public:
+  Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
+
+  Name name; // label that can only be targeted by 'delegate's
+  Expression* body;
+  ArenaVector<Name> catchTags;
+  ExpressionList catchBodies;
+  Name delegateTarget; // target try's label
+
+  bool hasCatchAll() const {
+    return catchBodies.size() - catchTags.size() == 1;
+  }
+  bool isCatch() const { return !catchBodies.empty(); }
+  bool isDelegate() const { return delegateTarget.is(); }
+  void finalize();
+  void finalize(Type type_);
+};
+
+class Throw : public SpecificExpression<Expression::ThrowId> {
+public:
+  Throw(MixedArena& allocator) : operands(allocator) {}
+
+  Name tag;
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class Rethrow : public SpecificExpression<Expression::RethrowId> {
+public:
+  Rethrow(MixedArena& allocator) {}
+
+  Name target;
+
+  void finalize();
+};
+
+class TupleMake : public SpecificExpression<Expression::TupleMakeId> {
+public:
+  TupleMake(MixedArena& allocator) : operands(allocator) {}
+
+  ExpressionList operands;
+
+  void finalize();
+};
+
+class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
+public:
+  TupleExtract(MixedArena& allocator) {}
+
+  Expression* tuple;
+  Index index;
+
+  void finalize();
+};
+
+class I31New : public SpecificExpression<Expression::I31NewId> {
+public:
+  I31New(MixedArena& allocator) {}
+
+  Expression* value;
+
+  void finalize();
+};
+
+class I31Get : public SpecificExpression<Expression::I31GetId> {
+public:
+  I31Get(MixedArena& allocator) {}
+
+  Expression* i31;
+  bool signed_ = false;
+
+  void finalize();
+};
+
+class CallRef : public SpecificExpression<Expression::CallRefId> {
+public:
+  CallRef(MixedArena& allocator) : operands(allocator) {}
+  ExpressionList operands;
+  Expression* target;
+  bool isReturn = false;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
+class RefTest : public SpecificExpression<Expression::RefTestId> {
+public:
+  RefTest(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  HeapType intendedType;
+
+  void finalize();
+};
+
+class RefCast : public SpecificExpression<Expression::RefCastId> {
+public:
+  RefCast(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  HeapType intendedType;
+
+  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
+  // measurements.
+  enum Safety { Safe, Unsafe };
+  Safety safety = Safe;
+
+  void finalize();
+};
+
+class BrOn : public SpecificExpression<Expression::BrOnId> {
+public:
+  BrOn(MixedArena& allocator) {}
+
+  BrOnOp op;
+  Name name;
+  Expression* ref;
+
+  HeapType intendedType;
+
+  void finalize();
+
+  // Returns the type sent on the branch, if it is taken.
+  Type getSentType();
+};
+
+class StructNew : public SpecificExpression<Expression::StructNewId> {
+public:
+  StructNew(MixedArena& allocator) : operands(allocator) {}
+
+  // A struct.new_with_default has empty operands. This does leave the case of a
+  // struct with no fields ambiguous, but it doesn't make a difference in that
+  // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
+  ExpressionList operands;
+
+  bool isWithDefault() { return operands.empty(); }
+
+  void finalize();
+};
+
+class StructGet : public SpecificExpression<Expression::StructGetId> {
+public:
+  StructGet(MixedArena& allocator) {}
+
+  Index index;
+  Expression* ref;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
+};
+
+class StructSet : public SpecificExpression<Expression::StructSetId> {
+public:
+  StructSet(MixedArena& allocator) {}
+
+  Index index;
+  Expression* ref;
+  Expression* value;
+
+  void finalize();
+};
+
+class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
+public:
+  ArrayNew(MixedArena& allocator) {}
+
+  // If set, then the initial value is assigned to all entries in the array. If
+  // not set, this is array.new_with_default and the default of the type is
+  // used.
+  Expression* init = nullptr;
+  Expression* size;
+
+  bool isWithDefault() { return !init; }
+
+  void finalize();
+};
+
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) : values(allocator) {}
+
+  ExpressionList values;
+
+  void finalize();
+};
+
+class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
+public:
+  ArrayGet(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* index;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
+};
+
+class ArraySet : public SpecificExpression<Expression::ArraySetId> {
+public:
+  ArraySet(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+
+  void finalize();
+};
+
+class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
+public:
+  ArrayLen(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
+public:
+  ArrayCopy(MixedArena& allocator) {}
+
+  Expression* destRef;
+  Expression* destIndex;
+  Expression* srcRef;
+  Expression* srcIndex;
+  Expression* length;
+
+  void finalize();
+};
+
+class RefAs : public SpecificExpression<Expression::RefAsId> {
+public:
+  RefAs(MixedArena& allocator) {}
+
+  RefAsOp op;
+
+  Expression* value;
+
+  void finalize();
+};
+
+class StringNew : public SpecificExpression<Expression::StringNewId> {
+public:
+  StringNew(MixedArena& allocator) {}
+
+  StringNewOp op;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
+  Expression* ptr;
+
+  // Used only in linear memory variations.
+  Expression* length = nullptr;
+
+  // Used only in GC variations.
+  Expression* start = nullptr;
+  Expression* end = nullptr;
+
+  void finalize();
+};
+
+class StringConst : public SpecificExpression<Expression::StringConstId> {
+public:
+  StringConst(MixedArena& allocator) {}
+
+  // TODO: Use a different type to allow null bytes in the middle -
+  //       ArenaVector<char> perhaps? However, Name has the benefit of being
+  //       interned and immutable (which is appropriate here).
+  Name string;
+
+  void finalize();
+};
+
+class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
+public:
+  StringMeasure(MixedArena& allocator) {}
+
+  StringMeasureOp op;
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
+public:
+  StringEncode(MixedArena& allocator) {}
+
+  StringEncodeOp op;
+
+  Expression* ref;
+
+  // In linear memory variations this is the pointer in linear memory. In the
+  // GC variations this is an Array.
+  Expression* ptr;
+
+  // Used only in GC variations, where it is the index in |ptr| to start
+  // encoding from.
+  Expression* start = nullptr;
+
+  void finalize();
+};
+
+class StringConcat : public SpecificExpression<Expression::StringConcatId> {
+public:
+  StringConcat(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class StringEq : public SpecificExpression<Expression::StringEqId> {
+public:
+  StringEq(MixedArena& allocator) {}
+
+  Expression* left;
+  Expression* right;
+
+  void finalize();
+};
+
+class StringAs : public SpecificExpression<Expression::StringAsId> {
+public:
+  StringAs(MixedArena& allocator) {}
+
+  StringAsOp op;
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringWTF8Advance
+  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
+public:
+  StringWTF8Advance(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+  Expression* bytes;
+
+  void finalize();
+};
+
+class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
+public:
+  StringWTF16Get(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* pos;
+
+  void finalize();
+};
+
+class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
+public:
+  StringIterNext(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
+};
+
+class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
+public:
+  StringIterMove(MixedArena& allocator) {}
+
+  // Whether the movement is to advance or reverse.
+  StringIterMoveOp op;
+
+  Expression* ref;
+
+  // How many codepoints to advance or reverse.
+  Expression* num;
+
+  void finalize();
+};
+
+class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
+public:
+  StringSliceWTF(MixedArena& allocator) {}
+
+  StringSliceWTFOp op;
+
+  Expression* ref;
+  Expression* start;
+  Expression* end;
+
+  void finalize();
+};
+
+class StringSliceIter
+  : public SpecificExpression<Expression::StringSliceIterId> {
+public:
+  StringSliceIter(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* num;
+
+  void finalize();
 };
 
 // Globals
 
-class Function {
-public:
+struct Named {
   Name name;
-  WasmType result;
-  std::vector<WasmType> params; // function locals are
-  std::vector<WasmType> vars;   // params plus vars
-  Name type; // if null, it is implicit in params and result
-  Expression* body;
 
-  // local names. these are optional.
-  std::vector<Name> localNames;
-  std::map<Name, Index> localIndices;
+  // Explicit names are ones that we read from the input file and
+  // will be written the name section in the output file.
+  // Implicit names are names that binaryen generated for internal
+  // use only and will not be written the name section.
+  bool hasExplicitName = false;
 
-  // node annotations, printed alongside the node in the text format
-  std::unordered_map<Expression*, std::string> annotations;
-
-  Function() : result(none) {}
-
-  size_t getNumParams() {
-    return params.size();
-  }
-  size_t getNumVars() {
-    return vars.size();
-  }
-  size_t getNumLocals() {
-    return params.size() + vars.size();
+  void setName(Name name_, bool hasExplicitName_) {
+    name = name_;
+    hasExplicitName = hasExplicitName_;
   }
 
-  bool isParam(Index index) {
-    return index < params.size();
-  }
-  bool isVar(Index index) {
-    return index >= params.size();
-  }
-
-  Name getLocalName(Index index) {
-    assert(index < localNames.size() && localNames[index].is());
-    return localNames[index];
-  }
-  Name tryLocalName(Index index) {
-    if (index < localNames.size() && localNames[index].is()) {
-      return localNames[index];
-    }
-    // this is an unnamed local
-    return Name();
-  }
-  Index getLocalIndex(Name name) {
-    assert(localIndices.count(name) > 0);
-    return localIndices[name];
-  }
-  Index getVarIndexBase() {
-    return params.size();
-  }
-  WasmType getLocalType(Index index) {
-    if (isParam(index)) {
-      return params[index];
-    } else if (isVar(index)) {
-      return vars[index - getVarIndexBase()];
-    } else {
-      WASM_UNREACHABLE();
-    }
-  }
+  void setExplicitName(Name name_) { setName(name_, true); }
 };
 
+struct Importable : Named {
+  // If these are set, then this is an import, as module.base
+  Name module, base;
+
+  bool imported() const { return module.is(); }
+};
+
+class Function;
+
+// Represents an offset into a wasm binary file. This is used for debug info.
+// For now, assume this is 32 bits as that's the size limit of wasm files
+// anyhow.
+using BinaryLocation = uint32_t;
+
+// Represents a mapping of wasm module elements to their location in the
+// binary representation. This is used for general debugging info support.
+// Offsets are relative to the beginning of the code section, as in DWARF.
+struct BinaryLocations {
+  struct Span {
+    BinaryLocation start = 0, end = 0;
+  };
+
+  // Track the range of addresses an expressions appears at. This is the
+  // contiguous range that all instructions have - control flow instructions
+  // have additional opcodes later (like an end for a block or loop), see
+  // just after this.
+  std::unordered_map<Expression*, Span> expressions;
+
+  // Track the extra delimiter positions that some instructions, in particular
+  // control flow, have, like 'end' for loop and block. We keep these in a
+  // separate map because they are rare and we optimize for the storage space
+  // for the common type of instruction which just needs a Span.
+  // For "else" (from an if) we use index 0, and for catch (from a try) we use
+  // indexes 0 and above.
+  // We use automatic zero-initialization here because that indicates a "null"
+  // debug value, indicating the information is not present.
+  using DelimiterLocations = ZeroInitSmallVector<BinaryLocation, 1>;
+
+  enum DelimiterId : size_t { Else = 0, Invalid = size_t(-1) };
+
+  std::unordered_map<Expression*, DelimiterLocations> delimiters;
+
+  // DWARF debug info can refer to multiple interesting positions in a function.
+  struct FunctionLocations {
+    // The very start of the function, where the binary has a size LEB.
+    BinaryLocation start = 0;
+    // The area where we declare locals, which is right after the size LEB.
+    BinaryLocation declarations = 0;
+    // The end, which is one past the final "end" instruction byte.
+    BinaryLocation end = 0;
+  };
+
+  std::unordered_map<Function*, FunctionLocations> functions;
+};
+
+// Forward declarations of Stack IR, as functions can contain it, see
+// the stackIR property.
+// Stack IR is a secondary IR to the main IR defined in this file (Binaryen
+// IR). See wasm-stack.h.
+class StackInst;
+
+using StackIR = std::vector<StackInst*>;
+
+class Function : public Importable {
+public:
+  HeapType type = HeapType(Signature()); // parameters and return value
+  IRProfile profile = IRProfile::Normal;
+  std::vector<Type> vars; // non-param locals
+
+  // The body of the function
+  Expression* body = nullptr;
+
+  // If present, this stack IR was generated from the main Binaryen IR body,
+  // and possibly optimized. If it is present when writing to wasm binary,
+  // it will be emitted instead of the main Binaryen IR.
+  //
+  // Note that no special care is taken to synchronize the two IRs - if you
+  // emit stack IR and then optimize the main IR, you need to recompute the
+  // stack IR. The Pass system will throw away Stack IR if a pass is run
+  // that declares it may modify Binaryen IR.
+  std::unique_ptr<StackIR> stackIR;
+
+  // local names. these are optional.
+  std::unordered_map<Index, Name> localNames;
+  std::unordered_map<Name, Index> localIndices;
+
+  // Source maps debugging info: map expression nodes to their file, line, col.
+  struct DebugLocation {
+    BinaryLocation fileIndex, lineNumber, columnNumber;
+    bool operator==(const DebugLocation& other) const {
+      return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
+             columnNumber == other.columnNumber;
+    }
+    bool operator!=(const DebugLocation& other) const {
+      return !(*this == other);
+    }
+    bool operator<(const DebugLocation& other) const {
+      return fileIndex != other.fileIndex
+               ? fileIndex < other.fileIndex
+               : lineNumber != other.lineNumber
+                   ? lineNumber < other.lineNumber
+                   : columnNumber < other.columnNumber;
+    }
+  };
+  std::unordered_map<Expression*, DebugLocation> debugLocations;
+  std::set<DebugLocation> prologLocation;
+  std::set<DebugLocation> epilogLocation;
+
+  // General debugging info support: track instructions and the function itself.
+  std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
+  std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
+    delimiterLocations;
+  BinaryLocations::FunctionLocations funcLocation;
+
+  Signature getSig() { return type.getSignature(); }
+  Type getParams() { return getSig().params; }
+  Type getResults() { return getSig().results; }
+  void setParams(Type params) { type = Signature(params, getResults()); }
+  void setResults(Type results) { type = Signature(getParams(), results); }
+
+  size_t getNumParams();
+  size_t getNumVars();
+  size_t getNumLocals();
+
+  bool isParam(Index index);
+  bool isVar(Index index);
+
+  Name getLocalName(Index index);
+  Index getLocalIndex(Name name);
+  Index getVarIndexBase();
+  Type getLocalType(Index index);
+
+  Name getLocalNameOrDefault(Index index);
+  Name getLocalNameOrGeneric(Index index);
+
+  bool hasLocalName(Index index) const;
+  void setLocalName(Index index, Name name);
+
+  void clearNames();
+  void clearDebugInfo();
+};
+
+// The kind of an import or export.
 enum class ExternalKind {
   Function = 0,
   Table = 1,
   Memory = 2,
-  Global = 3
-};
-
-class Import {
-public:
-  Import() : functionType(nullptr), globalType(none) {}
-
-  Name name, module, base; // name = module.base
-  ExternalKind kind;
-  FunctionType* functionType; // for Function imports
-  WasmType globalType; // for Global imports
+  Global = 3,
+  Tag = 4,
+  Invalid = -1
 };
 
 class Export {
 public:
-  Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
+  // exported name - note that this is the key, as the internal name is
+  // non-unique (can have multiple exports for an internal, also over kinds)
+  Name name;
   Name value; // internal name
   ExternalKind kind;
 };
 
-class Table {
+class ElementSegment : public Named {
 public:
+  Name table;
+  Expression* offset;
+  Type type = Type(HeapType::func, Nullable);
+  std::vector<Expression*> data;
+
+  ElementSegment() = default;
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type = Type(HeapType::func, Nullable))
+    : table(table), offset(offset), type(type) {}
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type,
+                 std::vector<Expression*>& init)
+    : table(table), offset(offset), type(type) {
+    data.swap(init);
+  }
+};
+
+class Table : public Importable {
+public:
+  static const Address::address32_t kPageSize = 1;
+  static const Index kUnlimitedSize = Index(-1);
+  // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
-  struct Segment {
-    Expression* offset;
-    std::vector<Name> data;
-    Segment() {}
-    Segment(Expression* offset) : offset(offset) {
-    }
-    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
-      data.swap(init);
-    }
-  };
+  Address initial = 0;
+  Address max = kMaxSize;
+  Type type = Type(HeapType::func, Nullable);
 
-  // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
-  // The table can exist but be empty and have no defined initial or max size.
-  bool exists;
-  bool imported;
-  Name name;
-  Address initial, max;
-  std::vector<Segment> segments;
-
-  Table() : exists(false), imported(false), initial(0), max(kMaxSize) {
-    name = Name::fromInt(0);
+  bool hasMax() { return max != kUnlimitedSize; }
+  void clear() {
+    name = "";
+    initial = 0;
+    max = kMaxSize;
   }
 };
 
-class Memory {
+class DataSegment : public Named {
 public:
-  static const Address::address_t kPageSize = 64 * 1024;
-  static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
-  static const Address::address_t kPageMask = ~(kPageSize - 1);
+  Name memory;
+  bool isPassive = false;
+  Expression* offset = nullptr;
+  std::vector<char> data; // TODO: optimize
+};
 
-  struct Segment {
-    Expression* offset;
-    std::vector<char> data; // TODO: optimize
-    Segment() {}
-    Segment(Expression* offset, const char* init, Address size) : offset(offset) {
-      data.resize(size);
-      std::copy_n(init, size, data.begin());
-    }
-    Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
-      data.swap(init);
-    }
-  };
+class Memory : public Importable {
+public:
+  static const Address::address32_t kPageSize = 64 * 1024;
+  static const Address::address64_t kUnlimitedSize = Address::address64_t(-1);
+  // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
+  static const Address::address32_t kMaxSize32 =
+    (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
-  Name name;
-  Address initial, max; // sizes are in pages
-  std::vector<Segment> segments;
+  Address initial = 0; // sizes are in pages
+  Address max = kMaxSize32;
 
-  // See comment in Table.
-  bool exists;
-  bool imported;
+  bool shared = false;
+  Type indexType = Type::i32;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), imported(false) {
-    name = Name::fromInt(0);
+  bool hasMax() { return max != kUnlimitedSize; }
+  bool is64() { return indexType == Type::i64; }
+  void clear() {
+    name = "";
+    initial = 0;
+    max = kMaxSize32;
+    shared = false;
+    indexType = Type::i32;
   }
 };
 
-class Global {
+class Global : public Importable {
 public:
-  Name name;
-  WasmType type;
-  Expression* init;
-  bool mutable_;
+  Type type;
+  Expression* init = nullptr;
+  bool mutable_ = false;
+};
+
+class Tag : public Importable {
+public:
+  Signature sig;
+};
+
+// "Opaque" data, not part of the core wasm spec, that is held in binaries.
+// May be parsed/handled by utility code elsewhere, but not in wasm.h
+class UserSection {
+public:
+  std::string name;
+  std::vector<char> data;
+};
+
+// The optional "dylink" section is used in dynamic linking.
+class DylinkSection {
+public:
+  bool isLegacy = false;
+  Index memorySize, memoryAlignment, tableSize, tableAlignment;
+  std::vector<Name> neededDynlibs;
+  std::vector<char> tail;
 };
 
 class Module {
 public:
-  // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
-  std::vector<std::unique_ptr<FunctionType>> functionTypes;
-  std::vector<std::unique_ptr<Import>> imports;
+  // wasm contents (generally you shouldn't access these from outside, except
+  // maybe for iterating; use add*() and the get() functions)
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
+  std::vector<std::unique_ptr<Tag>> tags;
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<Memory>> memories;
+  std::vector<std::unique_ptr<DataSegment>> dataSegments;
+  std::vector<std::unique_ptr<Table>> tables;
 
-  Table table;
-  Memory memory;
   Name start;
+
+  std::vector<UserSection> userSections;
+
+  // Optional user section IR representation.
+  std::unique_ptr<DylinkSection> dylinkSection;
+
+  // Source maps debug info.
+  std::vector<std::string> debugInfoFileNames;
+
+  // `features` are the features allowed to be used in this module and should be
+  // respected regardless of the value of`hasFeaturesSection`.
+  // `hasFeaturesSection` means we read a features section and will emit one
+  // too.
+  FeatureSet features = FeatureSet::MVP;
+  bool hasFeaturesSection = false;
+
+  // Module name, if specified. Serves a documentary role only.
+  Name name;
+
+  std::unordered_map<HeapType, TypeNames> typeNames;
 
   MixedArena allocator;
 
 private:
-  // TODO: add a build option where Names are just indices, and then these methods are not needed
-  std::map<Name, FunctionType*> functionTypesMap;
-  std::map<Name, Import*> importsMap;
-  std::map<Name, Export*> exportsMap; // exports map is by the *exported* name, which is unique
-  std::map<Name, Function*> functionsMap;
-  std::map<Name, Global*> globalsMap;
+  // TODO: add a build option where Names are just indices, and then these
+  // methods are not needed
+  // exports map is by the *exported* name, which is unique
+  std::unordered_map<Name, Export*> exportsMap;
+  std::unordered_map<Name, Function*> functionsMap;
+  std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, Memory*> memoriesMap;
+  std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
+  std::unordered_map<Name, DataSegment*> dataSegmentsMap;
+  std::unordered_map<Name, Global*> globalsMap;
+  std::unordered_map<Name, Tag*> tagsMap;
 
 public:
-  Module() {};
+  Module() = default;
 
-  FunctionType* getFunctionType(Name name) { assert(functionTypesMap.count(name)); return functionTypesMap[name]; }
-  Import* getImport(Name name) { assert(importsMap.count(name)); return importsMap[name]; }
-  Export* getExport(Name name) { assert(exportsMap.count(name)); return exportsMap[name]; }
-  Function* getFunction(Name name) { assert(functionsMap.count(name)); return functionsMap[name]; }
-  Global* getGlobal(Name name) { assert(globalsMap.count(name)); return globalsMap[name]; }
+  Export* getExport(Name name);
+  Function* getFunction(Name name);
+  Table* getTable(Name name);
+  ElementSegment* getElementSegment(Name name);
+  Memory* getMemory(Name name);
+  DataSegment* getDataSegment(Name name);
+  Global* getGlobal(Name name);
+  Tag* getTag(Name name);
 
-  FunctionType* checkFunctionType(Name name) { if (!functionTypesMap.count(name)) return nullptr; return functionTypesMap[name]; }
-  Import* checkImport(Name name) { if (!importsMap.count(name)) return nullptr; return importsMap[name]; }
-  Export* checkExport(Name name) { if (!exportsMap.count(name)) return nullptr; return exportsMap[name]; }
-  Function* checkFunction(Name name) { if (!functionsMap.count(name)) return nullptr; return functionsMap[name]; }
-  Global* checkGlobal(Name name) { if (!globalsMap.count(name)) return nullptr; return globalsMap[name]; }
+  Export* getExportOrNull(Name name);
+  Table* getTableOrNull(Name name);
+  Memory* getMemoryOrNull(Name name);
+  ElementSegment* getElementSegmentOrNull(Name name);
+  DataSegment* getDataSegmentOrNull(Name name);
+  Function* getFunctionOrNull(Name name);
+  Global* getGlobalOrNull(Name name);
+  Tag* getTagOrNull(Name name);
 
-  void addFunctionType(FunctionType* curr) {
-    assert(curr->name.is());
-    functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
-    assert(functionTypesMap.find(curr->name) == functionTypesMap.end());
-    functionTypesMap[curr->name] = curr;
-  }
-  void addImport(Import* curr) {
-    assert(curr->name.is());
-    imports.push_back(std::unique_ptr<Import>(curr));
-    assert(importsMap.find(curr->name) == importsMap.end());
-    importsMap[curr->name] = curr;
-  }
-  void addExport(Export* curr) {
-    assert(curr->name.is());
-    exports.push_back(std::unique_ptr<Export>(curr));
-    assert(exportsMap.find(curr->name) == exportsMap.end());
-    exportsMap[curr->name] = curr;
-  }
-  void addFunction(Function* curr) {
-    assert(curr->name.is());
-    functions.push_back(std::unique_ptr<Function>(curr));
-    assert(functionsMap.find(curr->name) == functionsMap.end());
-    functionsMap[curr->name] = curr;
-  }
-  void addGlobal(Global* curr) {
-    assert(curr->name.is());
-    globals.push_back(std::unique_ptr<Global>(curr));
-    assert(globalsMap.find(curr->name) == globalsMap.end());
-    globalsMap[curr->name] = curr;
-  }
+  Export* addExport(Export* curr);
+  Function* addFunction(Function* curr);
+  Global* addGlobal(Global* curr);
+  Tag* addTag(Tag* curr);
 
-  void addStart(const Name& s) {
-    start = s;
-  }
+  Export* addExport(std::unique_ptr<Export>&& curr);
+  Function* addFunction(std::unique_ptr<Function>&& curr);
+  Table* addTable(std::unique_ptr<Table>&& curr);
+  ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  Memory* addMemory(std::unique_ptr<Memory>&& curr);
+  DataSegment* addDataSegment(std::unique_ptr<DataSegment>&& curr);
+  Global* addGlobal(std::unique_ptr<Global>&& curr);
+  Tag* addTag(std::unique_ptr<Tag>&& curr);
 
-  void removeImport(Name name) {
-    for (size_t i = 0; i < imports.size(); i++) {
-      if (imports[i]->name == name) {
-        imports.erase(imports.begin() + i);
-        break;
-      }
-    }
-    importsMap.erase(name);
-  }
-  // TODO: remove* for other elements
+  void addStart(const Name& s);
 
-  void updateMaps() {
-    functionsMap.clear();
-    for (auto& curr : functions) {
-      functionsMap[curr->name] = curr.get();
-    }
-    functionTypesMap.clear();
-    for (auto& curr : functionTypes) {
-      functionTypesMap[curr->name] = curr.get();
-    }
-    importsMap.clear();
-    for (auto& curr : imports) {
-      importsMap[curr->name] = curr.get();
-    }
-    exportsMap.clear();
-    for (auto& curr : exports) {
-      exportsMap[curr->name] = curr.get();
-    }
-    globalsMap.clear();
-    for (auto& curr : globals) {
-      globalsMap[curr->name] = curr.get();
-    }
-  }
+  void removeExport(Name name);
+  void removeFunction(Name name);
+  void removeTable(Name name);
+  void removeElementSegment(Name name);
+  void removeMemory(Name name);
+  void removeDataSegment(Name name);
+  void removeGlobal(Name name);
+  void removeTag(Name name);
+
+  void removeExports(std::function<bool(Export*)> pred);
+  void removeFunctions(std::function<bool(Function*)> pred);
+  void removeTables(std::function<bool(Table*)> pred);
+  void removeElementSegments(std::function<bool(ElementSegment*)> pred);
+  void removeMemories(std::function<bool(Memory*)> pred);
+  void removeDataSegments(std::function<bool(DataSegment*)> pred);
+  void removeGlobals(std::function<bool(Global*)> pred);
+  void removeTags(std::function<bool(Tag*)> pred);
+
+  void updateDataSegmentsMap();
+  void updateMaps();
+
+  void clearDebugInfo();
 };
+
+using ModuleExpression = std::pair<Module&, Expression*>;
 
 } // namespace wasm
 
 namespace std {
 template<> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
-    return std::hash<wasm::Address::address_t>()(a.addr);
+    return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
-}
+
+std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
+
+} // namespace std
 
 #endif // wasm_wasm_h

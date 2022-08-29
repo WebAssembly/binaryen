@@ -1,0 +1,79 @@
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $1
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $2
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $3
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $4
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (nop)
+ )
+ (func $5
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $6
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (nop)
+ )
+ (func $7
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $8
+  (nop)
+  (block $label$1
+   (nop)
+   (br $label$1)
+  )
+  (nop)
+ )
+ (func $9
+  (block $label$1
+   (nop)
+   (block $label$2
+    (nop)
+    (br $label$1)
+   )
+  )
+ )
+)
+

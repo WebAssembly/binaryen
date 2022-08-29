@@ -1,0 +1,127 @@
+
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
+ var i64toi32_i32$HIGH_BITS = 0;
+ function $1($0) {
+  $0 = $0 | 0;
+  var $1_1 = 0;
+  while (1) {
+   if ($0) {
+    $0 = $0 - 1 & $0;
+    $1_1 = $1_1 + 1 | 0;
+    continue;
+   }
+   break;
+  };
+  return $1_1 | 0;
+ }
+ 
+ function $6($0) {
+  $0 = $0 | 0;
+  return Math_clz32($0) | 0;
+ }
+ 
+ function $7($0) {
+  $0 = $0 | 0;
+  if ($0) {
+   $0 = 31 - Math_clz32($0 - 1 ^ $0) | 0
+  } else {
+   $0 = 32
+  }
+  return $0 | 0;
+ }
+ 
+ function legalstub$2($0, $1_1, $2, $3) {
+  var $4 = 0, $5 = 0, $6_1 = 0;
+  $4 = $0;
+  while (1) {
+   if ($1_1 | $4) {
+    $0 = $4;
+    $4 = $4 - 1 & $4;
+    $1_1 = $1_1 - !$0 & $1_1;
+    $5 = $5 + 1 | 0;
+    $6_1 = $5 ? $6_1 : $6_1 + 1 | 0;
+    continue;
+   }
+   break;
+  };
+  i64toi32_i32$HIGH_BITS = $6_1;
+  return ($2 | 0) == ($5 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
+ }
+ 
+ function legalstub$3($0, $1_1, $2) {
+  return !$2 & ($0 | 0) == ($1_1 | 0);
+ }
+ 
+ function legalstub$4($0, $1_1, $2) {
+  return ($0 | 0) == ($1_1 | 0) & ($2 | 0) == $0 >> 31;
+ }
+ 
+ function legalstub$5($0, $1_1) {
+  return !($0 | $1_1);
+ }
+ 
+ function legalstub$8($0, $1_1, $2, $3) {
+  var $4 = 0;
+  $4 = Math_clz32($0) + 32 | 0;
+  $0 = Math_clz32($1_1);
+  return !$3 & ($2 | 0) == ((($0 | 0) == 32 ? $4 : $0) | 0);
+ }
+ 
+ function legalstub$9($0, $1_1, $2, $3) {
+  var $4 = 0, $5 = 0, $6_1 = 0, $7_1 = 0;
+  __inlined_func$__wasm_ctz_i64 : {
+   if ($1_1 | $0) {
+    $4 = $1_1 - 1 | 0;
+    $5 = $4 + 1 | 0;
+    $6_1 = $4;
+    $4 = $0 - 1 | 0;
+    $7_1 = Math_clz32($0 ^ $4) + 32 | 0;
+    $0 = Math_clz32($1_1 ^ (($4 | 0) != -1 ? $5 : $6_1));
+    $0 = ($0 | 0) == 32 ? $7_1 : $0;
+    $1_1 = 63 - $0 | 0;
+    i64toi32_i32$HIGH_BITS = 0 - ($0 >>> 0 > 63) | 0;
+    break __inlined_func$__wasm_ctz_i64;
+   }
+   i64toi32_i32$HIGH_BITS = 0;
+   $1_1 = 64;
+  }
+  return ($1_1 | 0) == ($2 | 0) & ($3 | 0) == (i64toi32_i32$HIGH_BITS | 0);
+ }
+ 
+ return {
+  "i32_popcnt": $1, 
+  "check_popcnt_i64": legalstub$2, 
+  "check_extend_ui32": legalstub$3, 
+  "check_extend_si32": legalstub$4, 
+  "check_eqz_i64": legalstub$5, 
+  "i32_clz": $6, 
+  "i32_ctz": $7, 
+  "check_clz_i64": legalstub$8, 
+  "check_ctz_i64": legalstub$9
+ };
+}
+
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+export var i32_popcnt = retasmFunc.i32_popcnt;
+export var check_popcnt_i64 = retasmFunc.check_popcnt_i64;
+export var check_extend_ui32 = retasmFunc.check_extend_ui32;
+export var check_extend_si32 = retasmFunc.check_extend_si32;
+export var check_eqz_i64 = retasmFunc.check_eqz_i64;
+export var i32_clz = retasmFunc.i32_clz;
+export var i32_ctz = retasmFunc.i32_ctz;
+export var check_clz_i64 = retasmFunc.check_clz_i64;
+export var check_ctz_i64 = retasmFunc.check_ctz_i64;

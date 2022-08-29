@@ -1,0 +1,175 @@
+
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var abort = env.abort;
+ var nan = NaN;
+ var infinity = Infinity;
+ function zed($0) {
+  zed($0);
+ }
+ 
+ function $1($0) {
+  $0 = $0 | 0;
+  a : {
+   b : {
+    switch ($0 | 0) {
+    default:
+     zed(-1);
+     zed(-2);
+    case 3:
+     zed(-3);
+     zed(-4);
+    case 2:
+     zed(-5);
+     zed(-6);
+     break a;
+    case 0:
+     break a;
+    case 1:
+     break b;
+    };
+   }
+   zed(-7);
+   zed(-8);
+  }
+  zed(-9);
+  zed(-10);
+ }
+ 
+ function $2($0) {
+  $0 = $0 | 0;
+  a : {
+   b : {
+    c : {
+     d : {
+      switch ($0 | 0) {
+      default:
+       zed(-1);
+       zed(-2);
+       break c;
+      case 0:
+       break a;
+      case 1:
+       break b;
+      case 2:
+       break c;
+      case 3:
+       break d;
+      };
+     }
+     zed(-3);
+     zed(-4);
+    }
+    zed(-5);
+    zed(-6);
+    break a;
+   }
+   zed(-7);
+   zed(-8);
+  }
+  zed(-9);
+  zed(-10);
+ }
+ 
+ function $3($0) {
+  $0 = $0 | 0;
+  a : {
+   b : {
+    c : {
+     d : {
+      switch ($0 | 0) {
+      default:
+       if ($0) {
+        break c
+       }
+       zed(-1);
+       zed(-2);
+       break;
+      case 0:
+       break a;
+      case 1:
+       break b;
+      case 2:
+       break c;
+      case 3:
+       break d;
+      };
+     }
+     zed(-3);
+     zed(-4);
+    }
+    zed(-5);
+    zed(-6);
+    break a;
+   }
+   zed(-7);
+   zed(-8);
+  }
+  zed(-9);
+  zed(-10);
+ }
+ 
+ function $4($0) {
+  $0 = $0 | 0;
+  a : {
+   b : {
+    c : {
+     if ($0) {
+      break c
+     }
+     d : {
+      switch ($0 | 0) {
+      default:
+       if ($0) {
+        break c
+       }
+       zed(-1);
+       zed(-2);
+       break;
+      case 0:
+       break a;
+      case 1:
+       break b;
+      case 2:
+       break c;
+      case 3:
+       break d;
+      };
+     }
+     zed(-3);
+     zed(-4);
+    }
+    zed(-5);
+    zed(-6);
+    break a;
+   }
+   zed(-7);
+   zed(-8);
+  }
+  zed(-9);
+  zed(-10);
+ }
+ 
+ return {
+  "foo1": $1, 
+  "foo2": $2, 
+  "foo3": $3, 
+  "foo4": $4
+ };
+}
+
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+export var foo1 = retasmFunc.foo1;
+export var foo2 = retasmFunc.foo2;
+export var foo3 = retasmFunc.foo3;
+export var foo4 = retasmFunc.foo4;

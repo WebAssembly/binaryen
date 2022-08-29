@@ -22,7 +22,7 @@
 
 using namespace wasm;
 
-bool wasm::isInteger(double x) { return fmod(x, 1) == 0; }
+bool wasm::isInteger(double x) { return trunc(x) == x && !std::isinf(x); }
 
 bool wasm::isUInteger32(double x) {
   return !std::signbit(x) && isInteger(x) &&
@@ -35,17 +35,18 @@ bool wasm::isSInteger32(double x) {
 }
 
 uint32_t wasm::toUInteger32(double x) {
-  return std::signbit(x) ? 0 : (x < std::numeric_limits<uint32_t>::max()
-                                    ? (uint32_t)x
-                                    : std::numeric_limits<uint32_t>::max());
+  return std::signbit(x) ? 0
+                         : (x < std::numeric_limits<uint32_t>::max()
+                              ? (uint32_t)x
+                              : std::numeric_limits<uint32_t>::max());
 }
 
 int32_t wasm::toSInteger32(double x) {
   return (x > std::numeric_limits<int32_t>::min() &&
           x < std::numeric_limits<int32_t>::max())
-             ? (int32_t)x
-             : (std::signbit(x) ? std::numeric_limits<int32_t>::min()
-                                : std::numeric_limits<int32_t>::max());
+           ? (int32_t)x
+           : (std::signbit(x) ? std::numeric_limits<int32_t>::min()
+                              : std::numeric_limits<int32_t>::max());
 }
 
 bool wasm::isUInteger64(double x) {
@@ -59,17 +60,18 @@ bool wasm::isSInteger64(double x) {
 }
 
 uint64_t wasm::toUInteger64(double x) {
-  return std::signbit(x) ? 0 : (x < (double)std::numeric_limits<uint64_t>::max()
-                                    ? (uint64_t)x
-                                    : std::numeric_limits<uint64_t>::max());
+  return std::signbit(x) ? 0
+                         : (x < (double)std::numeric_limits<uint64_t>::max()
+                              ? (uint64_t)x
+                              : std::numeric_limits<uint64_t>::max());
 }
 
 int64_t wasm::toSInteger64(double x) {
   return (x > (double)std::numeric_limits<int64_t>::min() &&
           x < (double)std::numeric_limits<int64_t>::max())
-             ? (int64_t)x
-             : (std::signbit(x) ? std::numeric_limits<int64_t>::min()
-                                : std::numeric_limits<int64_t>::max());
+           ? (int64_t)x
+           : (std::signbit(x) ? std::numeric_limits<int64_t>::min()
+                              : std::numeric_limits<int64_t>::max());
 }
 
 /* 3 32222222 222...00
@@ -116,13 +118,14 @@ bool wasm::isInRangeI64TruncU(int32_t i) {
   return (u < 0x5f800000U) || (u >= 0x80000000U && u < 0xbf800000U);
 }
 
+/* clang-format off */
 /*
  * 6 66655555555 5544...222221...000
  * 3 21098765432 1098...432109...210
  * ---------------------------------
  * 0 00000000000 0000...000000...000 0x0000000000000000 => 0
- * 0 10000011101 1111...111000...000 0x41dfffffffc00000 => 2147483647               (INT32_MAX)
- * 0 10000011110 1111...111100...000 0x41efffffffe00000 => 4294967295              (UINT32_MAX)
+ * 0 10000011101 1111...111000...111 0x41dfffffffffffff => 2147483647.9999998     (rounds down to INT32_MAX)
+ * 0 10000011110 1111...111111...111 0x41efffffffffffff => 4294967295.9999995     (rounds down to UINT32_MAX)
  * 0 10000111101 1111...111111...111 0x43dfffffffffffff => 9223372036854774784     (~INT64_MAX)
  * 0 10000111110 0000...000000...000 0x43e0000000000000 => 9223372036854775808
  * 0 10000111110 1111...111111...111 0x43efffffffffffff => 18446744073709549568   (~UINT64_MAX)
@@ -133,22 +136,23 @@ bool wasm::isInRangeI64TruncU(int32_t i) {
  * 1 00000000000 0000...000000...000 0x8000000000000000 => -0
  * 1 01111111110 1111...111111...111 0xbfefffffffffffff => -1 + ulp  (~UINT32_MIN, ~UINT64_MIN)
  * 1 01111111111 0000...000000...000 0xbff0000000000000 => -1
- * 1 10000011110 0000...000000...000 0xc1e0000000000000 => -2147483648              (INT32_MIN)
+ * 1 10000011110 0000...000000...111 0xc1e00000001fffff => -2147483648.9999995    (rounds up to INT32_MIN)
  * 1 10000111110 0000...000000...000 0xc3e0000000000000 => -9223372036854775808     (INT64_MIN)
  * 1 11111111111 0000...000000...000 0xfff0000000000000 => -inf
  * 1 11111111111 0000...000000...001 0xfff0000000000001 => -nan(0x1)
  * 1 11111111111 1111...111111...111 0xffffffffffffffff => -nan(0xfff...)
  */
+/* clang-format on */
 
 bool wasm::isInRangeI32TruncS(int64_t i) {
   uint64_t u = i;
-  return (u <= 0x41dfffffffc00000ULL) ||
-         (u >= 0x8000000000000000ULL && u <= 0xc1e0000000000000ULL);
+  return (u <= 0x41dfffffffffffffULL) ||
+         (u >= 0x8000000000000000ULL && u <= 0xc1e00000001fffffULL);
 }
 
 bool wasm::isInRangeI32TruncU(int64_t i) {
   uint64_t u = i;
-  return (u <= 0x41efffffffe00000ULL) ||
+  return (u <= 0x41efffffffffffffULL) ||
          (u >= 0x8000000000000000ULL && u <= 0xbfefffffffffffffULL);
 }
 

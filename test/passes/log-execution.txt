@@ -1,0 +1,98 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_none (func (param i32)))
+ (import "env" "func" (func $import))
+ (import "env" "log_execution" (func $log_execution (param i32)))
+ (func $nopp
+  (call $log_execution
+   (i32.const 0)
+  )
+  (nop)
+ )
+ (func $intt (result i32)
+  (call $log_execution
+   (i32.const 1)
+  )
+  (i32.const 10)
+ )
+ (func $workk
+  (call $log_execution
+   (i32.const 3)
+  )
+  (block
+   (if
+    (i32.const 0)
+    (nop)
+   )
+   (block
+    (call $log_execution
+     (i32.const 2)
+    )
+    (drop
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $loops
+  (call $log_execution
+   (i32.const 8)
+  )
+  (block
+   (loop $x
+    (call $log_execution
+     (i32.const 4)
+    )
+    (block
+     (call $loops)
+     (br $x)
+    )
+   )
+   (if
+    (call $intt)
+    (loop $y
+     (call $log_execution
+      (i32.const 5)
+     )
+     (call $loops)
+    )
+   )
+   (block
+    (call $log_execution
+     (i32.const 7)
+    )
+    (loop $loop-in
+     (call $log_execution
+      (i32.const 6)
+     )
+     (block
+      (drop
+       (i32.const 10)
+      )
+      (drop
+       (i32.const 20)
+      )
+      (drop
+       (i32.const 30)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $loops-similar
+  (call $log_execution
+   (i32.const 10)
+  )
+  (loop $x
+   (call $log_execution
+    (i32.const 9)
+   )
+   (block
+    (call $loops)
+    (br $x)
+   )
+  )
+ )
+)

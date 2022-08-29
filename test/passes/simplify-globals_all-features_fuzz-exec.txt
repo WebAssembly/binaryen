@@ -1,0 +1,21 @@
+[fuzz-exec] calling export
+[fuzz-exec] note result: export => funcref
+(module
+ (type $f32_i31ref_i64_f64_funcref_=>_none (func (param f32 i31ref i64 f64 funcref)))
+ (type $none_=>_funcref (func (result funcref)))
+ (global $global$0 (mut funcref) (ref.null func))
+ (elem declare func $0)
+ (export "export" (func $1))
+ (func $0 (param $0 f32) (param $1 i31ref) (param $2 i64) (param $3 f64) (param $4 funcref)
+  (nop)
+ )
+ (func $1 (result funcref)
+  (global.set $global$0
+   (ref.func $0)
+  )
+  (ref.func $0)
+ )
+)
+[fuzz-exec] calling export
+[fuzz-exec] note result: export => funcref
+[fuzz-exec] comparing export

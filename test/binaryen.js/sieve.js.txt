@@ -1,0 +1,108 @@
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (memory $0 1 100)
+ (export "sieve" (func $sieve))
+ (func $sieve (param $0 i32) (result i32)
+  (local $1 i32)
+  (if
+   (i32.lt_u
+    (i32.mul
+     (memory.size)
+     (i32.const 65536)
+    )
+    (local.get $0)
+   )
+   (drop
+    (memory.grow
+     (i32.sub
+      (i32.div_u
+       (i32.add
+        (local.get $0)
+        (i32.const 65535)
+       )
+       (i32.const 65536)
+      )
+      (memory.size)
+     )
+    )
+   )
+  )
+  (local.set $1
+   (i32.const 0)
+  )
+  (loop $clear
+   (i32.store8
+    (local.get $1)
+    (i32.const 0)
+   )
+   (local.set $1
+    (i32.add
+     (local.get $1)
+     (i32.const 1)
+    )
+   )
+   (br_if $clear
+    (i32.eq
+     (local.get $1)
+     (local.get $0)
+    )
+   )
+  )
+  (return
+   (local.get $0)
+  )
+ )
+)
+
+optimized:
+
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (memory $0 1 100)
+ (export "sieve" (func $sieve))
+ (func $sieve (; has Stack IR ;) (param $0 i32) (result i32)
+  (local $1 i32)
+  (if
+   (i32.lt_u
+    (i32.shl
+     (memory.size)
+     (i32.const 16)
+    )
+    (local.get $0)
+   )
+   (drop
+    (memory.grow
+     (i32.sub
+      (i32.shr_u
+       (i32.add
+        (local.get $0)
+        (i32.const 65535)
+       )
+       (i32.const 16)
+      )
+      (memory.size)
+     )
+    )
+   )
+  )
+  (loop $clear
+   (i32.store8
+    (local.get $1)
+    (i32.const 0)
+   )
+   (br_if $clear
+    (i32.eq
+     (local.tee $1
+      (i32.add
+       (local.get $1)
+       (i32.const 1)
+      )
+     )
+     (local.get $0)
+    )
+   )
+  )
+  (local.get $0)
+ )
+)
+

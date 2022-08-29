@@ -1,0 +1,14 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
+ (memory $0 1)
+ (func $load-would-normally-have-side-effects (result i32)
+  (i64.ge_s
+   (i64.const 2912825531628789796)
+   (i64.const 0)
+  )
+ )
+ (func $unary-binary-may-trap
+  (nop)
+ )
+)

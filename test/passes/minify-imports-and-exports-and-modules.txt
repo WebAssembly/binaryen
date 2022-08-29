@@ -1,0 +1,15 @@
+memory => a
+table => b
+longname1 => c
+longname2 => d
+longname3 => e
+longname4 => f
+(module
+ (type $none_=>_none (func))
+ (import "a" "a" (memory $0 256 256))
+ (import "a" "b" (table $0 4 funcref))
+ (import "a" "c" (func $internal1))
+ (import "a" "d" (func $internal2))
+ (import "a" "e" (func $internal3))
+ (import "a" "f" (func $internal4))
+)

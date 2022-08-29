@@ -19,57 +19,55 @@
 // a location behind a condition, where it might not always execute.
 //
 
-#include <wasm.h>
+#include <ir/effects.h>
 #include <pass.h>
-#include <ast_utils.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
 //
 // Analyzers some useful local properties: # of sets and gets, and SFA.
 //
-// Single First Assignment (SFA) form: the local has a single set_local, is
-// not a parameter, and has no get_locals before the set_local in postorder.
+// Single First Assignment (SFA) form: the local has a single local.set, is
+// not a parameter, and has no local.gets before the local.set in postorder.
 // This is a much weaker property than SSA, obviously, but together with
 // our implicit dominance properties in the structured AST is quite useful.
 //
-struct LocalAnalyzer : public PostWalker<LocalAnalyzer, Visitor<LocalAnalyzer>> {
+struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
   std::vector<bool> sfa;
   std::vector<Index> numSets;
   std::vector<Index> numGets;
 
   void analyze(Function* func) {
     auto num = func->getNumLocals();
+    numSets.clear();
     numSets.resize(num);
-    std::fill(numSets.begin(), numSets.end(), 0);
+    numGets.clear();
     numGets.resize(num);
-    std::fill(numGets.begin(), numGets.end(), 0);
+    sfa.clear();
     sfa.resize(num);
-    std::fill(sfa.begin(), sfa.begin() + func->getNumParams(), false);
     std::fill(sfa.begin() + func->getNumParams(), sfa.end(), true);
     walk(func->body);
     for (Index i = 0; i < num; i++) {
-      if (numSets[i] == 0) sfa[i] = false;
+      if (numSets[i] == 0) {
+        sfa[i] = false;
+      }
     }
   }
 
-  bool isSFA(Index i) {
-    return sfa[i];
-  }
+  bool isSFA(Index i) { return sfa[i]; }
 
-  Index getNumGets(Index i) {
-    return numGets[i];
-  }
+  Index getNumGets(Index i) { return numGets[i]; }
 
-  void visitGetLocal(GetLocal *curr) {
+  void visitLocalGet(LocalGet* curr) {
     if (numSets[curr->index] == 0) {
       sfa[curr->index] = false;
     }
     numGets[curr->index]++;
   }
 
-  void visitSetLocal(SetLocal *curr) {
+  void visitLocalSet(LocalSet* curr) {
     numSets[curr->index]++;
     if (numSets[curr->index] > 1) {
       sfa[curr->index] = false;
@@ -77,22 +75,30 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer, Visitor<LocalAnalyzer>> 
   }
 };
 
-// Implement core optimization logic in a struct, used and then discarded entirely
-// for each block
+// Implements core optimization logic. Used and then discarded entirely
+// for each block.
 class Pusher {
   ExpressionList& list;
   LocalAnalyzer& analyzer;
   std::vector<Index>& numGetsSoFar;
   PassOptions& passOptions;
+  Module& module;
 
 public:
-  Pusher(Block* block, LocalAnalyzer& analyzer, std::vector<Index>& numGetsSoFar, PassOptions& passOptions) : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar), passOptions(passOptions) {
+  Pusher(Block* block,
+         LocalAnalyzer& analyzer,
+         std::vector<Index>& numGetsSoFar,
+         PassOptions& passOptions,
+         Module& module)
+    : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar),
+      passOptions(passOptions), module(module) {
     // Find an optimization segment: from the first pushable thing, to the first
     // point past which we want to push. We then push in that range before
     // continuing forward.
-    Index relevant = list.size() - 1; // we never need to push past a final element, as
-                                      // we couldn't be used after it.
-    Index nothing = -1;
+    // we never need to push past a final element, as we couldn't be used after
+    // it.
+    Index relevant = list.size() - 1;
+    const Index nothing = -1;
     Index i = 0;
     Index firstPushable = nothing;
     while (i < relevant) {
@@ -112,15 +118,17 @@ public:
   }
 
 private:
-  SetLocal* isPushable(Expression* curr) {
-    auto* set = curr->dynCast<SetLocal>();
-    if (!set) return nullptr;
+  LocalSet* isPushable(Expression* curr) {
+    auto* set = curr->dynCast<LocalSet>();
+    if (!set) {
+      return nullptr;
+    }
     auto index = set->index;
     // to be pushable, this must be SFA and the right # of gets,
     // but also have no side effects, as it may not execute if pushed.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(passOptions, set->value).hasSideEffects()) {
+        !EffectAnalyzer(passOptions, module, set->value).hasSideEffects()) {
       return set;
     }
     return nullptr;
@@ -133,7 +141,9 @@ private:
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>()) return true;
+    if (curr->is<If>()) {
+      return true;
+    }
     if (auto* br = curr->dynCast<Break>()) {
       return !!br->condition;
     }
@@ -146,24 +156,29 @@ private:
     // forward, that way we can push later things out of the way
     // of earlier ones. Once we know all we can push, we push it all
     // in one pass, keeping the order of the pushables intact.
-    assert(firstPushable != Index(-1) && pushPoint != Index(-1) && firstPushable < pushPoint);
-    EffectAnalyzer cumulativeEffects(passOptions); // everything that matters if you want
-                                                   // to be pushed past the pushPoint
-    cumulativeEffects.analyze(list[pushPoint]);
-    cumulativeEffects.branches = false; // it is ok to ignore the branching here,
-                                        // that is the crucial point of this opt
-    std::vector<SetLocal*> toPush;
+    assert(firstPushable != Index(-1) && pushPoint != Index(-1) &&
+           firstPushable < pushPoint);
+    // everything that matters if you want to be pushed past the pushPoint
+    EffectAnalyzer cumulativeEffects(passOptions, module);
+    cumulativeEffects.walk(list[pushPoint]);
+    // it is ok to ignore the branching here, that is the crucial point of this
+    // opt
+    // TODO: it would be ok to ignore thrown exceptions here, if we know they
+    //       could not be caught and must go outside of the function
+    cumulativeEffects.ignoreBranches();
+    std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
       auto* pushable = isPushable(list[i]);
       if (pushable) {
         auto iter = pushableEffects.find(pushable);
         if (iter == pushableEffects.end()) {
-          iter = pushableEffects.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(pushable),
-            std::forward_as_tuple(passOptions, pushable)
-          ).first;
+          iter =
+            pushableEffects
+              .emplace(std::piecewise_construct,
+                       std::forward_as_tuple(pushable),
+                       std::forward_as_tuple(passOptions, module, pushable))
+              .first;
         }
         auto& effects = iter->second;
         if (cumulativeEffects.invalidates(effects)) {
@@ -179,7 +194,7 @@ private:
         }
       } else {
         // something that can't be pushed, so it might block further pushing
-        cumulativeEffects.analyze(list[i]);
+        cumulativeEffects.walk(list[i]);
       }
       assert(i > 0);
       i--;
@@ -213,10 +228,10 @@ private:
   }
 
   // Pushables may need to be scanned more than once, so cache their effects.
-  std::unordered_map<SetLocal*, EffectAnalyzer> pushableEffects;
+  std::unordered_map<LocalSet*, EffectAnalyzer> pushableEffects;
 };
 
-struct CodePushing : public WalkerPass<PostWalker<CodePushing, Visitor<CodePushing>>> {
+struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new CodePushing; }
@@ -230,36 +245,33 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing, Visitor<CodePushi
     // pre-scan to find which vars are sfa, and also count their gets&sets
     analyzer.analyze(func);
     // prepare to walk
+    numGetsSoFar.clear();
     numGetsSoFar.resize(func->getNumLocals());
-    std::fill(numGetsSoFar.begin(), numGetsSoFar.end(), 0);
     // walk and optimize
     walk(func->body);
   }
 
-  void visitGetLocal(GetLocal *curr) {
-    numGetsSoFar[curr->index]++;
-  }
+  void visitLocalGet(LocalGet* curr) { numGetsSoFar[curr->index]++; }
 
   void visitBlock(Block* curr) {
     // Pushing code only makes sense if we are size 3 or above: we need
     // one element to push, an element to push it past, and an element to use
     // what we pushed.
-    if (curr->list.size() < 3) return;
-    // At this point in the postorder traversal we have gone through all our children.
-    // Therefore any variable whose gets seen so far is equal to the total gets must
-    // have no further users after this block. And therefore when we see an SFA
-    // variable defined here, we know it isn't used before it either, and has just this
-    // one assign. So we can push it forward while we don't hit a non-control-flow
-    // ordering invalidation issue, since if this isn't a loop, it's fine (we're not
-    // used outside), and if it is, we hit the assign before any use (as we can't
-    // push it past a use).
-    Pusher pusher(curr, analyzer, numGetsSoFar, getPassOptions());
+    if (curr->list.size() < 3) {
+      return;
+    }
+    // At this point in the postorder traversal we have gone through all our
+    // children. Therefore any variable whose gets seen so far is equal to the
+    // total gets must have no further users after this block. And therefore
+    // when we see an SFA variable defined here, we know it isn't used before it
+    // either, and has just this one assign. So we can push it forward while we
+    // don't hit a non-control-flow ordering invalidation issue, since if this
+    // isn't a loop, it's fine (we're not used outside), and if it is, we hit
+    // the assign before any use (as we can't push it past a use).
+    Pusher pusher(curr, analyzer, numGetsSoFar, getPassOptions(), *getModule());
   }
 };
 
-Pass *createCodePushingPass() {
-  return new CodePushing();
-}
+Pass* createCodePushingPass() { return new CodePushing(); }
 
 } // namespace wasm
-

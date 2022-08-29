@@ -3,7 +3,7 @@
   (type $0 (func (param i32) (result i32)))
   (type $1 (func))
   (func $b0 (type $0) (param $i1 i32) (result i32)
-    (block $topmost i32
+    (block $topmost (result i32)
       (i32.const 0)
     )
   )
@@ -76,5 +76,30 @@
         )
       )
     )
+  )
+  (func $merge-typed-with-unreachable-child (result i32)
+   (local $0 f32)
+   (block $label$0 (result i32)
+    (block $label$1 (result i32)
+     (br_if $label$1
+      (i32.const 1)
+      (br_if $label$0
+       (i32.const 0)
+       (br $label$0
+        (i32.const 0)
+       )
+      )
+     )
+    )
+   )
+  )
+  (func $loop-with-child-of-other-type
+   (drop
+    (loop (result i32) ;; the loop has no name, but can't be replaced by the child
+     (block $l         ;; as the type differs
+      (unreachable)
+     )
+    )
+   )
   )
 )

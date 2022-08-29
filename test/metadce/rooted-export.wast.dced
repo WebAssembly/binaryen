@@ -1,0 +1,10 @@
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (tag $b_wasm_tag (param i32))
+ (export "wasm_func_b" (func $b_wasm_func))
+ (export "wasm_tag_b" (tag $b_wasm_tag))
+ (func $b_wasm_func
+  (unreachable)
+ )
+)

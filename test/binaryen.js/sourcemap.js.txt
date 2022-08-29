@@ -1,0 +1,8 @@
+module.c
+
+000: 00 a  s  m  01 00 00 00 01 05 01 `  00 01 7f 03 
+010: 02 01 00 0a 06 01 04 00 A  01 0b 00 !  10 s  o  
+020: u  r  c  e  M  a  p  p  i  n  g  U  R  L  0f m  
+030: o  d  u  l  e  .  w  a  s  m  .  m  a  p 
+
+{"version":3,"sources":["module.c"],"names":[],"mappings":"wBAAE"}

@@ -3,7 +3,7 @@
   (memory $0 4096 4096)
   (data (i32.const 1026) "\14\00")
   (func $kitchensink (type $0) (result i32)
-    (block $block0 i32
+    (block $block0 (result i32)
       (drop
         (i32.add
           (i32.const 10)
@@ -537,127 +537,167 @@
         )
       )
       (drop
-        (i32.trunc_s/f32
+        (i32.trunc_f32_s
           (f32.const 10)
         )
       )
       (drop
-        (i32.trunc_s/f64
+        (i32.trunc_f64_s
           (f64.const 10)
         )
       )
       (drop
-        (i32.trunc_u/f32
+        (i32.trunc_f32_u
           (f32.const 10)
         )
       )
       (drop
-        (i32.trunc_u/f64
+        (i32.trunc_f64_u
           (f64.const 10)
         )
       )
       (drop
-        (i32.wrap/i64
-          (i64.const 100)
-        )
-      )
-      (drop
-        (i64.trunc_s/f32
+        (i32.trunc_sat_f32_s
           (f32.const 10)
         )
       )
       (drop
-        (i64.trunc_s/f64
+        (i32.trunc_sat_f32_u
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i32.trunc_sat_f64_s
           (f64.const 10)
         )
       )
       (drop
-        (i64.trunc_u/f32
-          (f32.const 10)
-        )
-      )
-      (drop
-        (i64.trunc_u/f64
+        (i32.trunc_sat_f64_u
           (f64.const 10)
         )
       )
       (drop
-        (i64.extend_s/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (i64.extend_u/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (f32.convert_s/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (f32.convert_u/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (f32.convert_s/i64
+        (i32.wrap_i64
           (i64.const 100)
         )
       )
       (drop
-        (f32.convert_u/i64
-          (i64.const 100)
+        (i64.trunc_f32_s
+          (f32.const 10)
         )
       )
       (drop
-        (f32.demote/f64
+        (i64.trunc_f64_s
           (f64.const 10)
         )
       )
       (drop
-        (f32.reinterpret/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (f64.convert_s/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (f64.convert_u/i32
-          (i32.const 10)
-        )
-      )
-      (drop
-        (f64.convert_s/i64
-          (i64.const 100)
-        )
-      )
-      (drop
-        (f64.convert_u/i64
-          (i64.const 100)
-        )
-      )
-      (drop
-        (f64.promote/f32
+        (i64.trunc_f32_u
           (f32.const 10)
         )
       )
       (drop
-        (f64.reinterpret/i64
-          (i64.const 100)
+        (i64.trunc_f64_u
+          (f64.const 10)
         )
       )
       (drop
-        (i32.reinterpret/f32
+        (i64.trunc_sat_f32_s
           (f32.const 10)
         )
       )
       (drop
-        (i64.reinterpret/f64
+        (i64.trunc_sat_f32_u
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i64.trunc_sat_f64_s
+          (f64.const 10)
+        )
+      )
+      (drop
+        (i64.trunc_sat_f64_u
+          (f64.const 10)
+        )
+      )
+      (drop
+        (i64.extend_i32_s
+          (i32.const 10)
+        )
+      )
+      (drop
+        (i64.extend_i32_u
+          (i32.const 10)
+        )
+      )
+      (drop
+        (f32.convert_i32_s
+          (i32.const 10)
+        )
+      )
+      (drop
+        (f32.convert_i32_u
+          (i32.const 10)
+        )
+      )
+      (drop
+        (f32.convert_i64_s
+          (i64.const 100)
+        )
+      )
+      (drop
+        (f32.convert_i64_u
+          (i64.const 100)
+        )
+      )
+      (drop
+        (f32.demote_f64
+          (f64.const 10)
+        )
+      )
+      (drop
+        (f32.reinterpret_i32
+          (i32.const 10)
+        )
+      )
+      (drop
+        (f64.convert_i32_s
+          (i32.const 10)
+        )
+      )
+      (drop
+        (f64.convert_i32_u
+          (i32.const 10)
+        )
+      )
+      (drop
+        (f64.convert_i64_s
+          (i64.const 100)
+        )
+      )
+      (drop
+        (f64.convert_i64_u
+          (i64.const 100)
+        )
+      )
+      (drop
+        (f64.promote_f32
+          (f32.const 10)
+        )
+      )
+      (drop
+        (f64.reinterpret_i64
+          (i64.const 100)
+        )
+      )
+      (drop
+        (i32.reinterpret_f32
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i64.reinterpret_f64
           (f64.const 10)
         )
       )

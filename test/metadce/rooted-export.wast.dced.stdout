@@ -1,0 +1,4 @@
+unused: export$wasm_func_a$4
+unused: export$wasm_tag_a$5
+unused: func$a_wasm_func$0
+unused: tag$a_wasm_tag$2

@@ -1,0 +1,337 @@
+(module
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
+ (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $f32_=>_i64 (func (param f32) (result i64)))
+ (type $f64_=>_i64 (func (param f64) (result i64)))
+ (type $f32_=>_none (func (param f32)))
+ (type $f64_=>_none (func (param f64)))
+ (type $f64_=>_i32 (func (param f64) (result i32)))
+ (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
+ (func $test_div (param $0 i32) (param $1 i64)
+  (drop
+   (call $i32s-div
+    (local.get $0)
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $i32u-div
+    (local.get $0)
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $i64s-div
+    (local.get $1)
+    (local.get $1)
+   )
+  )
+  (drop
+   (call $i64u-div
+    (local.get $1)
+    (local.get $1)
+   )
+  )
+ )
+ (func $test_rem (param $0 i32) (param $1 i64)
+  (drop
+   (call $i32s-rem
+    (local.get $0)
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $i32u-rem
+    (local.get $0)
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $i64s-rem
+    (local.get $1)
+    (local.get $1)
+   )
+  )
+  (drop
+   (call $i64u-rem
+    (local.get $1)
+    (local.get $1)
+   )
+  )
+ )
+ (func $test_f32_to_int (param $0 f32)
+  (drop
+   (call $f64-to-int
+    (f64.promote_f32
+     (local.get $0)
+    )
+   )
+  )
+  (drop
+   (call $f64-to-int
+    (f64.promote_f32
+     (local.get $0)
+    )
+   )
+  )
+  (drop
+   (call $f32-to-int64
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $f32-to-uint64
+    (local.get $0)
+   )
+  )
+ )
+ (func $test_f64_to_int (param $0 f64)
+  (drop
+   (call $f64-to-int
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $f64-to-int
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $f64-to-int64
+    (local.get $0)
+   )
+  )
+  (drop
+   (call $f64-to-uint64
+    (local.get $0)
+   )
+  )
+ )
+ (func $f32-to-int64 (param $0 f32) (result i64)
+  (if (result i64)
+   (f32.ne
+    (local.get $0)
+    (local.get $0)
+   )
+   (i64.const -9223372036854775808)
+   (if (result i64)
+    (f32.ge
+     (local.get $0)
+     (f32.const 9223372036854775808)
+    )
+    (i64.const -9223372036854775808)
+    (if (result i64)
+     (f32.le
+      (local.get $0)
+      (f32.const -9223372036854775808)
+     )
+     (i64.const -9223372036854775808)
+     (i64.trunc_f32_s
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
+ (func $f32-to-uint64 (param $0 f32) (result i64)
+  (if (result i64)
+   (f32.ne
+    (local.get $0)
+    (local.get $0)
+   )
+   (i64.const 0)
+   (if (result i64)
+    (f32.ge
+     (local.get $0)
+     (f32.const 18446744073709551615)
+    )
+    (i64.const 0)
+    (if (result i64)
+     (f32.le
+      (local.get $0)
+      (f32.const -1)
+     )
+     (i64.const 0)
+     (i64.trunc_f32_u
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
+ (func $f64-to-int64 (param $0 f64) (result i64)
+  (if (result i64)
+   (f64.ne
+    (local.get $0)
+    (local.get $0)
+   )
+   (i64.const -9223372036854775808)
+   (if (result i64)
+    (f64.ge
+     (local.get $0)
+     (f64.const 9223372036854775808)
+    )
+    (i64.const -9223372036854775808)
+    (if (result i64)
+     (f64.le
+      (local.get $0)
+      (f64.const -9223372036854775808)
+     )
+     (i64.const -9223372036854775808)
+     (i64.trunc_f64_s
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
+ (func $f64-to-uint64 (param $0 f64) (result i64)
+  (if (result i64)
+   (f64.ne
+    (local.get $0)
+    (local.get $0)
+   )
+   (i64.const 0)
+   (if (result i64)
+    (f64.ge
+     (local.get $0)
+     (f64.const 18446744073709551615)
+    )
+    (i64.const 0)
+    (if (result i64)
+     (f64.le
+      (local.get $0)
+      (f64.const -1)
+     )
+     (i64.const 0)
+     (i64.trunc_f64_u
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
+ (func $i32s-div (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $1)
+   )
+   (i32.const 0)
+   (if (result i32)
+    (i32.and
+     (i32.eq
+      (local.get $0)
+      (i32.const -2147483648)
+     )
+     (i32.eq
+      (local.get $1)
+      (i32.const -1)
+     )
+    )
+    (i32.const 0)
+    (i32.div_s
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+  )
+ )
+ (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $1)
+   )
+   (i32.const 0)
+   (i32.rem_s
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $1)
+   )
+   (i32.const 0)
+   (i32.div_u
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $i32u-rem (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $1)
+   )
+   (i32.const 0)
+   (i32.rem_u
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $i64s-div (param $0 i64) (param $1 i64) (result i64)
+  (if (result i64)
+   (i64.eqz
+    (local.get $1)
+   )
+   (i64.const 0)
+   (if (result i64)
+    (i32.and
+     (i64.eq
+      (local.get $0)
+      (i64.const -9223372036854775808)
+     )
+     (i64.eq
+      (local.get $1)
+      (i64.const -1)
+     )
+    )
+    (i64.const 0)
+    (i64.div_s
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+  )
+ )
+ (func $i64s-rem (param $0 i64) (param $1 i64) (result i64)
+  (if (result i64)
+   (i64.eqz
+    (local.get $1)
+   )
+   (i64.const 0)
+   (i64.rem_s
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $i64u-div (param $0 i64) (param $1 i64) (result i64)
+  (if (result i64)
+   (i64.eqz
+    (local.get $1)
+   )
+   (i64.const 0)
+   (i64.div_u
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $i64u-rem (param $0 i64) (param $1 i64) (result i64)
+  (if (result i64)
+   (i64.eqz
+    (local.get $1)
+   )
+   (i64.const 0)
+   (i64.rem_u
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+)

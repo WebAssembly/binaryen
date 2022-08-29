@@ -1,0 +1,56 @@
+;; Test canonicalization
+;; Test basic
+;; Test recursive types
+(func (result (ref null $0)))
+
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (result (ref null $0) (ref null $2)))
+(func (result (ref null $0) (ref null $2)))
+(func)
+(func)
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (param anyref) (result (ref null $0)))
+(func (param anyref) (result (ref null $0)))
+
+;; Test LUBs
+;; Test canonicalization
+;; Test basic
+;; Test recursive types
+(func (result (ref null $0)))
+
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (result (ref null $0) (ref null $2)))
+(func (result (ref null $0) (ref null $2)))
+(func)
+(func)
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (result (ref null $0)))
+(func (result (ref null $0)))
+
+(func (param anyref) (result (ref null $0)))
+(func (param anyref) (result (ref null $0)))
+
+;; Test LUBs

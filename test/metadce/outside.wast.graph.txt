@@ -1,0 +1,12 @@
+[
+  {
+    "name": "outside-entity",
+    "reaches": ["inside-wasm-func"],
+    "root": true
+  },
+  {
+    "name": "inside-wasm-func",
+    "export": "wasm_func"
+  }
+]
+

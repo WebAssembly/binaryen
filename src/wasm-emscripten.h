@@ -14,29 +14,46 @@
  * limitations under the License.
  */
 
-#ifndef wasm_emscripten_h
-#define wasm_emscripten_h
+#ifndef wasm_wasm_emscripten_h
+#define wasm_wasm_emscripten_h
 
+#include "support/file.h"
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
 
-namespace emscripten {
+Global* getStackPointerGlobal(Module& wasm);
 
-void generateMemoryGrowthFunction(Module&);
+// Class which modifies a wasm module for use with emscripten. Generates
+// runtime functions and emits metadata.
+class EmscriptenGlueGenerator {
+public:
+  EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
+    : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) {}
 
-// Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-// signature in the indirect function table.
-std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData);
+  void fixInvokeFunctionNames();
 
-void generateEmscriptenMetadata(std::ostream& o,
-                                Module& wasm,
-                                std::unordered_map<Address, Address> segmentsByAddress,
-                                Address staticBump,
-                                std::vector<Name> const& initializerFunctions);
+  // Emits the data segments to a file. The file contains data from address base
+  // onwards (we must pass in base, as we can't tell it from the wasm - the
+  // first segment may start after a run of zeros, but we need those zeros in
+  // the file).
+  void separateDataSegments(Output* outfile, Address base);
 
-} // namespace emscripten
+  bool standalone = false;
+  bool sideModule = false;
+  bool minimizeWasmChanges = false;
+  bool noDynCalls = false;
+  bool onlyI64DynCalls = false;
+
+private:
+  Module& wasm;
+  Builder builder;
+  Address stackPointerOffset;
+  bool useStackPointerGlobal;
+};
 
 } // namespace wasm
 
-#endif // wasm_emscripten_h
+#endif // wasm_wasm_emscripten_h

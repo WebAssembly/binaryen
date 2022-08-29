@@ -19,51 +19,77 @@
 //
 // Secondarily, sort by first appearance. This canonicalizes the order.
 //
+// While sorting, we remove locals that have no uses at all.
+//
 
 #include <memory>
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
-struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<ReorderLocals>>> {
+struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ReorderLocals; }
 
-  std::map<Index, Index> counts; // local => times it is used
-  std::map<Index, Index> firstUses; // local => index in the list of which local is first seen
+  // local index => times it is used
+  std::vector<Index> counts;
+  // local index => how many locals we saw before this one, before a use of
+  // this one appeared. that is, one local has 1, another has 2, and so forth,
+  // in the order in which we saw the first uses of them (we use "0" to mark
+  // locals we have not yet seen).
+  std::vector<Index> firstUses;
+  Index firstUseIndex = 1;
 
-  void visitFunction(Function *curr) {
+  enum { Unseen = 0 };
+
+  void doWalkFunction(Function* curr) {
+    if (curr->getNumVars() == 0) {
+      return; // nothing to do. All locals are parameters
+    }
     Index num = curr->getNumLocals();
-    std::vector<Index> newToOld;
+    counts.clear();
+    counts.resize(num);
+    firstUses.clear();
+    firstUses.resize(num, Unseen);
+    // Gather information about local usages.
+    walk(curr->body);
+    // Use the information about local usages.
+    std::vector<Index> newToOld(num);
     for (size_t i = 0; i < num; i++) {
-      newToOld.push_back(i);
+      newToOld[i] = i;
     }
     // sort, keeping params in front (where they will not be moved)
-    sort(newToOld.begin(), newToOld.end(), [this, curr](Index a, Index b) -> bool {
-      if (curr->isParam(a) && !curr->isParam(b)) return true;
-      if (curr->isParam(b) && !curr->isParam(a)) return false;
-      if (curr->isParam(b) && curr->isParam(a)) {
-        return a < b;
-      }
-      if (counts[a] == counts[b]) {
-        if (counts[a] == 0) return a < b;
-        return firstUses[a] < firstUses[b];
-      }
-      return counts[a] > counts[b];
-    });
+    sort(
+      newToOld.begin(), newToOld.end(), [this, curr](Index a, Index b) -> bool {
+        if (curr->isParam(a) && !curr->isParam(b)) {
+          return true;
+        }
+        if (curr->isParam(b) && !curr->isParam(a)) {
+          return false;
+        }
+        if (curr->isParam(b) && curr->isParam(a)) {
+          return a < b;
+        }
+        if (counts[a] == counts[b]) {
+          if (counts[a] == 0) {
+            return a < b;
+          }
+          return firstUses[a] < firstUses[b];
+        }
+        return counts[a] > counts[b];
+      });
     // sorting left params in front, perhaps slightly reordered. verify and fix.
-    for (size_t i = 0; i < curr->params.size(); i++) {
-      assert(newToOld[i] < curr->params.size());
-    }
-    for (size_t i = 0; i < curr->params.size(); i++) {
+    size_t numParams = curr->getParams().size();
+    for (size_t i = 0; i < numParams; i++) {
+      assert(newToOld[i] < numParams);
       newToOld[i] = i;
     }
     // sort vars, and drop unused ones
-    auto oldVars = curr->vars;
-    curr->vars.clear();
+    std::vector<Type> oldVars;
+    std::swap(oldVars, curr->vars);
     for (size_t i = curr->getVarIndexBase(); i < newToOld.size(); i++) {
       Index index = newToOld[i];
       if (counts[index] > 0) {
@@ -84,22 +110,19 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
       }
     }
     // apply the renaming to AST nodes
-    struct ReIndexer : public PostWalker<ReIndexer, Visitor<ReIndexer>> {
+    struct ReIndexer : public PostWalker<ReIndexer> {
       Function* func;
       std::vector<Index>& oldToNew;
 
-      ReIndexer(Function* func, std::vector<Index>& oldToNew) : func(func), oldToNew(oldToNew) {}
+      ReIndexer(Function* func, std::vector<Index>& oldToNew)
+        : func(func), oldToNew(oldToNew) {}
 
-      void visitGetLocal(GetLocal *curr) {
-        if (func->isVar(curr->index)) {
-          curr->index = oldToNew[curr->index];
-        }
+      void visitLocalGet(LocalGet* curr) {
+        curr->index = oldToNew[curr->index];
       }
 
-      void visitSetLocal(SetLocal *curr) {
-        if (func->isVar(curr->index)) {
-          curr->index = oldToNew[curr->index];
-        }
+      void visitLocalSet(LocalSet* curr) {
+        curr->index = oldToNew[curr->index];
       }
     };
     ReIndexer reIndexer(curr, oldToNew);
@@ -108,34 +131,32 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals, Visitor<Reord
     auto oldLocalNames = curr->localNames;
     auto oldLocalIndices = curr->localIndices;
     curr->localNames.clear();
-    curr->localNames.resize(newToOld.size());
     curr->localIndices.clear();
     for (size_t i = 0; i < newToOld.size(); i++) {
-      if (newToOld[i] < oldLocalNames.size()) {
-        auto old = oldLocalNames[newToOld[i]];
+      auto iter = oldLocalNames.find(newToOld[i]);
+      if (iter != oldLocalNames.end()) {
+        auto old = iter->second;
         curr->localNames[i] = old;
         curr->localIndices[old] = i;
       }
     }
   }
 
-  void visitGetLocal(GetLocal *curr) {
+  void visitLocalGet(LocalGet* curr) {
     counts[curr->index]++;
-    if (firstUses.count(curr->index) == 0) {
-      firstUses[curr->index] = firstUses.size();
+    if (firstUses[curr->index] == Unseen) {
+      firstUses[curr->index] = firstUseIndex++;
     }
   }
 
-  void visitSetLocal(SetLocal *curr) {
+  void visitLocalSet(LocalSet* curr) {
     counts[curr->index]++;
-    if (firstUses.count(curr->index) == 0) {
-      firstUses[curr->index] = firstUses.size();
+    if (firstUses[curr->index] == Unseen) {
+      firstUses[curr->index] = firstUseIndex++;
     }
   }
 };
 
-Pass *createReorderLocalsPass() {
-  return new ReorderLocals();
-}
+Pass* createReorderLocalsPass() { return new ReorderLocals(); }
 
 } // namespace wasm

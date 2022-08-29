@@ -1,0 +1,87 @@
+;; Heap types
+func
+funcref
+(ref func)
+any
+anyref
+(ref any)
+eq
+eqref
+(ref eq)
+i31
+(ref null i31)
+i31ref
+(func)
+(struct)
+(array i32)
+
+;; Signature
+(func)
+(ref $func.0)
+(ref null $func.0)
+(func (param i32) (result f64))
+(ref $func.0)
+(ref null $func.0)
+
+;; Struct
+(struct)
+(ref $struct.0)
+(ref null $struct.0)
+(struct (field i32 i64 (mut f32) (mut f64)))
+(ref $struct.0)
+(ref null $struct.0)
+
+;; Array
+(array i32)
+(ref $array.0)
+(ref null $array.0)
+(array (mut i64))
+(ref $array.0)
+(ref null $array.0)
+
+;; Tuple
+()
+none
+(i32 f64)
+(i32 f64)
+
+;; Signature of references (param/result)
+(func (param (ref null $struct.0)) (result (ref $array.0)))
+
+;; Signature of references (params/results)
+(func (param (ref null $struct.0) (ref $array.0)) (result (ref $struct.0) (ref null $array.1)))
+
+;; Struct of references
+(struct (field (ref $func.0) (mut (ref $func.0)) (ref null $func.0) (mut (ref null $func.0))))
+(ref $struct.0)
+(ref null $struct.0)
+(struct (field (ref $struct.0) (mut (ref $struct.0)) (ref null $struct.0) (mut (ref null $struct.0))))
+(ref $struct.0)
+(ref null $struct.0)
+(struct (field (ref $array.0) (mut (ref $array.0)) (ref null $array.0) (mut (ref null $array.0))))
+(ref $struct.0)
+(ref null $struct.0)
+(struct (field (mut i32) (mut (ref null $func.0)) (mut (ref null $struct.0)) (mut (ref null $array.0))))
+(ref $struct.0)
+(ref null $struct.0)
+
+;; Array of references
+(array (ref null $func.0))
+(ref $array.0)
+(ref null $array.0)
+(array (mut (ref null $struct.0)))
+(ref $array.0)
+(ref null $array.0)
+(array (ref null $array.0))
+(ref $array.0)
+(ref null $array.0)
+
+;; Tuple of references
+((ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
+((ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
+
+;; Recursive (not really)
+(func (param (ref $func.0)))
+(ref $func.0)
+(func (param (ref $array.0)))
+(ref $func.0)

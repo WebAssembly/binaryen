@@ -1,2 +1,1 @@
-void baz() {
-}
+void baz() {}

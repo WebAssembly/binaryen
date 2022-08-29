@@ -18,23 +18,24 @@
 // Write out the name list of the module, similar to `nm`.
 //
 
-#include "wasm.h"
+#include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "wasm.h"
 
 namespace wasm {
 
 struct NameList : public Pass {
+  bool modifiesBinaryenIR() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
-    for (auto& func : module->functions) {
-      std::cout << "    " << func->name << " : " << Measurer::measure(func->body) << '\n';
-    }
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+      std::cout << "    " << func->name << " : "
+                << Measurer::measure(func->body) << '\n';
+    });
   }
 };
 
-Pass *createNameListPass() {
-  return new NameList();
-}
+Pass* createNameListPass() { return new NameList(); }
 
 } // namespace wasm
-
