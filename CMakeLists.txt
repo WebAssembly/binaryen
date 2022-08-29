@@ -468,4 +468,3 @@ if(EMSCRIPTEN)
 endif()
 
 configure_file(scripts/binaryen-lit.in ${CMAKE_BINARY_DIR}/bin/binaryen-lit @ONLY)
-

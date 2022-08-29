@@ -526,25 +526,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
             continue;
           }
         }
-
-        // Remove ineffective actions, that is, dead stores.
-        //
-        // Note that this may have downsides for non-nullable locals:
-        //
-        //   x = whatever; // dead set for validation
-        //   if (..) {
-        //     x = value1;
-        //   } else {
-        //     x = value2;
-        //   }
-        //
-        // The dead set ensures validation, at the cost of extra code size and
-        // slower speed in some tiers (the optimizing tier, at least, will
-        // remove such dead sets anyhow). In theory keeping such a dead set may
-        // be worthwhile, as it may save code size (by keeping the local
-        // non-nullable and avoiding ref.as_non_nulls later). But the tradeoff
-        // here isn't clear, so do the simple thing for now and remove all dead
-        // sets.
+        // remove ineffective actions
         if (!action.effective) {
           // value may have no side effects, further optimizations can eliminate
           // it
