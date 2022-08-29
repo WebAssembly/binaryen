@@ -3978,7 +3978,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       }
       if (opcode == BinaryConsts::RefAsFunc ||
           opcode == BinaryConsts::RefAsData ||
-          opcode == BinaryConsts::RefAsI31) {
+          opcode == BinaryConsts::RefAsI31 ||
+          opcode == BinaryConsts::ExternInternalize ||
+          opcode == BinaryConsts::ExternExternalize) {
         visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), opcode);
         break;
       }
@@ -7347,6 +7349,12 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
     case BinaryConsts::RefAsI31:
       curr->op = RefAsI31;
       break;
+    case BinaryConsts::ExternInternalize:
+      curr->op = ExternInternalize;
+      break;
+    case BinaryConsts::ExternExternalize:
+      curr->op = ExternExternalize;
+      break;
     default:
       WASM_UNREACHABLE("invalid code for ref.as_*");
   }
@@ -7356,6 +7364,7 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   }
   curr->finalize();
 }
+
 void WasmBinaryBuilder::throwError(std::string text) {
   throw ParseException(text, 0, pos);
 }

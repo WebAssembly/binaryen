@@ -185,9 +185,25 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'e':
-    if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
-    goto parse_error;
+  case 'e': {
+    switch (op[1]) {
+      case 'l':
+        if (strcmp(op, "else") == 0) { return makeThenOrElse(s); }
+        goto parse_error;
+      case 'x': {
+        switch (op[7]) {
+          case 'e':
+            if (strcmp(op, "extern.externalize") == 0) { return makeRefAs(s, ExternExternalize); }
+            goto parse_error;
+          case 'i':
+            if (strcmp(op, "extern.internalize") == 0) { return makeRefAs(s, ExternInternalize); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      default: goto parse_error;
+    }
+  }
   case 'f': {
     switch (op[1]) {
       case '3': {
@@ -3816,13 +3832,37 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'e':
-    if (op == "else"sv) {
-      auto ret = makeThenOrElse(ctx, in);
-      CHECK_ERR(ret);
-      return *ret;
+  case 'e': {
+    switch (op[1]) {
+      case 'l':
+        if (op == "else"sv) {
+          auto ret = makeThenOrElse(ctx, in);
+          CHECK_ERR(ret);
+          return *ret;
+        }
+        goto parse_error;
+      case 'x': {
+        switch (op[7]) {
+          case 'e':
+            if (op == "extern.externalize"sv) {
+              auto ret = makeRefAs(ctx, in, ExternExternalize);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          case 'i':
+            if (op == "extern.internalize"sv) {
+              auto ret = makeRefAs(ctx, in, ExternInternalize);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      default: goto parse_error;
     }
-    goto parse_error;
+  }
   case 'f': {
     switch (op[1]) {
       case '3': {

@@ -1122,6 +1122,12 @@ void RefAs::finalize() {
     case RefAsI31:
       type = Type(HeapType::i31, NonNullable);
       break;
+    case ExternInternalize:
+      type = Type(HeapType::any, value->type.getNullability());
+      break;
+    case ExternExternalize:
+      type = Type(HeapType::ext, value->type.getNullability());
+      break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
   }

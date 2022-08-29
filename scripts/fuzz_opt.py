@@ -270,8 +270,10 @@ def init_important_initial_contents():
 INITIAL_CONTENTS_IGNORE = [
     # not all relaxed SIMD instructions are implemented in the interpreter
     'relaxed-simd.wast',
-    # TODO fuzzer and interpreter support for strings
+    # TODO: fuzzer and interpreter support for strings
     'strings.wast',
+    # TODO: fuzzer and interpreter support for extern conversions
+    'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
     'zlib.wasm',
     'cubescript.wasm',

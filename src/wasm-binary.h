@@ -1125,6 +1125,8 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  ExternInternalize = 0x70,
+  ExternExternalize = 0x71,
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
