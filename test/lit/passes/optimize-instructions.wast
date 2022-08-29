@@ -732,6 +732,25 @@
       )
     )
   )
+  ;; CHECK:      (func $select-and-eqz (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-eqz (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eqz
+        (local.get $x)
+      )
+      (i32.const 0)
+      (i32.eqz
+        (local.get $y)
+      )
+    )
+  )
   ;; CHECK:      (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (i32.or
   ;; CHECK-NEXT:   (i32.eq
