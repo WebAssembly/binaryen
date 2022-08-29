@@ -122,6 +122,12 @@ class ExpressionIntMap : public std::unordered_map<HashedExpression,
 static Module global;          // a module that persists til the end
 static ExpressionIntMap freqs; // expression -> its frequency
 
+static bool isRelevantType(Type type) {
+  // We only look at math types.
+  // TODO: SIMD
+  return type.isNumber() && type != Type::v128;
+}
+
 // Normalize an expression, replacing irrelevant bits with
 // generalizations to get_local, and make get_locals start
 // from 0. Returns nullptr if the expression is irrelevant.
@@ -143,7 +149,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       // For now, we only handle math-type expressions: having a return value
       // and no side effects
       // TODO: do more stuff, modeling side effects etc.
-      if (!curr->type.isNumber()) {
+      if (!isRelevantType(curr->type)) {
         return builder.makeUnreachable();
       }
       if (auto* get = curr->dynCast<LocalGet>()) {
@@ -178,7 +184,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
   auto* ret = ExpressionManipulator::flexibleCopy(
     expr, wasm, [&](Expression* curr) { return normalizer.copy(curr); });
 
-  if (!ret->type.isConcrete() || normalizer.nextLocal >= MAX_LOCAL ||
+  if (!isRelevantType(ret->type) || normalizer.nextLocal >= MAX_LOCAL ||
       Measurer::measure(ret) > MAX_EXPRESSION_SIZE) {
     return nullptr;
   }
