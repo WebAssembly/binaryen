@@ -30,9 +30,9 @@
 #include "support/permutations.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
-#include "wasm-type.h"
 #include "wasm-s-parser.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -605,9 +605,11 @@ int main(int argc, const char* argv[]) {
 
     // scan all expressions in all functions, optimized and not
     PassRunner passRunner(&wasm);
-    passRunner.add(make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
+    passRunner.add(
+      make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
     passRunner.addDefaultOptimizationPasses();
-    passRunner.add(make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
+    passRunner.add(
+      make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
     passRunner.run();
   }
 
