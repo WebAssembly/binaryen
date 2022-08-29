@@ -3450,7 +3450,8 @@ private:
         Builder builder(*getModule());
         if (std::signbit(c->value.getFloat())) {
           // copysign(x, -nan)   ==>   neg(abs(x))
-          return builder.makeUnary(getUnary(type, Neg), builder.makeUnary(getUnary(type, Abs), x));
+          return builder.makeUnary(getUnary(type, Neg),
+                                   builder.makeUnary(getUnary(type, Abs), x));
         } else {
           // copysign(x, +nan)   ==>   abs(x)
           return builder.makeUnary(getUnary(type, Abs), x);
@@ -3468,8 +3469,7 @@ private:
       Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
           std::isnan(c->value.getFloat()) && !x->is<Const>() &&
-          bin->op != CopySignFloat32 &&
-          bin->op != CopySignFloat64) {
+          bin->op != CopySignFloat32 && bin->op != CopySignFloat64) {
         if (bin->isRelational()) {
           // reuse "c" (nan) constant
           c->type = Type::i32;
