@@ -84,7 +84,7 @@ static double LIMIT_F64S[NUM_LIMITS] = {
 // An expression with a cached hash value
 struct HashedExpression {
   Expression* expr;
-  size_t hash;
+  size_t hash = 0;
 
   HashedExpression(Expression* expr) : expr(expr) {
     if (expr) {
