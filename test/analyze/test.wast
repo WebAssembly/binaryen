@@ -1,6 +1,6 @@
 (module
   (func $func (param $x i32) (param $y i32)
-    ;; shifting twice by 1 is the same as by 2
+    ;; shifting twice by 1 is the same as once by 2
     (drop
       (i32.shl
         (i32.shl
