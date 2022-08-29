@@ -2138,23 +2138,24 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
       if (curr->type == Type::unreachable) {
         return;
       }
-      shouldBeEqual(curr->type,
-                    Type(HeapType::any, curr->value->type.getNullability()),
-                    curr,
-                    "extern.internalize should have correct type");
+      shouldBeSubType(curr->value->type,
+                      Type(HeapType::ext, Nullable),
+                      curr->value,
+                      "extern.internalize value should be an externref");
       break;
-      case ExternExternalize:
-        shouldBeTrue(getModule()->features.hasGC(),
-                     curr,
-                     "extern.externalize requries GC to be enabled");
-        if (curr->type == Type::unreachable) {
-          return;
-        }
-        shouldBeEqual(curr->type,
-                      Type(HeapType::ext, curr->value->type.getNullability()),
-                      curr,
-                      "extern.internalize should have correct type");
-        break;
+    }
+    case ExternExternalize: {
+      shouldBeTrue(getModule()->features.hasGC(),
+                   curr,
+                   "extern.externalize requries GC to be enabled");
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      shouldBeSubType(curr->value->type,
+                      Type(HeapType::any, Nullable),
+                      curr->value,
+                      "extern.externalize value should be an anyref");
+      break;
     }
   }
 }
