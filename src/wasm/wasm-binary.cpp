@@ -2977,9 +2977,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto& segment : dataSegments) {
-    wasm.addDataSegment(std::move(segment));
-  }
   // now that we have names, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
@@ -3072,7 +3069,7 @@ void WasmBinaryBuilder::readDataSegments() {
     auto size = getU32LEB();
     auto data = getByteView(size);
     curr->data = {data.first, data.second};
-    dataSegments.push_back(std::move(curr));
+    wasm.addDataSegment(std::move(curr));
   }
 }
 
@@ -3398,8 +3395,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < dataSegments.size()) {
-          dataSegments[i]->setExplicitName(name);
+        if (index < wasm.dataSegments.size()) {
+          wasm.dataSegments[i]->setExplicitName(name);
         } else {
           std::cerr << "warning: data index out of bounds in name section, "
                        "data subsection: "
