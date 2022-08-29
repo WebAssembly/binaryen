@@ -175,7 +175,8 @@ def update_wasm_analyze_tests():
                    wast]
             actual = subprocess.check_output(cmd, stderr=open('/dev/null', 'w'))
             out = wast.replace('.wast', '.txt')
-            with open(out, 'w') as o: o.write(actual)
+            with open(out, 'wb') as o:
+                o.write(actual)
 
 
 TEST_SUITES = OrderedDict([
