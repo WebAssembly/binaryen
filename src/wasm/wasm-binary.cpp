@@ -2033,7 +2033,7 @@ void WasmBinaryBuilder::readMemories() {
                        memory->shared,
                        memory->indexType,
                        Memory::kUnlimitedSize);
-    memories.push_back(std::move(memory));
+    wasm.addMemory(std::move(memory));
   }
 }
 
