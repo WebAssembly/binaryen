@@ -1519,11 +1519,6 @@ public:
   // function to check
   Index endOfFunction = -1;
 
-  // we store tables here before wasm.addTable after we know their names
-  std::vector<std::unique_ptr<Table>> tables;
-  // we store table imports here before wasm.addTableImport after we know
-  // their names
-  std::vector<Table*> tableImports;
   // at index i we have all references to the table i
   std::map<Index, std::vector<Name*>> tableRefs;
 
@@ -1545,11 +1540,6 @@ public:
   // we store data here after being read from binary, before we know their names
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
 
-  // we store globals here before wasm.addGlobal after we know their names
-  std::vector<std::unique_ptr<Global>> globals;
-  // we store global imports here before wasm.addGlobalImport after we know
-  // their names
-  std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
   std::map<Index, std::vector<Name*>> globalRefs;
 

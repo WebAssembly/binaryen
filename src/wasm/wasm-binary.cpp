@@ -2334,7 +2334,6 @@ void WasmBinaryBuilder::readImports() {
           throwError("Tables may not be 64-bit");
         }
 
-        tableImports.push_back(table.get());
         wasm.addTable(std::move(table));
         break;
       }
@@ -2363,7 +2362,6 @@ void WasmBinaryBuilder::readImports() {
                              mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;
-        globalImports.push_back(curr.get());
         wasm.addGlobal(std::move(curr));
         break;
       }
@@ -2772,7 +2770,7 @@ void WasmBinaryBuilder::readGlobals() {
       throwError("Global mutability must be 0 or 1");
     }
     auto* init = readExpression();
-    globals.push_back(
+    wasm.addGlobal(
       Builder::makeGlobal("global$" + std::to_string(i),
                           type,
                           init,
@@ -2983,12 +2981,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto& global : globals) {
-    wasm.addGlobal(std::move(global));
-  }
-  for (auto& table : tables) {
-    wasm.addTable(std::move(table));
-  }
   for (auto& segment : elementSegments) {
     wasm.addElementSegment(std::move(segment));
   }
@@ -3115,7 +3107,7 @@ void WasmBinaryBuilder::readTableDeclarations() {
       throwError("Tables may not be 64-bit");
     }
 
-    tables.push_back(std::move(table));
+    wasm.addTable(std::move(table));
   }
 }
 
@@ -3154,17 +3146,10 @@ void WasmBinaryBuilder::readElementSegments() {
         tableIdx = getU32LEB();
       }
 
-      Table* table = nullptr;
-      auto numTableImports = tableImports.size();
-      if (tableIdx < numTableImports) {
-        table = tableImports[tableIdx];
-      } else if (tableIdx - numTableImports < tables.size()) {
-        table = tables[tableIdx - numTableImports].get();
-      }
-      if (!table) {
+      if (tableIdx >= wasm.tables.size()) {
         throwError("Table index out of range.");
       }
-
+      auto* table = wasm.tables[tableIdx].get();
       segment->table = table->name;
       segment->offset = readExpression();
     }
@@ -3367,20 +3352,15 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numTableImports = tableImports.size();
-        auto setTableName = [&](Table* table) {
+
+        if (index < wasm.tables.size()) {
+          auto* table = wasm.tables[index].get();
           for (auto& segment : elementSegments) {
             if (segment->table == table->name) {
               segment->table = name;
             }
           }
           table->setExplicitName(name);
-        };
-
-        if (index < numTableImports) {
-          setTableName(tableImports[index]);
-        } else if (index - numTableImports < tables.size()) {
-          setTableName(tables[index - numTableImports].get());
         } else {
           std::cerr << "warning: table index out of bounds in name section, "
                        "table subsection: "
@@ -3447,11 +3427,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numGlobalImports = globalImports.size();
-        if (index < numGlobalImports) {
-          globalImports[index]->setExplicitName(name);
-        } else if (index - numGlobalImports < globals.size()) {
-          globals[index - numGlobalImports]->setExplicitName(name);
+        if (index < wasm.globals.size()) {
+          wasm.globals[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: global index out of bounds in name section, "
                        "global subsection: "
@@ -4361,35 +4338,22 @@ void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
 void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
   BYN_TRACE("zz node: GlobalGet " << pos << std::endl);
   auto index = getU32LEB();
-  if (index < globalImports.size()) {
-    auto* import = globalImports[index];
-    curr->name = import->name;
-    curr->type = import->type;
-  } else {
-    Index adjustedIndex = index - globalImports.size();
-    if (adjustedIndex >= globals.size()) {
-      throwError("invalid global index");
-    }
-    auto& glob = globals[adjustedIndex];
-    curr->name = glob->name;
-    curr->type = glob->type;
+  if (index >= wasm.globals.size()) {
+    throwError("invalid global index");
   }
+  auto* global = wasm.globals[index].get();
+  curr->name = global->name;
+  curr->type = global->type;
   globalRefs[index].push_back(&curr->name); // we don't know the final name yet
 }
 
 void WasmBinaryBuilder::visitGlobalSet(GlobalSet* curr) {
   BYN_TRACE("zz node: GlobalSet\n");
   auto index = getU32LEB();
-  if (index < globalImports.size()) {
-    auto* import = globalImports[index];
-    curr->name = import->name;
-  } else {
-    Index adjustedIndex = index - globalImports.size();
-    if (adjustedIndex >= globals.size()) {
-      throwError("invalid global index");
-    }
-    curr->name = globals[adjustedIndex]->name;
+  if (index >= wasm.globals.size()) {
+    throwError("invalid global index");
   }
+  curr->name = wasm.globals[index]->name;
   curr->value = popNonVoidExpression();
   globalRefs[index].push_back(&curr->name); // we don't know the final name yet
   curr->finalize();
@@ -5226,7 +5190,7 @@ bool WasmBinaryBuilder::maybeVisitTableSize(Expression*& out, uint32_t code) {
     return false;
   }
   Index tableIdx = getU32LEB();
-  if (tableIdx >= tables.size()) {
+  if (tableIdx >= wasm.tables.size()) {
     throwError("bad table index");
   }
   auto* curr = allocator.alloc<TableSize>();
@@ -5242,7 +5206,7 @@ bool WasmBinaryBuilder::maybeVisitTableGrow(Expression*& out, uint32_t code) {
     return false;
   }
   Index tableIdx = getU32LEB();
-  if (tableIdx >= tables.size()) {
+  if (tableIdx >= wasm.tables.size()) {
     throwError("bad table index");
   }
   auto* curr = allocator.alloc<TableGrow>();
@@ -6634,11 +6598,11 @@ void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
 void WasmBinaryBuilder::visitTableGet(TableGet* curr) {
   BYN_TRACE("zz node: TableGet\n");
   Index tableIdx = getU32LEB();
-  if (tableIdx >= tables.size()) {
+  if (tableIdx >= wasm.tables.size()) {
     throwError("bad table index");
   }
   curr->index = popNonVoidExpression();
-  curr->type = tables[tableIdx]->type;
+  curr->type = wasm.tables[tableIdx]->type;
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);
@@ -6647,7 +6611,7 @@ void WasmBinaryBuilder::visitTableGet(TableGet* curr) {
 void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
   BYN_TRACE("zz node: TableSet\n");
   Index tableIdx = getU32LEB();
-  if (tableIdx >= tables.size()) {
+  if (tableIdx >= wasm.tables.size()) {
     throwError("bad table index");
   }
   curr->value = popNonVoidExpression();
