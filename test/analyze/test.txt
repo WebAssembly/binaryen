@@ -8,23 +8,23 @@ sorted possible optimization rules:
 
 [generalized rule 0: benefit: 2, (12.5%)], input pattern:
 (i32.shl
-  (i32.shl
-    (get_local $0)
-    (unreachable)
-  )
+ (i32.shl
+  (local.get $0)
   (unreachable)
+ )
+ (unreachable)
 )
 
 [child specific rule benefit: 2, (12.5%)], possible rule:
 (i32.shl
-  (i32.shl
-    (get_local $0)
-    (i32.const 1)
-  )
+ (i32.shl
+  (local.get $0)
   (i32.const 1)
+ )
+ (i32.const 1)
 )
  =->
 (i32.shl
-  (get_local $0)
-  (i32.const 2)
+ (local.get $0)
+ (i32.const 2)
 )

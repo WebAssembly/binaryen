@@ -536,7 +536,7 @@ bool looksValid(Expression* a, Expression* b) {
   // optimizer can do: if we optimize the input, do we get something
   // as good or better than the output?
   if (alreadyOptimizable(a, aScanner.localTypes, b)) {
-    return false;
+//    return false;
   }
   // we see no reason these two should not be joined together in holy optimony
   return true;
@@ -614,8 +614,8 @@ int main(int argc, const char* argv[]) {
     passRunner.run();
   }
 
-  // print frequencies
-#if 1
+  // print raw frequencies
+#if 0
   std::cout << "Frequencies:\n";
   std::vector<HashedExpression> sorted;
   for (auto& iter : freqs) {
@@ -688,32 +688,37 @@ int main(int argc, const char* argv[]) {
     for (auto& pair : executionHasher.hashClasses) {
       auto& clazz = pair.second;
       Index size = clazz.size();
-      if (size < 2)
+      if (size < 2) {
         continue;
+      }
       // consider all pairs, since some may be spurious hash collisions
       for (Index i = 0; i < size; i++) {
         auto* iExpr = clazz[i];
         auto iFreq = freqs[iExpr];
-        if (iFreq == 0)
+        if (iFreq == 0) {
           continue; // no frequency means no benefit to optimize it; this
                     // expression is just a target of optimization, not an
                     // origin
+        }
         Index iSize = calcWeight(iExpr);
         Expression* best = nullptr;
         Index bestSize = -1;
         for (Index j = 0; j < size; j++) {
-          if (i == j)
+          if (i == j) {
             continue;
+          }
           auto* jExpr = clazz[j];
           Index jSize = calcWeight(jExpr);
           // we are looking for a rule where i => j, so we need j to be smaller
-          if (iSize <= jSize)
+          if (iSize <= jSize) {
             continue; // TODO: for equality, look not just at size, but cost
                       // etc.
+          }
           // a likely candidate, if direct attempts to prove they differ fail,
           // this is worth reporting to the user
-          if (best && jSize >= bestSize)
+          if (best && jSize >= bestSize) {
             continue; // we can't do better
+          }
           if (looksValid(iExpr, jExpr)) {
             best = jExpr;
             bestSize = jSize;
@@ -730,7 +735,7 @@ int main(int argc, const char* argv[]) {
     // what the human would write in the optimizer, so to assess the benefit of
     // rules, we must generalize in our output.
 
-    std::cerr << "[generalizing]\n";
+    std::cerr << "[generalizing from " << rules.size() << " rules]\n";
 
     struct GeneralizedRule : public Rule {
       std::vector<Rule*>
@@ -802,15 +807,15 @@ int main(int argc, const char* argv[]) {
                 << ": benefit: " << item->benefit << ", ("
                 << (100 * double(item->benefit) / totalWeight)
                 << "%)], input pattern:\n"
-                << item->from << '\n';
+                << *item->from << '\n';
       // show the specific rules underlying the generalized one
       std::sort(item->rules.begin(), item->rules.end(), ruleSorter);
       for (auto* rule : item->rules) {
         std::cout << "\n[child specific rule benefit: " << rule->benefit
                   << ", (" << (100 * double(rule->benefit) / totalWeight)
                   << "%)], possible rule:\n"
-                  << rule->from << "\n =->\n"
-                  << rule->to << '\n';
+                  << *rule->from << "\n =->\n"
+                  << *rule->to << '\n';
       }
     }
   }
