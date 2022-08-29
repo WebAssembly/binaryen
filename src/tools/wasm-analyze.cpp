@@ -363,7 +363,7 @@ public:
       }
       return ret;
     } else {
-      WASM_UNREACHABLE();
+      WASM_UNREACHABLE("bad type for seed");
     }
   }
 };
@@ -382,7 +382,7 @@ public:
     // but we can't tell if non-infinite, since we don't have state, so loops
     // are just impossible to optimize for now
     trap("loop");
-    WASM_UNREACHABLE();
+    WASM_UNREACHABLE("unreachable");
   }
 
   Flow visitCall(Call* curr) {
@@ -445,24 +445,25 @@ struct ExecutionHasher {
         rehash(hash, size_t(flow.breakTo.str));
       } else {
         rehash(hash, 4);
-        rehash(hash, flow.value.type);
-        if (flow.value.type == Type::f32) {
-          flow.value = flow.value.castToI32();
-        } else if (flow.value.type == Type::f64) {
-          flow.value = flow.value.castToI64();
+        auto value = flow.getSingleValue();
+        rehash(hash, value.type);
+        if (value.type == Type::f32) {
+          value = value.castToI32();
+        } else if (value.type == Type::f64) {
+          value = value.castToI64();
         }
-        if (flow.value.type == Type::none2) {
+        if (value.type == Type::none) {
           rehash(hash, 5);
           rehash(hash, 6);
           break;
-        } else if (flow.value.type == Type::i32) {
-          rehash(hash, flow.value.geti32());
+        } else if (value.type == Type::i32) {
+          rehash(hash, value.geti32());
           rehash(hash, 7);
-        } else if (flow.value.type == Type::i64) {
-          rehash(hash, flow.value.geti64());
-          rehash(hash, flow.value.geti64() >> 32);
+        } else if (value.type == Type::i64) {
+          rehash(hash, value.geti64());
+          rehash(hash, value.geti64() >> 32);
         } else {
-          WASM_UNREACHABLE();
+          WASM_UNREACHABLE("bad type for hash");
         }
       }
     }
@@ -484,10 +485,12 @@ static bool alreadyOptimizable(Expression* input,
   // output
   auto* func = new Function();
   func->name = Name("temp");
-  func->result = input->type;
+  func->setResults(input->type);
+  std::vector<Type> params;
   for (Index i = 0; i < MAX_LOCAL; i++) {
-    func->params.push_back(localTypes[i]);
+    params.push_back(localTypes[i]);
   }
+  func->setParams(Type(params));
   func->body = ExpressionManipulator::copy(input, temp);
   temp.addFunction(func);
   // export the function, so optimizations don't kill it!
@@ -524,14 +527,16 @@ bool looksValid(Expression* a, Expression* b) {
     Flow aFlow = Runner(localGenerator).visit(a);
     Flow bFlow = Runner(localGenerator).visit(b);
     // TODO: breaking
-    if (aFlow.value != bFlow.value)
+    if (aFlow.values != bFlow.values) {
       return false;
+    }
   }
   // let's see if this possible optimization is already something our
   // optimizer can do: if we optimize the input, do we get something
   // as good or better than the output?
-  if (alreadyOptimizable(a, aScanner.localTypes, b))
+  if (alreadyOptimizable(a, aScanner.localTypes, b)) {
     return false;
+  }
   // we see no reason these two should not be joined together in holy optimony
   return true;
 }
@@ -585,7 +590,7 @@ int main(int argc, const char* argv[]) {
       continue;
     }
 
-    auto input(read_file<std::string>(filename, Flags::Text, Flags::Release));
+    auto input(read_file<std::string>(filename, Flags::Text));
     Module wasm;
 
     std::cerr << "[processing: " << filename << ']' << '\n';
@@ -600,9 +605,9 @@ int main(int argc, const char* argv[]) {
 
     // scan all expressions in all functions, optimized and not
     PassRunner passRunner(&wasm);
-    passRunner.add<Scan>(ScanSettings(&totalExpressions, adviseOnly));
+    passRunner.add(make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
     passRunner.addDefaultOptimizationPasses();
-    passRunner.add<Scan>(ScanSettings(&totalExpressions, adviseOnly));
+    passRunner.add(make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
     passRunner.run();
   }
 
