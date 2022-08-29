@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 WebAssembly Community Group participants
+ * Copyright 2022 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ struct ScanLocals
 
   ScanLocals(Expression* expr) {
     for (Index i = 0; i < MAX_LOCAL; i++) {
-      localTypes[i] = Type::none;
+      localTypes[i] = Type::i32;
     }
     walk(expr);
   }
