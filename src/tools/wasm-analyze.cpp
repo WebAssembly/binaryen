@@ -260,7 +260,7 @@ struct Scan
       // here
       auto* copy = ExpressionManipulator::copy(normalized, global);
       freqs[HashedExpression(copy)] = settings.adviseOnly ? 0 : 1;
-#if 1
+#if 0
       // add the permutations on the locals as well, with freq 0, as we just
       // want to use them as optimization targets, we don't need to optimize
       // them, we optimize the canonical first form.
@@ -510,8 +510,9 @@ static bool alreadyOptimizable(Expression* input,
 // Given two expressions that hashing suggests might be the same, try
 // harder directly on the two to prove or disprove equivalence
 bool looksValid(Expression* a, Expression* b) {
-  if (a->type != b->type)
+  if (a->type != b->type) {
     return false; // hash collision, these are not even the same type
+  }
   // local types must be identical, otherwise the rule isn't even valid to apply
   ScanLocals aScanner(a), bScanner(b);
   for (Index i = 0; i < MAX_LOCAL; i++) {
@@ -614,7 +615,7 @@ int main(int argc, const char* argv[]) {
   }
 
   // print frequencies
-#if 0
+#if 1
   std::cout << "Frequencies:\n";
   std::vector<HashedExpression> sorted;
   for (auto& iter : freqs) {
@@ -627,7 +628,7 @@ int main(int argc, const char* argv[]) {
     return size_t(a.expr) < size_t(b.expr);
   });
   for (auto& item : sorted) {
-    std::cout << freqs[item] << " : " << item.expr << '\n';
+    std::cout << freqs[item] << " : " << *item.expr << '\n';
   }
 #endif
 
