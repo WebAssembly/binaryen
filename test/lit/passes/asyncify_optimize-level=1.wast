@@ -752,8 +752,14 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (select
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     (i32.and
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (select
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:        (global.get $__asyncify_state)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.or
   ;; CHECK-NEXT:       (i32.eqz
   ;; CHECK-NEXT:        (local.get $2)
@@ -762,11 +768,6 @@
   ;; CHECK-NEXT:        (global.get $__asyncify_state)
   ;; CHECK-NEXT:        (i32.const 2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (select
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (global.get $__asyncify_state)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
@@ -906,8 +907,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (select
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     (i32.and
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (global.get $__asyncify_state)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.or
   ;; CHECK-NEXT:       (i32.eqz
   ;; CHECK-NEXT:        (local.get $1)
@@ -917,7 +920,6 @@
   ;; CHECK-NEXT:        (i32.const 2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (global.get $__asyncify_state)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (return
   ;; CHECK-NEXT:      (i32.const 2)
