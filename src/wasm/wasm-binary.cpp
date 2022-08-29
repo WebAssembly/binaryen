@@ -2977,9 +2977,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto& segment : elementSegments) {
-    wasm.addElementSegment(std::move(segment));
-  }
   for (auto& segment : dataSegments) {
     wasm.addDataSegment(std::move(segment));
   }
@@ -3178,7 +3175,7 @@ void WasmBinaryBuilder::readElementSegments() {
       }
     }
 
-    elementSegments.push_back(std::move(segment));
+    wasm.addElementSegment(std::move(segment));
   }
 }
 
@@ -3348,7 +3345,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
 
         if (index < wasm.tables.size()) {
           auto* table = wasm.tables[index].get();
-          for (auto& segment : elementSegments) {
+          for (auto& segment : wasm.elementSegments) {
             if (segment->table == table->name) {
               segment->table = name;
             }
@@ -3369,8 +3366,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
 
-        if (index < elementSegments.size()) {
-          elementSegments[index]->setExplicitName(name);
+        if (index < wasm.elementSegments.size()) {
+          wasm.elementSegments[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: elem index out of bounds in name section, "
                        "elem subsection: "
