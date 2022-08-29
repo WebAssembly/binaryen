@@ -194,8 +194,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
     T& map;
 
     void maybeUpdate(Name& name) {
-      auto iter = map.find(name);
-      if (iter != map.end()) {
+      if (auto iter = map.find(name); iter != map.end()) {
         name = iter->second;
       }
     }
