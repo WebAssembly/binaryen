@@ -3467,8 +3467,7 @@ private:
       Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
           std::isnan(c->value.getFloat()) && !x->is<Const>() &&
-          bin->op != CopySignFloat32 &&
-          bin->op != CopySignFloat64) {
+          bin->op != CopySignFloat32 && bin->op != CopySignFloat64) {
         if (bin->isRelational()) {
           // reuse "c" (nan) constant
           c->type = Type::i32;
