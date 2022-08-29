@@ -176,13 +176,13 @@ inline void clearModule(Module& wasm) {
 // Rename functions along with all their uses.
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
-// call this redirect all of its uses.
+// call this to redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& [oldName, newName] : map) {
-    if (Function* F = wasm.getFunctionOrNull(oldName)) {
-      assert(!wasm.getFunctionOrNull(newName) || F->name == newName);
-      F->name = newName;
+    if (Function* func = wasm.getFunctionOrNull(oldName)) {
+      assert(!wasm.getFunctionOrNull(newName) || func->name == newName);
+      func->name = newName;
     }
   }
   wasm.updateMaps();
