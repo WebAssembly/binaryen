@@ -4,7 +4,7 @@
     (drop
       (i32.shl
         (i32.shl
-          (get_local $x)
+          (local.get $x)
           (i32.const 1)
         )
         (i32.const 1)
@@ -12,7 +12,7 @@
     )
     (drop
       (i32.shl
-        (get_local $y) ;; note how the better pattern has a different local; we abstract over them
+        (local.get $y) ;; note how the better pattern has a different local; we abstract over them
         (i32.const 2)
       )
     )

@@ -164,14 +164,16 @@ def update_lit_tests():
 
 
 def update_wasm_analyze_tests():
-    print '\n[ checking wasm-analyze testcases... ]\n'
+    print('\n[ checking wasm-analyze testcases... ]\n')
 
-    for t in sorted(os.listdir(os.path.join('test', 'analyze'))):
+    test_dir = os.path.join(shared.options.binaryen_root, 'test', 'analyze')
+    for t in sorted(os.listdir(test_dir)):
         if t.endswith('.wast'):
-            print '..', t
-            wast = os.path.join('test', 'analyze', t)
-            cmd = [os.path.join('bin', 'wasm-analyze'), wast]
-            actual = run_command(cmd, stderr=open('/dev/null', 'w'))
+            print('..', t)
+            wast = os.path.join(test_dir, t)
+            cmd = [os.path.join(shared.options.binaryen_bin, 'wasm-analyze'),
+                   wast]
+            actual = subprocess.check_output(cmd, stderr=open('/dev/null', 'w'))
             out = wast.replace('.wast', '.txt')
             with open(out, 'w') as o: o.write(actual)
 
