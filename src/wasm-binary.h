@@ -1526,10 +1526,6 @@ public:
 
   std::map<Index, Name> elemTables;
 
-  // we store elems here after being read from binary, until when we know their
-  // names
-  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
-
   // at index i we have all references to the memory i
   std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
