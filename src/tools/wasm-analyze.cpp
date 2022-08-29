@@ -30,6 +30,7 @@
 #include "support/permutations.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
+#Include "wasm-type.h"
 #include "wasm-s-parser.h"
 #include "wasm-traversal.h"
 
@@ -300,10 +301,10 @@ struct Scan
 
 // Generate local values deterministically, using a seed
 class LocalGenerator {
-  Index seed;
+  size_t seed;
 
 public:
-  LocalGenerator(Index seed) : seed(seed) {}
+  LocalGenerator(size_t seed) : seed(seed) {}
 
   Literal get(Index index, Type type) {
     // use low indexes to ensure we get representation of a few special values
@@ -345,25 +346,23 @@ public:
       }
     }
     // a general "random"/deterministic value
-    auto base = hash_combine(seed, index);
-    switch (type) {
-      case i32:
-      case f32: {
-        auto ret = Literal(hash_combine(base, Index(type)));
-        if (type == f32)
-          ret = ret.castToF32();
-        return ret;
+    auto base = seed;
+    rehash(base, index);
+    if (type == Type::i32 || type == Type::f32) {
+      auto ret = Literal(rehash(base, std::hash(type)));
+      if (type == f32) {
+        ret = ret.castToF32();
       }
-      case i64:
-      case f64: {
-        auto ret = Literal(hash_combine(base, Index(type)) |
-                           (int64_t(hash_combine(base, Index(type + 1000))) << 32));
-        if (type == f64)
-          ret = ret.castToF64();
-        return ret;
+      return ret;
+    } if (type == Type::i64 || type == Type::f64) {
+      auto ret = Literal(rehash(base, Index(type)) |
+                         (int64_t(rehash(base, std::hash(type) + 1000)) << 32));
+      if (type == f64) {
+        ret = ret.castToF64();
       }
-      default:
-        WASM_UNREACHABLE();
+      return ret;
+    } else {
+      WASM_UNREACHABLE();
     }
   }
 };
@@ -439,13 +438,13 @@ struct ExecutionHasher {
       LocalGenerator localGenerator(i);
       Flow flow = Runner(localGenerator).visit(expr);
       if (flow.breaking()) {
-        hash = hash_combine(hash, 1);
-        hash = hash_combine(hash, 2);
-        hash = hash_combine(hash, 3);
-        hash = hash_combine(hash, size_t(flow.breakTo.str));
+        hash = rehash(hash, 1);
+        hash = rehash(hash, 2);
+        hash = rehash(hash, 3);
+        hash = rehash(hash, size_t(flow.breakTo.str));
       } else {
-        hash = hash_combine(hash, 4);
-        hash = hash_combine(hash, flow.value.type);
+        hash = rehash(hash, 4);
+        hash = rehash(hash, flow.value.type);
         switch (flow.value.type) {
           case f32:
             flow.value = flow.value.castToI32();
@@ -458,16 +457,16 @@ struct ExecutionHasher {
         }
         switch (flow.value.type) {
           case Type::none:
-            hash = hash_combine(hash, 5);
-            hash = hash_combine(hash, 6);
+            hash = rehash(hash, 5);
+            hash = rehash(hash, 6);
             break;
           case i32:
-            hash = hash_combine(hash, flow.value.geti32());
-            hash = hash_combine(hash, 7);
+            hash = rehash(hash, flow.value.geti32());
+            hash = rehash(hash, 7);
             break;
           case i64:
-            hash = hash_combine(hash, flow.value.geti64());
-            hash = hash_combine(hash, flow.value.geti64() >> 32);
+            hash = rehash(hash, flow.value.geti64());
+            hash = rehash(hash, flow.value.geti64() >> 32);
             break;
           default:
             WASM_UNREACHABLE();
