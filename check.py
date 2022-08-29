@@ -368,10 +368,7 @@ def run_wasm_analyze_tests():
                    '--show-already-optimizable']
             actual = subprocess.check_output(cmd, stderr=None)
             out = wast.replace('.wast', '.txt')
-            with open(out) as f:
-                expected = f.read()
-                if actual != expected:
-                    fail(actual, expected)
+            shared.fail_if_not_identical_to_file(actual, out)
 
 
 TEST_SUITES = OrderedDict([

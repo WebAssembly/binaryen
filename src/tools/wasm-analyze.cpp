@@ -143,7 +143,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       // For now, we only handle math-type expressions: having a return value
       // and no side effects
       // TODO: do more stuff, modeling side effects etc.
-      if (!curr->type.isConcrete()) {
+      if (!curr->type.isNumber()) {
         return builder.makeUnreachable();
       }
       if (auto* get = curr->dynCast<LocalGet>()) {
@@ -329,7 +329,7 @@ public:
         } else if (type == Type::f64) {
           return Literal(LIMIT_F64S[special]);
         } else {
-          WASM_UNREACHABLE("bad type");
+          Fatal() << "bad type for limits " << type;
         }
       } else {
         special -= NUM_LIMITS;
@@ -345,7 +345,7 @@ public:
         } else if (type == Type::f64) {
           return Literal(double(special));
         } else {
-          WASM_UNREACHABLE("bad type");
+          Fatal() << "bad type for specials " << type;
         }
       }
     }
@@ -466,8 +466,16 @@ struct ExecutionHasher {
         } else if (value.type == Type::i64) {
           rehash(hash, value.geti64());
           rehash(hash, value.geti64() >> 32);
+        } else if (value.type == Type::v128) {
+          auto bytes = value.getv128();
+          size_t v128Digest = 0;
+          for (auto byte : bytes) {
+            rehash(v128Digest, byte);
+          }
+          rehash(hash, v128Digest);
+          rehash(hash, 8);
         } else {
-          WASM_UNREACHABLE("bad type for hash");
+          Fatal() << "bad type for hash " << value.type;
         }
       }
     }
