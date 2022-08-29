@@ -162,10 +162,9 @@ static Expression* normalize(Expression* expr, Module& wasm) {
         // consider the general case of an arbitrary expression here
         return builder.makeLocalGet(nextLocal++, curr->type);
       }
-      if (curr->is<Call>() ||
-          curr->is<CallIndirect>() || curr->is<GlobalGet>() ||
-          curr->is<Load>() || curr->is<Return>() || curr->is<Break>() ||
-          curr->is<Switch>()) {
+      if (curr->is<Call>() || curr->is<CallIndirect>() ||
+          curr->is<GlobalGet>() || curr->is<Load>() || curr->is<Return>() ||
+          curr->is<Break>() || curr->is<Switch>()) {
         return builder.makeUnreachable();
       }
       return nullptr; // allow the default copy to proceed
@@ -279,7 +278,8 @@ struct Scan
         };
         static PermutationsLister permutationsLister;
         Index numLocals = 2;
-        while (numLocals < MAX_LOCAL && scanner.localTypes[numLocals] != Type::none) {
+        while (numLocals < MAX_LOCAL &&
+               scanner.localTypes[numLocals] != Type::none) {
           numLocals++;
         }
         assert(numLocals <= MAX_LOCAL);
@@ -354,7 +354,8 @@ public:
         ret = ret.castToF32();
       }
       return ret;
-    } if (type == Type::i64 || type == Type::f64) {
+    }
+    if (type == Type::i64 || type == Type::f64) {
       auto ret = Literal(rehash(base, Index(type)) |
                          (int64_t(rehash(base, std::hash(type) + 1000)) << 32));
       if (type == f64) {
