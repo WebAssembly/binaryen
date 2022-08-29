@@ -439,38 +439,30 @@ struct ExecutionHasher {
       LocalGenerator localGenerator(i);
       Flow flow = Runner(localGenerator).visit(expr);
       if (flow.breaking()) {
-        hash = rehash(hash, 1);
-        hash = rehash(hash, 2);
-        hash = rehash(hash, 3);
-        hash = rehash(hash, size_t(flow.breakTo.str));
+        rehash(hash, 1);
+        rehash(hash, 2);
+        rehash(hash, 3);
+        rehash(hash, size_t(flow.breakTo.str));
       } else {
-        hash = rehash(hash, 4);
-        hash = rehash(hash, flow.value.type);
-        switch (flow.value.type) {
-          case f32:
-            flow.value = flow.value.castToI32();
-            break;
-          case f64:
-            flow.value = flow.value.castToI64();
-            break;
-          default: {
-          }
+        rehash(hash, 4);
+        rehash(hash, flow.value.type);
+        if (flow.value.type == Type::f32) {
+          flow.value = flow.value.castToI32();
+        } else if (flow.value.type == Type::f64) {
+          flow.value = flow.value.castToI64();
         }
-        switch (flow.value.type) {
-          case Type::none:
-            hash = rehash(hash, 5);
-            hash = rehash(hash, 6);
-            break;
-          case i32:
-            hash = rehash(hash, flow.value.geti32());
-            hash = rehash(hash, 7);
-            break;
-          case i64:
-            hash = rehash(hash, flow.value.geti64());
-            hash = rehash(hash, flow.value.geti64() >> 32);
-            break;
-          default:
-            WASM_UNREACHABLE();
+        if (flow.value.type == Type::none2) {
+          rehash(hash, 5);
+          rehash(hash, 6);
+          break;
+        } else if (flow.value.type == Type::i32) {
+          rehash(hash, flow.value.geti32());
+          rehash(hash, 7);
+        } else if (flow.value.type == Type::i64) {
+          rehash(hash, flow.value.geti64());
+          rehash(hash, flow.value.geti64() >> 32);
+        } else {
+          WASM_UNREACHABLE();
         }
       }
     }
