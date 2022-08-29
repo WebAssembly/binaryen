@@ -153,7 +153,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
         return builder.makeLocalGet(newIndex, get->type);
       }
       if (curr->is<LocalSet>()) {
-        assert(curr->type != none); // this is a tee
+        assert(curr->type != Type::none); // this is a tee
         // look through the tee
         return parentCopy(curr->cast<LocalSet>()->value);
       }
@@ -161,7 +161,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
         // consider the general case of an arbitrary expression here
         return builder.makeLocalGet(nextLocal++, curr->type);
       }
-      if (curr->is<Host>() || curr->is<Call>() || curr->is<CallImport>() ||
+      if (curr->is<Call>() ||
           curr->is<CallIndirect>() || curr->is<GlobalGet>() ||
           curr->is<Load>() || curr->is<Return>() || curr->is<Break>() ||
           curr->is<Switch>()) {
@@ -174,7 +174,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
   auto* ret = ExpressionManipulator::flexibleCopy(
     expr, wasm, [&](Expression* curr) { return normalizer.copy(curr); });
 
-  if (!isConcreteWasmType(ret->type) || normalizer.nextLocal >= MAX_LOCAL ||
+  if (!ret->type.isConcrete() || normalizer.nextLocal >= MAX_LOCAL ||
       Measurer::measure(ret) > MAX_EXPRESSION_SIZE) {
     return nullptr;
   }
@@ -184,11 +184,11 @@ static Expression* normalize(Expression* expr, Module& wasm) {
 // Scan an expression for local types. Assumes it has MAX_LOCAL locals at most
 struct ScanLocals
   : public WalkerPass<PostWalker<ScanLocals, Visitor<ScanLocals>>> {
-  WasmType localTypes[MAX_LOCAL];
+  Type localTypes[MAX_LOCAL];
 
   ScanLocals(Expression* expr) {
     for (Index i = 0; i < MAX_LOCAL; i++) {
-      localTypes[i] = none;
+      localTypes[i] = Type::none;
     }
     walk(expr);
   }
@@ -265,20 +265,20 @@ struct Scan
       // want to use them as optimization targets, we don't need to optimize
       // them, we optimize the canonical first form.
       ScanLocals scanner(copy);
-      if (scanner.localTypes[1] != none) {
+      if (scanner.localTypes[1] != Type::none) {
         struct PermutationsLister {
           std::vector<std::vector<std::vector<Index>>>
             list; // index => list of permutations of that size
           PermutationsLister() {
             list.resize(MAX_LOCAL + 1);
             for (size_t i = 1; i < MAX_LOCAL + 1; i++) {
-              list[i] = Permutation::makeAllPermutations(i);
+              list[i] = makeAllPermutations(i);
             }
           }
         };
         static PermutationsLister permutationsLister;
         Index numLocals = 2;
-        while (numLocals < MAX_LOCAL && scanner.localTypes[numLocals] != none) {
+        while (numLocals < MAX_LOCAL && scanner.localTypes[numLocals] != Type::none) {
           numLocals++;
         }
         assert(numLocals <= MAX_LOCAL);
@@ -305,7 +305,7 @@ class LocalGenerator {
 public:
   LocalGenerator(Index seed) : seed(seed) {}
 
-  Literal get(Index index, WasmType type) {
+  Literal get(Index index, Type type) {
     // use low indexes to ensure we get representation of a few special values
     // TODO: get each of the MAX_LOCALS to all of its NUM_SPECIALS values
     int64_t special =
@@ -315,34 +315,32 @@ public:
     }
     if (special >= 0 && special < NUM_SPECIALS) {
       if (special < NUM_LIMITS) {
-        switch (type) {
-          case i32:
-            return Literal(LIMIT_I32S[special]);
-          case i64:
-            return Literal(LIMIT_I64S[special]);
-          case f32:
-            return Literal(LIMIT_F32S[special]);
-          case f64:
-            return Literal(LIMIT_F64S[special]);
-          default:
-            WASM_UNREACHABLE();
+        if (type == Type::i32) {
+          return Literal(LIMIT_I32S[special]);
+        } else if (type == Type::i64) {
+          return Literal(LIMIT_I64S[special]);
+        } else if (type == Type::f32) {
+          return Literal(LIMIT_F32S[special]);
+        } else if (type == Type::f64) {
+          return Literal(LIMIT_F64S[special]);
+        } else {
+          WASM_UNREACHABLE("bad type");
         }
       } else {
         special -= NUM_LIMITS;
         assert(special >= 0 && special < NUM_SMALLS);
         special -= MAX_SMALL;
         assert(special >= -MAX_SMALL && special <= MAX_SMALL);
-        switch (type) {
-          case i32:
-            return Literal(int32_t(special));
-          case i64:
-            return Literal(int64_t(special));
-          case f32:
-            return Literal(float(special));
-          case f64:
-            return Literal(double(special));
-          default:
-            WASM_UNREACHABLE();
+        if (type == Type::i32) {
+          return Literal(int32_t(special));
+        } else if (type == Type::i64) {
+          return Literal(int64_t(special));
+        } else if (type == Type::f32) {
+          return Literal(float(special));
+        } else if (type == Type::f64) {
+          return Literal(double(special));
+        } else {
+          WASM_UNREACHABLE("bad type");
         }
       }
     }
@@ -388,9 +386,6 @@ public:
   }
 
   Flow visitCall(Call* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitCallImport(CallImport* curr) {
     abort(); // we should not see this
   }
   Flow visitCallIndirect(CallIndirect* curr) {
@@ -462,7 +457,7 @@ struct ExecutionHasher {
           }
         }
         switch (flow.value.type) {
-          case none:
+          case Type::none:
             hash = rehash(hash, 5);
             hash = rehash(hash, 6);
             break;
@@ -490,7 +485,7 @@ Index calcWeight(Expression* expr) {
 
 // can our optimizer do better on a than b?
 static bool alreadyOptimizable(Expression* input,
-                               WasmType localTypes[MAX_LOCAL],
+                               Type localTypes[MAX_LOCAL],
                                Expression* output) {
   Module temp;
   // make a single function that receives the expressions locals and returns its
