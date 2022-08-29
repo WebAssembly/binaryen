@@ -364,7 +364,8 @@ def run_wasm_analyze_tests():
             print('..', t)
             wast = os.path.join(test_dir, t)
             cmd = [os.path.join(shared.options.binaryen_bin, 'wasm-analyze'),
-                   wast]
+                   wast,
+                   '--show-already-optimizable']
             actual = subprocess.check_output(cmd, stderr=None)
             out = wast.replace('.wast', '.txt')
             with open(out) as f:

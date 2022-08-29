@@ -108,6 +108,10 @@ struct ExpressionComparer {
   }
 };
 
+// By default, do not show rules that the optimizer already handles. Showing
+// such rules is only useful in internal testing of this tool.
+static bool showAlreadyOptimizable = false;
+
 // expression -> a count
 class ExpressionIntMap : public std::unordered_map<HashedExpression,
                                                    size_t,
@@ -115,8 +119,8 @@ class ExpressionIntMap : public std::unordered_map<HashedExpression,
                                                    ExpressionComparer> {};
 
 // global expression state
-Module global;          // a module that persists til the end
-ExpressionIntMap freqs; // expression -> its frequency
+static Module global;          // a module that persists til the end
+static ExpressionIntMap freqs; // expression -> its frequency
 
 // Normalize an expression, replacing irrelevant bits with
 // generalizations to get_local, and make get_locals start
@@ -535,8 +539,9 @@ bool looksValid(Expression* a, Expression* b) {
   // let's see if this possible optimization is already something our
   // optimizer can do: if we optimize the input, do we get something
   // as good or better than the output?
-  if (alreadyOptimizable(a, aScanner.localTypes, b)) {
-//    return false;
+  if (!showAlreadyOptimizable &&
+      alreadyOptimizable(a, aScanner.localTypes, b)) {
+    return false;
   }
   // we see no reason these two should not be joined together in holy optimony
   return true;
@@ -568,6 +573,7 @@ Expression* generalize(Expression* expr, Module& wasm) {
 int main(int argc, const char* argv[]) {
   // receive arguments
   std::vector<std::string> filenames;
+  const std::string WasmAnalyzeOption = "wasm-ctor-eval options";
   Options options(
     "wasm-analyze",
     "Analyze a set of wasm modules. Provide a set of input files, optionally "
@@ -578,6 +584,14 @@ int main(int argc, const char* argv[]) {
                          [&](Options* o, const std::string& argument) {
                            filenames.push_back(argument);
                          });
+  options.add("--show-already-optimizable",
+         "-sao",
+         "Show rules the optimizer already handles (used in internal testing).",
+         WasmAnalyzeOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           showAlreadyOptimizable = true;
+         });
   options.parse(argc, argv);
 
   Index totalExpressions = 0;
