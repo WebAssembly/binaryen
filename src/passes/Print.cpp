@@ -3253,7 +3253,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         nontrivialGroup = currGroup->size() > 1;
         if (nontrivialGroup) {
           doIndent(o, indent);
-          o << "(rec ";
+          o << "(rec";
           incIndent();
         }
       }
