@@ -382,11 +382,16 @@ public:
 struct TrapException {}; // TODO: use a flow label for optimization?
 
 // Execute the expression over a set of local values
-class Runner : public ExpressionRunner<Runner> {
+class Runner : public ConstantExpressionRunner<Runner> {
   LocalGenerator& localGenerator;
 
 public:
-  Runner(LocalGenerator& localGenerator) : localGenerator(localGenerator) {}
+  Runner(LocalGenerator& localGenerator) : ConstantExpressionRunner(
+    nullptr,
+    ConstantExpressionRunner::FlagValues::DEFAULT,
+    0, /* maxDepth */
+    0  /* maxLoopIterations */
+  ), localGenerator(localGenerator) {}
 
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
