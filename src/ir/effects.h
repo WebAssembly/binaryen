@@ -726,6 +726,10 @@ private:
       parent.implicitTrap = true;
     }
     void visitRefAs(RefAs* curr) {
+      if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+        // These conversions are infallible.
+        return;
+      }
       // traps when the arg is not valid
       parent.implicitTrap = true;
       // Note: We could be more precise here and report the lack of a possible

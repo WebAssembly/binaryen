@@ -2033,7 +2033,7 @@ void WasmBinaryBuilder::readMemories() {
                        memory->shared,
                        memory->indexType,
                        Memory::kUnlimitedSize);
-    memories.push_back(std::move(memory));
+    wasm.addMemory(std::move(memory));
   }
 }
 
@@ -2247,11 +2247,8 @@ Name WasmBinaryBuilder::getTagName(Index index) {
 }
 
 Memory* WasmBinaryBuilder::getMemory(Index index) {
-  Index numMemoryImports = memoryImports.size();
-  if (index < numMemoryImports) {
-    return memoryImports[index];
-  } else if (index - numMemoryImports < memories.size()) {
-    return memories[index - numMemoryImports].get();
+  if (index < wasm.memories.size()) {
+    return wasm.memories[index].get();
   }
   throwError("Memory index out of range.");
 }
@@ -2347,7 +2344,6 @@ void WasmBinaryBuilder::readImports() {
                            memory->shared,
                            memory->indexType,
                            Memory::kUnlimitedSize);
-        memoryImports.push_back(memory.get());
         wasm.addMemory(std::move(memory));
         break;
       }
@@ -2981,12 +2977,6 @@ void WasmBinaryBuilder::validateBinary() {
 }
 
 void WasmBinaryBuilder::processNames() {
-  for (auto& segment : elementSegments) {
-    wasm.addElementSegment(std::move(segment));
-  }
-  for (auto& memory : memories) {
-    wasm.addMemory(std::move(memory));
-  }
   for (auto& segment : dataSegments) {
     wasm.addDataSegment(std::move(segment));
   }
@@ -3185,7 +3175,7 @@ void WasmBinaryBuilder::readElementSegments() {
       }
     }
 
-    elementSegments.push_back(std::move(segment));
+    wasm.addElementSegment(std::move(segment));
   }
 }
 
@@ -3355,7 +3345,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
 
         if (index < wasm.tables.size()) {
           auto* table = wasm.tables[index].get();
-          for (auto& segment : elementSegments) {
+          for (auto& segment : wasm.elementSegments) {
             if (segment->table == table->name) {
               segment->table = name;
             }
@@ -3376,8 +3366,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
 
-        if (index < elementSegments.size()) {
-          elementSegments[index]->setExplicitName(name);
+        if (index < wasm.elementSegments.size()) {
+          wasm.elementSegments[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: elem index out of bounds in name section, "
                        "elem subsection: "
@@ -3392,11 +3382,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        auto numMemoryImports = memoryImports.size();
-        if (index < numMemoryImports) {
-          memoryImports[index]->setExplicitName(name);
-        } else if (index - numMemoryImports < memories.size()) {
-          memories[index - numMemoryImports]->setExplicitName(name);
+        if (index < wasm.memories.size()) {
+          wasm.memories[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "
@@ -3988,7 +3975,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       }
       if (opcode == BinaryConsts::RefAsFunc ||
           opcode == BinaryConsts::RefAsData ||
-          opcode == BinaryConsts::RefAsI31) {
+          opcode == BinaryConsts::RefAsI31 ||
+          opcode == BinaryConsts::ExternInternalize ||
+          opcode == BinaryConsts::ExternExternalize) {
         visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), opcode);
         break;
       }
@@ -4379,16 +4368,10 @@ Index WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   if (hasMemIdx) {
     memIdx = getU32LEB();
   }
-  Memory* memory = nullptr;
-  auto numMemoryImports = memoryImports.size();
-  if (memIdx < numMemoryImports) {
-    memory = memoryImports[memIdx];
-  } else if (memIdx - numMemoryImports < memories.size()) {
-    memory = memories[memIdx - numMemoryImports].get();
-  }
-  if (!memory) {
+  if (memIdx >= wasm.memories.size()) {
     throwError("Memory index out of range while reading memory alignment.");
   }
+  auto* memory = wasm.memories[memIdx].get();
   offset = memory->indexType == Type::i32 ? getU32LEB() : getU64LEB();
 
   return memIdx;
@@ -7363,6 +7346,12 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
     case BinaryConsts::RefAsI31:
       curr->op = RefAsI31;
       break;
+    case BinaryConsts::ExternInternalize:
+      curr->op = ExternInternalize;
+      break;
+    case BinaryConsts::ExternExternalize:
+      curr->op = ExternExternalize;
+      break;
     default:
       WASM_UNREACHABLE("invalid code for ref.as_*");
   }
@@ -7372,6 +7361,7 @@ void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   }
   curr->finalize();
 }
+
 void WasmBinaryBuilder::throwError(std::string text) {
   throw ParseException(text, 0, pos);
 }

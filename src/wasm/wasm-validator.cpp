@@ -425,6 +425,7 @@ public:
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIs(RefIs* curr);
+  void visitRefAs(RefAs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
@@ -2124,6 +2125,40 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
                  curr->value->type.isRef(),
                curr->value,
                "ref.is_*'s argument should be a reference type");
+}
+
+void FunctionValidator::visitRefAs(RefAs* curr) {
+  switch (curr->op) {
+    default:
+      // TODO: validate all the other ref.as_*
+      break;
+    case ExternInternalize: {
+      shouldBeTrue(getModule()->features.hasGC(),
+                   curr,
+                   "extern.internalize requries GC to be enabled");
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      shouldBeSubType(curr->value->type,
+                      Type(HeapType::ext, Nullable),
+                      curr->value,
+                      "extern.internalize value should be an externref");
+      break;
+    }
+    case ExternExternalize: {
+      shouldBeTrue(getModule()->features.hasGC(),
+                   curr,
+                   "extern.externalize requries GC to be enabled");
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      shouldBeSubType(curr->value->type,
+                      Type(HeapType::any, Nullable),
+                      curr->value,
+                      "extern.externalize value should be an anyref");
+      break;
+    }
+  }
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {

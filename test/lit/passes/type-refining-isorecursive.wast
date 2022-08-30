@@ -4,7 +4,7 @@
 (module
  ;; The types should be refined to a set of three mutually recursive types.
 
- ;; CHECK:      (rec 
+ ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $0 (struct_subtype (field anyref) (field (ref $1)) data))
  (type $0 (struct_subtype (ref null any) anyref data))
  ;; CHECK:       (type $1 (struct_subtype (field eqref) (field (ref $2)) data))
@@ -61,7 +61,7 @@
  ;; referenced by $all, but now we need to worry about ordering supertypes
  ;; correctly.
 
- ;; CHECK:      (rec 
+ ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $all (struct_subtype (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2)) data))
  (type $all (struct_subtype i32 anyref anyref anyref data))
 

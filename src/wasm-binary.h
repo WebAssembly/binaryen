@@ -1125,6 +1125,8 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  ExternInternalize = 0x70,
+  ExternExternalize = 0x71,
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
@@ -1524,16 +1526,6 @@ public:
 
   std::map<Index, Name> elemTables;
 
-  // we store elems here after being read from binary, until when we know their
-  // names
-  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
-
-  // we store memories here after being read from binary, before we know their
-  // names
-  std::vector<std::unique_ptr<Memory>> memories;
-  // we store memory imports here before wasm.addMemoryImport after we know
-  // their names
-  std::vector<Memory*> memoryImports;
   // at index i we have all references to the memory i
   std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
