@@ -1874,6 +1874,9 @@ public:
           trap("not an i31");
         }
         break;
+      case ExternInternalize:
+      case ExternExternalize:
+        WASM_UNREACHABLE("unimplemented extern conversion");
       default:
         WASM_UNREACHABLE("unimplemented ref.as_*");
     }
@@ -2225,6 +2228,13 @@ public:
   }
   Flow visitStringSliceIter(StringSliceIter* curr) {
     return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitRefAs(RefAs* curr) {
+    // TODO: Remove this once interpretation is implemented.
+    if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    return ExpressionRunner<SubType>::visitRefAs(curr);
   }
 
   void trap(const char* why) override { throw NonconstantException(); }
