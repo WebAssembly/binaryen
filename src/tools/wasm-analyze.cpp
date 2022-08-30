@@ -178,6 +178,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       if (curr->is<Call>() || curr->is<CallIndirect>() ||
           curr->is<GlobalGet>() || curr->is<Load>() || curr->is<Return>() ||
           curr->is<Break>() || curr->is<Switch>()) {
+        // maybe scan children for irrelevant types? FIXME
         return builder.makeUnreachable();
       }
       return nullptr; // allow the default copy to proceed
@@ -715,6 +716,7 @@ int main(int argc, const char* argv[]) {
 
     auto input(read_file<std::string>(filename, Flags::Text));
     Module wasm;
+    options.applyFeatures(wasm);
 
     std::cerr << "[processing: " << filename << ']' << '\n';
 
