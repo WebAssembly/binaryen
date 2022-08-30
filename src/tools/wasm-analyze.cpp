@@ -171,15 +171,13 @@ static Expression* normalize(Expression* expr, Module& wasm) {
         // look through the tee
         return parentCopy(curr->cast<LocalSet>()->value);
       }
-      if (curr->is<Load>()) {
-        // consider the general case of an arbitrary expression here
+      PassOptions options; // TODO: use the real ones.
+      // If this has effects we don't handle, emit a placeholder instead, so we
+      // just have the abstract shape of the entire thing.
+      EffectAnalyzer effects(options, wasm, curr);
+      // Traps don't matter - we can optimize even with them, in most cases.
+      if (effects.hasNonTrapSideEffects()) {
         return builder.makeLocalGet(nextLocal++, curr->type);
-      }
-      if (curr->is<Call>() || curr->is<CallIndirect>() ||
-          curr->is<GlobalGet>() || curr->is<Load>() || curr->is<Return>() ||
-          curr->is<Break>() || curr->is<Switch>()) {
-        // maybe scan children for irrelevant types? FIXME
-        return builder.makeUnreachable();
       }
       return nullptr; // allow the default copy to proceed
     }
@@ -448,29 +446,8 @@ public:
     WASM_UNREACHABLE("unreachable");
   }
 
-  Flow visitCall(Call* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitCallIndirect(CallIndirect* curr) {
-    abort(); // we should not see this
-  }
   Flow visitLocalGet(LocalGet* curr) {
     return Flow(localGenerator.get(curr->index, curr->type));
-  }
-  Flow visitLocalSet(LocalSet* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitGlobalGet(GlobalGet* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitGlobalSet(GlobalSet* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitLoad(Load* curr) {
-    abort(); // we should not see this
-  }
-  Flow visitStore(Store* curr) {
-    abort(); // we should not see this
   }
 
   void trap(const char* why) override { throw TrapException(); }
