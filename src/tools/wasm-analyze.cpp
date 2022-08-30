@@ -21,6 +21,8 @@
 // 2006): "Automatic Generation of Peephole Superoptimizers".
 //
 
+#include <random>
+
 #include "ir/cost.h"
 #include "ir/utils.h"
 #include "support/colors.h"
@@ -339,10 +341,22 @@ public:
     auto random = seed;
     rehash(random, index);
     rehash(random, std::hash<wasm::Type>{}(type));
+    // Generate a random number from the hash.
+    std::linear_congruential_engine<uint64_t, 48271, 0, std::numeric_limits<uint64_t>::max()> generator(random);
+    generator.discard(7);
+    random = generator();
     if ((random & 7) == 0) {
       // Use a special value here, specifically for this index and type.
       return getSpecial(random, type);
     }
+    random = generator();
+    if ((random & 7) == 0) {
+      // Use a zero. We must make zeros common, since otherwise expressions like
+      // select will see non-zero 99.99% of the time, and not realize that the
+      // output can be of either arm.
+      return Literal::makeZero(type);
+    }
+    random = generator();
     if ((random & 3) == 0 && !givenLiterals.empty()) {
       // Pick a given value, if we can.
       auto givenIndex = random % givenLiterals.size();

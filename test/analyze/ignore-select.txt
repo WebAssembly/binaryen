@@ -2,24 +2,6 @@ Execution hashing info:
   num expression nodes in total: 4
   num unique expressions: 2
   num relevant expressions: 2
-  num execution classes: 1
-  max class size: 2
-sorted possible optimization rules:
-
-=======================================
-
-[generalized rule 0: benefit: 3, (37.5%)], input pattern:
-(select
- (local.get $0)
- (local.get $1)
- (local.get $2)
-)
-
-[child specific rule benefit: 3, (37.5%)], possible rule:
-(select
- (local.get $0)
- (local.get $1)
- (local.get $2)
-)
- =->
-(local.get $0)
+  num execution classes: 2
+  max class size: 1
+no rules found.
