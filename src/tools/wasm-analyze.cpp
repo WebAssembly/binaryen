@@ -24,6 +24,7 @@
 #include <random>
 
 #include "ir/cost.h"
+#include "ir/effects.h"
 #include "ir/utils.h"
 #include "support/colors.h"
 #include "support/command-line.h"
@@ -149,9 +150,6 @@ static Expression* normalize(Expression* expr, Module& wasm) {
     }
 
     Expression* copy(Expression* curr) {
-      // For now, we only handle math-type expressions: having a return value
-      // and no side effects
-      // TODO: do more stuff, modeling side effects etc.
       if (!isRelevantType(curr->type)) {
         return builder.makeUnreachable();
       }
