@@ -886,6 +886,11 @@ int main(int argc, const char* argv[]) {
         return ruleSorter(a, b);
       });
 
+    if (sortedGeneralizedRules.empty()) {
+      std::cout << "no rules found.\n";
+      return 0;
+    }
+
     std::cout << "sorted possible optimization rules:\n";
 
     Index totalWeight = totalExpressions * 2; // Just an estimate FIXME
