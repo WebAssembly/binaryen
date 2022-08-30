@@ -318,52 +318,32 @@ class LocalGenerator {
   const std::vector<Literal> givenLiterals;
 
 public:
-  LocalGenerator(size_t seed, const std::vector<Literal>& givenLiterals={}) : seed(seed), givenLiterals(givenLiterals) {}
+  LocalGenerator(size_t seed, const std::vector<Literal>& givenLiterals={}) : seed(seed), givenLiterals(givenLiterals) {
+#if WASM_ANALYZE_DEBUG
+    std::cout << "LG(" << seed << "), locals:\n";
+    for (Index i = 0; i < MAX_LOCAL; i++) {
+      std::cout << "  $" << i << " = " << get(i, Type::i32) << '\n';
+    }
+#endif
+  }
 
   Literal get(Index index, Type type) {
     // use low indexes to ensure we get representation of a few special values
     // TODO: get each of the MAX_LOCALS to all of its NUM_SPECIALS values
-    int64_t special =
-      seed; // start with 0-NS having them all taking the same value
-    if (special >= NUM_SPECIALS) { // then give each a range for itself
-      special = int64_t(seed) - int64_t(NUM_SPECIALS * (index + 1));
+    if (seed < NUM_SPECIALS) {
+      // Just return a special here, regardless of index or type else.
+      return getSpecial(seed, type);
     }
-    if (special >= 0 && special < NUM_SPECIALS) {
-      if (special < NUM_LIMITS) {
-        if (type == Type::i32) {
-          return Literal(LIMIT_I32S[special]);
-        } else if (type == Type::i64) {
-          return Literal(LIMIT_I64S[special]);
-        } else if (type == Type::f32) {
-          return Literal(LIMIT_F32S[special]);
-        } else if (type == Type::f64) {
-          return Literal(LIMIT_F64S[special]);
-        } else {
-          Fatal() << "bad type for limits " << type;
-        }
-      } else {
-        special -= NUM_LIMITS;
-        assert(special >= 0 && special < NUM_SMALLS);
-        special -= MAX_SMALL;
-        assert(special >= -MAX_SMALL && special <= MAX_SMALL);
-        if (type == Type::i32) {
-          return Literal(int32_t(special));
-        } else if (type == Type::i64) {
-          return Literal(int64_t(special));
-        } else if (type == Type::f32) {
-          return Literal(float(special));
-        } else if (type == Type::f64) {
-          return Literal(double(special));
-        } else {
-          Fatal() << "bad type for specials " << type;
-        }
-      }
-    }
+
     // |random| is a general "random"/deterministic value
     auto random = seed;
     rehash(random, index);
     rehash(random, std::hash<wasm::Type>{}(type));
-    if (!givenLiterals.empty()) {
+    if ((random & 7) == 0) {
+      // Use a special value here, specifically for this index and type.
+      return getSpecial(random, type);
+    }
+    if ((random & 3) == 0 && !givenLiterals.empty()) {
       // Pick a given value, if we can.
       auto givenIndex = random % givenLiterals.size();
       auto given = givenLiterals[givenIndex];
@@ -387,6 +367,40 @@ public:
       return ret;
     } else {
       WASM_UNREACHABLE("bad type for seed");
+    }
+  }
+
+  Literal getSpecial(size_t special, Type type) {
+    special = special % NUM_SPECIALS;
+    if (special < NUM_LIMITS) {
+      if (type == Type::i32) {
+        return Literal(LIMIT_I32S[special]);
+      } else if (type == Type::i64) {
+        return Literal(LIMIT_I64S[special]);
+      } else if (type == Type::f32) {
+        return Literal(LIMIT_F32S[special]);
+      } else if (type == Type::f64) {
+        return Literal(LIMIT_F64S[special]);
+      } else {
+        Fatal() << "bad type for limits " << type;
+      }
+    }
+
+    special -= NUM_LIMITS;
+    assert(special < NUM_SMALLS);
+    int64_t signedSpecial = special;
+    signedSpecial -= MAX_SMALL;
+    assert(signedSpecial >= -MAX_SMALL && signedSpecial <= MAX_SMALL);
+    if (type == Type::i32) {
+      return Literal(int32_t(signedSpecial));
+    } else if (type == Type::i64) {
+      return Literal(int64_t(signedSpecial));
+    } else if (type == Type::f32) {
+      return Literal(float(signedSpecial));
+    } else if (type == Type::f64) {
+      return Literal(double(signedSpecial));
+    } else {
+      Fatal() << "bad type for specials " << type;
     }
   }
 };
