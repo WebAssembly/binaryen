@@ -892,7 +892,8 @@ int main(int argc, const char* argv[]) {
 
     size_t i = 0;
     for (auto* item : sortedGeneralizedRules) {
-      std::cout << "\n[generalized rule " << (i++)
+      std::cout << "\n=======================================\n\n"
+                << "[generalized rule " << (i++)
                 << ": benefit: " << item->benefit << ", ("
                 << (100 * double(item->benefit) / totalWeight)
                 << "%)], input pattern:\n"

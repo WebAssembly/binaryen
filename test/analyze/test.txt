@@ -6,6 +6,8 @@ Execution hashing info:
   max class size: 2
 sorted possible optimization rules:
 
+=======================================
+
 [generalized rule 0: benefit: 2, (12.5%)], input pattern:
 (i32.shl
  (i32.shl
