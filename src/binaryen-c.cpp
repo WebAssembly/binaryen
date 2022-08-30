@@ -3757,6 +3757,9 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
     memory->name = internalName;
     memory->module = externalModuleName;
     memory->base = externalBaseName;
+    memory->initial = 0;
+    memory->max = Memory::kMaxSize32;
+    memory->indexType = Type::i32;
     memory->shared = shared;
     ((Module*)module)->addMemory(std::move(memory));
   } else {
