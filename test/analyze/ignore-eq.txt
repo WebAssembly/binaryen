@@ -5,17 +5,3 @@ Execution hashing info:
   num execution classes: 3
   max class size: 2
 sorted possible optimization rules:
-
-[generalized rule 0: benefit: 2, (25%)], input pattern:
-(i32.eq
- (local.get $0)
- (unreachable)
-)
-
-[child specific rule benefit: 2, (25%)], possible rule:
-(i32.eq
- (local.get $0)
- (i32.const 123456)
-)
- =->
-(i32.const 0)

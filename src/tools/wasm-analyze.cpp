@@ -314,8 +314,11 @@ struct Scan
 class LocalGenerator {
   size_t seed;
 
+  // A list of given literal values, that we may select from.
+  const std::vector<Literal> givenLiterals;
+
 public:
-  LocalGenerator(size_t seed) : seed(seed) {}
+  LocalGenerator(size_t seed, const std::vector<Literal>& givenLiterals={}) : seed(seed), givenLiterals(givenLiterals) {}
 
   Literal get(Index index, Type type) {
     // use low indexes to ensure we get representation of a few special values
@@ -356,19 +359,28 @@ public:
         }
       }
     }
-    // a general "random"/deterministic value
-    auto base = seed;
-    rehash(base, index);
-    rehash(base, std::hash<wasm::Type>{}(type));
+    // |random| is a general "random"/deterministic value
+    auto random = seed;
+    rehash(random, index);
+    rehash(random, std::hash<wasm::Type>{}(type));
+    if (!givenLiterals.empty()) {
+      // Pick a given value, if we can.
+      auto givenIndex = random % givenLiterals.size();
+      auto given = givenLiterals[givenIndex];
+      if (given.type == type) {
+        // The type fits! Use it.
+        return given;
+      }
+    }
     if (type == Type::i32 || type == Type::f32) {
-      auto ret = Literal(int32_t(base));
+      auto ret = Literal(int32_t(random));
       if (type == Type::f32) {
         ret = ret.castToF32();
       }
       return ret;
     }
     if (type == Type::i64 || type == Type::f64) {
-      auto ret = Literal(int64_t(base));
+      auto ret = Literal(int64_t(random));
       if (type == Type::f64) {
         ret = ret.castToF64();
       }
@@ -564,6 +576,29 @@ bool looksValid(Expression* a, Expression* b) {
     // TODO: breaking
     if (aFlow.values != bFlow.values) {
       return false;
+    }
+  }
+  // In addition, use the constants actually appearing the expression, which can
+  // catch things like  x == 123456  (which we need to test on the input 123456
+  // to actually see anything but a 0).
+  FindAll<Const> aConsts(a);
+  FindAll<Const> bConsts(b);
+  std::vector<Literal> literals;
+  for (auto c : aConsts.list) {
+    literals.push_back(c->value);
+  }
+  for (auto c : bConsts.list) {
+    literals.push_back(c->value);
+  }
+  if (!literals.empty()) {
+    for (Index i = 0; i < NUM_EXECUTIONS; i++) {
+      LocalGenerator localGenerator(i, literals);
+      Flow aFlow = Runner(localGenerator).visit(a);
+      Flow bFlow = Runner(localGenerator).visit(b);
+      // TODO: breaking
+      if (aFlow.values != bFlow.values) {
+        return false;
+      }
     }
   }
   // let's see if this possible optimization is already something our
