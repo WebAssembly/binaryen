@@ -3716,13 +3716,13 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
                                BinaryenType results) {
   auto* func = ((Module*)module)->getFunctionOrNull(internalName);
   if (func == nullptr) {
-    auto* func = new Function();
+    auto func = make_unique<Function>();
     func->name = internalName;
     func->module = externalModuleName;
     func->base = externalBaseName;
     // TODO: Take a HeapType rather than params and results.
     func->type = Signature(Type(params), Type(results));
-    ((Module*)module)->addFunction(func);
+    ((Module*)module)->addFunction(std::move(func));
   } else {
     // already exists so just set module and base
     func->module = externalModuleName;
@@ -3735,7 +3735,7 @@ void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* externalBaseName) {
   auto* table = ((Module*)module)->getTableOrNull(internalName);
   if (table == nullptr) {
-    auto table = std::make_unique<Table>();
+    auto table = make_unique<Table>();
     table->name = internalName;
     table->module = externalModuleName;
     table->base = externalBaseName;
@@ -3753,7 +3753,8 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              uint8_t shared) {
   auto* memory = ((Module*)module)->getMemoryOrNull(internalName);
   if (memory == nullptr) {
-    auto memory = Builder::makeMemory(internalName);
+    auto memory = make_unique<Memory>();
+    memory->name = internalName;
     memory->module = externalModuleName;
     memory->base = externalBaseName;
     memory->shared = shared;
@@ -3772,13 +3773,13 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              bool mutable_) {
   auto* glob = ((Module*)module)->getGlobalOrNull(internalName);
   if (glob == nullptr) {
-    auto* glob = new Global();
+    auto glob = make_unique<Global>();
     glob->name = internalName;
     glob->module = externalModuleName;
     glob->base = externalBaseName;
     glob->type = Type(globalType);
     glob->mutable_ = mutable_;
-    ((Module*)module)->addGlobal(glob);
+    ((Module*)module)->addGlobal(std::move(glob));
   } else {
     // already exists so just set module and base
     glob->module = externalModuleName;
@@ -3793,12 +3794,12 @@ void BinaryenAddTagImport(BinaryenModuleRef module,
                           BinaryenType results) {
   auto* tag = ((Module*)module)->getGlobalOrNull(internalName);
   if (tag == nullptr) {
-    auto* tag = new Tag();
+    auto tag = make_unique<Tag>();
     tag->name = internalName;
     tag->module = externalModuleName;
     tag->base = externalBaseName;
     tag->sig = Signature(Type(params), Type(results));
-    ((Module*)module)->addTag(tag);
+    ((Module*)module)->addTag(std::move(tag));
   } else {
     // already exists so just set module and base
     tag->module = externalModuleName;
