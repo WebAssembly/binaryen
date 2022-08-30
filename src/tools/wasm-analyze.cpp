@@ -386,12 +386,13 @@ class Runner : public ConstantExpressionRunner<Runner> {
   LocalGenerator& localGenerator;
 
 public:
-  Runner(LocalGenerator& localGenerator) : ConstantExpressionRunner(
-    nullptr, /* module */
-    ConstantExpressionRunner::FlagValues::DEFAULT,
-    0, /* maxDepth */
-    0  /* maxLoopIterations */
-  ), localGenerator(localGenerator) {}
+  Runner(LocalGenerator& localGenerator)
+    : ConstantExpressionRunner(nullptr, /* module */
+                               ConstantExpressionRunner::FlagValues::DEFAULT,
+                               0, /* maxDepth */
+                               0  /* maxLoopIterations */
+                               ),
+      localGenerator(localGenerator) {}
 
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
@@ -445,8 +446,8 @@ struct ExecutionHasher {
       return;
     }
     if (hash) {
-      hashClasses[*hash].push_back(expr); // we depend on expr being unique, so the
-                                         // classes are mathematical sets
+      hashClasses[*hash].push_back(expr); // we depend on expr being unique, so
+                                          // the classes are mathematical sets
     }
   }
 
