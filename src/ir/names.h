@@ -83,6 +83,10 @@ inline Name getValidElementSegmentName(Module& module, Name root) {
   return getValidName(
     root, [&](Name test) { return !module.getElementSegmentOrNull(test); });
 }
+inline Name getValidLocalName(Function& func, Name root) {
+  return getValidName(root,
+                      [&](Name test) { return !func.hasLocalIndex(test); });
+}
 
 class MinifiedNameGenerator {
   size_t state = 0;

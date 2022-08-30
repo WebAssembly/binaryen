@@ -3,6 +3,7 @@
 ;; RUN: wasm-opt %s --jspi -all -S -o - | filecheck %s
 
 (module
+
   ;; CHECK:      (type $externref_f64_=>_i32 (func (param externref f64) (result i32)))
 
   ;; CHECK:      (type $f64_=>_i32 (func (param f64) (result i32)))
@@ -24,20 +25,26 @@
   ;; CHECK:      (export "update_state" (func $export$update_state))
   (export "update_state" (func $update_state))
   ;; Test duplicating an export.
-  ;; CHECK:      (export "update_state_again" (func $export$update_state_0))
+  ;; CHECK:      (export "update_state_again" (func $export$update_state))
   (export "update_state_again" (func $update_state))
+  ;; Test that a name collision on the parameters is handled.
+  ;; CHECK:      (export "update_state_param_collision" (func $export$update_state_param_collision))
+  (export "update_state_param_collision" (func $update_state_param_collision))
   ;; Test function that is imported and exported.
   ;; CHECK:      (export "import_and_export" (func $export$import_and_export))
   (export "import_and_export" (func $import_and_export))
 
 
-  ;; CHECK:      (func $update_state (param $param1 f64) (result i32)
+  ;; CHECK:      (func $update_state (param $param f64) (result i32)
   ;; CHECK-NEXT:  (call $compute_delta
-  ;; CHECK-NEXT:   (f64.const 1.1)
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (f64.const 1.1)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $update_state (param $param1 f64) (result i32)
-    (call $compute_delta (f64.const 1.1))
+  (func $update_state (param $param f64) (result i32)
+    (call $compute_delta (f64.sub (f64.const 1.1) (local.get $param)))
   )
 
   ;; CHECK:      (func $update_state_void (param $0 f64)
@@ -52,41 +59,53 @@
     ;; fake return value to make v8 happy.
     (drop (call $compute_delta (f64.const 1.1)))
   )
+
+  ;; CHECK:      (func $update_state_param_collision (param $susp f64) (result i32)
+  ;; CHECK-NEXT:  (call $update_state_param_collision
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (f64.const 1.1)
+  ;; CHECK-NEXT:    (local.get $susp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $update_state_param_collision (param $susp f64) (result i32)
+    (call $update_state_param_collision (f64.sub (f64.const 1.1) (local.get $susp)))
+  )
 )
-;; CHECK:      (func $export$update_state_void (param $0 externref) (param $1 f64) (result i32)
+;; CHECK:      (func $export$update_state_void (param $susp externref) (param $0 f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
-;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $update_state_void
-;; CHECK-NEXT:   (local.get $1)
+;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (i32.const 0)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$update_state (param $0 externref) (param $1 f64) (result i32)
+;; CHECK:      (func $export$update_state (param $susp externref) (param $param f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
-;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $update_state
-;; CHECK-NEXT:   (local.get $1)
+;; CHECK-NEXT:   (local.get $param)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$update_state_0 (param $0 externref) (param $1 f64) (result i32)
+;; CHECK:      (func $export$update_state_param_collision (param $susp_0 externref) (param $susp f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
-;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:   (local.get $susp_0)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (call $update_state
-;; CHECK-NEXT:   (local.get $1)
+;; CHECK-NEXT:  (call $update_state_param_collision
+;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$import_and_export (param $0 externref) (param $1 i32) (result i32)
+;; CHECK:      (func $export$import_and_export (param $susp externref) (param $0 i32) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
-;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import_and_export
-;; CHECK-NEXT:   (local.get $1)
+;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 

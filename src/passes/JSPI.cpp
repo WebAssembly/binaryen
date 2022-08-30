@@ -48,13 +48,24 @@ struct JSPI : public Pass {
     module->addGlobal(builder.makeGlobal(
       suspender, externref, builder.makeRefNull(externref), Builder::Mutable));
 
+    // Keep track of already wrapped functions since they can be exported
+    // multiple times, but only one wrapper is needed.
+    std::unordered_map<Name, Name> wrappedExports;
+
     // Wrap each exported function in a function that stores the suspender
     // and calls the original export.
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         auto* func = module->getFunction(ex->value);
-        auto legalName = makeWrapperForExport(func, module, suspender);
-        ex->value = legalName;
+        Name wrapperName;
+        auto iter = wrappedExports.find(func->name);
+        if (iter == wrappedExports.end()) {
+          wrapperName = makeWrapperForExport(func, module, suspender);
+          wrappedExports[func->name] = wrapperName;
+        } else {
+          wrapperName = iter->second;
+        }
+        ex->value = wrapperName;
       }
     }
 
@@ -88,13 +99,14 @@ private:
     std::vector<Type> wrapperParams;
     std::vector<NameType> namedWrapperParams;
     wrapperParams.push_back(externref);
-    namedWrapperParams.emplace_back("susp", externref);
+    namedWrapperParams.emplace_back(Names::getValidLocalName(*func, "susp"),
+                                    externref);
     Index i = 0;
     for (const auto& param : func->getParams()) {
       call->operands.push_back(
         builder.makeLocalGet(wrapperParams.size(), param));
       wrapperParams.push_back(param);
-      namedWrapperParams.emplace_back(func->getLocalNameOrDefault(i), param);
+      namedWrapperParams.emplace_back(func->getLocalNameOrGeneric(i), param);
       i++;
     }
     auto* block = builder.makeBlock();
@@ -110,8 +122,12 @@ private:
       block->list.push_back(builder.makeConst(0));
     }
     block->finalize();
-    auto wrapperFunc = Builder::makeFunction(
-      wrapperName, Signature(Type(wrapperParams), resultsType), {}, block);
+    auto wrapperFunc =
+      Builder::makeFunction(wrapperName,
+                            std::move(namedWrapperParams),
+                            Signature(Type(wrapperParams), resultsType),
+                            {},
+                            block);
     return module->addFunction(std::move(wrapperFunc))->name;
   }
 
