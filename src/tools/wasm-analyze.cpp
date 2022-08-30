@@ -172,7 +172,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       PassOptions options; // TODO: use the real ones.
       // If this has effects we don't handle, emit a placeholder instead, so we
       // just have the abstract shape of the entire thing.
-      EffectAnalyzer effects(options, wasm, curr);
+      ShallowEffectAnalyzer effects(options, wasm, curr);
       // Traps don't matter - we can optimize even with them, in most cases.
       if (effects.hasNonTrapSideEffects()) {
         return builder.makeLocalGet(nextLocal++, curr->type);
@@ -188,6 +188,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       Measurer::measure(ret) > MAX_EXPRESSION_SIZE) {
     return nullptr;
   }
+
   return ret;
 }
 
