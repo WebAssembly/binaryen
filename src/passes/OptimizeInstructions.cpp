@@ -3449,11 +3449,11 @@ private:
           (bin->op == CopySignFloat32 || bin->op == CopySignFloat64)) {
         Builder builder(*getModule());
         if (std::signbit(c->value.getFloat())) {
-          // copysign(x, -nan)   ==>   neg(abs(x))
+          // copysign(x, -C)   ==>   neg(abs(x))
           return builder.makeUnary(getUnary(type, Neg),
                                    builder.makeUnary(getUnary(type, Abs), x));
         } else {
-          // copysign(x, +nan)   ==>   abs(x)
+          // copysign(x, +C)   ==>   abs(x)
           return builder.makeUnary(getUnary(type, Abs), x);
         }
       }
