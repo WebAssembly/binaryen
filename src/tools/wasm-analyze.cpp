@@ -555,8 +555,10 @@ static bool alreadyOptimizable(Expression* input,
   export_->value = func->name;
   export_->kind = ExternalKind::Function;
   temp.addExport(export_);
-  // run the optimizer
+  // run the optimizer at a high level
   PassRunner passRunner(&temp);
+  passRunner.options.optimizeLevel = 3;
+  passRunner.options.shrinkLevel = 1;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
   // evaluate the output vs b
