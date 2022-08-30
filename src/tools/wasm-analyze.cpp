@@ -571,11 +571,15 @@ bool looksValid(Expression* a, Expression* b) {
   // case on the two expressions.
   for (Index i = 0; i < NUM_EXECUTIONS; i++) {
     LocalGenerator localGenerator(i);
-    Flow aFlow = Runner(localGenerator).visit(a);
-    Flow bFlow = Runner(localGenerator).visit(b);
-    // TODO: breaking
-    if (aFlow.values != bFlow.values) {
-      return false;
+    try {
+      Flow aFlow = Runner(localGenerator).visit(a);
+      Flow bFlow = Runner(localGenerator).visit(b);
+      // TODO: breaking
+      if (aFlow.values != bFlow.values) {
+        return false;
+      }
+    } catch (TrapException& e) {
+      // One of them trapped. We can skip that.
     }
   }
   // In addition, use the constants actually appearing the expression, which can
@@ -592,12 +596,17 @@ bool looksValid(Expression* a, Expression* b) {
   }
   if (!literals.empty()) {
     for (Index i = 0; i < NUM_EXECUTIONS; i++) {
+      // TODO: this is identical to the above, but adds |literals|. Merge?
       LocalGenerator localGenerator(i, literals);
-      Flow aFlow = Runner(localGenerator).visit(a);
-      Flow bFlow = Runner(localGenerator).visit(b);
-      // TODO: breaking
-      if (aFlow.values != bFlow.values) {
-        return false;
+      try {
+        Flow aFlow = Runner(localGenerator).visit(a);
+        Flow bFlow = Runner(localGenerator).visit(b);
+        // TODO: breaking
+        if (aFlow.values != bFlow.values) {
+          return false;
+        }
+      } catch (TrapException& e) {
+        // One of them trapped. We can skip that.
       }
     }
   }
