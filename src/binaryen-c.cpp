@@ -3714,34 +3714,56 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
                                const char* externalBaseName,
                                BinaryenType params,
                                BinaryenType results) {
-  auto* ret = new Function();
-  ret->name = internalName;
-  ret->module = externalModuleName;
-  ret->base = externalBaseName;
-  // TODO: Take a HeapType rather than params and results.
-  ret->type = Signature(Type(params), Type(results));
-  ((Module*)module)->addFunction(ret);
+  auto* func = ((Module*)module)->getFunctionOrNull(internalName);
+  if (func == nullptr) {
+    auto func = make_unique<Function>();
+    func->name = internalName;
+    func->module = externalModuleName;
+    func->base = externalBaseName;
+    // TODO: Take a HeapType rather than params and results.
+    func->type = Signature(Type(params), Type(results));
+    ((Module*)module)->addFunction(std::move(func));
+  } else {
+    // already exists so just set module and base
+    func->module = externalModuleName;
+    func->base = externalBaseName;
+  }
 }
 void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,
                             const char* externalBaseName) {
-  auto table = std::make_unique<Table>();
-  table->name = internalName;
-  table->module = externalModuleName;
-  table->base = externalBaseName;
-  ((Module*)module)->addTable(std::move(table));
+  auto* table = ((Module*)module)->getTableOrNull(internalName);
+  if (table == nullptr) {
+    auto table = make_unique<Table>();
+    table->name = internalName;
+    table->module = externalModuleName;
+    table->base = externalBaseName;
+    ((Module*)module)->addTable(std::move(table));
+  } else {
+    // already exists so just set module and base
+    table->module = externalModuleName;
+    table->base = externalBaseName;
+  }
 }
 void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* internalName,
                              const char* externalModuleName,
                              const char* externalBaseName,
                              uint8_t shared) {
-  auto memory = Builder::makeMemory(internalName);
-  memory->module = externalModuleName;
-  memory->base = externalBaseName;
-  memory->shared = shared;
-  ((Module*)module)->addMemory(std::move(memory));
+  auto* memory = ((Module*)module)->getMemoryOrNull(internalName);
+  if (memory == nullptr) {
+    auto memory = make_unique<Memory>();
+    memory->name = internalName;
+    memory->module = externalModuleName;
+    memory->base = externalBaseName;
+    memory->shared = shared;
+    ((Module*)module)->addMemory(std::move(memory));
+  } else {
+    // already exists so just set module and base
+    memory->module = externalModuleName;
+    memory->base = externalBaseName;
+  }
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
@@ -3749,13 +3771,20 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* externalBaseName,
                              BinaryenType globalType,
                              bool mutable_) {
-  auto* ret = new Global();
-  ret->name = internalName;
-  ret->module = externalModuleName;
-  ret->base = externalBaseName;
-  ret->type = Type(globalType);
-  ret->mutable_ = mutable_;
-  ((Module*)module)->addGlobal(ret);
+  auto* glob = ((Module*)module)->getGlobalOrNull(internalName);
+  if (glob == nullptr) {
+    auto glob = make_unique<Global>();
+    glob->name = internalName;
+    glob->module = externalModuleName;
+    glob->base = externalBaseName;
+    glob->type = Type(globalType);
+    glob->mutable_ = mutable_;
+    ((Module*)module)->addGlobal(std::move(glob));
+  } else {
+    // already exists so just set module and base
+    glob->module = externalModuleName;
+    glob->base = externalBaseName;
+  }
 }
 void BinaryenAddTagImport(BinaryenModuleRef module,
                           const char* internalName,
@@ -3763,12 +3792,19 @@ void BinaryenAddTagImport(BinaryenModuleRef module,
                           const char* externalBaseName,
                           BinaryenType params,
                           BinaryenType results) {
-  auto* ret = new Tag();
-  ret->name = internalName;
-  ret->module = externalModuleName;
-  ret->base = externalBaseName;
-  ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addTag(ret);
+  auto* tag = ((Module*)module)->getGlobalOrNull(internalName);
+  if (tag == nullptr) {
+    auto tag = make_unique<Tag>();
+    tag->name = internalName;
+    tag->module = externalModuleName;
+    tag->base = externalBaseName;
+    tag->sig = Signature(Type(params), Type(results));
+    ((Module*)module)->addTag(std::move(tag));
+  } else {
+    // already exists so just set module and base
+    tag->module = externalModuleName;
+    tag->base = externalBaseName;
+  }
 }
 
 // Exports
