@@ -320,7 +320,8 @@ class LocalGenerator {
   const std::vector<Literal> givenLiterals;
 
 public:
-  LocalGenerator(size_t seed, const std::vector<Literal>& givenLiterals={}) : seed(seed), givenLiterals(givenLiterals) {
+  LocalGenerator(size_t seed, const std::vector<Literal>& givenLiterals = {})
+    : seed(seed), givenLiterals(givenLiterals) {
 #if WASM_ANALYZE_DEBUG
     std::cout << "LG(" << seed << "), locals:\n";
     for (Index i = 0; i < MAX_LOCAL; i++) {
@@ -342,7 +343,11 @@ public:
     rehash(random, index);
     rehash(random, std::hash<wasm::Type>{}(type));
     // Generate a random number from the hash.
-    std::linear_congruential_engine<uint64_t, 48271, 0, std::numeric_limits<uint64_t>::max()> generator(random);
+    std::linear_congruential_engine<uint64_t,
+                                    48271,
+                                    0,
+                                    std::numeric_limits<uint64_t>::max()>
+      generator(random);
     generator.discard(7);
     random = generator();
     if ((random & 7) == 0) {
