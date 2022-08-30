@@ -2185,6 +2185,10 @@ BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // Imports
 
+// These either create a new entity (function/table/memory/etc.) and
+// mark it as an import, or, if an entity already exists with internalName then
+// the existing entity is turned into an import.
+
 BINARYEN_API void BinaryenAddFunctionImport(BinaryenModuleRef module,
                                             const char* internalName,
                                             const char* externalModuleName,
