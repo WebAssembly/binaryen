@@ -4,4 +4,4 @@ Execution hashing info:
   num relevant expressions: 4
   num execution classes: 3
   max class size: 2
-sorted possible optimization rules:
+no rules found.
