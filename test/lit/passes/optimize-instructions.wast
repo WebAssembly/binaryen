@@ -1774,7 +1774,7 @@
       (local.get $y)
       (i64.const 9223372036854775806)
     ))
-    ;; (unsigned)x <= u_max - 1   ==>   x == u_max
+    ;; (unsigned)x <= u_max - 1   ==>   x != u_max
     (drop (i32.le_u
       (local.get $x)
       (i32.const -2)
@@ -1783,7 +1783,7 @@
       (local.get $y)
       (i64.const -2)
     ))
-    ;; (unsigned)x > u_max - 1   ==>   x != u_max
+    ;; (unsigned)x > u_max - 1   ==>   x == u_max
     (drop (i32.gt_u
       (local.get $x)
       (i32.const -2)
