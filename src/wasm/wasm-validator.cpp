@@ -2762,10 +2762,6 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    // The experimental GCNNLocals flag lets everything validate.
-    bool valid = getModule()->features.hasGCNNLocals() ||
-                 (var.isDefaultable() || var.isNonNullable());
-    shouldBeTrue(valid, var, "vars must be defaultable or non-nullable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
@@ -2818,7 +2814,7 @@ void FunctionValidator::visitFunction(Function* curr) {
       // This is slow, so only do it if we find such locals exist at all.
       bool hasNNLocals = false;
       for (const auto& var : curr->vars) {
-        if (var.isNonNullable()) {
+        if (!var.isDefaultable()) {
           hasNNLocals = true;
           break;
         }
@@ -2829,7 +2825,7 @@ void FunctionValidator::visitFunction(Function* curr) {
           auto index = get->index;
           // It is always ok to read nullable locals, and it is always ok to
           // read params even if they are non-nullable.
-          if (!curr->getLocalType(index).isNonNullable() ||
+          if (curr->getLocalType(index).isDefaultable() ||
               curr->isParam(index)) {
             continue;
           }
