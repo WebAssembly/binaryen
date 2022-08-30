@@ -3743,6 +3743,17 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
   memory->shared = shared;
   ((Module*)module)->addMemory(std::move(memory));
 }
+void BinaryenSetMemoryImport(BinaryenModuleRef module,
+                             const char* name,
+                             const char* externalModuleName,
+                             const char* externalBaseName) {
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
+  }
+  memory->module = externalModuleName;
+  memory->base = externalBaseName;
+}
 void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              const char* internalName,
                              const char* externalModuleName,

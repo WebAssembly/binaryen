@@ -2212,6 +2212,10 @@ BINARYEN_API void BinaryenAddTagImport(BinaryenModuleRef module,
                                        const char* externalBaseName,
                                        BinaryenType params,
                                        BinaryenType results);
+BINARYEN_API void BinaryenSetMemoryImport(BinaryenModuleRef module,
+                                          const char* internalName,
+                                          const char* externalModuleName,
+                                          const char* externalBaseName);
 
 // Memory
 BINARYEN_REF(Memory);

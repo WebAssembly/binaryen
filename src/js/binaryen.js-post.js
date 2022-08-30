@@ -2473,6 +2473,11 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)
     );
   };
+  self['setMemoryImport'] = function(internalName, externalModuleName, externalBaseName) {
+    return preserveStack(() =>
+      Module['_BinaryenSetMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))
+    );
+  };
   self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType, mutable) {
     return preserveStack(() =>
       Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)
