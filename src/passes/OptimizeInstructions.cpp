@@ -3443,10 +3443,8 @@ private:
       // copysign(x, +C)   ==>   abs(x)
       // copysign(x, -C)   ==>   neg(abs(x))
       Const* c;
-      Binary* bin;
       Expression* x;
-      if (matches(curr, binary(&bin, any(&x), fval(&c))) &&
-          (bin->op == CopySignFloat32 || bin->op == CopySignFloat64)) {
+      if (matches(curr, binary(CopySign, any(&x), fval(&c)))) {
         Builder builder(*getModule());
         if (std::signbit(c->value.getFloat())) {
           // copysign(x, -C)   ==>   neg(abs(x))
@@ -3467,7 +3465,7 @@ private:
       Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
           std::isnan(c->value.getFloat()) && !x->is<Const>() &&
-          bin->op != CopySignFloat32 && bin->op != CopySignFloat64) {
+          bin->op != getBinary(x->type, CopySign)) {
         if (bin->isRelational()) {
           // reuse "c" (nan) constant
           c->type = Type::i32;
