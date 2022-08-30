@@ -2,8 +2,7 @@
 
 ;; RUN: foreach %s %t wasm-opt -all -S -o - | filecheck %s
 
-;; Tests for the "1a" form of non-nullable locals. This will likely be the final
-;; form in the spec.
+;; Tests for validation of non-nullable locals.
 
 (module
   ;; CHECK:      (type $none_=>_none (func))

@@ -3,8 +3,9 @@
 ;; RUN:   | filecheck %s
 
 ;; --remove-unused-names is run to avoid adding names to blocks. Block names
-;; can prevent 1a validation (we emit named blocks in the binary format, if we
-;; need them, but never emit unnamed ones), which affects some testcases.
+;; can prevent non-nullable local validation (we emit named blocks in the binary
+;; format, if we need them, but never emit unnamed ones), which affects some
+;; testcases.
 
 (module
   ;; CHECK:      (type ${} (struct ))
@@ -457,7 +458,7 @@
   (func $cannot-become-non-nullable
     (local $x (ref null func))
     ;; The set is in a nested scope, so we should not make the local non-
-    ;; nullable, as it would not validate in 1a. (We can refine the heap type,
+    ;; nullable, as it would not validate. (We can refine the heap type,
     ;; though.)
     (if
       (i32.const 1)
@@ -516,7 +517,7 @@
     (local $x (ref null func))
     ;; An named block does *not* prevent us from optimizing here. Unlike above,
     ;; an unnamed block is never emitted in the binary format, so it does not
-    ;; prevent 1a validation.
+    ;; prevent validation.
     (block
       (local.set $x
         (ref.func $become-non-nullable)

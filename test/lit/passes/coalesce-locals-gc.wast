@@ -3,8 +3,9 @@
 ;; RUN:   | filecheck %s
 
 ;; --remove-unused-names is run to avoid adding names to blocks. Block names
-;; can prevent 1a validation (we emit named blocks in the binary format, if we
-;; need them, but never emit unnamed ones), which affects some testcases.
+;; can prevent non-nullable local validation (we emit named blocks in the binary
+;; format, if we need them, but never emit unnamed ones), which affects some
+;; testcases.
 
 (module
  ;; CHECK:      (type $array (array (mut i8)))
@@ -125,7 +126,7 @@
    (ref.func $nn-dead)
   )
   ;; As above, but now the block has no name. Nameless blocks do not interfere
-  ;; with 1a validation, so we can keep the local non-nullable.
+  ;; with validation, so we can keep the local non-nullable.
   (block
    (local.set $x
     (ref.func $nn-dead)

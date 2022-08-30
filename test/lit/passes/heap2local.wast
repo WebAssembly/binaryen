@@ -2854,7 +2854,7 @@
    ;; The local.get here is in unreachable code, which means we won't do
    ;; anything to it. But when we remove the local.set during optimization (we
    ;; can replace it with new locals for the fields of $struct.A), we must make
-   ;; sure that validation of 1a still passes, that is, since the local.get is
+   ;; sure that validation still passes, that is, since the local.get is
    ;; around we must have a local.set for it, or it must become nullable (which
    ;; is what the fixup will do).
    (local.set $0
