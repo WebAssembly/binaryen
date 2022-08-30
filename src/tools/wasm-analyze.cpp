@@ -387,7 +387,7 @@ class Runner : public ConstantExpressionRunner<Runner> {
 
 public:
   Runner(LocalGenerator& localGenerator) : ConstantExpressionRunner(
-    nullptr,
+    nullptr, /* module */
     ConstantExpressionRunner::FlagValues::DEFAULT,
     0, /* maxDepth */
     0  /* maxLoopIterations */
@@ -436,7 +436,7 @@ struct ExecutionHasher {
                  // be equal
 
   void note(Expression* expr) {
-    size_t hash;
+    std::optional<size_t> hash;
     try {
       hash = doHash(expr);
     } catch (TrapException& e) {
@@ -444,17 +444,26 @@ struct ExecutionHasher {
       // whole thing, move try out, for speed?
       return;
     }
-    hashClasses[hash].push_back(expr); // we depend on expr being unique, so the
-                                       // classes are mathematical sets
+    if (hash) {
+      hashClasses[*hash].push_back(expr); // we depend on expr being unique, so the
+                                         // classes are mathematical sets
+    }
   }
 
-  size_t doHash(Expression* expr) {
+  // Returns the hash, if there is a viable one to consider. If this is not
+  // something that we should be considering, returns {} and the caller will
+  // ignore.
+  std::optional<size_t> doHash(Expression* expr) {
     // combine the result of multiple executions into the final hash
     size_t hash = 0;
     for (Index i = 0; i < NUM_EXECUTIONS; i++) {
       LocalGenerator localGenerator(i);
       Flow flow = Runner(localGenerator).visit(expr);
       if (flow.breaking()) {
+        if (flow.breakTo == NONCONSTANT_FLOW) {
+          // This is something we should ignore.
+          return {};
+        }
         rehash(hash, 1);
         rehash(hash, 2);
         rehash(hash, 3);
