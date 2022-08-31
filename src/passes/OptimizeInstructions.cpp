@@ -2418,6 +2418,21 @@ private:
         return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
       }
     }
+    // Flip the arms if doing so might help later optimizations here.
+    if (auto* binary = curr->condition->dynCast<Binary>()) {
+      auto inv = invertBinaryOp(binary->op);
+      if (inv != InvalidBinary) {
+        // For invertible binary operations, we prefer to have non-zero values
+        // in the ifTrue, and zero values in the ifFalse, due to the
+        // optimization right after us. (Even if this does not help there, it is
+        // a nice canonicalization.)
+         if (matches(curr->ifTrue, ival(0)) ||
+             matches(curr->ifFalse, ival())) {
+           binary->op = inv;
+           std::swap(curr->ifTrue, curr->ifFalse);
+         }
+      }
+    }
     if (curr->type == Type::i32 &&
         Bits::getMaxBits(curr->condition, this) <= 1 &&
         Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
@@ -4171,7 +4186,6 @@ private:
   // Invert (negate) the opcode, so that it has the exact negative meaning as it
   // had before.
   BinaryOp invertBinaryOp(BinaryOp op) {
-    // use de-morgan's laws
     switch (op) {
       case EqInt32:
         return NeInt32;
