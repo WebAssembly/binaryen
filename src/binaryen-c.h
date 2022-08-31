@@ -644,6 +644,42 @@ BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
 BINARYEN_API BinaryenOp BinaryenRefAsFunc(void);
 BINARYEN_API BinaryenOp BinaryenRefAsData(void);
 BINARYEN_API BinaryenOp BinaryenRefAsI31(void);
+BINARYEN_API BinaryenOp BinaryenBrOnNull(void);
+BINARYEN_API BinaryenOp BinaryenBrOnNonNull(void);
+BINARYEN_API BinaryenOp BinaryenBrOnCast(void);
+BINARYEN_API BinaryenOp BinaryenBrOnCastFail(void);
+BINARYEN_API BinaryenOp BinaryenBrOnFunc(void);
+BINARYEN_API BinaryenOp BinaryenBrOnNonFunc(void);
+BINARYEN_API BinaryenOp BinaryenBrOnData(void);
+BINARYEN_API BinaryenOp BinaryenBrOnNonData(void);
+BINARYEN_API BinaryenOp BinaryenBrOnI31(void);
+BINARYEN_API BinaryenOp BinaryenBrOnNonI31(void);
+BINARYEN_API BinaryenOp BinaryenStringNewUTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringNewWTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringNewReplace(void);
+BINARYEN_API BinaryenOp BinaryenStringNewWTF16(void);
+BINARYEN_API BinaryenOp BinaryenStringNewUTF8Array(void);
+BINARYEN_API BinaryenOp BinaryenStringNewWTF8Array(void);
+BINARYEN_API BinaryenOp BinaryenStringNewReplaceArray(void);
+BINARYEN_API BinaryenOp BinaryenStringNewWTF16Array(void);
+BINARYEN_API BinaryenOp BinaryenStringMeasureUTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringMeasureWTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringMeasureWTF16(void);
+BINARYEN_API BinaryenOp BinaryenStringMeasureIsUSV(void);
+BINARYEN_API BinaryenOp BinaryenStringMeasureWTF16View(void);
+BINARYEN_API BinaryenOp BinaryenStringEncodeUTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringEncodeWTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringEncodeWTF16(void);
+BINARYEN_API BinaryenOp BinaryenStringEncodeUTF8Array(void);
+BINARYEN_API BinaryenOp BinaryenStringEncodeWTF8Array(void);
+BINARYEN_API BinaryenOp BinaryenStringEncodeWTF16Array(void);
+BINARYEN_API BinaryenOp BinaryenStringAsWTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringAsWTF16(void);
+BINARYEN_API BinaryenOp BinaryenStringAsIter(void);
+BINARYEN_API BinaryenOp BinaryenStringIterMoveAdvance(void);
+BINARYEN_API BinaryenOp BinaryenStringIterMoveRewind(void);
+BINARYEN_API BinaryenOp BinaryenStringSliceWTF8(void);
+BINARYEN_API BinaryenOp BinaryenStringSliceWTF16(void);
 
 BINARYEN_REF(Expression);
 
@@ -959,16 +995,115 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                                   BinaryenExpressionRef i31,
                                                   bool signed_);
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefTest(BinaryenModuleRef module,
+                BinaryenExpressionRef ref,
+                BinaryenHeapType intendedType);
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefCast(BinaryenModuleRef module,
+                BinaryenExpressionRef ref,
+                BinaryenHeapType intendedType);
+BINARYEN_API BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
+                                                BinaryenOp op,
+                                                const char* name,
+                                                BinaryenExpressionRef ref,
+                                                BinaryenHeapType intendedType);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructNew(BinaryenModuleRef module,
+                  BinaryenExpressionRef* operands,
+                  BinaryenIndex numOperands,
+                  BinaryenHeapType type);
+BINARYEN_API BinaryenExpressionRef BinaryenStructGet(BinaryenModuleRef module,
+                                                     BinaryenIndex index,
+                                                     BinaryenExpressionRef ref,
+                                                     BinaryenType type,
+                                                     bool signed_);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStructSet(BinaryenModuleRef module,
+                  BinaryenIndex index,
+                  BinaryenExpressionRef ref,
+                  BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
+                                                    BinaryenHeapType type,
+                                                    BinaryenExpressionRef size,
+                                                    BinaryenExpressionRef init);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInit(BinaryenModuleRef module,
+                  BinaryenHeapType type,
+                  BinaryenExpressionRef* values,
+                  BinaryenIndex numValues);
+BINARYEN_API BinaryenExpressionRef BinaryenArrayGet(BinaryenModuleRef module,
+                                                    BinaryenExpressionRef ref,
+                                                    BinaryenExpressionRef index,
+                                                    bool signed_);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArraySet(BinaryenModuleRef module,
+                 BinaryenExpressionRef ref,
+                 BinaryenExpressionRef index,
+                 BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenArrayLen(BinaryenModuleRef module,
+                                                    BinaryenExpressionRef ref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayCopy(BinaryenModuleRef module,
+                  BinaryenExpressionRef destRef,
+                  BinaryenExpressionRef destIndex,
+                  BinaryenExpressionRef srcRef,
+                  BinaryenExpressionRef srcIndex,
+                  BinaryenExpressionRef length);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringNew(BinaryenModuleRef module,
+                  BinaryenOp op,
+                  BinaryenExpressionRef ptr,
+                  BinaryenExpressionRef length,
+                  BinaryenExpressionRef start,
+                  BinaryenExpressionRef end);
+BINARYEN_API BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
+                                                       const char* name);
+BINARYEN_API BinaryenExpressionRef BinaryenStringMeasure(
+  BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef ref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringEncode(BinaryenModuleRef module,
+                     BinaryenOp op,
+                     BinaryenExpressionRef ref,
+                     BinaryenExpressionRef ptr,
+                     BinaryenExpressionRef start);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringConcat(BinaryenModuleRef module,
+                     BinaryenExpressionRef left,
+                     BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringEq(BinaryenModuleRef module,
+                 BinaryenExpressionRef left,
+                 BinaryenExpressionRef right);
+BINARYEN_API BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
+                                                    BinaryenOp op,
+                                                    BinaryenExpressionRef ref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringWTF8Advance(BinaryenModuleRef module,
+                          BinaryenExpressionRef ref,
+                          BinaryenExpressionRef pos,
+                          BinaryenExpressionRef bytes);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringWTF16Get(BinaryenModuleRef module,
+                       BinaryenExpressionRef ref,
+                       BinaryenExpressionRef pos);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringIterNext(BinaryenModuleRef module, BinaryenExpressionRef ref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringIterMove(BinaryenModuleRef module,
+                       BinaryenOp op,
+                       BinaryenExpressionRef ref,
+                       BinaryenExpressionRef num);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringSliceWTF(BinaryenModuleRef module,
+                       BinaryenOp op,
+                       BinaryenExpressionRef ref,
+                       BinaryenExpressionRef start,
+                       BinaryenExpressionRef end);
+BINARYEN_API BinaryenExpressionRef
+BinaryenStringSliceIter(BinaryenModuleRef module,
+                        BinaryenExpressionRef ref,
+                        BinaryenExpressionRef num);
 
 // Expression
 
