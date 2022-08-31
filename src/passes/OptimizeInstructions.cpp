@@ -2426,11 +2426,10 @@ private:
         // in the ifTrue, and zero values in the ifFalse, due to the
         // optimization right after us. (Even if this does not help there, it is
         // a nice canonicalization.)
-         if (matches(curr->ifTrue, ival(0)) ||
-             matches(curr->ifFalse, ival())) {
-           binary->op = inv;
-           std::swap(curr->ifTrue, curr->ifFalse);
-         }
+        if (matches(curr->ifTrue, ival(0)) || matches(curr->ifFalse, ival())) {
+          binary->op = inv;
+          std::swap(curr->ifTrue, curr->ifFalse);
+        }
       }
     }
     if (curr->type == Type::i32 &&
