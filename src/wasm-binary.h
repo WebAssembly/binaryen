@@ -1529,9 +1529,6 @@ public:
   // at index i we have all references to the memory i
   std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
-  // we store data here after being read from binary, before we know their names
-  std::vector<std::unique_ptr<DataSegment>> dataSegments;
-
   // at index i we have all refs to the global i
   std::map<Index, std::vector<Name*>> globalRefs;
 
