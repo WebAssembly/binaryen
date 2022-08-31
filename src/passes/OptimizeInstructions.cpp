@@ -2424,11 +2424,15 @@ private:
       if (inv != InvalidBinary) {
         // For invertible binary operations, we prefer to have non-zero values
         // in the ifTrue, and zero values in the ifFalse, due to the
-        // optimization right after us. (Even if this does not help there, it is
-        // a nice canonicalization.)
+        // optimization right after us. Even if this does not help there, it is
+        // a nice canonicalization. (To ensure convergence - that we don't keep
+        // doing work each time we get here - do nothing if both are zero, or
+        // if both are nonzero.)
         Const* c;
-        if (matches(curr->ifTrue, ival(0)) ||
-            (matches(curr->ifFalse, ival(&c)) && c->value.getInteger() != 0)) {
+        if ((matches(curr->ifTrue, ival(0)) &&
+             !matches(curr->ifFalse, ival(0)) ||
+            (!matches(curr->ifTrue, ival()) &&
+             matches(curr->ifFalse, ival(&c)) && !c->value.isZero())) {
           binary->op = inv;
           std::swap(curr->ifTrue, curr->ifFalse);
         }
