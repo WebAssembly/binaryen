@@ -2031,6 +2031,16 @@ BinaryenFeatureAll: 253951
         (ref.null any)
        )
       )
+      (drop
+       (extern.internalize
+        (ref.null extern)
+       )
+      )
+      (drop
+       (extern.externalize
+        (ref.null any)
+       )
+      )
       (try
        (do
         (throw $a-tag

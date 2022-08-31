@@ -1002,6 +1002,12 @@ void test_core() {
     BinaryenRefAs(module,
                   BinaryenRefAsI31(),
                   BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsExternInternalize(),
+                  BinaryenRefNull(module, BinaryenTypeExternref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsExternExternalize(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
     // Exception handling
     BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),
     // (try $try_outer

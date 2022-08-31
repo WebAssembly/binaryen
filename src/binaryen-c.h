@@ -644,6 +644,8 @@ BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
 BINARYEN_API BinaryenOp BinaryenRefAsFunc(void);
 BINARYEN_API BinaryenOp BinaryenRefAsData(void);
 BINARYEN_API BinaryenOp BinaryenRefAsI31(void);
+BINARYEN_API BinaryenOp BinaryenRefAsExternInternalize(void);
+BINARYEN_API BinaryenOp BinaryenRefAsExternExternalize(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNonNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnCast(void);

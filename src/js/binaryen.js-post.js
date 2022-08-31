@@ -557,6 +557,8 @@ function initializeConstants() {
     'RefAsFunc',
     'RefAsData',
     'RefAsI31',
+    'RefAsExternInternalize',
+    'RefAsExternExternalize',
     'BrOnNull',
     'BrOnNonNull',
     'BrOnCast',
@@ -2433,6 +2435,8 @@ function wrapModule(module, self = {}) {
     }
   };
 
+  // TODO: extern.internalize
+  // TODO: extern.externalize
   // TODO: ref.test
   // TODO: ref.cast
   // TODO: br_on_*
