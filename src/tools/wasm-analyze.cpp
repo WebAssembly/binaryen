@@ -533,6 +533,7 @@ struct ExecutionHasher {
 // calculate the weight of an expression - a value we wish to minimize
 Index calcWeight(Expression* expr) {
   // Focus more on size than speed.
+  // TODO: can also superoptimize on cost and ignore size entirely for -O3
   return 10 * Measurer::measure(expr) + CostAnalyzer(expr).cost;
 }
 
