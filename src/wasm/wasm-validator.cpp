@@ -24,6 +24,7 @@
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/local-graph.h"
+#include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
@@ -424,6 +425,7 @@ public:
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIs(RefIs* curr);
+  void visitRefAs(RefAs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
@@ -2125,6 +2127,40 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
                "ref.is_*'s argument should be a reference type");
 }
 
+void FunctionValidator::visitRefAs(RefAs* curr) {
+  switch (curr->op) {
+    default:
+      // TODO: validate all the other ref.as_*
+      break;
+    case ExternInternalize: {
+      shouldBeTrue(getModule()->features.hasGC(),
+                   curr,
+                   "extern.internalize requries GC to be enabled");
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      shouldBeSubType(curr->value->type,
+                      Type(HeapType::ext, Nullable),
+                      curr->value,
+                      "extern.internalize value should be an externref");
+      break;
+    }
+    case ExternExternalize: {
+      shouldBeTrue(getModule()->features.hasGC(),
+                   curr,
+                   "extern.externalize requries GC to be enabled");
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      shouldBeSubType(curr->value->type,
+                      Type(HeapType::any, Nullable),
+                      curr->value,
+                      "extern.externalize value should be an anyref");
+      break;
+    }
+  }
+}
+
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
   // If we are not in a function, this is a global location like a table. We
   // allow RefFunc there as we represent tables that way regardless of what
@@ -2726,8 +2762,6 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    bool valid = getModule()->features.hasGCNNLocals() || var.isDefaultable();
-    shouldBeTrue(valid, var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
@@ -2761,32 +2795,43 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
   }
 
-  if (getModule()->features.hasGCNNLocals()) {
-    // If we have non-nullable locals, verify that no local.get can read a null
-    // default value.
-    // TODO: this can be fairly slow due to the LocalGraph. writing more code to
-    //       do a more specific analysis (we don't need to know all sets, just
-    //       if there is a set of a null default value that is read) could be a
-    //       lot faster.
-    bool hasNNLocals = false;
-    for (const auto& var : curr->vars) {
-      if (var.isNonNullable()) {
-        hasNNLocals = true;
-        break;
+  if (getModule()->features.hasGC()) {
+    // If we have non-nullable locals, verify that local.get are valid.
+    if (!getModule()->features.hasGCNNLocals()) {
+      // Without the special GCNNLocals feature, we implement the spec rules,
+      // that is, a set allows gets until the end of the block.
+      LocalStructuralDominance info(curr, *getModule());
+      for (auto index : info.nonDominatingIndices) {
+        shouldBeTrue(!curr->getLocalType(index).isNonNullable(),
+                     index,
+                     "non-nullable local's sets must dominate gets");
       }
-    }
-    if (hasNNLocals) {
-      LocalGraph graph(curr);
-      for (auto& [get, sets] : graph.getSetses) {
-        auto index = get->index;
-        // It is always ok to read nullable locals, and it is always ok to read
-        // params even if they are non-nullable.
-        if (!curr->getLocalType(index).isNonNullable() ||
-            curr->isParam(index)) {
-          continue;
+    } else {
+      // With the special GCNNLocals feature, we allow gets anywhere, so long as
+      // we can prove they cannot read the null value. (TODO: remove this once
+      // the spec is stable).
+      //
+      // This is slow, so only do it if we find such locals exist at all.
+      bool hasNNLocals = false;
+      for (const auto& var : curr->vars) {
+        if (!var.isDefaultable()) {
+          hasNNLocals = true;
+          break;
         }
-        for (auto* set : sets) {
-          shouldBeTrue(!!set, index, "non-nullable local must not read null");
+      }
+      if (hasNNLocals) {
+        LocalGraph graph(curr);
+        for (auto& [get, sets] : graph.getSetses) {
+          auto index = get->index;
+          // It is always ok to read nullable locals, and it is always ok to
+          // read params even if they are non-nullable.
+          if (curr->getLocalType(index).isDefaultable() ||
+              curr->isParam(index)) {
+            continue;
+          }
+          for (auto* set : sets) {
+            shouldBeTrue(!!set, index, "non-nullable local must not read null");
+          }
         }
       }
     }

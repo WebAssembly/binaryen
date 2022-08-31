@@ -7,7 +7,7 @@
 ;; single recursion group.
 
 (module
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $make-super-t (func_subtype (result (ref $super)) func))
 
   ;; CHECK:       (type $make-sub-t (func_subtype (result (ref $sub)) func))

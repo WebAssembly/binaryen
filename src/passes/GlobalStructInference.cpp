@@ -57,6 +57,9 @@ namespace wasm {
 namespace {
 
 struct GlobalStructInference : public Pass {
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // Maps optimizable struct types to the globals whose init is a struct.new of
   // them. If a global is not present here, it cannot be optimized.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;

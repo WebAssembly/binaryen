@@ -45,6 +45,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureTypedFunctionReferences: 4096
 BinaryenFeatureRelaxedSIMD: 16384
 BinaryenFeatureExtendedConst: 32768
+BinaryenFeatureStrings: 65536
 BinaryenFeatureAll: 253951
 (f32.neg
  (f32.const -33.61199951171875)
@@ -62,13 +63,24 @@ BinaryenFeatureAll: 253951
  (i32.const 0)
 )
 (module
+ (type $[mut:i8] (array (mut i8)))
+ (type ${mut:i32} (struct (field (mut i32))))
  (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
+ (type $[mut:i16] (array (mut i16)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (type $none_=>_none (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
+ (global $i8Array-global (mut (ref null $[mut:i8])) (array.new_default $[mut:i8]
+  (i32.const 0)
+ ))
+ (global $i16Array-global (mut (ref null $[mut:i16])) (array.new_default $[mut:i16]
+  (i32.const 0)
+ ))
+ (global $i32Struct-global (mut (ref null ${mut:i32})) (struct.new_default ${mut:i32}))
+ (global $string-global (mut stringref) (string.const ""))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data "I am passive")
@@ -2019,6 +2031,16 @@ BinaryenFeatureAll: 253951
         (ref.null any)
        )
       )
+      (drop
+       (extern.internalize
+        (ref.null extern)
+       )
+      )
+      (drop
+       (extern.externalize
+        (ref.null any)
+       )
+      )
       (try
        (do
         (throw $a-tag
@@ -2133,6 +2155,294 @@ BinaryenFeatureAll: 253951
         (i31.new
          (i32.const 2)
         )
+       )
+      )
+      (drop
+       (ref.test_static $[mut:i8]
+        (global.get $i8Array-global)
+       )
+      )
+      (drop
+       (ref.cast_static $[mut:i8]
+        (global.get $i8Array-global)
+       )
+      )
+      (drop
+       (struct.new_default ${mut:i32})
+      )
+      (drop
+       (struct.new ${mut:i32}
+        (i32.const 0)
+       )
+      )
+      (drop
+       (struct.get ${mut:i32} 0
+        (global.get $i32Struct-global)
+       )
+      )
+      (struct.set ${mut:i32} 0
+       (global.get $i32Struct-global)
+       (i32.const 0)
+      )
+      (drop
+       (array.new_default $[mut:i8]
+        (i32.const 3)
+       )
+      )
+      (drop
+       (array.new $[mut:i8]
+        (i32.const 42)
+        (i32.const 3)
+       )
+      )
+      (drop
+       (array.init_static $[mut:i8]
+        (i32.const 1)
+        (i32.const 2)
+        (i32.const 3)
+       )
+      )
+      (drop
+       (array.get_s $[mut:i8]
+        (global.get $i8Array-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (array.get_u $[mut:i8]
+        (global.get $i8Array-global)
+        (i32.const 0)
+       )
+      )
+      (array.set $[mut:i8]
+       (global.get $i8Array-global)
+       (i32.const 0)
+       (i32.const 42)
+      )
+      (drop
+       (array.len $[mut:i8]
+        (global.get $i8Array-global)
+       )
+      )
+      (array.copy $[mut:i8] $[mut:i8]
+       (global.get $i8Array-global)
+       (i32.const 0)
+       (global.get $i8Array-global)
+       (i32.const 1)
+       (i32.const 2)
+      )
+      (drop
+       (string.new_wtf8 utf8
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf8 wtf8
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf8 replace
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf16
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf8_array utf8
+        (global.get $i8Array-global)
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf8_array wtf8
+        (global.get $i8Array-global)
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf8_array replace
+        (global.get $i8Array-global)
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.new_wtf16_array
+        (global.get $i16Array-global)
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.const "hello world")
+      )
+      (drop
+       (string.measure_wtf8 utf8
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.measure_wtf8 wtf8
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.measure_wtf16
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.is_usv_sequence
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (stringview_wtf16.length
+        (string.as_wtf16
+         (global.get $string-global)
+        )
+       )
+      )
+      (drop
+       (string.encode_wtf8 utf8
+        (global.get $string-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.encode_wtf8 wtf8
+        (global.get $string-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.encode_wtf16
+        (global.get $string-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.encode_wtf8_array utf8
+        (global.get $string-global)
+        (global.get $i8Array-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.encode_wtf8_array wtf8
+        (global.get $string-global)
+        (global.get $i8Array-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.encode_wtf16_array
+        (global.get $string-global)
+        (global.get $i16Array-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.concat
+        (global.get $string-global)
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.eq
+        (global.get $string-global)
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.as_wtf8
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.as_wtf16
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.as_iter
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (stringview_wtf8.advance
+        (string.as_wtf8
+         (global.get $string-global)
+        )
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (stringview_wtf16.get_codeunit
+        (string.as_wtf16
+         (global.get $string-global)
+        )
+        (i32.const 0)
+       )
+      )
+      (drop
+       (stringview_iter.next
+        (string.as_iter
+         (global.get $string-global)
+        )
+       )
+      )
+      (drop
+       (stringview_iter.advance
+        (string.as_iter
+         (global.get $string-global)
+        )
+        (i32.const 1)
+       )
+      )
+      (drop
+       (stringview_iter.rewind
+        (string.as_iter
+         (global.get $string-global)
+        )
+        (i32.const 1)
+       )
+      )
+      (drop
+       (stringview_wtf8.slice
+        (string.as_wtf8
+         (global.get $string-global)
+        )
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (stringview_wtf16.slice
+        (string.as_wtf16
+         (global.get $string-global)
+        )
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (stringview_iter.slice
+        (string.as_iter
+         (global.get $string-global)
+        )
+        (i32.const 0)
        )
       )
       (nop)

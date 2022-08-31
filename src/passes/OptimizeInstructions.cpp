@@ -238,9 +238,6 @@ struct OptimizeInstructions
       optimizer.walkFunction(func);
     }
 
-    // Some patterns create locals (like when we use getResultOfFirst), which we
-    // may need to fix up.
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
     // the 'pop' into a block making it invalid.
     EHUtils::handleBlockNestedPops(func, *getModule());
@@ -2157,6 +2154,67 @@ private:
         c->value = Literal::makeZero(c->type);
         return;
       }
+      // Prefer compare to signed min (s_min) instead of s_min + 1.
+      // (signed)x < s_min + 1   ==>   x == s_min
+      if (binary->op == LtSInt32 && c->value.geti32() == INT32_MIN + 1) {
+        binary->op = EqInt32;
+        c->value = Literal::makeSignedMin(Type::i32);
+        return;
+      }
+      if (binary->op == LtSInt64 && c->value.geti64() == INT64_MIN + 1) {
+        binary->op = EqInt64;
+        c->value = Literal::makeSignedMin(Type::i64);
+        return;
+      }
+      // (signed)x >= s_min + 1   ==>   x != s_min
+      if (binary->op == GeSInt32 && c->value.geti32() == INT32_MIN + 1) {
+        binary->op = NeInt32;
+        c->value = Literal::makeSignedMin(Type::i32);
+        return;
+      }
+      if (binary->op == GeSInt64 && c->value.geti64() == INT64_MIN + 1) {
+        binary->op = NeInt64;
+        c->value = Literal::makeSignedMin(Type::i64);
+        return;
+      }
+      // Prefer compare to signed max (s_max) instead of s_max - 1.
+      // (signed)x > s_max - 1   ==>   x == s_max
+      if (binary->op == GtSInt32 && c->value.geti32() == INT32_MAX - 1) {
+        binary->op = EqInt32;
+        c->value = Literal::makeSignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == GtSInt64 && c->value.geti64() == INT64_MAX - 1) {
+        binary->op = EqInt64;
+        c->value = Literal::makeSignedMax(Type::i64);
+        return;
+      }
+      // (signed)x <= s_max - 1   ==>   x != s_max
+      if (binary->op == LeSInt32 && c->value.geti32() == INT32_MAX - 1) {
+        binary->op = NeInt32;
+        c->value = Literal::makeSignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == LeSInt64 && c->value.geti64() == INT64_MAX - 1) {
+        binary->op = NeInt64;
+        c->value = Literal::makeSignedMax(Type::i64);
+        return;
+      }
+      // Prefer compare to unsigned max (u_max) instead of u_max - 1.
+      // (unsigned)x <= u_max - 1   ==>   x != u_max
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LeU) &&
+          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
+        c->value = Literal::makeUnsignedMax(c->type);
+        return;
+      }
+      // (unsigned)x > u_max - 1   ==>   x == u_max
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GtU) &&
+          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
+        c->value = Literal::makeUnsignedMax(c->type);
+        return;
+      }
       return;
     }
     // Prefer a get on the right.
@@ -2309,21 +2367,6 @@ private:
       // order using a temp local, which would be bad
     }
     {
-      // Flip select to remove eqz if we can reorder
-      Select* s;
-      Expression *ifTrue, *ifFalse, *c;
-      if (matches(
-            curr,
-            select(
-              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
-          canReorder(ifTrue, ifFalse)) {
-        s->ifTrue = ifFalse;
-        s->ifFalse = ifTrue;
-        s->condition = c;
-        return s;
-      }
-    }
-    {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
       // i32(x) ? i32(x) : 0  ==>  x
@@ -2375,6 +2418,25 @@ private:
         return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
       }
     }
+    if (curr->type == Type::i32 &&
+        Bits::getMaxBits(curr->condition, this) <= 1 &&
+        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
+        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
+      // The condition and both arms are i32 booleans, which allows us to do
+      // boolean optimizations.
+      Expression* x;
+      Expression* y;
+
+      // x ? y : 0   ==>   x & y
+      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
+        return builder.makeBinary(AndInt32, y, x);
+      }
+
+      // x ? 1 : y   ==>   x | y
+      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
+        return builder.makeBinary(OrInt32, y, x);
+      }
+    }
     {
       // Simplify x < 0 ? -1 : 1 or x >= 0 ? 1 : -1 to
       // i32(x) >> 31 | 1
@@ -2398,59 +2460,19 @@ private:
         }
       }
     }
-    if (curr->type == Type::i32 &&
-        Bits::getMaxBits(curr->condition, this) <= 1 &&
-        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
-        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
-      // The condition and both arms are i32 booleans, which allows us to do
-      // boolean optimizations.
-
-      // x ? y : 0   ==>   x & y
-      if (matches(curr->ifFalse, ival(0))) {
-        return builder.makeBinary(AndInt32, curr->ifTrue, curr->condition);
-      }
-
-      // x ? 1 : y   ==>   x | y
-      if (matches(curr->ifTrue, ival(1))) {
-        return builder.makeBinary(OrInt32, curr->ifFalse, curr->condition);
-      }
-
-      // Some operations require us to add an eqz, like
-      // x ? 0 : y   ==>   !x & y
-      // We replace the select with an and, which does not change code size, and
-      // then reduce code size by removing the number (2 bytes) and adding an
-      // eqz (one byte). However, the eqz adds work, so it is not obvious that
-      // this is beneficial to do - only do it when we know we can fold away the
-      // eqz.
-      // TODO: Perhaps also do this even if we can't remove the eqz, if we are
-      //       optimizing for size? We should measure the performance aspect
-      //       first though, to see if we need that.
-      //
-      // (Note that aside from a relational binary which we can flip, we could
-      // also check for an eqz unary, but a select with an eqz condition would
-      // have already been removed in the cases relevant to us, since the true
-      // and false arms can be flipped given that one of them is a constant.)
-      if (auto* binary = curr->condition->dynCast<Binary>()) {
-        if (binary->isRelational()) {
-          // x ? 0 : y   ==>   z & y   where z is the inverse of x
-          if (matches(curr->ifTrue, ival(0))) {
-            // Check if the binary operation is invertible.
-            auto inv = invertBinaryOp(binary->op);
-            if (inv != InvalidBinary) {
-              binary->op = inv;
-              return builder.makeBinary(AndInt32, curr->ifFalse, binary);
-            }
-          }
-
-          // x ? y : 1  ==>   z | y   where z is the inverse of x
-          if (matches(curr->ifFalse, ival(1))) {
-            auto inv = invertBinaryOp(binary->op);
-            if (inv != InvalidBinary) {
-              binary->op = inv;
-              return builder.makeBinary(OrInt32, curr->ifTrue, binary);
-            }
-          }
-        }
+    {
+      // Flip select to remove eqz if we can reorder
+      Select* s;
+      Expression *ifTrue, *ifFalse, *c;
+      if (matches(
+            curr,
+            select(
+              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
+          canReorder(ifTrue, ifFalse)) {
+        s->ifTrue = ifFalse;
+        s->ifFalse = ifTrue;
+        s->condition = c;
+        return s;
       }
     }
     {

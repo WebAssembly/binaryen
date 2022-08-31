@@ -16,7 +16,7 @@
 
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
- ;; CHECK:      (type $data_=>_none (func (param dataref)))
+ ;; CHECK:      (type $data_=>_none (func (param (ref data))))
  (type $data_=>_none (func (param (ref data))))
 
  ;; CHECK:      (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none (func (param i32 i32 i32 (ref $i32_i32_=>_none))))
@@ -124,10 +124,10 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-non-nullable (param $x dataref)
- ;; CHECK-NEXT:  (local $1 (ref null data))
+ ;; CHECK:      (func $fallthrough-non-nullable (param $x (ref data))
+ ;; CHECK-NEXT:  (local $1 dataref)
  ;; CHECK-NEXT:  (call $fallthrough-non-nullable
- ;; CHECK-NEXT:   (block (result dataref)
+ ;; CHECK-NEXT:   (block (result (ref data))
  ;; CHECK-NEXT:    (local.set $1
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )

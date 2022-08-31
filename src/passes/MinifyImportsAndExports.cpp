@@ -46,6 +46,9 @@
 namespace wasm {
 
 struct MinifyImportsAndExports : public Pass {
+  // This operates on import/export names only.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   bool minifyExports, minifyModules;
 
 public:

@@ -568,6 +568,8 @@ enum RefAsOp {
   RefAsFunc,
   RefAsData,
   RefAsI31,
+  ExternInternalize,
+  ExternExternalize,
 };
 
 enum BrOnOp {

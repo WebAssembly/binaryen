@@ -10,7 +10,7 @@
 
 
  (rec
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $used (struct_subtype  data))
   (type $used (struct_subtype data))
   ;; CHECK:       (type $unused (struct_subtype  data))

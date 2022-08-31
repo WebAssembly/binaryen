@@ -732,6 +732,25 @@
       )
     )
   )
+  ;; CHECK:      (func $select-and-eqz (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.or
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-eqz (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eqz
+        (local.get $x)
+      )
+      (i32.const 0)
+      (i32.eqz
+        (local.get $y)
+      )
+    )
+  )
   ;; CHECK:      (func $select-or-side-effects (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (i32.or
   ;; CHECK-NEXT:   (i32.eq
@@ -1751,6 +1770,136 @@
     (drop (i32.ge_u
       (local.get $x)
       (i32.const 1)
+    ))
+  )
+  ;; CHECK:      (func $canonicalize-cmp-near-min-max (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.ne
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $canonicalize-cmp-near-min-max (param $x i32) (param $y i64)
+    ;; (signed)x < s_min + 1   ==>   x == s_min
+    (drop (i32.lt_s
+      (local.get $x)
+      (i32.const -2147483647)
+    ))
+    (drop (i64.lt_s
+      (local.get $y)
+      (i64.const -9223372036854775807)
+    ))
+    ;; (signed)x >= s_min + 1   ==>   x != s_min
+    (drop (i32.ge_s
+      (local.get $x)
+      (i32.const -2147483647)
+    ))
+    (drop (i64.ge_s
+      (local.get $y)
+      (i64.const -9223372036854775807)
+    ))
+    ;; (signed)x > s_max - 1   ==>   x == s_max
+    (drop (i32.gt_s
+      (local.get $x)
+      (i32.const 2147483646)
+    ))
+    (drop (i64.gt_s
+      (local.get $y)
+      (i64.const 9223372036854775806)
+    ))
+    ;; (signed)x <= s_max - 1   ==>   x != s_max
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const 2147483646)
+    ))
+    (drop (i64.le_s
+      (local.get $y)
+      (i64.const 9223372036854775806)
+    ))
+    ;; (unsigned)x <= u_max - 1   ==>   x != u_max
+    (drop (i32.le_u
+      (local.get $x)
+      (i32.const -2)
+    ))
+    (drop (i64.le_u
+      (local.get $y)
+      (i64.const -2)
+    ))
+    ;; (unsigned)x > u_max - 1   ==>   x == u_max
+    (drop (i32.gt_u
+      (local.get $x)
+      (i32.const -2)
+    ))
+    (drop (i64.gt_u
+      (local.get $y)
+      (i64.const -2)
     ))
   )
   ;; CHECK:      (func $canonicalize-cmp-const (param $x i32) (param $fx f64)

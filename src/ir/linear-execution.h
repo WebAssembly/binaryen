@@ -49,7 +49,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
 
     switch (curr->_id) {
       case Expression::Id::InvalidId:
-        abort();
+        WASM_UNREACHABLE("bad id");
       case Expression::Id::BlockId: {
         self->pushTask(SubType::doVisitBlock, currp);
         if (curr->cast<Block>()->name.is()) {

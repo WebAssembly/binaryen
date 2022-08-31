@@ -17,7 +17,6 @@
 #include "ir/eh-utils.h"
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
-#include "ir/type-updating.h"
 
 namespace wasm {
 
@@ -157,9 +156,6 @@ void handleBlockNestedPops(Function* func, Module& wasm) {
   for (auto* try_ : trys.list) {
     handleBlockNestedPop(try_, func, wasm);
   }
-  // Pops we handled can be of non-defaultable types, so we may have created
-  // non-nullable type locals. Fix them.
-  TypeUpdating::handleNonDefaultableLocals(func, wasm);
 }
 
 Pop* findPop(Expression* expr) {

@@ -454,6 +454,7 @@ enum Subsection {
   NameData = 9,
   // see: https://github.com/WebAssembly/gc/issues/193
   NameField = 10,
+  NameTag = 11,
 
   DylinkMemInfo = 1,
   DylinkNeeded = 2,
@@ -1124,6 +1125,8 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  ExternInternalize = 0x70,
+  ExternExternalize = 0x71,
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
@@ -1518,39 +1521,19 @@ public:
   // function to check
   Index endOfFunction = -1;
 
-  // we store tables here before wasm.addTable after we know their names
-  std::vector<std::unique_ptr<Table>> tables;
-  // we store table imports here before wasm.addTableImport after we know
-  // their names
-  std::vector<Table*> tableImports;
   // at index i we have all references to the table i
   std::map<Index, std::vector<Name*>> tableRefs;
 
   std::map<Index, Name> elemTables;
 
-  // we store elems here after being read from binary, until when we know their
-  // names
-  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
-
-  // we store memories here after being read from binary, before we know their
-  // names
-  std::vector<std::unique_ptr<Memory>> memories;
-  // we store memory imports here before wasm.addMemoryImport after we know
-  // their names
-  std::vector<Memory*> memoryImports;
   // at index i we have all references to the memory i
   std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
-  // we store data here after being read from binary, before we know their names
-  std::vector<std::unique_ptr<DataSegment>> dataSegments;
-
-  // we store globals here before wasm.addGlobal after we know their names
-  std::vector<std::unique_ptr<Global>> globals;
-  // we store global imports here before wasm.addGlobalImport after we know
-  // their names
-  std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
   std::map<Index, std::vector<Name*>> globalRefs;
+
+  // at index i we have all refs to the tag i
+  std::map<Index, std::vector<Name*>> tagRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);

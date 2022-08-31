@@ -5,7 +5,7 @@
   ;; A struct with three fields. The first will have no writes, the second one
   ;; write of the same type, and the last a write of a subtype, which will allow
   ;; us to specialize that one.
-  ;; CHECK:      (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut i31ref)) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut (ref i31))) data))
   (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut anyref)) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
@@ -51,7 +51,7 @@
   ;; must keep the type nullable, unlike in the previous module, due to the
   ;; default value being null.
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null i31))) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut i31ref)) data))
   (type $struct (struct_subtype (field (mut anyref)) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
@@ -655,7 +655,7 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field (mut (ref null data))) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut dataref)) data))
   (type $struct (struct_subtype (field (mut (ref null data))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
