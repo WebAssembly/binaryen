@@ -1618,7 +1618,7 @@ BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenRefCast(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,
-                                      BinaryenType intendedType) {
+                                      BinaryenHeapType intendedType) {
   return static_cast<Expression*>(Builder(*(Module*)module)
                                     .makeRefCast((Expression*)ref,
                                                  HeapType(intendedType),
