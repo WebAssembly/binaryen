@@ -331,50 +331,6 @@ struct SimplifyLocals
           invalidated.push_back(index);
           continue;
         }
-
-        // Non-nullable local.sets cannot be moved into a try, as that may
-        // change dominance from the perspective of the spec
-        //
-        //  (local.set $x X)
-        //  (try
-        //    ..
-        //    (Y
-        //      (local.get $x))
-        //  (catch
-        //    (Z
-        //      (local.get $x)))
-        //
-        // =>
-        //
-        //  (try
-        //    ..
-        //    (Y
-        //      (local.tee $x X))
-        //  (catch
-        //    (Z
-        //      (local.get $x)))
-        //
-        // After sinking the set, the tee does not dominate the get in the
-        // catch, at least not in the simple way the spec defines it, see
-        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
-        // We have more refined information about control flow and dominance
-        // than the spec, and so we would see if ".." can throw or not (only if
-        // it can throw is there a branch to the catch, which can change
-        // dominance). To stay compliant with the spec, however, we must not
-        // move code regardless of whether ".." can throw - we must simply keep
-        // the set outside of the try.
-        //
-        // The problem described can also occur on the *value* and not the set
-        // itself. For example, |X| above could be a local.set of a non-nullable
-        // local. For that reason we must scan it all.
-        if (self->getModule()->features.hasGCNNLocals()) {
-          for (auto* set : FindAll<LocalSet>(*info.item).list) {
-            if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
-              invalidated.push_back(index);
-              break;
-            }
-          }
-        }
       }
       for (auto index : invalidated) {
         self->sinkables.erase(index);
@@ -804,7 +760,48 @@ struct SimplifyLocals
     if (sinkables.empty()) {
       return;
     }
+
+    // Check if the type makes sense. A non-nullable local might be dangerous
+    // here, as creating new local.gets for such locals is risky:
+    //
+    //  (func $silly
+    //    (local $x (ref $T))
+    //    (if
+    //      (condition)
+    //      (local.set $x ..)
+    //    )
+    //  )
+    //
+    // That local is silly as the write is never read. If we optimize it and add
+    // a local.get, however, then we'd no longer validate (as no set would
+    // dominate that new get in the if's else arm). Fixups would add a
+    // ref.as_non_null around the local.get, which will then trap at runtime:
+    //
+    //  (func $silly
+    //    (local $x (ref null $T))
+    //    (local.set $x
+    //      (if
+    //        (condition)
+    //        (..)
+    //        (ref.as_non_null
+    //          (local.get $x)
+    //        )
+    //      )
+    //    )
+    //  )
+    //
+    // In other words, local.get is not necessarily free of effects if the local
+    // is non-nullable - it must have been set already. We could check that
+    // here, but running that linear-time check may not be worth it as this
+    // optimization is fairly minor, so just skip the non-nullable case.
+    //
+    // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
+    auto localType = this->getFunction()->getLocalType(goodIndex);
+    if (localType.isNonNullable()) {
+      return;
+    }
+
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
@@ -813,6 +810,9 @@ struct SimplifyLocals
       ifsToEnlarge.push_back(iff);
       return;
     }
+
+    // We can optimize!
+
     // Update the ifTrue side.
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
@@ -822,8 +822,7 @@ struct SimplifyLocals
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(
-      set->index, this->getFunction()->getLocalType(set->index));
+    iff->ifFalse = builder.makeLocalGet(set->index, localType);
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;

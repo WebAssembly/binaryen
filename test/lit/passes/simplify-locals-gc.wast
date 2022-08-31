@@ -226,6 +226,145 @@
    )
   )
 
+  ;; CHECK:      (func $if-nnl
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $if-nnl (type $none_=>_none)
+  ;; NOMNL-NEXT:  (local $x (ref func))
+  ;; NOMNL-NEXT:  (if
+  ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:   (local.set $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.tee $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $if-nnl
+   (local $x (ref func))
+   ;; We want to turn this if into an if-else with a set on the outside:
+   ;;
+   ;;  (local.set $x
+   ;;   (if
+   ;;    (i32.const 1)
+   ;;    (ref.func $if-nnl)
+   ;;    (local.get $x)))
+   ;;
+   ;; That will not validate, however (no set dominates the get), so we'll get
+   ;; fixed up by adding a ref.as_non_null. But that may be dangerous - if no
+   ;; set exists before us, then that new instruction will trap, in fact. So we
+   ;; do not optimize here.
+   (if
+    (i32.const 1)
+    (local.set $x
+     (ref.func $if-nnl)
+    )
+   )
+   ;; An exta set + gets, just to avoid other optimizations kicking in
+   ;; (without them, the function only has a set and nothing else, and will
+   ;; remove the set entirely). Nothing should change here.
+   (call $helper
+    (local.tee $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.get $x)
+   )
+  )
+
+  ;; CHECK:      (func $if-nnl-previous-set
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $if-nnl)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $if-nnl-previous-set (type $none_=>_none)
+  ;; NOMNL-NEXT:  (local $x (ref func))
+  ;; NOMNL-NEXT:  (local.set $x
+  ;; NOMNL-NEXT:   (ref.func $if-nnl)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (if
+  ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:   (local.set $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.tee $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $if-nnl-previous-set
+   (local $x (ref func))
+   ;; As the above testcase, but now there is a set before the if. We could
+   ;; optimize in this case, but don't atm. TODO
+   (local.set $x
+    (ref.func $if-nnl)
+   )
+   (if
+    (i32.const 1)
+    (local.set $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.tee $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.get $x)
+   )
+  )
+
+  ;; CHECK:      (func $helper (param $ref (ref func))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $helper (type $ref|func|_=>_none) (param $ref (ref func))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
+  (func $helper (param $ref (ref func))
+  )
+
   ;; CHECK:      (func $needs-refinalize (param $b (ref $B)) (result anyref)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (nop)

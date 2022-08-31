@@ -76,8 +76,9 @@ public:
 
   void build();
 
-private:
   Module& wasm;
+
+private:
   Builder builder;
   Random random;
 
