@@ -1,0 +1,26 @@
+Execution hashing info:
+  num expression nodes in total: 6
+  num unique expressions: 5
+  num relevant expressions: 5
+  num execution classes: 4
+  max class size: 2
+sorted possible optimization rules:
+
+=======================================
+
+[generalized rule 0: benefit: 1, (8.33333%)], input pattern:
+(i32.mul
+ (local.get $0)
+ (unreachable)
+)
+
+[child specific rule benefit: 1, (8.33333%)], possible rule:
+(i32.mul
+ (local.get $0)
+ (i32.const 2)
+)
+ =->
+(i32.shl
+ (local.get $0)
+ (i32.const 1)
+)

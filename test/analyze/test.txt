@@ -8,7 +8,7 @@ sorted possible optimization rules:
 
 =======================================
 
-[generalized rule 0: benefit: 2, (12.5%)], input pattern:
+[generalized rule 0: benefit: 22, (137.5%)], input pattern:
 (i32.shl
  (i32.shl
   (local.get $0)
@@ -17,7 +17,7 @@ sorted possible optimization rules:
  (unreachable)
 )
 
-[child specific rule benefit: 2, (12.5%)], possible rule:
+[child specific rule benefit: 22, (137.5%)], possible rule:
 (i32.shl
  (i32.shl
   (local.get $0)
