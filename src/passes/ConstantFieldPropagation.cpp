@@ -185,8 +185,9 @@ struct ConstantFieldPropagation : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "ConstantFieldPropagation requires nominal typing";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "CFP requires nominal/hybrid typing";
     }
 
     // Find and analyze all writes inside each function.

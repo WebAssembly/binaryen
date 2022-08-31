@@ -43,6 +43,7 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
+# TODO: switch to --hybrid when that becomes the most common mode for users
 TYPE_SYSTEM_FLAG = '--nominal'
 
 # feature options that are always passed to the tools.

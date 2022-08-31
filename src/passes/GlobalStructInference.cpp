@@ -68,8 +68,9 @@ struct GlobalStructInference : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "GlobalStructInference requires nominal typing";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "GSI requires nominal/hybrid typing";
     }
 
     // First, find all the information we need. We need to know which struct
