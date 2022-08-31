@@ -896,10 +896,52 @@ BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
 BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
 BinaryenOp BinaryenRefIsI31(void) { return RefIsI31; }
-BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; };
+BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
 BinaryenOp BinaryenRefAsFunc(void) { return RefAsFunc; }
-BinaryenOp BinaryenRefAsData(void) { return RefAsData; };
-BinaryenOp BinaryenRefAsI31(void) { return RefAsI31; };
+BinaryenOp BinaryenRefAsData(void) { return RefAsData; }
+BinaryenOp BinaryenRefAsI31(void) { return RefAsI31; }
+BinaryenOp BinaryenRefAsExternInternalize(void) { return ExternInternalize; }
+BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternExternalize; }
+BinaryenOp BinaryenBrOnNull(void) { return BrOnNull; }
+BinaryenOp BinaryenBrOnNonNull(void) { return BrOnNonNull; }
+BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }
+BinaryenOp BinaryenBrOnCastFail(void) { return BrOnCastFail; };
+BinaryenOp BinaryenBrOnFunc(void) { return BrOnFunc; }
+BinaryenOp BinaryenBrOnNonFunc(void) { return BrOnNonFunc; }
+BinaryenOp BinaryenBrOnData(void) { return BrOnData; }
+BinaryenOp BinaryenBrOnNonData(void) { return BrOnNonData; }
+BinaryenOp BinaryenBrOnI31(void) { return BrOnI31; }
+BinaryenOp BinaryenBrOnNonI31(void) { return BrOnNonI31; }
+BinaryenOp BinaryenStringNewUTF8(void) { return StringNewUTF8; }
+BinaryenOp BinaryenStringNewWTF8(void) { return StringNewWTF8; }
+BinaryenOp BinaryenStringNewReplace(void) { return StringNewReplace; }
+BinaryenOp BinaryenStringNewWTF16(void) { return StringNewWTF16; }
+BinaryenOp BinaryenStringNewUTF8Array(void) { return StringNewUTF8Array; }
+BinaryenOp BinaryenStringNewWTF8Array(void) { return StringNewWTF8Array; }
+BinaryenOp BinaryenStringNewReplaceArray(void) { return StringNewReplaceArray; }
+BinaryenOp BinaryenStringNewWTF16Array(void) { return StringNewWTF16Array; }
+BinaryenOp BinaryenStringMeasureUTF8(void) { return StringMeasureUTF8; }
+BinaryenOp BinaryenStringMeasureWTF8(void) { return StringMeasureWTF8; }
+BinaryenOp BinaryenStringMeasureWTF16(void) { return StringMeasureWTF16; }
+BinaryenOp BinaryenStringMeasureIsUSV(void) { return StringMeasureIsUSV; }
+BinaryenOp BinaryenStringMeasureWTF16View(void) {
+  return StringMeasureWTF16View;
+}
+BinaryenOp BinaryenStringEncodeUTF8(void) { return StringEncodeUTF8; }
+BinaryenOp BinaryenStringEncodeWTF8(void) { return StringEncodeWTF8; }
+BinaryenOp BinaryenStringEncodeWTF16(void) { return StringEncodeWTF16; }
+BinaryenOp BinaryenStringEncodeUTF8Array(void) { return StringEncodeUTF8Array; }
+BinaryenOp BinaryenStringEncodeWTF8Array(void) { return StringEncodeWTF8Array; }
+BinaryenOp BinaryenStringEncodeWTF16Array(void) {
+  return StringEncodeWTF16Array;
+}
+BinaryenOp BinaryenStringAsWTF8(void) { return StringAsWTF8; }
+BinaryenOp BinaryenStringAsWTF16(void) { return StringAsWTF16; }
+BinaryenOp BinaryenStringAsIter(void) { return StringAsIter; }
+BinaryenOp BinaryenStringIterMoveAdvance(void) { return StringIterMoveAdvance; }
+BinaryenOp BinaryenStringIterMoveRewind(void) { return StringIterMoveRewind; }
+BinaryenOp BinaryenStringSliceWTF8(void) { return StringSliceWTF8; }
+BinaryenOp BinaryenStringSliceWTF16(void) { return StringSliceWTF16; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
@@ -1567,17 +1609,219 @@ BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeI31Get((Expression*)i31, signed_ != 0));
 }
-
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
+                                      BinaryenExpressionRef ref,
+                                      BinaryenHeapType intendedType) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeRefTest((Expression*)ref, HeapType(intendedType)));
+}
+BinaryenExpressionRef BinaryenRefCast(BinaryenModuleRef module,
+                                      BinaryenExpressionRef ref,
+                                      BinaryenHeapType intendedType) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeRefCast((Expression*)ref,
+                                                 HeapType(intendedType),
+                                                 RefCast::Safety::Safe));
+}
+BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
+                                   BinaryenOp op,
+                                   const char* name,
+                                   BinaryenExpressionRef ref,
+                                   BinaryenHeapType intendedType) {
+  Builder builder(*(Module*)module);
+  return static_cast<Expression*>(
+    intendedType ? builder.makeBrOn(
+                     BrOnOp(op), name, (Expression*)ref, HeapType(intendedType))
+                 : builder.makeBrOn(BrOnOp(op), name, (Expression*)ref));
+}
+BinaryenExpressionRef BinaryenStructNew(BinaryenModuleRef module,
+                                        BinaryenExpressionRef* operands,
+                                        BinaryenIndex numOperands,
+                                        BinaryenHeapType type) {
+  std::vector<Expression*> args;
+  for (BinaryenIndex i = 0; i < numOperands; i++) {
+    args.push_back((Expression*)operands[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeStructNew(HeapType(type), args));
+}
+BinaryenExpressionRef BinaryenStructGet(BinaryenModuleRef module,
+                                        BinaryenIndex index,
+                                        BinaryenExpressionRef ref,
+                                        BinaryenType type,
+                                        bool signed_) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStructGet(index, (Expression*)ref, Type(type), signed_));
+}
+BinaryenExpressionRef BinaryenStructSet(BinaryenModuleRef module,
+                                        BinaryenIndex index,
+                                        BinaryenExpressionRef ref,
+                                        BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStructSet(index, (Expression*)ref, (Expression*)value));
+}
+BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
+                                       BinaryenHeapType type,
+                                       BinaryenExpressionRef size,
+                                       BinaryenExpressionRef init) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArrayNew(HeapType(type), (Expression*)size, (Expression*)init));
+}
+BinaryenExpressionRef BinaryenArrayInit(BinaryenModuleRef module,
+                                        BinaryenHeapType type,
+                                        BinaryenExpressionRef* values,
+                                        BinaryenIndex numValues) {
+  std::vector<Expression*> vals;
+  for (BinaryenIndex i = 0; i < numValues; i++) {
+    vals.push_back((Expression*)values[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeArrayInit(HeapType(type), vals));
+}
+BinaryenExpressionRef BinaryenArrayGet(BinaryenModuleRef module,
+                                       BinaryenExpressionRef ref,
+                                       BinaryenExpressionRef index,
+                                       bool signed_) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArrayGet((Expression*)ref, (Expression*)index, signed_));
+}
+BinaryenExpressionRef BinaryenArraySet(BinaryenModuleRef module,
+                                       BinaryenExpressionRef ref,
+                                       BinaryenExpressionRef index,
+                                       BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArraySet((Expression*)ref, (Expression*)index, (Expression*)value));
+}
+BinaryenExpressionRef BinaryenArrayLen(BinaryenModuleRef module,
+                                       BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeArrayLen((Expression*)ref));
+}
+BinaryenExpressionRef BinaryenArrayCopy(BinaryenModuleRef module,
+                                        BinaryenExpressionRef destRef,
+                                        BinaryenExpressionRef destIndex,
+                                        BinaryenExpressionRef srcRef,
+                                        BinaryenExpressionRef srcIndex,
+                                        BinaryenExpressionRef length) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeArrayCopy((Expression*)destRef,
+                                                   (Expression*)destIndex,
+                                                   (Expression*)srcRef,
+                                                   (Expression*)srcIndex,
+                                                   (Expression*)length));
+}
+BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
+                                        BinaryenOp op,
+                                        BinaryenExpressionRef ptr,
+                                        BinaryenExpressionRef length,
+                                        BinaryenExpressionRef start,
+                                        BinaryenExpressionRef end) {
+  Builder builder(*(Module*)module);
+  return static_cast<Expression*>(
+    length ? builder.makeStringNew(
+               StringNewOp(op), (Expression*)ptr, (Expression*)length)
+           : builder.makeStringNew(StringNewOp(op),
+                                   (Expression*)ptr,
+                                   (Expression*)start,
+                                   (Expression*)end));
+}
+BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
+                                          const char* name) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeStringConst(name));
+}
+BinaryenExpressionRef BinaryenStringMeasure(BinaryenModuleRef module,
+                                            BinaryenOp op,
+                                            BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStringMeasure(StringMeasureOp(op), (Expression*)ref));
+}
+BinaryenExpressionRef BinaryenStringEncode(BinaryenModuleRef module,
+                                           BinaryenOp op,
+                                           BinaryenExpressionRef ref,
+                                           BinaryenExpressionRef ptr,
+                                           BinaryenExpressionRef start) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeStringEncode(StringEncodeOp(op),
+                                                      (Expression*)ref,
+                                                      (Expression*)ptr,
+                                                      (Expression*)start));
+}
+BinaryenExpressionRef BinaryenStringConcat(BinaryenModuleRef module,
+                                           BinaryenExpressionRef left,
+                                           BinaryenExpressionRef right) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStringConcat((Expression*)left, (Expression*)right));
+}
+BinaryenExpressionRef BinaryenStringEq(BinaryenModuleRef module,
+                                       BinaryenExpressionRef left,
+                                       BinaryenExpressionRef right) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStringEq((Expression*)left, (Expression*)right));
+}
+BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
+                                       BinaryenOp op,
+                                       BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeStringAs(StringAsOp(op), (Expression*)ref));
+}
+BinaryenExpressionRef BinaryenStringWTF8Advance(BinaryenModuleRef module,
+                                                BinaryenExpressionRef ref,
+                                                BinaryenExpressionRef pos,
+                                                BinaryenExpressionRef bytes) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeStringWTF8Advance((Expression*)ref,
+                                                           (Expression*)pos,
+                                                           (Expression*)bytes));
+}
+BinaryenExpressionRef BinaryenStringWTF16Get(BinaryenModuleRef module,
+                                             BinaryenExpressionRef ref,
+                                             BinaryenExpressionRef pos) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStringWTF16Get((Expression*)ref, (Expression*)pos));
+}
+BinaryenExpressionRef BinaryenStringIterNext(BinaryenModuleRef module,
+                                             BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeStringIterNext((Expression*)ref));
+}
+BinaryenExpressionRef BinaryenStringIterMove(BinaryenModuleRef module,
+                                             BinaryenOp op,
+                                             BinaryenExpressionRef ref,
+                                             BinaryenExpressionRef num) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeStringIterMove(StringIterMoveOp(op),
+                                                        (Expression*)ref,
+                                                        (Expression*)num));
+}
+BinaryenExpressionRef BinaryenStringSliceWTF(BinaryenModuleRef module,
+                                             BinaryenOp op,
+                                             BinaryenExpressionRef ref,
+                                             BinaryenExpressionRef start,
+                                             BinaryenExpressionRef end) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeStringSliceWTF(StringSliceWTFOp(op),
+                                                        (Expression*)ref,
+                                                        (Expression*)start,
+                                                        (Expression*)end));
+}
+BinaryenExpressionRef BinaryenStringSliceIter(BinaryenModuleRef module,
+                                              BinaryenExpressionRef ref,
+                                              BinaryenExpressionRef num) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeStringSliceIter((Expression*)ref, (Expression*)num));
+}
 
 // Expression utility
 

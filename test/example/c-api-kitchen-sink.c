@@ -365,6 +365,7 @@ void test_features() {
          BinaryenFeatureTypedFunctionReferences());
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
+  printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -472,6 +473,28 @@ void test_core() {
   BinaryenType f32 = BinaryenTypeFloat32();
   BinaryenType f64 = BinaryenTypeFloat64();
   BinaryenType v128 = BinaryenTypeVec128();
+  BinaryenType i8Array;
+  BinaryenType i16Array;
+  BinaryenType i32Struct;
+  {
+    TypeBuilderRef tb = TypeBuilderCreate(3);
+    TypeBuilderSetArrayType(
+      tb, 0, BinaryenTypeInt32(), BinaryenPackedTypeInt8(), true);
+    TypeBuilderSetArrayType(
+      tb, 1, BinaryenTypeInt32(), BinaryenPackedTypeInt16(), true);
+    TypeBuilderSetStructType(
+      tb,
+      2,
+      (BinaryenType[]){BinaryenTypeInt32()},
+      (BinaryenPackedType[]){BinaryenPackedTypeNotPacked()},
+      (bool[]){true},
+      1);
+    BinaryenHeapType builtHeapTypes[3];
+    TypeBuilderBuildAndDispose(tb, (BinaryenHeapType*)&builtHeapTypes, 0, 0);
+    i8Array = BinaryenTypeFromHeapType(builtHeapTypes[0], true);
+    i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
+    i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
+  }
 
   // Memory. Add it before creating any memory-using instructions.
 
@@ -979,6 +1002,12 @@ void test_core() {
     BinaryenRefAs(module,
                   BinaryenRefAsI31(),
                   BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsExternInternalize(),
+                  BinaryenRefNull(module, BinaryenTypeExternref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsExternExternalize(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
     // Exception handling
     BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),
     // (try $try_outer
@@ -1040,6 +1069,249 @@ void test_core() {
     BinaryenI31New(module, makeInt32(module, 0)),
     BinaryenI31Get(module, i31refExpr, 1),
     BinaryenI31Get(module, BinaryenI31New(module, makeInt32(module, 2)), 0),
+    BinaryenRefTest(module,
+                    BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                    BinaryenTypeGetHeapType(i8Array)),
+    BinaryenRefCast(module,
+                    BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                    BinaryenTypeGetHeapType(i8Array)),
+    BinaryenStructNew(module, 0, 0, BinaryenTypeGetHeapType(i32Struct)),
+    BinaryenStructNew(module,
+                      (BinaryenExpressionRef[]){makeInt32(module, 0)},
+                      1,
+                      BinaryenTypeGetHeapType(i32Struct)),
+    BinaryenStructGet(module,
+                      0,
+                      BinaryenGlobalGet(module, "i32Struct-global", i32Struct),
+                      BinaryenTypeInt32(),
+                      false),
+    BinaryenStructSet(module,
+                      0,
+                      BinaryenGlobalGet(module, "i32Struct-global", i32Struct),
+                      makeInt32(module, 0)),
+    BinaryenArrayNew(
+      module, BinaryenTypeGetHeapType(i8Array), makeInt32(module, 3), 0),
+    BinaryenArrayNew(module,
+                     BinaryenTypeGetHeapType(i8Array),
+                     makeInt32(module, 3),
+                     makeInt32(module, 42)),
+    BinaryenArrayInit(module,
+                      BinaryenTypeGetHeapType(i8Array),
+                      (BinaryenExpressionRef[]){makeInt32(module, 1),
+                                                makeInt32(module, 2),
+                                                makeInt32(module, 3)},
+                      3),
+    BinaryenArrayGet(module,
+                     BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                     makeInt32(module, 0),
+                     true),
+    BinaryenArrayGet(module,
+                     BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                     makeInt32(module, 0),
+                     false),
+    BinaryenArraySet(module,
+                     BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                     makeInt32(module, 0),
+                     makeInt32(module, 42)),
+    BinaryenArrayLen(module,
+                     BinaryenGlobalGet(module, "i8Array-global", i8Array)),
+    BinaryenArrayCopy(module,
+                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                      makeInt32(module, 0),
+                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                      makeInt32(module, 1),
+                      makeInt32(module, 2)),
+    // Strings
+    BinaryenStringNew(module,
+                      BinaryenStringNewUTF8(),
+                      makeInt32(module, 0),
+                      makeInt32(module, 0),
+                      0,
+                      0),
+    BinaryenStringNew(module,
+                      BinaryenStringNewWTF8(),
+                      makeInt32(module, 0),
+                      makeInt32(module, 0),
+                      0,
+                      0),
+    BinaryenStringNew(module,
+                      BinaryenStringNewReplace(),
+                      makeInt32(module, 0),
+                      makeInt32(module, 0),
+                      0,
+                      0),
+    BinaryenStringNew(module,
+                      BinaryenStringNewWTF16(),
+                      makeInt32(module, 0),
+                      makeInt32(module, 0),
+                      0,
+                      0),
+    BinaryenStringNew(module,
+                      BinaryenStringNewUTF8Array(),
+                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                      0,
+                      makeInt32(module, 0),
+                      makeInt32(module, 0)),
+    BinaryenStringNew(module,
+                      BinaryenStringNewWTF8Array(),
+                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                      0,
+                      makeInt32(module, 0),
+                      makeInt32(module, 0)),
+    BinaryenStringNew(module,
+                      BinaryenStringNewReplaceArray(),
+                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                      0,
+                      makeInt32(module, 0),
+                      makeInt32(module, 0)),
+    BinaryenStringNew(module,
+                      BinaryenStringNewWTF16Array(),
+                      BinaryenGlobalGet(module, "i16Array-global", i8Array),
+                      0,
+                      makeInt32(module, 0),
+                      makeInt32(module, 0)),
+    BinaryenStringConst(module, "hello world"),
+    BinaryenStringMeasure(
+      module,
+      BinaryenStringMeasureUTF8(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringMeasure(
+      module,
+      BinaryenStringMeasureWTF8(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringMeasure(
+      module,
+      BinaryenStringMeasureWTF16(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringMeasure(
+      module,
+      BinaryenStringMeasureIsUSV(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringMeasure(
+      module,
+      BinaryenStringMeasureWTF16View(),
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsWTF16(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()))),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeUTF8(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      makeInt32(module, 0),
+      0),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeWTF8(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      makeInt32(module, 0),
+      0),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeWTF16(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      makeInt32(module, 0),
+      0),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeUTF8Array(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+      makeInt32(module, 0)),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeWTF8Array(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+      makeInt32(module, 0)),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeWTF16Array(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      BinaryenGlobalGet(module, "i16Array-global", i16Array),
+      makeInt32(module, 0)),
+    BinaryenStringConcat(
+      module,
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringEq(
+      module,
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringAs(
+      module,
+      BinaryenStringAsWTF8(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringAs(
+      module,
+      BinaryenStringAsWTF16(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringAs(
+      module,
+      BinaryenStringAsIter(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+    BinaryenStringWTF8Advance(
+      module,
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsWTF8(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 0),
+      makeInt32(module, 0)),
+    BinaryenStringWTF16Get(
+      module,
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsWTF16(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 0)),
+    BinaryenStringIterNext(
+      module,
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsIter(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()))),
+    BinaryenStringIterMove(
+      module,
+      BinaryenStringIterMoveAdvance(),
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsIter(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 1)),
+    BinaryenStringIterMove(
+      module,
+      BinaryenStringIterMoveRewind(),
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsIter(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 1)),
+    BinaryenStringSliceWTF(
+      module,
+      BinaryenStringSliceWTF8(),
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsWTF8(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 0),
+      makeInt32(module, 0)),
+    BinaryenStringSliceWTF(
+      module,
+      BinaryenStringSliceWTF16(),
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsWTF16(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 0),
+      makeInt32(module, 0)),
+    BinaryenStringSliceIter(
+      module,
+      BinaryenStringAs(
+        module,
+        BinaryenStringAsIter(),
+        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      makeInt32(module, 0)),
     // Other
     BinaryenNop(module),
     BinaryenUnreachable(module),
@@ -1077,6 +1349,31 @@ void test_core() {
                     BinaryenTypeFloat32(),
                     1,
                     makeFloat32(module, 7.5));
+  BinaryenAddGlobal(
+    module,
+    "i8Array-global",
+    i8Array,
+    true,
+    BinaryenArrayNew(
+      module, BinaryenTypeGetHeapType(i8Array), makeInt32(module, 0), 0));
+  BinaryenAddGlobal(
+    module,
+    "i16Array-global",
+    i16Array,
+    true,
+    BinaryenArrayNew(
+      module, BinaryenTypeGetHeapType(i16Array), makeInt32(module, 0), 0));
+  BinaryenAddGlobal(
+    module,
+    "i32Struct-global",
+    i32Struct,
+    true,
+    BinaryenStructNew(module, 0, 0, BinaryenTypeGetHeapType(i32Struct)));
+  BinaryenAddGlobal(module,
+                    "string-global",
+                    BinaryenTypeStringref(),
+                    true,
+                    BinaryenStringConst(module, ""));
 
   // Imports
 
@@ -1830,7 +2127,7 @@ void test_typebuilder() {
     TypeBuilderSetSignatureType(
       builder,
       tempSignatureIndex,
-      TypeBuilderGetTempTupleType(builder, &paramTypes, 2),
+      TypeBuilderGetTempTupleType(builder, (BinaryenType*)&paramTypes, 2),
       tempSignatureType);
   }
 
@@ -1908,8 +2205,8 @@ void test_typebuilder() {
       arrayType, structType, signatureType, basicType, subStructType};
     BinaryenAddFunction(module,
                         "test",
-                        BinaryenNone(),
-                        BinaryenNone(),
+                        BinaryenTypeNone(),
+                        BinaryenTypeNone(),
                         varTypes,
                         5,
                         BinaryenNop(module));
