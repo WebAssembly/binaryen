@@ -12,11 +12,28 @@
 
  ;; CHECK:      (type $externref_=>_anyref (func (param externref) (result anyref)))
 
+ ;; CHECK:      (export "ext" (func $extern.externalize))
+
+ ;; CHECK:      (export "int" (func $extern.internalize))
+
  ;; CHECK:      (func $extern.externalize (param $x (ref any)) (result (ref extern))
  ;; CHECK-NEXT:  (extern.externalize
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; OPTIM:      (type $ref|any|_=>_ref|extern| (func (param (ref any)) (result (ref extern))))
+
+ ;; OPTIM:      (type $externref_=>_anyref (func (param externref) (result anyref)))
+
+ ;; OPTIM:      (export "ext" (func $extern.externalize))
+
+ ;; OPTIM:      (export "int" (func $extern.internalize))
+
+ ;; OPTIM:      (func $extern.externalize (param $0 (ref any)) (result (ref extern))
+ ;; OPTIM-NEXT:  (extern.externalize
+ ;; OPTIM-NEXT:   (local.get $0)
+ ;; OPTIM-NEXT:  )
+ ;; OPTIM-NEXT: )
  (func $extern.externalize (export "ext") (param $x (ref any)) (result (ref extern))
   (extern.externalize
    (local.get $x)
@@ -28,6 +45,11 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; OPTIM:      (func $extern.internalize (param $0 externref) (result anyref)
+ ;; OPTIM-NEXT:  (extern.internalize
+ ;; OPTIM-NEXT:   (local.get $0)
+ ;; OPTIM-NEXT:  )
+ ;; OPTIM-NEXT: )
  (func $extern.internalize (export "int") (param $x (ref null extern)) (result (ref null any))
   (extern.internalize
    (local.get $x)
