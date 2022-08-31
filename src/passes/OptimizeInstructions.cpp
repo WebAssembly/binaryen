@@ -3547,8 +3547,8 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants for shrinkLevel > 0
-      // later in FinalOptimizer.
+      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // in FinalOptimizer.
 
       // (x >> C)  << C   =>   x & -(1 << C)
       // (x >>> C) << C   =>   x & -(1 << C)
@@ -3572,8 +3572,8 @@ private:
       }
     }
     {
-      // TODO: Add cancelation for some large constants for shrinkLevel > 0
-      // later in FinalOptimizer.
+      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // in FinalOptimizer.
 
       // (x << C) >>> C   =>   x & (-1 >>> C)
       // (x >>> C) << C   =>   skip
