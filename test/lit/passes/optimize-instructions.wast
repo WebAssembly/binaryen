@@ -6026,7 +6026,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.and
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const -2147483648)
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -6098,7 +6098,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.and
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const -2147483648)
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
