@@ -174,7 +174,10 @@ static Expression* normalize(Expression* expr, Module& wasm) {
       // just have the abstract shape of the entire thing.
       ShallowEffectAnalyzer effects(options, wasm, curr);
       // Traps don't matter - we can optimize even with them, in most cases.
-      if (effects.hasNonTrapSideEffects()) {
+      // Other effects are an issue, as well as reading global state (like a
+      // load from memory - we won't have a memory when we interpret).
+      if (effects.hasNonTrapSideEffects() ||
+          effects.readsMutableGlobalState()) {
         return builder.makeLocalGet(nextLocal++, curr->type);
       }
       return nullptr; // allow the default copy to proceed
