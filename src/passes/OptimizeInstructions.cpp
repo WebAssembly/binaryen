@@ -3547,6 +3547,37 @@ private:
       }
     }
     {
+      // (x >> C)  << C   =>   x & -(1 << C)
+      // (x >>> C) << C   =>   x & -(1 << C)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(Shl, binary(&inner, any(), ival(&c1)), ival(&c2))) &&
+          (inner->op == getBinary(inner->type, ShrS) ||
+           inner->op == getBinary(inner->type, ShrU)) &&
+          Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+        auto type = c1->type;
+        c1->value = Literal::makeFromInt32(-(1 << Bits::getEffectiveShifts(c1)), type);
+        inner->op = getBinary(type, And);
+        return inner;
+      }
+    }
+    {
+      // (x << C) >>> C   =>   x & (-1 >>> C)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(ShrU, binary(&inner, Shl, any(), ival(&c1)), ival(&c2))) &&
+          Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+        auto type = c1->type;
+        c1->value = Literal::makeFromInt32((-1U >> Bits::getEffectiveShifts(c1)), type);
+        inner->op = getBinary(type, And);
+        return inner;
+      }
+    }
+    {
       // TODO: Add canonicalization rotr to rotl and remove these rules.
       // rotl(rotr(x, C1), C2)   =>   rotr(x, C1 - C2)
       // rotr(rotl(x, C1), C2)   =>   rotl(x, C1 - C2)
