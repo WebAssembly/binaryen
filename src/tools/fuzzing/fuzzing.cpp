@@ -560,6 +560,11 @@ Function* TranslateToFuzzReader::addFunction() {
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
       return validExportType(t) && t.isDefaultable();
     });
+  // Note: spec discussions around JS API integration are still ongoing, and it
+  // is not clear if we should allow nondefaultable types in exports or not
+  // (in imports, we cannot allow them in the fuzzer anyhow, since it can't
+  // construct such values in JS to send over to the wasm from the fuzzer
+  // harness).
   bool validExportResults =
     std::all_of(resultType.begin(), resultType.end(), validExportType);
   if (validExportParams && validExportResults &&
