@@ -106,8 +106,9 @@ struct ExpressionHasher {
 
 struct ExpressionComparer {
   bool operator()(const HashedExpression a, const HashedExpression b) const {
-    if (a.hash != b.hash)
+    if (a.hash != b.hash) {
       return false;
+    }
     return ExpressionAnalyzer::equal(a.expr, b.expr);
   }
 };
@@ -258,8 +259,9 @@ struct Scan
     // which is ephemeral TODO: avoid keeping them alive til the end of
     // module processing to reduce peak mem usage?
     auto* normalized = normalize(curr, *getModule());
-    if (!normalized)
+    if (!normalized) {
       return;
+    }
     if (!settings.adviseOnly) {
       (*settings.totalExpressions)++; // this is relevant, count it
     }
@@ -890,10 +892,12 @@ int main(int argc, const char* argv[]) {
     auto ruleSorter = [](const Rule* a, const Rule* b) {
       // primary sorting criteria is the size benefit
       auto diff = int64_t(a->benefit) - int64_t(b->benefit);
-      if (diff > 0)
+      if (diff > 0) {
         return true;
-      if (diff < 0)
+      }
+      if (diff < 0) {
         return false;
+      }
       return size_t(a->from) < size_t(b->from);
     };
 
