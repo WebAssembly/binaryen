@@ -3547,6 +3547,9 @@ private:
       }
     }
     {
+      // TODO: Add cancelation for some large constants for shrinkLevel > 0
+      // later in FinalOptimizer.
+
       // (x >> C)  << C   =>   x & -(1 << C)
       // (x >>> C) << C   =>   x & -(1 << C)
       Binary* inner;
@@ -3564,7 +3567,11 @@ private:
       }
     }
     {
+      // TODO: Add cancelation for some large constants for shrinkLevel > 0
+      // later in FinalOptimizer.
+
       // (x << C) >>> C   =>   x & (-1 >>> C)
+      // (x >>> C) << C   =>   skip
       Binary* inner;
       Const *c1, *c2;
       if (matches(
