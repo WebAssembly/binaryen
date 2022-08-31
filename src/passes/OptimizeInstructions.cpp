@@ -2426,7 +2426,9 @@ private:
         // in the ifTrue, and zero values in the ifFalse, due to the
         // optimization right after us. (Even if this does not help there, it is
         // a nice canonicalization.)
-        if (matches(curr->ifTrue, ival(0)) || matches(curr->ifFalse, ival())) {
+        Const* c;
+        if (matches(curr->ifTrue, ival(0)) ||
+            (matches(curr->ifFalse, ival(&c)) && c->value.getInteger() != 0)) {
           binary->op = inv;
           std::swap(curr->ifTrue, curr->ifFalse);
         }
