@@ -1056,12 +1056,12 @@
   )
   ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
@@ -11380,9 +11380,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (i64.eq
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:     (i64.const 1)
   ;; CHECK-NEXT:    )

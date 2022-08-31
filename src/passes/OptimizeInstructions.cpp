@@ -2430,7 +2430,7 @@ private:
         // if both are nonzero.)
         Const* c;
         if ((matches(curr->ifTrue, ival(0)) &&
-             !matches(curr->ifFalse, ival(0)) ||
+             !matches(curr->ifFalse, ival(0))) ||
             (!matches(curr->ifTrue, ival()) &&
              matches(curr->ifFalse, ival(&c)) && !c->value.isZero())) {
           binary->op = inv;
