@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
 
@@ -461,6 +462,9 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
+
+  // We must ensure non-nullable locals validate.
+  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {

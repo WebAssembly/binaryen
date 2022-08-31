@@ -181,8 +181,6 @@ struct Heap2LocalOptimizer {
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
 
-  bool optimized = false;
-
   Heap2LocalOptimizer(Function* func,
                       Module* module,
                       const PassOptions& passOptions)
@@ -203,9 +201,7 @@ struct Heap2LocalOptimizer {
         continue;
       }
 
-      if (convertToLocals(allocation)) {
-        optimized = true;
-      }
+      convertToLocals(allocation);
     }
   }
 
@@ -473,7 +469,7 @@ struct Heap2LocalOptimizer {
 
   // Analyze an allocation to see if we can convert it from a heap allocation to
   // locals.
-  bool convertToLocals(StructNew* allocation) {
+  void convertToLocals(StructNew* allocation) {
     Rewriter rewriter(allocation, func, module);
 
     // A queue of flows from children to parents. When something is in the queue
@@ -502,13 +498,13 @@ struct Heap2LocalOptimizer {
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
       if (!seen.emplace(parent).second) {
-        return false;
+        return;
       }
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
           // If the parent may let us escape then we are done.
-          return false;
+          return;
         }
         case ParentChildInteraction::FullyConsumes: {
           // If the parent consumes us without letting us escape then all is
@@ -524,7 +520,7 @@ struct Heap2LocalOptimizer {
         case ParentChildInteraction::Mixes: {
           // Our allocation is not used exclusively via the parent, as other
           // values are mixed with it. Give up.
-          return false;
+          return;
         }
       }
 
@@ -558,13 +554,11 @@ struct Heap2LocalOptimizer {
 
     // We finished the loop over the flows. Do the final checks.
     if (!getsAreExclusiveToSets(rewriter.sets)) {
-      return false;
+      return;
     }
 
     // We can do it, hurray!
     rewriter.applyOptimization();
-
-    return true;
   }
 
   ParentChildInteraction getParentChildInteraction(Expression* parent,
@@ -750,9 +744,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // vacuum, in particular, to optimize such nested allocations.
     // TODO Consider running multiple iterations here, and running vacuum in
     //      between them.
-    if (Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized) {
-      TypeUpdating::handleNonDefaultableLocals(func, *getModule());
-    }
+    Heap2LocalOptimizer(func, getModule(), getPassOptions());
   }
 };
 

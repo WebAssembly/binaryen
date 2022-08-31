@@ -34,7 +34,6 @@
 
 #include "call-utils.h"
 #include "ir/table-utils.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -107,7 +106,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
     if (changedTypes) {
       ReFinalize().walkFunctionInModule(func, getModule());
-      TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     }
   }
 

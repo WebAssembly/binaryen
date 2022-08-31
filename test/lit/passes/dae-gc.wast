@@ -66,13 +66,13 @@
   )
  )
  ;; A function that gets a non-nullable reference that is never used. We can
- ;; still create a nullable local for that parameter.
+ ;; still create a non-nullable local for that parameter.
  ;; CHECK:      (func $get-nonnull
- ;; CHECK-NEXT:  (local $0 (ref null ${}))
+ ;; CHECK-NEXT:  (local $0 (ref ${}))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get-nonnull (type $none_=>_none)
- ;; NOMNL-NEXT:  (local $0 (ref null ${}))
+ ;; NOMNL-NEXT:  (local $0 (ref ${}))
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $get-nonnull (param $0 (ref ${}))
@@ -94,15 +94,13 @@
 ;; Test ref.func and ref.null optimization of constant parameter values.
 (module
  ;; CHECK:      (func $foo (param $0 (ref $none_=>_none))
- ;; CHECK-NEXT:  (local $1 (ref null $none_=>_none))
+ ;; CHECK-NEXT:  (local $1 (ref $none_=>_none))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $a)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $0)
@@ -110,15 +108,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $foo (type $ref|none_->_none|_=>_none) (param $0 (ref $none_=>_none))
- ;; NOMNL-NEXT:  (local $1 (ref null $none_=>_none))
+ ;; NOMNL-NEXT:  (local $1 (ref $none_=>_none))
  ;; NOMNL-NEXT:  (local.set $1
  ;; NOMNL-NEXT:   (ref.func $a)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (block
  ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (ref.as_non_null
- ;; NOMNL-NEXT:     (local.get $1)
- ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (local.get $1)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:   (drop
  ;; NOMNL-NEXT:    (local.get $0)
