@@ -907,7 +907,7 @@
   ;; CHECK-NEXT: )
   (func $select-or-negation (param $x i32) (param $y i32) (result i32)
     (select
-      ;; We can turn this select into an and, by negating the condition.
+      ;; We can turn this select into an and by negating the condition.
       (i32.const 0)
       (i32.eq
         (local.get $y)
