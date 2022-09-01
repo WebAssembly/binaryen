@@ -809,32 +809,31 @@ int main(int argc, const char* argv[]) {
                     // expression is just a target of optimization, not an
                     // origin
         }
-        Index iSize = calcWeight(iExpr);
+        Index iWeight = calcWeight(iExpr);
         Expression* best = nullptr;
-        Index bestSize = -1;
+        Index bestWeight = -1;
         for (Index j = 0; j < size; j++) {
           if (i == j) {
             continue;
           }
           auto* jExpr = clazz[j];
-          Index jSize = calcWeight(jExpr);
+          Index jWeight = calcWeight(jExpr);
           // we are looking for a rule where i => j, so we need j to be smaller
-          if (iSize <= jSize) {
-            continue; // TODO: for equality, look not just at size, but cost
-                      // etc.
+          if (iWeight <= jWeight) {
+            continue;
           }
           // a likely candidate, if direct attempts to prove they differ fail,
           // this is worth reporting to the user
-          if (best && jSize >= bestSize) {
+          if (best && jWeight >= bestWeight) {
             continue; // we can't do better
           }
           if (looksValid(iExpr, jExpr)) {
             best = jExpr;
-            bestSize = jSize;
+            bestWeight = jWeight;
           }
         }
         if (best) {
-          rules.emplace_back(iExpr, best, (iSize - bestSize) * iFreq);
+          rules.emplace_back(iExpr, best, (iWeight - bestWeight) * iFreq);
         }
       }
     }
