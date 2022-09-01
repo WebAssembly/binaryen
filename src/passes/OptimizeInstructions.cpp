@@ -855,13 +855,22 @@ struct OptimizeInstructions
       {
         // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
-        Unary* inner;
         Expression* x;
-        if (matches(curr,
-                    unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
-            matches(curr,
-                    unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
+        if (matches(curr, unary(WrapInt64, unary(ExtendSInt32, any(&x)))) ||
+            matches(curr, unary(WrapInt64, unary(ExtendUInt32, any(&x))))) {
           return replaceCurrent(x);
+        }
+      }
+      {
+        // canonicalize
+        // i32.wrap_i64(u64(x) >> 63)  =>  i64(x) < 0
+        Binary* inner;
+        if (matches(curr,
+                    unary(WrapInt64, binary(&inner, ShrU, any(), i64(63))))) {
+          inner->op = LtSInt64;
+          inner->right->cast<Const>()->value = Literal::makeZero(Type::i64);
+          inner->type = Type::i32;
+          return replaceCurrent(inner);
         }
       }
       {
@@ -2214,6 +2223,11 @@ private:
         binary->op = Abstract::getBinary(c->type, Abstract::Eq);
         c->value = Literal::makeUnsignedMax(c->type);
         return;
+      }
+      // u32(x) >> 31  ==>  i32(x) < 0
+      if (binary->op == ShrUInt32 && c->value.geti32() == 31) {
+        c->value = Literal::makeZero(Type::i32);
+        binary->op = LtSInt32;
       }
       return;
     }
@@ -4341,7 +4355,8 @@ private:
   }
 
   bool shouldCanonicalize(Binary* binary) {
-    if ((binary->op == SubInt32 || binary->op == SubInt64) &&
+    if ((binary->op == SubInt32 || binary->op == SubInt64 ||
+         binary->op == ShrUInt32) &&
         binary->right->is<Const>() && !binary->left->is<Const>()) {
       return true;
     }
