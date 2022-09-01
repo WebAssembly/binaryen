@@ -334,11 +334,19 @@ public:
   }
 
   Literal get(Index index, Type type) {
+    // Represent the given literals early on. This ensures we test them early,
+    // which can quickly rule things out in common cases.
+    if (seed < givenLiterals.size() && givenLiterals[seed].type == type) {
+      return givenLiterals[seed];
+    }
+
+    // Next, use important special values.
+    auto special = seed - givenLiterals.size();
     // use low indexes to ensure we get representation of a few special values
     // TODO: get each of the MAX_LOCALS to all of its NUM_SPECIALS values
-    if (seed < NUM_SPECIALS) {
+    if (special < NUM_SPECIALS) {
       // Just return a special here, regardless of index or type else.
-      return getSpecial(seed, type);
+      return getSpecial(special, type);
     }
 
     // |random| is a general "random"/deterministic value
