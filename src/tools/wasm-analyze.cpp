@@ -697,11 +697,8 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in parsing input " << filename;
     }
 
-    // scan all expressions in all functions, optimized and not
+    // scan all expressions in all functions
     PassRunner passRunner(&wasm);
-    passRunner.add(
-      make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
-    passRunner.addDefaultOptimizationPasses();
     passRunner.add(
       make_unique<Scan>(ScanSettings{&totalExpressions, adviseOnly}));
     passRunner.run();
