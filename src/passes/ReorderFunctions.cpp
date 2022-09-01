@@ -57,6 +57,9 @@ private:
 };
 
 struct ReorderFunctions : public Pass {
+  // Only reorders functions, does not change their contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
     NameCountMap counts;
     // fill in info, as we operate on it in parallel (each function to its own

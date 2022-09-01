@@ -1355,4 +1355,62 @@
    )
   )
  )
+
+ ;; CHECK:      (func $remove-set (result (ref func))
+ ;; CHECK-NEXT:  (local $nn funcref)
+ ;; CHECK-NEXT:  (local $i i32)
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $i
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $loop)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $nn)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $remove-set (type $none_=>_ref|func|) (result (ref func))
+ ;; NOMNL-NEXT:  (local $nn funcref)
+ ;; NOMNL-NEXT:  (local $i i32)
+ ;; NOMNL-NEXT:  (loop $loop
+ ;; NOMNL-NEXT:   (local.set $i
+ ;; NOMNL-NEXT:    (i32.const 0)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (br $loop)
+ ;; NOMNL-NEXT:   (return
+ ;; NOMNL-NEXT:    (ref.as_non_null
+ ;; NOMNL-NEXT:     (local.get $nn)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $remove-set (result (ref func))
+  (local $nn (ref func))
+  (local $i i32)
+  (loop $loop
+   ;; Add a local.set here in the loop, just so the entire loop is not optimized
+   ;; out.
+   (local.set $i
+    (i32.const 0)
+   )
+   ;; This entire block can be precomputed into an unconditional br. That
+   ;; removes the local.set, which means the local no longer validates since
+   ;; there is a get without a set (the get is never reached, but the validator
+   ;; does not take that into account). Fixups will turn the local nullable to
+   ;; avoid that problem.
+   (block
+    (br_if $loop
+     (i32.const 1)
+    )
+    (local.set $nn
+     (ref.func $remove-set)
+    )
+   )
+   (return
+    (local.get $nn)
+   )
+  )
+ )
 )

@@ -242,6 +242,9 @@ struct OptimizeAddedConstants
                  UnifiedExpressionVisitor<OptimizeAddedConstants>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass operates on linear memory, and does not affect reference locals.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   bool propagate;
 
   OptimizeAddedConstants(bool propagate) : propagate(propagate) {}

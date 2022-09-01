@@ -238,9 +238,6 @@ struct OptimizeInstructions
       optimizer.walkFunction(func);
     }
 
-    // Some patterns create locals (like when we use getResultOfFirst), which we
-    // may need to fix up.
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
     // the 'pop' into a block making it invalid.
     EHUtils::handleBlockNestedPops(func, *getModule());
@@ -2421,6 +2418,26 @@ private:
         return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
       }
     }
+    // Flip the arms if doing so might help later optimizations here.
+    if (auto* binary = curr->condition->dynCast<Binary>()) {
+      auto inv = invertBinaryOp(binary->op);
+      if (inv != InvalidBinary) {
+        // For invertible binary operations, we prefer to have non-zero values
+        // in the ifTrue, and zero values in the ifFalse, due to the
+        // optimization right after us. Even if this does not help there, it is
+        // a nice canonicalization. (To ensure convergence - that we don't keep
+        // doing work each time we get here - do nothing if both are zero, or
+        // if both are nonzero.)
+        Const* c;
+        if ((matches(curr->ifTrue, ival(0)) &&
+             !matches(curr->ifFalse, ival(0))) ||
+            (!matches(curr->ifTrue, ival()) &&
+             matches(curr->ifFalse, ival(&c)) && !c->value.isZero())) {
+          binary->op = inv;
+          std::swap(curr->ifTrue, curr->ifFalse);
+        }
+      }
+    }
     if (curr->type == Type::i32 &&
         Bits::getMaxBits(curr->condition, this) <= 1 &&
         Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
@@ -4171,8 +4188,9 @@ private:
     }
   }
 
+  // Invert (negate) the opcode, so that it has the exact negative meaning as it
+  // had before.
   BinaryOp invertBinaryOp(BinaryOp op) {
-    // use de-morgan's laws
     switch (op) {
       case EqInt32:
         return NeInt32;
@@ -4231,6 +4249,9 @@ private:
     }
   }
 
+  // Change the opcode so it is correct after reversing the operands. That is,
+  // we had  X OP  Y  and we need OP' so that this is equivalent to that:
+  //         Y OP' X
   BinaryOp reverseRelationalOp(BinaryOp op) {
     switch (op) {
       case EqInt32:

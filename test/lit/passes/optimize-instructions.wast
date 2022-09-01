@@ -893,9 +893,35 @@
       )
     )
   )
+  ;; CHECK:      (func $select-or-negation (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-or-negation (param $x i32) (param $y i32) (result i32)
+    (select
+      ;; We can turn this select into an and by negating the condition.
+      (i32.const 0)
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      (i32.lt_u
+        (local.get $x)
+        (i32.const 20)
+      )
+    )
+  )
   ;; CHECK:      (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i32.const 1337)
@@ -908,8 +934,8 @@
   ;; CHECK-NEXT: )
   (func $select-or-no-const (param $x i32) (param $y i32) (result i32)
     (select
-      ;; The wrong const (should be 1).
-      (i32.const 0)
+      ;; The wrong const (should be 0 or 1).
+      (i32.const 2)
       (i32.eq
         (local.get $y)
         (i32.const 1337)
@@ -945,14 +971,97 @@
       )
     )
   )
-  ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $select-and-negation (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-negation (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; With a 1 here, we negate the condition.
+      (i32.const 1)
+      (i32.eq
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-negation-impossible (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-negation-impossible (param $x i32) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; With a 1 here, we must negate the condition, but the condition here
+      ;; cannot be negated in a simple way, so skip.
+      (i32.const 1)
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 31)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-negation-impossible-float (param $x f64) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (f64.le
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-and-negation-impossible-float (param $x f64) (param $y i32) (result i32)
+    (select
+      (i32.eq
+        (local.get $y)
+        (i32.const 1337)
+      )
+      ;; With a 1 here, we must negate the condition, but the condition here
+      ;; cannot be negated due to it operating on floats (where NaNs cause
+      ;; difficulties), so we skip.
+      (i32.const 1)
+      (f64.le
+        (local.get $x)
+        (f64.const 3.14159)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-and-no-const (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
@@ -964,8 +1073,8 @@
         (local.get $y)
         (i32.const 1337)
       )
-      ;; The wrong constant (should be 0).
-      (i32.const 1)
+      ;; The wrong constant (should be 0 or 1).
+      (i32.const 2)
       (i32.eq
         (local.get $x)
         (i32.const 42)
@@ -1774,7 +1883,7 @@
       (local.get $y)
       (i64.const 9223372036854775806)
     ))
-    ;; (unsigned)x <= u_max - 1   ==>   x == u_max
+    ;; (unsigned)x <= u_max - 1   ==>   x != u_max
     (drop (i32.le_u
       (local.get $x)
       (i32.const -2)
@@ -1783,7 +1892,7 @@
       (local.get $y)
       (i64.const -2)
     ))
-    ;; (unsigned)x > u_max - 1   ==>   x != u_max
+    ;; (unsigned)x > u_max - 1   ==>   x == u_max
     (drop (i32.gt_u
       (local.get $x)
       (i32.const -2)
@@ -11271,9 +11380,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.ne
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (i64.eq
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:     (i64.const 1)
   ;; CHECK-NEXT:    )

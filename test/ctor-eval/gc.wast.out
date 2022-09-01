@@ -27,7 +27,7 @@
   )
  )
  (func $0_0
-  (local $0 (ref null $struct))
+  (local $0 (ref $struct))
   (local.set $0
    (global.get $ctor-eval$global_0)
   )
