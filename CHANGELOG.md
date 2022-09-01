@@ -14,7 +14,13 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
-- Add support for non-nullable locals in wasm GC.
+
+v110
+----
+
+- Add support for non-nullable locals in wasm GC. (#4959)
+- Add support for multiple memories. (#4811)
+- Add support for the wasm Strings proposal. (see PRs with [Strings] in name)
 - Add a new flag to Directize, `--pass-arg=directize-initial-contents-immutable`
   which indicates the initial table contents are immutable. That is the case for
   LLVM, for example, and it allows us to optimize more indirect calls to direct
