@@ -588,19 +588,6 @@ bool looksValid(Expression* a, Expression* b) {
   // Let's use brute force: we'll run the same checks we run for hashing,
   // but instead of a single hash summarizing it all, we'll check each
   // case on the two expressions.
-  for (Index i = 0; i < NUM_EXECUTIONS; i++) {
-    LocalGenerator localGenerator(i);
-    try {
-      Flow aFlow = Runner(localGenerator).visit(a);
-      Flow bFlow = Runner(localGenerator).visit(b);
-      // TODO: breaking
-      if (aFlow.values != bFlow.values) {
-        return false;
-      }
-    } catch (TrapException& e) {
-      // One of them trapped. We can skip that.
-    }
-  }
   // In addition, use the constants actually appearing the expression, which can
   // catch things like  x == 123456  (which we need to test on the input 123456
   // to actually see anything but a 0).
@@ -613,20 +600,17 @@ bool looksValid(Expression* a, Expression* b) {
   for (auto c : bConsts.list) {
     literals.push_back(c->value);
   }
-  if (!literals.empty()) {
-    for (Index i = 0; i < NUM_EXECUTIONS; i++) {
-      // TODO: this is identical to the above, but adds |literals|. Merge?
-      LocalGenerator localGenerator(i, literals);
-      try {
-        Flow aFlow = Runner(localGenerator).visit(a);
-        Flow bFlow = Runner(localGenerator).visit(b);
-        // TODO: breaking
-        if (aFlow.values != bFlow.values) {
-          return false;
-        }
-      } catch (TrapException& e) {
-        // One of them trapped. We can skip that.
+  for (Index i = 0; i < NUM_EXECUTIONS; i++) {
+    LocalGenerator localGenerator(i, literals);
+    try {
+      Flow aFlow = Runner(localGenerator).visit(a);
+      Flow bFlow = Runner(localGenerator).visit(b);
+      // TODO: breaking
+      if (aFlow.values != bFlow.values) {
+        return false;
       }
+    } catch (TrapException& e) {
+      // One of them trapped. We can skip that.
     }
   }
   // let's see if this possible optimization is already something our
