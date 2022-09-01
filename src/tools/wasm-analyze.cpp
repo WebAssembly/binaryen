@@ -42,8 +42,8 @@ using namespace cashew;
 using namespace wasm;
 
 // limits on what we care about
-#define MAX_EXPRESSION_SIZE 20
-#define MAX_LOCAL 4
+#define MAX_EXPRESSION_SIZE 10
+#define MAX_LOCAL 3
 
 // special values to make sure to consider in execution hashing
 #define NUM_LIMITS 6
@@ -188,7 +188,7 @@ static Expression* normalize(Expression* expr, Module& wasm) {
   auto* ret = ExpressionManipulator::flexibleCopy(
     expr, wasm, [&](Expression* curr) { return normalizer.copy(curr); });
 
-  if (!isRelevantType(ret->type) || normalizer.nextLocal >= MAX_LOCAL ||
+  if (!isRelevantType(ret->type) || normalizer.nextLocal > MAX_LOCAL ||
       Measurer::measure(ret) > MAX_EXPRESSION_SIZE) {
     return nullptr;
   }
