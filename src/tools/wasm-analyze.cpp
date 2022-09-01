@@ -351,7 +351,7 @@ public:
                                     0,
                                     std::numeric_limits<uint64_t>::max()>
       generator(random);
-    generator.discard(2);
+    generator.discard(3);
     random = generator();
     if ((random & 7) == 0) {
       // Use a special value here, specifically for this index and type.
