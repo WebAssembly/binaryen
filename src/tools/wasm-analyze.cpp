@@ -795,6 +795,8 @@ int main(int argc, const char* argv[]) {
     std::cerr << "[finding rules]\n";
 
     for (auto& pair : executionHasher.hashClasses) {
+      std::cerr << '.';
+
       auto& clazz = pair.second;
       Index size = clazz.size();
       if (size < 2) {
@@ -843,7 +845,7 @@ int main(int argc, const char* argv[]) {
     // what the human would write in the optimizer, so to assess the benefit of
     // rules, we must generalize in our output.
 
-    std::cerr << "[generalizing from " << rules.size() << " rules]\n";
+    std::cerr << "\n[generalizing from " << rules.size() << " rules]\n";
 
     struct GeneralizedRule : public Rule {
       std::vector<Rule*>
