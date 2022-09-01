@@ -1,7 +1,7 @@
 Execution hashing info:
-  num expression nodes in total: 4
-  num unique expressions: 4
-  num relevant expressions: 4
-  num execution classes: 3
+  num expression nodes in total: 7
+  num unique expressions: 6
+  num relevant expressions: 6
+  num execution classes: 5
   max class size: 2
 no rules found.
