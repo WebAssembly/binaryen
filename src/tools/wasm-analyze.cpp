@@ -800,9 +800,7 @@ int main(int argc, const char* argv[]) {
       if (size < 2) {
         continue;
       }
-      // Consider all pairs, since some may be spurious hash collisions. But
-      // cache seen pairs to not repeat work.
-      std::unordered_set<std::pair<Expression*, Expression*>> seen;
+      // consider all pairs, since some may be spurious hash collisions
       for (Index i = 0; i < size; i++) {
         auto* iExpr = clazz[i];
         auto iFreq = freqs[iExpr];
@@ -819,12 +817,6 @@ int main(int argc, const char* argv[]) {
             continue;
           }
           auto* jExpr = clazz[j];
-
-          if (seen.count({iExpr, jExpr})) {
-            continue;
-          }
-          seen.insert({iExpr, jExpr});
-
           Index jWeight = calcWeight(jExpr);
           // we are looking for a rule where i => j, so we need j to be smaller
           if (iWeight <= jWeight) {
