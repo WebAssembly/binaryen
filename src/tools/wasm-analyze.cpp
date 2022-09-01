@@ -325,7 +325,7 @@ class LocalGenerator {
 public:
   LocalGenerator(size_t seed, const std::vector<Literal>& givenLiterals = {})
     : seed(seed), givenLiterals(givenLiterals) {
-#if WASM_ANALYZE_DEBUG
+#if 0
     std::cout << "LG(" << seed << "), locals:\n";
     for (Index i = 0; i < MAX_LOCAL; i++) {
       std::cout << "  $" << i << " = " << get(i, Type::i32) << '\n';
@@ -351,7 +351,7 @@ public:
                                     0,
                                     std::numeric_limits<uint64_t>::max()>
       generator(random);
-    generator.discard(7);
+    generator.discard(2);
     random = generator();
     if ((random & 7) == 0) {
       // Use a special value here, specifically for this index and type.
@@ -795,13 +795,12 @@ int main(int argc, const char* argv[]) {
     std::cerr << "[finding rules]\n";
 
     for (auto& pair : executionHasher.hashClasses) {
-      std::cerr << '.';
-
       auto& clazz = pair.second;
       Index size = clazz.size();
       if (size < 2) {
         continue;
       }
+      std::cerr << '.';
       // consider all pairs, since some may be spurious hash collisions
       for (Index i = 0; i < size; i++) {
         auto* iExpr = clazz[i];
