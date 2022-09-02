@@ -1293,6 +1293,10 @@ Name Function::getLocalNameOrGeneric(Index index) {
   return Name::fromInt(index);
 }
 
+bool Function::hasLocalIndex(Name name) const {
+  return localIndices.find(name) != localIndices.end();
+}
+
 Index Function::getLocalIndex(Name name) {
   auto iter = localIndices.find(name);
   if (iter == localIndices.end()) {

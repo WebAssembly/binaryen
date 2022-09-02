@@ -197,6 +197,9 @@ void PassRegistry::registerPasses() {
   registerPass("intrinsic-lowering",
                "lower away binaryen intrinsics",
                createIntrinsicLoweringPass);
+  registerPass("jspi",
+               "wrap imports and exports for JavaScript promise integration",
+               createJSPIPass);
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);

@@ -1971,6 +1971,7 @@ public:
 
   Name getLocalName(Index index);
   Index getLocalIndex(Name name);
+  bool hasLocalIndex(Name name) const;
   Index getVarIndexBase();
   Type getLocalType(Index index);
 
