@@ -3576,9 +3576,15 @@ private:
           (inner->op == getBinary(inner->type, ShrS) ||
            inner->op == getBinary(inner->type, ShrU)) &&
           Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
-        c1->value = Literal::makeFromInt64(
-          -(1ULL << Bits::getEffectiveShifts(c1)), c1->type);
-        inner->op = getBinary(inner->type, And);
+                auto type = c1->type;
+        if (type == Type::i32) {
+          c1->value = Literal::makeFromInt32(
+            -(1U << Bits::getEffectiveShifts(c1)), Type::i32);
+        } else {
+          c1->value = Literal::makeFromInt64(
+            -(1ULL << Bits::getEffectiveShifts(c1)), Type::i64);
+        }
+        inner->op = getBinary(type, And);
         return inner;
       }
     }
@@ -3594,9 +3600,15 @@ private:
             curr,
             binary(ShrU, binary(&inner, Shl, any(), ival(&c1)), ival(&c2))) &&
           Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
-        c1->value = Literal::makeFromInt64(
-          -1ULL >> Bits::getEffectiveShifts(c1), c1->type);
-        inner->op = getBinary(inner->type, And);
+        auto type = c1->type;
+        if (type == Type::i32) {
+          c1->value = Literal::makeFromInt32(
+            -1U >> Bits::getEffectiveShifts(c1), Type::i32);
+        } else {
+          c1->value = Literal::makeFromInt64(
+            -1ULL >> Bits::getEffectiveShifts(c1), Type::i64);
+        }
+        inner->op = getBinary(type, And);
         return inner;
       }
     }
