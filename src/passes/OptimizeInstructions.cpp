@@ -3576,7 +3576,7 @@ private:
           (inner->op == getBinary(inner->type, ShrS) ||
            inner->op == getBinary(inner->type, ShrU)) &&
           Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
-                auto type = c1->type;
+        auto type = c1->type;
         if (type == Type::i32) {
           c1->value = Literal::makeFromInt32(
             -(1U << Bits::getEffectiveShifts(c1)), Type::i32);
