@@ -2006,6 +2006,17 @@ public:
     globalValues[name] = values;
   }
 
+  Flow visitDrop(Drop* curr) {
+    NOTE_ENTER("Drop");
+    Flow value = ExpressionRunner<SubType>::visit(curr->value);
+    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS)) {
+      value.clearIf(NONCONSTANT_FLOW);
+    }
+    if (value.breaking()) {
+      return value;
+    }
+    return Flow();
+  }
   Flow visitLocalGet(LocalGet* curr) {
     NOTE_ENTER("LocalGet");
     NOTE_EVAL1(curr->index);
@@ -2024,7 +2035,9 @@ public:
       // constant value set, if any, and see if there is a value flowing through
       // a tee.
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
-      if (!setFlow.breaking()) {
+      if (setFlow.breaking()) {
+        localValues.erase(curr->index);
+      } else {
         setLocalValue(curr->index, setFlow.values);
         if (curr->type.isConcrete()) {
           assert(curr->isTee());
@@ -2061,7 +2074,9 @@ public:
       // constant value set, if any, for subsequent gets.
       assert(this->module->getGlobal(curr->name)->mutable_);
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
-      if (!setFlow.breaking()) {
+      if (setFlow.breaking()) {
+        globalValues.erase(curr->name);
+      } else {
         setGlobalValue(curr->name, setFlow.values);
         return Flow();
       }
