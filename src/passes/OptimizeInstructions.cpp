@@ -2765,12 +2765,13 @@ private:
             // All things we can optimize do the following: change the type to
             // i32, and prepare to scan the children.
             binary->type = Type::i32;
-            stack.push_back(&binary->left);
-            stack.push_back(&binary->right);
           }
+          stack.push_back(&binary->left);
+          stack.push_back(&binary->right);
         } else {
           // Anything else makes us give up.
           canOptimize = false;
+          return;
         }
       }
     };

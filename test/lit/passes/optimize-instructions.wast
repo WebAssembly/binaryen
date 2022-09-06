@@ -14826,6 +14826,34 @@
     )
   )
 
+  ;; CHECK:      (func $wrap-i64-to-i32-tee-no (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $y i64)
+  ;; CHECK-NEXT:  (i32.wrap_i64
+  ;; CHECK-NEXT:   (i64.add
+  ;; CHECK-NEXT:    (local.tee $y
+  ;; CHECK-NEXT:     (i64.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-tee-no (param $x i32) (result i32)
+    ;; The local.tee stops us from optimizing atm. TODO
+    (local $y i64)
+    (i32.wrap_i64
+      (i64.add
+        (i64.extend_i32_u
+          (local.get $x)
+        )
+        (local.tee $y
+          (i64.const 42)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $wrap-i64-to-i32-local-no (param $x i64) (result i32)
   ;; CHECK-NEXT:  (i32.wrap_i64
   ;; CHECK-NEXT:   (i64.div_s
