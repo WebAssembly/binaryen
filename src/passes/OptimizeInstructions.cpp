@@ -2730,6 +2730,8 @@ private:
               break;
             }
             default: {
+              // TODO: handle more cases here and below,
+              //       https://github.com/WebAssembly/binaryen/issues/5004
               canOptimize = false;
               return;
             }
