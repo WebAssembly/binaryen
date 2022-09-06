@@ -857,12 +857,11 @@ struct OptimizeInstructions
         // actually require 64 bits, e.g.:
         //
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
-        if (matches(curr,
-                    unary(WrapInt64, any()))) {
-        if (auto* ret = optimizeWrappedResult(curr)) {
-          return replaceCurrent(ret);
+        if (matches(curr, unary(WrapInt64, any()))) {
+          if (auto* ret = optimizeWrappedResult(curr)) {
+            return replaceCurrent(ret);
+          }
         }
-      }
       {
         // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
         //   where maxBits(x) <= 32
@@ -2687,7 +2686,7 @@ private:
   //  int32_t(int64_t(x))               => x    (extend and then wrap)
   //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10) (also add
   //
-  Expression* optimizeWrappedResult(Unary* wrap) {
+  Expression* optimizeWrappedResult(Unary * wrap) {
     assert(wrap->op == WrapInt64);
 
     // Core processing logic. This goes through the children, in one of two
@@ -2697,12 +2696,8 @@ private:
     //  * Optimize: Given we can handle everything, update things. This both
     //    updates the children of |wrap| and sets |replacement| which should
     //    replace |wrap|.
-    enum Mode {
-      Scan,
-      Optimize
-    };
-    bool canOptimize = false
-    Expression* replacement = nullptr;
+    enum Mode { Scan, Optimize };
+    bool canOptimize = false Expression* replacement = nullptr;
     auto processChildren = [&](Mode mode) {
       // Use a simple stack as we go through the children. We use ** as we need
       // to replace children for some optimizations.
