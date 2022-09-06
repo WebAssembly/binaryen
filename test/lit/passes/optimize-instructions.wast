@@ -2541,12 +2541,9 @@
   )
   ;; CHECK:      (func $eq-sext-unsigned-shr (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.eqz
-  ;; CHECK-NEXT:   (i32.shr_u
-  ;; CHECK-NEXT:    (i32.shl
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (i32.const 24)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 255)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -3254,14 +3251,11 @@
   )
   ;; CHECK:      (func $sext-24-shr_u-wrap-too-big (result i32)
   ;; CHECK-NEXT:  (i32.shr_s
-  ;; CHECK-NEXT:   (i32.shl
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.wrap_i64
-  ;; CHECK-NEXT:      (i64.const -1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (i64.const -1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:    (i32.const -16777216)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 24)
   ;; CHECK-NEXT:  )
@@ -3304,12 +3298,9 @@
   )
   ;; CHECK:      (func $sext-24-shr_u-wrap-extend-too-big (result i32)
   ;; CHECK-NEXT:  (i32.shr_s
-  ;; CHECK-NEXT:   (i32.shl
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.const -1)
-  ;; CHECK-NEXT:     (i32.const 24)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:    (i32.const -16777216)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 24)
   ;; CHECK-NEXT:  )
@@ -6127,11 +6118,260 @@
   ;; CHECK-NEXT: )
   (func $mix-shifts (result i32)
     (i32.shr_s
-     (i32.shl
-      (i32.const 23)
-      (i32.const -61)
-     )
-     (i32.const 168)
+      (i32.shl
+        (i32.const 23)
+        (i32.const -61)
+      )
+      (i32.const 168)
+    )
+  )
+  ;; CHECK:      (func $mix-shifts-with-same-const-signed (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.shr_s
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 63)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $mix-shifts-with-same-const-signed (param $x i32) (param $y i64)
+    (drop
+      (i32.shl
+        (i32.shr_s
+          (local.get $x)
+          (i32.const 4)
+        )
+        (i32.const 4)
+      )
+    )
+    (drop
+      (i64.shl
+        (i64.shr_s
+          (local.get $y)
+          (i64.const 63)
+        )
+        (i64.const 127) ;; effective shift is 63
+      )
+    )
+
+    ;; skips
+    (drop
+      (i32.shl
+        (i32.shr_s
+          (local.get $x)
+          (i32.const 4)
+        )
+        (i32.const 5)
+      )
+    )
+    (drop
+      (i64.shl
+        (i64.shr_s
+          (local.get $y)
+          (i64.const 63)
+        )
+        (i64.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $mix-shifts-with-same-const-unsigned (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (i64.shr_u
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 63)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $mix-shifts-with-same-const-unsigned (param $x i32) (param $y i64)
+    (drop
+      (i32.shl
+        (i32.shr_u
+          (local.get $x)
+          (i32.const 4)
+        )
+        (i32.const 4)
+      )
+    )
+    (drop
+      (i64.shl
+        (i64.shr_u
+          (local.get $y)
+          (i64.const 63)
+        )
+        (i64.const 127) ;; effective shift is 63
+      )
+    )
+
+    ;; skips
+    (drop
+      (i32.shl
+        (i32.shr_u
+          (local.get $x)
+          (i32.const 4)
+        )
+        (i32.const 5)
+      )
+    )
+    (drop
+      (i64.shl
+        (i64.shr_u
+          (local.get $y)
+          (i64.const 63)
+        )
+        (i64.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $reversed-mix-shifts-with-same-const (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 268435455)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shr_u
+  ;; CHECK-NEXT:    (i64.shl
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (i32.shl
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 6)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reversed-mix-shifts-with-same-const (param $x i32) (param $y i64)
+    (drop
+      (i32.shr_u
+        (i32.shl
+          (local.get $x)
+          (i32.const 4)
+        )
+        (i32.const 4)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.shl
+          (local.get $x)
+          (i32.const 31)
+        )
+        (i32.const 31)
+      )
+    )
+    (drop
+      (i64.shr_u
+        (i64.shl
+          (local.get $y)
+          (i64.const 127) ;; effective shift is 63
+        )
+        (i64.const 63) ;; effective shift is 63
+      )
+    )
+
+    ;; skips
+    (drop
+      (i32.shr_u
+        (i32.shl
+          (local.get $x)
+          (i32.const 5)
+        )
+        (i32.const 4)
+      )
+    )
+    (drop
+      (i64.shr_u
+        (i64.shl
+          (local.get $y)
+          (i64.const 4)
+        )
+        (i64.const 8)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.shl
+          (local.get $x)
+          (i32.const 6)
+        )
+        (i32.const 6)
+      )
     )
   )
   ;; CHECK:      (func $actually-no-shifts (result i32)
