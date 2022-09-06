@@ -2713,6 +2713,7 @@ private:
         if (curr->type == Type::unreachable) {
           // Leave unreachability for other passes.
           canOptimize = false;
+          return;
         } else if (auto* c = curr->dynCast<Const>()) {
           // A i64 const can be handled by just turning it into an i32.
           if (mode == Optimize) {
@@ -2733,25 +2734,46 @@ private:
             }
             default: {
               canOptimize = false;
+              return;
             }
           }
         } else if (auto* binary = curr->dynCast<Binary>()) {
+          // Turn the binary into a 32-bit one, if we can.
           switch (binary->op) {
             case AddInt64:
             case SubInt64:
             case MulInt64: {
-              if (mode == Optimize) {
-                // Turn the binary into a 32-bit one.
-                binary->op = Abstract::getBinary(c->type, Type::i32);
-                binary->type = Type::i32;
-              }
-              stack.push_back(binary->left);
-              stack.push_back(binary->right);
+              // We can optimize these.
               break;
             }
             default: {
               canOptimize = false;
+              return;
             }
+          }
+          if (mode == Optimize) {
+            switch (binary->op) {
+              case AddInt64: {
+                binary->op = AddInt32;
+                break;
+              }
+              case SubInt64: {
+                binary->op = SubInt32;
+                break;
+              }
+              case MulInt64: {
+                binary->op = MulInt32;
+                break;
+              }
+              default: {
+                WASM_UNREACHABLE("bad op");
+              }
+            }
+            // All things we can optimize do the following: change the type to
+            // i32, and prepare to scan the children.
+            binary->type = Type::i32;
+            stack.push_back(&binary->left);
+            stack.push_back(&binary->right);
           }
         } else {
           // Anything else makes us give up.
