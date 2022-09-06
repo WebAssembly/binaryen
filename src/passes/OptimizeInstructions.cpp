@@ -2707,7 +2707,8 @@ private:
       stack.emplace_back(wrap);
 
       while (!stack.empty() && canOptimize) {
-        auto* currp = stack.pop_back();
+        auto* currp = stack.back();
+        stack.pop_back();
         auto* curr = *currp;
         if (curr->type == Type::unreachable) {
           // Leave unreachability for other passes.
