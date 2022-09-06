@@ -3252,9 +3252,7 @@
   ;; CHECK:      (func $sext-24-shr_u-wrap-too-big (result i32)
   ;; CHECK-NEXT:  (i32.shr_s
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const -1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
   ;; CHECK-NEXT:    (i32.const -16777216)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 24)
