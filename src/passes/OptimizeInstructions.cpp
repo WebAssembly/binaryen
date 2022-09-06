@@ -3593,7 +3593,7 @@ private:
       // in FinalOptimizer.
 
       // (x << C) >>> C   =>   x & (-1 >>> C)
-      // (x >> C) << C    =>   skip
+      // (x << C) >> C    =>   skip
       Binary* inner;
       Const *c1, *c2;
       if (matches(
