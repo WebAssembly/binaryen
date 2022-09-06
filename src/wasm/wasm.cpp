@@ -182,7 +182,7 @@ void Block::finalize() {
     return;
   }
   // The default type is what is at the end. Next we need to see if breaks and/
-  // or unreachabitily change that.
+  // or unreachability change that.
   type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
