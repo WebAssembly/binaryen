@@ -862,6 +862,7 @@ struct OptimizeInstructions
             return replaceCurrent(ret);
           }
         }
+      }
       {
         // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
         //   where maxBits(x) <= 32
