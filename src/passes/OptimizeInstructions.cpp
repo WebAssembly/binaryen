@@ -1169,8 +1169,12 @@ struct OptimizeInstructions
     optimizeMemoryAccess(curr->ptr, curr->offset, curr->memory);
     optimizeStoredValue(curr->value, curr->bytes);
     if (auto* unary = curr->value->dynCast<Unary>()) {
-      if (!curr->isAtomic && Abstract::hasAnyReinterpret(unary->op) &&
-          curr->bytes == curr->valueType.getByteSize()) {
+      if (unary->op == WrapInt64) {
+        // instead of wrapping to 32, just store some of the bits in the i64
+        curr->valueType = Type::i64;
+        curr->value = unary->value;
+      } else if (!curr->isAtomic && Abstract::hasAnyReinterpret(unary->op) &&
+                 curr->bytes == curr->valueType.getByteSize()) {
         // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
         // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
         // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)

@@ -1199,32 +1199,32 @@
   (func $store16-and-65534
     (i32.store16 (i32.const 11) (i32.and (i32.const -4) (i32.const 65534)))
   )
-  ;; CHECK:      (func $store8-wrap
-  ;; CHECK-NEXT:  (i32.store8
+  ;; CHECK:      (func $store8-wrap (param $x i64)
+  ;; CHECK-NEXT:  (i64.store8
   ;; CHECK-NEXT:   (i32.const 11)
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store8-wrap
-    (i32.store8 (i32.const 11) (i32.wrap_i64 (i64.const 1)))
+  (func $store8-wrap (param $x i64)
+    (i32.store8 (i32.const 11) (i32.wrap_i64 (local.get $x)))
   )
-  ;; CHECK:      (func $store16-wrap
-  ;; CHECK-NEXT:  (i32.store16
+  ;; CHECK:      (func $store16-wrap (param $x i64)
+  ;; CHECK-NEXT:  (i64.store16
   ;; CHECK-NEXT:   (i32.const 11)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store16-wrap
-    (i32.store16 (i32.const 11) (i32.wrap_i64 (i64.const 2)))
+  (func $store16-wrap (param $x i64)
+    (i32.store16 (i32.const 11) (i32.wrap_i64 (local.get $x)))
   )
-  ;; CHECK:      (func $store-wrap
-  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK:      (func $store-wrap (param $x i64)
+  ;; CHECK-NEXT:  (i64.store32
   ;; CHECK-NEXT:   (i32.const 11)
-  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store-wrap
-    (i32.store (i32.const 11) (i32.wrap_i64 (i64.const 3)))
+  (func $store-wrap (param $x i64)
+    (i32.store (i32.const 11) (i32.wrap_i64 (local.get $x)))
   )
   ;; CHECK:      (func $store8-neg1
   ;; CHECK-NEXT:  (i32.store8
