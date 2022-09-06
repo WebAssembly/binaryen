@@ -2704,7 +2704,8 @@ private:
       // Use a simple stack as we go through the children. We use ** as we need
       // to replace children for some optimizations.
       SmallVector<Expression**, 2> stack;
-      stack.emplace_back(wrap);
+      Expression* top = wrap;
+      stack.emplace_back(&top);
 
       while (!stack.empty() && canOptimize) {
         auto* currp = stack.back();
