@@ -60,9 +60,7 @@ inline std::vector<std::vector<Index>> makeAllPermutations(Index size) {
   }
   while (1) {
     std::set<Index> set;
-    for (auto x : curr) {
-      set.insert(x);
-    }
+    set.insert(curr.begin(), curr.end());
     if (set.size() == size) {
       ret.push_back(curr); // this is indeed a permutation
     }
