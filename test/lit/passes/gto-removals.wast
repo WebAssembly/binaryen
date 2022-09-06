@@ -815,11 +815,13 @@
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (block (result (ref null ${mut:i8}))
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.null ${mut:i8})
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (br $block)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null ${mut:i8})
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -833,6 +835,33 @@
         (ref.null ${mut:i8})
         (br $block)
       )
+    )
+  )
+
+  ;; CHECK:      (func $unreachable-set-2b (type $none_=>_none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null ${mut:i8})
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-set-2b
+    ;; As above, but with an unreachable instead of a br. We add a nop here so
+    ;; that we are inside of a block, and then validation would fail if we do
+    ;; not keep the type of the replacement for the struct.set identical to the
+    ;; struct.set. That is, the type must remain unreachable.
+    (nop)
+    (struct.set ${mut:i8} 0
+      (ref.null ${mut:i8})
+      (unreachable)
     )
   )
 
