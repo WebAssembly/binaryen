@@ -2686,7 +2686,7 @@ private:
   //  int32_t(int64_t(x))               => x    (extend and then wrap)
   //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10) (also add
   //
-  Expression* optimizeWrappedResult(Unary * wrap) {
+  Expression* optimizeWrappedResult(Unary* wrap) {
     assert(wrap->op == WrapInt64);
 
     // Core processing logic. This goes through the children, in one of two
@@ -2697,7 +2697,8 @@ private:
     //    updates the children of |wrap| and sets |replacement| which should
     //    replace |wrap|.
     enum Mode { Scan, Optimize };
-    bool canOptimize = false Expression* replacement = nullptr;
+    bool canOptimize = false;
+    Expression* replacement = nullptr;
     auto processChildren = [&](Mode mode) {
       // Use a simple stack as we go through the children. We use ** as we need
       // to replace children for some optimizations.
