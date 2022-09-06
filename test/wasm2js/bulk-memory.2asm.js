@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -35,7 +36,8 @@ var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
     bufferView.fill(value, dest, dest + size);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -143,7 +145,8 @@ function initActiveSegments(imports) {
     bufferView.copyWithin(dest, source, source + size);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -229,7 +232,8 @@ memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -344,7 +348,8 @@ function initActiveSegments(imports) {
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);

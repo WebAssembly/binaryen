@@ -53,6 +53,8 @@ namespace wasm {
 
 using namespace cashew;
 
+static IString importObject("importObject");
+
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
@@ -411,7 +413,21 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
-  ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
+  ValueBuilder::appendArgumentToFunction(asmFunc, importObject);
+
+  // Retrieve `env` object from info.  Older version of emscripten pass `env`
+  // *as* `info` so for now we make this conditional.
+  // TODO(sbc): Remove the makeBinary here once emscripten change has landed.
+  Ref envVar = ValueBuilder::makeVar();
+  asmFunc[3]->push_back(envVar);
+  ValueBuilder::appendToVar(
+    envVar,
+    ENV,
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeDot(ValueBuilder::makeName(importObject),
+                            ValueBuilder::makeName(ENV)),
+      "||",
+      ValueBuilder::makeName(importObject)));
 
   // add memory import
   if (!wasm->memories.empty()) {
@@ -2570,7 +2586,7 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out << "function instantiate(asmLibraryArg) {\n";
+  out << "function instantiate(info) {\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
@@ -2617,7 +2633,7 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  out << "  return asmFunc(asmLibraryArg);\n}\n";
+  out << "  return asmFunc(info);\n}\n";
 }
 
 void Wasm2JSGlue::emitPostES6() {

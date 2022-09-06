@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -238,7 +239,8 @@ export var i64_no_fold_cmp_s_offset = retasmFunc.i64_no_fold_cmp_s_offset;
 export var i64_no_fold_cmp_u_offset = retasmFunc.i64_no_fold_cmp_u_offset;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -321,7 +323,8 @@ var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
 export var i64_no_fold_wrap_extend_s = retasmFunc.i64_no_fold_wrap_extend_s;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -403,7 +406,8 @@ var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
 export var i64_no_fold_wrap_extend_u = retasmFunc.i64_no_fold_wrap_extend_u;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -600,7 +604,8 @@ export var i64_no_fold_shl_shr_s = retasmFunc.i64_no_fold_shl_shr_s;
 export var i64_no_fold_shl_shr_u = retasmFunc.i64_no_fold_shl_shr_u;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -797,7 +802,8 @@ export var i64_no_fold_shr_s_shl = retasmFunc.i64_no_fold_shr_s_shl;
 export var i64_no_fold_shr_u_shl = retasmFunc.i64_no_fold_shr_u_shl;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -1609,7 +1615,8 @@ export var i64_no_fold_div_s_mul = retasmFunc.i64_no_fold_div_s_mul;
 export var i64_no_fold_div_u_mul = retasmFunc.i64_no_fold_div_u_mul;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -2327,7 +2334,8 @@ export var i64_no_fold_div_s_self = retasmFunc.i64_no_fold_div_s_self;
 export var i64_no_fold_div_u_self = retasmFunc.i64_no_fold_div_u_self;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -3027,7 +3035,8 @@ export var i64_no_fold_rem_s_self = retasmFunc.i64_no_fold_rem_s_self;
 export var i64_no_fold_rem_u_self = retasmFunc.i64_no_fold_rem_u_self;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -3839,7 +3848,8 @@ export var i64_no_fold_mul_div_s = retasmFunc.i64_no_fold_mul_div_s;
 export var i64_no_fold_mul_div_u = retasmFunc.i64_no_fold_mul_div_u;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -4491,7 +4501,8 @@ export var i32_no_fold_div_s_2 = retasmFunc.i32_no_fold_div_s_2;
 export var i64_no_fold_div_s_2 = retasmFunc.i64_no_fold_div_s_2;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -5125,7 +5136,8 @@ export var i32_no_fold_rem_s_2 = retasmFunc.i32_no_fold_rem_s_2;
 export var i64_no_fold_rem_s_2 = retasmFunc.i64_no_fold_rem_s_2;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -5843,7 +5855,8 @@ export var i64_div_s_0 = retasmFunc.i64_div_s_0;
 export var i64_div_u_0 = retasmFunc.i64_div_u_0;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -6561,7 +6574,8 @@ export var i64_div_s_3 = retasmFunc.i64_div_s_3;
 export var i64_div_u_3 = retasmFunc.i64_div_u_3;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -7279,7 +7293,8 @@ export var i64_div_s_5 = retasmFunc.i64_div_s_5;
 export var i64_div_u_5 = retasmFunc.i64_div_u_5;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -7997,7 +8012,8 @@ export var i64_div_s_7 = retasmFunc.i64_div_s_7;
 export var i64_div_u_7 = retasmFunc.i64_div_u_7;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -8697,7 +8713,8 @@ export var i64_rem_s_3 = retasmFunc.i64_rem_s_3;
 export var i64_rem_u_3 = retasmFunc.i64_rem_u_3;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -9397,7 +9414,8 @@ export var i64_rem_s_5 = retasmFunc.i64_rem_s_5;
 export var i64_rem_u_5 = retasmFunc.i64_rem_u_5;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -10097,7 +10115,8 @@ export var i64_rem_s_7 = retasmFunc.i64_rem_s_7;
 export var i64_rem_u_7 = retasmFunc.i64_rem_u_7;
 import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;

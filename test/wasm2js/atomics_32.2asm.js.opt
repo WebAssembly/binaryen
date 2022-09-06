@@ -94,7 +94,8 @@ memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29y
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(16777216);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
