@@ -2680,8 +2680,8 @@ private:
   // being operated on behave the same with or without wrapping, then we don't
   // need to go to 64 bits at all, e.g.:
   //
-  //  int32_t(int64_t(x))               => x    (extend and then wrap)
-  //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10) (also add
+  //  int32_t(int64_t(x))               => x                 (extend, then wrap)
+  //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10)            (also add)
   //
   Expression* optimizeWrappedResult(Unary* wrap) {
     assert(wrap->op == WrapInt64);
