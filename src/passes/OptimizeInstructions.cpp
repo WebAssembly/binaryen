@@ -2762,8 +2762,7 @@ private:
                 WASM_UNREACHABLE("bad op");
               }
             }
-            // All things we can optimize do the following: change the type to
-            // i32, and prepare to scan the children.
+            // All things we can optimize change the type to i32.
             binary->type = Type::i32;
           }
           stack.push_back(&binary->left);
