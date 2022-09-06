@@ -2694,18 +2694,14 @@ private:
     // modes:
     //  * Scan: Find if there is anything we can't handle. Sets |canOptimize|
     //    with what it finds.
-    //  * Optimize: Given we can handle everything, update things. This both
-    //    updates the children of |wrap| and sets |replacement| which should
-    //    replace |wrap|.
+    //  * Optimize: Given we can handle everything, update things.
     enum Mode { Scan, Optimize };
-    bool canOptimize = false;
-    Expression* replacement = nullptr;
+    bool canOptimize = true;
     auto processChildren = [&](Mode mode) {
       // Use a simple stack as we go through the children. We use ** as we need
       // to replace children for some optimizations.
       SmallVector<Expression**, 2> stack;
-      Expression* top = wrap;
-      stack.emplace_back(&top);
+      stack.emplace_back(&wrap->value);
 
       while (!stack.empty() && canOptimize) {
         auto* currp = stack.back();
@@ -2788,8 +2784,10 @@ private:
       return nullptr;
     }
 
+    // Optimize, and return the optimized results (in which we no longer need
+    // the wrap operation itself).
     processChildren(Optimize);
-    return replacement;
+    return wrap->value;
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2,

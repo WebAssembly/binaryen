@@ -3306,7 +3306,11 @@
   ;; CHECK-NEXT:  (i32.shr_s
   ;; CHECK-NEXT:   (i32.shl
   ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:     (i32.wrap_i64
+  ;; CHECK-NEXT:      (i64.extend_i32_s
+  ;; CHECK-NEXT:       (i32.const -1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 24)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 24)
@@ -3332,7 +3336,11 @@
   )
   ;; CHECK:      (func $sext-24-shr_u-wrap-extend (result i32)
   ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.const -1)
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.extend_i32_s
+  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 25)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -13051,10 +13059,18 @@
 
   ;; CHECK:      (func $sign-and-zero-extention-elimination-1 (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.extend_i32_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $sign-and-zero-extention-elimination-1 (param $x i32)
