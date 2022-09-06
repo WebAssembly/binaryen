@@ -853,7 +853,7 @@ struct OptimizeInstructions
         }
       }
       {
-        // i32.wrap_i64 can be removed, if the operations inside it do not
+        // i32.wrap_i64 can be removed if the operations inside it do not
         // actually require 64 bits, e.g.:
         //
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
