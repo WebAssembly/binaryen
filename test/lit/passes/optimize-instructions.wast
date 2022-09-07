@@ -15272,6 +15272,20 @@
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ge_u-added-constant (param $x i32)
     ;; As above, but with ge rather than gt. We can optimize here.
@@ -15283,6 +15297,102 @@
             (i32.const 1)
           )
           (i32.const 5)
+        )
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 5)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 6)
+        )
+        (i32.const 5)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ge_u-added-constant-no (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const -2147483648)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ge_u-added-constant-no (param $x i32)
+    ;; As above, but with ge rather than gt. We cannot optimize here.
+    (drop
+      (i32.ge_u
+        (i32.add
+          (local.get $x)
+          (i32.const 5)
+        )
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0x80000000)
+        )
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0xffffffff)
         )
         (i32.const 10)
       )
