@@ -11,7 +11,6 @@
   ;; CHECK:      (type ${} (struct ))
   (type ${} (struct_subtype data))
 
-  ;; CHECK:      (type ${i32} (struct (field i32)))
   (type ${i32} (struct_subtype (field i32) data))
 
   (type $array (array_subtype i8 data))
@@ -323,7 +322,7 @@
   ;; CHECK-NEXT:   (local.tee $temp
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null func)
+  ;; CHECK-NEXT:      (ref.null nofunc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -332,7 +331,7 @@
   ;; CHECK-NEXT:  (local.tee $temp
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null func)
+  ;; CHECK-NEXT:     (ref.null nofunc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -365,25 +364,25 @@
   ;; CHECK:      (func $update-nulls
   ;; CHECK-NEXT:  (local $x (ref null ${}))
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.new_default ${})
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null ${})
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null ${i32})
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $update-nulls

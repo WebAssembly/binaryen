@@ -8,7 +8,7 @@
 
  ;; CHECK:      (func $br_on_non_data-1
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result anyref)
+ ;; CHECK-NEXT:   (block $any (result i31ref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br $any
  ;; CHECK-NEXT:      (i31.new
@@ -16,7 +16,7 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -35,11 +35,11 @@
  )
  ;; CHECK:      (func $br_on_non_data-2 (param $data (ref data))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result anyref)
+ ;; CHECK-NEXT:   (block $any (result nullref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (local.get $data)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -144,7 +144,7 @@
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br_on_cast_static $block $struct
- ;; CHECK-NEXT:     (ref.null $struct)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -191,7 +191,7 @@
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.test_static $struct
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
@@ -199,9 +199,9 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (ref.cast_static $struct
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -211,12 +211,12 @@
  ;; CHECK-NEXT:    (block $something (result anyref)
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (br_on_cast_static $something $struct
- ;; CHECK-NEXT:       (ref.null $struct)
+ ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -225,13 +225,13 @@
  ;; CHECK-NEXT:     (block $nothing
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (br_on_null $nothing
- ;; CHECK-NEXT:        (ref.null $struct)
+ ;; CHECK-NEXT:        (ref.null none)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

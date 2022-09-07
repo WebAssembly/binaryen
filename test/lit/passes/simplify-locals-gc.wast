@@ -108,6 +108,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -123,6 +124,7 @@
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (unreachable)
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (struct.set $struct 0
@@ -154,15 +156,15 @@
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_null $block
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br $block)
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -176,15 +178,15 @@
   ;; NOMNL-NEXT:  (block $block
   ;; NOMNL-NEXT:   (drop
   ;; NOMNL-NEXT:    (br_on_null $block
-  ;; NOMNL-NEXT:     (ref.null any)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.set $temp
-  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (br $block)
   ;; NOMNL-NEXT:   (local.set $temp
-  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop

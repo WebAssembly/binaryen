@@ -159,7 +159,7 @@
  ;; CHECK:      (func $bar (param $0 i31ref)
  ;; CHECK-NEXT:  (local $1 anyref)
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (ref.null any)
+ ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -173,7 +173,7 @@
  ;; NOMNL:      (func $bar (type $i31ref_=>_none) (param $0 i31ref)
  ;; NOMNL-NEXT:  (local $1 anyref)
  ;; NOMNL-NEXT:  (local.set $1
- ;; NOMNL-NEXT:   (ref.null any)
+ ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (block
  ;; NOMNL-NEXT:   (drop
@@ -192,7 +192,7 @@
 
  ;; CHECK:      (func $call-bar
  ;; CHECK-NEXT:  (call $bar
- ;; CHECK-NEXT:   (ref.null i31)
+ ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $bar
  ;; CHECK-NEXT:   (i31.new
@@ -202,7 +202,7 @@
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-bar (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $bar
- ;; NOMNL-NEXT:   (ref.null i31)
+ ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $bar
  ;; NOMNL-NEXT:   (i31.new

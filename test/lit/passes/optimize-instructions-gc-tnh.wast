@@ -53,17 +53,7 @@
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.eq
-  ;; TNH-NEXT:    (block (result (ref null $struct))
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (ref.null any)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (ref.null $struct)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (ref.as_data
-  ;; TNH-NEXT:     (ref.null any)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_=>_none) (param $a eqref) (param $b eqref)
@@ -85,14 +75,14 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.eq
-  ;; NO_TNH-NEXT:    (block (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (block (result nullref)
   ;; NO_TNH-NEXT:     (drop
-  ;; NO_TNH-NEXT:      (ref.null any)
+  ;; NO_TNH-NEXT:      (ref.null none)
   ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:     (ref.null $struct)
+  ;; NO_TNH-NEXT:     (ref.null none)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:    (ref.as_data
-  ;; NO_TNH-NEXT:     (ref.null any)
+  ;; NO_TNH-NEXT:     (ref.null none)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )

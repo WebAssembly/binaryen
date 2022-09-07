@@ -431,9 +431,9 @@ void test_core() {
                         temp15 = makeInt32(module, 110),
                         temp16 = makeInt64(module, 111);
   BinaryenExpressionRef externrefExpr =
-    BinaryenRefNull(module, BinaryenTypeExternref());
+    BinaryenRefNull(module, BinaryenTypeNullExternref());
   BinaryenExpressionRef funcrefExpr =
-    BinaryenRefNull(module, BinaryenTypeFuncref());
+    BinaryenRefNull(module, BinaryenTypeNullFuncref());
   funcrefExpr =
     BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
   BinaryenExpressionRef i31refExpr =
@@ -973,40 +973,40 @@ void test_core() {
     BinaryenSelect(
       module,
       temp10,
-      BinaryenRefNull(module, BinaryenTypeFuncref()),
+      BinaryenRefNull(module, BinaryenTypeNullFuncref()),
       BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref()),
       BinaryenTypeFuncref()),
     // GC
     BinaryenRefEq(module,
-                  BinaryenRefNull(module, BinaryenTypeEqref()),
-                  BinaryenRefNull(module, BinaryenTypeEqref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref()),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefIs(module,
                   BinaryenRefIsFunc(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefIs(module,
                   BinaryenRefIsData(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefIs(module,
                   BinaryenRefIsI31(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
                   BinaryenRefAsNonNull(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
                   BinaryenRefAsFunc(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
                   BinaryenRefAsData(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
                   BinaryenRefAsI31(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
                   BinaryenRefAsExternInternalize(),
-                  BinaryenRefNull(module, BinaryenTypeExternref())),
+                  BinaryenRefNull(module, BinaryenTypeNullExternref())),
     BinaryenRefAs(module,
                   BinaryenRefAsExternExternalize(),
-                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+                  BinaryenRefNull(module, BinaryenTypeNullref())),
     // Exception handling
     BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),
     // (try $try_outer
@@ -1103,11 +1103,8 @@ void test_core() {
     BinaryenArrayGet(module,
                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
                      makeInt32(module, 0),
+                     BinaryenTypeInt32(),
                      true),
-    BinaryenArrayGet(module,
-                     BinaryenGlobalGet(module, "i8Array-global", i8Array),
-                     makeInt32(module, 0),
-                     false),
     BinaryenArraySet(module,
                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
                      makeInt32(module, 0),
@@ -1420,7 +1417,7 @@ void test_core() {
   BinaryenTableSizeSetTable(tablesize, table);
 
   BinaryenExpressionRef valueExpr =
-    BinaryenRefNull(module, BinaryenTypeFuncref());
+    BinaryenRefNull(module, BinaryenTypeNullFuncref());
   BinaryenExpressionRef sizeExpr = makeInt32(module, 0);
   BinaryenExpressionRef growExpr =
     BinaryenTableGrow(module, "0", valueExpr, sizeExpr);

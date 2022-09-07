@@ -58,7 +58,7 @@ BinaryenFeatureAll: 126975
 )
 (table.size $0)
 (table.grow $0
- (ref.null func)
+ (ref.null nofunc)
  (i32.const 0)
 )
 (module
@@ -1974,7 +1974,7 @@ BinaryenFeatureAll: 126975
       )
       (drop
        (ref.is_null
-        (ref.null extern)
+        (ref.null noextern)
        )
       )
       (drop
@@ -1984,60 +1984,60 @@ BinaryenFeatureAll: 126975
       )
       (drop
        (select (result funcref)
-        (ref.null func)
+        (ref.null nofunc)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
       )
       (drop
        (ref.eq
-        (ref.null eq)
-        (ref.null eq)
+        (ref.null none)
+        (ref.null none)
        )
       )
       (drop
        (ref.is_func
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (ref.is_data
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (ref.is_i31
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (ref.as_non_null
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (ref.as_func
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (ref.as_data
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (ref.as_i31
-        (ref.null any)
+        (ref.null none)
        )
       )
       (drop
        (extern.internalize
-        (ref.null extern)
+        (ref.null noextern)
        )
       )
       (drop
        (extern.externalize
-        (ref.null any)
+        (ref.null none)
        )
       )
       (try
@@ -2203,12 +2203,6 @@ BinaryenFeatureAll: 126975
       )
       (drop
        (array.get_s $[mut:i8]
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (array.get_u $[mut:i8]
         (global.get $i8Array-global)
         (i32.const 0)
        )

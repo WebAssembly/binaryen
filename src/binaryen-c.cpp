@@ -51,96 +51,111 @@ static_assert(sizeof(BinaryenLiteral) == sizeof(Literal),
 BinaryenLiteral toBinaryenLiteral(Literal x) {
   BinaryenLiteral ret;
   ret.type = x.type.getID();
-  if (x.type.isRef()) {
-    auto heapType = x.type.getHeapType();
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic()) {
-        case HeapType::func:
-          ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
-          break;
-        case HeapType::ext:
-        case HeapType::eq:
-          assert(x.isNull() && "unexpected non-null reference type literal");
-          break;
-        case HeapType::any:
-        case HeapType::i31:
-        case HeapType::data:
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: reftypes");
-      }
-      return ret;
+  assert(x.type.isSingle());
+  if (x.type.isBasic()) {
+    switch (x.type.getBasic()) {
+      case Type::i32:
+        ret.i32 = x.geti32();
+        return ret;
+      case Type::i64:
+        ret.i64 = x.geti64();
+        return ret;
+      case Type::f32:
+        ret.i32 = x.reinterpreti32();
+        return ret;
+      case Type::f64:
+        ret.i64 = x.reinterpreti64();
+        return ret;
+      case Type::v128:
+        memcpy(&ret.v128, x.getv128Ptr(), 16);
+        return ret;
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE("TODO: reftypes");
   }
-  TODO_SINGLE_COMPOUND(x.type);
-  switch (x.type.getBasic()) {
-    case Type::i32:
-      ret.i32 = x.geti32();
-      break;
-    case Type::i64:
-      ret.i64 = x.geti64();
-      break;
-    case Type::f32:
-      ret.i32 = x.reinterpreti32();
-      break;
-    case Type::f64:
-      ret.i64 = x.reinterpreti64();
-      break;
-    case Type::v128:
-      memcpy(&ret.v128, x.getv128Ptr(), 16);
-      break;
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  assert(x.type.isRef());
+  auto heapType = x.type.getHeapType();
+  if (heapType.isBasic()) {
+    switch (heapType.getBasic()) {
+      case HeapType::i31:
+        WASM_UNREACHABLE("TODO: i31");
+      case HeapType::ext:
+      case HeapType::any:
+        WASM_UNREACHABLE("TODO: extern literals");
+      case HeapType::eq:
+      case HeapType::func:
+      case HeapType::data:
+        WASM_UNREACHABLE("invalid type");
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        WASM_UNREACHABLE("TODO: string literals");
+      case HeapType::none:
+      case HeapType::noext:
+      case HeapType::nofunc:
+        // Null.
+        return ret;
+    }
   }
-  return ret;
+  if (heapType.isSignature()) {
+    ret.func = x.getFunc().c_str();
+    return ret;
+  }
+  assert(x.isData());
+  WASM_UNREACHABLE("TODO: gc data");
 }
 
 Literal fromBinaryenLiteral(BinaryenLiteral x) {
   auto type = Type(x.type);
-  if (type.isRef()) {
-    auto heapType = type.getHeapType();
-    if (type.isNullable()) {
-      return Literal::makeNull(heapType);
-    }
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic()) {
-        case HeapType::func:
-        case HeapType::any:
-        case HeapType::eq:
-        case HeapType::data:
-          assert(false && "Literals must have concrete types");
-          WASM_UNREACHABLE("no fallthrough here");
-        case HeapType::ext:
-        case HeapType::i31:
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: reftypes");
-      }
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(x.i32);
+      case Type::i64:
+        return Literal(x.i64);
+      case Type::f32:
+        return Literal(x.i32).castToF32();
+      case Type::f64:
+        return Literal(x.i64).castToF64();
+      case Type::v128:
+        return Literal(x.v128);
+      case Type::none:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
     }
   }
-  assert(type.isBasic());
-  switch (type.getBasic()) {
-    case Type::i32:
-      return Literal(x.i32);
-    case Type::i64:
-      return Literal(x.i64);
-    case Type::f32:
-      return Literal(x.i32).castToF32();
-    case Type::f64:
-      return Literal(x.i64).castToF64();
-    case Type::v128:
-      return Literal(x.v128);
-    case Type::none:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+  assert(type.isRef());
+  auto heapType = type.getHeapType();
+  if (heapType.isBasic()) {
+    switch (heapType.getBasic()) {
+      case HeapType::i31:
+        WASM_UNREACHABLE("TODO: i31");
+      case HeapType::ext:
+      case HeapType::any:
+        WASM_UNREACHABLE("TODO: extern literals");
+      case HeapType::eq:
+      case HeapType::func:
+      case HeapType::data:
+        WASM_UNREACHABLE("invalid type");
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        WASM_UNREACHABLE("TODO: string literals");
+      case HeapType::none:
+      case HeapType::noext:
+      case HeapType::nofunc:
+        assert(type.isNullable());
+        return Literal::makeNull(heapType);
+    }
   }
-  WASM_UNREACHABLE("invalid type");
+  if (heapType.isSignature()) {
+    return Literal::makeFunc(Name(x.func), heapType);
+  }
+  assert(heapType.isData());
+  WASM_UNREACHABLE("TODO: gc data");
 }
 
 // Mutexes (global for now; in theory if multiple modules
@@ -196,6 +211,15 @@ BinaryenType BinaryenTypeStringviewWTF16() {
 }
 BinaryenType BinaryenTypeStringviewIter() {
   return Type(HeapType::stringview_iter, Nullable).getID();
+}
+BinaryenType BinaryenTypeNullref() {
+  return Type(HeapType::none, Nullable).getID();
+}
+BinaryenType BinaryenTypeNullExternref(void) {
+  return Type(HeapType::noext, Nullable).getID();
+}
+BinaryenType BinaryenTypeNullFuncref(void) {
+  return Type(HeapType::nofunc, Nullable).getID();
 }
 BinaryenType BinaryenTypeUnreachable(void) { return Type::unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uintptr_t(-1); }
@@ -1699,10 +1723,11 @@ BinaryenExpressionRef BinaryenArrayInit(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenArrayGet(BinaryenModuleRef module,
                                        BinaryenExpressionRef ref,
                                        BinaryenExpressionRef index,
+                                       BinaryenType type,
                                        bool signed_) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeArrayGet((Expression*)ref, (Expression*)index, signed_));
+      .makeArrayGet((Expression*)ref, (Expression*)index, Type(type), signed_));
 }
 BinaryenExpressionRef BinaryenArraySet(BinaryenModuleRef module,
                                        BinaryenExpressionRef ref,

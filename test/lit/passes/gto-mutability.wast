@@ -7,7 +7,7 @@
   ;; The struct here has three fields, and the second of them has no struct.set
   ;; which means we can make it immutable.
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) (field funcref) (field (mut funcref)) data))
+  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) (field funcref) data))
   (type $struct (struct (field (mut funcref)) (field (mut funcref)) (field (mut funcref))))
 
   ;; CHECK:      (type $two-params (func_subtype (param (ref $struct) (ref $struct)) func))
@@ -33,18 +33,23 @@
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (ref.null func)
-  ;; CHECK-NEXT:    (ref.null func)
-  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 2
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nofunc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (local.get $x)
@@ -108,7 +113,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $foo (result (ref null $struct))
     ;; Use a tag so that we test proper updating of its type after making
@@ -155,8 +160,11 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 2
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -171,9 +179,8 @@
   ;; Test recursion between structs where we only modify one. Specifically $B
   ;; has no writes to either of its fields.
 
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $B))) (field (mut i32)) data))
+  ;; CHECK:      (type $A (struct_subtype  data))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
-  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) (field f64) data))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
   ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
@@ -181,13 +188,25 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $ref|$A|_=>_none) (param $x (ref $A))
-  ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $A 1
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A))
@@ -203,23 +222,35 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 1
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -234,10 +265,9 @@
 (module
   ;; As before, but flipped so that $A's fields can become immutable.
 
-  ;; CHECK:      (type $B (struct_subtype (field (mut (ref null $A))) (field (mut f64)) data))
+  ;; CHECK:      (type $B (struct_subtype  data))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
-  ;; CHECK:      (type $A (struct_subtype (field (ref null $B)) (field i32) data))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
   ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
@@ -245,13 +275,25 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $ref|$B|_=>_none) (param $x (ref $B))
-  ;; CHECK-NEXT:  (struct.set $B 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $B))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $B 1
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $B))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (f64.const 3.14159)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $B))
@@ -267,23 +309,35 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 1
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -298,10 +352,11 @@
 (module
   ;; As before, but now one field in each can become immutable.
 
-  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) (field (mut f64)) data))
+  ;; CHECK:      (type $A (struct_subtype  data))
+
+  ;; CHECK:      (type $B (struct_subtype  data))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $B))) (field i32) data))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
   ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func_subtype (param (ref $A) (ref $B)) func))
@@ -309,13 +364,25 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $ref|$A|_ref|$B|_=>_none) (param $x (ref $A)) (param $y (ref $B))
-  ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $B 1
-  ;; CHECK-NEXT:   (local.get $y)
-  ;; CHECK-NEXT:   (f64.const 3.14159)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $B))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (f64.const 3.14159)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $A)) (param $y (ref $B))
@@ -331,23 +398,35 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 1
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -364,7 +443,7 @@
   ;; Field #1 is mutable and can become so.
   ;; Field #2 is mutable and must remain so.
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) (field i32) (field (mut i32)) data))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct (field i32) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
@@ -372,9 +451,15 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (struct.set $struct 2
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
@@ -386,18 +471,27 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 1
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 2
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -412,23 +506,19 @@
   ;; Subtyping. Without a write in either supertype or subtype, we can
   ;; optimize the field to be immutable.
 
-  ;; CHECK:      (type $super (struct_subtype (field i32) data))
-  (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct_subtype (field i32) $super))
-  (type $sub (struct_subtype (field (mut i32)) $super))
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $super (struct_subtype  data))
+  (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $sub (struct_subtype  $super))
+  (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $super
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $super)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $sub
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $sub)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
@@ -447,13 +537,19 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $super 0
-  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $sub 0
-  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -466,29 +562,31 @@
 (module
   ;; As above, but add a write in the super, which prevents optimization.
 
-  ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $super (struct_subtype  data))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
-  (type $sub (struct_subtype (field (mut i32)) $super))
-
   ;; CHECK:      (type $ref|$super|_=>_none (func_subtype (param (ref $super)) func))
+
+  ;; CHECK:      (type $sub (struct_subtype  $super))
+  (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $ref|$super|_=>_none) (param $x (ref $super))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $super
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $super)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $sub
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $sub)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $super 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $super))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $super))
@@ -511,13 +609,19 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $super 0
-  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $sub 0
-  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -531,9 +635,9 @@
   ;; As above, but add a write in the sub, which prevents optimization.
 
 
-  ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $super (struct_subtype  data))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
+  ;; CHECK:      (type $sub (struct_subtype  $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $ref|$sub|_=>_none (func_subtype (param (ref $sub)) func))
@@ -541,9 +645,15 @@
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $func (type $ref|$sub|_=>_none) (param $x (ref $sub))
-  ;; CHECK-NEXT:  (struct.set $sub 0
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $sub))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $sub))
@@ -555,13 +665,19 @@
 
   ;; CHECK:      (func $field-keepalive (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $super 0
-  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $sub 0
-  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

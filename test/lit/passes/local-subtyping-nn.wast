@@ -5,8 +5,6 @@
 ;; RUN:   | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $struct (struct ))
-  ;; NOMNL:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
   ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
@@ -14,11 +12,11 @@
   (import "out" "i32" (func $i32 (result i32)))
 
   ;; CHECK:      (func $non-nullable
-  ;; CHECK-NEXT:  (local $x (ref $struct))
+  ;; CHECK-NEXT:  (local $x (ref none))
   ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
@@ -29,11 +27,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $non-nullable (type $none_=>_none)
-  ;; NOMNL-NEXT:  (local $x (ref $struct))
+  ;; NOMNL-NEXT:  (local $x (ref none))
   ;; NOMNL-NEXT:  (local $y (ref $none_=>_i32))
   ;; NOMNL-NEXT:  (local.set $x
   ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (ref.null $struct)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (local.set $y
@@ -62,12 +60,12 @@
   )
 
   ;; CHECK:      (func $uses-default (param $i i32)
-  ;; CHECK-NEXT:  (local $x (ref null $struct))
+  ;; CHECK-NEXT:  (local $x nullref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -76,12 +74,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $uses-default (type $i32_=>_none) (param $i i32)
-  ;; NOMNL-NEXT:  (local $x (ref null $struct))
+  ;; NOMNL-NEXT:  (local $x nullref)
   ;; NOMNL-NEXT:  (if
   ;; NOMNL-NEXT:   (local.get $i)
   ;; NOMNL-NEXT:   (local.set $x
   ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.null $struct)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )

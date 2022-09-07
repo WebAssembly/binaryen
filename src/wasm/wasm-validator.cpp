@@ -2079,6 +2079,10 @@ void FunctionValidator::visitSelect(Select* curr) {
 }
 
 void FunctionValidator::visitDrop(Drop* curr) {
+  if (!curr->value->type.isConcrete() &&
+      curr->value->type != Type::unreachable) {
+    assert(false);
+  }
   shouldBeTrue(curr->value->type.isConcrete() ||
                  curr->value->type == Type::unreachable,
                curr,
@@ -2110,13 +2114,13 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.null requires reference-types to be enabled");
-  shouldBeTrue(
-    curr->type.isNullable(), curr, "ref.null types must be nullable");
-
-  // The type of the null must also be valid for the features.
-  shouldBeTrue(curr->type.getFeatures() <= getModule()->features,
-               curr->type,
-               "ref.null type should be allowed");
+  if (!shouldBeTrue(
+        curr->type.isNullable(), curr, "ref.null types must be nullable")) {
+    return;
+  }
+  shouldBeTrue(curr->type.getHeapType().isBottom(),
+               curr,
+               "ref.null must have a bottom heap type");
 }
 
 void FunctionValidator::visitRefIs(RefIs* curr) {
@@ -2454,12 +2458,15 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
   validateReturnCall(curr);
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "call_ref requires gc to be enabled");
-  if (curr->target->type != Type::unreachable) {
-    if (shouldBeTrue(curr->target->type.isFunction(),
-                     curr,
-                     "call_ref target must be a function reference")) {
-      validateCallParamsAndResult(curr, curr->target->type.getHeapType());
-    }
+  if (curr->target->type == Type::unreachable ||
+      (curr->target->type.isRef() &&
+       curr->target->type.getHeapType() == HeapType::nofunc)) {
+    return;
+  }
+  if (shouldBeTrue(curr->target->type.isFunction(),
+                   curr,
+                   "call_ref target must be a function reference")) {
+    validateCallParamsAndResult(curr, curr->target->type.getHeapType());
   }
 }
 
@@ -2580,7 +2587,7 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc to be enabled");
-  if (curr->ref->type == Type::unreachable) {
+  if (curr->type == Type::unreachable || curr->ref->type.isNull()) {
     return;
   }
   if (!shouldBeTrue(curr->ref->type.isStruct(),
@@ -2610,22 +2617,28 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   if (curr->ref->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(curr->ref->type.isStruct(),
+  if (!shouldBeTrue(curr->ref->type.isRef(),
                     curr->ref,
-                    "struct.set ref must be a struct")) {
+                    "struct.set ref must be a reference type")) {
     return;
   }
-  if (curr->ref->type != Type::unreachable) {
-    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
-    auto& field = fields[curr->index];
-    shouldBeSubType(curr->value->type,
-                    field.type,
-                    curr,
-                    "struct.set must have the proper type");
-    shouldBeEqual(
-      field.mutable_, Mutable, curr, "struct.set field must be mutable");
+  auto type = curr->ref->type.getHeapType();
+  if (type == HeapType::none) {
+    return;
   }
+  if (!shouldBeTrue(
+        type.isStruct(), curr->ref, "struct.set ref must be a struct")) {
+    return;
+  }
+  const auto& fields = type.getStruct().fields;
+  shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+  auto& field = fields[curr->index];
+  shouldBeSubType(curr->value->type,
+                  field.type,
+                  curr,
+                  "struct.set must have the proper type");
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.set field must be mutable");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
@@ -2688,7 +2701,18 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  const auto& element = curr->ref->type.getHeapType().getArray().element;
+  // TODO: array rather than data once we've implemented that.
+  if (!shouldBeSubType(curr->ref->type,
+                       Type(HeapType::data, Nullable),
+                       curr,
+                       "array.get target should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->ref->type.getHeapType();
+  if (heapType == HeapType::none) {
+    return;
+  }
+  const auto& element = heapType.getArray().element;
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
   if (element.type != Type::i32 || element.packedType == Field::not_packed) {
@@ -2704,6 +2728,17 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->index->type, Type(Type::i32), curr, "array.set index must be an i32");
   if (curr->type == Type::unreachable) {
+    return;
+  }
+  // TODO: array rather than data once we've implemented that.
+  if (!shouldBeSubType(curr->ref->type,
+                       Type(HeapType::data, Nullable),
+                       curr,
+                       "array.set target should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->ref->type.getHeapType();
+  if (heapType == HeapType::none) {
     return;
   }
   const auto& element = curr->ref->type.getHeapType().getArray().element;
@@ -2736,9 +2771,23 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  const auto& srcElement = curr->srcRef->type.getHeapType().getArray().element;
-  const auto& destElement =
-    curr->destRef->type.getHeapType().getArray().element;
+  if (!shouldBeSubType(curr->srcRef->type,
+                       Type(HeapType::data, Nullable),
+                       curr,
+                       "array.copy source should be an array reference") ||
+      !shouldBeSubType(curr->destRef->type,
+                       Type(HeapType::data, Nullable),
+                       curr,
+                       "array.copy destination should be an array reference")) {
+    return;
+  }
+  auto srcHeapType = curr->srcRef->type.getHeapType();
+  auto destHeapType = curr->destRef->type.getHeapType();
+  if (srcHeapType == HeapType::none || destHeapType == HeapType::none) {
+    return;
+  }
+  const auto& srcElement = srcHeapType.getArray().element;
+  const auto& destElement = destHeapType.getArray().element;
   shouldBeSubType(srcElement.type,
                   destElement.type,
                   curr,

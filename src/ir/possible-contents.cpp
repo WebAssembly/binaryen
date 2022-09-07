@@ -785,7 +785,8 @@ struct InfoCollector
     // part of the main IR, which is potentially confusing during debugging,
     // however, which is a downside.
     Builder builder(*getModule());
-    auto* get = builder.makeArrayGet(curr->srcRef, curr->srcIndex);
+    auto* get =
+      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type);
     visitArrayGet(get);
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);

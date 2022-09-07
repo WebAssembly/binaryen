@@ -1,19 +1,15 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
  (type $vector (array (mut f64)))
- (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $none_=>_none (func))
+ (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $matrix (array (mut (ref null $vector))))
  (type $bytes (array (mut i8)))
- (type $struct.C (struct (field $named-mut (mut f32))))
- (type $grandchild (struct (field i32) (field i64)))
  (type $anyref_=>_none (func (param anyref)))
- (type $nested-child-struct (struct (field (mut (ref $child)))))
- (type $words (array (mut i32)))
- (type $nested-child-array (array (mut (ref $child))))
- (type $child (struct (field i32)))
  (type $ref|$struct.A|_=>_ref|$struct.B| (func (param (ref $struct.A)) (result (ref $struct.B))))
+ (type $struct.C (struct (field $named-mut (mut f32))))
  (type $ref|$vector|_=>_ref|$matrix| (func (param (ref $vector)) (result (ref $matrix))))
+ (type $words (array (mut i32)))
  (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
  (type $none_=>_ref|$vector| (func (result (ref $vector))))
  (type $none_=>_ref|$bytes| (func (result (ref $bytes))))
@@ -48,69 +44,7 @@
    )
   )
   (drop
-   (struct.get $struct.A $named
-    (ref.null $struct.A)
-   )
-  )
-  (drop
-   (struct.get_u $struct.B 0
-    (local.get $tB)
-   )
-  )
-  (drop
-   (struct.get_s $struct.B 0
-    (local.get $tB)
-   )
-  )
-  (drop
-   (struct.get $grandchild 0
-    (ref.null $grandchild)
-   )
-  )
-  (drop
-   (ref.null $struct.A)
-  )
-  (drop
-   (local.get $x)
-  )
-  (drop
-   (if (result (ref null $struct.A))
-    (i32.const 1)
-    (local.get $x)
-    (local.get $x)
-   )
-  )
-  (drop
-   (loop $label$3 (result (ref null $struct.A))
-    (local.get $x)
-   )
-  )
-  (drop
-   (select (result (ref null $struct.A))
-    (local.get $x)
-    (local.get $x)
-    (i32.const 1)
-   )
-  )
-  (struct.set $struct.C $named-mut
-   (ref.null $struct.C)
-   (f32.const 100)
-  )
-  (struct.set $nested-child-struct 0
-   (ref.null $nested-child-struct)
-   (ref.as_non_null
-    (ref.null $grandchild)
-   )
-  )
-  (drop
-   (struct.new_default $struct.A)
-  )
-  (drop
-   (struct.new $struct.A
-    (i32.const 1)
-    (f32.const 2.3450000286102295)
-    (f64.const 3.14159)
-   )
+   (ref.null none)
   )
   (unreachable)
  )
@@ -141,34 +75,15 @@
    (i32.const 2)
    (f64.const 2.18281828)
   )
-  (array.set $nested-child-array
-   (ref.null $nested-child-array)
+  (drop
+   (ref.null none)
+  )
+  (drop
    (i32.const 3)
+  )
+  (drop
    (ref.as_non_null
-    (ref.null $grandchild)
-   )
-  )
-  (drop
-   (array.len $vector
-    (local.get $x)
-   )
-  )
-  (drop
-   (array.get $words
-    (local.get $tw)
-    (i32.const 1)
-   )
-  )
-  (drop
-   (array.get_u $bytes
-    (local.get $tb)
-    (i32.const 2)
-   )
-  )
-  (drop
-   (array.get_s $bytes
-    (local.get $tb)
-    (i32.const 3)
+    (ref.null none)
    )
   )
   (unreachable)
@@ -235,7 +150,7 @@
       (local.get $x)
      )
     )
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
   (drop
@@ -245,7 +160,7 @@
       (local.get $x)
      )
     )
-    (ref.null data)
+    (ref.null none)
    )
   )
   (drop
@@ -255,7 +170,7 @@
       (local.get $x)
      )
     )
-    (ref.null i31)
+    (ref.null none)
    )
   )
   (drop
@@ -273,7 +188,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -283,7 +198,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -293,7 +208,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
  )
@@ -302,7 +217,7 @@
  )
  (func $unreachables-2
   (drop
-   (ref.null $struct.C)
+   (ref.null none)
   )
   (unreachable)
  )
@@ -317,7 +232,7 @@
  )
  (func $unreachables-array-2
   (drop
-   (ref.null $vector)
+   (ref.null none)
   )
   (unreachable)
  )
@@ -326,13 +241,13 @@
  )
  (func $unreachables-array-4
   (drop
-   (ref.null $vector)
+   (ref.null none)
   )
   (unreachable)
  )
  (func $unreachables-array-5
   (drop
-   (ref.null $vector)
+   (ref.null none)
   )
   (drop
    (i32.const 2)
@@ -371,19 +286,19 @@
   (local $temp.B (ref null $struct.B))
   (drop
    (ref.test_static $struct.B
-    (ref.null $struct.A)
+    (ref.null none)
    )
   )
   (drop
    (ref.cast_static $struct.B
-    (ref.null $struct.A)
+    (ref.null none)
    )
   )
   (drop
    (block $label$1 (result (ref $struct.B))
     (local.set $temp.A
      (br_on_cast_static $label$1 $struct.B
-      (ref.null $struct.A)
+      (ref.null none)
      )
     )
     (unreachable)
@@ -393,7 +308,7 @@
    (block $label$2 (result (ref null $struct.A))
     (local.set $temp.B
      (br_on_cast_static_fail $label$2 $struct.B
-      (ref.null $struct.A)
+      (ref.null none)
      )
     )
     (unreachable)

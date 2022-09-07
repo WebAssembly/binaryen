@@ -1509,6 +1509,17 @@ struct OptimizeInstructions
     return getDroppedChildrenAndAppend(curr, result);
   }
 
+  bool trapOnNull(Expression* curr, Expression* ref) {
+    if (ref->type.isNull()) {
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, Builder(*getModule()).makeUnreachable()));
+      // Propagate the unreachability.
+      refinalize = true;
+      return true;
+    }
+    return false;
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1564,10 +1575,16 @@ struct OptimizeInstructions
     }
   }
 
-  void visitStructGet(StructGet* curr) { skipNonNullCast(curr->ref); }
+  void visitStructGet(StructGet* curr) {
+    skipNonNullCast(curr->ref);
+    trapOnNull(curr, curr->ref);
+  }
 
   void visitStructSet(StructSet* curr) {
     skipNonNullCast(curr->ref);
+    if (trapOnNull(curr, curr->ref)) {
+      return;
+    }
 
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
@@ -1715,10 +1732,16 @@ struct OptimizeInstructions
     return true;
   }
 
-  void visitArrayGet(ArrayGet* curr) { skipNonNullCast(curr->ref); }
+  void visitArrayGet(ArrayGet* curr) {
+    skipNonNullCast(curr->ref);
+    trapOnNull(curr, curr->ref);
+  }
 
   void visitArraySet(ArraySet* curr) {
     skipNonNullCast(curr->ref);
+    if (trapOnNull(curr, curr->ref)) {
+      return;
+    }
 
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       auto element = curr->ref->type.getHeapType().getArray().element;
@@ -1726,11 +1749,15 @@ struct OptimizeInstructions
     }
   }
 
-  void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
+  void visitArrayLen(ArrayLen* curr) {
+    skipNonNullCast(curr->ref);
+    trapOnNull(curr, curr->ref);
+  }
 
   void visitArrayCopy(ArrayCopy* curr) {
     skipNonNullCast(curr->destRef);
     skipNonNullCast(curr->srcRef);
+    trapOnNull(curr, curr->destRef) || trapOnNull(curr, curr->srcRef);
   }
 
   bool canBeCastTo(HeapType a, HeapType b) {

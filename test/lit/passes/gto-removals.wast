@@ -32,7 +32,7 @@
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (block (result (ref $struct))
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null func)
+  ;; CHECK-NEXT:      (ref.null nofunc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -399,7 +399,7 @@
 (module
   ;; A new with side effects
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct i32 f64 (ref any)))
 
 
@@ -421,8 +421,11 @@
 
   ;; CHECK:      (func $gets (type $ref|any|_=>_none) (param $x (ref any))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -456,9 +459,7 @@
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -491,9 +492,7 @@
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (global.get $imm-i32)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -530,9 +529,7 @@
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -562,6 +559,7 @@
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -578,11 +576,15 @@
   )
 
   ;; CHECK:      (func $new-side-effect-in-kept (type $ref|any|_=>_none) (param $any (ref any))
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (call $helper0
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -778,25 +780,24 @@
 )
 
 (module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type ${mut:i8} (struct_subtype  data))
   (type ${mut:i8} (struct_subtype (field (mut i8)) data))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $none_=>_ref|${mut:i8}| (func_subtype (result (ref ${mut:i8})) func))
 
   ;; CHECK:      (func $unreachable-set (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref null ${mut:i8}))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (call $helper-i32)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null ${mut:i8})
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachable-set
@@ -813,17 +814,14 @@
 
   ;; CHECK:      (func $unreachable-set-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null ${mut:i8})
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br $block)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br $block)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -840,17 +838,14 @@
 
   ;; CHECK:      (func $unreachable-set-2b (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null ${mut:i8})
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachable-set-2b

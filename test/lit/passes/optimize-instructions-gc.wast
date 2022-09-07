@@ -14,12 +14,14 @@
     (field $i64 (mut i64))
   ))
 
+  ;; CHECK:      (type $array (array (mut i8)))
+
   ;; CHECK:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $array (array_subtype (mut i8) data))
+
   ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $array (array (mut i8)))
-  ;; NOMNL:      (type $array (array_subtype (mut i8) data))
   (type $array (array (mut i8)))
 
   ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
@@ -30,12 +32,9 @@
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
-  ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
-
   ;; NOMNL:      (type $empty (struct_subtype  data))
   (type $empty (struct))
 
-  ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -45,10 +44,10 @@
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
   ;; CHECK:      (func $if-arms-subtype-fold (result anyref)
-  ;; CHECK-NEXT:  (ref.null eq)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $if-arms-subtype-fold (type $none_=>_anyref) (result anyref)
-  ;; NOMNL-NEXT:  (ref.null eq)
+  ;; NOMNL-NEXT:  (ref.null none)
   ;; NOMNL-NEXT: )
   (func $if-arms-subtype-fold (result anyref)
     (if (result anyref)
@@ -59,18 +58,10 @@
   )
   ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
   ;; CHECK:      (func $if-arms-subtype-nofold (result anyref)
-  ;; CHECK-NEXT:  (if (result anyref)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (ref.null data)
-  ;; CHECK-NEXT:   (ref.null i31)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $if-arms-subtype-nofold (type $none_=>_anyref) (result anyref)
-  ;; NOMNL-NEXT:  (if (result anyref)
-  ;; NOMNL-NEXT:   (i32.const 0)
-  ;; NOMNL-NEXT:   (ref.null data)
-  ;; NOMNL-NEXT:   (ref.null i31)
-  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (ref.null none)
   ;; NOMNL-NEXT: )
   (func $if-arms-subtype-nofold (result anyref)
     (if (result anyref)
@@ -1254,7 +1245,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $x
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1263,7 +1254,7 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.tee $x
   ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.null any)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -1881,26 +1872,10 @@
   )
 
   ;; CHECK:      (func $hoist-LUB-danger (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (if (result i32)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (struct.get $C 1
-  ;; CHECK-NEXT:    (ref.null $C)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $hoist-LUB-danger (type $i32_=>_i32) (param $x i32) (result i32)
-  ;; NOMNL-NEXT:  (if (result i32)
-  ;; NOMNL-NEXT:   (local.get $x)
-  ;; NOMNL-NEXT:   (struct.get $B 1
-  ;; NOMNL-NEXT:    (ref.null $B)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:   (struct.get $C 1
-  ;; NOMNL-NEXT:    (ref.null $C)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
   (func $hoist-LUB-danger (param $x i32) (result i32)
     ;; In nominal typing, if we hoist the struct.get out of the if, then the if
@@ -1952,44 +1927,44 @@
 
   ;; CHECK:      (func $incompatible-cast-of-null
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $array))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $array)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref null $array))
+  ;; CHECK-NEXT:    (block (result nullref)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $array)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-cast-of-null (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $array))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $array)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (block (result (ref null $array))
+  ;; NOMNL-NEXT:    (block (result nullref)
   ;; NOMNL-NEXT:     (drop
   ;; NOMNL-NEXT:      (ref.as_non_null
-  ;; NOMNL-NEXT:       (ref.null $struct)
+  ;; NOMNL-NEXT:       (ref.null none)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.null $array)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -2171,74 +2146,74 @@
   ;; CHECK:      (func $ref-cast-static-null
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $B)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $B))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.tee $a
-  ;; CHECK-NEXT:      (ref.null $A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-null (type $none_=>_none)
   ;; NOMNL-NEXT:  (local $a (ref null $A))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $B)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $B))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $B)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.tee $a
-  ;; NOMNL-NEXT:      (ref.null $A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )

@@ -24,7 +24,7 @@
   (import "js" "import_and_export" (func $import_and_export (param i32) (result i32)))
   ;; CHECK:      (import "js" "import_void_return" (func $import$import_void_return (param externref i32)))
   (import "js" "import_void_return" (func $import_void_return (param i32)))
-  ;; CHECK:      (global $suspender (mut externref) (ref.null extern))
+  ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 
   ;; CHECK:      (export "update_state_void" (func $export$update_state_void))
   (export "update_state_void" (func $update_state_void))

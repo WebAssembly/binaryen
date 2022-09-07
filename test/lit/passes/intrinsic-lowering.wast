@@ -2,7 +2,6 @@
 ;; RUN: wasm-opt %s --intrinsic-lowering -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none (func))
   (type $none (func))
 
   ;; call.without.effects with no params.
@@ -27,8 +26,11 @@
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $none
-  ;; CHECK-NEXT:   (ref.null $none)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )

@@ -21,10 +21,10 @@
  ;; CHECK-NEXT:   (block $label$1 (result i31ref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br_on_i31 $label$1
- ;; CHECK-NEXT:      (ref.null any)
+ ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null i31)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -45,11 +45,13 @@
 
  ;; CHECK:      (func $struct.set
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 1234)
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $struct 0
- ;; CHECK-NEXT:   (ref.null $struct)
+ ;; CHECK-NEXT:   (block (result (ref null $struct))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 1234)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 5)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (nop)
@@ -71,11 +73,13 @@
  ;; CHECK:      (func $struct.get
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 1234)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.get $struct 0
- ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:    (block (result (ref null $struct))
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (i32.const 1234)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (nop)

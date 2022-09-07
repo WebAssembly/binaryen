@@ -1018,7 +1018,7 @@
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (call $call-without-effects
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-keep)
@@ -1046,7 +1046,7 @@
 
   ;; CHECK:      (func $target-keep (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep (type $A) (param $x i32)
@@ -1057,7 +1057,7 @@
 
   ;; CHECK:      (func $target-keep-2 (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep-2 (type $A) (param $x i32)

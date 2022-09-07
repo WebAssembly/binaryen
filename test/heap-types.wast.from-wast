@@ -1,18 +1,14 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
- (type $vector (array (mut f64)))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
+ (type $vector (array (mut f64)))
  (type $none_=>_none (func))
- (type $struct.C (struct (field $named-mut (mut f32))))
  (type $matrix (array (mut (ref null $vector))))
  (type $bytes (array (mut i8)))
- (type $grandchild (struct (field i32) (field i64)))
  (type $anyref_=>_none (func (param anyref)))
- (type $nested-child-struct (struct (field (mut (ref $child)))))
  (type $words (array (mut i32)))
- (type $nested-child-array (array (mut (ref $child))))
- (type $child (struct (field i32)))
  (type $ref|$struct.A|_=>_ref|$struct.B| (func (param (ref $struct.A)) (result (ref $struct.B))))
+ (type $struct.C (struct (field $named-mut (mut f32))))
  (type $ref|$vector|_=>_ref|$matrix| (func (param (ref $vector)) (result (ref $matrix))))
  (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
  (type $none_=>_ref|$vector| (func (result (ref $vector))))
@@ -48,8 +44,11 @@
    )
   )
   (drop
-   (struct.get $struct.A $named
-    (ref.null $struct.A)
+   (block ;; (replaces something unreachable we can't emit)
+    (drop
+     (ref.null none)
+    )
+    (unreachable)
    )
   )
   (drop
@@ -63,12 +62,15 @@
    )
   )
   (drop
-   (struct.get $grandchild 0
-    (ref.null $grandchild)
+   (block ;; (replaces something unreachable we can't emit)
+    (drop
+     (ref.null none)
+    )
+    (unreachable)
    )
   )
   (drop
-   (ref.null $struct.A)
+   (ref.null none)
   )
   (drop
    (block (result (ref null $struct.A))
@@ -94,15 +96,25 @@
     (i32.const 1)
    )
   )
-  (struct.set $struct.C $named-mut
-   (ref.null $struct.C)
-   (f32.const 100)
-  )
-  (struct.set $nested-child-struct 0
-   (ref.null $nested-child-struct)
-   (ref.as_non_null
-    (ref.null $grandchild)
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
    )
+   (drop
+    (f32.const 100)
+   )
+   (unreachable)
+  )
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
+   )
+   (drop
+    (ref.as_non_null
+     (ref.null none)
+    )
+   )
+   (unreachable)
   )
   (drop
    (struct.new_default $struct.A)
@@ -143,12 +155,19 @@
    (i32.const 2)
    (f64.const 2.18281828)
   )
-  (array.set $nested-child-array
-   (ref.null $nested-child-array)
-   (i32.const 3)
-   (ref.as_non_null
-    (ref.null $grandchild)
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
    )
+   (drop
+    (i32.const 3)
+   )
+   (drop
+    (ref.as_non_null
+     (ref.null none)
+    )
+   )
+   (unreachable)
   )
   (drop
    (array.len $vector
@@ -237,7 +256,7 @@
       (local.get $x)
      )
     )
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
   (drop
@@ -247,7 +266,7 @@
       (local.get $x)
      )
     )
-    (ref.null data)
+    (ref.null none)
    )
   )
   (drop
@@ -257,7 +276,7 @@
       (local.get $x)
      )
     )
-    (ref.null i31)
+    (ref.null none)
    )
   )
   (drop
@@ -275,7 +294,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -285,7 +304,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -295,7 +314,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
  )
@@ -305,12 +324,18 @@
     (drop
      (unreachable)
     )
+    (unreachable)
    )
   )
  )
  (func $unreachables-2
-  (struct.set $struct.C $named-mut
-   (ref.null $struct.C)
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
+   )
+   (drop
+    (unreachable)
+   )
    (unreachable)
   )
  )
@@ -322,6 +347,7 @@
    (drop
     (unreachable)
    )
+   (unreachable)
   )
  )
  (func $unreachables-4
@@ -332,6 +358,7 @@
    (drop
     (f32.const 1)
    )
+   (unreachable)
   )
  )
  (func $unreachables-array-1
@@ -342,11 +369,17 @@
    (drop
     (i32.const 2)
    )
+   (unreachable)
   )
  )
  (func $unreachables-array-2
-  (array.get $vector
-   (ref.null $vector)
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
+   )
+   (drop
+    (unreachable)
+   )
    (unreachable)
   )
  )
@@ -361,25 +394,43 @@
    (drop
     (f64.const 2.18281828)
    )
+   (unreachable)
   )
  )
  (func $unreachables-array-4
-  (array.set $vector
-   (ref.null $vector)
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
+   )
+   (drop
+    (unreachable)
+   )
+   (drop
+    (f64.const 2.18281828)
+   )
    (unreachable)
-   (f64.const 2.18281828)
   )
  )
  (func $unreachables-array-5
-  (array.set $vector
-   (ref.null $vector)
-   (i32.const 2)
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (ref.null none)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (drop
+    (unreachable)
+   )
    (unreachable)
   )
  )
  (func $unreachables-array-6
   (drop
-   (block
+   (block ;; (replaces something unreachable we can't emit)
+    (drop
+     (unreachable)
+    )
     (unreachable)
    )
   )
@@ -413,19 +464,19 @@
   (local $temp.B (ref null $struct.B))
   (drop
    (ref.test_static $struct.B
-    (ref.null $struct.A)
+    (ref.null none)
    )
   )
   (drop
    (ref.cast_static $struct.B
-    (ref.null $struct.A)
+    (ref.null none)
    )
   )
   (drop
    (block $out-B (result (ref $struct.B))
     (local.set $temp.A
      (br_on_cast_static $out-B $struct.B
-      (ref.null $struct.A)
+      (ref.null none)
      )
     )
     (unreachable)
@@ -435,7 +486,7 @@
    (block $out-A (result (ref null $struct.A))
     (local.set $temp.B
      (br_on_cast_static_fail $out-A $struct.B
-      (ref.null $struct.A)
+      (ref.null none)
      )
     )
     (unreachable)

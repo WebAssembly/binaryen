@@ -381,6 +381,10 @@ enum EncodedType {
   stringview_wtf8 = -0x1d,  // 0x63
   stringview_wtf16 = -0x1e, // 0x62
   stringview_iter = -0x1f,  // 0x61
+  // bottom types
+  nullexternref = -0x17, // 0x69
+  nullfuncref = -0x18,   // 0x68
+  nullref = -0x1b,       // 0x65
   // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -410,6 +414,10 @@ enum EncodedHeapType {
   stringview_wtf8_heap = -0x1d,  // 0x63
   stringview_wtf16_heap = -0x1e, // 0x62
   stringview_iter_heap = -0x1f,  // 0x61
+  // bottom types
+  noext = -0x17,  // 0x69
+  nofunc = -0x18, // 0x68
+  none = -0x1b,   // 0x65
 };
 
 namespace UserSections {

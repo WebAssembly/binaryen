@@ -18,10 +18,16 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-B)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -44,7 +50,7 @@
   )
 
   ;; CHECK:      (func $target-A (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A (type $A)
     ;; This function is reachable from the export "foo": there is a RefFunc and
@@ -80,8 +86,11 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
@@ -97,7 +106,7 @@
   )
 
   ;; CHECK:      (func $target-A (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A (type $A)
     ;; This function is reachable.
@@ -119,14 +128,20 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-2)
@@ -148,14 +163,14 @@
   )
 
   ;; CHECK:      (func $target-A-1 (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A-1 (type $A)
     ;; This function is reachable.
   )
 
   ;; CHECK:      (func $target-A-2 (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A-2 (type $A)
     ;; This function is reachable.
@@ -181,14 +196,20 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (export "foo")
@@ -207,14 +228,14 @@
   )
 
   ;; CHECK:      (func $target-A-1 (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A-1 (type $A)
     ;; This function is reachable.
   )
 
   ;; CHECK:      (func $target-A-2 (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A-2 (type $A)
     ;; This function is reachable.
@@ -300,7 +321,7 @@
 
   ;; CHECK:      (func $foo (type $A)
   ;; CHECK-NEXT:  (call $call-without-effects
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-keep)
@@ -325,13 +346,13 @@
   )
 
   ;; CHECK:      (func $target-keep (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-keep (type $A)
   )
 
   ;; CHECK:      (func $target-keep-2 (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-keep-2 (type $A)
   )
