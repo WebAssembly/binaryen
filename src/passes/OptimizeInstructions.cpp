@@ -853,15 +853,14 @@ struct OptimizeInstructions
         }
       }
       {
-        // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
+        // i32.wrap_i64 can be removed if the operations inside it do not
+        // actually require 64 bits, e.g.:
+        //
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
-        Unary* inner;
-        Expression* x;
-        if (matches(curr,
-                    unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
-            matches(curr,
-                    unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
-          return replaceCurrent(x);
+        if (matches(curr, unary(WrapInt64, any()))) {
+          if (auto* ret = optimizeWrappedResult(curr)) {
+            return replaceCurrent(ret);
+          }
         }
       }
       {
@@ -2679,6 +2678,118 @@ private:
       Abstract::getBinary(walked->type, Abstract::Add),
       walked,
       builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
+  }
+
+  // Given an i64.wrap operation, see if we can remove it. If all the things
+  // being operated on behave the same with or without wrapping, then we don't
+  // need to go to 64 bits at all, e.g.:
+  //
+  //  int32_t(int64_t(x))               => x                 (extend, then wrap)
+  //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10)            (also add)
+  //
+  Expression* optimizeWrappedResult(Unary* wrap) {
+    assert(wrap->op == WrapInt64);
+
+    // Core processing logic. This goes through the children, in one of two
+    // modes:
+    //  * Scan: Find if there is anything we can't handle. Sets |canOptimize|
+    //    with what it finds.
+    //  * Optimize: Given we can handle everything, update things.
+    enum Mode { Scan, Optimize };
+    bool canOptimize = true;
+    auto processChildren = [&](Mode mode) {
+      // Use a simple stack as we go through the children. We use ** as we need
+      // to replace children for some optimizations.
+      SmallVector<Expression**, 2> stack;
+      stack.emplace_back(&wrap->value);
+
+      while (!stack.empty() && canOptimize) {
+        auto* currp = stack.back();
+        stack.pop_back();
+        auto* curr = *currp;
+        if (curr->type == Type::unreachable) {
+          // Leave unreachability for other passes.
+          canOptimize = false;
+          return;
+        } else if (auto* c = curr->dynCast<Const>()) {
+          // A i64 const can be handled by just turning it into an i32.
+          if (mode == Optimize) {
+            c->value = Literal(int32_t(c->value.getInteger()));
+            c->type = Type::i32;
+          }
+        } else if (auto* unary = curr->dynCast<Unary>()) {
+          switch (unary->op) {
+            case ExtendSInt32:
+            case ExtendUInt32: {
+              // Note that there is nothing to push to the stack here: the child
+              // is 32-bit already, so we can stop looking. We just need to skip
+              // the extend operation.
+              if (mode == Optimize) {
+                *currp = unary->value;
+              }
+              break;
+            }
+            default: {
+              // TODO: handle more cases here and below,
+              //       https://github.com/WebAssembly/binaryen/issues/5004
+              canOptimize = false;
+              return;
+            }
+          }
+        } else if (auto* binary = curr->dynCast<Binary>()) {
+          // Turn the binary into a 32-bit one, if we can.
+          switch (binary->op) {
+            case AddInt64:
+            case SubInt64:
+            case MulInt64: {
+              // We can optimize these.
+              break;
+            }
+            default: {
+              canOptimize = false;
+              return;
+            }
+          }
+          if (mode == Optimize) {
+            switch (binary->op) {
+              case AddInt64: {
+                binary->op = AddInt32;
+                break;
+              }
+              case SubInt64: {
+                binary->op = SubInt32;
+                break;
+              }
+              case MulInt64: {
+                binary->op = MulInt32;
+                break;
+              }
+              default: {
+                WASM_UNREACHABLE("bad op");
+              }
+            }
+            // All things we can optimize change the type to i32.
+            binary->type = Type::i32;
+          }
+          stack.push_back(&binary->left);
+          stack.push_back(&binary->right);
+        } else {
+          // Anything else makes us give up.
+          canOptimize = false;
+          return;
+        }
+      }
+    };
+
+    processChildren(Scan);
+    if (!canOptimize) {
+      return nullptr;
+    }
+
+    // Optimize, and return the optimized results (in which we no longer need
+    // the wrap operation itself).
+    processChildren(Optimize);
+    return wrap->value;
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2,

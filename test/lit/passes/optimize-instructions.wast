@@ -1199,32 +1199,32 @@
   (func $store16-and-65534
     (i32.store16 (i32.const 11) (i32.and (i32.const -4) (i32.const 65534)))
   )
-  ;; CHECK:      (func $store8-wrap
+  ;; CHECK:      (func $store8-wrap (param $x i64)
   ;; CHECK-NEXT:  (i64.store8
   ;; CHECK-NEXT:   (i32.const 11)
-  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store8-wrap
-    (i32.store8 (i32.const 11) (i32.wrap_i64 (i64.const 1)))
+  (func $store8-wrap (param $x i64)
+    (i32.store8 (i32.const 11) (i32.wrap_i64 (local.get $x)))
   )
-  ;; CHECK:      (func $store16-wrap
+  ;; CHECK:      (func $store16-wrap (param $x i64)
   ;; CHECK-NEXT:  (i64.store16
   ;; CHECK-NEXT:   (i32.const 11)
-  ;; CHECK-NEXT:   (i64.const 2)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store16-wrap
-    (i32.store16 (i32.const 11) (i32.wrap_i64 (i64.const 2)))
+  (func $store16-wrap (param $x i64)
+    (i32.store16 (i32.const 11) (i32.wrap_i64 (local.get $x)))
   )
-  ;; CHECK:      (func $store-wrap
+  ;; CHECK:      (func $store-wrap (param $x i64)
   ;; CHECK-NEXT:  (i64.store32
   ;; CHECK-NEXT:   (i32.const 11)
-  ;; CHECK-NEXT:   (i64.const 3)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store-wrap
-    (i32.store (i32.const 11) (i32.wrap_i64 (i64.const 3)))
+  (func $store-wrap (param $x i64)
+    (i32.store (i32.const 11) (i32.wrap_i64 (local.get $x)))
   )
   ;; CHECK:      (func $store8-neg1
   ;; CHECK-NEXT:  (i32.store8
@@ -3252,9 +3252,7 @@
   ;; CHECK:      (func $sext-24-shr_u-wrap-too-big (result i32)
   ;; CHECK-NEXT:  (i32.shr_s
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const -1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
   ;; CHECK-NEXT:    (i32.const -16777216)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 24)
@@ -3276,9 +3274,7 @@
   )
   ;; CHECK:      (func $sext-24-shr_u-wrap (result i32)
   ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (i64.const -1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -1)
   ;; CHECK-NEXT:   (i32.const 25)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -6647,15 +6643,7 @@
     )
   )
   ;; CHECK:      (func $optimizeAddedConstants-filters-through-nonzero (result i32)
-  ;; CHECK-NEXT:  (i32.sub
-  ;; CHECK-NEXT:   (i32.shl
-  ;; CHECK-NEXT:    (i32.const -536870912)
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 31744)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const -536902656)
   ;; CHECK-NEXT: )
   (func $optimizeAddedConstants-filters-through-nonzero (result i32)
    (i32.sub
@@ -6672,15 +6660,7 @@
    )
   )
   ;; CHECK:      (func $optimizeAddedConstants-filters-through-nonzero-b (result i32)
-  ;; CHECK-NEXT:  (i32.sub
-  ;; CHECK-NEXT:   (i32.shl
-  ;; CHECK-NEXT:    (i32.const -536870912)
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const -1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 31744)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const -31744)
   ;; CHECK-NEXT: )
   (func $optimizeAddedConstants-filters-through-nonzero-b (result i32)
    (i32.sub
@@ -6850,19 +6830,12 @@
   ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const 2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.wrap_i64
-  ;; CHECK-NEXT:     (i64.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -12783,8 +12756,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.eqz
-  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -14985,5 +14958,157 @@
     (drop (i64.extend_i32_s (i32.load8_s (local.get $x))))
     (drop (i64.extend_i32_s (i32.load16_s (local.get $x))))
     (drop (i64.extend_i32_s (i32.load (local.get $x))))
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-add (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-add (param $x i32) (result i32)
+    ;; Rather than extend to 64 and add there, we can do all of this in i32.
+    (i32.wrap_i64
+      (i64.add
+        (i64.extend_i32_u
+          (local.get $x)
+        )
+        (i64.const 8)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-sub (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-sub (param $x i32) (result i32)
+    (i32.wrap_i64
+      (i64.sub
+        (i64.const 8)
+        (i64.extend_i32_u
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-mul (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-mul (param $x i32) (result i32)
+    (i32.wrap_i64
+      (i64.mul
+        (i64.extend_i32_u
+          (local.get $x)
+        )
+        (i64.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-many (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (i32.mul
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.const -1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-many (param $x i32) (param $y i32) (result i32)
+    ;; Multiple operations that all together can be turned into i32.
+    (i32.wrap_i64
+      (i64.mul
+        (i64.add
+          (i64.extend_i32_u
+            (local.get $x)
+          )
+          (i64.sub
+            (i64.const -1)
+            (i64.extend_i32_u
+              (local.get $y)
+            )
+          )
+        )
+        (i64.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-div-no (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.wrap_i64
+  ;; CHECK-NEXT:   (i64.div_u
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-div-no (param $x i32) (result i32)
+    ;; We *cannot* optimize here, as division cares about i32/i64 differences.
+    (i32.wrap_i64
+      (i64.div_s
+        (i64.extend_i32_u
+          (local.get $x)
+        )
+        (i64.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-tee-no (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $y i64)
+  ;; CHECK-NEXT:  (i32.wrap_i64
+  ;; CHECK-NEXT:   (i64.add
+  ;; CHECK-NEXT:    (local.tee $y
+  ;; CHECK-NEXT:     (i64.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.extend_i32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-tee-no (param $x i32) (result i32)
+    ;; The local.tee stops us from optimizing atm. TODO
+    (local $y i64)
+    (i32.wrap_i64
+      (i64.add
+        (i64.extend_i32_u
+          (local.get $x)
+        )
+        (local.tee $y
+          (i64.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $wrap-i64-to-i32-local-no (param $x i64) (result i32)
+  ;; CHECK-NEXT:  (i32.wrap_i64
+  ;; CHECK-NEXT:   (i64.div_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrap-i64-to-i32-local-no (param $x i64) (result i32)
+    ;; We do not optimize here for now as an input ($x) is an i64. TODO
+    (i32.wrap_i64
+      (i64.div_s
+        (local.get $x)
+        (i64.const 42)
+      )
+    )
   )
 )
