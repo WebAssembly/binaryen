@@ -161,7 +161,6 @@ public:
   bool isFunction() const;
   bool isData() const;
   bool isString() const;
-  bool isStringView() const;
   // Checks whether a type is a reference and is nullable. This returns false
   // for a value that is not a reference, that is, for which nullability is
   // irrelevant.
@@ -361,7 +360,6 @@ public:
   bool isStruct() const;
   bool isArray() const;
   bool isString() const;
-  bool isStringView() const;
 
   Signature getSignature() const;
   const Struct& getStruct() const;

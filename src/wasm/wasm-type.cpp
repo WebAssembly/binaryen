@@ -137,7 +137,6 @@ struct HeapTypeInfo {
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
-  constexpr bool isString() const { return isStruct() || isArray(); }
 
   // If this HeapTypeInfo represents a HeapType that can be represented more
   // simply, return that simpler HeapType. This handles turning BasicKind
@@ -974,15 +973,6 @@ bool Type::isString() const {
   }
 }
 
-bool Type::isStringView() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    auto* info = getTypeInfo(*this);
-    return info->isRef() && info->ref.heapType.isStringView();
-  }
-}
-
 bool Type::isNullable() const {
   if (isBasic()) {
     return false;
@@ -1380,11 +1370,6 @@ bool HeapType::isArray() const {
 }
 
 bool HeapType::isString() const { return isBasic() && id == string; }
-
-bool HeapType::isStringView() const {
-  return isBasic() && (id == stringview_wtf8 || id == stringview_wtf16 ||
-                       id == stringview_iter);
-}
 
 Signature HeapType::getSignature() const {
   assert(isSignature());
