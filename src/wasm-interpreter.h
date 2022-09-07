@@ -48,7 +48,7 @@ using namespace cashew;
 
 // Utilities
 
-extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW;
+extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW, RECOVERABLE_NONCONSTANT_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -2010,7 +2010,7 @@ public:
     NOTE_ENTER("Drop");
     Flow value = ExpressionRunner<SubType>::visit(curr->value);
     if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS)) {
-      value.clearIf(NONCONSTANT_FLOW);
+      value.clearIf(RECOVERABLE_NONCONSTANT_FLOW);
     }
     if (value.breaking()) {
       return value;
@@ -2025,7 +2025,7 @@ public:
     if (iter != localValues.end()) {
       return Flow(iter->second);
     }
-    return Flow(NONCONSTANT_FLOW);
+    return Flow(RECOVERABLE_NONCONSTANT_FLOW);
   }
   Flow visitLocalSet(LocalSet* curr) {
     NOTE_ENTER("LocalSet");
@@ -2037,6 +2037,7 @@ public:
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
       if (setFlow.breaking()) {
         localValues.erase(curr->index);
+        return Flow(RECOVERABLE_NONCONSTANT_FLOW);
       } else {
         setLocalValue(curr->index, setFlow.values);
         if (curr->type.isConcrete()) {
@@ -2063,7 +2064,7 @@ public:
     if (iter != globalValues.end()) {
       return Flow(iter->second);
     }
-    return Flow(NONCONSTANT_FLOW);
+    return Flow(RECOVERABLE_NONCONSTANT_FLOW);
   }
   Flow visitGlobalSet(GlobalSet* curr) {
     NOTE_ENTER("GlobalSet");
@@ -2076,6 +2077,7 @@ public:
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
       if (setFlow.breaking()) {
         globalValues.erase(curr->name);
+        return Flow(RECOVERABLE_NONCONSTANT_FLOW);
       } else {
         setGlobalValue(curr->name, setFlow.values);
         return Flow();

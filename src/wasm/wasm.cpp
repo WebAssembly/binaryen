@@ -25,6 +25,7 @@ namespace wasm {
 Name WASM("wasm");
 Name RETURN_FLOW("*return:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
+Name RECOVERABLE_NONCONSTANT_FLOW("*recoverable_nonconstant:)*");
 
 namespace BinaryConsts {
 namespace UserSections {

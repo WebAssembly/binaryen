@@ -278,7 +278,7 @@ struct Precompute
       return;
     }
     if (flow.breaking()) {
-      if (flow.breakTo == NONCONSTANT_FLOW) {
+      if (flow.breakTo == NONCONSTANT_FLOW || flow.breakTo == RECOVERABLE_NONCONSTANT_FLOW) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
