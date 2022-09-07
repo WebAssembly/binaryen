@@ -88,7 +88,7 @@ Literal::Literal(std::shared_ptr<StringViewData> stringViewData, Type type)
   // Null data is only allowed if nullable.
   assert(stringViewData || type.isNullable());
   // The type must be a proper type.
-  assert(isString());
+  assert(isStringView());
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
