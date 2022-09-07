@@ -3591,7 +3591,7 @@ private:
           // The result is always true.
           c1->value = Literal(int32_t(1));
           c1->type = Type::i32;
-          return builder.makeSequence(builder.makeDrop(add->left), c1);
+          return getDroppedChildrenAndAppend(curr, c1);
         }
         c2->value = c2->value.sub(c1->value);
         curr->left = add->left;
