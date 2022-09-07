@@ -15209,6 +15209,18 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $gt_u-added-constant-no (param $x i32)
     ;; As above, but without the shr_u, A is big enough for a possible overflow,
@@ -15232,6 +15244,18 @@
             (i32.const 1)
           )
           (i32.const 0x80000000)
+        )
+        (i32.const 10)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0xffffffff)
         )
         (i32.const 10)
       )
