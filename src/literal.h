@@ -32,6 +32,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
+using StringData = std::vector<uint8_t>;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -54,6 +55,7 @@ class Literal {
     // will need to represent external values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
     // 2) avoid bailing out when seeing a reference typed value in precompute
+    std::shared_ptr<StringData> stringData;
   };
 
 public:
@@ -81,6 +83,7 @@ public:
   explicit Literal(Name func, HeapType type)
     : func(func), type(type, NonNullable) {}
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
+  explicit Literal(std::shared_ptr<StringData> stringData, Type type);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
@@ -89,6 +92,7 @@ public:
   bool isNone() const { return type == Type::none; }
   bool isFunction() const { return type.isFunction(); }
   bool isData() const { return type.isData(); }
+  bool isString() const { return type.isString(); }
 
   bool isNull() const {
     if (type.isNullable()) {
@@ -97,6 +101,9 @@ public:
       }
       if (isData()) {
         return !gcData;
+      }
+      if (isString()) {
+        return !stringData;
       }
       if (type.getHeapType() == HeapType::i31) {
         return i32 == 0;
@@ -282,6 +289,7 @@ public:
     return func;
   }
   std::shared_ptr<GCData> getGCData() const;
+  std::shared_ptr<StringData> getStringData() const;
 
   // careful!
   int32_t* geti32Ptr() {
