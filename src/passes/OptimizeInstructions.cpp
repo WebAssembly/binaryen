@@ -51,6 +51,20 @@
 
 namespace wasm {
 
+static Index getBitsForType(Type type) {
+  if (!type.isBasic()) {
+    return -1;
+  }
+  switch (type.getBasic()) {
+    case Type::i32:
+      return 32;
+    case Type::i64:
+      return 64;
+    default:
+      return -1;
+  }
+}
+
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
@@ -123,20 +137,6 @@ struct LocalScanner : PostWalker<LocalScanner> {
   // define this for the templated getMaxBits method. we know nothing here yet
   // about locals, so return the maxes
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
-
-  Index getBitsForType(Type type) {
-    if (!type.isBasic()) {
-      return -1;
-    }
-    switch (type.getBasic()) {
-      case Type::i32:
-        return 32;
-      case Type::i64:
-        return 64;
-      default:
-        return -1;
-    }
-  }
 };
 
 namespace {
@@ -3382,7 +3382,7 @@ private:
           binary(DivSInt64, any(), i64(std::numeric_limits<int64_t>::min())))) {
       curr->op = EqInt64;
       curr->type = Type::i32;
-      return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
+      return builder.makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x < 0   ==>   i32(0)
     if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
@@ -3567,7 +3567,63 @@ private:
         return left;
       }
     }
+    {
+      // (unsigned)  x + C1 >  C2   ==>  x >  C2-C1   if no overflowing
+      // (unsigned)  x + C1 >= C2   ==>  x >= C2-C1   if no overflowing
+      Binary* add;
+      Const* c1;
+      Const* c2;
+      if ((matches(curr, binary(GtU, binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+           matches(curr, binary(GeU, binary(&add, Add, any(), ival(&c1)), ival(&c2))))
+          !canOverflow(add)) {
+        if (c1->value.gtU(c2->value)) {
+          // C2-C1 overflows. This is a situation that looks like this:
+          //   (unsigned)  x + 10 > 5
+          // The result is always true.
+          c1->value = Literal(int32_t(1));
+          c1->type = Type::i32;
+          return builder.makeSequence(makeDrop(add->left), c1);
+        }
+        c2->value = c2->value.sub(c1->value);
+        curr->left = add->left;
+        return curr;
+      }
+    }
     return nullptr;
+  }
+
+  // Returns true if the given binary operation can overflow. If we can't be
+  // sure either way, we return true, assuming the worst.
+  bool canOverflow(Binary* binary) {
+    using namespace Abstract;
+
+    // If we know nothing about a limit on the amount of bits on either side,
+    // give up.
+    auto typeMaxBits = getBitsForType(binary->type);
+    auto leftMaxBits = Bits::getMaxBits(binary->left, this);
+    if (leftMaxBits == typeMaxBits) {
+      return true;
+    }
+    auto rightMaxBits = Bits::getMaxBits(binary->right, this);
+    if (rightMaxBits == typeMaxBits) {
+      return true;
+    }
+
+    if (binary->op == getBinary(binary->type, Add)) {
+      // left  < 2^(leftMaxBits-1)
+      // right < 2^(rightMaxBits-1)
+      //   =>
+      // left + right <= 
+      , and right is at most
+      // 2^(rightMaxBits-1) - 1, so 
+      // When adding or subtracting, we can get an overflow of one extra bit.
+      // E.g. if left has 30 bits and right has 1 bit, we might have
+      // 0x3fffffff + 0x1
+      return leftMaxBits + rightMaxBits + 1 < typeMaxBits;
+    }
+
+    // TODO subtraction etc.
+    return true;
   }
 
   // Folding two expressions into one with similar operations and
