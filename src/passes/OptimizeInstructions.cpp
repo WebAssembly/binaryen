@@ -1474,6 +1474,13 @@ struct OptimizeInstructions
     }
   }
 
+  // Appends a result after the dropped children, if we need them.
+  Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                          Expression* result) {
+    return wasm::getDroppedChildrenAndAppend(
+      curr, *getModule(), getPassOptions(), result);
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1495,7 +1502,7 @@ struct OptimizeInstructions
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
       replaceCurrent(getDroppedChildrenAndAppend(
-        curr, *getModule(), getPassOptions(), result));
+        curr, result));
       return;
     }
 
@@ -1517,7 +1524,7 @@ struct OptimizeInstructions
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
       replaceCurrent(getDroppedChildrenAndAppend(
-        curr, *getModule(), getPassOptions(), result));
+        curr, result));
       return;
     }
 
