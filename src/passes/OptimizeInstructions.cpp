@@ -3579,14 +3579,14 @@ private:
            matches(curr,
                    binary(GeU,
                           binary(&add, Add, any(), ival(&c1)),
-                          ival(&c2)))) !canOverflow(add)) {
-        if (c1->value.gtU(c2->value)) {
+                          ival(&c2)))) && !canOverflow(add)) {
+        if (c1->value.gtU(c2->value).getInteger()) {
           // C2-C1 overflows. This is a situation that looks like this:
           //   (unsigned)  x + 10 > 5
           // The result is always true.
           c1->value = Literal(int32_t(1));
           c1->type = Type::i32;
-          return builder.makeSequence(makeDrop(add->left), c1);
+          return builder.makeSequence(builder.makeDrop(add->left), c1);
         }
         c2->value = c2->value.sub(c1->value);
         curr->left = add->left;
