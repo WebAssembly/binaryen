@@ -3610,16 +3610,17 @@ private:
     }
 
     if (binary->op == getBinary(binary->type, Add)) {
-      // left  < 2^(leftMaxBits-1)
-      // right < 2^(rightMaxBits-1)
-      //   =>
-      // left + right <= 
-      , and right is at most
-      // 2^(rightMaxBits-1) - 1, so 
-      // When adding or subtracting, we can get an overflow of one extra bit.
-      // E.g. if left has 30 bits and right has 1 bit, we might have
-      // 0x3fffffff + 0x1
-      return leftMaxBits + rightMaxBits + 1 < typeMaxBits;
+      // Proof this cannot overflow:
+      //
+      // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
+      //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
+      //              =  2^typeMaxBits                           (3)
+      //
+      // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
+      //     and its max value is 2^32 - 1, which is < 2^32).
+      // (2) By the above checks and early returns.
+      // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
+      return false;
     }
 
     // TODO subtraction etc.
