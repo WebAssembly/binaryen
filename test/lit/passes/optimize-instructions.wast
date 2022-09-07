@@ -15119,7 +15119,7 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 6)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15147,7 +15147,7 @@
           )
           (i32.const 5)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
     ;; We can optimize even if the constants are equal.
@@ -15186,7 +15186,7 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15198,7 +15198,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const -2147483648)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15210,7 +15210,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -15223,7 +15223,7 @@
           (local.get $x)
           (i32.const 5)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
     ;; With the added constant too big, it might overflow, and we cannot
@@ -15237,7 +15237,7 @@
           )
           (i32.const 0x80000000)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
     (drop
@@ -15249,7 +15249,7 @@
           )
           (i32.const 0xffffffff)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
   )
@@ -15261,7 +15261,7 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 6)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15282,7 +15282,7 @@
           )
           (i32.const 5)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
     (drop
@@ -15318,7 +15318,7 @@
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15330,7 +15330,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const -2147483648)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -15342,7 +15342,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -15354,7 +15354,7 @@
           (local.get $x)
           (i32.const 5)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
     (drop
@@ -15366,7 +15366,7 @@
           )
           (i32.const 0x80000000)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
     (drop
@@ -15378,7 +15378,7 @@
           )
           (i32.const 0xffffffff)
         )
-        (i32.const 10)
+        (i32.const 11)
       )
     )
   )
