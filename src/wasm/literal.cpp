@@ -56,6 +56,9 @@ Literal::Literal(Type type) : type(type) {
   } else if (isString()) {
     assert(!type.isNonNullable());
     new (&stringData) std::shared_ptr<StringData>();
+  } else if (isStringView()) {
+    assert(!type.isNonNullable());
+    new (&stringViewData) std::shared_ptr<StringViewData>();
   } else {
     // For anything else, zero out all the union data.
     memset(&v128, 0, 16);
@@ -76,6 +79,14 @@ Literal::Literal(std::shared_ptr<StringData> stringData, Type type)
   : stringData(stringData), type(type) {
   // Null data is only allowed if nullable.
   assert(stringData || type.isNullable());
+  // The type must be a proper type.
+  assert(isString());
+}
+
+Literal::Literal(std::shared_ptr<StringViewData> stringViewData, Type type)
+  : stringViewData(stringViewData), type(type) {
+  // Null data is only allowed if nullable.
+  assert(stringViewData || type.isNullable());
   // The type must be a proper type.
   assert(isString());
 }
@@ -106,6 +117,10 @@ Literal::Literal(const Literal& other) : type(other.type) {
   }
   if (other.isString()) {
     new (&stringData) std::shared_ptr<StringData>(other.stringData);
+    return;
+  }
+  if (other.isString()) {
+    new (&stringViewData) std::shared_ptr<StringViewData>(other.stringViewData);
     return;
   }
   if (type.isFunction()) {
@@ -144,6 +159,8 @@ Literal::~Literal() {
     gcData.~shared_ptr();
   } else if (isString()) {
     stringData.~shared_ptr();
+  } else if (isStringView()) {
+    stringViewData.~shared_ptr();
   }
 }
 
@@ -249,6 +266,11 @@ std::shared_ptr<GCData> Literal::getGCData() const {
 std::shared_ptr<StringData> Literal::getStringData() const {
   assert(isString());
   return stringData;
+}
+
+std::shared_ptr<StringViewData> Literal::getStringViewData() const {
+  assert(isString());
+  return stringViewData;
 }
 
 Literal Literal::castToF32() {
@@ -368,6 +390,9 @@ bool Literal::operator==(const Literal& other) const {
     }
     if (type.isString()) {
       return stringData == other.stringData;
+    }
+    if (type.isStringView()) {
+      return stringViewData == other.stringViewData;
     }
     if (type.getHeapType() == HeapType::i31) {
       return i32 == other.i32;
@@ -499,6 +524,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       } else {
         o << "[ref null " << literal.type << ']';
       }
+    } else if (literal.isString()) {
+      o << "[string.view " << literal.type << ']';
     } else {
       switch (literal.type.getHeapType().getBasic()) {
         case HeapType::ext:
