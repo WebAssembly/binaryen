@@ -3576,10 +3576,10 @@ private:
       if ((matches(
              curr,
              binary(GtU, binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-           matches(curr,
-                   binary(GeU,
-                          binary(&add, Add, any(), ival(&c1)),
-                          ival(&c2)))) && !canOverflow(add)) {
+           matches(
+             curr,
+             binary(GeU, binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+          !canOverflow(add)) {
         if (c1->value.gtU(c2->value).getInteger()) {
           // C2-C1 overflows. This is a situation that looks like this:
           //   (unsigned)  x + 10 > 5
