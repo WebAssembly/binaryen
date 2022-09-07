@@ -34,10 +34,6 @@ struct HeapTypeGeneratorImpl {
   // Map the HeapTypes we are building to their indices in the builder.
   std::unordered_map<HeapType, Index> typeIndices;
 
-  // Abstract over all the types that may be assigned to a builder slot.
-  using Assignable =
-    std::variant<HeapType::BasicHeapType, Signature, Struct, Array>;
-
   // Top-level kinds, chosen before the types are actually constructed. This
   // allows us to choose HeapTypes that we know will be subtypes of data or func
   // before we actually generate the types.
@@ -237,69 +233,6 @@ struct HeapTypeGeneratorImpl {
   }
 
   Array generateArray() { return {generateField()}; }
-
-  Assignable generateSubData() {
-    switch (rand.upTo(2)) {
-      case 0:
-        return generateStruct();
-      case 1:
-        return generateArray();
-    }
-    WASM_UNREACHABLE("unexpected index");
-  }
-
-  Assignable generateSubEq() {
-    switch (rand.upTo(3)) {
-      case 0:
-        return HeapType::i31;
-      case 1:
-        return HeapType::data;
-      case 2:
-        return generateSubData();
-    }
-    WASM_UNREACHABLE("unexpected index");
-  }
-
-  Assignable generateSubAny() {
-    switch (rand.upTo(4)) {
-      case 0:
-        return HeapType::eq;
-      case 1:
-        return HeapType::func;
-      case 2:
-        return generateSubEq();
-      case 3:
-        return generateSignature();
-    }
-    WASM_UNREACHABLE("unexpected index");
-  }
-
-  Assignable generateSubBasic(HeapType::BasicHeapType type) {
-    if (rand.oneIn(2)) {
-      return type;
-    } else {
-      switch (type) {
-        case HeapType::ext:
-        case HeapType::i31:
-          // No other subtypes.
-          return type;
-        case HeapType::func:
-          return generateSignature();
-        case HeapType::any:
-          return generateSubAny();
-        case HeapType::eq:
-          return generateSubEq();
-        case HeapType::data:
-          return generateSubData();
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: fuzz strings");
-      }
-      WASM_UNREACHABLE("unexpected index");
-    }
-  }
 
   template<typename Kind> std::optional<HeapType> pickKind() {
     std::vector<Index> candidateIndices;
