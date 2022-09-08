@@ -3569,7 +3569,7 @@ private:
     }
     // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
     // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
-    // And similarly for other relational operations.
+    // And similarly for other relational operations on integers.
     if (curr->isRelational()) {
       Binary* add;
       Const* c1;
