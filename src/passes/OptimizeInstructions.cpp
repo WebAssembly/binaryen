@@ -52,7 +52,7 @@
 namespace wasm {
 
 static Index getBitsForType(Type type) {
-  if (!type.isConcrete()) {
+  if (!type.isNumber()) {
     return -1;
   }
   return type.getByteSize() * 8;

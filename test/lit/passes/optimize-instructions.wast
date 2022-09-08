@@ -15387,4 +15387,85 @@
       )
     )
   )
+
+  ;; CHECK:      (func $eq-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $eq-added-constant (param $x i32)
+    ;; As above, but with eq rather than gt. We can optimize here.
+    (drop
+      (i32.eq
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ne-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ne-added-constant (param $x i32)
+    ;; As above, but with ne rather than gt. We can optimize here.
+    (drop
+      (i32.ne
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $lt-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $lt-added-constant (param $x i32)
+    ;; As above, but with lt_s rather than gt_u. We can optimize here.
+    (drop
+      (i32.lt_s
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+  )
 )
