@@ -322,4 +322,33 @@
       (drop (local.get $x))
     )
   )
+
+  ;; CHECK:      (func $can-push-past-throw (param $a i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (throw $e
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $can-push-past-throw (param $a i32)
+    (local $x i32)
+    (block $out
+      (local.set $x (i32.const 1))
+      (if
+        (local.get $a)
+        (throw $e (i32.const 0))
+      )
+      (drop (local.get $x))
+    )
+  )
 )

@@ -161,11 +161,22 @@ private:
     // everything that matters if you want to be pushed past the pushPoint
     EffectAnalyzer cumulativeEffects(passOptions, module);
     cumulativeEffects.walk(list[pushPoint]);
-    // it is ok to ignore the branching here, that is the crucial point of this
-    // opt
-    // TODO: it would be ok to ignore thrown exceptions here, if we know they
-    //       could not be caught and must go outside of the function
+    // It is ok to ignore branching out of the block here, that is the crucial
+    // point of this optimization. That is, we are in a situation like this:
+    //
+    // {
+    //   x = value;
+    //   if (..) break;
+    //   foo(x);
+    // }
+    //
+    // If the branch is taken, then that's fine, it will jump out of this block
+    // and reach some outer scope, and in that case we never need x at all
+    // (since we've proven before that x is not used outside of this block, see
+    // numGetsSoFar which we use for that). Similarly, the break could be a
+    // return and that would be ok as well, and also an exception.
     cumulativeEffects.ignoreBranches();
+    cumulativeEffects.throws_ = false;
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
