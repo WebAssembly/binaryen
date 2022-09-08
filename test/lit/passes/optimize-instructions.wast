@@ -15142,8 +15142,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $gt_u-added-constant (param $x i32)
-    ;; A + 5 > 10  =>  A > 5, since this cannot overflow (A and the constants
-    ;; are small enough)
+    ;; x + C1 > C2  =>  x > (C2-C1), iff x+C1 and C2-C1 don't over/underflow
     (drop
       (i32.gt_u
         (i32.add
@@ -15169,8 +15168,8 @@
         (i32.const 5)
       )
     )
-    ;; If the first constant is larger, the result is trivial: this must be
-    ;; true.
+    ;; x + C1 > C2  =>  x + (C1-C2) > 0, iff x+C1 and C1-C2 don't over/underflow
+    ;; After doing that, further optimizations are possible here.
     (drop
       (i32.gt_u
         (i32.add

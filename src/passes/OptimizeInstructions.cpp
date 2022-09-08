@@ -52,17 +52,10 @@
 namespace wasm {
 
 static Index getBitsForType(Type type) {
-  if (!type.isBasic()) {
+  if (!type.isConcrete()) {
     return -1;
   }
-  switch (type.getBasic()) {
-    case Type::i32:
-      return 32;
-    case Type::i64:
-      return 64;
-    default:
-      return -1;
-  }
+  return type.getByteSize() * 8;
 }
 
 // Useful information about locals
