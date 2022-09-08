@@ -46,3 +46,6 @@ test/lit/lit.site.cfg.py
 
 # files related to Emsdk installation
 .emsdk_version
+
+# files related to clangd cache
+.cache/*
