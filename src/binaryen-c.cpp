@@ -377,9 +377,6 @@ BinaryenFeatures BinaryenFeatureGC(void) {
 BinaryenFeatures BinaryenFeatureMemory64(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Memory64);
 }
-BinaryenFeatures BinaryenFeatureTypedFunctionReferences(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::TypedFunctionReferences);
-}
 BinaryenFeatures BinaryenFeatureRelaxedSIMD(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::RelaxedSIMD);
 }
