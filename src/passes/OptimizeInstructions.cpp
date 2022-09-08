@@ -3587,8 +3587,8 @@ private:
         }
         // This is the second line above, we turn into x + (C1-C2) > 0. Other
         // optimizations can often kick in later. However, we must rule out the
-        // case where C2 is already 0 (to avoid continuing to think we are
-        // improving forever).
+        // case where C2 is already 0 (as then we would not actually change
+        // anything, and we could infinite loop).
         auto zero = Literal::makeZero(c2->type);
         if (c2->value != zero) {
           c1->value = c1->value.sub(c2->value);
