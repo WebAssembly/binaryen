@@ -174,7 +174,9 @@ private:
     // and reach some outer scope, and in that case we never need x at all
     // (since we've proven before that x is not used outside of this block, see
     // numGetsSoFar which we use for that). Similarly, the break could be a
-    // return and that would be ok as well, and also an exception.
+    // return and that would be ok as well, and also an exception (if the
+    // exception is caught in the function, it must be outside the block, which
+    // is just like a break; and if it is not caught, it is just like a return).
     cumulativeEffects.ignoreBranches();
     cumulativeEffects.throws_ = false;
     std::vector<LocalSet*> toPush;
