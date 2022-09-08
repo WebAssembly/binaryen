@@ -14,9 +14,11 @@
  (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
+ ;; CHECK:      (global $global$1 (mut f32) (f32.const 10))
+ (global $global$1 (mut f32) (f32.const 10))
  ;; CHECK:      (func $0 (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (global.set $global$1
  ;; CHECK-NEXT:   (if (result f32)
  ;; CHECK-NEXT:    (local.tee $0
  ;; CHECK-NEXT:     (i32.const 33554432)
@@ -28,7 +30,7 @@
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:     (f32.const 1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (call $1)
  ;; CHECK-NEXT:   )
@@ -42,7 +44,7 @@
    (local.tee $7
     (i32.const 33554432)
    )
-   (drop
+   (global.set $global$1
     (loop $label$2 (result f32)
      (if
       (global.get $global$0)
@@ -66,7 +68,7 @@
      (f32.const 1)
     )
    )
-   (drop
+   (global.set $global$1
     (call $1
      (f32.const 1)
     )
