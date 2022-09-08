@@ -3581,12 +3581,10 @@ private:
       Binary* add;
       Const* c1;
       Const* c2;
-      if ((matches(
-             curr,
-             binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-           matches(
-             curr,
-             binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+      if ((matches(curr,
+                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+           matches(curr,
+                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
           !canOverflow(add)) {
         if (c2->value.geU(c1->value).getInteger()) {
           // This is the first line above, we turn into x > (C2-C1)
