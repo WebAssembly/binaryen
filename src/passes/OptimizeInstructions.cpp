@@ -3574,30 +3574,36 @@ private:
         return left;
       }
     }
-    {
-      // (unsigned)  x + C1 >  C2   ==>  x >  C2-C1   if no overflowing
-      // (unsigned)  x + C1 >= C2   ==>  x >= C2-C1   if no overflowing
+    // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
+    // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
+    // And similarly for other relational operations.
+    if (curr->isRelational()) {
       Binary* add;
       Const* c1;
       Const* c2;
       if ((matches(
              curr,
-             binary(GtU, binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+             binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
            matches(
              curr,
-             binary(GeU, binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+             binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
           !canOverflow(add)) {
-        if (c1->value.gtU(c2->value).getInteger()) {
-          // C2-C1 overflows. This is a situation that looks like this:
-          //   (unsigned)  x + 10 > 5
-          // The result is always true.
-          c1->value = Literal(int32_t(1));
-          c1->type = Type::i32;
-          return getDroppedChildrenAndAppend(curr, c1);
+        if (c2->value.geU(c1->value).getInteger()) {
+          // This is the first line above, we turn into x > (C2-C1)
+          c2->value = c2->value.sub(c1->value);
+          curr->left = add->left;
+          return curr;
         }
-        c2->value = c2->value.sub(c1->value);
-        curr->left = add->left;
-        return curr;
+        // This is the second line above, we turn into x + (C1-C2) > 0. Other
+        // optimizations can often kick in later. However, we must rule out the
+        // case where C2 is already 0 (to avoid continuing to think we are
+        // improving forever).
+        auto zero = Literal::makeZero(c2->type);
+        if (c2->value != zero) {
+          c1->value = c1->value.sub(c2->value);
+          c2->value = zero;
+          return curr;
+        }
       }
     }
     return nullptr;
