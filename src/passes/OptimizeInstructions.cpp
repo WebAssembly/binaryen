@@ -3612,11 +3612,8 @@ private:
     // give up.
     auto typeMaxBits = getBitsForType(binary->type);
     auto leftMaxBits = Bits::getMaxBits(binary->left, this);
-    if (leftMaxBits == typeMaxBits) {
-      return true;
-    }
     auto rightMaxBits = Bits::getMaxBits(binary->right, this);
-    if (rightMaxBits == typeMaxBits) {
+    if (std::max(leftMaxBits, rightMaxBits) == typeMaxBits) {
       return true;
     }
 
