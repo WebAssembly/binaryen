@@ -49,10 +49,10 @@ template<typename Parent, typename Iterator> struct ParentIndexIterator {
 
   Iterator& self() { return *static_cast<Iterator*>(this); }
 
-  bool operator==(const Iterator& other) const {
+  bool operator==(const ParentIndexIterator& other) const {
     return index == other.index && parent == other.parent;
   }
-  bool operator!=(const Iterator& other) const { return !(*this == other); }
+  bool operator!=(const ParentIndexIterator& other) const { return !(*this == other); }
   Iterator& operator++() {
     ++index;
     return self();
