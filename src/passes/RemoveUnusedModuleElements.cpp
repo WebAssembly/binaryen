@@ -240,6 +240,8 @@ struct RemoveUnusedModuleElements : public Pass {
     : rootAllFunctions(rootAllFunctions) {}
 
   void run(PassRunner* runner, Module* module) override {
+    assert(module->memories.size() <= 1);
+
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
