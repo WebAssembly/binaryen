@@ -66,12 +66,47 @@ template<typename T> void test(size_t N) {
     t.reserve(t.capacity() + 100);
     assert(t.capacity() >= N + 100);
   }
+  {
+    // Test resizing.
+    T t;
+
+    assert(t.empty());
+    t.resize(1);
+    assert(t.size() == 1);
+    t.resize(2);
+    assert(t.size() == 2);
+    t.resize(3);
+    assert(t.size() == 3);
+    t.resize(6);
+    assert(t.size() == 6);
+
+    // Now go in reverse.
+    t.resize(6);
+    assert(t.size() == 6);
+    t.resize(3);
+    assert(t.size() == 3);
+    t.resize(2);
+    assert(t.size() == 2);
+    t.resize(1);
+    assert(t.size() == 1);
+
+    // Test a big leap from nothing (rather than gradual increase as before).
+    t.clear();
+    assert(t.empty());
+    t.resize(6);
+    assert(t.size() == 6);
+    t.resize(2);
+    assert(t.size() == 2);
+    t.clear();
+    assert(t.empty());
+  }
 }
 
 int main() {
   test<SmallVector<int, 0>>(0);
   test<SmallVector<int, 1>>(1);
   test<SmallVector<int, 2>>(2);
+  test<SmallVector<int, 3>>(3);
   test<SmallVector<int, 10>>(10);
   std::cout << "ok.\n";
 }

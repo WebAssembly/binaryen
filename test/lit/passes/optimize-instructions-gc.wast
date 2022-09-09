@@ -154,7 +154,7 @@
 
   ;; ref.is_null is not needed on a non-nullable value, and if something is
   ;; a func we don't need that either etc. if we know the result
-  ;; CHECK:      (func $unneeded_is (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_is (param $struct (ref $struct)) (param $func (ref func)) (param $data (ref data)) (param $i31 (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -188,7 +188,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is (type $ref|$struct|_ref|func|_dataref_i31ref_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; NOMNL:      (func $unneeded_is (type $ref|$struct|_ref|func|_ref|data|_ref|i31|_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $data (ref data)) (param $i31 (ref i31))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
@@ -243,7 +243,7 @@
 
   ;; similar to $unneeded_is, but the values are nullable. we can at least
   ;; leave just the null check.
-  ;; CHECK:      (func $unneeded_is_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK:      (func $unneeded_is_null (param $struct (ref null $struct)) (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $struct)
@@ -271,7 +271,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is_null (type $ref?|$struct|_funcref_ref?|data|_ref?|i31|_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_is_null (type $ref?|$struct|_funcref_dataref_i31ref_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (local.get $struct)
@@ -320,7 +320,7 @@
 
   ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
   ;; data, etc.). regardless of nullability the result here is always 0.
-  ;; CHECK:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -376,7 +376,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is_bad_kinds (type $funcref_ref?|data|_ref?|i31|_=>_none) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_is_bad_kinds (type $funcref_dataref_i31ref_=>_none) (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
@@ -459,7 +459,7 @@
 
   ;; ref.as_non_null is not needed on a non-nullable value, and if something is
   ;; a func we don't need that either etc., and can just return the value.
-  ;; CHECK:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data (ref data)) (param $i31 (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
@@ -473,7 +473,7 @@
   ;; CHECK-NEXT:   (local.get $i31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_as (type $ref|$struct|_ref|func|_dataref_i31ref_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; NOMNL:      (func $unneeded_as (type $ref|$struct|_ref|func|_ref|data|_ref|i31|_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $data (ref data)) (param $i31 (ref i31))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.get $struct)
   ;; NOMNL-NEXT:  )
@@ -508,7 +508,7 @@
 
   ;; similar to $unneeded_as, but the values are nullable. we can turn the
   ;; more specific things into ref.as_non_null.
-  ;; CHECK:      (func $unneeded_as_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK:      (func $unneeded_as_null (param $struct (ref null $struct)) (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $struct)
@@ -530,7 +530,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_as_null (type $ref?|$struct|_funcref_ref?|data|_ref?|i31|_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_as_null (type $ref?|$struct|_funcref_dataref_i31ref_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
   ;; NOMNL-NEXT:    (local.get $struct)
@@ -573,7 +573,7 @@
 
   ;; similar to $unneeded_as, but the values are of mixed kind (as_func of
   ;; data, etc.), so we know we will trap
-  ;; CHECK:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref func))
   ;; CHECK-NEXT:    (drop
@@ -583,7 +583,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result dataref)
+  ;; CHECK-NEXT:   (block (result (ref data))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
@@ -591,7 +591,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i31ref)
+  ;; CHECK-NEXT:   (block (result (ref i31))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
@@ -607,7 +607,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result dataref)
+  ;; CHECK-NEXT:   (block (result (ref data))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
@@ -615,7 +615,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i31ref)
+  ;; CHECK-NEXT:   (block (result (ref i31))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
@@ -623,7 +623,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_as_bad_kinds (type $funcref_ref?|data|_ref?|i31|_=>_none) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; NOMNL:      (func $unneeded_as_bad_kinds (type $funcref_dataref_i31ref_=>_none) (param $func funcref) (param $data dataref) (param $i31 i31ref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref func))
   ;; NOMNL-NEXT:    (drop
@@ -633,7 +633,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result dataref)
+  ;; NOMNL-NEXT:   (block (result (ref data))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $i31)
   ;; NOMNL-NEXT:    )
@@ -641,7 +641,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result i31ref)
+  ;; NOMNL-NEXT:   (block (result (ref i31))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $func)
   ;; NOMNL-NEXT:    )
@@ -657,7 +657,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result dataref)
+  ;; NOMNL-NEXT:   (block (result (ref data))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $i31)
   ;; NOMNL-NEXT:    )
@@ -665,7 +665,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result i31ref)
+  ;; NOMNL-NEXT:   (block (result (ref i31))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (local.get $func)
   ;; NOMNL-NEXT:    )
@@ -2130,7 +2130,7 @@
   ;; CHECK:      (func $consecutive-opts-with-unreachable (param $func funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
-  ;; CHECK-NEXT:    (block (result dataref)
+  ;; CHECK-NEXT:    (block (result (ref data))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (local.get $func)
   ;; CHECK-NEXT:     )
@@ -2142,7 +2142,7 @@
   ;; NOMNL:      (func $consecutive-opts-with-unreachable (type $funcref_=>_none) (param $func funcref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast_static $struct
-  ;; NOMNL-NEXT:    (block (result dataref)
+  ;; NOMNL-NEXT:    (block (result (ref data))
   ;; NOMNL-NEXT:     (drop
   ;; NOMNL-NEXT:      (local.get $func)
   ;; NOMNL-NEXT:     )

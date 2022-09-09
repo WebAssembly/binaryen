@@ -230,6 +230,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 };
 
 struct RemoveUnusedModuleElements : public Pass {
+  // This pass only removes module elements, it never modifies function
+  // contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   bool rootAllFunctions;
 
   RemoveUnusedModuleElements(bool rootAllFunctions)

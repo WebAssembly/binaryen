@@ -103,7 +103,7 @@
    (i32.const 6)
   )
   (drop
-   (block $i31 (result i31ref)
+   (block $i31 (result (ref i31))
     (drop
      (br $i31
       (i31.new
@@ -136,7 +136,7 @@
  )
  (func $br_on-to-flow
   (drop
-   (block $data (result (ref null data))
+   (block $data (result dataref)
     (drop
      (ref.func $br_on-to-flow)
     )
@@ -144,7 +144,7 @@
    )
   )
   (drop
-   (block $datab (result (ref null data))
+   (block $datab (result dataref)
     (drop
      (i31.new
       (i32.const 1337)
@@ -174,7 +174,7 @@
    )
   )
   (drop
-   (block $i31 (result (ref null i31))
+   (block $i31 (result i31ref)
     (drop
      (array.new_default $vector
       (i32.const 2)
@@ -184,7 +184,7 @@
    )
   )
   (drop
-   (block $i31b (result (ref null i31))
+   (block $i31b (result i31ref)
     (drop
      (ref.func $br_on-to-flow)
     )

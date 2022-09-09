@@ -93,6 +93,9 @@ struct FieldInfoScanner
 };
 
 struct TypeRefining : public Pass {
+  // Only affects GC type declarations and struct.gets.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
@@ -234,6 +237,9 @@ struct TypeRefining : public Pass {
   void updateInstructions(Module& wasm, PassRunner* runner) {
     struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
       bool isFunctionParallel() override { return true; }
+
+      // Only affects struct.gets.
+      bool requiresNonNullableLocalFixups() override { return false; }
 
       TypeRefining& parent;
 

@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 109)
+project(binaryen LANGUAGES C CXX VERSION 110)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -411,6 +411,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
+  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack")
   target_link_libraries(binaryen_wasm "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_wasm "-msign-ext")
@@ -447,6 +448,7 @@ if(EMSCRIPTEN)
   else()
     target_link_libraries(binaryen_js "-sEXPORT_ES6=1")
   endif()
+  target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack")
   target_link_libraries(binaryen_js "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)

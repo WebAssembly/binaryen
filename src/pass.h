@@ -386,6 +386,15 @@ public:
   // for. This is used to issue a proper warning about that.
   virtual bool invalidatesDWARF() { return false; }
 
+  // Whether this pass modifies Binaryen IR in ways that may require fixups for
+  // non-nullable locals to validate according to the wasm spec. If the pass
+  // adds locals not in that form, or moves code around in ways that might break
+  // that validation, this must return true. In that case the pass runner will
+  // automatically run the necessary fixups afterwards.
+  //
+  // For more details see the LocalStructuralDominance class.
+  virtual bool requiresNonNullableLocalFixups() { return true; }
+
   std::string name;
 
 protected:

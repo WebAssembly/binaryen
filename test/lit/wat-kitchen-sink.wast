@@ -5,7 +5,11 @@
 (module $parse
  ;; types
  (rec
-  ;; CHECK:      (rec 
+  ;; CHECK:      (type $void (func_subtype func))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
   (type $s0 (sub (struct)))
   ;; CHECK:       (type $s1 (struct_subtype  data))
@@ -13,6 +17,10 @@
  )
 
  (rec)
+
+ ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
+
+ ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
  ;; CHECK:      (type $s2 (struct_subtype (field i32) data))
  (type $s2 (struct i32))
@@ -39,14 +47,12 @@
  (type $a3 (array (field $x (mut f64))))
 
  (rec
-   ;; CHECK:      (type $void (func_subtype func))
    (type $void (func))
  )
 
  ;; CHECK:      (type $subvoid (func_subtype $void))
  (type $subvoid (sub $void (func)))
 
- ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
  (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
                    (result anyref (ref func))))
 
@@ -60,6 +66,8 @@
  (global (import "mod" "") (ref null $many))
 
  (global i32 i32.const 0)
+ ;; CHECK:      (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none (func_subtype (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany)) func))
+
  ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
  ;; CHECK:      (import "mod" "g2" (global $g2 (mut i64)))
@@ -68,43 +76,69 @@
 
  ;; CHECK:      (import "mod" "" (global $gimport$1 (ref null $many)))
 
+ ;; CHECK:      (import "mod" "f5" (func $fimport$1))
+
  ;; CHECK:      (global $2 i32 (i32.const 0))
 
  ;; CHECK:      (global $i32 i32 (i32.const 42))
  (global $i32 i32 i32.const 42)
 
- ;; uninteresting globals just to use the types
- ;; CHECK:      (global $s0 (mut (ref null $s0)) (ref.null $s0))
- (global $s0 (mut (ref null $s0)) ref.null $s0)
- ;; CHECK:      (global $s1 (mut (ref null $s1)) (ref.null $s1))
- (global $s1 (mut (ref null $s1)) ref.null $s1)
- ;; CHECK:      (global $s2 (mut (ref null $s2)) (ref.null $s2))
- (global $s2 (mut (ref null $s2)) ref.null $s2)
- ;; CHECK:      (global $s3 (mut (ref null $s3)) (ref.null $s3))
- (global $s3 (mut (ref null $s3)) ref.null $s3)
- ;; CHECK:      (global $s4 (mut (ref null $s4)) (ref.null $s4))
- (global $s4 (mut (ref null $s4)) ref.null $s4)
- ;; CHECK:      (global $s5 (mut (ref null $s5)) (ref.null $s5))
- (global $s5 (mut (ref null $s5)) ref.null $s5)
- ;; CHECK:      (global $s6 (mut (ref null $s6)) (ref.null $s6))
- (global $s6 (mut (ref null $s6)) ref.null $s6)
- ;; CHECK:      (global $s7 (mut (ref null $s7)) (ref.null $s7))
- (global $s7 (mut (ref null $s7)) ref.null $s7)
- ;; CHECK:      (global $s8 (mut (ref null $s8)) (ref.null $s8))
- (global $s8 (mut (ref null $s8)) ref.null $s8)
- ;; CHECK:      (global $a0 (mut (ref null $a0)) (ref.null $a0))
- (global $a0 (mut (ref null $a0)) ref.null $a0)
- ;; CHECK:      (global $a1 (mut (ref null $a1)) (ref.null $a1))
- (global $a1 (mut (ref null $a1)) ref.null $a1)
- ;; CHECK:      (global $a2 (mut (ref null $a2)) (ref.null $a2))
- (global $a2 (mut (ref null $a2)) ref.null $a2)
- ;; CHECK:      (global $a3 (mut (ref null $a3)) (ref.null $a3))
- (global $a3 (mut (ref null $a3)) ref.null $a3)
- ;; CHECK:      (global $sub0 (mut (ref null $subvoid)) (ref.null $subvoid))
- (global $sub0 (mut (ref null $subvoid)) ref.null $subvoid)
- ;; CHECK:      (global $sub1 (mut (ref null $submany)) (ref.null $submany))
- (global $sub1 (mut (ref null $submany)) ref.null $submany)
-)
-;; CHECK:      (export "g1" (global $g1))
+ ;; functions
+ (func)
 
-;; CHECK:      (export "g1.1" (global $g1))
+ ;; CHECK:      (export "g1" (global $g1))
+
+ ;; CHECK:      (export "g1.1" (global $g1))
+
+ ;; CHECK:      (export "f5.0" (func $fimport$1))
+
+ ;; CHECK:      (export "f5.1" (func $fimport$1))
+
+ ;; CHECK:      (func $0 (type $void)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+
+ ;; CHECK:      (func $f1 (type $i32_=>_none) (param $0 i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $f1 (param i32))
+ ;; CHECK:      (func $f2 (type $i32_=>_none) (param $x i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $f2 (param $x i32))
+ ;; CHECK:      (func $f3 (type $none_=>_i32) (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $f3 (result i32)
+  i32.const 0
+ )
+ ;; CHECK:      (func $f4 (type $void)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $1 i64)
+ ;; CHECK-NEXT:  (local $l f32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $f4 (type 13) (local i32 i64) (local $l f32))
+ (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
+
+ ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $use-types
+  (param (ref $s0))
+  (param (ref $s1))
+  (param (ref $s2))
+  (param (ref $s3))
+  (param (ref $s4))
+  (param (ref $s5))
+  (param (ref $s6))
+  (param (ref $s7))
+  (param (ref $s8))
+  (param (ref $a0))
+  (param (ref $a1))
+  (param (ref $a2))
+  (param (ref $a3))
+  (param (ref $subvoid))
+  (param (ref $submany))
+ )
+)

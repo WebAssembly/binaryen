@@ -74,14 +74,14 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref null data)) func))
+  ;; CHECK:      (type $sig (func_subtype (param dataref) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (func $func (type $sig) (param $x (ref null data))
+  ;; CHECK:      (func $func (type $sig) (param $x dataref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
@@ -356,7 +356,7 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig-1 (func_subtype (param (ref null data) anyref) func))
+  ;; CHECK:      (type $sig-1 (func_subtype (param dataref anyref) func))
   (type $sig-1 (func_subtype (param anyref) (param anyref) func))
   ;; CHECK:      (type $sig-2 (func_subtype (param eqref (ref $struct)) func))
   (type $sig-2 (func_subtype (param anyref) (param anyref) func))
@@ -365,7 +365,7 @@
 
   ;; CHECK:      (elem declare func $func-2)
 
-  ;; CHECK:      (func $func-1 (type $sig-1) (param $x (ref null data)) (param $y anyref)
+  ;; CHECK:      (func $func-1 (type $sig-1) (param $x dataref) (param $y anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1 (type $sig-1) (param $x anyref) (param $y anyref)
@@ -379,8 +379,8 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (local $any anyref)
-  ;; CHECK-NEXT:  (local $data (ref null data))
-  ;; CHECK-NEXT:  (local $i31 (ref null i31))
+  ;; CHECK-NEXT:  (local $data dataref)
+  ;; CHECK-NEXT:  (local $i31 i31ref)
   ;; CHECK-NEXT:  (call $func-1
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (local.get $data)
@@ -726,14 +726,14 @@
 ;; Do not modify the types used on imported functions (until the spec and VM
 ;; support becomes stable).
 (module
-  ;; CHECK:      (type $ref?|data|_=>_none (func_subtype (param (ref null data)) func))
+  ;; CHECK:      (type $dataref_=>_none (func_subtype (param dataref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (import "a" "b" (func $import (param (ref null data))))
+  ;; CHECK:      (import "a" "b" (func $import (param dataref)))
   (import "a" "b" (func $import (param (ref null data))))
 
   ;; CHECK:      (func $test (type $none_=>_none)
