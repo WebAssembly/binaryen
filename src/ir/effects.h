@@ -188,8 +188,7 @@ public:
   }
 
   bool hasAnything() const {
-    return hasSideEffects() || accessesLocal() || readsMemory || readsTable ||
-           accessesMutableGlobal();
+    return hasSideEffects() || accessesLocal() || readsMutableGlobalState();
   }
 
   // check if we break to anything external from ourselves

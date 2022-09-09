@@ -76,6 +76,7 @@ template<class Specific> class AbstractChildIterator {
 public:
   // The vector of children in the order emitted by wasm-delegations-fields
   // (which is in reverse execution order).
+  // TODO: rename this "reverseChildren"?
   SmallVector<Expression**, 4> children;
 
   AbstractChildIterator(Expression* parent) {

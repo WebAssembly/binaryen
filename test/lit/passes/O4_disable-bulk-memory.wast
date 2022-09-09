@@ -236,9 +236,9 @@
  ;; CHECK-NEXT:      (i32.add
  ;; CHECK-NEXT:       (i32.add
  ;; CHECK-NEXT:        (select
- ;; CHECK-NEXT:         (local.get $0)
  ;; CHECK-NEXT:         (i32.const 1)
- ;; CHECK-NEXT:         (i32.gt_u
+ ;; CHECK-NEXT:         (local.get $0)
+ ;; CHECK-NEXT:         (i32.le_u
  ;; CHECK-NEXT:          (local.get $0)
  ;; CHECK-NEXT:          (i32.const 1)
  ;; CHECK-NEXT:         )

@@ -213,7 +213,7 @@
 
   ;; CHECK:      (func $call-nondefaultable-param
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 (ref null $struct))
+  ;; CHECK-NEXT:  (local $1 (ref $struct))
   ;; CHECK-NEXT:  (block $__inlined_func$nondefaultable-param
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (i32.const 0)

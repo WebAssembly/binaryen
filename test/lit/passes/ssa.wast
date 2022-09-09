@@ -8,23 +8,19 @@
  (func $foo)
 
  ;; CHECK:      (func $bar (param $x (ref func))
- ;; CHECK-NEXT:  (local $1 funcref)
- ;; CHECK-NEXT:  (local $2 funcref)
+ ;; CHECK-NEXT:  (local $1 (ref func))
+ ;; CHECK-NEXT:  (local $2 (ref func))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $foo)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $2
  ;; CHECK-NEXT:   (ref.func $bar)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $bar (param $x (ref func))

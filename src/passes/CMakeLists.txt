@@ -47,6 +47,7 @@ set(passes_SOURCES
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
+  JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp

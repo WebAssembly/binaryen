@@ -25,6 +25,9 @@
 namespace wasm {
 
 struct SetGlobals : public Pass {
+  // Only modifies globals.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
     Name input = runner->options.getArgument(
       "set-globals",
