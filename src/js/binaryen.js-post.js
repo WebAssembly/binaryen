@@ -118,7 +118,22 @@ function initializeConstants() {
     'ArrayInit',
     'ArrayGet',
     'ArraySet',
-    'ArrayLen'
+    'ArrayLen',
+    'ArrayCopy',
+    'RefAs',
+    'StringNew',
+    'StringConst',
+    'StringMeasure',
+    'StringEncode',
+    'StringConcat',
+    'StringEq',
+    'StringAs',
+    'StringWTF8Advance',
+    'StringWTF16Get',
+    'StringIterNext',
+    'StringIterMove',
+    'StringSliceWTF',
+    'StringSliceIter'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
@@ -542,6 +557,44 @@ function initializeConstants() {
     'RefAsFunc',
     'RefAsData',
     'RefAsI31',
+    'RefAsExternInternalize',
+    'RefAsExternExternalize',
+    'BrOnNull',
+    'BrOnNonNull',
+    'BrOnCast',
+    'BrOnCastFail',
+    'BrOnFunc',
+    'BrOnNonFunc',
+    'BrOnData',
+    'BrOnNonData',
+    'BrOnI31',
+    'BrOnNonI31',
+    'StringNewUTF8',
+    'StringNewWTF8',
+    'StringNewReplace',
+    'StringNewWTF16',
+    'StringNewUTF8Array',
+    'StringNewWTF8Array',
+    'StringNewReplaceArray',
+    'StringNewWTF16Array',
+    'StringMeasureUTF8',
+    'StringMeasureWTF8',
+    'StringMeasureWTF16',
+    'StringMeasureIsUSV',
+    'StringMeasureWTF16View',
+    'StringEncodeUTF8',
+    'StringEncodeWTF8',
+    'StringEncodeWTF16',
+    'StringEncodeUTF8Array',
+    'StringEncodeWTF8Array',
+    'StringEncodeWTF16Array',
+    'StringAsWTF8',
+    'StringAsWTF16',
+    'StringAsIter',
+    'StringIterMoveAdvance',
+    'StringIterMoveRewind',
+    'StringSliceWTF8',
+    'StringSliceWTF16'
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
@@ -2381,6 +2434,18 @@ function wrapModule(module, self = {}) {
       return Module['_BinaryenI31Get'](module, i31, 0);
     }
   };
+
+  // TODO: extern.internalize
+  // TODO: extern.externalize
+  // TODO: ref.test
+  // TODO: ref.cast
+  // TODO: br_on_*
+  // TODO: struct.*
+  // TODO: array.*
+  // TODO: string.*
+  // TODO: stringview_wtf8.*
+  // TODO: stringview_wtf16.*
+  // TODO: stringview_iter.*
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {

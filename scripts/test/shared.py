@@ -262,7 +262,8 @@ V8_OPTS = [
     '--experimental-wasm-gc',
     '--experimental-wasm-typed-funcref',
     '--experimental-wasm-memory64',
-    '--experimental-wasm-extended-const'
+    '--experimental-wasm-extended-const',
+    '--experimental-wasm-nn-locals',
 ]
 
 # external tools

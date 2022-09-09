@@ -177,14 +177,12 @@
  ;; CHECK:      (elem declare func $1)
 
  ;; CHECK:      (func $1 (result (ref func))
- ;; CHECK-NEXT:  (local $0 funcref)
+ ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (ref.func $1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (type $none_=>_ref|func| (func_subtype (result (ref func)) func))
@@ -192,14 +190,12 @@
  ;; NOMNL:      (elem declare func $1)
 
  ;; NOMNL:      (func $1 (type $none_=>_ref|func|) (result (ref func))
- ;; NOMNL-NEXT:  (local $0 funcref)
+ ;; NOMNL-NEXT:  (local $0 (ref func))
  ;; NOMNL-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; NOMNL-NEXT:   (local.set $0
  ;; NOMNL-NEXT:    (ref.func $1)
  ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (ref.as_non_null
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (local.get $0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $1 (result (ref func))

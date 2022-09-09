@@ -188,8 +188,7 @@ public:
   }
 
   bool hasAnything() const {
-    return hasSideEffects() || accessesLocal() || readsMemory || readsTable ||
-           accessesMutableGlobal();
+    return hasSideEffects() || accessesLocal() || readsMutableGlobalState();
   }
 
   // check if we break to anything external from ourselves
@@ -726,6 +725,10 @@ private:
       parent.implicitTrap = true;
     }
     void visitRefAs(RefAs* curr) {
+      if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+        // These conversions are infallible.
+        return;
+      }
       // traps when the arg is not valid
       parent.implicitTrap = true;
       // Note: We could be more precise here and report the lack of a possible

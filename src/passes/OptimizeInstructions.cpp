@@ -51,6 +51,13 @@
 
 namespace wasm {
 
+static Index getBitsForType(Type type) {
+  if (!type.isNumber()) {
+    return -1;
+  }
+  return type.getByteSize() * 8;
+}
+
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
@@ -123,20 +130,6 @@ struct LocalScanner : PostWalker<LocalScanner> {
   // define this for the templated getMaxBits method. we know nothing here yet
   // about locals, so return the maxes
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
-
-  Index getBitsForType(Type type) {
-    if (!type.isBasic()) {
-      return -1;
-    }
-    switch (type.getBasic()) {
-      case Type::i32:
-        return 32;
-      case Type::i64:
-        return 64;
-      default:
-        return -1;
-    }
-  }
 };
 
 namespace {
@@ -238,9 +231,6 @@ struct OptimizeInstructions
       optimizer.walkFunction(func);
     }
 
-    // Some patterns create locals (like when we use getResultOfFirst), which we
-    // may need to fix up.
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
     // the 'pop' into a block making it invalid.
     EHUtils::handleBlockNestedPops(func, *getModule());
@@ -498,6 +488,8 @@ struct OptimizeInstructions
       }
       {
         // unsigned(x) >= 0   =>   i32(1)
+        // TODO: Use getDroppedChildrenAndAppend() here, so we can optimize even
+        //       if pure.
         Const* c;
         Expression* x;
         if (matches(curr, binary(GeU, pure(&x), ival(&c))) &&
@@ -856,15 +848,14 @@ struct OptimizeInstructions
         }
       }
       {
-        // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
+        // i32.wrap_i64 can be removed if the operations inside it do not
+        // actually require 64 bits, e.g.:
+        //
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
-        Unary* inner;
-        Expression* x;
-        if (matches(curr,
-                    unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
-            matches(curr,
-                    unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
-          return replaceCurrent(x);
+        if (matches(curr, unary(WrapInt64, any()))) {
+          if (auto* ret = optimizeWrappedResult(curr)) {
+            return replaceCurrent(ret);
+          }
         }
       }
       {
@@ -1019,7 +1010,7 @@ struct OptimizeInstructions
       if (auto* binary = curr->value->dynCast<Binary>()) {
         if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
              binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
-            ExpressionAnalyzer::equal(binary->left, binary->right)) {
+            areConsecutiveInputsEqual(binary->left, binary->right)) {
           return replaceCurrent(binary);
         }
         // abs(0 - x)   ==>   abs(x),
@@ -1478,6 +1469,13 @@ struct OptimizeInstructions
     }
   }
 
+  // Appends a result after the dropped children, if we need them.
+  Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                          Expression* result) {
+    return wasm::getDroppedChildrenAndAppend(
+      curr, *getModule(), getPassOptions(), result);
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1498,8 +1496,7 @@ struct OptimizeInstructions
       // reference can appear on both sides.
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(
-        curr, *getModule(), getPassOptions(), result));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
       return;
     }
 
@@ -1520,8 +1517,7 @@ struct OptimizeInstructions
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(
-        curr, *getModule(), getPassOptions(), result));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
       return;
     }
 
@@ -2026,13 +2022,14 @@ private:
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
   //
-  // This also checks that the inputs are removable.
+  // This also checks that the inputs are removable (but we do not assume the
+  // caller will always remove them).
   bool areConsecutiveInputsEqualAndRemovable(Expression* left,
                                              Expression* right) {
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical. (It is
-    // also ok to have side effects here, if we can remove them, as we are also
-    // checking if we can remove the two inputs anyhow.)
+    // also ok to have removable side effects here, see the function
+    // description.)
     auto& passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, *getModule(), left)
           .hasUnremovableSideEffects() ||
@@ -2055,9 +2052,13 @@ private:
     return true;
   }
 
-  // Check if two consecutive inputs to an instruction are equal and can be
-  // folded into the first of the two. This identifies reads from the same local
-  // variable when one of them is a "tee" operation.
+  // Check if two consecutive inputs to an instruction are equal and can also be
+  // folded into the first of the two (but we do not assume the caller will
+  // always fold them). This is similar to areConsecutiveInputsEqualAndRemovable
+  // but also identifies reads from the same local variable when the first of
+  // them is a "tee" operation and the second is a get (in which case, it is
+  // fine to remove the get, but not the tee).
+  //
   // The inputs here must be consecutive, but it is also ok to have code with no
   // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
@@ -2072,6 +2073,13 @@ private:
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
+  }
+
+  // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
+  // are equal (and not that they are foldable).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // TODO: optimize cases that must be equal but are *not* foldable.
+    return areConsecutiveInputsEqualAndFoldable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
@@ -2143,6 +2151,67 @@ private:
           c->value.getInteger() == 1LL) {
         binary->op = Abstract::getBinary(c->type, Abstract::Ne);
         c->value = Literal::makeZero(c->type);
+        return;
+      }
+      // Prefer compare to signed min (s_min) instead of s_min + 1.
+      // (signed)x < s_min + 1   ==>   x == s_min
+      if (binary->op == LtSInt32 && c->value.geti32() == INT32_MIN + 1) {
+        binary->op = EqInt32;
+        c->value = Literal::makeSignedMin(Type::i32);
+        return;
+      }
+      if (binary->op == LtSInt64 && c->value.geti64() == INT64_MIN + 1) {
+        binary->op = EqInt64;
+        c->value = Literal::makeSignedMin(Type::i64);
+        return;
+      }
+      // (signed)x >= s_min + 1   ==>   x != s_min
+      if (binary->op == GeSInt32 && c->value.geti32() == INT32_MIN + 1) {
+        binary->op = NeInt32;
+        c->value = Literal::makeSignedMin(Type::i32);
+        return;
+      }
+      if (binary->op == GeSInt64 && c->value.geti64() == INT64_MIN + 1) {
+        binary->op = NeInt64;
+        c->value = Literal::makeSignedMin(Type::i64);
+        return;
+      }
+      // Prefer compare to signed max (s_max) instead of s_max - 1.
+      // (signed)x > s_max - 1   ==>   x == s_max
+      if (binary->op == GtSInt32 && c->value.geti32() == INT32_MAX - 1) {
+        binary->op = EqInt32;
+        c->value = Literal::makeSignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == GtSInt64 && c->value.geti64() == INT64_MAX - 1) {
+        binary->op = EqInt64;
+        c->value = Literal::makeSignedMax(Type::i64);
+        return;
+      }
+      // (signed)x <= s_max - 1   ==>   x != s_max
+      if (binary->op == LeSInt32 && c->value.geti32() == INT32_MAX - 1) {
+        binary->op = NeInt32;
+        c->value = Literal::makeSignedMax(Type::i32);
+        return;
+      }
+      if (binary->op == LeSInt64 && c->value.geti64() == INT64_MAX - 1) {
+        binary->op = NeInt64;
+        c->value = Literal::makeSignedMax(Type::i64);
+        return;
+      }
+      // Prefer compare to unsigned max (u_max) instead of u_max - 1.
+      // (unsigned)x <= u_max - 1   ==>   x != u_max
+      if (binary->op == Abstract::getBinary(c->type, Abstract::LeU) &&
+          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Ne);
+        c->value = Literal::makeUnsignedMax(c->type);
+        return;
+      }
+      // (unsigned)x > u_max - 1   ==>   x == u_max
+      if (binary->op == Abstract::getBinary(c->type, Abstract::GtU) &&
+          c->value.getInteger() == (int64_t)(UINT64_MAX - 1)) {
+        binary->op = Abstract::getBinary(c->type, Abstract::Eq);
+        c->value = Literal::makeUnsignedMax(c->type);
         return;
       }
       return;
@@ -2297,21 +2366,6 @@ private:
       // order using a temp local, which would be bad
     }
     {
-      // Flip select to remove eqz if we can reorder
-      Select* s;
-      Expression *ifTrue, *ifFalse, *c;
-      if (matches(
-            curr,
-            select(
-              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
-          canReorder(ifTrue, ifFalse)) {
-        s->ifTrue = ifFalse;
-        s->ifFalse = ifTrue;
-        s->condition = c;
-        return s;
-      }
-    }
-    {
       // TODO: Remove this after landing SCCP pass. See: #4161
 
       // i32(x) ? i32(x) : 0  ==>  x
@@ -2363,6 +2417,45 @@ private:
         return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
       }
     }
+    // Flip the arms if doing so might help later optimizations here.
+    if (auto* binary = curr->condition->dynCast<Binary>()) {
+      auto inv = invertBinaryOp(binary->op);
+      if (inv != InvalidBinary) {
+        // For invertible binary operations, we prefer to have non-zero values
+        // in the ifTrue, and zero values in the ifFalse, due to the
+        // optimization right after us. Even if this does not help there, it is
+        // a nice canonicalization. (To ensure convergence - that we don't keep
+        // doing work each time we get here - do nothing if both are zero, or
+        // if both are nonzero.)
+        Const* c;
+        if ((matches(curr->ifTrue, ival(0)) &&
+             !matches(curr->ifFalse, ival(0))) ||
+            (!matches(curr->ifTrue, ival()) &&
+             matches(curr->ifFalse, ival(&c)) && !c->value.isZero())) {
+          binary->op = inv;
+          std::swap(curr->ifTrue, curr->ifFalse);
+        }
+      }
+    }
+    if (curr->type == Type::i32 &&
+        Bits::getMaxBits(curr->condition, this) <= 1 &&
+        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
+        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
+      // The condition and both arms are i32 booleans, which allows us to do
+      // boolean optimizations.
+      Expression* x;
+      Expression* y;
+
+      // x ? y : 0   ==>   x & y
+      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
+        return builder.makeBinary(AndInt32, y, x);
+      }
+
+      // x ? 1 : y   ==>   x | y
+      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
+        return builder.makeBinary(OrInt32, y, x);
+      }
+    }
     {
       // Simplify x < 0 ? -1 : 1 or x >= 0 ? 1 : -1 to
       // i32(x) >> 31 | 1
@@ -2386,23 +2479,19 @@ private:
         }
       }
     }
-    if (curr->type == Type::i32 &&
-        Bits::getMaxBits(curr->condition, this) <= 1 &&
-        Bits::getMaxBits(curr->ifTrue, this) <= 1 &&
-        Bits::getMaxBits(curr->ifFalse, this) <= 1) {
-      // The condition and both arms are i32 booleans, which allows us to do
-      // boolean optimizations.
-      Expression* x;
-      Expression* y;
-
-      // x ? y : 0   ==>   x & y
-      if (matches(curr, select(any(&y), ival(0), any(&x)))) {
-        return builder.makeBinary(AndInt32, y, x);
-      }
-
-      // x ? 1 : y   ==>   x | y
-      if (matches(curr, select(ival(1), any(&y), any(&x)))) {
-        return builder.makeBinary(OrInt32, y, x);
+    {
+      // Flip select to remove eqz if we can reorder
+      Select* s;
+      Expression *ifTrue, *ifFalse, *c;
+      if (matches(
+            curr,
+            select(
+              &s, any(&ifTrue), any(&ifFalse), unary(EqZInt32, any(&c)))) &&
+          canReorder(ifTrue, ifFalse)) {
+        s->ifTrue = ifFalse;
+        s->ifFalse = ifTrue;
+        s->condition = c;
+        return s;
       }
     }
     {
@@ -2589,6 +2678,118 @@ private:
       Abstract::getBinary(walked->type, Abstract::Add),
       walked,
       builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
+  }
+
+  // Given an i64.wrap operation, see if we can remove it. If all the things
+  // being operated on behave the same with or without wrapping, then we don't
+  // need to go to 64 bits at all, e.g.:
+  //
+  //  int32_t(int64_t(x))               => x                 (extend, then wrap)
+  //  int32_t(int64_t(x) + int64_t(10)) => x + int32_t(10)            (also add)
+  //
+  Expression* optimizeWrappedResult(Unary* wrap) {
+    assert(wrap->op == WrapInt64);
+
+    // Core processing logic. This goes through the children, in one of two
+    // modes:
+    //  * Scan: Find if there is anything we can't handle. Sets |canOptimize|
+    //    with what it finds.
+    //  * Optimize: Given we can handle everything, update things.
+    enum Mode { Scan, Optimize };
+    bool canOptimize = true;
+    auto processChildren = [&](Mode mode) {
+      // Use a simple stack as we go through the children. We use ** as we need
+      // to replace children for some optimizations.
+      SmallVector<Expression**, 2> stack;
+      stack.emplace_back(&wrap->value);
+
+      while (!stack.empty() && canOptimize) {
+        auto* currp = stack.back();
+        stack.pop_back();
+        auto* curr = *currp;
+        if (curr->type == Type::unreachable) {
+          // Leave unreachability for other passes.
+          canOptimize = false;
+          return;
+        } else if (auto* c = curr->dynCast<Const>()) {
+          // A i64 const can be handled by just turning it into an i32.
+          if (mode == Optimize) {
+            c->value = Literal(int32_t(c->value.getInteger()));
+            c->type = Type::i32;
+          }
+        } else if (auto* unary = curr->dynCast<Unary>()) {
+          switch (unary->op) {
+            case ExtendSInt32:
+            case ExtendUInt32: {
+              // Note that there is nothing to push to the stack here: the child
+              // is 32-bit already, so we can stop looking. We just need to skip
+              // the extend operation.
+              if (mode == Optimize) {
+                *currp = unary->value;
+              }
+              break;
+            }
+            default: {
+              // TODO: handle more cases here and below,
+              //       https://github.com/WebAssembly/binaryen/issues/5004
+              canOptimize = false;
+              return;
+            }
+          }
+        } else if (auto* binary = curr->dynCast<Binary>()) {
+          // Turn the binary into a 32-bit one, if we can.
+          switch (binary->op) {
+            case AddInt64:
+            case SubInt64:
+            case MulInt64: {
+              // We can optimize these.
+              break;
+            }
+            default: {
+              canOptimize = false;
+              return;
+            }
+          }
+          if (mode == Optimize) {
+            switch (binary->op) {
+              case AddInt64: {
+                binary->op = AddInt32;
+                break;
+              }
+              case SubInt64: {
+                binary->op = SubInt32;
+                break;
+              }
+              case MulInt64: {
+                binary->op = MulInt32;
+                break;
+              }
+              default: {
+                WASM_UNREACHABLE("bad op");
+              }
+            }
+            // All things we can optimize change the type to i32.
+            binary->type = Type::i32;
+          }
+          stack.push_back(&binary->left);
+          stack.push_back(&binary->right);
+        } else {
+          // Anything else makes us give up.
+          canOptimize = false;
+          return;
+        }
+      }
+    };
+
+    processChildren(Scan);
+    if (!canOptimize) {
+      return nullptr;
+    }
+
+    // Optimize, and return the optimized results (in which we no longer need
+    // the wrap operation itself).
+    processChildren(Optimize);
+    return wrap->value;
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2,
@@ -3181,7 +3382,7 @@ private:
           binary(DivSInt64, any(), i64(std::numeric_limits<int64_t>::min())))) {
       curr->op = EqInt64;
       curr->type = Type::i32;
-      return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
+      return builder.makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x < 0   ==>   i32(0)
     if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
@@ -3366,7 +3567,69 @@ private:
         return left;
       }
     }
+    // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
+    // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
+    // And similarly for other relational operations on integers.
+    if (curr->isRelational()) {
+      Binary* add;
+      Const* c1;
+      Const* c2;
+      if ((matches(curr,
+                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+           matches(curr,
+                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+          !canOverflow(add)) {
+        if (c2->value.geU(c1->value).getInteger()) {
+          // This is the first line above, we turn into x > (C2-C1)
+          c2->value = c2->value.sub(c1->value);
+          curr->left = add->left;
+          return curr;
+        }
+        // This is the second line above, we turn into x + (C1-C2) > 0. Other
+        // optimizations can often kick in later. However, we must rule out the
+        // case where C2 is already 0 (as then we would not actually change
+        // anything, and we could infinite loop).
+        auto zero = Literal::makeZero(c2->type);
+        if (c2->value != zero) {
+          c1->value = c1->value.sub(c2->value);
+          c2->value = zero;
+          return curr;
+        }
+      }
+    }
     return nullptr;
+  }
+
+  // Returns true if the given binary operation can overflow. If we can't be
+  // sure either way, we return true, assuming the worst.
+  bool canOverflow(Binary* binary) {
+    using namespace Abstract;
+
+    // If we know nothing about a limit on the amount of bits on either side,
+    // give up.
+    auto typeMaxBits = getBitsForType(binary->type);
+    auto leftMaxBits = Bits::getMaxBits(binary->left, this);
+    auto rightMaxBits = Bits::getMaxBits(binary->right, this);
+    if (std::max(leftMaxBits, rightMaxBits) == typeMaxBits) {
+      return true;
+    }
+
+    if (binary->op == getBinary(binary->type, Add)) {
+      // Proof this cannot overflow:
+      //
+      // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
+      //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
+      //              =  2^typeMaxBits                           (3)
+      //
+      // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
+      //     and its max value is 2^32 - 1, which is < 2^32).
+      // (2) By the above checks and early returns.
+      // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
+      return false;
+    }
+
+    // TODO subtraction etc.
+    return true;
   }
 
   // Folding two expressions into one with similar operations and
@@ -3470,6 +3733,55 @@ private:
             curr,
             binary(Shl, binary(&inner, Mul, any(), ival(&c1)), ival(&c2)))) {
         c1->value = c1->value.shl(c2->value);
+        return inner;
+      }
+    }
+    {
+      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // in FinalOptimizer.
+
+      // (x >> C)  << C   =>   x & -(1 << C)
+      // (x >>> C) << C   =>   x & -(1 << C)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(curr,
+                  binary(Shl, binary(&inner, any(), ival(&c1)), ival(&c2))) &&
+          (inner->op == getBinary(inner->type, ShrS) ||
+           inner->op == getBinary(inner->type, ShrU)) &&
+          Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+        auto type = c1->type;
+        if (type == Type::i32) {
+          c1->value = Literal::makeFromInt32(
+            -(1U << Bits::getEffectiveShifts(c1)), Type::i32);
+        } else {
+          c1->value = Literal::makeFromInt64(
+            -(1ULL << Bits::getEffectiveShifts(c1)), Type::i64);
+        }
+        inner->op = getBinary(type, And);
+        return inner;
+      }
+    }
+    {
+      // TODO: Add cancelation for some large constants when shrinkLevel > 0
+      // in FinalOptimizer.
+
+      // (x << C) >>> C   =>   x & (-1 >>> C)
+      // (x << C) >> C    =>   skip
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(ShrU, binary(&inner, Shl, any(), ival(&c1)), ival(&c2))) &&
+          Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+        auto type = c1->type;
+        if (type == Type::i32) {
+          c1->value = Literal::makeFromInt32(
+            -1U >> Bits::getEffectiveShifts(c1), Type::i32);
+        } else {
+          c1->value = Literal::makeFromInt64(
+            -1ULL >> Bits::getEffectiveShifts(c1), Type::i64);
+        }
+        inner->op = getBinary(type, And);
         return inner;
       }
     }
@@ -3839,7 +4151,7 @@ private:
     auto& options = getPassOptions();
 
     if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
-      if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
+      if (areConsecutiveInputsEqual(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
         return builder.makeBlock({builder.makeDrop(memCopy->dest),
@@ -4098,8 +4410,9 @@ private:
     }
   }
 
+  // Invert (negate) the opcode, so that it has the exact negative meaning as it
+  // had before.
   BinaryOp invertBinaryOp(BinaryOp op) {
-    // use de-morgan's laws
     switch (op) {
       case EqInt32:
         return NeInt32;
@@ -4158,6 +4471,9 @@ private:
     }
   }
 
+  // Change the opcode so it is correct after reversing the operands. That is,
+  // we had  X OP  Y  and we need OP' so that this is equivalent to that:
+  //         Y OP' X
   BinaryOp reverseRelationalOp(BinaryOp op) {
     switch (op) {
       case EqInt32:

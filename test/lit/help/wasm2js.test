@@ -165,6 +165,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
+;; CHECK-NEXT:                                                 JavaScript promise integration
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
 ;; CHECK-NEXT:
@@ -581,6 +584,10 @@
 ;; CHECK-NEXT:   --enable-strings                              Enable strings
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                             Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories                       Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories                      Disable multi-memories
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct

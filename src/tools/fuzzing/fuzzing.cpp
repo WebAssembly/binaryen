@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
 
@@ -461,6 +462,9 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
+
+  // We must ensure non-nullable locals validate.
+  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {
@@ -503,7 +507,8 @@ Function* TranslateToFuzzReader::addFunction() {
     params.push_back(type);
   }
   auto paramType = Type(params);
-  func->type = Signature(paramType, getControlFlowType());
+  auto resultType = getControlFlowType();
+  func->type = Signature(paramType, resultType);
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -545,13 +550,29 @@ Function* TranslateToFuzzReader::addFunction() {
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Only functions
-  // with defaultable params can be exported because the trap fuzzer depends on
-  // that (TODO: fix this).
-  bool defaultableParams =
-    std::all_of(paramType.begin(), paramType.end(), [](Type t) {
-      return t.isDefaultable();
+  // with valid params and returns can be exported because the trap fuzzer
+  // depends on that (TODO: fix this).
+  auto validExportType = [](Type t) {
+    if (!t.isRef()) {
+      return true;
+    }
+    auto heapType = t.getHeapType();
+    return heapType == HeapType::ext || heapType == HeapType::func ||
+           heapType == HeapType::string;
+  };
+  bool validExportParams =
+    std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
+      return validExportType(t) && t.isDefaultable();
     });
-  if (defaultableParams && (numAddedFunctions == 0 || oneIn(2)) &&
+  // Note: spec discussions around JS API integration are still ongoing, and it
+  // is not clear if we should allow nondefaultable types in exports or not
+  // (in imports, we cannot allow them in the fuzzer anyhow, since it can't
+  // construct such values in JS to send over to the wasm from the fuzzer
+  // harness).
+  bool validExportResults =
+    std::all_of(resultType.begin(), resultType.end(), validExportType);
+  if (validExportParams && validExportResults &&
+      (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
     export_->name = func->name;

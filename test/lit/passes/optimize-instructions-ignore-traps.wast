@@ -5,8 +5,13 @@
 (module
   ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
   (type $0 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $get-i32 (result i32)))
+
   ;; CHECK:      (memory $0 0)
   (memory $0 0)
+
+  (import "a" "b" (func $get-i32 (result i32)))
+
   ;; CHECK:      (func $conditionals (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -732,6 +737,19 @@
  ;; CHECK-NEXT:    (local.get $src)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.copy
+ ;; CHECK-NEXT:   (call $get-i32)
+ ;; CHECK-NEXT:   (call $get-i32)
+ ;; CHECK-NEXT:   (local.get $sz)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (call $get-i32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (call $get-i32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
   (memory.copy  ;; nop
@@ -743,6 +761,16 @@
   (memory.copy  ;; nop
     (local.get $dst)
     (local.get $src)
+    (i32.const 0)
+  )
+  (memory.copy  ;; not a nop as the runtime dst/src may differ
+    (call $get-i32)
+    (call $get-i32)
+    (local.get $sz)
+  )
+  (memory.copy  ;; as above, but with a size of 0. the calls must remain.
+    (call $get-i32)
+    (call $get-i32)
     (i32.const 0)
   )
  )

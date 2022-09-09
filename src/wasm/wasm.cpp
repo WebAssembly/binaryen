@@ -51,6 +51,7 @@ const char* TypedFunctionReferencesFeature = "typed-function-references";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
+const char* MultiMemoriesFeature = "multi-memories";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -181,7 +182,7 @@ void Block::finalize() {
     return;
   }
   // The default type is what is at the end. Next we need to see if breaks and/
-  // or unreachabitily change that.
+  // or unreachability change that.
   type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
@@ -1121,6 +1122,12 @@ void RefAs::finalize() {
     case RefAsI31:
       type = Type(HeapType::i31, NonNullable);
       break;
+    case ExternInternalize:
+      type = Type(HeapType::any, value->type.getNullability());
+      break;
+    case ExternExternalize:
+      type = Type(HeapType::ext, value->type.getNullability());
+      break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
   }
@@ -1284,6 +1291,10 @@ Name Function::getLocalNameOrGeneric(Index index) {
     return nameIt->second;
   }
   return Name::fromInt(index);
+}
+
+bool Function::hasLocalIndex(Name name) const {
+  return localIndices.find(name) != localIndices.end();
 }
 
 Index Function::getLocalIndex(Name name) {

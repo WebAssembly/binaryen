@@ -14,6 +14,13 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+v110
+----
+
+- Add support for non-nullable locals in wasm GC. (#4959)
+- Add support for multiple memories. (#4811)
+- Add support for the wasm Strings proposal. (see PRs with [Strings] in name)
 - Add a new flag to Directize, `--pass-arg=directize-initial-contents-immutable`
   which indicates the initial table contents are immutable. That is the case for
   LLVM, for example, and it allows us to optimize more indirect calls to direct
@@ -28,6 +35,8 @@ Current Trunk
   function references spec.
 - HeapType::ext has been restored but is no longer a subtype of HeapType::any to
   match the latest updates in the GC spec. (#4898)
+- `i31ref` and `dataref` are now nullable to match the latest GC spec. (#4843)
+- Add support for `extern.externalize` and `extern.internalize`. (#4975)
 
 v109
 ----

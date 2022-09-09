@@ -23,6 +23,7 @@
 
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "passes/passes.h"
 #include "support/colors.h"
@@ -196,6 +197,9 @@ void PassRegistry::registerPasses() {
   registerPass("intrinsic-lowering",
                "lower away binaryen intrinsics",
                createIntrinsicLoweringPass);
+  registerPass("jspi",
+               "wrap imports and exports for JavaScript promise integration",
+               createJSPIPass);
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);
@@ -936,16 +940,29 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
 }
 
 void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
-  if (pass->modifiesBinaryenIR()) {
-    // If Binaryen IR is modified, Stack IR must be cleared - it would
-    // be out of sync in a potentially dangerous way.
-    if (func) {
-      func->stackIR.reset(nullptr);
-    } else {
-      for (auto& func : wasm->functions) {
-        func->stackIR.reset(nullptr);
-      }
+  if (!pass->modifiesBinaryenIR()) {
+    return;
+  }
+
+  // Binaryen IR is modified, so we may have work here.
+
+  if (!func) {
+    // If no function is provided, then this is not a function-parallel pass,
+    // and it may have operated on any of the functions in theory, so run on
+    // them all.
+    assert(!pass->isFunctionParallel());
+    for (auto& func : wasm->functions) {
+      handleAfterEffects(pass, func.get());
     }
+    return;
+  }
+
+  // If Binaryen IR is modified, Stack IR must be cleared - it would
+  // be out of sync in a potentially dangerous way.
+  func->stackIR.reset(nullptr);
+
+  if (pass->requiresNonNullableLocalFixups()) {
+    TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
 }
 

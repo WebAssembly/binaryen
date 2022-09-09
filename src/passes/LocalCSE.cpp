@@ -549,8 +549,6 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
 
     Applier applier(requestInfos);
     applier.walkFunctionInModule(func, getModule());
-
-    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 };
 

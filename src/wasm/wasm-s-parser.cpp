@@ -1179,10 +1179,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type(HeapType::eq, Nullable);
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type(HeapType::i31, NonNullable);
+    return Type(HeapType::i31, Nullable);
   }
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type(HeapType::data, NonNullable);
+    return Type(HeapType::data, Nullable);
   }
   if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type(HeapType::string, Nullable);

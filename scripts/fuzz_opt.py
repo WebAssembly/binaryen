@@ -270,8 +270,10 @@ def init_important_initial_contents():
 INITIAL_CONTENTS_IGNORE = [
     # not all relaxed SIMD instructions are implemented in the interpreter
     'relaxed-simd.wast',
-    # TODO fuzzer and interpreter support for strings
+    # TODO: fuzzer and interpreter support for strings
     'strings.wast',
+    # TODO: fuzzer and interpreter support for extern conversions
+    'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
     'zlib.wasm',
     'cubescript.wasm',
@@ -1082,15 +1084,16 @@ class TrapsNeverHappen(TestCaseHandler):
                 # operations, etc.). in that case there is nothing for us to
                 # compare here; just leave.
                 return
-            call_end = before.index('\n', call_start)
+            # include the line separator in the index, as function names may
+            # be prefixes of each other
+            call_end = before.index(os.linesep, call_start) + 1
             # we now know the contents of the call line after which the trap
             # happens, which is something like "[fuzz-exec] calling bar", and
             # it is unique since it contains the function being called.
             call_line = before[call_start:call_end]
-            # find that call line, and remove everything from it onward.
-            before_index = before.index(call_line)
+            # remove everything from that call line onward.
             lines_pre = before.count(os.linesep)
-            before = before[:before_index]
+            before = before[:call_start]
             lines_post = before.count(os.linesep)
             print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
 

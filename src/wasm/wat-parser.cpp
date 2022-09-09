@@ -38,15 +38,14 @@
 // other module elements that can be referred to by name before their
 // definitions have been parsed.
 //
-// The third phase, not yet implemented, further parses and constructs types
-// implicitly defined by type uses in functions, blocks, and call_indirect
-// instructions. These implicitly defined types may be referred to by index
-// elsewhere.
+// The third phase further parses and constructs types implicitly defined by
+// type uses in functions, blocks, and call_indirect instructions. These
+// implicitly defined types may be referred to by index elsewhere.
 //
-// The fourth phase, not yet implemented, parses and sets the types of globals,
-// functions, and other top-level module elements. These types need to be set
-// before we parse instructions because they determine the types of instructions
-// such as global.get and ref.func.
+// The fourth phase parses and sets the types of globals, functions, and other
+// top-level module elements. These types need to be set before we parse
+// instructions because they determine the types of instructions such as
+// global.get and ref.func.
 //
 // The fifth and final phase parses the remaining contents of all module
 // elements, including instructions.
@@ -282,6 +281,13 @@ struct GlobalType {
   Type type;
 };
 
+// A signature type and parameter names (possibly empty), used for parsing
+// function types.
+struct TypeUse {
+  HeapType type;
+  std::vector<Name> names;
+};
+
 struct ImportNames {
   Name mod;
   Name nm;
@@ -366,6 +372,8 @@ struct NullTypeParserCtx {
   using StructT = Ok;
   using ArrayT = Ok;
   using GlobalTypeT = Ok;
+  using TypeUseT = Ok;
+  using LocalsT = Ok;
 
   HeapTypeT makeFunc() { return Ok{}; }
   HeapTypeT makeAny() { return Ok{}; }
@@ -405,6 +413,9 @@ struct NullTypeParserCtx {
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
+  LocalsT makeLocals() { return Ok{}; }
+  void appendLocal(LocalsT&, Name, TypeT) {}
+
   Result<Index> getTypeIndex(Name, ParseInput&) { return 1; }
   Result<HeapTypeT> getHeapTypeFromIdx(Index, ParseInput&) { return Ok{}; }
 };
@@ -421,6 +432,7 @@ template<typename Ctx> struct TypeParserCtx {
   using FieldsT = std::pair<std::vector<Name>, std::vector<Field>>;
   using StructT = std::pair<std::vector<Name>, Struct>;
   using ArrayT = Array;
+  using LocalsT = std::vector<NameType>;
 
   // Map heap type names to their indices.
   const IndexMap& typeIndices;
@@ -490,6 +502,11 @@ template<typename Ctx> struct TypeParserCtx {
       return Array(fields.second[0]);
     }
     return {};
+  }
+
+  LocalsT makeLocals() { return {}; }
+  void appendLocal(LocalsT& locals, Name id, TypeT type) {
+    locals.push_back({id, type});
   }
 
   Result<Index> getTypeIndex(Name id, ParseInput& in) {
@@ -573,10 +590,15 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   // The module element definitions we are parsing in this phase.
   std::vector<DefPos> typeDefs;
   std::vector<DefPos> subtypeDefs;
+  std::vector<DefPos> funcDefs;
   std::vector<DefPos> globalDefs;
+
+  // Positions of typeuses that might implicitly define new types.
+  std::vector<Index> implicitTypeDefs;
 
   // Counters used for generating names for module elements.
   int globalCounter = 0;
+  int funcCounter = 0;
 
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
@@ -593,6 +615,57 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
   void finishDeftype(Index pos) { typeDefs.push_back({{}, pos}); }
+
+  Result<TypeUseT> makeTypeUse(Index pos,
+                               std::optional<HeapTypeT> type,
+                               ParamsT*,
+                               ResultsT*,
+                               ParseInput&) {
+    if (!type) {
+      implicitTypeDefs.push_back(pos);
+    }
+    return Ok{};
+  }
+
+  Result<Function*> addFuncDecl(ParseInput& in,
+                                Name name,
+                                std::optional<ImportNames> importNames) {
+    auto f = std::make_unique<Function>();
+    if (name.is()) {
+      if (wasm.getFunctionOrNull(name)) {
+        // TDOO: if the existing function is not explicitly named, fix its name
+        // and continue.
+        // TODO: Fix error location to point to name.
+        return in.err("repeated function name");
+      }
+      f->setExplicitName(name);
+    } else {
+      name = (importNames ? "fimport$" : "") + std::to_string(funcCounter++);
+      name = Names::getValidFunctionName(wasm, name);
+      f->name = name;
+    }
+    applyImportNames(*f, importNames);
+    return wasm.addFunction(std::move(f));
+  }
+
+  Result<> addFunc(Name name,
+                   const std::vector<Name>& exports,
+                   ImportNames* import,
+                   TypeUseT type,
+                   std::optional<LocalsT>,
+                   std::optional<InstrsT>,
+                   Index pos,
+                   ParseInput& in) {
+    if (import && hasNonImport) {
+      return in.err("import after non-import");
+    }
+    auto imp = import ? std::make_optional(*import) : std::nullopt;
+    auto f = addFuncDecl(in, name, imp);
+    CHECK_ERR(f);
+    CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
+    funcDefs.push_back({name, pos});
+    return Ok{};
+  }
 
   Result<Global*> addGlobalDecl(ParseInput& in,
                                 Name name,
@@ -697,28 +770,30 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   void finishDeftype(Index) {}
 };
 
-// TODO: Phase 3: ParseImplicitTypeDefsCtx
+// Phase 3: Parse type uses to find implicitly defined types.
+struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
+  using TypeUseT = Ok;
 
-// Phase 4: Parse and set the types of module elements.
-struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
-                             NullInstrParserCtx {
-  // In this phase we have constructed all the types, so we can materialize and
-  // validate them when they are used.
+  // Types parsed so far.
+  std::vector<HeapType>& types;
 
-  using GlobalTypeT = GlobalType;
+  // Map typeuse positions without an explicit type to the correct type.
+  std::unordered_map<Index, HeapType>& implicitTypes;
 
-  Module& wasm;
+  // Map signatures to the first defined heap type they match.
+  std::unordered_map<Signature, HeapType> sigTypes;
 
-  const std::vector<HeapType>& types;
-
-  // The index of the current type.
-  Index index = 0;
-
-  ParseModuleTypesCtx(Module& wasm,
-                      const std::vector<HeapType>& types,
-                      const IndexMap& typeIndices)
-    : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), wasm(wasm),
-      types(types) {}
+  ParseImplicitTypeDefsCtx(std::vector<HeapType>& types,
+                           std::unordered_map<Index, HeapType>& implicitTypes,
+                           const IndexMap& typeIndices)
+    : TypeParserCtx<ParseImplicitTypeDefsCtx>(typeIndices), types(types),
+      implicitTypes(implicitTypes) {
+    for (auto type : types) {
+      if (type.isSignature() && type.getRecGroup().size() == 1) {
+        sigTypes.insert({type.getSignature(), type});
+      }
+    }
+  }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx, ParseInput& in) {
     if (idx >= types.size()) {
@@ -727,8 +802,114 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return types[idx];
   }
 
+  Result<TypeUseT> makeTypeUse(Index pos,
+                               std::optional<HeapTypeT>,
+                               ParamsT* params,
+                               ResultsT* results,
+                               ParseInput& in) {
+    std::vector<Type> paramTypes;
+    if (params) {
+      paramTypes = getUnnamedTypes(*params);
+    }
+
+    std::vector<Type> resultTypes;
+    if (results) {
+      resultTypes = *results;
+    }
+
+    auto sig = Signature(Type(paramTypes), Type(resultTypes));
+    auto [it, inserted] = sigTypes.insert({sig, HeapType::func});
+    if (inserted) {
+      auto type = HeapType(sig);
+      it->second = type;
+      types.push_back(type);
+    }
+    implicitTypes.insert({pos, it->second});
+
+    return Ok{};
+  }
+};
+
+// Phase 4: Parse and set the types of module elements.
+struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
+                             NullInstrParserCtx {
+  // In this phase we have constructed all the types, so we can materialize and
+  // validate them when they are used.
+
+  using GlobalTypeT = GlobalType;
+  using TypeUseT = TypeUse;
+
+  Module& wasm;
+
+  const std::vector<HeapType>& types;
+  const std::unordered_map<Index, HeapType>& implicitTypes;
+
+  // The index of the current type.
+  Index index = 0;
+
+  ParseModuleTypesCtx(Module& wasm,
+                      const std::vector<HeapType>& types,
+                      const std::unordered_map<Index, HeapType>& implicitTypes,
+                      const IndexMap& typeIndices)
+    : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), wasm(wasm), types(types),
+      implicitTypes(implicitTypes) {}
+
+  Result<HeapTypeT> getHeapTypeFromIdx(Index idx, ParseInput& in) {
+    if (idx >= types.size()) {
+      return in.err("type index out of bounds");
+    }
+    return types[idx];
+  }
+
+  Result<TypeUseT> makeTypeUse(Index pos,
+                               std::optional<HeapTypeT> type,
+                               ParamsT* params,
+                               ResultsT* results,
+                               ParseInput& in) {
+    std::vector<Name> ids;
+    if (params) {
+      ids.reserve(params->size());
+      for (auto& p : *params) {
+        ids.push_back(p.name);
+      }
+    }
+
+    if (type) {
+      return TypeUse{*type, ids};
+    }
+
+    auto it = implicitTypes.find(pos);
+    assert(it != implicitTypes.end());
+
+    return TypeUse{it->second, ids};
+  }
+
   GlobalTypeT makeGlobalType(Mutability mutability, TypeT type) {
     return {mutability, type};
+  }
+
+  Result<> addFunc(Name name,
+                   const std::vector<Name>&,
+                   ImportNames*,
+                   TypeUseT type,
+                   std::optional<LocalsT> locals,
+                   std::optional<InstrsT>,
+                   Index,
+                   ParseInput&) {
+    auto& f = wasm.functions[index];
+    f->type = type.type;
+    for (Index i = 0; i < type.names.size(); ++i) {
+      if (type.names[i].is()) {
+        f->setLocalName(i, type.names[i]);
+      }
+    }
+    if (locals) {
+      for (auto& l : *locals) {
+        Builder::addVar(f.get(), l.name, l.type);
+      }
+    }
+    // TODO: local types and names.
+    return Ok{};
   }
 
   Result<> addGlobal(Name,
@@ -748,6 +929,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 // Phase 5: Parse module element definitions, including instructions.
 struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   using GlobalTypeT = Ok;
+  using TypeUseT = HeapType;
 
   using InstrT = Expression*;
   using InstrsT = std::vector<Expression*>;
@@ -759,15 +941,17 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   std::vector<std::vector<Expression*>> instrStack;
 
   const std::vector<HeapType>& types;
+  const std::unordered_map<Index, HeapType>& implicitTypes;
 
   // The index of the current module element.
   Index index = 0;
 
   ParseDefsCtx(Module& wasm,
                const std::vector<HeapType>& types,
+               const std::unordered_map<Index, HeapType>& implicitTypes,
                const IndexMap& typeIndices)
-    : InstrParserCtx<ParseDefsCtx>(wasm, typeIndices), wasm(wasm),
-      types(types) {}
+    : InstrParserCtx<ParseDefsCtx>(wasm, typeIndices), wasm(wasm), types(types),
+      implicitTypes(implicitTypes) {}
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
@@ -776,6 +960,66 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       return in.err("type index out of bounds");
     }
     return types[idx];
+  }
+
+  Result<TypeUseT> makeTypeUse(Index pos,
+                               std::optional<HeapTypeT> type,
+                               ParamsT* params,
+                               ResultsT* results,
+                               ParseInput& in) {
+    if (type && (params || results)) {
+      std::vector<Type> paramTypes;
+      if (params) {
+        paramTypes = getUnnamedTypes(*params);
+      }
+
+      std::vector<Type> resultTypes;
+      if (results) {
+        resultTypes = *results;
+      }
+
+      auto sig = Signature(Type(paramTypes), Type(resultTypes));
+
+      if (!type->isSignature() || type->getSignature() != sig) {
+        return in.err("type does not match provided signature");
+      }
+    }
+
+    if (type) {
+      return *type;
+    }
+
+    auto it = implicitTypes.find(pos);
+    assert(it != implicitTypes.end());
+    return it->second;
+  }
+
+  Result<> addFunc(Name,
+                   const std::vector<Name>&,
+                   ImportNames*,
+                   TypeUseT,
+                   std::optional<LocalsT>,
+                   std::optional<InstrsT> insts,
+                   Index,
+                   ParseInput&) {
+    Expression* body;
+    if (insts) {
+      switch (insts->size()) {
+        case 0:
+          body = builder.makeNop();
+          break;
+        case 1:
+          body = insts->back();
+          break;
+        default:
+          body = builder.makeBlock(*insts, wasm.functions[index]->getResults());
+          break;
+      }
+    } else {
+      body = builder.makeNop();
+    }
+    wasm.functions[index]->body = body;
+    return Ok{};
   }
 
   Result<> addGlobal(Name,
@@ -1026,12 +1270,17 @@ template<typename Ctx>
 MaybeResult<Index> maybeTypeidx(Ctx& ctx, ParseInput& in);
 template<typename Ctx>
 Result<typename Ctx::HeapTypeT> typeidx(Ctx&, ParseInput&);
+template<typename Ctx>
+Result<typename Ctx::TypeUseT> typeuse(Ctx&, ParseInput&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
 template<typename Ctx> Result<> strtype(Ctx&, ParseInput&);
 template<typename Ctx>
 MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&, ParseInput&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&, ParseInput&);
+template<typename Ctx>
+MaybeResult<typename Ctx::LocalsT> locals(Ctx&, ParseInput&);
+template<typename Ctx> MaybeResult<> func(Ctx&, ParseInput&);
 template<typename Ctx> MaybeResult<> global(Ctx&, ParseInput&);
 MaybeResult<> modulefield(ParseDeclsCtx&, ParseInput&);
 Result<> module(ParseDeclsCtx&, ParseInput&);
@@ -1094,10 +1343,10 @@ MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx, ParseInput& in) {
     return ctx.makeRefType(ctx.makeEq(), Nullable);
   }
   if (in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31(), NonNullable);
+    return ctx.makeRefType(ctx.makeI31(), Nullable);
   }
   if (in.takeKeyword("dataref"sv)) {
-    return ctx.makeRefType(ctx.makeData(), NonNullable);
+    return ctx.makeRefType(ctx.makeData(), Nullable);
   }
   if (in.takeKeyword("arrayref"sv)) {
     return in.err("arrayref not yet supported");
@@ -1920,6 +2169,38 @@ Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx, ParseInput& in) {
   return in.err("expected type index or identifier");
 }
 
+// typeuse ::= '(' 'type' x:typeidx ')'                                => x, []
+//                 (if typedefs[x] = [t1*] -> [t2*]
+//           | '(' 'type' x:typeidx ')' ((t1,IDs):param)* (t2:result)* => x, IDs
+//                 (if typedefs[x] = [t1*] -> [t2*])
+//           | ((t1,IDs):param)* (t2:result)*                          => x, IDs
+//                 (if x is minimum s.t. typedefs[x] = [t1*] -> [t2*])
+template<typename Ctx>
+Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, ParseInput& in) {
+  auto pos = in.getPos();
+  std::optional<typename Ctx::HeapTypeT> type;
+  if (in.takeSExprStart("type"sv)) {
+    auto x = typeidx(ctx, in);
+    CHECK_ERR(x);
+
+    if (!in.takeRParen()) {
+      return in.err("expected end of type use");
+    }
+
+    type = *x;
+  }
+
+  auto namedParams = params(ctx, in);
+  CHECK_ERR(namedParams);
+
+  auto resultTypes = results(ctx, in);
+  CHECK_ERR(resultTypes);
+
+  // TODO: Use `pos` for error reporting rather than `in`.
+  return ctx.makeTypeUse(
+    pos, type, namedParams.getPtr(), resultTypes.getPtr(), in);
+}
+
 // ('(' 'import' mod:name nm:name ')')?
 MaybeResult<ImportNames> inlineImport(ParseInput& in) {
   if (!in.takeSExprStart("import"sv)) {
@@ -2041,14 +2322,96 @@ template<typename Ctx> MaybeResult<> deftype(Ctx& ctx, ParseInput& in) {
   return Ok{};
 }
 
+// local  ::= '(' 'local id? t:valtype ')' => [t]
+//          | '(' 'local t*:valtype* ')' => [t*]
+// locals ::= local*
+template<typename Ctx>
+MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx, ParseInput& in) {
+  bool hasAny = false;
+  auto res = ctx.makeLocals();
+  while (in.takeSExprStart("local"sv)) {
+    hasAny = true;
+    if (auto id = in.takeID()) {
+      // Single named local
+      auto type = valtype(ctx, in);
+      CHECK_ERR(type);
+      if (!in.takeRParen()) {
+        return in.err("expected end of local");
+      }
+      ctx.appendLocal(res, *id, *type);
+    } else {
+      // Repeated unnamed locals
+      while (!in.takeRParen()) {
+        auto type = valtype(ctx, in);
+        CHECK_ERR(type);
+        ctx.appendLocal(res, {}, *type);
+      }
+    }
+  }
+  if (hasAny) {
+    return res;
+  }
+  return {};
+}
+
+// func ::= '(' 'func' id? ('(' 'export' name ')')*
+//              x,I:typeuse t*:vec(local) (in:instr)* ')'
+//        | '(' 'func' id? ('(' 'export' name ')')*
+//              '(' 'import' mode:name nm:name ')' typeuse ')'
+template<typename Ctx> MaybeResult<> func(Ctx& ctx, ParseInput& in) {
+  auto pos = in.getPos();
+  if (!in.takeSExprStart("func"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = in.takeID()) {
+    name = *id;
+  }
+
+  auto exports = inlineExports(in);
+  CHECK_ERR(exports);
+
+  auto import = inlineImport(in);
+  CHECK_ERR(import);
+
+  auto type = typeuse(ctx, in);
+  CHECK_ERR(type);
+
+  std::optional<typename Ctx::LocalsT> localVars;
+  if (!import) {
+    if (auto l = locals(ctx, in)) {
+      CHECK_ERR(l);
+      localVars = *l;
+    }
+  }
+
+  std::optional<typename Ctx::InstrsT> insts;
+  if (!import) {
+    auto i = instrs(ctx, in);
+    CHECK_ERR(i);
+    insts = *i;
+  }
+
+  if (!in.takeRParen()) {
+    return in.err("expected end of function");
+  }
+
+  // TODO: Use `pos` instead of `in` for error position.
+  CHECK_ERR(ctx.addFunc(
+    name, *exports, import.getPtr(), *type, localVars, insts, pos, in));
+  return Ok{};
+}
+
 // global ::= '(' 'global' id? ('(' 'export' name ')')* gt:globaltype e:expr ')'
-//          | '(' 'global' id? '(' 'import' mod:name nm:name ')'
-//                gt:globaltype ')'
+//          | '(' 'global' id? ('(' 'export' name ')')*
+//                '(' 'import' mod:name nm:name ')' gt:globaltype ')'
 template<typename Ctx> MaybeResult<> global(Ctx& ctx, ParseInput& in) {
   auto pos = in.getPos();
   if (!in.takeSExprStart("global"sv)) {
     return {};
   }
+
   Name name;
   if (auto id = in.takeID()) {
     name = *id;
@@ -2095,6 +2458,10 @@ MaybeResult<> modulefield(ParseDeclsCtx& ctx, ParseInput& in) {
     return {};
   }
   if (auto res = deftype(ctx, in)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = func(ctx, in)) {
     CHECK_ERR(res);
     return Ok{};
   }
@@ -2168,19 +2535,30 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     }
   }
 
-  // TODO: Parse implicit type definitions.
+  // Parse implicit type definitions and map typeuses without explicit types to
+  // the correct types.
+  std::unordered_map<Index, HeapType> implicitTypes;
+  {
+    ParseImplicitTypeDefsCtx ctx(types, implicitTypes, *typeIndices);
+    for (Index pos : decls.implicitTypeDefs) {
+      ParseInput in(input, pos);
+      CHECK_ERR(typeuse(ctx, in));
+    }
+  }
 
   {
     // Parse module-level types.
-    ParseModuleTypesCtx ctx(wasm, types, *typeIndices);
+    ParseModuleTypesCtx ctx(wasm, types, implicitTypes, *typeIndices);
     CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, input, decls.funcDefs, func));
     // TODO: Parse types of other module elements.
   }
   {
     // Parse definitions.
     // TODO: Parallelize this.
-    ParseDefsCtx ctx(wasm, types, *typeIndices);
+    ParseDefsCtx ctx(wasm, types, implicitTypes, *typeIndices);
     CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, input, decls.funcDefs, func));
   }
 
   return Ok{};

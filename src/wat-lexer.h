@@ -172,14 +172,13 @@ public:
     index = i;
     skipSpace();
     lexToken();
-    skipSpace();
   }
 
   std::string_view next() const { return buffer.substr(index); }
   Lexer& operator++() {
     // Preincrement
-    lexToken();
     skipSpace();
+    lexToken();
     return *this;
   }
 

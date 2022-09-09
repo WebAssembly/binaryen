@@ -33,7 +33,7 @@
    )
   )
  )
- ;; CHECK:      (func $br_on_non_data-2 (param $data dataref)
+ ;; CHECK:      (func $br_on_non_data-2 (param $data (ref data))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result anyref)
  ;; CHECK-NEXT:    (drop
@@ -57,10 +57,10 @@
   )
  )
 
- ;; CHECK:      (func $br_on-if (param $0 dataref)
+ ;; CHECK:      (func $br_on-if (param $0 (ref data))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (select (result dataref)
+ ;; CHECK-NEXT:    (select (result (ref data))
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (i32.const 0)

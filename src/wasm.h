@@ -568,6 +568,8 @@ enum RefAsOp {
   RefAsFunc,
   RefAsData,
   RefAsI31,
+  ExternInternalize,
+  ExternExternalize,
 };
 
 enum BrOnOp {
@@ -1969,6 +1971,7 @@ public:
 
   Name getLocalName(Index index);
   Index getLocalIndex(Name name);
+  bool hasLocalIndex(Name name) const;
   Index getVarIndexBase();
   Type getLocalType(Index index);
 

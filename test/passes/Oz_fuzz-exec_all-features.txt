@@ -121,7 +121,7 @@
   )
  )
  (func $1 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
+  (local $0 (ref $bytes))
   (call $log
    (array.len $bytes
     (local.tee $0
@@ -168,7 +168,7 @@
   )
  )
  (func $3 (; has Stack IR ;)
-  (local $0 (ref null $struct))
+  (local $0 (ref $struct))
   (local.set $0
    (struct.new_default $struct)
   )
@@ -204,7 +204,7 @@
  )
  (func $7 (; has Stack IR ;) (param $0 anyref)
   (drop
-   (block $data (result dataref)
+   (block $data (result (ref data))
     (drop
      (br_on_data $data
       (local.get $0)
@@ -262,8 +262,8 @@
   )
  )
  (func $23 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
-  (local $1 (ref null $bytes))
+  (local $0 (ref $bytes))
+  (local $1 (ref $bytes))
   (array.set $bytes
    (local.tee $1
     (array.new_default $bytes
@@ -317,7 +317,7 @@
   )
  )
  (func $24 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
+  (local $0 (ref $bytes))
   (call $log
    (array.len $bytes
     (local.tee $0
