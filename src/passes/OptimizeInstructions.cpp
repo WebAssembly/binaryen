@@ -3617,9 +3617,10 @@ private:
     {
       // copysign(x, x)   ==>   x
       Expression *x, *y;
-      if (matches(curr, binary(CopySign, any(&x), any(&y))) &&
-        areConsecutiveInputsEqualAndFoldable(x, y)) {
-        return getDroppedChildrenAndAppend(curr, x);
+      if (matches(curr, binary(CopySign, any(&x), any(&y)))) {
+        if (areConsecutiveInputsEqualAndFoldable(x, y)) {
+          return getDroppedChildrenAndAppend(curr, x);
+        }
       }
     }
     return nullptr;

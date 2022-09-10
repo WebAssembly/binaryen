@@ -11217,7 +11217,7 @@
     ;; copysign(x, x)  ->  x
     (drop (f32.copysign (local.get $fx) (local.get $fx)))
     (drop (f64.copysign (local.get $fy) (local.get $fy)))
-    ;; copysign(y = x, y)  ->  y
+    ;; copysign(x2 = x, x2)  ->  x2
     (drop (f32.copysign (local.tee $fx2 (local.get $fx)) (local.get $fx2)))
     (drop (f64.copysign (local.tee $fy2 (local.get $fy)) (local.get $fy2)))
   )
