@@ -3597,6 +3597,31 @@ private:
         }
       }
     }
+    {
+      // copysign(x, +C)   ==>   abs(x)
+      // copysign(x, -C)   ==>   neg(abs(x))
+      Const* c;
+      Expression* x;
+      if (matches(curr, binary(CopySign, any(&x), fval(&c)))) {
+        Builder builder(*getModule());
+        if (std::signbit(c->value.getFloat())) {
+          // copysign(x, -C)   ==>   neg(abs(x))
+          return builder.makeUnary(getUnary(type, Neg),
+                                   builder.makeUnary(getUnary(type, Abs), x));
+        } else {
+          // copysign(x, +C)   ==>   abs(x)
+          return builder.makeUnary(getUnary(type, Abs), x);
+        }
+      }
+    }
+    {
+      // copysign(x, x)   ==>   x
+      Expression *x, *y;
+      if (matches(curr, binary(CopySign, any(&x), any(&y))) &&
+        areConsecutiveInputsEqualAndFoldable(x, y)) {
+        return getDroppedChildrenAndAppend(curr, x);
+      }
+    }
     return nullptr;
   }
 
