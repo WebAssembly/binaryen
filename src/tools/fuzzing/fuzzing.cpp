@@ -1302,7 +1302,7 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
 Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   // look for a call target with the right type
   Function* target;
-  bool isReturn;
+  bool isReturn = false;
   size_t i = 0;
   while (1) {
     if (i == TRIES || wasm.functions.empty()) {
@@ -1311,8 +1311,11 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
     }
     // TODO: handle unreachable
     target = wasm.functions[upTo(wasm.functions.size())].get();
-    isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-               funcContext->func->getResults() == target->getResults();
+    // TODO: V8 has updated return_call_ref to have a type annotation, but we
+    // don't emit that yet. Re-enable this once we do. Also do a subtype rather
+    // than equality check on the results.
+    // isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+    //            funcContext->func->getResults() == target->getResults();
     if (target->getResults() == type || isReturn) {
       break;
     }
