@@ -4595,11 +4595,14 @@ private:
       return true;
     }
     switch (binary->op) {
-      case AddFloat32:
       case SubFloat32:
+      case SubFloat64: {
+        // Should apply  x - C  ->  x + (-C)
+        return binary->right->is<Const>();
+      }
+      case AddFloat32:
       case MulFloat32:
       case AddFloat64:
-      case SubFloat64:
       case MulFloat64: {
         // If the LHS is known to be non-NaN, the operands can commute.
         // We don't care about the RHS because right now we only know if

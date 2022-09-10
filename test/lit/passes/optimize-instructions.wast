@@ -2036,6 +2036,115 @@
     (drop (i32.add (i32.ctz (local.get $x)) (i32.eqz (local.get $y))))
     (drop (i32.add (i32.eqz (local.get $x)) (i32.ctz (local.get $y))))
   )
+  ;; CHECK:      (func $canonicalize-consts-floats (param $x f32) (param $y f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const 3.4000000953674316)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.mul
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const 3.4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.min
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const 3.4000000953674316)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.min
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const 3.4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.max
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const 3.4000000953674316)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.max
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const 3.4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.min
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.min
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.max
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.max
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (f32.const 1)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.copysign
+  ;; CHECK-NEXT:    (f64.const 1)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $canonicalize-consts-floats (param $x f32) (param $y f64)
+    (drop (f32.sub (local.get $x) (f32.const 1.0)))
+    (drop (f64.sub (local.get $y) (f64.const 1.0)))
+
+    (drop (f32.mul (f32.const 3.4) (local.get $x)))
+    (drop (f64.mul (f64.const 3.4) (local.get $y)))
+
+    (drop (f32.min (f32.const 3.4) (local.get $x)))
+    (drop (f64.min (f64.const 3.4) (local.get $y)))
+
+    (drop (f32.max (f32.const 3.4) (local.get $x)))
+    (drop (f64.max (f64.const 3.4) (local.get $y)))
+
+    (drop (f32.min (f32.const nan) (local.get $x)))
+    (drop (f64.min (f64.const nan) (local.get $y)))
+
+    (drop (f32.max (f32.const nan) (local.get $x)))
+    (drop (f64.max (f64.const nan) (local.get $y)))
+
+    ;; skips
+    (drop (f32.copysign (f32.const 1.0) (local.get $x)))
+    (drop (f64.copysign (f64.const 1.0) (local.get $y)))
+  )
   ;; CHECK:      (func $ne0 (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $ne0)
@@ -8376,15 +8485,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -0)
   ;; CHECK-NEXT:    (local.get $y32)
-  ;; CHECK-NEXT:    (f32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (f64.const -0)
   ;; CHECK-NEXT:    (local.get $y64)
-  ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10329,27 +10438,51 @@
   )
   ;; CHECK:      (func $const-float-zero (param $fx f32) (param $fy f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:    (f64.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:    (f64.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
   ;; CHECK-NEXT:    (local.get $fx)
   ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:    (f64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:    (local.get $fx)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.sub
-  ;; CHECK-NEXT:    (local.get $fy)
   ;; CHECK-NEXT:    (f64.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.add
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f32.const -0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.add
   ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const -0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10366,32 +10499,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.add
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f32.const -0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.add
-  ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const -0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.add
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.add
-  ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
   ;; CHECK-NEXT:    (f32.const -nan:0x34546d)
-  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:    (f32.const -0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -10537,15 +10646,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -0)
   ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (f64.const -0)
   ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10823,9 +10932,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -0)
   ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -13646,17 +13755,17 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.add
+  ;; CHECK-NEXT:    (f64.sub
+  ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:     (local.get $x0)
-  ;; CHECK-NEXT:     (f64.const -0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.abs
-  ;; CHECK-NEXT:    (f32.add
+  ;; CHECK-NEXT:    (f32.sub
+  ;; CHECK-NEXT:     (f32.const 0)
   ;; CHECK-NEXT:     (local.get $y0)
-  ;; CHECK-NEXT:     (f32.const -0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
