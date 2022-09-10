@@ -10939,16 +10939,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.copysign
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $fx)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.copysign
-  ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $fy)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.copysign

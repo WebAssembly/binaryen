@@ -3614,15 +3614,6 @@ private:
         }
       }
     }
-    {
-      // copysign(x, x)   ==>   x
-      Expression *x, *y;
-      if (matches(curr, binary(CopySign, any(&x), any(&y)))) {
-        if (areConsecutiveInputsEqualAndFoldable(x, y)) {
-          return getDroppedChildrenAndAppend(curr, x);
-        }
-      }
-    }
     return nullptr;
   }
 
@@ -4417,8 +4408,10 @@ private:
         return LiteralUtils::makeZero(Type::i32, *getModule());
       case AndInt32:
       case OrInt32:
+      case CopySignFloat32:
       case AndInt64:
       case OrInt64:
+      case CopySignFloat64:
         return binary->left;
       case EqInt32:
       case LeSInt32:
