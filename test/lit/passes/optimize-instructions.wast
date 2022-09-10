@@ -10304,12 +10304,7 @@
   )
   ;; CHECK:      (func $add-sub-zero-reorder-2 (param $temp i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (i32.sub
-  ;; CHECK-NEXT:    (local.tee $temp
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $temp)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -10945,19 +10940,13 @@
   ;; CHECK-NEXT:   (local.get $fy)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.copysign
-  ;; CHECK-NEXT:    (local.tee $fx2
-  ;; CHECK-NEXT:     (local.get $fx)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $fx2)
+  ;; CHECK-NEXT:   (local.tee $fx2
+  ;; CHECK-NEXT:    (local.get $fx)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.copysign
-  ;; CHECK-NEXT:    (local.tee $fy2
-  ;; CHECK-NEXT:     (local.get $fy)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $fy2)
+  ;; CHECK-NEXT:   (local.tee $fy2
+  ;; CHECK-NEXT:    (local.get $fy)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -13053,11 +13042,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.or
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.or
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -13073,15 +13059,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.xor
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.xor
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.xor

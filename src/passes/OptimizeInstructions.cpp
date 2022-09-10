@@ -789,11 +789,9 @@ struct OptimizeInstructions
     }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
-    if (!effects(curr->left).hasSideEffects()) {
-      if (ExpressionAnalyzer::equal(curr->left, curr->right)) {
-        if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
-          return replaceCurrent(ret);
-        }
+    if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
+        return replaceCurrent(ret);
       }
     }
 
