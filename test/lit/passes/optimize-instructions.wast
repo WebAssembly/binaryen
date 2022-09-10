@@ -11137,20 +11137,21 @@
   ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:   (f32.copysign
   ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:   (f32.copysign
   ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x200000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.neg
-  ;; CHECK-NEXT:    (f64.abs
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (f64.copysign
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop

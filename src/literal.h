@@ -18,7 +18,6 @@
 #define wasm_literal_h
 
 #include <array>
-#include <cmath>
 #include <iostream>
 #include <variant>
 
@@ -727,19 +726,8 @@ struct GCData {
 // valid NaNs, and after optimization the output is still that same set, then
 // the optimization is valid. And if the interpreter picks the same NaN in both
 // cases from that identical set then nothing looks wrong to the fuzzer.
-template<typename T> static Literal standardizeNaN(T result) {
-  if (!std::isnan(result)) {
-    return Literal(result);
-  }
-  // Pick a simple canonical payload, and positive.
-  if (sizeof(T) == 4) {
-    return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
-  } else if (sizeof(T) == 8) {
-    return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
-  } else {
-    WASM_UNREACHABLE("invalid float");
-  }
-}
+Literal standardizeNaN(float result);
+Literal standardizeNaN(double result);
 
 } // namespace wasm
 

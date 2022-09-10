@@ -17,6 +17,7 @@
 #include "literal.h"
 
 #include <cassert>
+#include <cmath>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "ir/bits.h"
@@ -856,6 +857,22 @@ Literal Literal::demote() const {
     return Literal(std::numeric_limits<float>::infinity());
   }
   return Literal(float(getf64()));
+}
+
+Literal standardizeNaN(float result) {
+  if (!std::isnan(result)) {
+    return Literal(result);
+  }
+  // Pick a simple canonical payload, and positive.
+  return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
+}
+
+Literal standardizeNaN(double result) {
+  if (!std::isnan(result)) {
+    return Literal(result);
+  }
+  // Pick a simple canonical payload, and positive.
+  return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
 }
 
 Literal Literal::add(const Literal& other) const {
