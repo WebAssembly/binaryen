@@ -38,18 +38,17 @@ struct FeatureSet {
     Multivalue = 1 << 9,
     GC = 1 << 10,
     Memory64 = 1 << 11,
-    TypedFunctionReferences = 1 << 12,
     // TODO: Remove this feature when the wasm spec stabilizes.
-    GCNNLocals = 1 << 13,
-    RelaxedSIMD = 1 << 14,
-    ExtendedConst = 1 << 15,
-    Strings = 1 << 16,
-    MultiMemories = 1 << 17,
+    GCNNLocals = 1 << 12,
+    RelaxedSIMD = 1 << 13,
+    ExtendedConst = 1 << 14,
+    Strings = 1 << 15,
+    MultiMemories = 1 << 16,
     // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
     // get all possible values use AllPossible. See setAll() below for more
     // details.
-    All = ((1 << 18) - 1) & ~GCNNLocals,
-    AllPossible = (1 << 18) - 1,
+    All = ((1 << 17) - 1) & ~GCNNLocals,
+    AllPossible = (1 << 17) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -78,8 +77,6 @@ struct FeatureSet {
         return "gc";
       case Memory64:
         return "memory64";
-      case TypedFunctionReferences:
-        return "typed-function-references";
       case GCNNLocals:
         return "gc-nn-locals";
       case RelaxedSIMD:
@@ -130,9 +127,6 @@ struct FeatureSet {
   bool hasMultivalue() const { return (features & Multivalue) != 0; }
   bool hasGC() const { return (features & GC) != 0; }
   bool hasMemory64() const { return (features & Memory64) != 0; }
-  bool hasTypedFunctionReferences() const {
-    return (features & TypedFunctionReferences) != 0;
-  }
   bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
@@ -155,9 +149,6 @@ struct FeatureSet {
   void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setGC(bool v = true) { set(GC, v); }
   void setMemory64(bool v = true) { set(Memory64, v); }
-  void setTypedFunctionReferences(bool v = true) {
-    set(TypedFunctionReferences, v);
-  }
   void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
   void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
   void setExtendedConst(bool v = true) { set(ExtendedConst, v); }

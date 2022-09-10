@@ -89,8 +89,6 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
       .addFeature(FeatureSet::GC, "garbage collection")
       .addFeature(FeatureSet::Memory64, "memory64")
-      .addFeature(FeatureSet::TypedFunctionReferences,
-                  "typed function references")
       .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")

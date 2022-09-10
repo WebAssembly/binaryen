@@ -164,7 +164,6 @@ function initializeConstants() {
     'Multivalue',
     'GC',
     'Memory64',
-    'TypedFunctionReferences',
     'RelaxedSIMD',
     'ExtendedConst',
     'Strings',
