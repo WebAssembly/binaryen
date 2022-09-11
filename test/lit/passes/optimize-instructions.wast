@@ -10864,6 +10864,18 @@
   ;; CHECK-NEXT:    (local.get $fy)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const 3.5)
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (f64.const -5)
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $rhs-is-const (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
     ;; signed divs
@@ -11091,6 +11103,20 @@
       (f64.neg
         (local.get $fy)
       )
+    ))
+
+    ;; -x + C   ->   C - x
+    (drop (f32.add
+      (f32.neg
+        (local.get $fx)
+      )
+      (f32.const 3.5)
+    ))
+    (drop (f64.add
+      (f64.neg
+        (local.get $fy)
+      )
+      (f64.const -5)
     ))
   )
   ;; CHECK:      (func $lhs-is-neg-one (param $x i32) (param $y i64)

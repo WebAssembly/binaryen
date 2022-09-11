@@ -3539,6 +3539,15 @@ private:
         return curr->left;
       }
     }
+    {
+      // -x + fval(C)   ==>   fval(C) - x
+      if (matches(curr, binary(Add, unary(Neg, any(&left)), fval()))) {
+        curr->op = Abstract::getBinary(type, Abstract::Sub);
+        curr->left = left;
+        std::swap(curr->left, curr->right);
+        return curr;
+      }
+    }
     // -x * fval(C)   ==>   x * -C
     // -x / fval(C)   ==>   x / -C
     if (matches(curr, binary(Mul, unary(Neg, any(&left)), fval())) ||
