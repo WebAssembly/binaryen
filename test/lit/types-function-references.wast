@@ -10,12 +10,16 @@
 ;; RUN: cat %t.text.wast | filecheck %s --check-prefix=CHECK-TEXT
 
 (module
-  ;; inline ref type in result
-  (type $_=>_eqref (func (result eqref)))
   ;; CHECK-BINARY:      (type $mixed_results (func (result anyref f32 anyref f32)))
 
-  ;; CHECK-BINARY:      (type $none_=>_none (func))
+  ;; CHECK-BINARY:      (type $void (func))
+  ;; CHECK-TEXT:      (type $mixed_results (func (result anyref f32 anyref f32)))
 
+  ;; CHECK-TEXT:      (type $void (func))
+  (type $void (func))
+
+  ;; inline ref type in result
+  (type $_=>_eqref (func (result eqref)))
   ;; CHECK-BINARY:      (type $i32-i32 (func (param i32) (result i32)))
 
   ;; CHECK-BINARY:      (type $=>eqref (func (result eqref)))
@@ -27,10 +31,6 @@
   ;; CHECK-BINARY:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK-BINARY:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $=>eqref))))
-  ;; CHECK-TEXT:      (type $mixed_results (func (result anyref f32 anyref f32)))
-
-  ;; CHECK-TEXT:      (type $none_=>_none (func))
-
   ;; CHECK-TEXT:      (type $i32-i32 (func (param i32) (result i32)))
 
   ;; CHECK-TEXT:      (type $=>eqref (func (result eqref)))
@@ -77,17 +77,17 @@
     (call_ref (ref.func $call-ref))
   )
   ;; CHECK-BINARY:      (func $return-call-ref
-  ;; CHECK-BINARY-NEXT:  (return_call_ref
+  ;; CHECK-BINARY-NEXT:  (return_call_ref $void
   ;; CHECK-BINARY-NEXT:   (ref.func $call-ref)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $return-call-ref
-  ;; CHECK-TEXT-NEXT:  (return_call_ref
+  ;; CHECK-TEXT-NEXT:  (return_call_ref $void
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   (func $return-call-ref
-    (return_call_ref (ref.func $call-ref))
+    (return_call_ref $void (ref.func $call-ref))
   )
   ;; CHECK-BINARY:      (func $call-ref-more (param $0 i32) (result i32)
   ;; CHECK-BINARY-NEXT:  (call_ref
@@ -405,7 +405,7 @@
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $1
-;; CHECK-NODEBUG-NEXT:  (return_call_ref
+;; CHECK-NODEBUG-NEXT:  (return_call_ref $none_=>_none
 ;; CHECK-NODEBUG-NEXT:   (ref.func $0)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )

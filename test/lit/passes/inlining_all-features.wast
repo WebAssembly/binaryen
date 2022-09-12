@@ -135,7 +135,7 @@
  (export "func_36_invoker" (func $1))
 
  (func $0
-  (return_call_ref
+  (return_call_ref $none_=>_none
    (ref.null $none_=>_none)
   )
  )

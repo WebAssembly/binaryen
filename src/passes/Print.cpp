@@ -2014,7 +2014,13 @@ struct PrintExpressionContents
   }
   void visitCallRef(CallRef* curr) {
     if (curr->isReturn) {
-      printMedium(o, "return_call_ref");
+      if (printUnreachableReplacement(curr->target)) {
+        return;
+      }
+      printMedium(o, "return_call_ref ");
+      assert(curr->target->type != Type::unreachable);
+      // TODO: Workaround if target has bottom type.
+      printHeapType(o, curr->target->type.getHeapType(), wasm);
     } else {
       printMedium(o, "call_ref");
     }

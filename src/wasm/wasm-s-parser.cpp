@@ -2830,9 +2830,20 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
+  Index operandsStart = 1;
+  HeapType sigType;
+  if (isReturn) {
+    sigType = parseHeapType(*s[1]);
+    operandsStart = 2;
+  }
   std::vector<Expression*> operands;
-  parseOperands(s, 1, s.size() - 1, operands);
+  parseOperands(s, operandsStart, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
+
+  if (isReturn) {
+    return Builder(wasm).makeCallRef(
+      target, operands, sigType.getSignature().results, isReturn);
+  }
   return ValidatingBuilder(wasm, s.line, s.col)
     .validateAndMakeCallRef(target, operands, isReturn);
 }
