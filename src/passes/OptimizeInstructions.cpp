@@ -1476,6 +1476,12 @@ struct OptimizeInstructions
       curr, *getModule(), getPassOptions(), result);
   }
 
+  Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
+    auto* result =
+      Builder(*getModule()).makeConst(value);
+    return getDroppedChildrenAndAppend(curr, value);
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1494,9 +1500,7 @@ struct OptimizeInstructions
       // possibly appear on both sides is null, but one of the two is non-
       // nullable, which rules that out. So there is no way that the same
       // reference can appear on both sides.
-      auto* result =
-        Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32)));
       return;
     }
 
@@ -1515,9 +1519,7 @@ struct OptimizeInstructions
     // cases yet; the foldable case we do handle is the common one of the first
     // child being a tee and the second a get of that tee. TODO)
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
-      auto* result =
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
     }
 
@@ -3929,6 +3931,37 @@ private:
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
+        }
+      }
+
+      // Comparisons to a constant can sometimes be simplified depending on
+      // the number of bits, e.g.
+      //
+      //   x > 100
+      //
+      // cannot be true if x has maximum 2 bits.
+      if (auto* c = curr->right->dynCast<Const>()) {
+        auto leftMaxBits = Bits::getMaxBits(curr->left, this);
+        // Check if there is a nontrivial amount of bits on the left, which may
+        // provide enough to optimize.
+          auto type = curr->left->type;
+        if (leftMaxBits < getBitsForType(type)) {
+          using namespace Abstract;
+          auto cBits = Bits::getMaxBits(c, this);
+          if (leftMaxBits < cBits) {
+            // There are not enough bits on the left for it to be equal to the
+            // right.
+            if (curr->op == Abstract::getBinary(type, Eq) ||
+                curr->op == Abstract::getBinary(type, Gt) ||
+                curr->op == Abstract::getBinary(type, Ge)) {
+              return getDroppedChildrenAndAppend(curr, Literal::makeZero(type)));
+            }
+            if (curr->op == Abstract::getBinary(type, Ne) ||
+                curr->op == Abstract::getBinary(type, Lt) ||
+                curr->op == Abstract::getBinary(type, Le)) {
+              return getDroppedChildrenAndAppend(curr, Literal::makeOne(type)));
+            }
+          }
         }
       }
     }
