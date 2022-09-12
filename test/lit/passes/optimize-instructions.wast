@@ -15768,7 +15768,7 @@
     ;; As above, but now using only signed operations and the constant on the
     ;; right has the sign bit set. The left side is non-negative, which lets us
     ;; infer the results here.
-    ;; These are all true:
+    ;; These are all false:
     (drop
       (i32.lt_s
         (i32.and
@@ -15784,17 +15784,17 @@
           (local.get $x)
           (i32.const 255)
         )
-        (i32.const 0x80000000)
+        (i32.const 0x80000000) ;; -2147483648
       )
     )
-    ;; These are all false:
+    ;; These are all true:
     (drop
       (i32.gt_s
         (i32.and
           (local.get $x)
           (i32.const 255)
         )
-        (i32.const 0x80000000)
+        (i32.const 0x80000000) ;; -2147483648
       )
     )
     (drop
@@ -15803,7 +15803,7 @@
           (local.get $x)
           (i32.const 255)
         )
-        (i32.const 0x80000000)
+        (i32.const 0x80000000) ;; -2147483648
       )
     )
   )
