@@ -3952,14 +3952,14 @@ private:
             // There are not enough bits on the left for it to be equal to the
             // right, making various comparisons obviously false:
             //             x == y
-            //   (unsigned)x <  y
-            //   (unsigned)x <= y
+            //   (unsigned)x >  y
+            //   (unsigned)x >= y
             // and the same for signed, if y does not have the sign bit set
             // (in that case, the comparison is effectively unsigned).
             //
             // TODO: In addition to leftMaxBits < rightMinBits, we could
             //       handle the reverse, and also special cases like all bits
-            //       being 1 on the right, things like (x & 255) <= 255  =>  1
+            //       being 1 on the right, things like (x & 255) <= 255  ->  1
             if (curr->op == Abstract::getBinary(type, Eq) ||
                 curr->op == Abstract::getBinary(type, GtU) ||
                 curr->op == Abstract::getBinary(type, GeU) ||
@@ -3972,8 +3972,8 @@ private:
 
             // And some are obviously true:
             //             x != y
-            //   (unsigned)x >  y
-            //   (unsigned)x >= y
+            //   (unsigned)x <  y
+            //   (unsigned)x <= y
             // and likewise for signed, as above.
             if (curr->op == Abstract::getBinary(type, Ne) ||
                 curr->op == Abstract::getBinary(type, LtU) ||
