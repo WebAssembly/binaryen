@@ -3947,7 +3947,7 @@ private:
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
           auto rightMinBits = Bits::getMinBits(curr->right);
-          auto rightIsSigned = rightMinBits != getBitsForType(type);
+          auto rightIsSigned = rightMinBits == getBitsForType(type);
           if (leftMaxBits < rightMinBits) {
             // There are not enough bits on the left for it to be equal to the
             // right, making various comparisons obviously false:

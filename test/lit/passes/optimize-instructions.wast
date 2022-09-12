@@ -12551,13 +12551,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.ge_s
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 2147483647)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const -7)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unsigned-context (param $x i32) (param $y i64)
