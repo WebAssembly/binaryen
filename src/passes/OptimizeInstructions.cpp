@@ -1477,8 +1477,7 @@ struct OptimizeInstructions
   }
 
   Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
-    auto* result =
-      Builder(*getModule()).makeConst(value);
+    auto* result = Builder(*getModule()).makeConst(value);
     return getDroppedChildrenAndAppend(curr, value);
   }
 
@@ -1500,7 +1499,8 @@ struct OptimizeInstructions
       // possibly appear on both sides is null, but one of the two is non-
       // nullable, which rules that out. So there is no way that the same
       // reference can appear on both sides.
-      replaceCurrent(getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32)));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32)));
       return;
     }
 
@@ -1519,7 +1519,8 @@ struct OptimizeInstructions
     // cases yet; the foldable case we do handle is the common one of the first
     // child being a tee and the second a get of that tee. TODO)
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
-      replaceCurrent(getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
     }
 
@@ -3944,7 +3945,7 @@ private:
         auto leftMaxBits = Bits::getMaxBits(curr->left, this);
         // Check if there is a nontrivial amount of bits on the left, which may
         // provide enough to optimize.
-          auto type = curr->left->type;
+        auto type = curr->left->type;
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
           auto cBits = Bits::getMaxBits(c, this);
