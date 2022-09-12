@@ -3605,7 +3605,7 @@ private:
       Binary* bin;
       Expression* x;
       if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
-          std::isnan(c->value.getFloat()) && !x->is<Const>() &&
+          std::isnan(c->value.getFloat()) &&
           bin->op != getBinary(x->type, CopySign)) {
         if (bin->isRelational()) {
           // reuse "c" (nan) constant
