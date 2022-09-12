@@ -3939,6 +3939,8 @@ private:
       // bits, e.g.  (unsigned)x > y  must be true if x has strictly more bits.
       // A common case is a constant on the right, e.g. (x & 255) < 256 must be
       // true.
+      // TODO: use getMinBits in more places, see ideas in
+      //       https://github.com/WebAssembly/binaryen/issues/2898
       {
         // Check if there is a nontrivial amount of bits on the left, which may
         // provide enough to optimize.
