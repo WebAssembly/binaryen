@@ -4242,12 +4242,14 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex* segmentSizes,
                        BinaryenIndex numSegments,
                        bool shared,
+                       bool memory64,
                        const char* name) {
   auto memory = std::make_unique<Memory>();
   memory->name = name ? name : "0";
   memory->initial = initial;
   memory->max = int32_t(maximum); // Make sure -1 extends.
   memory->shared = shared;
+  memory->indexType = memory64 ? Type::i64 : Type::i32;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
@@ -4388,6 +4390,17 @@ bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name) {
     Fatal() << "invalid memory '" << name << "'.";
   }
   return memory->shared;
+}
+bool BinaryenMemoryIs64(BinaryenModuleRef module, const char* name) {
+  // Maintaining compatibility for instructions with a single memory
+  if (name == nullptr && module->memories.size() == 1) {
+    name = module->memories[0]->name.c_str();
+  }
+  auto* memory = ((Module*)module)->getMemoryOrNull(name);
+  if (memory == nullptr) {
+    Fatal() << "invalid memory '" << name << "'.";
+  }
+  return memory->is64();
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
                                           BinaryenIndex id) {
