@@ -438,7 +438,7 @@ Index getMaxBits(Expression* curr,
 }
 
 // As getMaxBits, but returns the minimum amount of bots.
-Index getMinBits(Expression* curr) {
+inline Index getMinBits(Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     // Constants are simple: the min and max are identical.
     return getMaxBits(c);

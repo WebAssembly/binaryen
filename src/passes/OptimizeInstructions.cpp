@@ -3937,14 +3937,16 @@ private:
 
       // Comparisons can sometimes be simplified depending on the number of
       // bits, e.g.  (unsigned)x > y  must be true if x has strictly more bits.
-      if (auto* c = curr->right->dynCast<Const>()) {
+      // A common case is a constant on the right, e.g. (x & 255) < 256 must be
+      // true.
+      {
         auto leftMaxBits = Bits::getMaxBits(curr->left, this);
         // Check if there is a nontrivial amount of bits on the left, which may
         // provide enough to optimize.
         auto type = curr->left->type;
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
-          auto rightMinBits = Bits::getMinBits(c);
+          auto rightMinBits = Bits::getMinBits(curr->right);
           auto rightIsSigned = rightMinBits != getBitsForType(type);
           if (leftMaxBits < rightMinBits) {
             // There are not enough bits on the left for it to be equal to the
@@ -3954,13 +3956,17 @@ private:
             //   (unsigned)x <= y
             // and the same for signed, if y does not have the sign bit set
             // (in that case, the comparison is effectively unsigned).
+            //
+            // TODO: In addition to leftMaxBits < rightMinBits, we could
+            //       handle the reverse, and also special cases like all bits
+            //       being 1 on the right, things like (x & 255) <= 255  =>  1
             if (curr->op == Abstract::getBinary(type, Eq) ||
                 curr->op == Abstract::getBinary(type, GtU) ||
                 curr->op == Abstract::getBinary(type, GeU) ||
-                (rightIsSigned &&
+                (!rightIsSigned &&
                  (curr->op == Abstract::getBinary(type, GtS) ||
                   curr->op == Abstract::getBinary(type, GeS)))) {
-              return getDroppedChildrenAndAppend(curr, Literal::makeZero(type));
+              return getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32));
             }
 
             // And some are obviously true:
@@ -3971,10 +3977,10 @@ private:
             if (curr->op == Abstract::getBinary(type, Ne) ||
                 curr->op == Abstract::getBinary(type, LtU) ||
                 curr->op == Abstract::getBinary(type, LeU) ||
-                (rightIsSigned &&
+                (!rightIsSigned &&
                  (curr->op == Abstract::getBinary(type, LtS) ||
                   curr->op == Abstract::getBinary(type, LeS)))) {
-              return getDroppedChildrenAndAppend(curr, Literal::makeOne(type));
+              return getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32));
             }
 
             // For truly signed comparisons, where y's sign bit is set, we can
@@ -3985,13 +3991,13 @@ private:
               //   (signed, non-negative)x >= (negative)y   =>   1
               if (curr->op == Abstract::getBinary(type, GtS) ||
                   curr->op == Abstract::getBinary(type, GeS)) {
-                return getDroppedChildrenAndAppend(curr, Literal::makeOne(type));
+                return getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32));
               }
               //   (signed, non-negative)x <  (negative)y   =>   0
               //   (signed, non-negative)x <= (negative)y   =>   0
               if (curr->op == Abstract::getBinary(type, LtS) ||
                   curr->op == Abstract::getBinary(type, LeS)) {
-                return getDroppedChildrenAndAppend(curr, Literal::makeZero(type));
+                return getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32));
               }
             }
           }
