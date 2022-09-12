@@ -15763,6 +15763,12 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $too-few-bits-signed (param $x i32)
     ;; As above, but now using only signed operations and the constant on the
@@ -15803,6 +15809,14 @@
           (local.get $x)
           (i32.const 255)
         )
+        (i32.const 0x80000000) ;; -2147483648
+      )
+    )
+    ;; This cannot be inferred, as the left has too many possible bits (so it
+    ;; may have the sign bit set).
+    (drop
+      (i32.gt_s
+        (local.get $x)
         (i32.const 0x80000000) ;; -2147483648
       )
     )
