@@ -3957,10 +3957,9 @@ private:
             if (curr->op == Abstract::getBinary(type, Eq) ||
                 curr->op == Abstract::getBinary(type, GtU) ||
                 curr->op == Abstract::getBinary(type, GeU) ||
-                (rightIsSigned && (
-                curr->op == Abstract::getBinary(type, GtS) ||
-                curr->op == Abstract::getBinary(type, GeS)
-                ))) {
+                (rightIsSigned &&
+                 (curr->op == Abstract::getBinary(type, GtS) ||
+                  curr->op == Abstract::getBinary(type, GeS)))) {
               return getDroppedChildrenAndAppend(curr, Literal::makeZero(type)));
             }
 
@@ -3972,10 +3971,9 @@ private:
             if (curr->op == Abstract::getBinary(type, Ne) ||
                 curr->op == Abstract::getBinary(type, LtU) ||
                 curr->op == Abstract::getBinary(type, LeU) ||
-                (rightIsSigned && (
-                curr->op == Abstract::getBinary(type, LtS) ||
-                curr->op == Abstract::getBinary(type, LeS)
-                ))) {
+                (rightIsSigned &&
+                 (curr->op == Abstract::getBinary(type, LtS) ||
+                  curr->op == Abstract::getBinary(type, LeS)))) {
               return getDroppedChildrenAndAppend(curr, Literal::makeOne(type)));
             }
 
