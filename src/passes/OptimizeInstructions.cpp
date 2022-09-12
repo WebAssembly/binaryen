@@ -3960,7 +3960,7 @@ private:
                 (rightIsSigned &&
                  (curr->op == Abstract::getBinary(type, GtS) ||
                   curr->op == Abstract::getBinary(type, GeS)))) {
-              return getDroppedChildrenAndAppend(curr, Literal::makeZero(type)));
+              return getDroppedChildrenAndAppend(curr, Literal::makeZero(type));
             }
 
             // And some are obviously true:
@@ -3974,7 +3974,7 @@ private:
                 (rightIsSigned &&
                  (curr->op == Abstract::getBinary(type, LtS) ||
                   curr->op == Abstract::getBinary(type, LeS)))) {
-              return getDroppedChildrenAndAppend(curr, Literal::makeOne(type)));
+              return getDroppedChildrenAndAppend(curr, Literal::makeOne(type));
             }
 
             // For truly signed comparisons, where y's sign bit is set, we can
@@ -3985,13 +3985,13 @@ private:
               //   (signed, non-negative)x >= (negative)y   =>   1
               if (curr->op == Abstract::getBinary(type, GtS) ||
                   curr->op == Abstract::getBinary(type, GeS)) {
-                return getDroppedChildrenAndAppend(curr, Literal::makeOne(type)));
+                return getDroppedChildrenAndAppend(curr, Literal::makeOne(type));
               }
               //   (signed, non-negative)x <  (negative)y   =>   0
               //   (signed, non-negative)x <= (negative)y   =>   0
               if (curr->op == Abstract::getBinary(type, LtS) ||
                   curr->op == Abstract::getBinary(type, LeS)) {
-                return getDroppedChildrenAndAppend(curr, Literal::makeZero(type)));
+                return getDroppedChildrenAndAppend(curr, Literal::makeZero(type));
               }
             }
           }
