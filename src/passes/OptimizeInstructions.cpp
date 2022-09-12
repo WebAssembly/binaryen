@@ -1478,7 +1478,7 @@ struct OptimizeInstructions
 
   Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
     auto* result = Builder(*getModule()).makeConst(value);
-    return getDroppedChildrenAndAppend(curr, value);
+    return getDroppedChildrenAndAppend(curr, result);
   }
 
   void visitRefEq(RefEq* curr) {
@@ -3949,18 +3949,54 @@ private:
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
           auto cBits = Bits::getMaxBits(c, this);
+          auto cIsSigned = cBits != getBitsForType(type);
           if (leftMaxBits < cBits) {
             // There are not enough bits on the left for it to be equal to the
-            // right.
+            // right, making various comparisons obviously false:
+            //             x == C
+            //   (unsigned)x <  C
+            //   (unsigned)x <=Cc
+            // and the same for signed, if the C does not have the sign bit set
+            // (in that case, the comparison is effectively unsigned).
             if (curr->op == Abstract::getBinary(type, Eq) ||
-                curr->op == Abstract::getBinary(type, Gt) ||
-                curr->op == Abstract::getBinary(type, Ge)) {
+                curr->op == Abstract::getBinary(type, GtU) ||
+                curr->op == Abstract::getBinary(type, GeU) ||
+                (cIsSigned && (
+                curr->op == Abstract::getBinary(type, GtS) ||
+                curr->op == Abstract::getBinary(type, GeS)
+                ))) {
               return getDroppedChildrenAndAppend(curr, Literal::makeZero(type)));
             }
+
+            // And some are obviously true:
+            //             x != C
+            //   (unsigned)x >  C
+            //   (unsigned)x >= C
+            // and likewise for signed, as above.
             if (curr->op == Abstract::getBinary(type, Ne) ||
-                curr->op == Abstract::getBinary(type, Lt) ||
-                curr->op == Abstract::getBinary(type, Le)) {
+                curr->op == Abstract::getBinary(type, LtU) ||
+                curr->op == Abstract::getBinary(type, LeU) ||
+                (cIsSigned && (
+                curr->op == Abstract::getBinary(type, LtS) ||
+                curr->op == Abstract::getBinary(type, LeS)
+                ))) {
               return getDroppedChildrenAndAppend(curr, Literal::makeOne(type)));
+            }
+
+            // For truly signed comparisons, where C's sign bit is set, we can
+            // also infer some things, since we know C is signed bit X is not
+            // (since X does not have enough bits for the sign bit to be set):
+            //   (signed, non-negative)x >  -C   =>   1
+            //   (signed, non-negative)x >= -C   =>   1
+            if (cIsSigned) {
+              if (curr->op == Abstract::getBinary(type, GtS) ||
+                  curr->op == Abstract::getBinary(type, GeS)) {
+                return getDroppedChildrenAndAppend(curr, Literal::makeOne(type)));
+              }
+              if (curr->op == Abstract::getBinary(type, LtS) ||
+                  curr->op == Abstract::getBinary(type, LeS)) {
+                return getDroppedChildrenAndAppend(curr, Literal::makeZero(type)));
+              }
             }
           }
         }
