@@ -62,10 +62,7 @@
    )
   )
   (call $logf32
-   (f32.div
-    (f32.const nan:0x7fff82)
-    (f32.const -nan:0x7ff622)
-   )
+   (f32.const nan:0x400000)
   )
   (call $logf32
    (f32.copysign
@@ -118,10 +115,7 @@
    )
   )
   (call $logf64
-   (f64.div
-    (f64.const nan:0xfffffffffff82)
-    (f64.const -nan:0xfffffffffa622)
-   )
+   (f64.const nan:0x8000000000000)
   )
   (call $logf64
    (f64.copysign
