@@ -3940,9 +3940,9 @@ private:
       // A common case is a constant on the right, e.g. (x & 255) < 256 must be
       // true.
       {
-        auto leftMaxBits = Bits::getMaxBits(curr->left, this);
         // Check if there is a nontrivial amount of bits on the left, which may
         // provide enough to optimize.
+        auto leftMaxBits = Bits::getMaxBits(curr->left, this);
         auto type = curr->left->type;
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
