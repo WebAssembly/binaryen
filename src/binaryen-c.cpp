@@ -3902,6 +3902,7 @@ void BinaryenCallRefSetTarget(BinaryenExpressionRef expr,
                               BinaryenExpressionRef targetExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallRef>());
+  assert(targetExpr);
   static_cast<CallRef*>(expression)->target = (Expression*)targetExpr;
 }
 bool BinaryenCallRefIsReturn(BinaryenExpressionRef expr) {
@@ -3924,6 +3925,7 @@ void BinaryenRefTestSetRef(BinaryenExpressionRef expr,
                            BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<RefTest>());
+  assert(refExpr);
   static_cast<RefTest*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenHeapType BinaryenRefTestGetIntendedType(BinaryenExpressionRef expr) {
@@ -3947,6 +3949,7 @@ void BinaryenRefCastSetRef(BinaryenExpressionRef expr,
                            BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<RefCast>());
+  assert(refExpr);
   static_cast<RefCast*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenHeapType BinaryenRefCastGetIntendedType(BinaryenExpressionRef expr) {
@@ -3979,6 +3982,7 @@ const char* BinaryenBrOnGetName(BinaryenExpressionRef expr) {
 void BinaryenBrOnSetName(BinaryenExpressionRef expr, const char* nameStr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOn>());
+  assert(nameStr);
   static_cast<BrOn*>(expression)->name = nameStr;
 }
 BinaryenExpressionRef BinaryenBrOnGetRef(BinaryenExpressionRef expr) {
@@ -3990,6 +3994,7 @@ void BinaryenBrOnSetRef(BinaryenExpressionRef expr,
                         BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOn>());
+  assert(refExpr);
   static_cast<BrOn*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenHeapType BinaryenBrOnGetIntendedType(BinaryenExpressionRef expr) {
@@ -4074,6 +4079,7 @@ void BinaryenStructGetSetRef(BinaryenExpressionRef expr,
                              BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StructGet>());
+  assert(refExpr);
   static_cast<StructGet*>(expression)->ref = (Expression*)refExpr;
 }
 bool BinaryenStructGetIsSigned(BinaryenExpressionRef expr) {
@@ -4107,6 +4113,7 @@ void BinaryenStructSetSetRef(BinaryenExpressionRef expr,
                              BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StructSet>());
+  assert(refExpr);
   static_cast<StructSet*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenStructSetGetValue(BinaryenExpressionRef expr) {
@@ -4118,6 +4125,7 @@ void BinaryenStructSetSetValue(BinaryenExpressionRef expr,
                                BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StructSet>());
+  assert(valueExpr);
   static_cast<StructSet*>(expression)->value = (Expression*)valueExpr;
 }
 // ArrayNew
@@ -4130,6 +4138,7 @@ void BinaryenArrayNewSetInit(BinaryenExpressionRef expr,
                              BinaryenExpressionRef initExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayNew>());
+  // may be null
   static_cast<ArrayNew*>(expression)->init = (Expression*)initExpr;
 }
 BinaryenExpressionRef BinaryenArrayNewGetSize(BinaryenExpressionRef expr) {
@@ -4141,6 +4150,7 @@ void BinaryenArrayNewSetSize(BinaryenExpressionRef expr,
                              BinaryenExpressionRef sizeExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayNew>());
+  assert(sizeExpr);
   static_cast<ArrayNew*>(expression)->size = (Expression*)sizeExpr;
 }
 // ArrayInit
@@ -4200,6 +4210,7 @@ void BinaryenArrayGetSetRef(BinaryenExpressionRef expr,
                             BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayGet>());
+  assert(refExpr);
   static_cast<ArrayGet*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenArrayGetGetIndex(BinaryenExpressionRef expr) {
@@ -4211,6 +4222,7 @@ void BinaryenArrayGetSetIndex(BinaryenExpressionRef expr,
                               BinaryenExpressionRef indexExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayGet>());
+  assert(indexExpr);
   static_cast<ArrayGet*>(expression)->index = (Expression*)indexExpr;
 }
 bool BinaryenArrayGetIsSigned(BinaryenExpressionRef expr) {
@@ -4233,6 +4245,7 @@ void BinaryenArraySetSetRef(BinaryenExpressionRef expr,
                             BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArraySet>());
+  assert(refExpr);
   static_cast<ArraySet*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenArraySetGetIndex(BinaryenExpressionRef expr) {
@@ -4244,6 +4257,7 @@ void BinaryenArraySetSetIndex(BinaryenExpressionRef expr,
                               BinaryenExpressionRef indexExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArraySet>());
+  assert(indexExpr);
   static_cast<ArraySet*>(expression)->index = (Expression*)indexExpr;
 }
 BinaryenExpressionRef BinaryenArraySetGetValue(BinaryenExpressionRef expr) {
@@ -4255,6 +4269,7 @@ void BinaryenArraySetSetValue(BinaryenExpressionRef expr,
                               BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArraySet>());
+  assert(valueExpr);
   static_cast<ArraySet*>(expression)->value = (Expression*)valueExpr;
 }
 // ArrayLen
@@ -4267,6 +4282,7 @@ void BinaryenArrayLenSetRef(BinaryenExpressionRef expr,
                             BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayLen>());
+  assert(refExpr);
   static_cast<ArrayLen*>(expression)->ref = (Expression*)refExpr;
 }
 // ArrayCopy
@@ -4279,6 +4295,7 @@ void BinaryenArrayCopySetDestRef(BinaryenExpressionRef expr,
                                  BinaryenExpressionRef destRefExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayCopy>());
+  assert(destRefExpr);
   static_cast<ArrayCopy*>(expression)->destRef = (Expression*)destRefExpr;
 }
 BinaryenExpressionRef
@@ -4291,6 +4308,7 @@ void BinaryenArrayCopySetDestIndex(BinaryenExpressionRef expr,
                                    BinaryenExpressionRef destIndexExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayCopy>());
+  assert(destIndexExpr);
   static_cast<ArrayCopy*>(expression)->destIndex = (Expression*)destIndexExpr;
 }
 BinaryenExpressionRef BinaryenArrayCopyGetSrcRef(BinaryenExpressionRef expr) {
@@ -4302,6 +4320,7 @@ void BinaryenArrayCopySetSrcRef(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef srcRefExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayCopy>());
+  assert(srcRefExpr);
   static_cast<ArrayCopy*>(expression)->srcRef = (Expression*)srcRefExpr;
 }
 BinaryenExpressionRef BinaryenArrayCopyGetSrcIndex(BinaryenExpressionRef expr) {
@@ -4313,6 +4332,7 @@ void BinaryenArrayCopySetSrcIndex(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef srcIndexExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayCopy>());
+  assert(srcIndexExpr);
   static_cast<ArrayCopy*>(expression)->srcIndex = (Expression*)srcIndexExpr;
 }
 BinaryenExpressionRef BinaryenArrayCopyGetLength(BinaryenExpressionRef expr) {
@@ -4324,6 +4344,7 @@ void BinaryenArrayCopySetLength(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef lengthExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<ArrayCopy>());
+  assert(lengthExpr);
   static_cast<ArrayCopy*>(expression)->length = (Expression*)lengthExpr;
 }
 // StringNew
@@ -4346,6 +4367,7 @@ void BinaryenStringNewSetPtr(BinaryenExpressionRef expr,
                              BinaryenExpressionRef ptrExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringNew>());
+  assert(ptrExpr);
   static_cast<StringNew*>(expression)->ptr = (Expression*)ptrExpr;
 }
 BinaryenExpressionRef BinaryenStringNewGetLength(BinaryenExpressionRef expr) {
@@ -4357,6 +4379,7 @@ void BinaryenStringNewSetLength(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef lengthExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringNew>());
+  // may be null (linear memory only)
   static_cast<StringNew*>(expression)->length = (Expression*)lengthExpr;
 }
 BinaryenExpressionRef BinaryenStringNewGetStart(BinaryenExpressionRef expr) {
@@ -4368,6 +4391,7 @@ void BinaryenStringNewSetStart(BinaryenExpressionRef expr,
                                BinaryenExpressionRef startExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringNew>());
+  // may be null (GC only)
   static_cast<StringNew*>(expression)->start = (Expression*)startExpr;
 }
 BinaryenExpressionRef BinaryenStringNewGetEnd(BinaryenExpressionRef expr) {
@@ -4379,6 +4403,7 @@ void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
                              BinaryenExpressionRef endExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringNew>());
+  // may be null (GC only)
   static_cast<StringNew*>(expression)->end = (Expression*)endExpr;
 }
 // StringConst
@@ -4391,6 +4416,7 @@ void BinaryenStringConstSetString(BinaryenExpressionRef expr,
                                   const char* stringStr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringConst>());
+  assert(stringStr);
   static_cast<StringConst*>(expression)->string = stringStr;
 }
 // StringMeasure
@@ -4413,6 +4439,7 @@ void BinaryenStringMeasureSetRef(BinaryenExpressionRef expr,
                                  BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringMeasure>());
+  assert(refExpr);
   static_cast<StringMeasure*>(expression)->ref = (Expression*)refExpr;
 }
 // StringEncode
@@ -4435,6 +4462,7 @@ void BinaryenStringEncodeSetRef(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
+  assert(refExpr);
   static_cast<StringEncode*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenStringEncodeGetPtr(BinaryenExpressionRef expr) {
@@ -4446,6 +4474,7 @@ void BinaryenStringEncodeSetPtr(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef ptrExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
+  assert(ptrExpr);
   static_cast<StringEncode*>(expression)->ptr = (Expression*)ptrExpr;
 }
 BinaryenExpressionRef BinaryenStringEncodeGetStart(BinaryenExpressionRef expr) {
@@ -4457,6 +4486,7 @@ void BinaryenStringEncodeSetStart(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef startExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
+  // may be null (GC only)
   static_cast<StringEncode*>(expression)->start = (Expression*)startExpr;
 }
 // StringConcat
@@ -4469,6 +4499,7 @@ void BinaryenStringConcatSetLeft(BinaryenExpressionRef expr,
                                  BinaryenExpressionRef leftExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringConcat>());
+  assert(leftExpr);
   static_cast<StringConcat*>(expression)->left = (Expression*)leftExpr;
 }
 BinaryenExpressionRef BinaryenStringConcatGetRight(BinaryenExpressionRef expr) {
@@ -4480,6 +4511,7 @@ void BinaryenStringConcatSetRight(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef rightExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringConcat>());
+  assert(rightExpr);
   static_cast<StringConcat*>(expression)->right = (Expression*)rightExpr;
 }
 // StringEq
@@ -4492,6 +4524,7 @@ void BinaryenStringEqSetLeft(BinaryenExpressionRef expr,
                              BinaryenExpressionRef leftExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEq>());
+  assert(leftExpr);
   static_cast<StringEq*>(expression)->left = (Expression*)leftExpr;
 }
 BinaryenExpressionRef BinaryenStringEqGetRight(BinaryenExpressionRef expr) {
@@ -4503,6 +4536,7 @@ void BinaryenStringEqSetRight(BinaryenExpressionRef expr,
                               BinaryenExpressionRef rightExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEq>());
+  assert(rightExpr);
   static_cast<StringEq*>(expression)->right = (Expression*)rightExpr;
 }
 // StringAs
@@ -4525,6 +4559,7 @@ void BinaryenStringAsSetRef(BinaryenExpressionRef expr,
                             BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringAs>());
+  assert(refExpr);
   static_cast<StringAs*>(expression)->ref = (Expression*)refExpr;
 }
 // StringWTF8Advance
@@ -4538,6 +4573,7 @@ void BinaryenStringWTF8AdvanceSetRef(BinaryenExpressionRef expr,
                                      BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringWTF8Advance>());
+  assert(refExpr);
   static_cast<StringWTF8Advance*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef
@@ -4550,6 +4586,7 @@ void BinaryenStringWTF8AdvanceSetPos(BinaryenExpressionRef expr,
                                      BinaryenExpressionRef posExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringWTF8Advance>());
+  assert(posExpr);
   static_cast<StringWTF8Advance*>(expression)->pos = (Expression*)posExpr;
 }
 BinaryenExpressionRef
@@ -4562,6 +4599,7 @@ void BinaryenStringWTF8AdvanceSetBytes(BinaryenExpressionRef expr,
                                        BinaryenExpressionRef bytesExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringWTF8Advance>());
+  assert(bytesExpr);
   static_cast<StringWTF8Advance*>(expression)->bytes = (Expression*)bytesExpr;
 }
 // StringWTF16Get
@@ -4574,6 +4612,7 @@ void BinaryenStringWTF16GetSetRef(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringWTF16Get>());
+  assert(refExpr);
   static_cast<StringWTF16Get*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenStringWTF16GetGetPos(BinaryenExpressionRef expr) {
@@ -4585,6 +4624,7 @@ void BinaryenStringWTF16GetSetPos(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef posExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringWTF16Get>());
+  assert(posExpr);
   static_cast<StringWTF16Get*>(expression)->pos = (Expression*)posExpr;
 }
 // StringIterNext
@@ -4597,6 +4637,7 @@ void BinaryenStringIterNextSetRef(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringIterNext>());
+  assert(refExpr);
   static_cast<StringIterNext*>(expression)->ref = (Expression*)refExpr;
 }
 // StringIterMove
@@ -4619,6 +4660,7 @@ void BinaryenStringIterMoveSetRef(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringIterMove>());
+  assert(refExpr);
   static_cast<StringIterMove*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenStringIterMoveGetNum(BinaryenExpressionRef expr) {
@@ -4630,6 +4672,7 @@ void BinaryenStringIterMoveSetNum(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef numExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringIterMove>());
+  assert(numExpr);
   static_cast<StringIterMove*>(expression)->num = (Expression*)numExpr;
 }
 // StringSliceWTF
@@ -4652,6 +4695,7 @@ void BinaryenStringSliceWTFSetRef(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringSliceWTF>());
+  assert(refExpr);
   static_cast<StringSliceWTF*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef
@@ -4664,6 +4708,7 @@ void BinaryenStringSliceWTFSetStart(BinaryenExpressionRef expr,
                                     BinaryenExpressionRef startExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringSliceWTF>());
+  assert(startExpr);
   static_cast<StringSliceWTF*>(expression)->start = (Expression*)startExpr;
 }
 BinaryenExpressionRef BinaryenStringSliceWTFGetEnd(BinaryenExpressionRef expr) {
@@ -4675,6 +4720,7 @@ void BinaryenStringSliceWTFSetEnd(BinaryenExpressionRef expr,
                                   BinaryenExpressionRef endExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringSliceWTF>());
+  assert(endExpr);
   static_cast<StringSliceWTF*>(expression)->end = (Expression*)endExpr;
 }
 // StringSliceIter
@@ -4688,6 +4734,7 @@ void BinaryenStringSliceIterSetRef(BinaryenExpressionRef expr,
                                    BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringSliceIter>());
+  assert(refExpr);
   static_cast<StringSliceIter*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef
@@ -4700,6 +4747,7 @@ void BinaryenStringSliceIterSetNum(BinaryenExpressionRef expr,
                                    BinaryenExpressionRef numExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringSliceIter>());
+  assert(numExpr);
   static_cast<StringSliceIter*>(expression)->num = (Expression*)numExpr;
 }
 
