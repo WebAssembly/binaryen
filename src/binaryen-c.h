@@ -2485,6 +2485,7 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
                                     bool shared,
+                                    bool memory64,
                                     const char* name);
 
 BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);
@@ -2500,6 +2501,8 @@ BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
                                                      const char* name);
 BINARYEN_API bool BinaryenMemoryIsShared(BinaryenModuleRef module,
                                          const char* name);
+BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
+                                     const char* name);
 
 // Memory segments. Query utilities.
 
