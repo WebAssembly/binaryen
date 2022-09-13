@@ -173,12 +173,9 @@ private:
     // If the branch is taken, then that's fine, it will jump out of this block
     // and reach some outer scope, and in that case we never need x at all
     // (since we've proven before that x is not used outside of this block, see
-    // numGetsSoFar which we use for that). Similarly, the break could be a
-    // return and that would be ok as well, and also an exception (if the
-    // exception is caught in the function, it must be outside the block, which
-    // is just like a break; and if it is not caught, it is just like a return).
-    cumulativeEffects.ignoreBranches();
-    cumulativeEffects.throws_ = false;
+    // numGetsSoFar which we use for that). Similarly, control flow could
+    // transfer away via a return or an exception and that would be ok as well.
+    cumulativeEffects.ignoreControlFlowTransfers();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {

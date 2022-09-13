@@ -881,9 +881,19 @@ public:
     return effects;
   }
 
-  void ignoreBranches() {
+  // Ignores all forms of control flow transfers: breaks, returns, and
+  // exceptions. (Note that traps are not considered relevant here - a trap does
+  // not just transfer control flow, but can be seen as halting the entire
+  // program.)
+  //
+  // This function matches transfersControlFlow(), that is, after calling this
+  // method transfersControlFlow() will always return false.
+  void ignoreControlFlowTransfers() {
     branchesOut = false;
     breakTargets.clear();
+    throws_ = false;
+    delegateTargets.clear();
+    assert(!transfersControlFlow());
   }
 
 private:
