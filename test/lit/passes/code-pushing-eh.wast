@@ -60,7 +60,8 @@
   (func $cannot-push-past-throw
     (local $x i32)
     (block $out
-      ;; This local.set cannot be pushed down, because there is 'throw' below
+      ;; This local.set cannot be pushed down, because there is 'throw' below.
+      ;; This pass only pushes past conditional control flow atm.
       (local.set $x (i32.const 1))
       (throw $e (i32.const 0))
       (drop (i32.const 1))
@@ -321,5 +322,73 @@
       (br_if $out (i32.const 2))
       (drop (local.get $x))
     )
+  )
+
+  ;; CHECK:      (func $can-push-past-conditional-throw (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (throw $e
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $can-push-past-conditional-throw (param $param i32)
+    (local $x i32)
+    (block $block
+      ;; We can push past an if containing a throw. The if is conditional
+      ;; control flow, which is what we look for in this optimization, and a
+      ;; throw is like a break - it will jump out of the current block - so we
+      ;; can push the set past it, as the set is only needed in this block.
+      (local.set $x (i32.const 1))
+      (if
+        (local.get $param)
+        (throw $e (i32.const 0))
+      )
+      (drop (local.get $x))
+    )
+  )
+
+  ;; CHECK:      (func $cannot-push-past-conditional-throw-extra-use (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (throw $e
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cannot-push-past-conditional-throw-extra-use (param $param i32)
+    (local $x i32)
+    ;; As above, but now there is another local.get outside of the block. That
+    ;; means the local.set cannot be pushed to a place it might not execute.
+    (block $block
+      (local.set $x (i32.const 1))
+      (if
+        (local.get $param)
+        (throw $e (i32.const 0))
+      )
+      (drop (local.get $x))
+    )
+    (drop (local.get $x))
   )
 )
