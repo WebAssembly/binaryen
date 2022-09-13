@@ -3570,36 +3570,6 @@ private:
         return left;
       }
     }
-    // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
-    // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
-    // And similarly for other relational operations on integers.
-    if (curr->isRelational()) {
-      Binary* add;
-      Const* c1;
-      Const* c2;
-      if ((matches(curr,
-                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-           matches(curr,
-                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
-          !canOverflow(add)) {
-        if (c2->value.geU(c1->value).getInteger()) {
-          // This is the first line above, we turn into x > (C2-C1)
-          c2->value = c2->value.sub(c1->value);
-          curr->left = add->left;
-          return curr;
-        }
-        // This is the second line above, we turn into x + (C1-C2) > 0. Other
-        // optimizations can often kick in later. However, we must rule out the
-        // case where C2 is already 0 (as then we would not actually change
-        // anything, and we could infinite loop).
-        auto zero = Literal::makeZero(c2->type);
-        if (c2->value != zero) {
-          c1->value = c1->value.sub(c2->value);
-          c2->value = zero;
-          return curr;
-        }
-      }
-    }
     {
       //   x !=  NaN   ==>   1
       //   x <=> NaN   ==>   0
@@ -3902,6 +3872,9 @@ private:
 
   // TODO: templatize on type?
   Expression* optimizeRelational(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
     auto type = curr->right->type;
     if (curr->left->type.isInteger()) {
       if (curr->op == Abstract::getBinary(type, Abstract::Eq) ||
@@ -3935,9 +3908,6 @@ private:
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
       {
-        using namespace Abstract;
-        using namespace Match;
-
         Binary* inner;
         // unsigned(x - y) > 0    =>   x != y
         if (matches(curr,
@@ -3966,6 +3936,38 @@ private:
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
+        }
+      }
+
+      // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
+      // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
+      // And similarly for other relational operations on integers with a "+"
+      // on the left.
+      {
+        Binary* add;
+        Const* c1;
+        Const* c2;
+        if ((matches(curr,
+                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+             matches(curr,
+                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+            !canOverflow(add)) {
+          if (c2->value.geU(c1->value).getInteger()) {
+            // This is the first line above, we turn into x > (C2-C1)
+            c2->value = c2->value.sub(c1->value);
+            curr->left = add->left;
+            return curr;
+          }
+          // This is the second line above, we turn into x + (C1-C2) > 0. Other
+          // optimizations can often kick in later. However, we must rule out
+          // the case where C2 is already 0 (as then we would not actually
+          // change anything, and we could infinite loop).
+          auto zero = Literal::makeZero(c2->type);
+          if (c2->value != zero) {
+            c1->value = c1->value.sub(c2->value);
+            c2->value = zero;
+            return curr;
+          }
         }
       }
 
