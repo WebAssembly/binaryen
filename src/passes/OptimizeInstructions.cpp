@@ -3612,10 +3612,22 @@ private:
   bool canOverflow(Binary* binary) {
     using namespace Abstract;
 
-    // If we know nothing about a limit on the amount of bits on either side,
-    // give up.
     auto typeMaxBits = getBitsForType(binary->type);
     auto leftMaxBits = Bits::getMaxBits(binary->left, this);
+
+    if (binary->op == getBinary(binary->type, Shl)) {
+      // The case of a constant shift is easy to reason about.
+      if (auto* c = binary->right->dynCast<Const>()) {
+        auto shifts = Bits::getEffectiveShifts(c);
+        return leftMaxBits + shifts > typeMaxBits;
+      }
+
+      // TODO: check based on rightMaxBits, though it may only help rarely
+      return true;
+    }
+
+    // If we know nothing about a limit on the amount of bits on either side,
+    // give up, as the following patterns depend on that.
     auto rightMaxBits = Bits::getMaxBits(binary->right, this);
     if (std::max(leftMaxBits, rightMaxBits) == typeMaxBits) {
       return true;
@@ -3947,10 +3959,8 @@ private:
         Binary* add;
         Const* c1;
         Const* c2;
-        if ((matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-             matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+        if (matches(curr,
+                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
             !canOverflow(add)) {
           if (c2->value.geU(c1->value).getInteger()) {
             // This is the first line above, we turn into x > (C2-C1)
@@ -3966,6 +3976,44 @@ private:
           if (c2->value != zero) {
             c1->value = c1->value.sub(c2->value);
             c2->value = zero;
+            return curr;
+          }
+        }
+      }
+
+      // (x >>> C1) ? C2   ->   x ? (C2 << C1) + A      if no overflowing
+      // (see details about the adjustment A below; it depends on the op)
+      {
+        Binary* shift;
+        Const* c1;
+        Const* c2;
+        if (matches(curr,
+                     binary(binary(&shift, ShrU, any(), ival(&c1)), ival(&c2)))) {
+          // Construct a reversed shift and see if it would overflow.
+          Binary reversedShift;
+          reversedShift.op = Abstract::getBinary(c1->type, Shl);
+          reversedShift.left = c2;
+          reversedShift.right = c1;
+          if (!canOverflow(&reversedShift)) {
+            // Great, the reversed shift would not overflow, so we can in
+            // principle try to reverse the operation here. However, an
+            // adjustment is needed since the original ShrU is not a linear
+            // operation - it clears the lower bits. In particular, consider
+            //
+            //   (x >>> C1) < C2
+            //
+            // If  x < (C2 << C1)  then the original equation is true, but also,
+            // x can be even higher and it will still be true, since we can fill
+            // in those lower bits that would have been clears, ending up with
+            //
+            //   x < (C2 << C1) + (1 << C1) - 1
+            //
+            auto lowBits = Literal::makeFromInt64(1, c1->type);
+            lowBits = lowBits.shl(c1->value);
+            lowBits = loBits.sub(Literal::makeFromInt64(1, c1->type));
+            c2->value = c2->value.shl(c1->value);
+            c2->value = c2->value.add(c1->value);
+            curr->left = shift->left;
             return curr;
           }
         }
