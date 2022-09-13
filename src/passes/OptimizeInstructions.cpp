@@ -3949,7 +3949,7 @@ private:
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
           auto rightMinBits = Bits::getMinBits(curr->right);
-          auto rightIsSigned = rightMinBits == getBitsForType(type);
+          auto rightIsNegative = rightMinBits == getBitsForType(type);
           if (leftMaxBits < rightMinBits) {
             // There are not enough bits on the left for it to be equal to the
             // right, making various comparisons obviously false:
@@ -3965,7 +3965,7 @@ private:
             if (curr->op == Abstract::getBinary(type, Eq) ||
                 curr->op == Abstract::getBinary(type, GtU) ||
                 curr->op == Abstract::getBinary(type, GeU) ||
-                (!rightIsSigned &&
+                (!rightIsNegative &&
                  (curr->op == Abstract::getBinary(type, GtS) ||
                   curr->op == Abstract::getBinary(type, GeS)))) {
               return getDroppedChildrenAndAppend(curr,
@@ -3980,7 +3980,7 @@ private:
             if (curr->op == Abstract::getBinary(type, Ne) ||
                 curr->op == Abstract::getBinary(type, LtU) ||
                 curr->op == Abstract::getBinary(type, LeU) ||
-                (!rightIsSigned &&
+                (!rightIsNegative &&
                  (curr->op == Abstract::getBinary(type, LtS) ||
                   curr->op == Abstract::getBinary(type, LeS)))) {
               return getDroppedChildrenAndAppend(curr,
@@ -3990,7 +3990,7 @@ private:
             // For truly signed comparisons, where y's sign bit is set, we can
             // also infer some things, since we know y is signed but x is not
             // (since x does not have enough bits for the sign bit to be set).
-            if (rightIsSigned) {
+            if (rightIsNegative) {
               //   (signed, non-negative)x >  (negative)y   =>   1
               //   (signed, non-negative)x >= (negative)y   =>   1
               if (curr->op == Abstract::getBinary(type, GtS) ||
