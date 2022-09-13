@@ -15655,7 +15655,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $too-few-bits-no (param $x i32)
-    ;; Identical to the above, but the constant is changed to 255 from 256. We
+    ;; Identical to the above, but the constant is changed from 256 to 255. We
     ;; cannot optimize here: the number of bits is the same and we can't infer
     ;; anything.
     (drop
