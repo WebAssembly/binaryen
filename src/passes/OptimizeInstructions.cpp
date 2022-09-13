@@ -1476,6 +1476,11 @@ struct OptimizeInstructions
       curr, *getModule(), getPassOptions(), result);
   }
 
+  Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
+    auto* result = Builder(*getModule()).makeConst(value);
+    return getDroppedChildrenAndAppend(curr, result);
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1494,9 +1499,8 @@ struct OptimizeInstructions
       // possibly appear on both sides is null, but one of the two is non-
       // nullable, which rules that out. So there is no way that the same
       // reference can appear on both sides.
-      auto* result =
-        Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32)));
       return;
     }
 
@@ -1515,9 +1519,8 @@ struct OptimizeInstructions
     // cases yet; the foldable case we do handle is the common one of the first
     // child being a tee and the second a get of that tee. TODO)
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
-      auto* result =
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
     }
 
@@ -3963,6 +3966,81 @@ private:
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
+        }
+      }
+
+      // Comparisons can sometimes be simplified depending on the number of
+      // bits, e.g.  (unsigned)x > y  must be true if x has strictly more bits.
+      // A common case is a constant on the right, e.g. (x & 255) < 256 must be
+      // true.
+      // TODO: use getMinBits in more places, see ideas in
+      //       https://github.com/WebAssembly/binaryen/issues/2898
+      {
+        // Check if there is a nontrivial amount of bits on the left, which may
+        // provide enough to optimize.
+        auto leftMaxBits = Bits::getMaxBits(curr->left, this);
+        auto type = curr->left->type;
+        if (leftMaxBits < getBitsForType(type)) {
+          using namespace Abstract;
+          auto rightMinBits = Bits::getMinBits(curr->right);
+          auto rightIsNegative = rightMinBits == getBitsForType(type);
+          if (leftMaxBits < rightMinBits) {
+            // There are not enough bits on the left for it to be equal to the
+            // right, making various comparisons obviously false:
+            //             x == y
+            //   (unsigned)x >  y
+            //   (unsigned)x >= y
+            // and the same for signed, if y does not have the sign bit set
+            // (in that case, the comparison is effectively unsigned).
+            //
+            // TODO: In addition to leftMaxBits < rightMinBits, we could
+            //       handle the reverse, and also special cases like all bits
+            //       being 1 on the right, things like (x & 255) <= 255  ->  1
+            if (curr->op == Abstract::getBinary(type, Eq) ||
+                curr->op == Abstract::getBinary(type, GtU) ||
+                curr->op == Abstract::getBinary(type, GeU) ||
+                (!rightIsNegative &&
+                 (curr->op == Abstract::getBinary(type, GtS) ||
+                  curr->op == Abstract::getBinary(type, GeS)))) {
+              return getDroppedChildrenAndAppend(curr,
+                                                 Literal::makeZero(Type::i32));
+            }
+
+            // And some are obviously true:
+            //             x != y
+            //   (unsigned)x <  y
+            //   (unsigned)x <= y
+            // and likewise for signed, as above.
+            if (curr->op == Abstract::getBinary(type, Ne) ||
+                curr->op == Abstract::getBinary(type, LtU) ||
+                curr->op == Abstract::getBinary(type, LeU) ||
+                (!rightIsNegative &&
+                 (curr->op == Abstract::getBinary(type, LtS) ||
+                  curr->op == Abstract::getBinary(type, LeS)))) {
+              return getDroppedChildrenAndAppend(curr,
+                                                 Literal::makeOne(Type::i32));
+            }
+
+            // For truly signed comparisons, where y's sign bit is set, we can
+            // also infer some things, since we know y is signed but x is not
+            // (since x does not have enough bits for the sign bit to be set).
+            if (rightIsNegative) {
+              //   (signed, non-negative)x >  (negative)y   =>   1
+              //   (signed, non-negative)x >= (negative)y   =>   1
+              if (curr->op == Abstract::getBinary(type, GtS) ||
+                  curr->op == Abstract::getBinary(type, GeS)) {
+                return getDroppedChildrenAndAppend(curr,
+                                                   Literal::makeOne(Type::i32));
+              }
+              //   (signed, non-negative)x <  (negative)y   =>   0
+              //   (signed, non-negative)x <= (negative)y   =>   0
+              if (curr->op == Abstract::getBinary(type, LtS) ||
+                  curr->op == Abstract::getBinary(type, LeS)) {
+                return getDroppedChildrenAndAppend(
+                  curr, Literal::makeZero(Type::i32));
+              }
+            }
+          }
         }
       }
     }
