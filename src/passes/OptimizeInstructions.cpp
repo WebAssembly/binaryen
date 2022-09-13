@@ -51,6 +51,13 @@
 
 namespace wasm {
 
+static Index getBitsForType(Type type) {
+  if (!type.isNumber()) {
+    return -1;
+  }
+  return type.getByteSize() * 8;
+}
+
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
@@ -123,20 +130,6 @@ struct LocalScanner : PostWalker<LocalScanner> {
   // define this for the templated getMaxBits method. we know nothing here yet
   // about locals, so return the maxes
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
-
-  Index getBitsForType(Type type) {
-    if (!type.isBasic()) {
-      return -1;
-    }
-    switch (type.getBasic()) {
-      case Type::i32:
-        return 32;
-      case Type::i64:
-        return 64;
-      default:
-        return -1;
-    }
-  }
 };
 
 namespace {
@@ -495,6 +488,8 @@ struct OptimizeInstructions
       }
       {
         // unsigned(x) >= 0   =>   i32(1)
+        // TODO: Use getDroppedChildrenAndAppend() here, so we can optimize even
+        //       if pure.
         Const* c;
         Expression* x;
         if (matches(curr, binary(GeU, pure(&x), ival(&c))) &&
@@ -1474,6 +1469,13 @@ struct OptimizeInstructions
     }
   }
 
+  // Appends a result after the dropped children, if we need them.
+  Expression* getDroppedChildrenAndAppend(Expression* curr,
+                                          Expression* result) {
+    return wasm::getDroppedChildrenAndAppend(
+      curr, *getModule(), getPassOptions(), result);
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1494,8 +1496,7 @@ struct OptimizeInstructions
       // reference can appear on both sides.
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(
-        curr, *getModule(), getPassOptions(), result));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
       return;
     }
 
@@ -1516,8 +1517,7 @@ struct OptimizeInstructions
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
       auto* result =
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(
-        curr, *getModule(), getPassOptions(), result));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
       return;
     }
 
@@ -3382,7 +3382,7 @@ private:
           binary(DivSInt64, any(), i64(std::numeric_limits<int64_t>::min())))) {
       curr->op = EqInt64;
       curr->type = Type::i32;
-      return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
+      return builder.makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x < 0   ==>   i32(0)
     if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
@@ -3567,7 +3567,103 @@ private:
         return left;
       }
     }
+    // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
+    // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
+    // And similarly for other relational operations on integers.
+    if (curr->isRelational()) {
+      Binary* add;
+      Const* c1;
+      Const* c2;
+      if ((matches(curr,
+                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+           matches(curr,
+                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+          !canOverflow(add)) {
+        if (c2->value.geU(c1->value).getInteger()) {
+          // This is the first line above, we turn into x > (C2-C1)
+          c2->value = c2->value.sub(c1->value);
+          curr->left = add->left;
+          return curr;
+        }
+        // This is the second line above, we turn into x + (C1-C2) > 0. Other
+        // optimizations can often kick in later. However, we must rule out the
+        // case where C2 is already 0 (as then we would not actually change
+        // anything, and we could infinite loop).
+        auto zero = Literal::makeZero(c2->type);
+        if (c2->value != zero) {
+          c1->value = c1->value.sub(c2->value);
+          c2->value = zero;
+          return curr;
+        }
+      }
+    }
+    {
+      //   x !=  NaN   ==>   1
+      //   x <=> NaN   ==>   0
+      //   x op  NaN'  ==>   NaN',  iff `op` != `copysign` and `x` != C
+      Const* c;
+      Binary* bin;
+      Expression* x;
+      if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
+          std::isnan(c->value.getFloat()) &&
+          bin->op != getBinary(x->type, CopySign)) {
+        if (bin->isRelational()) {
+          // reuse "c" (nan) constant
+          c->type = Type::i32;
+          if (bin->op == getBinary(x->type, Ne)) {
+            // x != NaN  ==>  1
+            c->value = Literal::makeOne(Type::i32);
+          } else {
+            // x == NaN,
+            // x >  NaN,
+            // x <= NaN
+            // x .. NaN  ==>  0
+            c->value = Literal::makeZero(Type::i32);
+          }
+          return c;
+        }
+        // propagate NaN of RHS but canonicalize it
+        if (c->type == Type::f32) {
+          c->value = standardizeNaN(c->value.getf32());
+        } else {
+          c->value = standardizeNaN(c->value.getf64());
+        }
+        return c;
+      }
+    }
     return nullptr;
+  }
+
+  // Returns true if the given binary operation can overflow. If we can't be
+  // sure either way, we return true, assuming the worst.
+  bool canOverflow(Binary* binary) {
+    using namespace Abstract;
+
+    // If we know nothing about a limit on the amount of bits on either side,
+    // give up.
+    auto typeMaxBits = getBitsForType(binary->type);
+    auto leftMaxBits = Bits::getMaxBits(binary->left, this);
+    auto rightMaxBits = Bits::getMaxBits(binary->right, this);
+    if (std::max(leftMaxBits, rightMaxBits) == typeMaxBits) {
+      return true;
+    }
+
+    if (binary->op == getBinary(binary->type, Add)) {
+      // Proof this cannot overflow:
+      //
+      // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
+      //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
+      //              =  2^typeMaxBits                           (3)
+      //
+      // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
+      //     and its max value is 2^32 - 1, which is < 2^32).
+      // (2) By the above checks and early returns.
+      // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
+      return false;
+    }
+
+    // TODO subtraction etc.
+    return true;
   }
 
   // Folding two expressions into one with similar operations and

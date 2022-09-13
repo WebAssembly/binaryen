@@ -361,8 +361,6 @@ void test_features() {
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
   printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
-  printf("BinaryenFeatureTypedFunctionReferences: %d\n",
-         BinaryenFeatureTypedFunctionReferences());
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
@@ -513,6 +511,7 @@ void test_core() {
                     segmentSizes,
                     2,
                     1,
+                    0,
                     "0");
 
   BinaryenExpressionRef valueList[] = {
@@ -1992,6 +1991,7 @@ void test_for_each() {
                       segmentOffsets,
                       segmentSizes,
                       2,
+                      0,
                       0,
                       "0");
     BinaryenAddGlobal(module,

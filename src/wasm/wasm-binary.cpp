@@ -1218,8 +1218,6 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::GCFeature;
       case FeatureSet::Memory64:
         return BinaryConsts::UserSections::Memory64Feature;
-      case FeatureSet::TypedFunctionReferences:
-        return BinaryConsts::UserSections::TypedFunctionReferencesFeature;
       case FeatureSet::RelaxedSIMD:
         return BinaryConsts::UserSections::RelaxedSIMDFeature;
       case FeatureSet::ExtendedConst:
@@ -3519,9 +3517,6 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
       feature = FeatureSet::GC;
     } else if (name == BinaryConsts::UserSections::Memory64Feature) {
       feature = FeatureSet::Memory64;
-    } else if (name ==
-               BinaryConsts::UserSections::TypedFunctionReferencesFeature) {
-      feature = FeatureSet::TypedFunctionReferences;
     } else if (name == BinaryConsts::UserSections::RelaxedSIMDFeature) {
       feature = FeatureSet::RelaxedSIMD;
     } else if (name == BinaryConsts::UserSections::ExtendedConstFeature) {

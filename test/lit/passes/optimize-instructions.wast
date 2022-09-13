@@ -1937,10 +1937,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.ge
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.ge
@@ -7692,10 +7689,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.div
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f32.const nan:0x400000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.div
@@ -7836,10 +7830,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.div
@@ -10853,10 +10844,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.div
@@ -11092,6 +11080,200 @@
         (local.get $fy)
       )
     ))
+  )
+  ;; CHECK:      (func $rhs-is-const-nan (param $x f32) (param $y f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.copysign
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rhs-is-const-nan (param $x f32) (param $y f64)
+
+    ;; arithmetic ops
+
+    ;; x + nan'   =>   nan'
+    (drop (f32.add (local.get $x) (f32.const nan)))
+    (drop (f32.add (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.add (local.get $y) (f64.const -nan)))
+    ;; x - nan'   =>   nan'
+    (drop (f32.sub (local.get $x) (f32.const nan)))
+    (drop (f32.sub (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.sub (local.get $y) (f64.const -nan)))
+    ;; x * nan'   =>   nan'
+    (drop (f32.mul (local.get $x) (f32.const nan)))
+    (drop (f32.mul (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.mul (local.get $y) (f64.const -nan)))
+    ;; x / nan'   =>   nan'
+    (drop (f32.div (local.get $x) (f32.const nan)))
+    (drop (f32.div (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.div (local.get $y) (f64.const -nan)))
+
+    ;; min / max ops
+
+    ;; min(x, nan')   =>   nan'
+    (drop (f32.min (local.get $x) (f32.const nan)))
+    (drop (f32.min (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.min (local.get $y) (f64.const -nan)))
+    ;; max(x, nan')   =>   nan'
+    (drop (f32.max (local.get $x) (f32.const nan)))
+    (drop (f32.max (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.max (local.get $y) (f64.const -nan)))
+
+    ;; copysign ops (should be skipped)
+
+    ;; copysign(x, nan)   =>  skip
+    (drop (f32.copysign (local.get $x) (f32.const nan)))
+    (drop (f32.copysign (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.copysign (local.get $y) (f64.const -nan)))
+
+    ;; relational ops
+
+    ;; x != nan   =>   1
+    (drop (f32.ne (local.get $x) (f32.const nan)))
+    (drop (f32.ne (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.ne (local.get $y) (f64.const -nan)))
+    ;; x == nan   =>   0
+    (drop (f32.eq (local.get $x) (f32.const nan)))
+    (drop (f32.eq (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.eq (local.get $y) (f64.const -nan)))
+    ;; x >  nan   =>   0
+    (drop (f32.gt (local.get $x) (f32.const nan)))
+    (drop (f32.gt (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.gt (local.get $y) (f64.const -nan)))
+    ;; x >= nan   =>   0
+    (drop (f32.ge (local.get $x) (f32.const nan)))
+    (drop (f32.ge (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.ge (local.get $y) (f64.const -nan)))
+    ;; x <  nan   =>   0
+    (drop (f32.lt (local.get $x) (f32.const nan)))
+    (drop (f32.lt (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.lt (local.get $y) (f64.const -nan)))
+    ;; x <= nan   =>   0
+    (drop (f32.le (local.get $x) (f32.const nan)))
+    (drop (f32.le (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.le (local.get $y) (f64.const -nan)))
   )
   ;; CHECK:      (func $lhs-is-neg-one (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
@@ -15108,6 +15290,363 @@
       (i64.div_s
         (local.get $x)
         (i64.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $gt_u-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gt_u-added-constant (param $x i32)
+    ;; x + C1 > C2  =>  x > (C2-C1), iff x+C1 and C2-C1 don't over/underflow
+    (drop
+      (i32.gt_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+    ;; We can optimize even if the constants are equal.
+    (drop
+      (i32.gt_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 5)
+      )
+    )
+    ;; x + C1 > C2  =>  x + (C1-C2) > 0, iff x+C1 and C1-C2 don't over/underflow
+    ;; After doing that, further optimizations are possible here.
+    (drop
+      (i32.gt_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 6)
+        )
+        (i32.const 5)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $gt_u-added-constant-no (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const -2147483648)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gt_u-added-constant-no (param $x i32)
+    ;; As above, but without the shr_u, A is big enough for a possible overflow,
+    ;; and we cannot optimize.
+    (drop
+      (i32.gt_u
+        (i32.add
+          (local.get $x)
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+    ;; With the added constant too big, it might overflow, and we cannot
+    ;; optimize.
+    (drop
+      (i32.gt_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0x80000000)
+        )
+        (i32.const 11)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0xffffffff)
+        )
+        (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ge_u-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ge_u-added-constant (param $x i32)
+    ;; As above, but with ge rather than gt. We can optimize here.
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 5)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 6)
+        )
+        (i32.const 5)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ge_u-added-constant-no (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const -2147483648)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ge_u-added-constant-no (param $x i32)
+    ;; As above, but with ge rather than gt. We cannot optimize here.
+    (drop
+      (i32.ge_u
+        (i32.add
+          (local.get $x)
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0x80000000)
+        )
+        (i32.const 11)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 0xffffffff)
+        )
+        (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $eq-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $eq-added-constant (param $x i32)
+    ;; As above, but with eq rather than gt. We can optimize here.
+    (drop
+      (i32.eq
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ne-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ne-added-constant (param $x i32)
+    ;; As above, but with ne rather than gt. We can optimize here.
+    (drop
+      (i32.ne
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $lt-added-constant (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $lt-added-constant (param $x i32)
+    ;; As above, but with lt_s rather than gt_u. We can optimize here.
+    (drop
+      (i32.lt_s
+        (i32.add
+          (i32.shr_u
+            (local.get $x)
+            (i32.const 1)
+          )
+          (i32.const 5)
+        )
+        (i32.const 11)
       )
     )
   )
