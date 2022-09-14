@@ -88,32 +88,20 @@ public:
   // each other, but it is not ok to remove them or reorder them with other
   // effects in a noticeable way.
   //
-  // Note also that we ignore optional runtime-specific traps, such as hitting a
-  // recursion limit or running out of memory. Such traps are not part of wasm's
-  // official semantics, and they can occur anywhere: *any* instruction could in
-  // theory be implemented by a VM call (as will be the case when running in an
-  // interpreter), and such a call could run out of stack or memory in
-  // principle. And different VMs may have different limits, or no limit at all
-  // if they manage to optimize in particular ways. To put it another way, all
-  // VMs trap on i32 division by zero, but if some particular VM might run out
-  // of memory then that is a VM-specific issue that we do not care about;
-  // rather than consider all possible traps in all possible VMs, we only model
-  // things that must trap in *all* VMs.
-  //   * As a result, we do *not* mark things like GC allocation instructions as
-  //     having side effects, since one allocation by itself will not cause all
-  //     VMs to trap all the time - only ones that happen to hit their limit.
-  //     That has the nice benefit of making it possible to eliminate an
-  //     allocation whose result is not captured.
-  //   * OTOH, we *do* mark a potentially infinite number of allocations as
-  //     trapping. If we think a loop might be infinite then we must assume the
-  //     worst, that it is in fact infinite, and an infinite number of
-  //     allocations will trap eventually in all VMs. Similarly, possible
-  //     infinite recursion will be marked as potentially trapping.
-  //   * We also mark all loops (that we cannot prove must terminate) as
-  //     potentially trapping, even if they have no allocations or other effects
-  //     inside them. An infinite loop will eventually hit a timeout in all
-  //     VMs (or, if we want to be philosophical, the heat death of the universe
-  //     must eventually arrive, which is its own sort of error).
+  // Note also that we ignore *optional* runtime-specific traps: we only
+  // consider as trapping something that will trap in *all* VMs, and *all* the
+  // time. For example, a single allocation might trap in a VM in a particular
+  // execution, if it happens to run out of memory just there, but that is not
+  // enough for us to mark it as having a trap effect. (Note that not marking
+  // each allocation as possibly trapping has the nice benefit of making it
+  // possible to eliminate an allocation whose result is not captured.) OTOH, we
+  // *do* mark a potentially infinite number of allocations as trapping, as all
+  // VMs would trap eventually, and the same for potentially infinite recursion,
+  // etc.
+  //   * We assume that VMs will timeout eventually, so any loop that we cannot
+  //     prove terminates is considered to trap. (Some VMs might not have
+  //     such timeouts, but even they will error before the heat death of the
+  //     universe, which is a kind of trap.)
   bool trap = false;
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
