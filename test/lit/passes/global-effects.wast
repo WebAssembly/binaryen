@@ -10,13 +10,20 @@
 (module
   ;; WITHOUT:      (type $none_=>_none (func))
 
+  ;; WITHOUT:      (type $none_=>_i32 (func (result i32)))
+
   ;; WITHOUT:      (func $foo
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT:  (call $unreachable)
   ;; WITHOUT-NEXT:  (call $call-nop)
   ;; WITHOUT-NEXT:  (call $call-unreachable)
+  ;; WITHOUT-NEXT:  (drop
+  ;; WITHOUT-NEXT:   (call $unimportant-effects)
+  ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (type $none_=>_none (func))
+
+  ;; INCLUDE:      (type $none_=>_i32 (func (result i32)))
 
   ;; INCLUDE:      (func $foo
   ;; INCLUDE-NEXT:  (call $unreachable)
@@ -25,11 +32,16 @@
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (type $none_=>_none (func))
 
+  ;; DISCARD:      (type $none_=>_i32 (func (result i32)))
+
   ;; DISCARD:      (func $foo
   ;; DISCARD-NEXT:  (call $nop)
   ;; DISCARD-NEXT:  (call $unreachable)
   ;; DISCARD-NEXT:  (call $call-nop)
   ;; DISCARD-NEXT:  (call $call-unreachable)
+  ;; DISCARD-NEXT:  (drop
+  ;; DISCARD-NEXT:   (call $unimportant-effects)
+  ;; DISCARD-NEXT:  )
   ;; DISCARD-NEXT: )
   (func $foo
     ;; Calling a function with no effects can be optimized away in INCLUDE (but
@@ -43,6 +55,11 @@
     (call $call-nop)
     ;; Calling something that calls something with effects cannot.
     (call $call-unreachable)
+    ;; Calling something that only has unimportant effects can be optimized
+    ;; (see below for details).
+    (drop
+      (call $unimportant-effects)
+    )
   )
 
   ;; WITHOUT:      (func $cycle
@@ -111,5 +128,45 @@
   ;; DISCARD-NEXT: )
   (func $call-unreachable
     (call $unreachable)
+  )
+
+  ;; WITHOUT:      (func $unimportant-effects (result i32)
+  ;; WITHOUT-NEXT:  (local $x i32)
+  ;; WITHOUT-NEXT:  (local.set $x
+  ;; WITHOUT-NEXT:   (i32.const 100)
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (return
+  ;; WITHOUT-NEXT:   (local.get $x)
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $unimportant-effects (result i32)
+  ;; INCLUDE-NEXT:  (local $x i32)
+  ;; INCLUDE-NEXT:  (local.set $x
+  ;; INCLUDE-NEXT:   (i32.const 100)
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT:  (return
+  ;; INCLUDE-NEXT:   (local.get $x)
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $unimportant-effects (result i32)
+  ;; DISCARD-NEXT:  (local $x i32)
+  ;; DISCARD-NEXT:  (local.set $x
+  ;; DISCARD-NEXT:   (i32.const 100)
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT:  (return
+  ;; DISCARD-NEXT:   (local.get $x)
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT: )
+  (func $unimportant-effects (result i32)
+    (local $x i32)
+    ;; Operations on locals should not prevent optimization, as when we return
+    ;; from the function they no longer matter.
+    (local.set $x
+      (i32.const 100)
+    )
+    ;; A return is an effect that no longer matters once we exit the function.
+    (return
+      (local.get $x)
+    )
   )
 )
