@@ -324,6 +324,9 @@ public:
   }
 
   bool checkPost(Expression* curr) {
+    if (curr->is<Loop>()) {
+      branchesOut = true;
+    }
     visit(curr);
     return hasAnything();
   }
