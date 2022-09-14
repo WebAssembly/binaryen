@@ -95,6 +95,9 @@ struct InliningOptions {
   Index partialInliningIfs = 0;
 };
 
+// Forward declaration. The contents of this are not needed in this header.
+struct EffectAnalyzer;
+
 struct PassOptions {
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
@@ -165,6 +168,9 @@ struct PassOptions {
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::map<std::string, std::string> arguments;
+  // Effect information for functions, that passes can use while optimizing.
+  using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
+  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
 
   // -Os is our default
   static constexpr const int DEFAULT_OPTIMIZE_LEVEL = 2;

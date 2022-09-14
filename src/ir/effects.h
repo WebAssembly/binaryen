@@ -31,7 +31,8 @@ public:
                  Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
+      funcEffectsMap(passOptions.funcEffectsMap), module(module),
       features(module.features) {
     if (ast) {
       walk(ast);
@@ -40,6 +41,7 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
+  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
 
@@ -420,6 +422,16 @@ private:
       // call.without.effects has no effects.
       if (Intrinsics(parent.module).isCallWithoutEffects(curr)) {
         return;
+      }
+
+      if (parent.funcEffectsMap) {
+        auto iter = parent.funcEffectsMap.find(curr->target);
+        if (iter != parent.funcEffectsMap.end()) {
+          // We have effect information for this call target, and can just use
+          // that.
+          parent.mergeIn(iter->second);
+          return;
+        }
       }
 
       parent.calls = true;
