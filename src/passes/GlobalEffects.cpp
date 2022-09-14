@@ -1,0 +1,87 @@
+/*
+ * Copyright 2022 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//
+//
+//
+
+#include "ir/module-utils.h"
+#include "pass.h"
+#include "wasm.h"
+
+namespace wasm {
+
+struct GenerateGlobalEffects : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    // TODO: Full transitive closure of effects. For now, we just look at each
+    //       function by itself.
+
+    // First, clear any previous effects.
+    runner->funcEffectsMap.reset();
+
+    // When we find useful effects, we'll save them. If we can't find anything,
+    // the final map we emit will not have an entry there at all.
+    using PossibleEffects = std::optional<EffectAnalyzer>;
+
+    ModuleUtils::ParallelFunctionAnalysis<PossibleEffects> analysis(
+      *module, [&](Function* func, PossibleEffects& storedEffects) {
+        if (func->imported()) {
+          return;
+        }
+
+        // Gather the effects.
+        EffectAnalyzer effects(runner->options, *module, func->body);
+
+        // If the body has a call, give up - that means we can't infer a more
+        // specific set of effects than the pessimistic case of just assuming
+        // any call to here is an arbitrary call. (See the TODO above for
+        // improvements.)
+        if (effects.calls) {
+          return;
+        }
+
+        // We can ignore branching out of the function body - this can only be
+        // a return, and that is only noticeable in the function, not outside.
+        effects.branchesOut = false;
+
+        // Ignore local writes - when the function exits, those become
+        // unnoticeable anyhow.
+        effects.localsWritten.clear();
+
+        // Save the useful effects we found.
+        storedEffects = std::move(effects);
+      });
+
+    // Generate the final data structure.
+    for (auto& [func, possibleEffects] : analysis.map) {
+      if (possibleEffects) {
+        runner->funcEffectsMap[func->name] = std::move(*possibleEffects);
+      }
+    }
+  }
+};
+
+struct DiscardGlobalEffects : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    runner->funcEffectsMap.reset();
+  }
+};
+
+Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }
+
+Pass* createDiscardGlobalEffectsPass() { return new DiscardGlobalEffects(); }
+
+} // namespace wasm
