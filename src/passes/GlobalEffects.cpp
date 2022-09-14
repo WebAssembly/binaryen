@@ -29,37 +29,42 @@ struct GenerateGlobalEffects : public Pass {
     // TODO: Full transitive closure of effects. For now, we just look at each
     //       function by itself.
 
+    auto& funcEffectsMap = runner->options.funcEffectsMap;
+
     // First, clear any previous effects.
-    runner->funcEffectsMap.reset();
+    funcEffectsMap.reset();
 
     // When we find useful effects, we'll save them. If we can't find anything,
     // the final map we emit will not have an entry there at all.
-    using PossibleEffects = std::optional<EffectAnalyzer>;
+    using PossibleEffects = std::unique_ptr<EffectAnalyzer>;
 
     ModuleUtils::ParallelFunctionAnalysis<PossibleEffects> analysis(
       *module, [&](Function* func, PossibleEffects& storedEffects) {
         if (func->imported()) {
+          // Imports can do anything, so we need to assume the worst anyhow,
+          // which is the same as not specifying any effects for them in the
+          // map.
           return;
         }
 
         // Gather the effects.
-        EffectAnalyzer effects(runner->options, *module, func->body);
+        auto effects = std::make_unique<EffectAnalyzer>(runner->options, *module, func->body);
 
         // If the body has a call, give up - that means we can't infer a more
         // specific set of effects than the pessimistic case of just assuming
         // any call to here is an arbitrary call. (See the TODO above for
         // improvements.)
-        if (effects.calls) {
+        if (effects->calls) {
           return;
         }
 
         // We can ignore branching out of the function body - this can only be
         // a return, and that is only noticeable in the function, not outside.
-        effects.branchesOut = false;
+        effects->branchesOut = false;
 
         // Ignore local writes - when the function exits, those become
         // unnoticeable anyhow.
-        effects.localsWritten.clear();
+        effects->localsWritten.clear();
 
         // Save the useful effects we found.
         storedEffects = std::move(effects);
@@ -68,7 +73,13 @@ struct GenerateGlobalEffects : public Pass {
     // Generate the final data structure.
     for (auto& [func, possibleEffects] : analysis.map) {
       if (possibleEffects) {
-        runner->funcEffectsMap[func->name] = std::move(*possibleEffects);
+        // Only allocate a new funcEffectsMap if we actually have data for it
+        // (which might make later effect computation slightly faster, to
+        // quickly skip the funcEffectsMap code path).
+        if (!funcEffectsMap) {
+          funcEffectsMap = std::make_shared<FuncEffectsMap>();
+        }
+        funcEffectsMap->emplace(func->name, *possibleEffects);
       }
     }
   }
@@ -76,7 +87,7 @@ struct GenerateGlobalEffects : public Pass {
 
 struct DiscardGlobalEffects : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    runner->funcEffectsMap.reset();
+    runner->options.funcEffectsMap.reset();
   }
 };
 

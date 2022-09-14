@@ -96,7 +96,7 @@ struct InliningOptions {
 };
 
 // Forward declaration. The contents of this are not needed in this header.
-struct EffectAnalyzer;
+class EffectAnalyzer;
 using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
 
 struct PassOptions {
