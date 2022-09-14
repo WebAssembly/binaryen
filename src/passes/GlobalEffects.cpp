@@ -63,9 +63,10 @@ struct GenerateGlobalEffects : public Pass {
         // a return, and that is only noticeable in the function, not outside.
         effects->branchesOut = false;
 
-        // Ignore local writes - when the function exits, those become
+        // Ignore local effects - when the function exits, those become
         // unnoticeable anyhow.
         effects->localsWritten.clear();
+        effects->localsRead.clear();
 
         // Save the useful effects we found.
         storedEffects = std::move(effects);
