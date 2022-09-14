@@ -55,12 +55,12 @@
 ;; CHECK-NEXT:                                       indices to the function names.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --import-namespace                  [split, instrument] When provided as an
-;; CHECK-NEXT:                                       option for module splitting, the
-;; CHECK-NEXT:                                       namespace from which to import objects
-;; CHECK-NEXT:                                       from the primary module into the
-;; CHECK-NEXT:                                       secondary module. In instrument mode,
-;; CHECK-NEXT:                                       refers to the namespace from which to
-;; CHECK-NEXT:                                       import the secondary memory.
+;; CHECK-NEXT:                                       option for module splitting, the namespace
+;; CHECK-NEXT:                                       from which to import objects from the
+;; CHECK-NEXT:                                       primary module into the secondary module.
+;; CHECK-NEXT:                                       In instrument mode, refers to the
+;; CHECK-NEXT:                                       namespace from which to import the
+;; CHECK-NEXT:                                       secondary memory.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --placeholder-namespace             [split] The namespace from which to import
 ;; CHECK-NEXT:                                       placeholder functions into the primary
@@ -91,33 +91,23 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --in-secondary-memory               [instrument] Store profile information in
 ;; CHECK-NEXT:                                       a separate memory, rather than in module
-;; CHECK-NEXT:                                       main memory or globals (the default).
-;; CHECK-NEXT:                                       With this option, users do not need to
-;; CHECK-NEXT:                                       reserve the initial memory region for
-;; CHECK-NEXT:                                       profile data and the data can be shared
-;; CHECK-NEXT:                                       between multiple threads.
+;; CHECK-NEXT:                                       main memory or globals (the default). With
+;; CHECK-NEXT:                                       this option, users do not need to reserve
+;; CHECK-NEXT:                                       the initial memory region for profile data
+;; CHECK-NEXT:                                       and the data can be shared between
+;; CHECK-NEXT:                                       multiple threads.
 ;; CHECK-NEXT:
-<<<<<<< HEAD
+;; CHECK-NEXT:   --secondary-memory-name             [instrument] The name of the secondary
+;; CHECK-NEXT:                                       memory created to store profile
+;; CHECK-NEXT:                                       information.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-module-names                 [split, instrument] Emit module names,
-;; CHECK-NEXT:                                       even if not emitting the rest of the
-;; CHECK-NEXT:                                       names section. Can help differentiate the
+;; CHECK-NEXT:                                       even if not emitting the rest of the names
+;; CHECK-NEXT:                                       section. Can help differentiate the
 ;; CHECK-NEXT:                                       modules in stack traces. This option will
 ;; CHECK-NEXT:                                       be removed once simpler ways of naming
 ;; CHECK-NEXT:                                       modules are widely available. See
 ;; CHECK-NEXT:                                       https://bugs.chromium.org/p/v8/issues/detail?id=11808.
-=======
-;; CHECK-NEXT:   --secondary-memory-name              [instrument] The name of the secondary
-;; CHECK-NEXT:                                        memory created to store profile
-;; CHECK-NEXT:                                        information.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-module-names                  [split, instrument] Emit module names,
-;; CHECK-NEXT:                                        even if not emitting the rest of the
-;; CHECK-NEXT:                                        names section. Can help differentiate the
-;; CHECK-NEXT:                                        modules in stack traces. This option will
-;; CHECK-NEXT:                                        be removed once simpler ways of naming
-;; CHECK-NEXT:                                        modules are widely available. See
-;; CHECK-NEXT:                                        https://bugs.chromium.org/p/v8/issues/detail?id=11808.
->>>>>>> 34014ecd9 (added wasm-split switch)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --initial-table                     [split, instrument] A hack to ensure the
 ;; CHECK-NEXT:                                       split and instrumented modules have the
