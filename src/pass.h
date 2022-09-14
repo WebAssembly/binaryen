@@ -95,8 +95,9 @@ struct InliningOptions {
   Index partialInliningIfs = 0;
 };
 
-// Forward declaration. The contents of this are not needed in this header.
+// Forward declaration for FuncEffectsMap.
 class EffectAnalyzer;
+
 using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
 
 struct PassOptions {
@@ -169,7 +170,13 @@ struct PassOptions {
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::map<std::string, std::string> arguments;
-  // Effect information for functions, that passes can use while optimizing.
+
+  // Effect info computed for functions. One pass can generate this and then
+  // other passes later can benefit from it. It is up to the sequence of passes
+  // to update or discard this when necessary - in particular, when new effects
+  // are added to a function this must be changed or we may optimize
+  // incorrectly (however, it is extremely rare for a pass to *add* effects;
+  // passes normally only remove effects).
   std::shared_ptr<FuncEffectsMap> funcEffectsMap;
 
   // -Os is our default
