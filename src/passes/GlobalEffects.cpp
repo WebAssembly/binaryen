@@ -15,7 +15,8 @@
  */
 
 //
-//
+// Handle the computation of global effects. The effects are stored on the
+// PassOptions structure; see more details there.
 //
 
 #include "ir/module-utils.h"
