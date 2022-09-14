@@ -88,6 +88,8 @@
 ;; CHECK-NEXT:   --directize                                   turns indirect calls into direct
 ;; CHECK-NEXT:                                                 ones
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --discard-global-effects                      discards global effect info
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --duplicate-function-elimination              removes duplicate functions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --duplicate-import-elimination                removes duplicate imports
@@ -115,6 +117,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall fuctions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-global-effects                     generate global effect info
+;; CHECK-NEXT:                                                 (helps later passes)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-i64-dyncalls                       generate dynCall functions used
 ;; CHECK-NEXT:                                                 by emscripten ABI, but only for
