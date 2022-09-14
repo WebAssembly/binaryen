@@ -997,6 +997,13 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                                   BinaryenExpressionRef i31,
                                                   bool signed_);
 BINARYEN_API BinaryenExpressionRef
+BinaryenCallRef(BinaryenModuleRef module,
+                BinaryenExpressionRef target,
+                BinaryenExpressionRef* operands,
+                BinaryenIndex numOperands,
+                BinaryenType type,
+                bool isReturn);
+BINARYEN_API BinaryenExpressionRef
 BinaryenRefTest(BinaryenModuleRef module,
                 BinaryenExpressionRef ref,
                 BinaryenHeapType intendedType);

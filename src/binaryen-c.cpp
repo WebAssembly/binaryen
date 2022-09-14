@@ -1606,6 +1606,20 @@ BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeI31Get((Expression*)i31, signed_ != 0));
 }
+BinaryenExpressionRef BinaryenCallRef(BinaryenModuleRef module,
+                                      BinaryenExpressionRef target,
+                                      BinaryenExpressionRef* operands,
+                                      BinaryenIndex numOperands,
+                                      BinaryenType type,
+                                      bool isReturn) {
+  std::vector<Expression*> args;
+  for (BinaryenIndex i = 0; i < numOperands; i++) {
+    args.push_back((Expression*)operands[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeCallRef((Expression*)target, args, Type(type), isReturn));
+}
 BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,
                                       BinaryenHeapType intendedType) {
