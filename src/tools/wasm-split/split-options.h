@@ -64,6 +64,7 @@ struct WasmSplitOptions : ToolOptions {
 
   std::string importNamespace;
   std::string placeholderNamespace;
+  std::string secondaryMemoryName;
   std::string exportPrefix;
 
   // A hack to ensure the split and instrumented modules have the same table

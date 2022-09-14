@@ -22,14 +22,16 @@
 
 namespace wasm {
 
-Instrumenter::Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash)
-  : options(options), moduleHash(moduleHash) {}
+Instrumenter::Instrumenter(const InstrumenterConfig& config, uint64_t moduleHash)
+  : config(config), moduleHash(moduleHash) {}
 
 void Instrumenter::run(PassRunner* runner, Module* wasm) {
   this->runner = runner;
   this->wasm = wasm;
+
   size_t numFuncs = 0;
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
+
   addGlobals(numFuncs);
   addSecondaryMemory(numFuncs);
   instrumentFuncs();
@@ -37,7 +39,7 @@ void Instrumenter::run(PassRunner* runner, Module* wasm) {
 }
 
 void Instrumenter::addGlobals(size_t numFuncs) {
-  if (options.storageKind != WasmSplitOptions::StorageKind::InGlobals) {
+  if (config.storageKind != WasmSplitOptions::StorageKind::InGlobals) {
     // Don't need globals
     return;
   }
@@ -66,7 +68,7 @@ void Instrumenter::addGlobals(size_t numFuncs) {
 }
 
 void Instrumenter::addSecondaryMemory(size_t numFuncs) {
-  if (options.storageKind != WasmSplitOptions::StorageKind::InSecondaryMemory) {
+  if (config.storageKind != WasmSplitOptions::StorageKind::InSecondaryMemory) {
     // Don't need secondary memory
     return;
   }
@@ -75,17 +77,20 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
       << "error: --in-secondary-memory requires multi-memories to be enabled";
   }
 
-  secondaryMemory = Names::getValidMemoryName(*wasm, "split_data");
+  secondaryMemory = Names::getValidMemoryName(*wasm, config.secondaryMemoryName);
   // Create a memory with enough pages to write into
   size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
-  wasm->addMemory(Builder::makeMemory(secondaryMemory, pages, pages, true));
+  auto mem = Builder::makeMemory(secondaryMemory, pages, pages, true);
+  mem->module = config.importNamespace;
+  mem->base = config.secondaryMemoryName;
+  wasm->addMemory(std::move(mem));
 }
 
 void Instrumenter::instrumentFuncs() {
   // Inject code at the beginning of each function to advance the monotonic
   // counter and set the function's timestamp if it hasn't already been set.
   Builder builder(*wasm);
-  switch (options.storageKind) {
+  switch (config.storageKind) {
     case WasmSplitOptions::StorageKind::InGlobals: {
       // (if (i32.eqz (global.get $timestamp))
       //   (block
@@ -124,7 +129,7 @@ void Instrumenter::instrumentFuncs() {
     case WasmSplitOptions::StorageKind::InMemory:
     case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       if (!wasm->features.hasAtomics()) {
-        const char* command = options.storageKind == WasmSplitOptions::StorageKind::InMemory ? "in-memory" : "in-secondary-memory";
+        const char* command = config.storageKind == WasmSplitOptions::StorageKind::InMemory ? "in-memory" : "in-secondary-memory";
         Fatal() << "error: --" << command <<
                    " requires atomics to be enabled";
       }
@@ -132,7 +137,7 @@ void Instrumenter::instrumentFuncs() {
       Index funcIdx = 0;
       assert(!wasm->memories.empty());
       Name memoryName =
-        options.storageKind == WasmSplitOptions::StorageKind::InMemory
+        config.storageKind == WasmSplitOptions::StorageKind::InMemory
           ? wasm->memories[0]->name
           : secondaryMemory;
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
@@ -172,7 +177,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
   // writes the profile if the given space is sufficient to hold it.
-  auto name = Names::getValidFunctionName(*wasm, options.profileExport);
+  auto name = Names::getValidFunctionName(*wasm, config.profileExport);
   auto writeProfile = Builder::makeFunction(
     name, Signature({Type::i32, Type::i32}, Type::i32), {});
   writeProfile->hasExplicitName = true;
@@ -211,7 +216,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
     8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
 
-  switch (options.storageKind) {
+  switch (config.storageKind) {
     case WasmSplitOptions::StorageKind::InGlobals: {
       for (const auto& global : functionGlobals) {
         writeData = builder.blockify(
@@ -235,7 +240,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
         return builder.makeLocalGet(funcIdxVar, Type::i32);
       };
       Name loadMemoryName =
-        options.storageKind == WasmSplitOptions::StorageKind::InMemory
+        config.storageKind == WasmSplitOptions::StorageKind::InMemory
           ? wasm->memories[0]->name
           : secondaryMemory;
       // (block $outer
@@ -297,7 +302,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
   // Create an export for the function
   wasm->addFunction(std::move(writeProfile));
   wasm->addExport(
-    Builder::makeExport(options.profileExport, name, ExternalKind::Function));
+    Builder::makeExport(config.profileExport, name, ExternalKind::Function));
 
   // Export the memory if it is not already exported or imported.
   if (!wasm->memories[0]->imported()) {

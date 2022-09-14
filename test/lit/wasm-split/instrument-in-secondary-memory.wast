@@ -16,17 +16,19 @@
   )
 )
 
-;; Check that a memory has been added
-;; CHECK: (memory $0 1 1)
-;; CHECK: (memory $split_data (shared 1 1))
+;; Check that a memory import has been added for secondary memory
+;; CHECK: (import "env" "profile-data" (memory $profile-data (shared 1 1)))
 
 ;; And the profiling function exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
 
+;; And main memory has been exported
+;; CHECK: (export "profile-memory" (memory $0))
+
 ;; Check that the function instrumentation is correct
 
 ;; CHECK:      (func $bar
-;; CHECK-NEXT:  (i32.atomic.store8 $split_data
+;; CHECK-NEXT:  (i32.atomic.store8 $profile-data
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
@@ -34,7 +36,7 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK-NEXT: (func $baz (param $0 i32) (result i32)
-;; CHECK-NEXT:  (i32.atomic.store8 $split_data offset=1
+;; CHECK-NEXT:  (i32.atomic.store8 $profile-data offset=1
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
@@ -71,7 +73,7 @@
 ;; CHECK-NEXT:         (i32.const 4)
 ;; CHECK-NEXT:        )
 ;; CHECK-NEXT:       )
-;; CHECK-NEXT:       (i32.atomic.load8_u $split_data
+;; CHECK-NEXT:       (i32.atomic.load8_u $profile-data
 ;; CHECK-NEXT:        (local.get $funcIdx)
 ;; CHECK-NEXT:       )
 ;; CHECK-NEXT:      )

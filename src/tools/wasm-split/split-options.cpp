@@ -185,10 +185,10 @@ WasmSplitOptions::WasmSplitOptions()
       [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",
          "",
-         "The namespace from which to import objects from the primary "
-         "module into the secondary module.",
+         "When provided as an option for module splitting, the namespace from which to import objects from the primary "
+         "module into the secondary module. In instrument mode, refers to the namespace from which to import the secondary memory.",
          WasmSplitOption,
-         {Mode::Split},
+         {Mode::Split, Mode::Instrument},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
@@ -258,6 +258,16 @@ WasmSplitOptions::WasmSplitOptions()
       [&](Options* o, const std::string& argument) {
         storageKind = StorageKind::InSecondaryMemory;
       })
+    .add("--secondary-memory-name",
+         "",
+         "The name of the secondary memory created to store profile "
+         "information.",
+         WasmSplitOption,
+         {Mode::Instrument},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           secondaryMemoryName = argument;
+         })
     .add(
       "--emit-module-names",
       "",

@@ -111,7 +111,16 @@ void instrumentModule(const WasmSplitOptions& options) {
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
   PassRunner runner(&wasm, options.passOptions);
-  Instrumenter(options, moduleHash).run(&runner, &wasm);
+  InstrumenterConfig config;
+  if (options.importNamespace.size()) {
+    config.importNamespace = options.importNamespace;
+  }
+  if (options.secondaryMemoryName.size()) {
+    config.secondaryMemoryName = options.secondaryMemoryName;
+  }
+  config.storageKind = options.storageKind;
+  config.profileExport = options.profileExport;
+  Instrumenter(config, moduleHash).run(&runner, &wasm);
 
   adjustTableSize(wasm, options.initialTableSize);
 
