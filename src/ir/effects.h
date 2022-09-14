@@ -425,8 +425,8 @@ private:
       }
 
       if (parent.funcEffectsMap) {
-        auto iter = parent.funcEffectsMap.find(curr->target);
-        if (iter != parent.funcEffectsMap.end()) {
+        auto iter = parent.funcEffectsMap->find(curr->target);
+        if (iter != parent.funcEffectsMap->end()) {
           // We have effect information for this call target, and can just use
           // that.
           parent.mergeIn(iter->second);
