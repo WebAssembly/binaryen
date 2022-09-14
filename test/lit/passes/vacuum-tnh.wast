@@ -8,12 +8,8 @@
 (module
   (memory 1 1)
 
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (func $drop (param $x i32) (param $y anyref)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
   (func $drop (param $x i32) (param $y anyref)
     ;; A load might trap, normally, but if traps never happen then we can
     ;; remove it.
@@ -52,17 +48,6 @@
   )
 
   ;; Other side effects prevent us making any changes.
-  ;; CHECK:      (func $other-side-effects (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $other-side-effects
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: )
   (func $other-side-effects (param $x i32) (result i32)
     ;; A call has all manner of other side effects.
     (drop
@@ -82,20 +67,8 @@
   )
 
   ;; A helper function for the above, that returns nothing.
-  ;; CHECK:      (func $return-nothing
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
   (func $return-nothing)
 
-  ;; CHECK:      (func $partial (param $x (ref $struct))
-  ;; CHECK-NEXT:  (local $y (ref null $struct))
-  ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $partial (param $x (ref $struct))
     (local $y (ref null $struct))
     ;; The struct.get's side effect can be ignored due to tnh, and the value is
@@ -121,9 +94,6 @@
     )
   )
 
-  ;; CHECK:      (func $toplevel
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
   (func $toplevel
     ;; A removable side effect at the top level of a function. We can turn this
     ;; into a nop.
