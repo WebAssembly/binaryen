@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);

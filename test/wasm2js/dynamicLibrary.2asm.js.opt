@@ -36,7 +36,8 @@ function Table(ret) {
 function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, imports[memoryBase], "ZHluYW1pYyBkYXRh");
 }
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);
