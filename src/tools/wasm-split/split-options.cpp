@@ -185,8 +185,10 @@ WasmSplitOptions::WasmSplitOptions()
       [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",
          "",
-         "When provided as an option for module splitting, the namespace from which to import objects from the primary "
-         "module into the secondary module. In instrument mode, refers to the namespace from which to import the secondary memory.",
+         "When provided as an option for module splitting, the namespace from "
+         "which to import objects from the primary "
+         "module into the secondary module. In instrument mode, refers to the "
+         "namespace from which to import the secondary memory.",
          WasmSplitOption,
          {Mode::Split, Mode::Instrument},
          Options::Arguments::One,

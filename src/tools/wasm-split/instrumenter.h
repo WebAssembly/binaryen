@@ -30,7 +30,8 @@ struct InstrumenterConfig {
   // instrumentation
   Name secondaryMemoryName = "profile-data";
   // Where to store the profile data
-  WasmSplitOptions::StorageKind storageKind = WasmSplitOptions::StorageKind::InGlobals;
+  WasmSplitOptions::StorageKind storageKind =
+    WasmSplitOptions::StorageKind::InGlobals;
   // The export name of the function the embedder calls to write the profile
   // into memory
   std::string profileExport = DEFAULT_PROFILE_EXPORT;

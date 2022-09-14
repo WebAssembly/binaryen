@@ -22,7 +22,8 @@
 
 namespace wasm {
 
-Instrumenter::Instrumenter(const InstrumenterConfig& config, uint64_t moduleHash)
+Instrumenter::Instrumenter(const InstrumenterConfig& config,
+                           uint64_t moduleHash)
   : config(config), moduleHash(moduleHash) {}
 
 void Instrumenter::run(PassRunner* runner, Module* wasm) {
@@ -77,7 +78,8 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
       << "error: --in-secondary-memory requires multi-memories to be enabled";
   }
 
-  secondaryMemory = Names::getValidMemoryName(*wasm, config.secondaryMemoryName);
+  secondaryMemory =
+    Names::getValidMemoryName(*wasm, config.secondaryMemoryName);
   // Create a memory with enough pages to write into
   size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
   auto mem = Builder::makeMemory(secondaryMemory, pages, pages, true);
@@ -129,9 +131,11 @@ void Instrumenter::instrumentFuncs() {
     case WasmSplitOptions::StorageKind::InMemory:
     case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       if (!wasm->features.hasAtomics()) {
-        const char* command = config.storageKind == WasmSplitOptions::StorageKind::InMemory ? "in-memory" : "in-secondary-memory";
-        Fatal() << "error: --" << command <<
-                   " requires atomics to be enabled";
+        const char* command =
+          config.storageKind == WasmSplitOptions::StorageKind::InMemory
+            ? "in-memory"
+            : "in-secondary-memory";
+        Fatal() << "error: --" << command << " requires atomics to be enabled";
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
