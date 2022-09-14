@@ -587,6 +587,10 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("cfp");
     addIfNoDWARFIssues("gsi");
   }
+  // TODO: generate-global-effects here, right before function passes, then
+  //       discard in addDefaultGlobalOptimizationPostPasses? the benefit seems
+  //       quite minor so far, except perhaps when using call.without.effects
+  //       which can lead to more opportunities for global effects to matter.
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
