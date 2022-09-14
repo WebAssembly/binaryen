@@ -129,6 +129,8 @@ void PassRegistry::registerPasses() {
   registerPass(
     "directize", "turns indirect calls into direct ones", createDirectizePass);
   registerPass(
+    "discard-global-effects", "discards global effect info", createDiscardGlobalEffectsPass);
+  registerPass(
     "dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
   registerPass("dwarfdump",
                "dump DWARF debug info sections from the read binary",
@@ -165,6 +167,8 @@ void PassRegistry::registerPasses() {
     "functions with i64 in their signature (which cannot be invoked "
     "via the wasm table without JavaScript BigInt support).",
     createGenerateI64DynCallsPass);
+  registerPass(
+    "generate-global-effects", "generate global effect info (helps later passes)", createGenerateGlobalEffectsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
