@@ -3,9 +3,9 @@
 ;; Run without global effects, and run with, and also run with but discard them
 ;; first (to check that discard works; that should be the same as without).
 
-;; RUN: foreach %s %t wasm-opt                                                    --vacuum -S -o - | filecheck --check-prefix WITHOUT %s
-;; RUN: foreach %s %t wasm-opt --generate-global-effects                          --vacuum -S -o - | filecheck --check-prefix INCLUDE %s
-;; RUN: foreach %s %t wasm-opt --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck --check-prefix DISCARD %s
+;; RUN: foreach %s %t wasm-opt                                                    --vacuum -S -o - | filecheck %s --check-prefix WITHOUT
+;; RUN: foreach %s %t wasm-opt --generate-global-effects                          --vacuum -S -o - | filecheck %s --check-prefix INCLUDE
+;; RUN: foreach %s %t wasm-opt --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck %s --check-prefix DISCARD
 
 (module
   ;; WITHOUT:      (type $none_=>_none (func))
