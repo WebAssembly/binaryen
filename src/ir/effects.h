@@ -312,10 +312,10 @@ public:
   }
 
   bool checkPost(Expression* curr) {
+    visit(curr);
     if (curr->is<Loop>()) {
       branchesOut = true;
     }
-    visit(curr);
     return hasAnything();
   }
 
