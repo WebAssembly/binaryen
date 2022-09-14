@@ -3,13 +3,48 @@
 ;; Run in both TNH and non-TNH mode.
 
 ;; RUN: wasm-opt %s --vacuum --traps-never-happen -all -S -o - | filecheck --check-prefix YESTNH %s
-;; RUN: wasm-opt %s --vacuum --traps-never-happen -all -S -o - | filecheck --check-prefix NO_TNH %s
+;; RUN: wasm-opt %s --vacuum                      -all -S -o - | filecheck --check-prefix NO_TNH %s
 
 (module
   (memory 1 1)
 
+  ;; YESTNH:      (type $struct (struct (field (mut i32))))
+  ;; NO_TNH:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
+  ;; YESTNH:      (func $drop (param $x i32) (param $y anyref)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $drop (param $x i32) (param $y anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (i32.load
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $y)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_func
+  ;; NO_TNH-NEXT:    (local.get $y)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_data
+  ;; NO_TNH-NEXT:    (local.get $y)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_i31
+  ;; NO_TNH-NEXT:    (local.get $y)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
   (func $drop (param $x i32) (param $y anyref)
     ;; A load might trap, normally, but if traps never happen then we can
     ;; remove it.
@@ -48,6 +83,35 @@
   )
 
   ;; Other side effects prevent us making any changes.
+  ;; YESTNH:      (func $other-side-effects (param $x i32) (result i32)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (call $other-side-effects
+  ;; YESTNH-NEXT:    (i32.const 1)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (local.set $x
+  ;; YESTNH-NEXT:   (i32.const 2)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (i32.const 1)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $other-side-effects (param $x i32) (result i32)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (call $other-side-effects
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result i32)
+  ;; NO_TNH-NEXT:    (local.set $x
+  ;; NO_TNH-NEXT:     (i32.const 2)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.load
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (i32.const 1)
+  ;; NO_TNH-NEXT: )
   (func $other-side-effects (param $x i32) (result i32)
     ;; A call has all manner of other side effects.
     (drop
@@ -67,8 +131,40 @@
   )
 
   ;; A helper function for the above, that returns nothing.
+  ;; YESTNH:      (func $return-nothing
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $return-nothing
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
   (func $return-nothing)
 
+  ;; YESTNH:      (func $partial (param $x (ref $struct))
+  ;; YESTNH-NEXT:  (local $y (ref null $struct))
+  ;; YESTNH-NEXT:  (local.set $y
+  ;; YESTNH-NEXT:   (local.get $x)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (local.set $y
+  ;; YESTNH-NEXT:   (local.get $x)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $partial (param $x (ref $struct))
+  ;; NO_TNH-NEXT:  (local $y (ref null $struct))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.get $struct 0
+  ;; NO_TNH-NEXT:    (local.tee $y
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.get $struct 0
+  ;; NO_TNH-NEXT:    (local.tee $y
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
   (func $partial (param $x (ref $struct))
     (local $y (ref null $struct))
     ;; The struct.get's side effect can be ignored due to tnh, and the value is
@@ -94,12 +190,31 @@
     )
   )
 
+  ;; YESTNH:      (func $toplevel
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $toplevel
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
   (func $toplevel
     ;; A removable side effect at the top level of a function. We can turn this
     ;; into a nop.
     (unreachable)
   )
 
+  ;; YESTNH:      (func $drop-loop
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $drop-loop
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (loop $loop (result i32)
+  ;; NO_TNH-NEXT:    (br_if $loop
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.const 10)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
   (func $drop-loop
     ;; A loop has effects, since it might infinite loop (and hit a timeout trap
     ;; eventually), so we do not vacuum it out unless we are ignoring traps.
