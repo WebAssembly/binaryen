@@ -424,6 +424,10 @@ private:
         return;
       }
 
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
       if (parent.funcEffectsMap) {
         auto iter = parent.funcEffectsMap->find(curr->target);
         if (iter != parent.funcEffectsMap->end()) {
@@ -438,9 +442,6 @@ private:
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
