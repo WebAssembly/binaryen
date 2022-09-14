@@ -88,18 +88,32 @@ public:
   // each other, but it is not ok to remove them or reorder them with other
   // effects in a noticeable way.
   //
-  // Note also that we ignore runtime-dependent traps, such as hitting a
+  // Note also that we ignore optional runtime-specific traps, such as hitting a
   // recursion limit or running out of memory. Such traps are not part of wasm's
   // official semantics, and they can occur anywhere: *any* instruction could in
   // theory be implemented by a VM call (as will be the case when running in an
   // interpreter), and such a call could run out of stack or memory in
-  // principle. To put it another way, an i32 division by zero is the program
-  // doing something bad that causes a trap, but the VM running out of memory is
-  // the VM doing something bad - and therefore the VM behaving in a way that is
-  // not according to the wasm semantics - and we do not model such things. Note
-  // that as a result we do *not* mark things like GC allocation instructions as
-  // having side effects, which has the nice benefit of making it possible to
-  // eliminate an allocation whose result is not captured.
+  // principle. And different VMs may have different limits, or no limit at all
+  // if they manage to optimize in particular ways. To put it another way, all
+  // VMs trap on i32 division by zero, but if some particular VM might run out
+  // of memory then that is a VM-specific issue that we do not care about;
+  // rather than consider all possible traps in all possible VMs, we only model
+  // things that must trap in *all* VMs.
+  //   * As a result, we do *not* mark things like GC allocation instructions as
+  //     having side effects, since one allocation by itself will not cause all
+  //     VMs to trap all the time - only ones that happen to hit their limit.
+  //     That has the nice benefit of making it possible to eliminate an
+  //     allocation whose result is not captured.
+  //   * OTOH, we *do* mark a potentially infinite number of allocations as
+  //     trapping. If we think a loop might be infinite then we must assume the
+  //     worst, that it is in fact infinite, and an infinite number of
+  //     allocations will trap eventually in all VMs. Similarly, possible
+  //     infinite recursion will be marked as potentially trapping.
+  //   * We also mark all loops (that we cannot prove must terminate) as
+  //     potentially trapping, even if they have no allocations or other effects
+  //     inside them. An infinite loop will eventually hit a timeout in all
+  //     VMs (or, if we want to be philosophical, the heat death of the universe
+  //     must eventually arrive, which is its own sort of error).
   bool trap = false;
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
@@ -311,9 +325,6 @@ public:
 
   bool checkPost(Expression* curr) {
     visit(curr);
-    if (curr->is<Loop>()) {
-      branchesOut = true;
-    }
     return hasAnything();
   }
 
@@ -392,20 +403,13 @@ private:
     }
     void visitIf(If* curr) {}
     void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        parent.breakTargets.erase(curr->name); // these were internal breaks
-      }
-      // if the loop is unreachable, then there is branching control flow:
-      //  (1) if the body is unreachable because of a (return), uncaught (br)
-      //      etc., then we already noted branching, so it is ok to mark it
-      //      again (if we have *caught* (br)s, then they did not lead to the
-      //      loop body being unreachable). (same logic applies to blocks)
-      //  (2) if the loop is unreachable because it only has branches up to the
-      //      loop top, but no way to get out, then it is an infinite loop, and
-      //      we consider that a branching side effect (note how the same logic
-      //      does not apply to blocks).
-      if (curr->type == Type::unreachable) {
-        parent.branchesOut = true;
+      if (curr->name.is() && parent.breakTargets.erase(curr->name) > 0) {
+        // Breaks to this loop exist, which we just removed as they do not have
+        // further effect outside of this loop. One additional thing we need to
+        // take into account is infinite looping, which is a noticeable side
+        // effect we can't normally remove - eventually the VM will time out and
+        // error (see more details in the comment on trapping above).
+        parent.implicitTrap = true;
       }
     }
     void visitBreak(Break* curr) { parent.breakTargets.insert(curr->name); }
