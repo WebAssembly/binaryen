@@ -188,7 +188,7 @@ WasmSplitOptions::WasmSplitOptions()
          "When provided as an option for module splitting, the namespace from "
          "which to import objects from the primary "
          "module into the secondary module. In instrument mode, refers to the "
-         "namespace from which to import the secondary memory.",
+         "namespace from which to import the secondary memory, if any.",
          WasmSplitOption,
          {Mode::Split, Mode::Instrument},
          Options::Arguments::One,
