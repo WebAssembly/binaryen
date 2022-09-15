@@ -25,7 +25,7 @@
   ;; DISCARD:      (tag $tag (param))
   (tag $tag)
 
-  ;; WITHOUT:      (func $foo
+  ;; WITHOUT:      (func $main
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT:  (call $unreachable)
   ;; WITHOUT-NEXT:  (call $call-nop)
@@ -34,12 +34,12 @@
   ;; WITHOUT-NEXT:   (call $unimportant-effects)
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $foo
+  ;; INCLUDE:      (func $main
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT:  (call $call-nop)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $foo
+  ;; DISCARD:      (func $main
   ;; DISCARD-NEXT:  (call $nop)
   ;; DISCARD-NEXT:  (call $unreachable)
   ;; DISCARD-NEXT:  (call $call-nop)
@@ -48,7 +48,7 @@
   ;; DISCARD-NEXT:   (call $unimportant-effects)
   ;; DISCARD-NEXT:  )
   ;; DISCARD-NEXT: )
-  (func $foo
+  (func $main
     ;; Calling a function with no effects can be optimized away in INCLUDE (but
     ;; not WITHOUT or DISCARD, where the global effect info is not available).
     (call $nop)
@@ -175,7 +175,7 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-throws-and-catch
+  ;; WITHOUT:      (func $call-throw-and-catch
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw)
@@ -185,10 +185,10 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-throws-and-catch
+  ;; INCLUDE:      (func $call-throw-and-catch
   ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $call-throws-and-catch
+  ;; DISCARD:      (func $call-throw-and-catch
   ;; DISCARD-NEXT:  (try $try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $throw)
@@ -198,13 +198,48 @@
   ;; DISCARD-NEXT:   )
   ;; DISCARD-NEXT:  )
   ;; DISCARD-NEXT: )
-  (func $call-throws-and-catch
+  (func $call-throw-and-catch
     (try
       (do
         ;; This call cannot be optimized out, as the target throws. However, the
         ;; entire try-catch can be, since the call's only effect is to throw,
         ;; and the catch_all catches that.
         (call $throw)
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $call-unreachable-and-catch
+  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $unreachable)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $call-unreachable-and-catch
+  ;; INCLUDE-NEXT:  (call $unreachable)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $call-unreachable-and-catch
+  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (call $unreachable)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT: )
+  (func $call-unreachable-and-catch
+    (try
+      (do
+        ;; This call has a non-throw effect. We can optimize away the try-catch
+        ;; (since no exception can be thrown anyhow), but we must leave the
+        ;; call.
+        (call $unreachable)
       )
       (catch_all)
     )
