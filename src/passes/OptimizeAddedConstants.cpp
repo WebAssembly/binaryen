@@ -45,7 +45,9 @@ public:
                         T* curr,
                         Module* module,
                         LocalGraph* localGraph)
-    : parent(parent), curr(curr), module(module), localGraph(localGraph) {}
+    : parent(parent), curr(curr), module(module), localGraph(localGraph) {
+    memory64 = module->getMemory(curr->memory)->is64();
+  }
 
   // Tries to optimize, and returns whether we propagated a change.
   bool optimize() {
@@ -110,6 +112,7 @@ private:
   T* curr;
   Module* module;
   LocalGraph* localGraph;
+  bool memory64;
 
   void optimizeConstantPointer() {
     // The constant and an offset are interchangeable:
