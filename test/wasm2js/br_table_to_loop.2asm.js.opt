@@ -14,7 +14,7 @@ function asmFunc(env) {
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
-  while (1) continue;
+  abort();
  }
  
  function $1() {
