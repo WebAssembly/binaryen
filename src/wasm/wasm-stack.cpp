@@ -2500,7 +2500,13 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
   if (memoryIdx > 0) {
     o << U32LEB(memoryIdx);
   }
-  o << U32LEB(offset);
+
+  bool memory64 = parent.getModule()->getMemory(memory)->is64();
+  if (memory64) {
+    o << U64LEB(offset);
+  } else {
+    o << U32LEB(offset);
+  }
 }
 
 int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found
