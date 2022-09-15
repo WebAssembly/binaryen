@@ -56,7 +56,7 @@ public:
       return false;
     }
     if (auto* add = curr->ptr->template dynCast<Binary>()) {
-      if (add->op == AddInt32) {
+      if (add->op == AddInt32 || add->op == AddInt64) {
         // Look for a constant on both sides.
         if (tryToOptimizeConstant(add->right, add->left) ||
             tryToOptimizeConstant(add->left, add->right)) {
