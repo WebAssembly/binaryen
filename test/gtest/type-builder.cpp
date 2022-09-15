@@ -533,3 +533,35 @@ TEST_F(NominalTest, TestSubTypes) {
   auto subTypes1 = subTypes.getStrictSubTypes(built[1]);
   EXPECT_EQ(subTypes1.size(), 0u);
 }
+
+// Test reuse of a previously built type as supertype.
+TEST_F(NominalTest, TestExistingSubType) {
+  // Build an initial type A
+  Type A;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = Type(built[0], Nullable);
+  }
+
+  // Build a type B <: A using a new builder
+  Type B;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    builder.setSubType(0, A.getHeapType());
+    auto result = builder.build();
+    ASSERT_TRUE(result); // FIXME: ErrorReason::InvalidSupertype
+    auto built = *result;
+    B = Type(built[0], Nullable);
+  }
+
+  // Test that B <: A where A is the initial type A
+  auto superOfB = B.getHeapType().getSuperType();
+  ASSERT_TRUE(superOfB);
+  EXPECT_EQ(*superOfB, A.getHeapType());
+  EXPECT_NE(B.getHeapType(), A.getHeapType());
+}

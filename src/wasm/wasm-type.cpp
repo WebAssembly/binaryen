@@ -2803,13 +2803,6 @@ Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
   return markTemp(impl->typeStore.insert(TypeInfo(type, nullable)));
 }
 
-void TypeBuilder::setSubType(size_t i, size_t j) {
-  assert(i < size() && j < size() && "index out of bounds");
-  HeapTypeInfo* sub = impl->entries[i].info.get();
-  HeapTypeInfo* super = impl->entries[j].info.get();
-  sub->supertype = super;
-}
-
 void TypeBuilder::setSubType(size_t i, HeapType super) {
   assert(i < size() && "index out of bounds");
   HeapTypeInfo* sub = impl->entries[i].info.get();

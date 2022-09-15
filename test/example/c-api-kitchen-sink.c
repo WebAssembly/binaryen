@@ -2161,8 +2161,6 @@ void test_typebuilder() {
                              fieldMutables,
                              2);
   }
-  // the following two setSubType calls are identical
-  TypeBuilderSetSubTypeAt(builder, tempSubStructIndex, tempStructIndex);
   TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructHeapType);
 
   // TODO: Rtts (post-MVP?)
