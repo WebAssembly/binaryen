@@ -12,15 +12,21 @@
 
   ;; WITHOUT:      (type $none_=>_i32 (func (result i32)))
 
+  ;; WITHOUT:      (type $i32_=>_none (func (param i32)))
+
   ;; WITHOUT:      (tag $tag (param))
   ;; INCLUDE:      (type $none_=>_none (func))
 
   ;; INCLUDE:      (type $none_=>_i32 (func (result i32)))
 
+  ;; INCLUDE:      (type $i32_=>_none (func (param i32)))
+
   ;; INCLUDE:      (tag $tag (param))
   ;; DISCARD:      (type $none_=>_none (func))
 
   ;; DISCARD:      (type $none_=>_i32 (func (result i32)))
+
+  ;; DISCARD:      (type $i32_=>_none (func (param i32)))
 
   ;; DISCARD:      (tag $tag (param))
   (tag $tag)
@@ -240,6 +246,63 @@
         ;; (since no exception can be thrown anyhow), but we must leave the
         ;; call.
         (call $unreachable)
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (param $x i32)
+  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (if
+  ;; WITHOUT-NEXT:     (local.get $x)
+  ;; WITHOUT-NEXT:     (call $throw)
+  ;; WITHOUT-NEXT:     (call $unreachable)
+  ;; WITHOUT-NEXT:    )
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (param $x i32)
+  ;; INCLUDE-NEXT:  (try $try
+  ;; INCLUDE-NEXT:   (do
+  ;; INCLUDE-NEXT:    (if
+  ;; INCLUDE-NEXT:     (local.get $x)
+  ;; INCLUDE-NEXT:     (call $throw)
+  ;; INCLUDE-NEXT:     (call $unreachable)
+  ;; INCLUDE-NEXT:    )
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $call-throw-or-unreachable-and-catch (param $x i32)
+  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (if
+  ;; DISCARD-NEXT:     (local.get $x)
+  ;; DISCARD-NEXT:     (call $throw)
+  ;; DISCARD-NEXT:     (call $unreachable)
+  ;; DISCARD-NEXT:    )
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT: )
+  (func $call-throw-or-unreachable-and-catch (param $x i32)
+    ;; This try-catch-all's body will either call a throw or an unreachable.
+    ;; Since we have both possible effects, we cannot optimize anything here.
+    (try
+      (do
+        (if
+          (local.get $x)
+          (call $throw)
+          (call $unreachable)
+        )
       )
       (catch_all)
     )
