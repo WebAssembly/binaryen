@@ -73,20 +73,10 @@
    )
   )
   (call $logf32
-   (f32.min
-    (f32.const -nan:0x7fff82)
-    (f32.neg
-     (f32.const -nan:0x7ff622)
-    )
-   )
+   (f32.const nan:0x400000)
   )
   (call $logf32
-   (f32.max
-    (f32.const -nan:0x7fff82)
-    (f32.neg
-     (f32.const -nan:0x7ff622)
-    )
-   )
+   (f32.const nan:0x400000)
   )
  )
  (func $1
@@ -126,20 +116,10 @@
    )
   )
   (call $logf64
-   (f64.min
-    (f64.const -nan:0xfffffffffff82)
-    (f64.neg
-     (f64.const -nan:0xfffffffffa622)
-    )
-   )
+   (f64.const nan:0x8000000000000)
   )
   (call $logf64
-   (f64.max
-    (f64.const -nan:0xfffffffffff82)
-    (f64.neg
-     (f64.const -nan:0xfffffffffa622)
-    )
-   )
+   (f64.const nan:0x8000000000000)
   )
  )
  (func $2
