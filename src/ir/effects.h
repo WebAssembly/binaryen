@@ -263,7 +263,7 @@ public:
     return false;
   }
 
-  void mergeIn(EffectAnalyzer& other) {
+  void mergeIn(const EffectAnalyzer& other) {
     branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
@@ -432,8 +432,18 @@ private:
         auto iter = parent.funcEffectsMap->find(curr->target);
         if (iter != parent.funcEffectsMap->end()) {
           // We have effect information for this call target, and can just use
-          // that.
-          parent.mergeIn(iter->second);
+          // that. The one change we may want to make is to remove throws_, if
+          // the target function throws and we know that will be caught anyhow,
+          // the same as the code below for the general path.
+          const auto& targetEffects = iter->second;
+          if (targetEffects.throws_ && parent.tryDepth > 0) {
+            auto filteredEffects = targetEffects;
+            filteredEffects.throws_ = false;
+            parent.mergeIn(filteredEffects);
+          } else {
+            // Just merge in all the effects.
+            parent.mergeIn(targetEffects);
+          }
           return;
         }
       }
