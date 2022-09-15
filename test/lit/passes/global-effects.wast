@@ -3,14 +3,27 @@
 ;; Run without global effects, and run with, and also run with but discard them
 ;; first (to check that discard works; that should be the same as without).
 
-;; RUN: foreach %s %t wasm-opt                                                    --vacuum -S -o - | filecheck %s --check-prefix WITHOUT
-;; RUN: foreach %s %t wasm-opt --generate-global-effects                          --vacuum -S -o - | filecheck %s --check-prefix INCLUDE
-;; RUN: foreach %s %t wasm-opt --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck %s --check-prefix DISCARD
+;; RUN: foreach %s %t wasm-opt -all                                                    --vacuum -S -o - | filecheck %s --check-prefix WITHOUT
+;; RUN: foreach %s %t wasm-opt -all --generate-global-effects                          --vacuum -S -o - | filecheck %s --check-prefix INCLUDE
+;; RUN: foreach %s %t wasm-opt -all --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck %s --check-prefix DISCARD
 
 (module
   ;; WITHOUT:      (type $none_=>_none (func))
 
   ;; WITHOUT:      (type $none_=>_i32 (func (result i32)))
+
+  ;; WITHOUT:      (tag $tag (param))
+  ;; INCLUDE:      (type $none_=>_none (func))
+
+  ;; INCLUDE:      (type $none_=>_i32 (func (result i32)))
+
+  ;; INCLUDE:      (tag $tag (param))
+  ;; DISCARD:      (type $none_=>_none (func))
+
+  ;; DISCARD:      (type $none_=>_i32 (func (result i32)))
+
+  ;; DISCARD:      (tag $tag (param))
+  (tag $tag)
 
   ;; WITHOUT:      (func $foo
   ;; WITHOUT-NEXT:  (call $nop)
@@ -21,19 +34,11 @@
   ;; WITHOUT-NEXT:   (call $unimportant-effects)
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (type $none_=>_none (func))
-
-  ;; INCLUDE:      (type $none_=>_i32 (func (result i32)))
-
   ;; INCLUDE:      (func $foo
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT:  (call $call-nop)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (type $none_=>_none (func))
-
-  ;; DISCARD:      (type $none_=>_i32 (func (result i32)))
-
   ;; DISCARD:      (func $foo
   ;; DISCARD-NEXT:  (call $nop)
   ;; DISCARD-NEXT:  (call $unreachable)
@@ -168,5 +173,53 @@
     (return
       (local.get $x)
     )
+  )
+
+  ;; WITHOUT:      (func $call-throws-and-catch
+  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $throw)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $call-throws-and-catch
+  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $call-throws-and-catch
+  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (call $throw)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT: )
+  (func $call-throws-and-catch
+    (try
+      (do
+        ;; This call cannot be optimized out, as the target throws. However, the
+        ;; entire try-catch can be, since the call's only effect is to throw,
+        ;; and the catch_all catches that.
+        (call $throw)
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $throw
+  ;; WITHOUT-NEXT:  (throw $tag)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $throw
+  ;; INCLUDE-NEXT:  (throw $tag)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $throw
+  ;; DISCARD-NEXT:  (throw $tag)
+  ;; DISCARD-NEXT: )
+  (func $throw
+    (throw $tag)
   )
 )
