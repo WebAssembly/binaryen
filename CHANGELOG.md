@@ -16,6 +16,7 @@ Current Trunk
 -------------
 
 - Add extra `memory64` argument for `BinaryenSetMemory` and new `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
+- `TypeBuilderSetSubType` has been renamed to `TypeBuilderSetSubTypeAt`, with `TypeBuilderSetSubType` now taking a super type.
 
 v110
 ----

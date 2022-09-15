@@ -602,6 +602,10 @@ struct TypeBuilder {
   // index `i` to be an immediate subtype of the HeapType being built at index
   // `j`. Does nothing for equirecursive types.
   void setSubType(size_t i, size_t j);
+  // In nominal mode, or for nominal types, declare the HeapType being built at
+  // index `i` to be an immediate subtype of the given HeapType. Does nothing
+  // for equirecursive types.
+  void setSubType(size_t i, HeapType super);
 
   // Create a new recursion group covering slots [i, i + length). Groups must
   // not overlap or go out of bounds.

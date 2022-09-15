@@ -6261,10 +6261,15 @@ BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
     ->getTempRefType(HeapType(heapType), nullable ? Nullable : NonNullable)
     .getID();
 }
+void TypeBuilderSetSubTypeAt(TypeBuilderRef builder,
+                             BinaryenIndex index,
+                             BinaryenIndex superIndex) {
+  ((TypeBuilder*)builder)->setSubType(index, superIndex);
+}
 void TypeBuilderSetSubType(TypeBuilderRef builder,
                            BinaryenIndex index,
-                           BinaryenIndex superIndex) {
-  ((TypeBuilder*)builder)->setSubType(index, superIndex);
+                           BinaryenHeapType superType) {
+  ((TypeBuilder*)builder)->setSubType(index, HeapType(superType));
 }
 void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
                                BinaryenIndex index,

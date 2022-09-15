@@ -2810,6 +2810,12 @@ void TypeBuilder::setSubType(size_t i, size_t j) {
   sub->supertype = super;
 }
 
+void TypeBuilder::setSubType(size_t i, HeapType super) {
+  assert(i < size() && "index out of bounds");
+  HeapTypeInfo* sub = impl->entries[i].info.get();
+  sub->supertype = getHeapTypeInfo(super);
+}
+
 void TypeBuilder::createRecGroup(size_t i, size_t length) {
   assert(i <= size() && i + length <= size() && "group out of bounds");
   // Only materialize nontrivial recursion groups.
