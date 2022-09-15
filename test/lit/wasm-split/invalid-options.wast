@@ -20,7 +20,6 @@
 ;; --instrument cannot be used with --placeholder-namespace
 ;; RUN: not wasm-split %s --instrument --placeholder-namespace=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-PLACEHOLDER-NS
- 
 ;; --instrument cannot be used with --export-prefix
 ;; RUN: not wasm-split %s --instrument --export-prefix=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-EXPORT-PREFIX
