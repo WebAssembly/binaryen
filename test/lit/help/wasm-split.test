@@ -60,7 +60,7 @@
 ;; CHECK-NEXT:                                       primary module into the secondary module.
 ;; CHECK-NEXT:                                       In instrument mode, refers to the
 ;; CHECK-NEXT:                                       namespace from which to import the
-;; CHECK-NEXT:                                       secondary memory.
+;; CHECK-NEXT:                                       secondary memory, if any.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --placeholder-namespace             [split] The namespace from which to import
 ;; CHECK-NEXT:                                       placeholder functions into the primary
