@@ -373,7 +373,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // children may have no effects. (Note that this situation can only happen
     // if we do have a catch-all, so avoid wasted work by checking that first.)
     if (curr->hasCatchAll() &&
-        !EffectAnalyzer(getPassOptions(), *getModule(), curr).hasUnremovableSideEffects()) {
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr)
+           .hasUnremovableSideEffects()) {
       typeUpdater.noteRecursiveRemoval(curr);
       ExpressionManipulator::nop(curr);
     }
