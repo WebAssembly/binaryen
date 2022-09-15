@@ -140,6 +140,25 @@ struct PassOptions {
   // neither of those can happen (and it is undefined behavior if they do).
   //
   // TODO: deprecate and remove ignoreImplicitTraps.
+  //
+  // Since trapsNeverHappen assumes a trap is never reached, it can in principle
+  // remove code like this:
+  //
+  //   (i32.store ..)
+  //   (unreachable)
+  //
+  // The trap isn't reached, by assumption, and if we reach the store then we'd
+  // reach the trap, so we can assume that isn't reached either, and TNH can
+  // remove both. We do have a specific limitation here, however, which is that
+  // trapsNeverHappen cannot remove calls to *imports*. We assume that an import
+  // might do things we cannot understand, so we never eliminate it. For
+  // example, in LLVM output we might see this:
+  //
+  //   (call $abort) ;; a noreturn import - the process is halted with an error
+  //   (unreachable)
+  //
+  // That trap is never actually reached since the abort halts execution. In TNH
+  // we can remove the trap but not the call right before it.
   bool trapsNeverHappen = false;
   // Optimize assuming that the low 1K of memory is not valid memory for the
   // application to use. In that case, we can optimize load/store offsets in
