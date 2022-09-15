@@ -24,7 +24,7 @@ function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
 }
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
+ var env = importObject.env;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);
@@ -52,7 +52,7 @@ function asmFunc(importObject) {
  // EMSCRIPTEN_END_FUNCS
 ;
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(importObject);
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

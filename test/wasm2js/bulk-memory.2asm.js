@@ -1,6 +1,5 @@
 
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -18,8 +17,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 
   var bufferView;
 
@@ -31,7 +29,6 @@ var retasmFunc = asmFunc({
   }
       
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -98,8 +95,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var fill = retasmFunc.fill;
 export var load8_u = retasmFunc.load8_u;
 
@@ -134,7 +130,6 @@ function initActiveSegments(imports) {
   }
       
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -169,7 +164,7 @@ function asmFunc(importObject) {
  }
  
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(importObject);
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -180,8 +175,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var copy = retasmFunc.copy;
 export var load8_u = retasmFunc.load8_u;
 
@@ -215,7 +209,6 @@ memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM
   }
       
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -282,8 +275,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var init = retasmFunc.init;
 export var load8_u = retasmFunc.load8_u;
 
@@ -325,7 +317,6 @@ function initActiveSegments(imports) {
   }
       
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -364,7 +355,7 @@ function asmFunc(importObject) {
  }
  
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(importObject);
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -399,8 +390,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var drop_passive = retasmFunc.drop_passive;
 export var init_passive = retasmFunc.init_passive;
 export var drop_active = retasmFunc.drop_active;

@@ -34,10 +34,10 @@ function Table(ret) {
     return uint8Array;
   }
 function initActiveSegments(imports) {
-  base64DecodeToExistingUint8Array(bufferView, imports[memoryBase], "ZHluYW1pYyBkYXRh");
+  base64DecodeToExistingUint8Array(bufferView, imports.env[memoryBase], "ZHluYW1pYyBkYXRh");
 }
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
+ var env = importObject.env;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);
@@ -67,7 +67,7 @@ function asmFunc(importObject) {
  }
  
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(importObject);
  var FUNCTION_TABLE = Table(new Array(10));
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = foo;
@@ -83,6 +83,8 @@ function asmFunc(importObject) {
 
 var memasmFunc = new ArrayBuffer(16777216);
 var retasmFunc = asmFunc({
-    memory: { buffer : memasmFunc }
+  env: {
+    memory: { buffer : memasmFunc },
+  }
 });
 export var baz = retasmFunc.baz;

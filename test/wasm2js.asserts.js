@@ -31,7 +31,6 @@
     }
   
 function asmFunc0(importObject) {
- var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -67,8 +66,7 @@ function asmFunc0(importObject) {
  };
 }
 
-var retasmFunc0 = asmFunc0({
-});
+var retasmFunc0 = asmFunc0();
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;

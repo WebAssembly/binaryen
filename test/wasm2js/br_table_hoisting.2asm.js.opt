@@ -1,6 +1,5 @@
 
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -167,8 +166,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var foo1 = retasmFunc.foo1;
 export var foo2 = retasmFunc.foo2;
 export var foo3 = retasmFunc.foo3;

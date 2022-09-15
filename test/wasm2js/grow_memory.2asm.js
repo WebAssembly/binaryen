@@ -1,6 +1,5 @@
 
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -73,8 +72,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var memory = retasmFunc.memory;
 export var grow = retasmFunc.grow;
 export var current = retasmFunc.current;

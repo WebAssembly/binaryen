@@ -302,7 +302,11 @@ private:
   // on operations.
   std::unordered_set<Name> functionsCallableFromOutside;
 
+  std::unordered_set<Name> seenModuleImports;
+
   void addBasics(Ref ast, Module* wasm);
+  void ensureModuleImport(Ref ast, Name module);
+  void addTableImport(Ref ast, Table* import);
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
@@ -415,30 +419,17 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ret[1]->push_back(asmFunc);
   ValueBuilder::appendArgumentToFunction(asmFunc, importObject);
 
-  // Retrieve `env` object from info.  Older version of emscripten pass `env`
-  // *as* `info` so for now we make this conditional.
-  // TODO(sbc): Remove the makeBinary here once emscripten change has landed.
-  Ref envVar = ValueBuilder::makeVar();
-  asmFunc[3]->push_back(envVar);
-  ValueBuilder::appendToVar(
-    envVar,
-    ENV,
-    ValueBuilder::makeBinary(
-      ValueBuilder::makeDot(ValueBuilder::makeName(importObject),
-                            ValueBuilder::makeName(ENV)),
-      "||",
-      ValueBuilder::makeName(importObject)));
-
   // add memory import
   if (!wasm->memories.empty()) {
     if (wasm->memories[0]->imported()) {
+      ensureModuleImport(asmFunc[3], wasm->memories[0]->module);
       // find memory and buffer in imports
       Ref theVar = ValueBuilder::makeVar();
       asmFunc[3]->push_back(theVar);
       ValueBuilder::appendToVar(
         theVar,
         "memory",
-        ValueBuilder::makeDot(ValueBuilder::makeName(ENV),
+        ValueBuilder::makeDot(ValueBuilder::makeName(wasm->memories[0]->module),
                               ValueBuilder::makeName(wasm->memories[0]->base)));
 
       // Assign `buffer = memory.buffer`
@@ -474,14 +465,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   }
 
   // add imported tables
-  ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
-    Ref theVar = ValueBuilder::makeVar();
-    asmFunc[3]->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar,
-      FUNCTION_TABLE,
-      ValueBuilder::makeDot(ValueBuilder::makeName(ENV), table->base));
-  });
+  ModuleUtils::iterImportedTables(
+    *wasm, [&](Table* import) { addTableImport(asmFunc[3], import); });
 
   // create heaps, etc
   addBasics(asmFunc[3], wasm);
@@ -542,7 +527,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   if (hasActiveSegments(*wasm)) {
     asmFunc[3]->push_back(
       ValueBuilder::makeCall(ValueBuilder::makeName("initActiveSegments"),
-                             ValueBuilder::makeName(ENV)));
+                             ValueBuilder::makeName(importObject)));
   }
 
   addTable(asmFunc[3], wasm);
@@ -599,29 +584,61 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
     infinityVar, "infinity", ValueBuilder::makeName("Infinity"));
 }
 
+static Ref maybeSub(Name object, Name key) {
+  auto mangled = stringToIString(asmangle(key.str));
+  if (mangled != key) {
+    return ValueBuilder::makeSub(ValueBuilder::makeName(object),
+                                 ValueBuilder::makeString(key));
+  } else {
+    return ValueBuilder::makeDot(ValueBuilder::makeName(object),
+                                 ValueBuilder::makeName(key));
+  }
+}
+
+void Wasm2JSBuilder::ensureModuleImport(Ref ast, Name module) {
+  if (seenModuleImports.count(module) != 0) {
+    return;
+  }
+  seenModuleImports.insert(module);
+  Ref theVar = ValueBuilder::makeVar();
+  auto mangled = stringToIString(asmangle(module.str));
+  ValueBuilder::appendToVar(theVar, mangled, maybeSub(importObject, module));
+  ast->push_back(theVar);
+}
+
+void Wasm2JSBuilder::addTableImport(Ref ast, Table* import) {
+  ensureModuleImport(ast, import->module);
+
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+  auto mangled = stringToIString(asmangle(import->module.str));
+  ValueBuilder::appendToVar(
+    theVar, FUNCTION_TABLE, maybeSub(mangled, import->base));
+}
+
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
   // The scratch memory helpers are emitted in the glue, see code and comments
   // below.
   if (ABI::wasm2js::isHelper(import->base)) {
     return;
   }
+  ensureModuleImport(ast, import->module);
+
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
-  // TODO: handle nested module imports
-  Ref module = ValueBuilder::makeName(ENV);
-  ValueBuilder::appendToVar(
-    theVar,
-    fromName(import->name, NameScope::Top),
-    ValueBuilder::makeDot(module, fromName(import->base, NameScope::Top)));
+  auto mangled = stringToIString(asmangle(import->module.str));
+  ValueBuilder::appendToVar(theVar,
+                            fromName(import->name, NameScope::Top),
+                            maybeSub(mangled, import->base));
 }
 
 void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
+  ensureModuleImport(ast, import->module);
+
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
-  // TODO: handle nested module imports
-  Ref module = ValueBuilder::makeName(ENV);
-  Ref value =
-    ValueBuilder::makeDot(module, fromName(import->base, NameScope::Top));
+  auto mangled = stringToIString(asmangle(import->module.str));
+  Ref value = maybeSub(mangled, import->base);
   if (import->type == Type::i32) {
     value = makeJsCoercion(value, JS_INT);
   }
@@ -2638,14 +2655,8 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  if (!wasm.memories.empty() && wasm.memories[0]->imported()) {
-    out << "var mem" << moduleName.str << " = new ArrayBuffer("
-        << wasm.memories[0]->initial.addr * Memory::kPageSize << ");\n";
-  }
-
-  // Actually invoke the `asmFunc` generated function, passing in all global
-  // values followed by all imports
-  out << "var ret" << moduleName.str << " = " << moduleName.str << "({\n";
+  std::map<Name, std::vector<const Importable*>> module_map;
+  std::map<const Importable*, std::string> import_values;
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
@@ -2653,29 +2664,46 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << "    " << asmangle(import->base.str) << ",\n";
+    module_map[import->module].push_back(import);
   });
 
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* import) {
-    // The special helpers are emitted in the glue, see code and comments
-    // below.
-    if (ABI::wasm2js::isHelper(import->base)) {
-      return;
-    }
-    out << "    " << asmangle(import->base.str) << ": { buffer : mem"
-        << moduleName.str << " }\n";
+    module_map[import->module].push_back(import);
+    import_values[import] =
+      std::string("{ buffer : mem") + moduleName.str + " }";
   });
 
-  ModuleUtils::iterImportedTables(wasm, [&](Table* import) {
-    // The special helpers are emitted in the glue, see code and comments
-    // below.
-    if (ABI::wasm2js::isHelper(import->base)) {
-      return;
-    }
-    out << "    " << asmangle(import->base.str) << ",\n";
-  });
+  ModuleUtils::iterImportedTables(
+    wasm, [&](Table* import) { module_map[import->module].push_back(import); });
 
-  out << "});\n";
+  // Actually invoke the `asmFunc` generated function, passing in all global
+  // values followed by all imports
+  if (module_map.size()) {
+    if (!wasm.memories.empty() && wasm.memories[0]->imported()) {
+      out << "var mem" << moduleName.str << " = new ArrayBuffer("
+          << wasm.memories[0]->initial.addr * Memory::kPageSize << ");\n";
+    }
+    out << "var ret" << moduleName.str << " = " << moduleName.str << "({\n";
+    for (auto& [module, module_imports] : module_map) {
+      if (module.str == asmangle(module.str)) {
+        out << "  " << module.str << ": {\n";
+      } else {
+        out << "  '" << module.str << "': {\n";
+      }
+      for (const auto* import : module_imports) {
+        auto value = import_values[import];
+        if (value.size()) {
+          out << "    " << asmangle(import->base.str) << ": " << value << ",\n";
+        } else {
+          out << "    " << asmangle(import->base.str) << ",\n";
+        }
+      }
+      out << "  }\n";
+    }
+    out << "});\n";
+  } else {
+    out << "var ret" << moduleName.str << " = " << moduleName.str << "();\n";
+  }
 
   if (flags.allowAsserts) {
     return;
@@ -2781,8 +2809,9 @@ void Wasm2JSGlue::emitMemory() {
       }
       if (auto* get = segment.offset->dynCast<GlobalGet>()) {
         auto internalName = get->name;
-        auto importedName = wasm.getGlobal(internalName)->base;
-        return std::string("imports[") + asmangle(importedName.str) + "]";
+        auto* importedGlobal = wasm.getGlobal(internalName);
+        return std::string("imports.") + importedGlobal->module.str + "[" +
+               asmangle(importedGlobal->base.str) + "]";
       }
       Fatal() << "non-constant offsets aren't supported yet\n";
     };

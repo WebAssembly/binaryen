@@ -1,6 +1,5 @@
 
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -789,8 +788,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var eq_i64 = retasmFunc.eq_i64;
 export var ne_i64 = retasmFunc.ne_i64;
 export var ge_s_i64 = retasmFunc.ge_s_i64;

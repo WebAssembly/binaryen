@@ -1,7 +1,6 @@
 import { setTempRet0 } from 'env';
 
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -14,6 +13,7 @@ function asmFunc(importObject) {
  var Math_sqrt = Math.sqrt;
  var nan = NaN;
  var infinity = Infinity;
+ var env = importObject.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
@@ -201,7 +201,9 @@ function asmFunc(importObject) {
 }
 
 var retasmFunc = asmFunc({
+  env: {
     setTempRet0,
+  }
 });
 export var test8 = retasmFunc.test8;
 export var test16 = retasmFunc.test16;

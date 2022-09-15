@@ -1,6 +1,5 @@
 
 function asmFunc(importObject) {
- var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -315,8 +314,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc({
-});
+var retasmFunc = asmFunc();
 export var f32_add = retasmFunc.f32_add;
 export var f32_sub = retasmFunc.f32_sub;
 export var f32_mul = retasmFunc.f32_mul;
