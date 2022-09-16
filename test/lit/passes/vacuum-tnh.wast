@@ -2,8 +2,8 @@
 
 ;; Run in both TNH and non-TNH mode.
 
-;; RUN: wasm-opt %s --vacuum --traps-never-happen -all -S -o - | filecheck --check-prefix YESTNH %s
-;; RUN: wasm-opt %s --vacuum                      -all -S -o - | filecheck --check-prefix NO_TNH %s
+;; RUN: wasm-opt %s --vacuum --traps-never-happen -all -S -o - | filecheck --check-prefix=YESTNH %s
+;; RUN: wasm-opt %s --vacuum                      -all -S -o - | filecheck --check-prefix=NO_TNH %s
 
 (module
   (memory 1 1)
