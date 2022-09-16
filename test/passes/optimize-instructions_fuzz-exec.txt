@@ -107,19 +107,28 @@
    (f32.const nan:0x400000)
   )
   (call $logf32
-   (f32.const nan:0x400000)
+   (f32.add
+    (f32.const -nan:0x7ff622)
+    (f32.const -0)
+   )
   )
   (call $logf32
    (f32.const nan:0x400000)
   )
   (call $logf32
-   (f32.const nan:0x400000)
+   (f32.add
+    (f32.const -nan:0x7ff622)
+    (f32.const 0)
+   )
   )
   (call $logf32
    (f32.const nan:0x400000)
   )
   (call $logf32
-   (f32.const nan:0x400000)
+   (f32.add
+    (f32.const nan:0x7ff622)
+    (f32.const -0)
+   )
   )
  )
  (func $3

@@ -434,7 +434,6 @@ struct OptimizeInstructions
           curr->op = Abstract::getBinary(
             curr->type, curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
           curr->right = y;
-          std::swap(curr->left, curr->right);
           return replaceCurrent(curr);
         }
       }
