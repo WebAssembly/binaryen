@@ -26,6 +26,18 @@
     (return)
   )
 
+  ;; CHECK:      (func $result (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $result (param $x i32) (result i32)
     (local $y i32)
     ;; As above, but this function returns a value, so we cannot optimize here:
