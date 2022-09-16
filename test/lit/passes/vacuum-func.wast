@@ -40,7 +40,8 @@
   (func $partial (param $x i32)
     (local $y i32)
 
-    ;; As above, but with this code added. This prevents optimization.
+    ;; As above, but with this if added which adds extra possible effects. This
+    ;; prevents optimization.
     ;; We could, however, optimize away the local operations TODO (we can also
     ;; remove the return in theory, but other passes do that already)
     (if
