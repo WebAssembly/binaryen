@@ -94,6 +94,26 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
       .addFeature(FeatureSet::Strings, "strings")
       .addFeature(FeatureSet::MultiMemories, "multi-memories")
+      .add("--enable-typed-function-references",
+           "",
+           "Deprecated compatibility flag",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [this](Options* o, const std::string& argument) {
+             std::cerr
+               << "Warning: Typed function references have been made part of "
+                  "GC and --enable-typed-function-references is deprecated\n";
+           })
+      .add("--disable-typed-function-references",
+           "",
+           "Deprecated compatibility flag",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [this](Options* o, const std::string& argument) {
+             std::cerr
+               << "Warning: Typed function references have been made part of "
+                  "GC and --disable-typed-function-references is deprecated\n";
+           })
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
