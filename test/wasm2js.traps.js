@@ -42,7 +42,6 @@ function asmFunc0(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
@@ -68,8 +67,8 @@ function asmFunc0(importObject) {
  };
 }
 
-var retasmFunc0 = asmFunc0(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc0 = asmFunc0({
+});
 function check1() {
  retasmFunc0.empty();
  return 1 | 0;

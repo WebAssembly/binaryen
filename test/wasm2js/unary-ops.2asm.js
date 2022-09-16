@@ -11,7 +11,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
@@ -518,8 +517,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var i32_popcnt = retasmFunc.i32_popcnt;
 export var check_popcnt_i64 = retasmFunc.check_popcnt_i64;
 export var check_extend_ui32 = retasmFunc.check_extend_ui32;

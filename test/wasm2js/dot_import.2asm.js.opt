@@ -12,7 +12,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var base = env.ba_se;
@@ -25,7 +24,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    ba_se
-  });
+var retasmFunc = asmFunc({
+    ba_se,
+});
 export var exported = retasmFunc.exported;
