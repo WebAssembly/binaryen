@@ -123,11 +123,23 @@ private:
       // code may know that is valid, even if we can't. Only handle the
       // obviously valid case where an overflow can't occur.
       auto* c = curr->ptr->template cast<Const>();
-      uint32_t base = c->value.geti32();
-      uint32_t offset = curr->offset;
-      if (uint64_t(base) + uint64_t(offset) < (uint64_t(1) << 32)) {
-        c->value = c->value.add(Literal(uint32_t(curr->offset)));
-        curr->offset = 0;
+      if (memory64) {
+        uint64_t base = c->value.geti64();
+        uint64_t offset = curr->offset;
+
+        uint64_t max = std::numeric_limits<uint64_t>::max();
+        bool overflow = (base > max - offset) || (offset > max - base);
+        if (!overflow) {
+          c->value = c->value.add(Literal(offset));
+          curr->offset = 0;
+        }
+      } else {
+        uint32_t base = c->value.geti32();
+        uint32_t offset = curr->offset;
+        if (uint64_t(base) + uint64_t(offset) < (uint64_t(1) << 32)) {
+          c->value = c->value.add(Literal(uint32_t(curr->offset)));
+          curr->offset = 0;
+        }
       }
     }
   }
@@ -222,9 +234,9 @@ private:
 
   // Sees if we can optimize a particular constant.
   Result canOptimizeConstant(Literal literal) {
-    auto value = literal.geti32();
+    uint64_t value = literal.getInteger();
     // Avoid uninteresting corner cases with peculiar offsets.
-    if (value >= 0 && value < PassOptions::LowMemoryBound) {
+    if (value < PassOptions::LowMemoryBound) {
       // The total offset must not allow reaching reasonable memory
       // by overflowing.
       auto total = curr->offset + value;
