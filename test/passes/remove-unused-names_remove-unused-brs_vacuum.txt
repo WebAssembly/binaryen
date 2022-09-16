@@ -71,8 +71,12 @@
    (block $label$3
     (block
      (if
-      (i32.eqz
-       (local.get $var$8)
+      (local.get $var$8)
+      (loop $label$8
+       (if
+        (local.get $var$3)
+        (br $label$8)
+       )
       )
       (if
        (i32.eqz
