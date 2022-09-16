@@ -59,6 +59,22 @@ public:
     post();
   }
 
+  // Walk an entire function body. This will ignore effects that are not
+  // noticeable from the perspective of the caller, that is, effects that are
+  // only noticeable during the call, but "vanish" when the call stack is
+  // unwound.
+  void walk(Function* func) {
+    walk(func->body);
+
+    // We can ignore branching out of the function body - this can only be
+    // a return, and that is only noticeable in the function, not outside.
+    branchesOut = false;
+
+    // When the function exits, changes to locals cannot be noticed any more.
+    localsWritten.clear();
+    localsRead.clear();
+  }
+
   // Core effect tracking
 
   // Definitely branches out of this expression, or does a return, etc.
