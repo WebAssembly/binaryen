@@ -1,4 +1,6 @@
 
+function wasm2js_trap() { throw new Error('abort'); }
+
 function asmFunc(importObject) {
  var env = importObject.env || importObject;
  var Math_imul = Math.imul;
@@ -14,7 +16,7 @@ function asmFunc(importObject) {
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
-  while (1) continue;
+  wasm2js_trap();
  }
  
  function $1() {
