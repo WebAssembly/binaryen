@@ -22,6 +22,7 @@ CMakeFiles
 /bin/
 /lib/
 /config.h
+/emcc-build
 compile_commands.json
 test/lit/lit.site.cfg.py
 
