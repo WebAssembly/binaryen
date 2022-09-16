@@ -54,9 +54,13 @@
 ;; CHECK-NEXT:   --placeholdermap                    [split] Write a file mapping placeholder
 ;; CHECK-NEXT:                                       indices to the function names.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --import-namespace                  [split] The namespace from which to import
-;; CHECK-NEXT:                                       objects from the primary module into the
-;; CHECK-NEXT:                                       secondary module.
+;; CHECK-NEXT:   --import-namespace                  [split, instrument] When provided as an
+;; CHECK-NEXT:                                       option for module splitting, the namespace
+;; CHECK-NEXT:                                       from which to import objects from the
+;; CHECK-NEXT:                                       primary module into the secondary module.
+;; CHECK-NEXT:                                       In instrument mode, refers to the
+;; CHECK-NEXT:                                       namespace from which to import the
+;; CHECK-NEXT:                                       secondary memory, if any.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --placeholder-namespace             [split] The namespace from which to import
 ;; CHECK-NEXT:                                       placeholder functions into the primary
@@ -84,6 +88,18 @@
 ;; CHECK-NEXT:                                       responsible for ensuring that the module
 ;; CHECK-NEXT:                                       does not use the initial memory region for
 ;; CHECK-NEXT:                                       anything else.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --in-secondary-memory               [instrument] Store profile information in
+;; CHECK-NEXT:                                       a separate memory, rather than in module
+;; CHECK-NEXT:                                       main memory or globals (the default). With
+;; CHECK-NEXT:                                       this option, users do not need to reserve
+;; CHECK-NEXT:                                       the initial memory region for profile data
+;; CHECK-NEXT:                                       and the data can be shared between
+;; CHECK-NEXT:                                       multiple threads.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --secondary-memory-name             [instrument] The name of the secondary
+;; CHECK-NEXT:                                       memory created to store profile
+;; CHECK-NEXT:                                       information.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-module-names                 [split, instrument] Emit module names,
 ;; CHECK-NEXT:                                       even if not emitting the rest of the names
