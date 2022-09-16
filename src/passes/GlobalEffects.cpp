@@ -49,8 +49,8 @@ struct GenerateGlobalEffects : public Pass {
         }
 
         // Gather the effects.
-        auto effects = std::make_unique<EffectAnalyzer>(
-          runner->options, *module, func);
+        auto effects =
+          std::make_unique<EffectAnalyzer>(runner->options, *module, func);
 
         // If the body has a call, give up - that means we can't infer a more
         // specific set of effects than the pessimistic case of just assuming
