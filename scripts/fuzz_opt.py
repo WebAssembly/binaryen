@@ -1264,6 +1264,7 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
+    ["--discard-global-effects"],
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
@@ -1271,6 +1272,10 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
+    # note that no pass we run here should add effects to a function, so it is
+    # ok to run this pass and let the passes after it use the effects to
+    # optimize
+    ["--generate-global-effects"],
     ["--global-refining"],
     ["--gsi"],
     ["--gto"],

@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var memory = env.a;
  var buffer = memory.buffer;
  memory.grow = __wasm_memory_grow;
