@@ -11,7 +11,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -726,8 +725,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var no_dce_i32_div_s = retasmFunc.no_dce_i32_div_s;
 export var no_dce_i32_div_u = retasmFunc.no_dce_i32_div_u;
 export var no_dce_i64_div_s = retasmFunc.no_dce_i64_div_s;
@@ -745,7 +744,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -1442,8 +1440,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var no_dce_i32_rem_s = retasmFunc.no_dce_i32_rem_s;
 export var no_dce_i32_rem_u = retasmFunc.no_dce_i32_rem_u;
 export var no_dce_i64_rem_s = retasmFunc.no_dce_i64_rem_s;
@@ -1461,7 +1459,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0(x) {
@@ -1564,8 +1561,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var no_dce_i32_trunc_f32_s = retasmFunc.no_dce_i32_trunc_f32_s;
 export var no_dce_i32_trunc_f32_u = retasmFunc.no_dce_i32_trunc_f32_u;
 export var no_dce_i32_trunc_f64_s = retasmFunc.no_dce_i32_trunc_f64_s;
@@ -1596,7 +1593,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0(i) {
@@ -1718,8 +1714,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var no_dce_i32_load = retasmFunc.no_dce_i32_load;
 export var no_dce_i32_load16_s = retasmFunc.no_dce_i32_load16_s;
 export var no_dce_i32_load16_u = retasmFunc.no_dce_i32_load16_u;

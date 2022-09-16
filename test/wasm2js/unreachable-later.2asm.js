@@ -1,4 +1,6 @@
 
+function wasm2js_trap() { throw new Error('abort'); }
+
 function asmFunc(importObject) {
  var env = importObject.env || importObject;
  var Math_imul = Math.imul;
@@ -11,7 +13,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var global$0 = 10;
@@ -56,7 +57,7 @@ function asmFunc(importObject) {
   if (!$29) {
    return -255 | 0
   } else {
-   abort()
+   wasm2js_trap()
   }
  }
  
@@ -65,6 +66,6 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var func_50 = retasmFunc.func_50;

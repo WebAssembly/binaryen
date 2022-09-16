@@ -12,7 +12,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var setTempRet0 = env.setTempRet0;
@@ -13422,9 +13421,9 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({
+    setTempRet0,
+});
 export var type_i32 = retasmFunc.type_i32;
 export var type_i64 = retasmFunc.type_i64;
 export var type_f32 = retasmFunc.type_f32;

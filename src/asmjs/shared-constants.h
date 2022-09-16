@@ -97,7 +97,6 @@ extern cashew::IString WASM_I64_SREM;
 extern cashew::IString WASM_I64_UREM;
 // wasm2js constants
 extern cashew::IString ASM_FUNC;
-extern cashew::IString ABORT_FUNC;
 extern cashew::IString FUNCTION_TABLE;
 extern cashew::IString NO_RESULT;
 extern cashew::IString EXPRESSION_RESULT;
