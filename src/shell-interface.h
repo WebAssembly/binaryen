@@ -197,106 +197,80 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
 
   int8_t load8s(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load8s on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<int8_t>(addr);
   }
   uint8_t load8u(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load8u on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<uint8_t>(addr);
   }
   int16_t load16s(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load16s on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<int16_t>(addr);
   }
   uint16_t load16u(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load16u on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<uint16_t>(addr);
   }
   int32_t load32s(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load32s on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<int32_t>(addr);
   }
   uint32_t load32u(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load32u on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<uint32_t>(addr);
   }
   int64_t load64s(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load64s on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<int64_t>(addr);
   }
   uint64_t load64u(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load64u on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<uint64_t>(addr);
   }
   std::array<uint8_t, 16> load128(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("load128 on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     return memory.get<std::array<uint8_t, 16>>(addr);
   }
 
   void store8(Address addr, int8_t value, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("store8 on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     memory.set<int8_t>(addr, value);
   }
   void store16(Address addr, int16_t value, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("store16 on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     memory.set<int16_t>(addr, value);
   }
   void store32(Address addr, int32_t value, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("store32 on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     memory.set<int32_t>(addr, value);
   }
   void store64(Address addr, int64_t value, Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("store64 on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     memory.set<int64_t>(addr, value);
   }
@@ -304,9 +278,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
                 const std::array<uint8_t, 16>& value,
                 Name memoryName) override {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      trap("store128 on non-existing memory");
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }

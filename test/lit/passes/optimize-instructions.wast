@@ -152,9 +152,8 @@
     )
   )
   ;; CHECK:      (func $eqz-gt_s (result i32)
-  ;; CHECK-NEXT:  (i32.le_u
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-gt_s (result i32)
@@ -166,9 +165,8 @@
     )
   )
   ;; CHECK:      (func $eqz-ge_s (result i32)
-  ;; CHECK-NEXT:  (i32.lt_u
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-ge_s (result i32)
@@ -180,9 +178,8 @@
     )
   )
   ;; CHECK:      (func $eqz-lt_s (result i32)
-  ;; CHECK-NEXT:  (i32.ge_u
+  ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-lt_s (result i32)
@@ -194,9 +191,8 @@
     )
   )
   ;; CHECK:      (func $eqz-le_s (result i32)
-  ;; CHECK-NEXT:  (i32.gt_u
+  ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-le_s (result i32)
@@ -208,9 +204,8 @@
     )
   )
   ;; CHECK:      (func $eqz-gt_u (result i32)
-  ;; CHECK-NEXT:  (i32.le_u
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-gt_u (result i32)
@@ -222,9 +217,8 @@
     )
   )
   ;; CHECK:      (func $eqz-ge_u (result i32)
-  ;; CHECK-NEXT:  (i32.lt_u
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-ge_u (result i32)
@@ -236,9 +230,8 @@
     )
   )
   ;; CHECK:      (func $eqz-lt_u (result i32)
-  ;; CHECK-NEXT:  (i32.ge_u
+  ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-lt_u (result i32)
@@ -250,9 +243,8 @@
     )
   )
   ;; CHECK:      (func $eqz-le_u (result i32)
-  ;; CHECK-NEXT:  (i32.gt_u
+  ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $eqz-le_u (result i32)
@@ -463,10 +455,7 @@
     )
   )
   ;; CHECK:      (func $eq-zero-lhs (result i32)
-  ;; CHECK-NEXT:  (i32.eq
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 100)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $eq-zero-lhs (result i32)
     (i32.eq
@@ -497,10 +486,7 @@
     )
   )
   ;; CHECK:      (func $eq-zero-lhs-i64 (result i32)
-  ;; CHECK-NEXT:  (i64.eq
-  ;; CHECK-NEXT:   (i64.const 0)
-  ;; CHECK-NEXT:   (i64.const 100)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $eq-zero-lhs-i64 (result i32)
     (i64.eq
@@ -1385,10 +1371,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (i32.const 2000)
-  ;; CHECK-NEXT:    (i32.const 3000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $and-pos1
@@ -1937,10 +1920,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.ge
-  ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.ge
@@ -2035,6 +2015,103 @@
   (func $canonicalize-ctz-eqz (param $x i32) (param $y i32)
     (drop (i32.add (i32.ctz (local.get $x)) (i32.eqz (local.get $y))))
     (drop (i32.add (i32.eqz (local.get $x)) (i32.ctz (local.get $y))))
+  )
+  ;; CHECK:      (func $canonicalize-consts-floats (param $x f32) (param $y f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const 3.4000000953674316)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.mul
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const 3.4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.min
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const 3.4000000953674316)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.min
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const 3.4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.max
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const 3.4000000953674316)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.max
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const 3.4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (f32.const 1)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.copysign
+  ;; CHECK-NEXT:    (f64.const 1)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $canonicalize-consts-floats (param $x f32) (param $y f64)
+    (drop (f32.sub (local.get $x) (f32.const 1.0)))
+    (drop (f64.sub (local.get $y) (f64.const 1.0)))
+
+    (drop (f32.mul (f32.const 3.4) (local.get $x)))
+    (drop (f64.mul (f64.const 3.4) (local.get $y)))
+
+    (drop (f32.min (f32.const 3.4) (local.get $x)))
+    (drop (f64.min (f64.const 3.4) (local.get $y)))
+
+    (drop (f32.max (f32.const 3.4) (local.get $x)))
+    (drop (f64.max (f64.const 3.4) (local.get $y)))
+
+    (drop (f32.min (f32.const nan) (local.get $x)))
+    (drop (f64.min (f64.const nan) (local.get $y)))
+
+    (drop (f32.max (f32.const nan) (local.get $x)))
+    (drop (f64.max (f64.const nan) (local.get $y)))
+
+    ;; skips
+    (drop (f32.copysign (f32.const 1.0) (local.get $x)))
+    (drop (f64.copysign (f64.const 1.0) (local.get $y)))
   )
   ;; CHECK:      (func $ne0 (result i32)
   ;; CHECK-NEXT:  (if
@@ -7692,10 +7769,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.div
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f32.const nan:0x400000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.div
@@ -7836,10 +7910,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.div
@@ -10329,15 +10400,15 @@
   )
   ;; CHECK:      (func $const-float-zero (param $fx f32) (param $fy f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:   (f32.add
   ;; CHECK-NEXT:    (local.get $fx)
-  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:    (f32.const -0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:   (f64.add
   ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const 0)
+  ;; CHECK-NEXT:    (f64.const -0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -10389,9 +10460,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:   (f32.add
   ;; CHECK-NEXT:    (f32.const -nan:0x34546d)
-  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:    (f32.const -0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -10853,10 +10924,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.div
-  ;; CHECK-NEXT:    (local.get $fy)
-  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.div
@@ -11092,6 +11160,200 @@
         (local.get $fy)
       )
     ))
+  )
+  ;; CHECK:      (func $rhs-is-const-nan (param $x f32) (param $y f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f32.const nan:0x200000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.copysign
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rhs-is-const-nan (param $x f32) (param $y f64)
+
+    ;; arithmetic ops
+
+    ;; x + nan'   =>   nan'
+    (drop (f32.add (local.get $x) (f32.const nan)))
+    (drop (f32.add (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.add (local.get $y) (f64.const -nan)))
+    ;; x - nan'   =>   nan'
+    (drop (f32.sub (local.get $x) (f32.const nan)))
+    (drop (f32.sub (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.sub (local.get $y) (f64.const -nan)))
+    ;; x * nan'   =>   nan'
+    (drop (f32.mul (local.get $x) (f32.const nan)))
+    (drop (f32.mul (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.mul (local.get $y) (f64.const -nan)))
+    ;; x / nan'   =>   nan'
+    (drop (f32.div (local.get $x) (f32.const nan)))
+    (drop (f32.div (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.div (local.get $y) (f64.const -nan)))
+
+    ;; min / max ops
+
+    ;; min(x, nan')   =>   nan'
+    (drop (f32.min (local.get $x) (f32.const nan)))
+    (drop (f32.min (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.min (local.get $y) (f64.const -nan)))
+    ;; max(x, nan')   =>   nan'
+    (drop (f32.max (local.get $x) (f32.const nan)))
+    (drop (f32.max (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.max (local.get $y) (f64.const -nan)))
+
+    ;; copysign ops (should be skipped)
+
+    ;; copysign(x, nan)   =>  skip
+    (drop (f32.copysign (local.get $x) (f32.const nan)))
+    (drop (f32.copysign (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.copysign (local.get $y) (f64.const -nan)))
+
+    ;; relational ops
+
+    ;; x != nan   =>   1
+    (drop (f32.ne (local.get $x) (f32.const nan)))
+    (drop (f32.ne (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.ne (local.get $y) (f64.const -nan)))
+    ;; x == nan   =>   0
+    (drop (f32.eq (local.get $x) (f32.const nan)))
+    (drop (f32.eq (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.eq (local.get $y) (f64.const -nan)))
+    ;; x >  nan   =>   0
+    (drop (f32.gt (local.get $x) (f32.const nan)))
+    (drop (f32.gt (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.gt (local.get $y) (f64.const -nan)))
+    ;; x >= nan   =>   0
+    (drop (f32.ge (local.get $x) (f32.const nan)))
+    (drop (f32.ge (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.ge (local.get $y) (f64.const -nan)))
+    ;; x <  nan   =>   0
+    (drop (f32.lt (local.get $x) (f32.const nan)))
+    (drop (f32.lt (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.lt (local.get $y) (f64.const -nan)))
+    ;; x <= nan   =>   0
+    (drop (f32.le (local.get $x) (f32.const nan)))
+    (drop (f32.le (local.get $x) (f32.const nan:0x200000)))
+    (drop (f64.le (local.get $y) (f64.const -nan)))
   )
   ;; CHECK:      (func $lhs-is-neg-one (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
@@ -12520,13 +12782,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 2147483647)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const -2147483648)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.shr_u
@@ -12574,13 +12830,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.ge_s
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 2147483647)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const -7)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unsigned-context (param $x i32) (param $y i64)
@@ -15132,13 +15382,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.ne
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const -1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $gt_u-added-constant (param $x i32)
@@ -15465,6 +15709,431 @@
           (i32.const 5)
         )
         (i32.const 11)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $too-few-bits (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $too-few-bits (param $x i32)
+    ;; Comparison of something with at most 8 bits to something with more than
+    ;; 8. These must all be false.
+    (drop
+      (i32.eq
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    ;; These are all true.
+    (drop
+      (i32.ne
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.le_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+    (drop
+      (i32.le_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 256)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $too-few-bits-no (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eq
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $too-few-bits-no (param $x i32)
+    ;; Identical to the above, but the constant is changed from 256 to 255. We
+    ;; cannot optimize here: the number of bits is the same and we can't infer
+    ;; anything.
+    (drop
+      (i32.eq
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.ne
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.le_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.le_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 255)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $too-few-bits-signed (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ne
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $too-few-bits-signed (param $x i32)
+    ;; As above, but now using only signed operations and the constant on the
+    ;; right has the sign bit set. The left side is non-negative, which lets us
+    ;; infer the results here.
+    ;; These are all false:
+    (drop
+      (i32.lt_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 0x80000000) ;; -2147483648
+      )
+    )
+    (drop
+      (i32.le_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 0x80000000) ;; -2147483648
+      )
+    )
+    ;; These are all true:
+    (drop
+      (i32.gt_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 0x80000000) ;; -2147483648
+      )
+    )
+    (drop
+      (i32.ge_s
+        (i32.and
+          (local.get $x)
+          (i32.const 255)
+        )
+        (i32.const 0x80000000) ;; -2147483648
+      )
+    )
+    ;; This cannot be inferred, as the left has too many possible bits (so it
+    ;; may have the sign bit set).
+    (drop
+      (i32.gt_s
+        (local.get $x)
+        (i32.const 0x80000000) ;; -2147483648
+      )
+    )
+  )
+
+  ;; CHECK:      (func $too-few-bits-i64 (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eq
+  ;; CHECK-NEXT:    (i64.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $too-few-bits-i64 (param $x i64)
+    ;; As above, but with i64 values. We can infer 0 here.
+    (drop
+      (i64.eq
+        (i64.and
+          (local.get $x)
+          (i64.const 255)
+        )
+        (i64.const 256)
+      )
+    )
+    ;; The constant is now 255 and we cannot optimize here.
+    (drop
+      (i64.eq
+        (i64.and
+          (local.get $x)
+          (i64.const 255)
+        )
+        (i64.const 255)
       )
     )
   )

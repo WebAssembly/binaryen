@@ -2450,9 +2450,8 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 
 void FunctionValidator::visitCallRef(CallRef* curr) {
   validateReturnCall(curr);
-  shouldBeTrue(getModule()->features.hasTypedFunctionReferences(),
-               curr,
-               "call_ref requires typed-function-references to be enabled");
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "call_ref requires gc to be enabled");
   if (curr->target->type != Type::unreachable) {
     if (shouldBeTrue(curr->target->type.isFunction(),
                      curr,
@@ -3228,11 +3227,11 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         "Only function reference types or externref are valid "
                         "for table type (when GC is disabled)");
     }
-    if (!module.features.hasTypedFunctionReferences()) {
+    if (!module.features.hasGC()) {
       info.shouldBeTrue(table->type == funcref || table->type == externref,
                         "table",
                         "Only funcref and externref are valid for table type "
-                        "(when typed-function references are disabled)");
+                        "(when gc is disabled)");
     }
   }
 
@@ -3267,18 +3266,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                                            module.features),
                         segment->offset,
                         "table segment offset should be reasonable");
-      if (module.features.hasTypedFunctionReferences()) {
-        info.shouldBeTrue(
-          Type::isSubType(segment->type, table->type),
-          "elem",
-          "element segment type must be a subtype of the table type");
-      } else {
-        info.shouldBeEqual(
-          segment->type,
-          table->type,
-          "elem",
-          "element segment type must be the same as the table type");
-      }
+      info.shouldBeTrue(
+        Type::isSubType(segment->type, table->type),
+        "elem",
+        "element segment type must be a subtype of the table type");
       validator.validate(segment->offset);
     } else {
       info.shouldBeTrue(!segment->offset,

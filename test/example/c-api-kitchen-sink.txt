@@ -42,11 +42,10 @@ BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
-BinaryenFeatureTypedFunctionReferences: 4096
-BinaryenFeatureRelaxedSIMD: 16384
-BinaryenFeatureExtendedConst: 32768
-BinaryenFeatureStrings: 65536
-BinaryenFeatureAll: 253951
+BinaryenFeatureRelaxedSIMD: 8192
+BinaryenFeatureExtendedConst: 16384
+BinaryenFeatureStrings: 32768
+BinaryenFeatureAll: 126975
 (f32.neg
  (f32.const -33.61199951171875)
 )

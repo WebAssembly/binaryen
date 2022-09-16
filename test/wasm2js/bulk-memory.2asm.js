@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -10,7 +11,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  return {
@@ -18,16 +18,11 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 
   var bufferView;
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_memory_fill(dest, value, size) {
     dest = dest >>> 0;
     size = size >>> 0;
@@ -35,7 +30,8 @@ var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
     bufferView.fill(value, dest, dest + size);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -55,7 +51,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0($0_1, $1_1, $2) {
@@ -103,8 +98,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var fill = retasmFunc.fill;
 export var load8_u = retasmFunc.load8_u;
 
@@ -133,17 +128,13 @@ function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, 0, "qrvM3Q==");
 }
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_memory_copy(dest, source, size) {
     // TODO: traps on invalid things
     bufferView.copyWithin(dest, source, source + size);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -163,7 +154,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0($0_1, $1_1, $2) {
@@ -190,8 +180,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var copy = retasmFunc.copy;
 export var load8_u = retasmFunc.load8_u;
 
@@ -219,17 +209,13 @@ export var load8_u = retasmFunc.load8_u;
   }
 memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM3Q==");
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -249,7 +235,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0($0_1, $1_1, $2) {
@@ -297,8 +282,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var init = retasmFunc.init;
 export var load8_u = retasmFunc.load8_u;
 
@@ -329,11 +314,6 @@ function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, 0, "");
 }
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_data_drop(segment) {
     // TODO: traps on invalid things
     memorySegments[segment] = new Uint8Array(0);
@@ -344,7 +324,8 @@ function initActiveSegments(imports) {
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -364,7 +345,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
@@ -419,8 +399,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var drop_passive = retasmFunc.drop_passive;
 export var init_passive = retasmFunc.init_passive;
 export var drop_active = retasmFunc.drop_active;

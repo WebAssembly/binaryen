@@ -24,11 +24,6 @@
 memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "aGVsbG8s");
 memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29ybGQh");
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
     var timeout = Infinity;
     if (timeoutHigh >= 0) {
@@ -94,7 +89,8 @@ memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29y
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(16777216);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -114,7 +110,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
@@ -158,6 +153,6 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var test = retasmFunc.test;

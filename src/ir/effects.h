@@ -31,7 +31,8 @@ public:
                  Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
+      funcEffectsMap(passOptions.funcEffectsMap), module(module),
       features(module.features) {
     if (ast) {
       walk(ast);
@@ -40,6 +41,7 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
+  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
 
@@ -261,7 +263,7 @@ public:
     return false;
   }
 
-  void mergeIn(EffectAnalyzer& other) {
+  void mergeIn(const EffectAnalyzer& other) {
     branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
@@ -422,13 +424,34 @@ private:
         return;
       }
 
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
+      if (parent.funcEffectsMap) {
+        auto iter = parent.funcEffectsMap->find(curr->target);
+        if (iter != parent.funcEffectsMap->end()) {
+          // We have effect information for this call target, and can just use
+          // that. The one change we may want to make is to remove throws_, if
+          // the target function throws and we know that will be caught anyhow,
+          // the same as the code below for the general path.
+          const auto& targetEffects = iter->second;
+          if (targetEffects.throws_ && parent.tryDepth > 0) {
+            auto filteredEffects = targetEffects;
+            filteredEffects.throws_ = false;
+            parent.mergeIn(filteredEffects);
+          } else {
+            // Just merge in all the effects.
+            parent.mergeIn(targetEffects);
+          }
+          return;
+        }
+      }
+
       parent.calls = true;
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
@@ -881,9 +904,19 @@ public:
     return effects;
   }
 
-  void ignoreBranches() {
+  // Ignores all forms of control flow transfers: breaks, returns, and
+  // exceptions. (Note that traps are not considered relevant here - a trap does
+  // not just transfer control flow, but can be seen as halting the entire
+  // program.)
+  //
+  // This function matches transfersControlFlow(), that is, after calling this
+  // method transfersControlFlow() will always return false.
+  void ignoreControlFlowTransfers() {
     branchesOut = false;
     breakTargets.clear();
+    throws_ = false;
+    delegateTargets.clear();
+    assert(!transfersControlFlow());
   }
 
 private:

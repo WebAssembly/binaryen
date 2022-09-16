@@ -96,7 +96,6 @@ function test_features() {
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
   console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.Memory64: " + binaryen.Features.Memory64);
-  console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);

@@ -395,7 +395,6 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-multivalue',
             '--enable-gc',
             '--enable-memory64',
-            '--enable-typed-function-references',
             '--enable-relaxed-simd',
             '--enable-extended-const',
             '--enable-strings',
