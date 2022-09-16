@@ -99,7 +99,7 @@ struct ToolOptions : public Options {
            "Deprecated compatibility flag",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [this](Options* o, const std::string& argument) {
+           [](Options* o, const std::string& argument) {
              std::cerr
                << "Warning: Typed function references have been made part of "
                   "GC and --enable-typed-function-references is deprecated\n";
@@ -109,7 +109,7 @@ struct ToolOptions : public Options {
            "Deprecated compatibility flag",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [this](Options* o, const std::string& argument) {
+           [](Options* o, const std::string& argument) {
              std::cerr
                << "Warning: Typed function references have been made part of "
                   "GC and --disable-typed-function-references is deprecated\n";
