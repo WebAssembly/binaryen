@@ -432,7 +432,8 @@ struct OptimizeInstructions
         if (matches(curr, binary(Add, any(&x), unary(Neg, any(&y)))) ||
             matches(curr, binary(Sub, any(&x), unary(Neg, any(&y))))) {
           curr->op = Abstract::getBinary(
-            curr->type, curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
+            curr->type,
+            curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
           curr->right = y;
           return replaceCurrent(curr);
         }
