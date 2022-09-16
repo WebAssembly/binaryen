@@ -414,6 +414,31 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x + y   ==>   y - x
+        //   where  x, y  are floating points
+        Expression *x, *y;
+        if (matches(curr, binary(Add, unary(Neg, any(&x)), any(&y)))) {
+          curr->op = Abstract::getBinary(curr->type, Sub);
+          curr->left = x;
+          std::swap(curr->left, curr->right);
+          return replaceCurrent(curr);
+        }
+      }
+      {
+        // x + (-y)   ==>   x - y
+        // x - (-y)   ==>   x + y
+        //   where  x, y  are floating points
+        Expression *x, *y;
+        if (matches(curr, binary(Add, any(&x), unary(Neg, any(&y)))) ||
+            matches(curr, binary(Sub, any(&x), unary(Neg, any(&y))))) {
+          curr->op = Abstract::getBinary(
+            curr->type, curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
+          curr->right = y;
+          std::swap(curr->left, curr->right);
+          return replaceCurrent(curr);
+        }
+      }
+      {
         // -x * -y   ==>   x * y
         //   where  x, y  are integers
         Binary* bin;
@@ -3527,13 +3552,6 @@ private:
           value == 0.0 && std::signbit(value)) {
         return curr->left;
       }
-    }
-    // -x + fval(C)   ==>   C - x
-    if (matches(curr, binary(Add, unary(Neg, any(&left)), fval()))) {
-      curr->op = Abstract::getBinary(type, Abstract::Sub);
-      curr->left = left;
-      std::swap(curr->left, curr->right);
-      return curr;
     }
     // -x * fval(C)   ==>   x * -C
     // -x / fval(C)   ==>   x / -C
