@@ -42,7 +42,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var setTempRet0 = env.setTempRet0;
@@ -620,9 +619,9 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({
+    setTempRet0,
+});
 export var i64_extend_s_i32 = retasmFunc.i64_extend_s_i32;
 export var i64_extend_u_i32 = retasmFunc.i64_extend_u_i32;
 export var i32_wrap_i64 = retasmFunc.i32_wrap_i64;

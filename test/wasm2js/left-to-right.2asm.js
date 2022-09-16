@@ -47,7 +47,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -2164,8 +2163,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var i32_add = retasmFunc.i32_add;
 export var i32_sub = retasmFunc.i32_sub;
 export var i32_mul = retasmFunc.i32_mul;

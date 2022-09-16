@@ -11,7 +11,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $1($0, $0$hi, $1_1, $1$hi, $2_1, $2$hi) {
@@ -248,7 +247,7 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var shl_i64 = retasmFunc.shl_i64;
 export var shr_i64 = retasmFunc.shr_i64;
