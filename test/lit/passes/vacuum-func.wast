@@ -19,8 +19,28 @@
     (local.set $y
       (i32.const 2)
     )
+    (drop
+      (local.get $x)
+    )
     ;; Second, a return has no noticeable effect for the caller to notice.
     (return)
+  )
+
+  (func $result (param $x i32) (result i32)
+    (local $y i32)
+    ;; As above, but this function returns a value, so we cannot optimize here:
+    ;; the value must be computed and returned. (We could in theory remove just
+    ;; the parts that are valid to remove, but other passes will do so anyhow
+    ;; for the code in this test at least.)
+    (local.set $x
+      (i32.const 1)
+    )
+    (local.set $y
+      (i32.const 2)
+    )
+    (return
+      (local.get $x)
+    )
   )
 
   ;; CHECK:      (func $partial (param $x i32)
@@ -54,6 +74,9 @@
     )
     (local.set $y
       (i32.const 2)
+    )
+    (drop
+      (local.get $x)
     )
     (return)
   )
