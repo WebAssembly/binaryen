@@ -83,7 +83,7 @@
   ;; CHECK-NEXT: )
   (func $return-nothing)
 
-  ;; CHECK:      (func $partial (param $x (ref $struct))
+  ;; CHECK:      (func $partial (param $x (ref $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (local $y (ref null $struct))
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (local.get $x)
@@ -91,8 +91,9 @@
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $y)
   ;; CHECK-NEXT: )
-  (func $partial (param $x (ref $struct))
+  (func $partial (param $x (ref $struct)) (result (ref null $struct))
     (local $y (ref null $struct))
     ;; The struct.get's side effect can be ignored due to tnh, and the value is
     ;; dropped anyhow, so we can remove it. We cannot remove the local.tee
@@ -115,6 +116,7 @@
         )
       )
     )
+    (local.get $y)
   )
 
   ;; CHECK:      (func $toplevel
