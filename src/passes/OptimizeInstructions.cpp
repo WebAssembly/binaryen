@@ -3528,7 +3528,7 @@ private:
         return curr->left;
       }
     }
-    // -x + fval(C)   ==>   fval(C) - x
+    // -x + fval(C)   ==>   C - x
     if (matches(curr, binary(Add, unary(Neg, any(&left)), fval()))) {
       curr->op = Abstract::getBinary(type, Abstract::Sub);
       curr->left = left;
