@@ -80,7 +80,7 @@ void GlobalTypeRewriter::update() {
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(i, *super);
+      typeBuilder.setSubType(i, typeBuilder.getTempHeapType(indexedTypes.indices[*super]));
     }
   }
 

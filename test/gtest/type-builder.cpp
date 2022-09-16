@@ -554,7 +554,7 @@ TEST_F(NominalTest, TestExistingSubType) {
     builder[0] = Struct();
     builder.setSubType(0, A.getHeapType());
     auto result = builder.build();
-    ASSERT_TRUE(result); // FIXME: ErrorReason::InvalidSupertype
+    ASSERT_TRUE(result);
     auto built = *result;
     B = Type(built[0], Nullable);
   }
