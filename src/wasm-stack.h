@@ -124,7 +124,7 @@ public:
 private:
   void emitMemoryAccess(size_t alignment,
                         size_t bytes,
-                        uint32_t offset,
+                        uint64_t offset,
                         Name memory);
   int32_t getBreakIndex(Name name);
 

@@ -1895,7 +1895,8 @@ static size_t parseMemAttributes(size_t i,
                                  Element& s,
                                  Address& offset,
                                  Address& align,
-                                 Address fallbackAlign) {
+                                 Address fallbackAlign,
+                                 bool memory64) {
   offset = 0;
   align = fallbackAlign;
   // Parse "align=X" and "offset=X" arguments, bailing out on anything else.
@@ -1926,7 +1927,7 @@ static size_t parseMemAttributes(size_t i,
       }
       align = value;
     } else if (str[0] == 'o') {
-      if (value > std::numeric_limits<uint32_t>::max()) {
+      if (!memory64 && value > std::numeric_limits<uint32_t>::max()) {
         throw ParseException("bad offset", s[i]->line, s[i]->col);
       }
       offset = value;
@@ -1984,7 +1985,7 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes);
+  i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -2007,7 +2008,7 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes);
+  i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
   ret->finalize();
@@ -2062,7 +2063,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   }
   ret->memory = memory;
   Address align;
-  i = parseMemAttributes(i, s, ret->offset, align, ret->bytes);
+  i = parseMemAttributes(i, s, ret->offset, align, ret->bytes, isMemory64(memory));
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic RMW must match size", s.line, s.col);
   }
@@ -2090,7 +2091,7 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, align, ret->bytes);
+  i = parseMemAttributes(i, s, ret->offset, align, ret->bytes, isMemory64(memory));
   if (align != ret->bytes) {
     throw ParseException(
       "Align of Atomic Cmpxchg must match size", s.line, s.col);
@@ -2125,7 +2126,7 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, align, expectedAlign);
+  i = parseMemAttributes(i, s, ret->offset, align, expectedAlign, isMemory64(memory));
   if (align != expectedAlign) {
     throw ParseException(
       "Align of memory.atomic.wait must match size", s.line, s.col);
@@ -2151,7 +2152,7 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   }
   ret->memory = memory;
   Address align;
-  i = parseMemAttributes(i, s, ret->offset, align, 4);
+  i = parseMemAttributes(i, s, ret->offset, align, 4, isMemory64(memory));
   if (align != 4) {
     throw ParseException(
       "Align of memory.atomic.notify must be 4", s.line, s.col);
@@ -2270,7 +2271,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign);
+  i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -2317,7 +2318,7 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign);
+  i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
   ret->index = parseLaneIndex(s[i++], lanes);
   ret->ptr = parseExpression(s[i++]);
   ret->vec = parseExpression(s[i]);

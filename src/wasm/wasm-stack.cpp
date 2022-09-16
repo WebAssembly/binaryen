@@ -2487,7 +2487,7 @@ void BinaryInstWriter::setScratchLocals() {
 
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
-                                        uint32_t offset,
+                                        uint64_t offset,
                                         Name memory) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
   uint32_t memoryIdx = parent.getMemoryIndex(memory);
