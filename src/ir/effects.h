@@ -27,8 +27,7 @@ namespace wasm {
 
 class EffectAnalyzer {
 public:
-  EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module)
+  EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
       funcEffectsMap(passOptions.funcEffectsMap), module(module),
@@ -36,14 +35,12 @@ public:
 
   EffectAnalyzer(const PassOptions& passOptions,
                  Module& module,
-                 Expression* ast) : EffectAnalyzer(passOptions, module)
-    walk(ast);
-  }
+                 Expression* ast)
+    : EffectAnalyzer(passOptions, module) walk(ast);
+}
 
-  EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
-                 Function* func) : EffectAnalyzer(passOptions, module)
-    walk(func);
+EffectAnalyzer(const PassOptions& passOptions, Module& module, Function* func)
+  : EffectAnalyzer(passOptions, module) walk(func);
   }
 
   bool ignoreImplicitTraps;
