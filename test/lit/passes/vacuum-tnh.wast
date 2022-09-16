@@ -231,9 +231,10 @@
   ;; YESTNH:      (func $loop-effects
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (loop $loop (result i32)
-  ;; YESTNH-NEXT:    (i32.atomic.store
-  ;; YESTNH-NEXT:     (i32.const 0)
-  ;; YESTNH-NEXT:     (i32.const -1)
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (i32.atomic.load
+  ;; YESTNH-NEXT:      (i32.const 0)
+  ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:    )
   ;; YESTNH-NEXT:    (br_if $loop
   ;; YESTNH-NEXT:     (i32.const 1)
@@ -245,9 +246,10 @@
   ;; NO_TNH:      (func $loop-effects
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (loop $loop (result i32)
-  ;; NO_TNH-NEXT:    (i32.atomic.store
-  ;; NO_TNH-NEXT:     (i32.const 0)
-  ;; NO_TNH-NEXT:     (i32.const -1)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (i32.atomic.load
+  ;; NO_TNH-NEXT:      (i32.const 0)
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:    (br_if $loop
   ;; NO_TNH-NEXT:     (i32.const 1)
@@ -257,13 +259,14 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $loop-effects
-    ;; As above, but the loop also has an atomic store effect. That prevents
+    ;; As above, but the loop also has an atomic load effect. That prevents
     ;; optimization.
     (drop
       (loop $loop (result i32)
-        (i32.atomic.store
-          (i32.const 0)
-          (i32.const -1)
+        (drop
+          (i32.atomic.load
+            (i32.const 0)
+          )
         )
         (br_if $loop
           (i32.const 1)
