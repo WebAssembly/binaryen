@@ -124,10 +124,7 @@
  )
  (func $2
   (call $logf32
-   (f32.sub
-    (f32.const 0)
-    (f32.const -nan:0x7ff622)
-   )
+   (f32.const nan:0x400000)
   )
   (call $logf32
    (f32.add
@@ -138,10 +135,7 @@
    )
   )
   (call $logf32
-   (f32.sub
-    (f32.const -0)
-    (f32.const -nan:0x7ff622)
-   )
+   (f32.const nan:0x400000)
   )
   (call $logf32
    (f32.add
@@ -152,10 +146,7 @@
    )
   )
   (call $logf32
-   (f32.sub
-    (f32.const 0)
-    (f32.const nan:0x7ff622)
-   )
+   (f32.const nan:0x400000)
   )
   (call $logf32
    (f32.add
