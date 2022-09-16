@@ -36,11 +36,13 @@ public:
   EffectAnalyzer(const PassOptions& passOptions,
                  Module& module,
                  Expression* ast)
-    : EffectAnalyzer(passOptions, module) walk(ast);
-}
+    : EffectAnalyzer(passOptions, module) {
+  walk(ast);
+  }
 
 EffectAnalyzer(const PassOptions& passOptions, Module& module, Function* func)
-  : EffectAnalyzer(passOptions, module) walk(func);
+  : EffectAnalyzer(passOptions, module) {
+  walk(func);
   }
 
   bool ignoreImplicitTraps;
