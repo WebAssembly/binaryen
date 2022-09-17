@@ -11013,7 +11013,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.sub
-  ;; CHECK-NEXT:    (f64.const -5)
+  ;; CHECK-NEXT:    (f64.const 5)
   ;; CHECK-NEXT:    (local.get $fy)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -11253,7 +11253,7 @@
       )
       (f32.const 3.5)
     ))
-    (drop (f64.add
+    (drop (f64.sub
       (f64.neg
         (local.get $fy)
       )
