@@ -1985,7 +1985,8 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -2008,7 +2009,8 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
   ret->finalize();
@@ -2063,7 +2065,8 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
   }
   ret->memory = memory;
   Address align;
-  i = parseMemAttributes(i, s, ret->offset, align, ret->bytes, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, align, ret->bytes, isMemory64(memory));
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic RMW must match size", s.line, s.col);
   }
@@ -2091,7 +2094,8 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, align, ret->bytes, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, align, ret->bytes, isMemory64(memory));
   if (align != ret->bytes) {
     throw ParseException(
       "Align of Atomic Cmpxchg must match size", s.line, s.col);
@@ -2126,7 +2130,8 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, align, expectedAlign, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, align, expectedAlign, isMemory64(memory));
   if (align != expectedAlign) {
     throw ParseException(
       "Align of memory.atomic.wait must match size", s.line, s.col);
@@ -2271,7 +2276,8 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -2318,7 +2324,8 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
+  i = parseMemAttributes(
+    i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
   ret->index = parseLaneIndex(s[i++], lanes);
   ret->ptr = parseExpression(s[i++]);
   ret->vec = parseExpression(s[i]);
