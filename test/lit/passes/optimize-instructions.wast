@@ -10517,6 +10517,79 @@
       (f32.const 0)
     ))
   )
+
+  ;; CHECK:      (func $simplify-add-sub-with-neg-float (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.add
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.neg
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.sub
+  ;; CHECK-NEXT:    (f64.neg
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simplify-add-sub-with-neg-float (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+    ;; -x + y  ->  y - x
+    (drop (f32.add (f32.neg (local.get $a)) (local.get $b)))
+    (drop (f64.add (f64.neg (local.get $x)) (local.get $y)))
+
+    ;; x + (-y)   ==>   x - y
+    (drop (f32.add (local.get $a) (f32.neg (local.get $b))))
+    (drop (f64.add (local.get $x) (f64.neg (local.get $y))))
+
+    ;; x - (-y)   ==>   x + y
+    (drop (f32.sub (local.get $a) (f32.neg (local.get $b))))
+    (drop (f64.sub (local.get $x) (f64.neg (local.get $y))))
+
+    ;; skips
+    ;; -x - y  ->  skip
+    (drop (f32.sub (f32.neg (local.get $a)) (local.get $b)))
+    (drop (f64.sub (f64.neg (local.get $x)) (local.get $y)))
+  )
   ;; CHECK:      (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
