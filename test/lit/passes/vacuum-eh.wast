@@ -176,4 +176,43 @@
       )
     )
   )
+
+  ;; CHECK:      (func $trivial-catch-all-of-throw
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try $try3
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (throw $e
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $trivial-catch-all-of-throw (local $0 i32)
+    ;; This try-catch's body throws, but the catch-all catches it, so the entire
+    ;; try can be optimized out.
+    (try
+      (do
+        (throw $e (i32.const 0))
+      )
+      (catch_all)
+    )
+    ;; Here we also have a possible trap, so we can't do it.
+    (try
+      (do
+        (if
+          (local.get $0)
+          (throw $e (i32.const 0))
+          (unreachable)
+        )
+      )
+      (catch_all)
+    )
+  )
 )
