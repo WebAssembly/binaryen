@@ -37,6 +37,7 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
+  GlobalEffects.cpp
   GlobalRefining.cpp
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp

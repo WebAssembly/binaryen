@@ -11,7 +11,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  return {
@@ -19,16 +18,11 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 
   var bufferView;
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_memory_fill(dest, value, size) {
     dest = dest >>> 0;
     size = size >>> 0;
@@ -57,7 +51,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0($0_1, $1_1, $2) {
@@ -105,8 +98,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var fill = retasmFunc.fill;
 export var load8_u = retasmFunc.load8_u;
 
@@ -135,11 +128,6 @@ function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, 0, "qrvM3Q==");
 }
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_memory_copy(dest, source, size) {
     // TODO: traps on invalid things
     bufferView.copyWithin(dest, source, source + size);
@@ -166,7 +154,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0($0_1, $1_1, $2) {
@@ -193,8 +180,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var copy = retasmFunc.copy;
 export var load8_u = retasmFunc.load8_u;
 
@@ -222,11 +209,6 @@ export var load8_u = retasmFunc.load8_u;
   }
 memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM3Q==");
 
-  var scratchBuffer = new ArrayBuffer(16);
-  var i32ScratchView = new Int32Array(scratchBuffer);
-  var f32ScratchView = new Float32Array(scratchBuffer);
-  var f64ScratchView = new Float64Array(scratchBuffer);
-  
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
@@ -253,7 +235,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0($0_1, $1_1, $2) {
@@ -301,10 +282,13 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var init = retasmFunc.init;
 export var load8_u = retasmFunc.load8_u;
+
+  var bufferView;
+function wasm2js_trap() { throw new Error('abort'); }
 
 function asmFunc(importObject) {
  var env = importObject.env || importObject;
@@ -327,7 +311,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
@@ -336,10 +319,11 @@ function asmFunc(importObject) {
  
  function $1() {
   if (__wasm_memory_size() << 16 >>> 0 < 0) {
-   abort()
+   wasm2js_trap()
   }
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -361,6 +345,7 @@ function asmFunc(importObject) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
+   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -373,8 +358,8 @@ function asmFunc(importObject) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var drop_passive = retasmFunc.drop_passive;
 export var init_passive = retasmFunc.init_passive;
 export var drop_active = retasmFunc.drop_active;

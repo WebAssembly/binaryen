@@ -31,7 +31,8 @@ public:
                  Module& module,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
+      funcEffectsMap(passOptions.funcEffectsMap), module(module),
       features(module.features) {
     if (ast) {
       walk(ast);
@@ -40,6 +41,7 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
+  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
 
@@ -88,18 +90,20 @@ public:
   // each other, but it is not ok to remove them or reorder them with other
   // effects in a noticeable way.
   //
-  // Note also that we ignore runtime-dependent traps, such as hitting a
-  // recursion limit or running out of memory. Such traps are not part of wasm's
-  // official semantics, and they can occur anywhere: *any* instruction could in
-  // theory be implemented by a VM call (as will be the case when running in an
-  // interpreter), and such a call could run out of stack or memory in
-  // principle. To put it another way, an i32 division by zero is the program
-  // doing something bad that causes a trap, but the VM running out of memory is
-  // the VM doing something bad - and therefore the VM behaving in a way that is
-  // not according to the wasm semantics - and we do not model such things. Note
-  // that as a result we do *not* mark things like GC allocation instructions as
-  // having side effects, which has the nice benefit of making it possible to
-  // eliminate an allocation whose result is not captured.
+  // Note also that we ignore *optional* runtime-specific traps: we only
+  // consider as trapping something that will trap in *all* VMs, and *all* the
+  // time. For example, a single allocation might trap in a VM in a particular
+  // execution, if it happens to run out of memory just there, but that is not
+  // enough for us to mark it as having a trap effect. (Note that not marking
+  // each allocation as possibly trapping has the nice benefit of making it
+  // possible to eliminate an allocation whose result is not captured.) OTOH, we
+  // *do* mark a potentially infinite number of allocations as trapping, as all
+  // VMs would trap eventually, and the same for potentially infinite recursion,
+  // etc.
+  //   * We assume that VMs will timeout eventually, so any loop that we cannot
+  //     prove terminates is considered to trap. (Some VMs might not have
+  //     such timeouts, but even they will error before the heat death of the
+  //     universe, which is a kind of trap.)
   bool trap = false;
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
@@ -261,7 +265,7 @@ public:
     return false;
   }
 
-  void mergeIn(EffectAnalyzer& other) {
+  void mergeIn(const EffectAnalyzer& other) {
     branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
@@ -392,20 +396,13 @@ private:
     }
     void visitIf(If* curr) {}
     void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        parent.breakTargets.erase(curr->name); // these were internal breaks
-      }
-      // if the loop is unreachable, then there is branching control flow:
-      //  (1) if the body is unreachable because of a (return), uncaught (br)
-      //      etc., then we already noted branching, so it is ok to mark it
-      //      again (if we have *caught* (br)s, then they did not lead to the
-      //      loop body being unreachable). (same logic applies to blocks)
-      //  (2) if the loop is unreachable because it only has branches up to the
-      //      loop top, but no way to get out, then it is an infinite loop, and
-      //      we consider that a branching side effect (note how the same logic
-      //      does not apply to blocks).
-      if (curr->type == Type::unreachable) {
-        parent.branchesOut = true;
+      if (curr->name.is() && parent.breakTargets.erase(curr->name) > 0) {
+        // Breaks to this loop exist, which we just removed as they do not have
+        // further effect outside of this loop. One additional thing we need to
+        // take into account is infinite looping, which is a noticeable side
+        // effect we can't normally remove - eventually the VM will time out and
+        // error (see more details in the comment on trapping above).
+        parent.implicitTrap = true;
       }
     }
     void visitBreak(Break* curr) { parent.breakTargets.insert(curr->name); }
@@ -422,13 +419,34 @@ private:
         return;
       }
 
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
+      if (parent.funcEffectsMap) {
+        auto iter = parent.funcEffectsMap->find(curr->target);
+        if (iter != parent.funcEffectsMap->end()) {
+          // We have effect information for this call target, and can just use
+          // that. The one change we may want to make is to remove throws_, if
+          // the target function throws and we know that will be caught anyhow,
+          // the same as the code below for the general path.
+          const auto& targetEffects = iter->second;
+          if (targetEffects.throws_ && parent.tryDepth > 0) {
+            auto filteredEffects = targetEffects;
+            filteredEffects.throws_ = false;
+            parent.mergeIn(filteredEffects);
+          } else {
+            // Just merge in all the effects.
+            parent.mergeIn(targetEffects);
+          }
+          return;
+        }
+      }
+
       parent.calls = true;
       // When EH is enabled, any call can throw.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {

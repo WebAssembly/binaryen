@@ -22,7 +22,6 @@ function asmFunc(importObject) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
@@ -61,7 +60,7 @@ function asmFunc(importObject) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
+var retasmFunc = asmFunc({
     a: { buffer : memasmFunc }
-  });
+});
 export var foo = retasmFunc.foo;
