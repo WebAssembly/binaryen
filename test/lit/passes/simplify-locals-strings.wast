@@ -156,6 +156,65 @@
     )
   )
 
+  ;; CHECK:      (func $no-new-past-store-gc (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK-NEXT:  (local $temp stringref)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (string.new_wtf8_array utf8
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (string.new_wtf8_array replace
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (string.new_wtf16_array
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $no-new-past-store-gc (param $array (ref $array)) (param $array16 (ref $array16))
     (local $temp stringref)
     ;; A string.new cannot be moved past a memory store.
