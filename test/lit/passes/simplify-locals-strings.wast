@@ -463,4 +463,37 @@
       (local.get $temp)
     )
   )
+
+  (func $no-iteration-past-each-other
+    (param $iter stringview_iter)
+    (local $temp1 i32)
+    (local $temp2 i32)
+    (local $temp3 i32)
+    (local.set $temp1
+      (stringview_iter.next
+        (local.get $iter)
+      )
+    )
+    (local.set $temp2
+      (stringview_iter.advance
+        (local.get $iter)
+        (i32.const 3)
+      )
+    )
+    (local.set $temp3
+      (stringview_iter.rewind
+        (local.get $iter)
+        (i32.const 4)
+      )
+    )
+    (drop
+      (local.get $temp1)
+    )
+    (drop
+      (local.get $temp2)
+    )
+    (drop
+      (local.get $temp3)
+    )
+  )
 )
