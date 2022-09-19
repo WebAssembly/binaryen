@@ -5,6 +5,11 @@
 (module
   (memory 10 10)
 
+  ;; CHECK:      (type $array (array (mut i8)))
+  (type $array (array_subtype (mut i8) data))
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array_subtype (mut i16) data))
+
   ;; CHECK:      (func $no-new-past-store
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (local.set $temp
@@ -145,6 +150,67 @@
       (i32.load
         (i32.const 3)
       )
+    )
+    (drop
+      (local.get $temp)
+    )
+  )
+
+  (func $no-new-past-store-gc (param $array (ref $array)) (param $array16 (ref $array16))
+    (local $temp stringref)
+    ;; A string.new cannot be moved past a memory store.
+    (local.set $temp
+      (string.new_wtf8_array utf8
+        (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (i32.store
+      (i32.const 3)
+      (i32.const 4)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (string.new_wtf8_array wtf8
+        (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (i32.store
+      (i32.const 3)
+      (i32.const 4)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (string.new_wtf8_array replace
+        (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (i32.store
+      (i32.const 3)
+      (i32.const 4)
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (string.new_wtf16_array
+        (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (i32.store
+      (i32.const 3)
+      (i32.const 4)
     )
     (drop
       (local.get $temp)
