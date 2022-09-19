@@ -10556,6 +10556,276 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const -inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const inf)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -inf)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const -1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const 1.401298464324817e-45)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const 1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -1.401298464324817e-45)
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const inf)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const -inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -inf)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const 1.401298464324817e-45)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const -1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.sub
+  ;; CHECK-NEXT:    (f32.const -1.401298464324817e-45)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const 1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const -0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (f32.const -nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const -inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const -inf)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const 1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const 1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (f32.const -1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.add
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (f32.const -1.401298464324817e-45)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.sub
   ;; CHECK-NEXT:    (f32.neg
   ;; CHECK-NEXT:     (local.get $a)
@@ -10573,7 +10843,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simplify-add-sub-with-neg-float (param $a f32) (param $b f32) (param $x f64) (param $y f64)
-    ;; -x + y  ->  y - x
+    ;; -x + y     ==>   y - x
     (drop (f32.add (f32.neg (local.get $a)) (local.get $b)))
     (drop (f64.add (f64.neg (local.get $x)) (local.get $y)))
 
@@ -10584,6 +10854,69 @@
     ;; x - (-y)   ==>   x + y
     (drop (f32.sub (local.get $a) (f32.neg (local.get $b))))
     (drop (f64.sub (local.get $x) (f64.neg (local.get $y))))
+
+    ;; edge cases for -x + y
+    (drop (f32.add (f32.neg (f32.const 0)) (local.get $b)))
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const 0)))
+    (drop (f32.add (f32.neg (f32.const -0)) (local.get $b)))
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const -0)))
+
+    (drop (f32.add (f32.neg (f32.const nan)) (local.get $b)))
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const nan)))
+    (drop (f32.add (f32.neg (f32.const -nan)) (local.get $b)))
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const -nan)))
+
+    (drop (f32.add (f32.neg (f32.const inf)) (local.get $b)))
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const inf)))
+    (drop (f32.add (f32.neg (f32.const -inf)) (local.get $b)))
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const -inf)))
+
+    (drop (f32.add (f32.neg (f32.const 1.401298464324817e-45)) (local.get $b)))  ;; +min value
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const 1.401298464324817e-45)))  ;; +min value
+    (drop (f32.add (f32.neg (f32.const -1.401298464324817e-45)) (local.get $b))) ;; -min value
+    (drop (f32.add (f32.neg (local.get $a)) (f32.const -1.401298464324817e-45))) ;; -min value
+
+    ;; edge cases for x + (-y)
+    (drop (f32.add (f32.const 0) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const 0))))
+    (drop (f32.add (f32.const -0) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const -0))))
+
+    (drop (f32.add (f32.const nan) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const nan))))
+    (drop (f32.add (f32.const -nan) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const -nan))))
+
+    (drop (f32.add (f32.const inf) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const inf))))
+    (drop (f32.add (f32.const -inf) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const -inf))))
+
+    (drop (f32.add (f32.const 1.401298464324817e-45) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const 1.401298464324817e-45))))
+    (drop (f32.add (f32.const -1.401298464324817e-45) (f32.neg (local.get $b))))
+    (drop (f32.add (local.get $a) (f32.neg (f32.const -1.401298464324817e-45))))
+
+    ;; edge cases for x - (-y)
+    (drop (f32.sub (f32.const 0) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const 0))))
+    (drop (f32.sub (f32.const -0) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const -0))))
+
+    (drop (f32.sub (f32.const nan) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const nan))))
+    (drop (f32.sub (f32.const -nan) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const -nan))))
+
+    (drop (f32.sub (f32.const inf) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const inf))))
+    (drop (f32.sub (f32.const -inf) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const -inf))))
+
+    (drop (f32.sub (f32.const 1.401298464324817e-45) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const 1.401298464324817e-45))))
+    (drop (f32.sub (f32.const -1.401298464324817e-45) (f32.neg (local.get $b))))
+    (drop (f32.sub (local.get $a) (f32.neg (f32.const -1.401298464324817e-45))))
 
     ;; skips
     ;; -x - y  ->  skip
