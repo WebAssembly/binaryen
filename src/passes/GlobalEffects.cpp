@@ -49,8 +49,8 @@ struct GenerateGlobalEffects : public Pass {
         }
 
         // Gather the effects.
-        auto effects = std::make_unique<EffectAnalyzer>(
-          runner->options, *module, func->body);
+        auto effects =
+          std::make_unique<EffectAnalyzer>(runner->options, *module, func);
 
         // If the body has a call, give up - that means we can't infer a more
         // specific set of effects than the pessimistic case of just assuming
@@ -59,15 +59,6 @@ struct GenerateGlobalEffects : public Pass {
         if (effects->calls) {
           return;
         }
-
-        // We can ignore branching out of the function body - this can only be
-        // a return, and that is only noticeable in the function, not outside.
-        effects->branchesOut = false;
-
-        // Ignore local effects - when the function exits, those become
-        // unnoticeable anyhow.
-        effects->localsWritten.clear();
-        effects->localsRead.clear();
 
         // Save the useful effects we found.
         storedEffects = std::move(effects);
