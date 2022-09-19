@@ -27,16 +27,22 @@ namespace wasm {
 
 class EffectAnalyzer {
 public:
-  EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
-                 Expression* ast = nullptr)
+  EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
       funcEffectsMap(passOptions.funcEffectsMap), module(module),
-      features(module.features) {
-    if (ast) {
-      walk(ast);
-    }
+      features(module.features) {}
+
+  EffectAnalyzer(const PassOptions& passOptions,
+                 Module& module,
+                 Expression* ast)
+    : EffectAnalyzer(passOptions, module) {
+    walk(ast);
+  }
+
+  EffectAnalyzer(const PassOptions& passOptions, Module& module, Function* func)
+    : EffectAnalyzer(passOptions, module) {
+    walk(func);
   }
 
   bool ignoreImplicitTraps;
@@ -57,6 +63,22 @@ public:
     pre();
     InternalAnalyzer(*this).visit(ast);
     post();
+  }
+
+  // Walk an entire function body. This will ignore effects that are not
+  // noticeable from the perspective of the caller, that is, effects that are
+  // only noticeable during the call, but "vanish" when the call stack is
+  // unwound.
+  void walk(Function* func) {
+    walk(func->body);
+
+    // We can ignore branching out of the function body - this can only be
+    // a return, and that is only noticeable in the function, not outside.
+    branchesOut = false;
+
+    // When the function exits, changes to locals cannot be noticed any more.
+    localsWritten.clear();
+    localsRead.clear();
   }
 
   // Core effect tracking
