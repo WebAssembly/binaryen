@@ -96,6 +96,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field) COPY_VECTOR(field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field) COPY_VECTOR(field)
+#define DELEGATE_FIELD_CHAR_VECTOR(id, field) COPY_VECTOR(field)
 
 #define DELEGATE_FIELD_INT_ARRAY(id, field) COPY_ARRAY(field)
 

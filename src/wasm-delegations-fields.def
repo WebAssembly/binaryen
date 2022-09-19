@@ -77,6 +77,10 @@
 // DELEGATE_FIELD_HEAPTYPE(id, field) - called for a HeapType.
 //
 // DELEGATE_FIELD_ADDRESS(id, field) - called for an Address.
+//
+// DELEGATE_FIELD_CHAR_VECTOR(id, field) - called for ArenaVector<char>. If
+//    this is not defined and DELEGATE_GET_FIELD is, then DELEGATE_FIELD_INT is
+//    called on each char.
 
 #ifndef DELEGATE_START
 #define DELEGATE_START(id)
@@ -168,6 +172,17 @@
 
 #ifndef DELEGATE_FIELD_ADDRESS
 #error please define DELEGATE_FIELD_ADDRESS(id, field)
+#endif
+
+#ifndef DELEGATE_FIELD_CHAR_VECTOR
+#ifdef DELEGATE_GET_FIELD
+#define DELEGATE_FIELD_CHAR_VECTOR(id, field)                                  \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
+    DELEGATE_FIELD_INT(id, field[i]);                                          \
+  }
+#else
+#error please define DELEGATE_FIELD_CHAR_VECTOR(id, field)
+#endif
 #endif
 
 switch (DELEGATE_ID) {
@@ -721,7 +736,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::StringConstId: {
     DELEGATE_START(StringConst);
-    DELEGATE_FIELD_NAME(StringConst, string);
+    DELEGATE_FIELD_CHAR_VECTOR(StringConst, string);
     DELEGATE_END(StringConst);
     break;
   }
@@ -826,4 +841,5 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_TYPE
 #undef DELEGATE_FIELD_HEAPTYPE
 #undef DELEGATE_FIELD_ADDRESS
+#undef DELEGATE_FIELD_CHAR_VECTOR
 #undef DELEGATE_GET_FIELD

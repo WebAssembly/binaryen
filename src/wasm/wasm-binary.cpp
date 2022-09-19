@@ -462,7 +462,7 @@ void WasmBinaryWriter::writeStrings() {
 
   // Scan the entire wasm to find the relevant strings.
   // To find all the string literals we must scan all the code.
-  using StringSet = std::unordered_set<Name>;
+  using StringSet = std::unordered_set<ArenaVector<char>, StringHasher>;
 
   struct StringWalker : public PostWalker<StringWalker> {
     StringSet& strings;
@@ -492,9 +492,9 @@ void WasmBinaryWriter::writeStrings() {
       allStrings.insert(string);
     }
   }
-  std::vector<Name> sorted;
-  for (auto& string : allStrings) {
-    sorted.push_back(string);
+  std::vector<std::reference_wrapper<const ArenaVector<char>>> sorted;
+  for (const auto& string : allStrings) {
+    sorted.push_back(std::cref(string));
   }
   std::sort(sorted.begin(), sorted.end());
   for (Index i = 0; i < sorted.size(); i++) {
@@ -514,7 +514,7 @@ void WasmBinaryWriter::writeStrings() {
   // The number of strings and then their contents.
   o << U32LEB(num);
   for (auto& string : sorted) {
-    writeInlineString(string.str);
+    writeInlineString(std::string_view(&string.get().front(), string.get().size()));
   }
 
   finishSection(start);
@@ -660,7 +660,7 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getStringIndex(Name string) const {
+uint32_t WasmBinaryWriter::getStringIndex(ArenaVector<char>& string) const {
   auto it = stringIndexes.find(string);
   assert(it != stringIndexes.end());
   return it->second;
@@ -1345,10 +1345,9 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
   }
 }
 
-void WasmBinaryWriter::writeInlineString(const char* name) {
-  int32_t size = strlen(name);
-  o << U32LEB(size);
-  writeData(name, size);
+void WasmBinaryWriter::writeInlineString(std::string_view string) {
+  o << U32LEB(string.size());
+  writeData(string.data(), string.size());
 }
 
 static bool isHexDigit(char ch) {
@@ -2747,8 +2746,13 @@ void WasmBinaryBuilder::readStrings() {
   }
   size_t num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
-    auto string = getInlineString();
-    strings.push_back(string);
+    auto len = getU32LEB();
+    const char* str = getByteView(len).first;
+    strings.emplace_back();
+    auto& vec = strings.back();
+    vec.resize(len);
+    // TODO: UTF-8 validation
+    memcpy(vec.data(), str, len);
   }
 }
 

@@ -67,7 +67,7 @@ std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
   return o;
 }
 
-static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
+std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   Name name;
   if (func) {
     name = func->getLocalNameOrDefault(index);
@@ -78,9 +78,7 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
-namespace {
-
-static bool maybePrintRefShorthand(std::ostream& o, Type type) {
+bool maybePrintRefShorthand(std::ostream& o, Type type) {
   if (!type.isRef()) {
     return false;
   }
@@ -292,9 +290,7 @@ void TypeNamePrinter::print(const Array& array) {
   os << ']';
 }
 
-} // anonymous namespace
-
-static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
+std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   if (type.isBasic()) {
     o << type;
   } else if (type.isTuple()) {
@@ -321,13 +317,13 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   return o;
 }
 
-static std::ostream&
+std::ostream&
 printHeapType(std::ostream& o, HeapType type, Module* wasm) {
   TypeNamePrinter(o, wasm).print(type);
   return o;
 }
 
-static std::ostream& printPrefixedTypes(std::ostream& o,
+std::ostream& printPrefixedTypes(std::ostream& o,
                                         const char* prefix,
                                         Type type,
                                         Module* wasm) {
@@ -350,11 +346,11 @@ static std::ostream& printPrefixedTypes(std::ostream& o,
   return o;
 }
 
-static std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
+std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
   return printPrefixedTypes(o, "result", type, wasm);
 }
 
-static std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
+std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
   return printPrefixedTypes(o, "param", type, wasm);
 }
 
@@ -377,6 +373,91 @@ void processFieldName(Module* wasm, HeapType type, Index index, T func) {
     }
   }
   func(Name());
+}
+
+std::ostream& printEscapedString(std::ostream& o, char* str, size_t size) {
+  const char* end = str + size;
+
+  struct Masks {
+    uint32_t headerMask;
+    uint32_t header;
+    uint32_t contentMask;
+  };
+
+  // Header and content masks for ASCII bytes, UTF-8 continuation bytes, and
+  // UTF-8 2-, 3-, and 4-byte initial bytes.
+  Masks masks[5] = {
+    {0b10000000, 0b00000000, 0b01111111},
+    {0b11000000, 0b10000000, 0b00111111},
+    {0b11100000, 0b11000000, 0b00011111},
+    {0b11110000, 0b11100000, 0b00001111},
+    {0b11111000, 0b11110000, 0b00000111}
+  };
+
+  // Write one UTF-8 code point at a time, escaping as necessary.
+  while (str != end) {
+    uint32_t unicode = *str++;
+
+    // Look at the lead byte to determine the byte count.
+    size_t bytes = 4;
+    for (; bytes > 0; --bytes) {
+      if ((unicode & masks[bytes].headerMask) == masks[bytes].header) {
+        assert((unicode & masks[bytes].contentMask) &&
+               "Unexpected overlong UTF8-encoding");
+        // Shift the initial contents into the correct position
+        unicode = (unicode & masks[bytes].contentMask) << (6 * (bytes - 1));
+        break;
+      }
+    }
+
+    assert(bytes != 1 && "Unexpected UTF-8 continuation byte in lead position");
+
+    if (bytes == 0) {
+      assert((unicode & masks[0].headerMask) == masks[0].header &&
+             "Unexpected invalid UTF-8 byte in lead position");
+      switch (unicode) {
+        case '\t':
+          o << "\\t";
+          continue;
+        case '\n':
+          o << "\\n";
+          continue;
+        case '\r':
+          o << "\\r";
+          continue;
+        case '"':
+          o << "\\\"";
+          continue;
+        case '\'':
+          o << "\\'";
+          continue;
+        case '\\':
+          o << "\\\\";
+          continue;
+      }
+      if (unicode < 0x20 || unicode == 0x7f) {
+        o << "\\u{" << std::hex << unicode << std::dec << "}";
+        continue;
+      }
+      o << unicode;
+    }
+
+    // Collect data from the continuation bytes, each of which has 6 bits of
+    // payload.
+    for (size_t i = 0; i < bytes - 1; ++i) {
+      assert(str != end && "Unexpected end of string");
+      uint32_t cont = *str++;
+      assert((cont & masks[1].headerMask) == masks[1].header &&
+             "Unexpected non-continuation byte");
+      unicode |= (cont & masks[1].contentMask) << (6 * (bytes - 1 - i));
+    }
+
+    assert((unicode < 0xd800 || (0xe000 <= 0x110000)) &&
+           "Unexpected code point outside valid range");
+    o << "\\u{" << std::hex << unicode << std::dec << "}";
+  }
+
+  return o;
 }
 
 } // anonymous namespace
@@ -2256,7 +2337,7 @@ struct PrintExpressionContents
   }
   void visitStringConst(StringConst* curr) {
     printMedium(o, "string.const \"");
-    o << curr->string.str;
+    printEscapedString(o, &curr->string.front(), curr->string.size());
     o << '"';
   }
   void visitStringMeasure(StringMeasure* curr) {
@@ -3172,42 +3253,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ';
     }
     o << "\"";
-    for (size_t i = 0; i < curr->data.size(); i++) {
-      unsigned char c = curr->data[i];
-      switch (c) {
-        case '\n':
-          o << "\\n";
-          break;
-        case '\r':
-          o << "\\0d";
-          break;
-        case '\t':
-          o << "\\t";
-          break;
-        case '\f':
-          o << "\\0c";
-          break;
-        case '\b':
-          o << "\\08";
-          break;
-        case '\\':
-          o << "\\\\";
-          break;
-        case '"':
-          o << "\\\"";
-          break;
-        case '\'':
-          o << "\\'";
-          break;
-        default: {
-          if (c >= 32 && c < 127) {
-            o << c;
-          } else {
-            o << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
-          }
-        }
-      }
-    }
+    printEscapedString(o, curr->data.data(), curr->data.size());
     o << "\")" << maybeNewLine;
   }
   void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {

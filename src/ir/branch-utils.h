@@ -128,6 +128,7 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_CHAR_VECTOR(id, field)
 
 #include "wasm-delegations-fields.def"
 }

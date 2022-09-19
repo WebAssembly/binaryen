@@ -26,6 +26,7 @@
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wat-lexer.h"
 
 #define abort_on(str)                                                          \
   { throw ParseException(std::string("abort_on ") + str); }
@@ -3041,7 +3042,10 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
-  return Builder(wasm).makeStringConst(s[1]->str());
+  auto str = s[1]->str();
+  std::vector<char> data;
+  stringToBinary(str.c_str(), str.size(), data);
+  return Builder(wasm).makeStringConst(data);
 }
 
 Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
@@ -3141,47 +3145,24 @@ Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
 void SExpressionWasmBuilder::stringToBinary(const char* input,
                                             size_t size,
                                             std::vector<char>& data) {
-  auto originalSize = data.size();
-  data.resize(originalSize + size);
-  char* write = data.data() + originalSize;
-  while (1) {
-    if (input[0] == 0) {
-      break;
-    }
-    if (input[0] == '\\') {
-      if (input[1] == '"') {
-        *write++ = '"';
-        input += 2;
-        continue;
-      } else if (input[1] == '\'') {
-        *write++ = '\'';
-        input += 2;
-        continue;
-      } else if (input[1] == '\\') {
-        *write++ = '\\';
-        input += 2;
-        continue;
-      } else if (input[1] == 'n') {
-        *write++ = '\n';
-        input += 2;
-        continue;
-      } else if (input[1] == 't') {
-        *write++ = '\t';
-        input += 2;
-        continue;
-      } else {
-        *write++ = (char)(unhex(input[1]) * 16 + unhex(input[2]));
-        input += 3;
-        continue;
-      }
-    }
-    *write++ = input[0];
-    input++;
+  // Put the quotes back around the string contents.
+  std::vector<char> quoted;
+  quoted.resize(size + 2);
+  memcpy(&quoted[1], input, size);
+  quoted.front() = quoted.back() = '"';
+  // Parse the string.
+  WATParser::Lexer lexer(std::string_view(quoted.data(), quoted.size()));
+  if (lexer == lexer.end()) {
+    Fatal() << "Unexpected invalid string";
   }
-  assert(write >= data.data());
-  size_t actual = write - data.data();
-  assert(actual <= data.size());
-  data.resize(actual);
+  auto str = lexer->getString();
+  if (!str) {
+    Fatal() << "Unexpected invalid string";
+  }
+  // Append the string data.
+  auto originalSize = data.size();
+  data.resize(originalSize + str->size());
+  memcpy(&data[originalSize], str->data(), str->size());
 }
 
 Index SExpressionWasmBuilder::parseMemoryIndex(

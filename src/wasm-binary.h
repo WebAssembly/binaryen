@@ -1309,7 +1309,7 @@ public:
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
-  uint32_t getStringIndex(Name string) const;
+  uint32_t getStringIndex(ArenaVector<char>& string) const;
 
   void writeTableDeclarations();
   void writeElementSegments();
@@ -1331,7 +1331,7 @@ public:
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
   // helpers
-  void writeInlineString(const char* name);
+  void writeInlineString(std::string_view string);
   void writeEscapedName(const char* name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
@@ -1400,8 +1400,14 @@ private:
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
 
+  struct StringHasher {
+    size_t operator()(const ArenaVector<char>& str) {
+      return std::hash<std::string_view>{}(std::string_view(&str.front(), str.size()));
+    }
+  };
+
   // Indexes in the string literal section of each StringConst in the wasm.
-  std::unordered_map<Name, Index> stringIndexes;
+  std::unordered_map<ArenaVector<char>, Index, StringHasher> stringIndexes;
 
   void prepare();
 };
@@ -1545,7 +1551,7 @@ public:
   void readExports();
 
   // The strings in the strings section (which are referred to by StringConst).
-  std::vector<Name> strings;
+  std::vector<std::vector<char>> strings;
   void readStrings();
 
   Expression* readExpression();

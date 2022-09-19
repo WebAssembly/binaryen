@@ -1008,9 +1008,12 @@ public:
     ret->finalize();
     return ret;
   }
-  StringConst* makeStringConst(Name string) {
+  StringConst* makeStringConst(const std::vector<char>& string) {
     auto* ret = wasm.allocator.alloc<StringConst>();
-    ret->string = string;
+    ret->string.allocate(string.size());
+    for (size_t i = 0; i < string.size(); ++i) {
+      ret->string[i] = string[i];
+    }
     ret->finalize();
     return ret;
   }

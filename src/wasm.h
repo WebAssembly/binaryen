@@ -1682,12 +1682,9 @@ public:
 
 class StringConst : public SpecificExpression<Expression::StringConstId> {
 public:
-  StringConst(MixedArena& allocator) {}
+  StringConst(MixedArena& allocator) : string(allocator) {}
 
-  // TODO: Use a different type to allow null bytes in the middle -
-  //       ArenaVector<char> perhaps? However, Name has the benefit of being
-  //       interned and immutable (which is appropriate here).
-  Name string;
+  ArenaVector<char> string;
 
   void finalize();
 };

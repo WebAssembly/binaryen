@@ -208,6 +208,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 
 #define DELEGATE_FIELD_INT_ARRAY(id, field) COMPARE_LIST(field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field) COMPARE_LIST(field)
+#define DELEGATE_FIELD_CHAR_VECTOR(id, field) COMPARE_LIST(field)
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
   if (castLeft->field.is() != castRight->field.is()) {                         \
@@ -229,6 +230,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
       return false;                                                            \
     }                                                                          \
   }
+
 
 #include "wasm-delegations-fields.def"
 
