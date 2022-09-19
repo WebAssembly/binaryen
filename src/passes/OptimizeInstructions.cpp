@@ -416,8 +416,8 @@ struct OptimizeInstructions
       {
         // -x + y   ==>   y - x
         //   where  x, y  are floating points
-        Expression *x, *y;
-        if (matches(curr, binary(Add, unary(Neg, any(&x)), any(&y)))) {
+        Expression* x;
+        if (matches(curr, binary(Add, unary(Neg, any(&x)), any()))) {
           curr->op = Abstract::getBinary(curr->type, Sub);
           curr->left = x;
           std::swap(curr->left, curr->right);
@@ -428,9 +428,9 @@ struct OptimizeInstructions
         // x + (-y)   ==>   x - y
         // x - (-y)   ==>   x + y
         //   where  x, y  are floating points
-        Expression *x, *y;
-        if (matches(curr, binary(Add, any(&x), unary(Neg, any(&y)))) ||
-            matches(curr, binary(Sub, any(&x), unary(Neg, any(&y))))) {
+        Expression* y;
+        if (matches(curr, binary(Add, any(), unary(Neg, any(&y)))) ||
+            matches(curr, binary(Sub, any(), unary(Neg, any(&y))))) {
           curr->op = Abstract::getBinary(
             curr->type,
             curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
