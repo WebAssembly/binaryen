@@ -4429,7 +4429,8 @@ void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
 const char* BinaryenStringConstGetString(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringConst>());
-  return static_cast<StringConst*>(expression)->string.c_str();
+  auto& str = static_cast<StringConst*>(expression)->string;
+  return &str[0];
 }
 void BinaryenStringConstSetString(BinaryenExpressionRef expr,
                                   const char* stringStr) {
