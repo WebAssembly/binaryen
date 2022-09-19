@@ -116,4 +116,38 @@
       (local.get $temp)
     )
   )
+
+  ;; CHECK:      (func $yes-new-past-store
+  ;; CHECK-NEXT:  (local $temp stringref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.new_wtf8 utf8
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $yes-new-past-store
+    (local $temp stringref)
+    ;; A string.new can be moved past a memory load.
+    (local.set $temp
+      (string.new_wtf8 utf8
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.load
+        (i32.const 3)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+  )
 )
