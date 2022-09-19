@@ -202,7 +202,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (string.new_wtf16_array
-  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (local.get $array16)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
@@ -367,6 +367,54 @@
     )
   )
 
+  ;; CHECK:      (func $no-load-past-encode-gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf8_array wtf8
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf8_array utf8
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf16_array
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (local.get $array16)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $no-load-past-encode-gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (local $temp i32)
     (local.set $temp
