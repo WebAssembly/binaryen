@@ -275,4 +275,50 @@
       (local.get $temp)
     )
   )
+
+  (func $no-load-past-encode (param $ref stringref)
+    (local $temp i32)
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf8 wtf8
+        (local.get $ref)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf8 utf8
+        (local.get $ref)
+        (i32.const 20)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf16
+        (local.get $ref)
+        (i32.const 30)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+  )
 )
