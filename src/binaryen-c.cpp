@@ -1744,8 +1744,9 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                           const char* name) {
+  std::string chars = name;
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeStringConst(name));
+    Builder(*(Module*)module).makeStringConst(chars.data()));
 }
 BinaryenExpressionRef BinaryenStringMeasure(BinaryenModuleRef module,
                                             BinaryenOp op,
