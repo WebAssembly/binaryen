@@ -331,6 +331,7 @@
   ;; CHECK-NEXT: )
   (func $no-load-past-encode (param $ref stringref)
     (local $temp i32)
+    ;; string.encode writes to memory, so a load can't be moved past it.
     (local.set $temp
       (i32.load
         (i32.const 1)
@@ -428,6 +429,8 @@
   ;; CHECK-NEXT: )
   (func $no-load-past-encode-gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (local $temp i32)
+    ;; string.encode_*_array writes to an array, so an array get can't be moved
+    ;; past it.
     (local.set $temp
       (array.get $array
         (local.get $array)
@@ -512,6 +515,8 @@
   (func $no-iteration-past-each-other
     (param $iter stringview_iter)
     (local $i32 i32)
+    ;; Iteration operations interact with each other, and can't be moved past
+    ;; each other.
     (local.set $i32
       (stringview_iter.next
         (local.get $iter)
