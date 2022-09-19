@@ -262,7 +262,7 @@
     )
     (local.set $temp
       (string.new_wtf16_array
-        (local.get $array)
+        (local.get $array16)
         (i32.const 1)
         (i32.const 2)
       )
@@ -359,6 +359,55 @@
     (drop
       (string.encode_wtf16
         (local.get $ref)
+        (i32.const 30)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+  )
+
+  (func $no-load-past-encode-gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
+    (local $temp i32)
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf8_array wtf8
+        (local.get $ref)
+        (local.get $array)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf8_array utf8
+        (local.get $ref)
+        (local.get $array)
+        (i32.const 20)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf16_array
+        (local.get $ref)
+        (local.get $array16)
         (i32.const 30)
       )
     )
