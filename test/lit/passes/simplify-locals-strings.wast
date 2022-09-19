@@ -276,6 +276,51 @@
     )
   )
 
+  ;; CHECK:      (func $no-load-past-encode (param $ref stringref)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf8 wtf8
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf8 utf8
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf16
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $no-load-past-encode (param $ref stringref)
     (local $temp i32)
     (local.set $temp
