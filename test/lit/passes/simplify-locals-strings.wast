@@ -465,13 +465,8 @@
   )
 
   ;; CHECK:      (func $no-iteration-past-each-other (param $iter stringview_iter)
-  ;; CHECK-NEXT:  (local $temp1 i32)
-  ;; CHECK-NEXT:  (local $temp2 i32)
-  ;; CHECK-NEXT:  (local $temp3 i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local $i32 i32)
+  ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (stringview_iter.next
   ;; CHECK-NEXT:    (local.get $iter)
   ;; CHECK-NEXT:   )
@@ -483,10 +478,21 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $i32
+  ;; CHECK-NEXT:   (stringview_iter.next
+  ;; CHECK-NEXT:    (local.get $iter)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (stringview_iter.rewind
   ;; CHECK-NEXT:    (local.get $iter)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-iteration-past-each-other
@@ -497,7 +503,7 @@
         (local.get $iter)
       )
     )
-    (local.set $temp2
+    (drop
       (stringview_iter.advance
         (local.get $iter)
         (i32.const 3)
@@ -511,7 +517,7 @@
         (local.get $iter)
       )
     )
-    (local.set $temp3
+    (drop
       (stringview_iter.rewind
         (local.get $iter)
         (i32.const 4)
