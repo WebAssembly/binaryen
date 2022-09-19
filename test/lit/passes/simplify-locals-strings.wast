@@ -165,7 +165,8 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $array)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
@@ -179,7 +180,8 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $array)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
@@ -193,7 +195,8 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $array)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
@@ -207,7 +210,8 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $array)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
@@ -217,7 +221,7 @@
   ;; CHECK-NEXT: )
   (func $no-new-past-store-gc (param $array (ref $array)) (param $array16 (ref $array16))
     (local $temp stringref)
-    ;; A string.new cannot be moved past a memory store.
+    ;; A string.new cannot be moved past a GC store.
     (local.set $temp
       (string.new_wtf8_array utf8
         (local.get $array)
@@ -225,7 +229,8 @@
         (i32.const 2)
       )
     )
-    (i32.store
+    (array.set $array
+      (local.get $array)
       (i32.const 3)
       (i32.const 4)
     )
@@ -239,7 +244,8 @@
         (i32.const 2)
       )
     )
-    (i32.store
+    (array.set $array
+      (local.get $array)
       (i32.const 3)
       (i32.const 4)
     )
@@ -253,7 +259,8 @@
         (i32.const 2)
       )
     )
-    (i32.store
+    (array.set $array
+      (local.get $array)
       (i32.const 3)
       (i32.const 4)
     )
@@ -267,7 +274,8 @@
         (i32.const 2)
       )
     )
-    (i32.store
+    (array.set $array
+      (local.get $array)
       (i32.const 3)
       (i32.const 4)
     )
@@ -370,8 +378,9 @@
   ;; CHECK:      (func $no-load-past-encode-gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (array.get_u $array
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -385,8 +394,9 @@
   ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (array.get_u $array
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -400,8 +410,9 @@
   ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (array.get_u $array
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -418,8 +429,9 @@
   (func $no-load-past-encode-gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (local $temp i32)
     (local.set $temp
-      (i32.load
-        (i32.const 1)
+      (array.get $array
+        (local.get $array)
+        (i32.const 0)
       )
     )
     (drop
@@ -433,8 +445,9 @@
       (local.get $temp)
     )
     (local.set $temp
-      (i32.load
-        (i32.const 1)
+      (array.get $array
+        (local.get $array)
+        (i32.const 0)
       )
     )
     (drop
@@ -448,8 +461,9 @@
       (local.get $temp)
     )
     (local.set $temp
-      (i32.load
-        (i32.const 1)
+      (array.get $array
+        (local.get $array)
+        (i32.const 0)
       )
     )
     (drop
