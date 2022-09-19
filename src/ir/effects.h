@@ -570,7 +570,8 @@ private:
           parent.implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
     void visitBinary(Binary* curr) {
@@ -599,7 +600,8 @@ private:
           }
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
     void visitSelect(Select* curr) {}
@@ -761,6 +763,22 @@ private:
     void visitStringNew(StringNew* curr) {
       // traps when out of bounds in linear memory or ref is null
       parent.implicitTrap = true;
+      switch (curr->op) {
+        case StringNewUTF8:
+        case StringNewWTF8:
+        case StringNewReplace:
+        case StringNewWTF16:
+          parent.readsMemory = true;
+          break;
+        case StringNewUTF8Array:
+        case StringNewWTF8Array:
+        case StringNewReplaceArray:
+        case StringNewWTF16Array:
+          parent.readsArray = true;
+          break;
+        default: {
+        }
+      }
     }
     void visitStringConst(StringConst* curr) {}
     void visitStringMeasure(StringMeasure* curr) {
@@ -781,7 +799,8 @@ private:
         case StringEncodeWTF16Array:
           parent.writesArray = true;
           break;
-        default: {}
+        default: {
+        }
       }
     }
     void visitStringConcat(StringConcat* curr) {
