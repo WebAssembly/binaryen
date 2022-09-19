@@ -221,7 +221,7 @@
   ;; CHECK-NEXT: )
   (func $no-new-past-store-gc (param $array (ref $array)) (param $array16 (ref $array16))
     (local $temp stringref)
-    ;; A string.new cannot be moved past a GC store.
+    ;; A string.new_***_array cannot be moved past a GC store.
     (local.set $temp
       (string.new_wtf8_array utf8
         (local.get $array)
