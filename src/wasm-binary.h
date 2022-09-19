@@ -1402,7 +1402,8 @@ private:
 
   struct StringHasher {
     size_t operator()(const ArenaVector<char>& str) {
-      return std::hash<std::string_view>{}(std::string_view(&str.front(), str.size()));
+      return std::hash<std::string_view>{}(
+        std::string_view(&str.front(), str.size()));
     }
   };
 

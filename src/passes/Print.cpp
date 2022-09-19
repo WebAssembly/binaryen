@@ -317,16 +317,15 @@ std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   return o;
 }
 
-std::ostream&
-printHeapType(std::ostream& o, HeapType type, Module* wasm) {
+std::ostream& printHeapType(std::ostream& o, HeapType type, Module* wasm) {
   TypeNamePrinter(o, wasm).print(type);
   return o;
 }
 
 std::ostream& printPrefixedTypes(std::ostream& o,
-                                        const char* prefix,
-                                        Type type,
-                                        Module* wasm) {
+                                 const char* prefix,
+                                 Type type,
+                                 Module* wasm) {
   o << '(' << prefix;
   if (type == Type::none) {
     return o << ')';
@@ -386,13 +385,11 @@ std::ostream& printEscapedString(std::ostream& o, char* str, size_t size) {
 
   // Header and content masks for ASCII bytes, UTF-8 continuation bytes, and
   // UTF-8 2-, 3-, and 4-byte initial bytes.
-  Masks masks[5] = {
-    {0b10000000, 0b00000000, 0b01111111},
-    {0b11000000, 0b10000000, 0b00111111},
-    {0b11100000, 0b11000000, 0b00011111},
-    {0b11110000, 0b11100000, 0b00001111},
-    {0b11111000, 0b11110000, 0b00000111}
-  };
+  Masks masks[5] = {{0b10000000, 0b00000000, 0b01111111},
+                    {0b11000000, 0b10000000, 0b00111111},
+                    {0b11100000, 0b11000000, 0b00011111},
+                    {0b11110000, 0b11100000, 0b00001111},
+                    {0b11111000, 0b11110000, 0b00000111}};
 
   // Write one UTF-8 code point at a time, escaping as necessary.
   while (str != end) {

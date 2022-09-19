@@ -514,7 +514,8 @@ void WasmBinaryWriter::writeStrings() {
   // The number of strings and then their contents.
   o << U32LEB(num);
   for (auto& string : sorted) {
-    writeInlineString(std::string_view(&string.get().front(), string.get().size()));
+    writeInlineString(
+      std::string_view(&string.get().front(), string.get().size()));
   }
 
   finishSection(start);

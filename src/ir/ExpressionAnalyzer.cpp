@@ -231,7 +231,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
     }                                                                          \
   }
 
-
 #include "wasm-delegations-fields.def"
 
       return true;
