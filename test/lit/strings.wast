@@ -111,6 +111,12 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.const "bar")
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "some utf-8: \d7\90\d7\a0\d7\99 \d7\99\d7\9b\d7\95\d7\9c")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "some utf-8: \d7\90\d7\a0\d7\99 \d7\99\d7\9b\d7\95\d7\9c")
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.const
     (drop
@@ -121,6 +127,14 @@
     )
     (drop
       (string.const "bar")
+    )
+    ;; UTF8 strings. The first is in raw form, the second in encoded form. In
+    ;; the test output those should be the same.
+    (drop
+      (string.const "some utf-8: אני יכול")
+    )
+    (drop
+      (string.const "some utf-8: \d7\90\d7\a0\d7\99 \d7\99\d7\9b\d7\95\d7\9c")
     )
   )
 
