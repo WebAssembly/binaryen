@@ -4437,7 +4437,12 @@ void BinaryenStringConstSetString(BinaryenExpressionRef expr,
   auto* expression = (Expression*)expr;
   assert(expression->is<StringConst>());
   assert(stringStr);
-  static_cast<StringConst*>(expression)->string = stringStr;
+  std::vector<char> chars;
+  while (*stringStr) {
+    chars.push_back(*stringStr);
+    stringStr++;
+  }
+  static_cast<StringConst*>(expression)->string.set(chars);
 }
 // StringMeasure
 BinaryenOp BinaryenStringMeasureGetOp(BinaryenExpressionRef expr) {

@@ -1400,15 +1400,8 @@ private:
   // info here, and then use it when writing the names.
   std::unordered_map<Name, MappedLocals> funcMappedLocals;
 
-  struct StringHasher {
-    size_t operator()(const ArenaVector<char>& str) {
-      return std::hash<std::string_view>{}(
-        std::string_view(&str.front(), str.size()));
-    }
-  };
-
   // Indexes in the string literal section of each StringConst in the wasm.
-  std::unordered_map<ArenaVector<char>, Index, StringHasher> stringIndexes;
+  std::unordered_map<std::string, Index> stringIndexes;
 
   void prepare();
 };

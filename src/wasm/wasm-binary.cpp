@@ -462,14 +462,17 @@ void WasmBinaryWriter::writeStrings() {
 
   // Scan the entire wasm to find the relevant strings.
   // To find all the string literals we must scan all the code.
-  using StringSet = std::unordered_set<ArenaVector<char>, StringHasher>;
+  using StringSet = std::unordered_set<std::string>;
 
   struct StringWalker : public PostWalker<StringWalker> {
     StringSet& strings;
 
     StringWalker(StringSet& strings) : strings(strings) {}
 
-    void visitStringConst(StringConst* curr) { strings.insert(curr->string); }
+    void visitStringConst(StringConst* curr) {
+      std::string str(curr->string.begin(), curr->string.end());
+      strings.insert(str);
+    }
   };
 
   ModuleUtils::ParallelFunctionAnalysis<StringSet> analysis(
@@ -492,9 +495,9 @@ void WasmBinaryWriter::writeStrings() {
       allStrings.insert(string);
     }
   }
-  std::vector<std::reference_wrapper<const ArenaVector<char>>> sorted;
+  std::vector<std::string> sorted;
   for (const auto& string : allStrings) {
-    sorted.push_back(std::cref(string));
+    sorted.push_back(string);
   }
   std::sort(sorted.begin(), sorted.end());
   for (Index i = 0; i < sorted.size(); i++) {
@@ -514,8 +517,7 @@ void WasmBinaryWriter::writeStrings() {
   // The number of strings and then their contents.
   o << U32LEB(num);
   for (auto& string : sorted) {
-    writeInlineString(
-      std::string_view(&string.get().front(), string.get().size()));
+    writeInlineString(std::string_view(string.data(), string.size()));
   }
 
   finishSection(start);
@@ -662,7 +664,8 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
 }
 
 uint32_t WasmBinaryWriter::getStringIndex(ArenaVector<char>& string) const {
-  auto it = stringIndexes.find(string);
+  std::string str(string.begin(), string.end());
+  auto it = stringIndexes.find(str);
   assert(it != stringIndexes.end());
   return it->second;
 }
