@@ -147,7 +147,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       for (auto& action : block.actions) {
         std::cout << "  action: " << *action << '\n';
       }
-      for (auto &val : block.lastSets) {
+      for (auto& val : block.lastSets) {
         std::cout << "  last set " << val.second << '\n';
       }
 #endif
