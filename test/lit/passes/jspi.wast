@@ -14,10 +14,16 @@
 
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+  ;; CHECK:      (type $externref_i32_=>_none (func (param externref i32)))
+
   ;; CHECK:      (import "js" "compute_delta" (func $import$compute_delta (param externref f64) (result i32)))
   (import "js" "compute_delta" (func $compute_delta (param f64) (result i32)))
   ;; CHECK:      (import "js" "import_and_export" (func $import$import_and_export (param externref i32) (result i32)))
   (import "js" "import_and_export" (func $import_and_export (param i32) (result i32)))
+  ;; CHECK:      (import "js" "import_void_return" (func $import$import_void_return (param externref i32)))
+  (import "js" "import_void_return" (func $import_void_return (param i32)))
   ;; CHECK:      (global $suspender (mut externref) (ref.null extern))
 
   ;; CHECK:      (export "update_state_void" (func $export$update_state_void))
@@ -110,15 +116,51 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $compute_delta (param $0 f64) (result i32)
-;; CHECK-NEXT:  (call $import$compute_delta
+;; CHECK-NEXT:  (local $1 externref)
+;; CHECK-NEXT:  (local $2 i32)
+;; CHECK-NEXT:  (local.set $1
 ;; CHECK-NEXT:   (global.get $suspender)
-;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (call $import$compute_delta
+;; CHECK-NEXT:    (global.get $suspender)
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (global.set $suspender
+;; CHECK-NEXT:   (local.get $1)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (local.get $2)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $import_and_export (param $0 i32) (result i32)
-;; CHECK-NEXT:  (call $import$import_and_export
+;; CHECK-NEXT:  (local $1 externref)
+;; CHECK-NEXT:  (local $2 i32)
+;; CHECK-NEXT:  (local.set $1
+;; CHECK-NEXT:   (global.get $suspender)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (call $import$import_and_export
+;; CHECK-NEXT:    (global.get $suspender)
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (global.set $suspender
+;; CHECK-NEXT:   (local.get $1)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (local.get $2)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $import_void_return (param $0 i32)
+;; CHECK-NEXT:  (local $1 externref)
+;; CHECK-NEXT:  (local.set $1
+;; CHECK-NEXT:   (global.get $suspender)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import$import_void_return
 ;; CHECK-NEXT:   (global.get $suspender)
 ;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (global.set $suspender
+;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

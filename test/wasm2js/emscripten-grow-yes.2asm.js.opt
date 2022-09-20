@@ -1,4 +1,4 @@
-function instantiate(asmLibraryArg) {
+function instantiate(info) {
   var bufferView;
   var base64ReverseLookup = new Uint8Array(123/*'z'+1*/);
   for (var i = 25; i >= 0; --i) {
@@ -23,7 +23,8 @@ function instantiate(asmLibraryArg) {
 function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
 }
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var memory = env.memory;
  var buffer = memory.buffer;
  memory.grow = __wasm_memory_grow;
@@ -45,7 +46,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  // EMSCRIPTEN_START_FUNCS
@@ -101,5 +101,5 @@ function asmFunc(env) {
  };
 }
 
-  return asmFunc(asmLibraryArg);
+  return asmFunc(info);
 }

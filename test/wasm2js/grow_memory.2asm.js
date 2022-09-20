@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -19,7 +20,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0(var$0) {
@@ -73,8 +73,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var memory = retasmFunc.memory;
 export var grow = retasmFunc.grow;
 export var current = retasmFunc.current;

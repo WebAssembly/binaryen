@@ -11,20 +11,22 @@
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
 
-  ;; CHECK:      (func $used
+  ;; CHECK:      (func $used (result i32)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (call $call.without.effects
   ;; CHECK-NEXT:    (ref.func $i)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $i32)
   ;; CHECK-NEXT: )
-  (func $used
+  (func $used (result i32)
     (local $i32 i32)
     ;; The result is used (by the local.set), so we cannot do anything here.
     (local.set $i32
       (call $call.without.effects (ref.func $i))
     )
+    (local.get $i32)
   )
 
   ;; CHECK:      (func $unused
@@ -47,13 +49,14 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fj-side-effects
+  ;; CHECK:      (func $unused-fj-side-effects (result f32)
   ;; CHECK-NEXT:  (local $f32 f32)
   ;; CHECK-NEXT:  (local.set $f32
   ;; CHECK-NEXT:   (f32.const 2.718280076980591)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $f32)
   ;; CHECK-NEXT: )
-  (func $unused-fj-side-effects
+  (func $unused-fj-side-effects (result f32)
     (local $f32 f32)
     ;; As above, but side effects in the param. We must keep the params around
     ;; and drop them.
@@ -65,6 +68,7 @@
         (ref.func $fj)
       )
     )
+    (local.get $f32)
   )
 
   ;; CHECK:      (func $unused-unreachable

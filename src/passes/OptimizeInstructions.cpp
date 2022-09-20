@@ -3508,20 +3508,6 @@ private:
       }
     }
     {
-      double value;
-      if (matches(curr, binary(Sub, any(), fval(&value))) && value == 0.0) {
-        // x - (-0.0)   ==>   x + 0.0
-        if (std::signbit(value)) {
-          curr->op = Abstract::getBinary(type, Add);
-          right->value = right->value.neg();
-          return curr;
-        } else if (fastMath) {
-          // x - 0.0   ==>   x
-          return curr->left;
-        }
-      }
-    }
-    {
       // x * 2.0  ==>  x + x
       // but we apply this only for simple expressions like
       // local.get and global.get for avoid using extra local
@@ -4757,6 +4743,11 @@ private:
       return true;
     }
     switch (binary->op) {
+      case SubFloat32:
+      case SubFloat64: {
+        // Should apply  x - C  ->  x + (-C)
+        return binary->right->is<Const>();
+      }
       case AddFloat32:
       case MulFloat32:
       case AddFloat64:
