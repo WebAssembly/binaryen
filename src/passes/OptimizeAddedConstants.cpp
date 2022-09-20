@@ -131,7 +131,7 @@ private:
         uint64_t offset = curr->offset;
 
         uint64_t max = std::numeric_limits<uint64_t>::max();
-        bool overflow = (base > max - offset) || (offset > max - base);
+        bool overflow = (base > max - offset);
         if (!overflow) {
           c->value = c->value.add(Literal(offset));
           curr->offset = 0;
