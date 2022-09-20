@@ -155,9 +155,33 @@ private:
       params.push_back(param);
       ++i;
     }
-
+    auto* block = builder.makeBlock();
+    // Store the suspender so it can be restored after the call in case it is
+    // modified by another entry into a Wasm export.
+    auto supsenderCopyIndex = Builder::addVar(stub.get(), externref);
+    // If there's a return value we need to store it so it can be returned
+    // after restoring the suspender.
+    std::optional<Index> returnIndex;
+    if (stub->getResults().isConcrete()) {
+      returnIndex = Builder::addVar(stub.get(), stub->getResults());
+    }
+    block->list.push_back(builder.makeLocalSet(
+      supsenderCopyIndex, builder.makeGlobalGet(suspender, externref)));
+    if (returnIndex) {
+      block->list.push_back(builder.makeLocalSet(*returnIndex, call));
+    } else {
+      block->list.push_back(call);
+    }
+    // Restore the suspender.
+    block->list.push_back(builder.makeGlobalSet(
+      suspender, builder.makeLocalGet(supsenderCopyIndex, externref)));
+    if (returnIndex) {
+      block->list.push_back(
+        builder.makeLocalGet(*returnIndex, stub->getResults()));
+    }
+    block->finalize();
     call->type = im->getResults();
-    stub->body = call;
+    stub->body = block;
     wrapperIm->type = Signature(Type(params), call->type);
 
     module->removeFunction(im->name);

@@ -1,5 +1,9 @@
 
-function asmFunc(env) {
+  var bufferView;
+function wasm2js_trap() { throw new Error('abort'); }
+
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);
@@ -20,17 +24,17 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var global$0 = -44;
  function $0() {
   if ((global$0 >>> 0) / ((HEAP32[0 >> 2] | 0) >>> 0) | 0) {
-   abort()
+   wasm2js_trap()
   }
   return 1 | 0;
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -41,7 +45,7 @@ function asmFunc(env) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
+var retasmFunc = asmFunc({
     memory: { buffer : memasmFunc }
-  });
+});
 export var foo = retasmFunc.foo;

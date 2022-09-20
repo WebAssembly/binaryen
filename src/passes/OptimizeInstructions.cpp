@@ -414,6 +414,31 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x + y   ==>   y - x
+        //   where  x, y  are floating points
+        Expression* x;
+        if (matches(curr, binary(Add, unary(Neg, any(&x)), any()))) {
+          curr->op = Abstract::getBinary(curr->type, Sub);
+          curr->left = x;
+          std::swap(curr->left, curr->right);
+          return replaceCurrent(curr);
+        }
+      }
+      {
+        // x + (-y)   ==>   x - y
+        // x - (-y)   ==>   x + y
+        //   where  x, y  are floating points
+        Expression* y;
+        if (matches(curr, binary(Add, any(), unary(Neg, any(&y)))) ||
+            matches(curr, binary(Sub, any(), unary(Neg, any(&y))))) {
+          curr->op = Abstract::getBinary(
+            curr->type,
+            curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
+          curr->right = y;
+          return replaceCurrent(curr);
+        }
+      }
+      {
         // -x * -y   ==>   x * y
         //   where  x, y  are integers
         Binary* bin;
@@ -1474,6 +1499,11 @@ struct OptimizeInstructions
       curr, *getModule(), getPassOptions(), result);
   }
 
+  Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
+    auto* result = Builder(*getModule()).makeConst(value);
+    return getDroppedChildrenAndAppend(curr, result);
+  }
+
   void visitRefEq(RefEq* curr) {
     // The types may prove that the same reference cannot appear on both sides.
     auto leftType = curr->left->type;
@@ -1492,9 +1522,8 @@ struct OptimizeInstructions
       // possibly appear on both sides is null, but one of the two is non-
       // nullable, which rules that out. So there is no way that the same
       // reference can appear on both sides.
-      auto* result =
-        Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, Literal::makeZero(Type::i32)));
       return;
     }
 
@@ -1513,9 +1542,8 @@ struct OptimizeInstructions
     // cases yet; the foldable case we do handle is the common one of the first
     // child being a tee and the second a get of that tee. TODO)
     if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
-      auto* result =
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, result));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, Literal::makeOne(Type::i32)));
       return;
     }
 
@@ -3503,20 +3531,6 @@ private:
       }
     }
     {
-      double value;
-      if (matches(curr, binary(Sub, any(), fval(&value))) && value == 0.0) {
-        // x - (-0.0)   ==>   x + 0.0
-        if (std::signbit(value)) {
-          curr->op = Abstract::getBinary(type, Add);
-          right->value = right->value.neg();
-          return curr;
-        } else if (fastMath) {
-          // x - 0.0   ==>   x
-          return curr->left;
-        }
-      }
-    }
-    {
       // x * 2.0  ==>  x + x
       // but we apply this only for simple expressions like
       // local.get and global.get for avoid using extra local
@@ -3563,36 +3577,6 @@ private:
         matches(curr, binary(DivU, any(&left), constant(1)))) {
       if (curr->type.isInteger() || fastMath) {
         return left;
-      }
-    }
-    // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
-    // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
-    // And similarly for other relational operations on integers.
-    if (curr->isRelational()) {
-      Binary* add;
-      Const* c1;
-      Const* c2;
-      if ((matches(curr,
-                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-           matches(curr,
-                   binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
-          !canOverflow(add)) {
-        if (c2->value.geU(c1->value).getInteger()) {
-          // This is the first line above, we turn into x > (C2-C1)
-          c2->value = c2->value.sub(c1->value);
-          curr->left = add->left;
-          return curr;
-        }
-        // This is the second line above, we turn into x + (C1-C2) > 0. Other
-        // optimizations can often kick in later. However, we must rule out the
-        // case where C2 is already 0 (as then we would not actually change
-        // anything, and we could infinite loop).
-        auto zero = Literal::makeZero(c2->type);
-        if (c2->value != zero) {
-          c1->value = c1->value.sub(c2->value);
-          c2->value = zero;
-          return curr;
-        }
       }
     }
     {
@@ -3914,6 +3898,9 @@ private:
 
   // TODO: templatize on type?
   Expression* optimizeRelational(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
     auto type = curr->right->type;
     if (curr->left->type.isInteger()) {
       if (curr->op == Abstract::getBinary(type, Abstract::Eq) ||
@@ -3947,9 +3934,6 @@ private:
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
       {
-        using namespace Abstract;
-        using namespace Match;
-
         Binary* inner;
         // unsigned(x - y) > 0    =>   x != y
         if (matches(curr,
@@ -3978,6 +3962,113 @@ private:
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
+        }
+      }
+
+      // x + C1 > C2   ==>  x > (C2-C1)      if no overflowing, C2 >= C1
+      // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
+      // And similarly for other relational operations on integers with a "+"
+      // on the left.
+      {
+        Binary* add;
+        Const* c1;
+        Const* c2;
+        if ((matches(curr,
+                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
+             matches(curr,
+                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+            !canOverflow(add)) {
+          if (c2->value.geU(c1->value).getInteger()) {
+            // This is the first line above, we turn into x > (C2-C1)
+            c2->value = c2->value.sub(c1->value);
+            curr->left = add->left;
+            return curr;
+          }
+          // This is the second line above, we turn into x + (C1-C2) > 0. Other
+          // optimizations can often kick in later. However, we must rule out
+          // the case where C2 is already 0 (as then we would not actually
+          // change anything, and we could infinite loop).
+          auto zero = Literal::makeZero(c2->type);
+          if (c2->value != zero) {
+            c1->value = c1->value.sub(c2->value);
+            c2->value = zero;
+            return curr;
+          }
+        }
+      }
+
+      // Comparisons can sometimes be simplified depending on the number of
+      // bits, e.g.  (unsigned)x > y  must be true if x has strictly more bits.
+      // A common case is a constant on the right, e.g. (x & 255) < 256 must be
+      // true.
+      // TODO: use getMinBits in more places, see ideas in
+      //       https://github.com/WebAssembly/binaryen/issues/2898
+      {
+        // Check if there is a nontrivial amount of bits on the left, which may
+        // provide enough to optimize.
+        auto leftMaxBits = Bits::getMaxBits(curr->left, this);
+        auto type = curr->left->type;
+        if (leftMaxBits < getBitsForType(type)) {
+          using namespace Abstract;
+          auto rightMinBits = Bits::getMinBits(curr->right);
+          auto rightIsNegative = rightMinBits == getBitsForType(type);
+          if (leftMaxBits < rightMinBits) {
+            // There are not enough bits on the left for it to be equal to the
+            // right, making various comparisons obviously false:
+            //             x == y
+            //   (unsigned)x >  y
+            //   (unsigned)x >= y
+            // and the same for signed, if y does not have the sign bit set
+            // (in that case, the comparison is effectively unsigned).
+            //
+            // TODO: In addition to leftMaxBits < rightMinBits, we could
+            //       handle the reverse, and also special cases like all bits
+            //       being 1 on the right, things like (x & 255) <= 255  ->  1
+            if (curr->op == Abstract::getBinary(type, Eq) ||
+                curr->op == Abstract::getBinary(type, GtU) ||
+                curr->op == Abstract::getBinary(type, GeU) ||
+                (!rightIsNegative &&
+                 (curr->op == Abstract::getBinary(type, GtS) ||
+                  curr->op == Abstract::getBinary(type, GeS)))) {
+              return getDroppedChildrenAndAppend(curr,
+                                                 Literal::makeZero(Type::i32));
+            }
+
+            // And some are obviously true:
+            //             x != y
+            //   (unsigned)x <  y
+            //   (unsigned)x <= y
+            // and likewise for signed, as above.
+            if (curr->op == Abstract::getBinary(type, Ne) ||
+                curr->op == Abstract::getBinary(type, LtU) ||
+                curr->op == Abstract::getBinary(type, LeU) ||
+                (!rightIsNegative &&
+                 (curr->op == Abstract::getBinary(type, LtS) ||
+                  curr->op == Abstract::getBinary(type, LeS)))) {
+              return getDroppedChildrenAndAppend(curr,
+                                                 Literal::makeOne(Type::i32));
+            }
+
+            // For truly signed comparisons, where y's sign bit is set, we can
+            // also infer some things, since we know y is signed but x is not
+            // (since x does not have enough bits for the sign bit to be set).
+            if (rightIsNegative) {
+              //   (signed, non-negative)x >  (negative)y   =>   1
+              //   (signed, non-negative)x >= (negative)y   =>   1
+              if (curr->op == Abstract::getBinary(type, GtS) ||
+                  curr->op == Abstract::getBinary(type, GeS)) {
+                return getDroppedChildrenAndAppend(curr,
+                                                   Literal::makeOne(Type::i32));
+              }
+              //   (signed, non-negative)x <  (negative)y   =>   0
+              //   (signed, non-negative)x <= (negative)y   =>   0
+              if (curr->op == Abstract::getBinary(type, LtS) ||
+                  curr->op == Abstract::getBinary(type, LeS)) {
+                return getDroppedChildrenAndAppend(
+                  curr, Literal::makeZero(Type::i32));
+              }
+            }
+          }
         }
       }
     }
@@ -4646,6 +4737,11 @@ private:
       return true;
     }
     switch (binary->op) {
+      case SubFloat32:
+      case SubFloat64: {
+        // Should apply  x - C  ->  x + (-C)
+        return binary->right->is<Const>();
+      }
       case AddFloat32:
       case MulFloat32:
       case AddFloat64:

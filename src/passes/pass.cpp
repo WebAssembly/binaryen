@@ -128,6 +128,9 @@ void PassRegistry::registerPasses() {
                createDeNaNPass);
   registerPass(
     "directize", "turns indirect calls into direct ones", createDirectizePass);
+  registerPass("discard-global-effects",
+               "discards global effect info",
+               createDiscardGlobalEffectsPass);
   registerPass(
     "dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
   registerPass("dwarfdump",
@@ -165,6 +168,9 @@ void PassRegistry::registerPasses() {
     "functions with i64 in their signature (which cannot be invoked "
     "via the wasm table without JavaScript BigInt support).",
     createGenerateI64DynCallsPass);
+  registerPass("generate-global-effects",
+               "generate global effect info (helps later passes)",
+               createGenerateGlobalEffectsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
@@ -581,6 +587,10 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("cfp");
     addIfNoDWARFIssues("gsi");
   }
+  // TODO: generate-global-effects here, right before function passes, then
+  //       discard in addDefaultGlobalOptimizationPostPasses? the benefit seems
+  //       quite minor so far, except perhaps when using call.without.effects
+  //       which can lead to more opportunities for global effects to matter.
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {

@@ -30,7 +30,8 @@ import { setTempRet0 } from 'env';
     f32ScratchView[2] = value;
   }
       
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -41,7 +42,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var setTempRet0 = env.setTempRet0;
@@ -619,9 +619,9 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({
+    setTempRet0,
+});
 export var i64_extend_s_i32 = retasmFunc.i64_extend_s_i32;
 export var i64_extend_u_i32 = retasmFunc.i64_extend_u_i32;
 export var i32_wrap_i64 = retasmFunc.i32_wrap_i64;

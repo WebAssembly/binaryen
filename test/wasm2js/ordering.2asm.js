@@ -1,6 +1,7 @@
 import { table } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var FUNCTION_TABLE = env.table;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
@@ -12,7 +13,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function main() {
@@ -54,7 +54,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    table
-  });
+var retasmFunc = asmFunc({
+    table,
+});
 export var main = retasmFunc.main;
