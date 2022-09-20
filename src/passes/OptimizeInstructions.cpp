@@ -491,15 +491,13 @@ struct OptimizeInstructions
         // TODO: Use getDroppedChildrenAndAppend() here, so we can optimize even
         //       if pure.
         Const* c;
-        if (matches(curr, binary(GeU, pure(), ival(&c))) &&
-            c->value.isZero()) {
+        if (matches(curr, binary(GeU, pure(), ival(&c))) && c->value.isZero()) {
           c->value = Literal::makeOne(Type::i32);
           c->type = Type::i32;
           return replaceCurrent(c);
         }
         // unsigned(x) < 0   =>   i32(0)
-        if (matches(curr, binary(LtU, pure(), ival(&c))) &&
-            c->value.isZero()) {
+        if (matches(curr, binary(LtU, pure(), ival(&c))) && c->value.isZero()) {
           c->value = Literal::makeZero(Type::i32);
           c->type = Type::i32;
           return replaceCurrent(c);
