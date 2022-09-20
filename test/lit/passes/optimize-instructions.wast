@@ -10590,7 +10590,7 @@
     (drop (f32.sub (f32.neg (local.get $a)) (local.get $b)))
     (drop (f64.sub (f64.neg (local.get $x)) (local.get $y)))
   )
-  ;; CHECK:      (func $simplify-add-sub-with-neg-float-zeros (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  ;; CHECK:      (func $simplify-add-sub-with-neg-float-zeros (param $a f32) (param $b f32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.add
   ;; CHECK-NEXT:    (local.get $b)
@@ -10664,7 +10664,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $simplify-add-sub-with-neg-float-zeros (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  (func $simplify-add-sub-with-neg-float-zeros (param $a f32) (param $b f32)
     ;; edge cases for -x + y
     (drop (f32.add (f32.neg (f32.const 0)) (local.get $b)))
     (drop (f32.add (f32.neg (local.get $a)) (f32.const 0)))
@@ -10681,7 +10681,7 @@
     (drop (f32.sub (f32.const -0) (f32.neg (local.get $b))))
     (drop (f32.sub (local.get $a) (f32.neg (f32.const -0))))
   )
-  ;; CHECK:      (func $simplify-add-sub-with-neg-float-nans (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  ;; CHECK:      (func $simplify-add-sub-with-neg-float-nans (param $a f32) (param $b f32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
@@ -10737,7 +10737,7 @@
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $simplify-add-sub-with-neg-float-nans (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  (func $simplify-add-sub-with-neg-float-nans (param $a f32) (param $b f32)
     ;; edge cases for -x + y
     (drop (f32.add (f32.neg (f32.const nan)) (local.get $b)))
     (drop (f32.add (f32.neg (local.get $a)) (f32.const nan)))
@@ -10754,7 +10754,7 @@
     (drop (f32.sub (f32.const -nan) (f32.neg (local.get $b))))
     (drop (f32.sub (local.get $a) (f32.neg (f32.const -nan))))
   )
-  ;; CHECK:      (func $simplify-add-sub-with-neg-float-infs (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  ;; CHECK:      (func $simplify-add-sub-with-neg-float-infs (param $a f32) (param $b f32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.add
   ;; CHECK-NEXT:    (local.get $b)
@@ -10828,7 +10828,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $simplify-add-sub-with-neg-float-infs (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  (func $simplify-add-sub-with-neg-float-infs (param $a f32) (param $b f32)
     ;; edge cases for -x + y
     (drop (f32.add (f32.neg (f32.const inf)) (local.get $b)))
     (drop (f32.add (f32.neg (local.get $a)) (f32.const inf)))
@@ -10845,7 +10845,7 @@
     (drop (f32.sub (f32.const -inf) (f32.neg (local.get $b))))
     (drop (f32.sub (local.get $a) (f32.neg (f32.const -inf))))
   )
-  ;; CHECK:      (func $simplify-add-sub-with-neg-float-mins (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  ;; CHECK:      (func $simplify-add-sub-with-neg-float-mins (param $a f32) (param $b f32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.add
   ;; CHECK-NEXT:    (local.get $b)
@@ -10919,7 +10919,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $simplify-add-sub-with-neg-float-mins (param $a f32) (param $b f32) (param $x f64) (param $y f64)
+  (func $simplify-add-sub-with-neg-float-mins (param $a f32) (param $b f32)
     ;; edge cases for -x + y
     (drop (f32.add (f32.neg (f32.const 1.401298464324817e-45)) (local.get $b)))  ;; +min value
     (drop (f32.add (f32.neg (local.get $a)) (f32.const 1.401298464324817e-45)))  ;; +min value
