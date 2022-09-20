@@ -4031,23 +4031,23 @@ private:
             auto moveShift = [&]() {
               // Helper function to remove the shift on the left and add a shift
               // onto the constant on the right,
-              // (x >> C1) ? C2   =>  x ? (C2 << C1)
-              binary->left = shift->left;
+              //   (x >> C1) ? C2   =>  x ? (C2 << C1)
+              curr->left = shift->left;
               c2->value = c2->value.shl(c1->value);
             };
-            auto orLowerBits [&]() {
-              c2->value = c->value.or_(Literal::fromInt64(Bits::lowBitMask64(shifts), type));
+            auto orLowerBits = [&]() {
+              c2->value = c2->value.or_(Literal::makeFromInt64(Bits::lowBitMask64(shifts), type));
             };
-            if (binary->op == Abstract::getBinary(type, LtS)) {
+            if (curr->op == Abstract::getBinary(type, LtS)) {
               // Explained above.
               moveShift();
               return curr;
-            } else if (binary->op == Abstract::getBinary(type, LeS)) {
+            } else if (curr->op == Abstract::getBinary(type, LeS)) {
               // Explained above.
               moveShift();
               orLowerBits();
               return curr;
-            } if (binary->op == Abstract::getBinary(type, GtS)) {
+            } if (curr->op == Abstract::getBinary(type, GtS)) {
               // E.g.
               //   signed(x & -4) >  (100 << 2) = 400
               //   signed(x & -4) >= 401
@@ -4056,7 +4056,7 @@ private:
               moveShift();
               orLowerBits();
               return curr;
-            } else if (binary->op == Abstract::getBinary(type, LeS)) {
+            } else if (curr->op == Abstract::getBinary(type, LeS)) {
               // E.g.
               //   signed(x & -4) >= (100 << 2) = 400
               // x & -4 is rounded down to a multiple of 4, so this is only true
