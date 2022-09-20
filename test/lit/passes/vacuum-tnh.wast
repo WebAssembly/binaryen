@@ -139,7 +139,7 @@
   ;; NO_TNH-NEXT: )
   (func $return-nothing)
 
-  ;; YESTNH:      (func $partial (param $x (ref $struct))
+  ;; YESTNH:      (func $partial (param $x (ref $struct)) (result (ref null $struct))
   ;; YESTNH-NEXT:  (local $y (ref null $struct))
   ;; YESTNH-NEXT:  (local.set $y
   ;; YESTNH-NEXT:   (local.get $x)
@@ -147,8 +147,9 @@
   ;; YESTNH-NEXT:  (local.set $y
   ;; YESTNH-NEXT:   (local.get $x)
   ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (local.get $y)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $partial (param $x (ref $struct))
+  ;; NO_TNH:      (func $partial (param $x (ref $struct)) (result (ref null $struct))
   ;; NO_TNH-NEXT:  (local $y (ref null $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.get $struct 0
@@ -164,8 +165,9 @@
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (local.get $y)
   ;; NO_TNH-NEXT: )
-  (func $partial (param $x (ref $struct))
+  (func $partial (param $x (ref $struct)) (result (ref null $struct))
     (local $y (ref null $struct))
     ;; The struct.get's side effect can be ignored due to tnh, and the value is
     ;; dropped anyhow, so we can remove it. We cannot remove the local.tee
@@ -188,6 +190,7 @@
         )
       )
     )
+    (local.get $y)
   )
 
   ;; YESTNH:      (func $toplevel

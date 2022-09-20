@@ -70,9 +70,6 @@ function asmFunc(importObject) {
   $3_1 = $3_1 | 0;
   $4_1 = $4_1 | 0;
   var i64toi32_i32$0 = 0, $5_1 = Math_fround(0), $6$hi = 0, $6_1 = 0, $7$hi = 0, $7_1 = 0, $8_1 = 0.0;
-  i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = $6$hi;
-  i64toi32_i32$0 = $7$hi;
  }
  
  function $9($0_1, $0$hi, $1_1, $2_1, $3_1, $4_1) {

@@ -390,7 +390,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       ExpressionManipulator::nop(curr->body);
     }
     if (curr->getResults() == Type::none &&
-        !EffectAnalyzer(getPassOptions(), *getModule(), curr->body)
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
