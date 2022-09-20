@@ -3967,7 +3967,8 @@ private:
         }
       }
 
-      // (x >> C1) ? C2   ->   x ? (C2 << C1)       if no overflowing
+      // (x >> C1) ? C2   ->   x ? (C2 << C1)       if no overflow in <<
+      // This may require an adjustment to the constant on the right, see below.
       {
         Binary* shift;
         Const* c1;
@@ -3975,8 +3976,11 @@ private:
         if (matches(
               curr,
               binary(binary(&shift, ShrS, any(), ival(&c1)), ival(&c2)))) {
-          // Construct a reversed shift and see if it can overflow or change the
-          // sign.
+          // Consider C2 << C1 and see if it can overflow or even change the
+          // sign. If it can't, then we know that removing the shift from the
+          // left side does not change the sign there (it's a signed-shift-
+          // right) and since neither does the left change sign, we can move the
+          // shift to the right side without altering the result.
           auto shifts = Bits::getEffectiveShifts(c1);
           auto c2MaxBits = Bits::getMaxBits(c2, this);
           auto typeMaxBits = getBitsForType(type);
@@ -3984,11 +3988,15 @@ private:
             // Great, the reversed shift is in a range that does not cause any
             // problems, so we can in principle try to reverse the operation
             // by shifting both sides to the left, which will "undo" the
-            // existing shift on x. However, an adjustment is needed since the
-            // original Shr is not a linear operation - it clears the lower
-            // That is, after the new shift, we have
+            // existing shift on x, causing us to only have a shift on the
+            // right:
             //
             //   ((x >> C1) << C1) ? (C2 << C1)
+            //
+            // However, an adjustment may be needed since the original Shr is
+            // not a linear operation - it clears the lower bits. That is, after
+            // the new shift, we have:
+            //
             //   (x & mask)        ? (C2 << C1)
             //
             // Note that we don't want to optimize to this pattern, as it is
