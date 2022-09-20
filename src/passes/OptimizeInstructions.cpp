@@ -4010,13 +4010,13 @@ private:
             // x down, and comparing it to a number that is similarly rounded
             // (since it is the result of a left shift). As a result, an
             // adjustment may be needed as a larger or smaller x may be
-            // possible, e.g.:
+            // possible, e.g., consider for < :
             //
             //   signed(x & -4) < (100 << 2) = 400
             //
             // Consider x = 400. It has no lower bits to mask off, and 400 < 400
-            // which is false. For anything less than 400 the mask can only
-            // decrease x, so
+            // which is false. For anything less than 400 the mask will round
+            // x down to something less than 400, so this will be true:
             //
             //   (x & -4) < x < 400
             //
