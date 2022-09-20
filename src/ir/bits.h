@@ -34,6 +34,14 @@ inline int32_t lowBitMask(int32_t bits) {
   return ret >> (32 - bits);
 }
 
+inline int64_t lowBitMask64(int64_t bits) {
+  uint64_t ret = -1;
+  if (bits >= 64) {
+    return ret;
+  }
+  return ret >> (64 - bits);
+}
+
 // checks if the input is a mask of lower bits, i.e., all 1s up to some high
 // bit, and all zeros from there. returns the number of masked bits, or 0 if
 // this is not such a mask

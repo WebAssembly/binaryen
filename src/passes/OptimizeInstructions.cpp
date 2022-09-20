@@ -3967,40 +3967,103 @@ private:
         }
       }
 
-      // (x >>> C1) ? C2   ->   x ? (C2 << C1) + A      if no overflowing
-      // (see details about the adjustment A below; it depends on the op)
+      // (x >> C1) ? C2   ->   x ? (C2 << C1)       if no overflowing
       {
         Binary* shift;
         Const* c1;
         Const* c2;
         if (matches(curr,
-                     binary(binary(&shift, ShrU, any(), ival(&c1)), ival(&c2)))) {
-          // Construct a reversed shift and see if it would overflow.
-          Binary reversedShift;
-          reversedShift.op = Abstract::getBinary(c1->type, Shl);
-          reversedShift.left = c2;
-          reversedShift.right = c1;
-          if (!canOverflow(&reversedShift)) {
-            // Great, the reversed shift would not overflow, so we can in
-            // principle try to reverse the operation here. However, an
-            // adjustment is needed since the original ShrU is not a linear
-            // operation - it clears the lower bits. In particular, consider
+                     binary(binary(&shift, ShrS, any(), ival(&c1)), ival(&c2)))) {
+          // Construct a reversed shift and see if it can overflow or change the
+          // sign.
+          auto shifts = Bits::getEffectiveShifts(c1);
+          auto c2MaxBits = Bits::getMaxBits(c2, this);
+          auto typeMaxBits = getBitsForType(type);
+          if (c2MaxBits + shifts < typeMaxBits) {
+            // Great, the reversed shift is in a range that does not cause any
+            // problems, so we can in principle try to reverse the operation
+            // by shifting both sides to the left, which will "undo" the
+            // existing shift on x. However, an adjustment is needed since the
+            // original Shr is not a linear operation - it clears the lower
+            // That is, after the new shift, we have
             //
-            //   (x >>> C1) < C2
+            //   ((x >> C1) << C1) ? (C2 << C1)
+            //   (x & mask)        ? (C2 << C1)
             //
-            // If  x < (C2 << C1)  then the original equation is true, but also,
-            // x can be even higher and it will still be true, since we can fill
-            // in those lower bits that would have been clears, ending up with
+            // Note that we don't want to optimize to this pattern, as it is
+            // strictly larger than the original (the mask is a larger constant
+            // than the shift, and the new constant on the right is larger). So
+            // we only want to optimize here if we can reduce this further,
+            // which we can in some cases.
             //
-            //   x < (C2 << C1) + (1 << C1) - 1
+            // To implement the necessary adjustment, consider that the mask
+            // makes the lower bits not matter. In other words, we are rounding
+            // x down, and comparing it to a number that is similarly rounded
+            // (since it is the result of a left shift). As a result, an
+            // adjustment may be needed as a larger or smaller x may be
+            // possible, e.g.:
             //
-            auto lowBits = Literal::makeFromInt64(1, c1->type);
-            lowBits = lowBits.shl(c1->value);
-            lowBits = loBits.sub(Literal::makeFromInt64(1, c1->type));
-            c2->value = c2->value.shl(c1->value);
-            c2->value = c2->value.add(c1->value);
-            curr->left = shift->left;
-            return curr;
+            //   signed(x & -4) < (100 << 2) = 400
+            //
+            // Consider x = 400. It has no lower bits to mask off, and 400 < 400
+            // which is false. For anything less than 400 the mask can only
+            // decrease x, so
+            //
+            //   (x & -4) < x < 400
+            //
+            // Thus we can optimize this to x < 400, and no special adjustment
+            // is necessary. However, consider <= instead of <:
+            //
+            //   signed(x & -4) <= 400
+            //
+            // x = 400 results in 400 <= 400 which is true. But x can also be
+            // larger since the bits would get masked off. That is, for x in
+            // [401, 403], we get (x & -4) == 400. Only 404 would be too large.
+            // And so we can optimize to x <= 403, basically adding the bits to
+            // the constant on the right.
+            //
+            // Note that we cannot optimize == or != here, as e.g.
+            //
+            //   (x & -4) == 400
+            //
+            // is true for all of [400, 403]. Only when we have a range can we
+            // extend the range with an adjustment, basically.
+            auto moveShift = [&]() {
+              // Helper function to remove the shift on the left and add a shift
+              // onto the constant on the right,
+              // (x >> C1) ? C2   =>  x ? (C2 << C1)
+              binary->left = shift->left;
+              c2->value = c2->value.shl(c1->value);
+            };
+            auto orLowerBits [&]() {
+              c2->value = c->value.or_(Literal::fromInt64(Bits::lowBitMask64(shifts), type));
+            };
+            if (binary->op == Abstract::getBinary(type, LtS)) {
+              // Explained above.
+              moveShift();
+              return curr;
+            } else if (binary->op == Abstract::getBinary(type, LeS)) {
+              // Explained above.
+              moveShift();
+              orLowerBits();
+              return curr;
+            } if (binary->op == Abstract::getBinary(type, GtS)) {
+              // E.g.
+              //   signed(x & -4) >  (100 << 2) = 400
+              //   signed(x & -4) >= 401
+              // x & -4 is rounded down to a multiple of 4, so this is only true
+              // when x > 403.
+              moveShift();
+              orLowerBits();
+              return curr;
+            } else if (binary->op == Abstract::getBinary(type, LeS)) {
+              // E.g.
+              //   signed(x & -4) >= (100 << 2) = 400
+              // x & -4 is rounded down to a multiple of 4, so this is only true
+              // when x >= 400, and no adjustment is needed.
+              moveShift();
+              return curr;
+            }
           }
         }
       }
