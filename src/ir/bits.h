@@ -109,6 +109,10 @@ inline Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {
 
 // getMaxBits() helper that has pessimistic results for the bits used in locals.
 struct DummyLocalInfoProvider {
+  Index getMinBitsForLocal(LocalGet* get) {
+    return 0;
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     if (get->type == Type::i32) {
       return 32;
@@ -438,10 +442,55 @@ Index getMaxBits(Expression* curr,
 }
 
 // As getMaxBits, but returns the minimum amount of bits.
-inline Index getMinBits(Expression* curr) {
+template<typename LocalInfoProvider = DummyLocalInfoProvider>
+inline Index getMinBits(Expression* curr,
+                        LocalInfoProvider* localInfoProvider = nullptr) {
   if (auto* c = curr->dynCast<Const>()) {
     // Constants are simple: the min and max are identical.
     return getMaxBits(c);
+  } else if (auto* binary = curr->dynCast<Binary>()) {
+    switch (binary->op) {
+      case AndInt32:
+      case AndInt64: {
+        return std::max(getMinBits(binary->left, localInfoProvider),
+                        getMinBits(binary->right, localInfoProvider));
+      }
+      case OrInt32:
+      case OrInt64:
+      case XorInt32:
+      case XorInt64: {
+        return std::min(getMinBits(binary->left, localInfoProvider),
+                        getMinBits(binary->right, localInfoProvider));
+      }
+      case ShlInt32:
+      case ShlInt64: {
+        if (auto* shifts = binary->right->dynCast<Const>()) {
+          return getMinBits(binary->left, localInfoProvider) +
+                 Bits::getEffectiveShifts(shifts);
+        }
+        break;
+      }
+      case ShrUInt32:
+      case ShrUInt64:
+      case ShrSInt32:
+      case ShrSInt64: {
+        if (auto* shift = binary->right->dynCast<Const>()) {
+          auto minBits = getMinBits(binary->left, localInfoProvider);
+          auto shifts = Index(Bits::getEffectiveShifts(shift));
+          return std::max(Index(0), minBits - shifts);
+        }
+        break;
+      }
+      default: {
+      }
+    }
+  } else if (auto* set = curr->dynCast<LocalSet>()) {
+    // a tee passes through the value
+    return getMinBits(set->value, localInfoProvider);
+  } else if (auto* get = curr->dynCast<LocalGet>()) {
+    // TODO: Should this be optional?
+    assert(localInfoProvider);
+    return localInfoProvider->getMinBitsForLocal(get);
   }
 
   // TODO: everything else
