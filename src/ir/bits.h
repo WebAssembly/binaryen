@@ -462,7 +462,7 @@ inline Index getMinBits(Expression* curr,
       case ShlInt32:
       case ShlInt64: {
         if (auto* shift = binary->right->dynCast<Const>()) {
-          Index maxBits = c->type.getByteSize() * 8;
+          Index maxBits = shift->type.getByteSize() * 8;
           Index minBits = getMinBits(binary->left, localInfoProvider);
           return std::min(maxBits, minBits + Bits::getEffectiveShifts(shift));
         }
