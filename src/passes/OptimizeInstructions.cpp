@@ -3946,7 +3946,7 @@ private:
         Const* c1;
         Const* c2;
         if (matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
+                    binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
             !canOverflow(add)) {
           if (c2->value.geU(c1->value).getInteger()) {
             // This is the first line above, we turn into x > (C2-C1)
@@ -3972,8 +3972,9 @@ private:
         Binary* shift;
         Const* c1;
         Const* c2;
-        if (matches(curr,
-                     binary(binary(&shift, ShrS, any(), ival(&c1)), ival(&c2)))) {
+        if (matches(
+              curr,
+              binary(binary(&shift, ShrS, any(), ival(&c1)), ival(&c2)))) {
           // Construct a reversed shift and see if it can overflow or change the
           // sign.
           auto shifts = Bits::getEffectiveShifts(c1);
@@ -4036,7 +4037,8 @@ private:
               c2->value = c2->value.shl(c1->value);
             };
             auto orLowerBits = [&]() {
-              c2->value = c2->value.or_(Literal::makeFromInt64(Bits::lowBitMask64(shifts), type));
+              c2->value = c2->value.or_(
+                Literal::makeFromInt64(Bits::lowBitMask64(shifts), type));
             };
             if (curr->op == Abstract::getBinary(type, LtS)) {
               // Explained above.
@@ -4047,7 +4049,8 @@ private:
               moveShift();
               orLowerBits();
               return curr;
-            } if (curr->op == Abstract::getBinary(type, GtS)) {
+            }
+            if (curr->op == Abstract::getBinary(type, GtS)) {
               // E.g.
               //   signed(x & -4) >  (100 << 2) = 400
               //   signed(x & -4) >= 401
