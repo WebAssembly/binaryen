@@ -2487,7 +2487,7 @@ void BinaryInstWriter::setScratchLocals() {
 
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
                                         size_t bytes,
-                                        uint32_t offset,
+                                        uint64_t offset,
                                         Name memory) {
   uint32_t alignmentBits = Bits::log2(alignment ? alignment : bytes);
   uint32_t memoryIdx = parent.getMemoryIndex(memory);
@@ -2500,7 +2500,13 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
   if (memoryIdx > 0) {
     o << U32LEB(memoryIdx);
   }
-  o << U32LEB(offset);
+
+  bool memory64 = parent.getModule()->getMemory(memory)->is64();
+  if (memory64) {
+    o << U64LEB(offset);
+  } else {
+    o << U32LEB(offset);
+  }
 }
 
 int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found

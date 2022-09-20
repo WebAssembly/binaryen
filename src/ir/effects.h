@@ -27,16 +27,22 @@ namespace wasm {
 
 class EffectAnalyzer {
 public:
-  EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
-                 Expression* ast = nullptr)
+  EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
       funcEffectsMap(passOptions.funcEffectsMap), module(module),
-      features(module.features) {
-    if (ast) {
-      walk(ast);
-    }
+      features(module.features) {}
+
+  EffectAnalyzer(const PassOptions& passOptions,
+                 Module& module,
+                 Expression* ast)
+    : EffectAnalyzer(passOptions, module) {
+    walk(ast);
+  }
+
+  EffectAnalyzer(const PassOptions& passOptions, Module& module, Function* func)
+    : EffectAnalyzer(passOptions, module) {
+    walk(func);
   }
 
   bool ignoreImplicitTraps;
@@ -57,6 +63,22 @@ public:
     pre();
     InternalAnalyzer(*this).visit(ast);
     post();
+  }
+
+  // Walk an entire function body. This will ignore effects that are not
+  // noticeable from the perspective of the caller, that is, effects that are
+  // only noticeable during the call, but "vanish" when the call stack is
+  // unwound.
+  void walk(Function* func) {
+    walk(func->body);
+
+    // We can ignore branching out of the function body - this can only be
+    // a return, and that is only noticeable in the function, not outside.
+    branchesOut = false;
+
+    // When the function exits, changes to locals cannot be noticed any more.
+    localsWritten.clear();
+    localsRead.clear();
   }
 
   // Core effect tracking
@@ -570,7 +592,8 @@ private:
           parent.implicitTrap = true;
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
     void visitBinary(Binary* curr) {
@@ -599,7 +622,8 @@ private:
           }
           break;
         }
-        default: {}
+        default: {
+        }
       }
     }
     void visitSelect(Select* curr) {}
@@ -761,6 +785,22 @@ private:
     void visitStringNew(StringNew* curr) {
       // traps when out of bounds in linear memory or ref is null
       parent.implicitTrap = true;
+      switch (curr->op) {
+        case StringNewUTF8:
+        case StringNewWTF8:
+        case StringNewReplace:
+        case StringNewWTF16:
+          parent.readsMemory = true;
+          break;
+        case StringNewUTF8Array:
+        case StringNewWTF8Array:
+        case StringNewReplaceArray:
+        case StringNewWTF16Array:
+          parent.readsArray = true;
+          break;
+        default: {
+        }
+      }
     }
     void visitStringConst(StringConst* curr) {}
     void visitStringMeasure(StringMeasure* curr) {
@@ -770,6 +810,20 @@ private:
     void visitStringEncode(StringEncode* curr) {
       // traps when ref is null or we write out of bounds.
       parent.implicitTrap = true;
+      switch (curr->op) {
+        case StringEncodeUTF8:
+        case StringEncodeWTF8:
+        case StringEncodeWTF16:
+          parent.writesMemory = true;
+          break;
+        case StringEncodeUTF8Array:
+        case StringEncodeWTF8Array:
+        case StringEncodeWTF16Array:
+          parent.writesArray = true;
+          break;
+        default: {
+        }
+      }
     }
     void visitStringConcat(StringConcat* curr) {
       // traps when an input is null.
