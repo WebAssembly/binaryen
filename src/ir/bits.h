@@ -109,10 +109,7 @@ inline Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {
 
 // getMaxBits() helper that has pessimistic results for the bits used in locals.
 struct DummyLocalInfoProvider {
-  Index getMinBitsForLocal(LocalGet* get) {
-    return 0;
-  }
-
+  Index getMinBitsForLocal(LocalGet* get) { return 0; }
   Index getMaxBitsForLocal(LocalGet* get) {
     if (get->type == Type::i32) {
       return 32;
