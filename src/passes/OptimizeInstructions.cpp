@@ -4067,7 +4067,7 @@ private:
               moveShift();
               orLowerBits();
               return curr;
-            } else if (curr->op == Abstract::getBinary(type, LeS)) {
+            } else if (curr->op == Abstract::getBinary(type, GeS)) {
               // E.g.
               //   signed(x & -4) >= (100 << 2) = 400
               // x & -4 is rounded down to a multiple of 4, so this is only true
