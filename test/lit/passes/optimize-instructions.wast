@@ -11355,6 +11355,79 @@
     (drop (f32.le (local.get $x) (f32.const nan:0x200000)))
     (drop (f64.le (local.get $y) (f64.const -nan)))
   )
+  ;; CHECK:      (func $lhs-is-const-nan (param $x f32) (param $y f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:    (f32.const nan:0x400000)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.copysign
+  ;; CHECK-NEXT:    (f64.const nan:0x8000000000000)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $lhs-is-const-nan (param $x f32) (param $y f64)
+    ;; nan - x   =>   nan'
+    (drop (f32.sub (f32.const nan) (local.get $x)))
+    (drop (f32.sub (f32.const nan:0x200000) (local.get $x)))
+    (drop (f64.sub (f64.const -nan) (local.get $y)))
+    ;; nan / x   =>   nan'
+    (drop (f32.div (f32.const nan) (local.get $x)))
+    (drop (f32.div (f32.const nan:0x200000) (local.get $x)))
+    (drop (f64.div (f64.const -nan) (local.get $y)))
+    ;; min(nan, x)   =>   nan'
+    (drop (f32.min (f32.const nan) (local.get $x)))
+    (drop (f32.min (f32.const nan:0x200000) (local.get $x)))
+    (drop (f64.min (f64.const -nan) (local.get $y)))
+    ;; max(nan, x)   =>   nan'
+    (drop (f32.max (f32.const nan) (local.get $x)))
+    (drop (f32.max (f32.const nan:0x200000) (local.get $x)))
+    (drop (f64.max (f64.const -nan) (local.get $y)))
+
+    ;; skips
+    ;; copysign(nan, x)   =>   skip
+    (drop (f32.copysign (f32.const nan) (local.get $x)))
+    (drop (f64.copysign (f64.const nan) (local.get $y)))
+  )
   ;; CHECK:      (func $lhs-is-neg-one (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const -1)

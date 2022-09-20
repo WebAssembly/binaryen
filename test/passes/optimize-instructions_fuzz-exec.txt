@@ -46,12 +46,7 @@
    )
   )
   (call $logf32
-   (f32.sub
-    (f32.const -nan:0x7fff82)
-    (f32.neg
-     (f32.const -nan:0x7ff622)
-    )
-   )
+   (f32.const nan:0x400000)
   )
   (call $logf32
    (f32.mul
@@ -89,12 +84,7 @@
    )
   )
   (call $logf64
-   (f64.sub
-    (f64.const -nan:0xfffffffffff82)
-    (f64.neg
-     (f64.const -nan:0xfffffffffa622)
-    )
-   )
+   (f64.const nan:0x8000000000000)
   )
   (call $logf64
    (f64.mul
