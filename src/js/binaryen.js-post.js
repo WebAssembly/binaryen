@@ -167,6 +167,7 @@ function initializeConstants() {
     'RelaxedSIMD',
     'ExtendedConst',
     'Strings',
+    'MultiMemories',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2566,7 +2567,7 @@ function wrapModule(module, self = {}) {
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false, memory64 = false, internalName) {
+  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false, memory64 = false, internalName = null) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     return preserveStack(() => {
       const segmentsLen = segments.length;
@@ -3559,6 +3560,9 @@ const thisPtr = Symbol();
 // Makes a specific expression wrapper class with the specified static members
 // while automatically deriving instance methods and accessors.
 function makeExpressionWrapper(ownStaticMembers) {
+  /**
+   * @constructor
+   */
   function SpecificExpression(expr) {
     // can call the constructor without `new`
     if (!(this instanceof SpecificExpression)) {

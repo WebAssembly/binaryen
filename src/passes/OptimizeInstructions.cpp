@@ -414,6 +414,31 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x + y   ==>   y - x
+        //   where  x, y  are floating points
+        Expression* x;
+        if (matches(curr, binary(Add, unary(Neg, any(&x)), any()))) {
+          curr->op = Abstract::getBinary(curr->type, Sub);
+          curr->left = x;
+          std::swap(curr->left, curr->right);
+          return replaceCurrent(curr);
+        }
+      }
+      {
+        // x + (-y)   ==>   x - y
+        // x - (-y)   ==>   x + y
+        //   where  x, y  are floating points
+        Expression* y;
+        if (matches(curr, binary(Add, any(), unary(Neg, any(&y)))) ||
+            matches(curr, binary(Sub, any(), unary(Neg, any(&y))))) {
+          curr->op = Abstract::getBinary(
+            curr->type,
+            curr->op == Abstract::getBinary(curr->type, Add) ? Sub : Add);
+          curr->right = y;
+          return replaceCurrent(curr);
+        }
+      }
+      {
         // -x * -y   ==>   x * y
         //   where  x, y  are integers
         Binary* bin;
