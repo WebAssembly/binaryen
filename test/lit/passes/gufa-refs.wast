@@ -2455,7 +2455,7 @@
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (export "ref.test-cone" (func $ref.test-inexact))
+  ;; CHECK:      (export "ref.test-inexact" (func $ref.test-inexact))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
