@@ -341,15 +341,18 @@ struct InfoCollector
     addRoot(curr, PossibleContents::literal(curr->value));
   }
   void visitUnary(Unary* curr) {
-    // TODO: Optimize cases like this using interpreter integration: if the
-    //       input is a Literal, we could interpret the Literal result.
+    // We could optimize cases like this using interpreter integration: if the
+    // input is a Literal, we could interpret the Literal result. However, if
+    // the input is a literal then the GUFA pass will emit a Const there, and
+    // the Precompute pass can use that later to interpret a result. That is,
+    // the input we need here, a constant, is already something GUFA can emit as
+    // an output. As a result, integrating the interpreter here would perhaps
+    // make compilation require fewer steps, but it wouldn't let us optimize
+    // more than we could before.
     addRoot(curr);
   }
   void visitBinary(Binary* curr) { addRoot(curr); }
   void visitSelect(Select* curr) {
-    // TODO: We could use the fact that both sides are executed unconditionally
-    //       while optimizing (if one arm must trap, then the Select will trap,
-    //       which is not the same as with an If).
     receiveChildValue(curr->ifTrue, curr);
     receiveChildValue(curr->ifFalse, curr);
   }
@@ -362,7 +365,11 @@ struct InfoCollector
       PossibleContents::literal(Literal::makeNull(curr->type.getHeapType())));
   }
   void visitRefIs(RefIs* curr) {
-    // TODO: optimize when possible
+    // TODO: Optimize when possible. For example, if we can infer an exact type
+    //       here which allows us to know the result then we should do so. This
+    //       is unlike the case in visitUnary, above: the information that lets
+    //       us optimize *cannot* be written into Binaryen IR (unlike a Literal)
+    //       so using it during this pass allows us to optimize new things.
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
@@ -372,11 +379,11 @@ struct InfoCollector
   }
   void visitRefEq(RefEq* curr) {
     // TODO: optimize when possible (e.g. when both sides must contain the same
-    //       global)
+    //       global, or if we infer exact types that are different then the
+    //       result must be 0)
     addRoot(curr);
   }
   void visitTableGet(TableGet* curr) {
-    // TODO: optimize when possible
     addRoot(curr);
   }
   void visitTableSet(TableSet* curr) {}
@@ -408,13 +415,13 @@ struct InfoCollector
     addRoot(curr);
   }
 
-  void visitRefTest(RefTest* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
   void visitRefCast(RefCast* curr) {
     // We will handle this in a special way later during the flow, as ref.cast
     // only allows valid values to flow through.
+    addChildParentLink(curr->ref, curr);
+  }
+  void visitRefTest(RefTest* curr) {
+    // We will handle this similarly to RefCast.
     addChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
@@ -1107,6 +1114,9 @@ private:
   // values to flow through it.
   void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
+  // The possible contents may allow us to infer an outcome, like with RefCast.
+  void flowRefTest(const PossibleContents& contents, RefTest* test);
+
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1459,6 +1469,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == child);
       flowRefCast(contents, cast);
+    } else if (auto* test = parent->dynCast<RefTest>()) {
+      assert(test->ref == child);
+      flowRefTest(contents, test);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1718,6 +1731,34 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
 #endif
     updateContents(ExpressionLocation{cast, 0}, filtered);
   }
+}
+
+void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
+  // The possible contents may prove that
+  // ...
+  PossibleContents filtered;
+  if (contents.isMany()) {
+    // Just pass the Many through.
+    filtered = contents;
+  } else {
+    // RefTest returns 1 iff the input is not null and is also a subtype.
+    bool isSubType =
+      HeapType::isSubType(contents.getType().getHeapType(), test->intendedType);
+    bool mayBeNull = contents.getType().isNullable();
+    if (!isSubType) {
+      filtered = PossibleContents::literal(Literal(int32_t(0)));
+    } else if (!mayBeNull) {
+      filtered = PossibleContents::literal(Literal(int32_t(1)));
+    } else {
+      filtered = PossibleContents::many();
+    }
+  }
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "    ref.test passing through\n";
+  filtered.dump(std::cout);
+  std::cout << '\n';
+#endif
+  updateContents(ExpressionLocation{test, 0}, filtered);
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
