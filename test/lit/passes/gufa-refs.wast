@@ -2685,7 +2685,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.test-inexact (export "ref.test-cone") (param $x i32)
+  (func $ref.test-inexact (export "ref.test-inexact") (param $x i32)
     ;; The input to the ref.test is potentially null, so we cannot infer here.
     (drop
       (ref.test_static $struct
