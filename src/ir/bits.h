@@ -464,7 +464,8 @@ inline Index getMinBits(Expression* curr,
         if (auto* shift = binary->right->dynCast<Const>()) {
           Index maxBits = shift->type.getByteSize() * 8;
           Index minBits = getMinBits(binary->left, localInfoProvider);
-          return std::min(maxBits, minBits + Bits::getEffectiveShifts(shift));
+          Index shiftBits = Bits::getEffectiveShifts(shift);
+          return std::min(maxBits, minBits + shiftBits);
         }
         break;
       }
@@ -473,8 +474,9 @@ inline Index getMinBits(Expression* curr,
       case ShrSInt32:
       case ShrSInt64: {
         if (auto* shift = binary->right->dynCast<Const>()) {
-          Index minBits = getMinBits(binary->left, localInfoProvider);
-          return std::max(Index(0), minBits - Bits::getEffectiveShifts(shift));
+          int32_t minBits = getMinBits(binary->left, localInfoProvider);
+          int32_t shiftBits = Bits::getEffectiveShifts(shift);
+          return Index(std::max(0, minBits - shiftBits));
         }
         break;
       }
