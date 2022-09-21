@@ -3598,22 +3598,10 @@ private:
   bool canOverflow(Binary* binary) {
     using namespace Abstract;
 
+    // If we know nothing about a limit on the amount of bits on either side,
+    // give up.
     auto typeMaxBits = getBitsForType(binary->type);
     auto leftMaxBits = Bits::getMaxBits(binary->left, this);
-
-    if (binary->op == getBinary(binary->type, Shl)) {
-      // The case of a constant shift is easy to reason about.
-      if (auto* c = binary->right->dynCast<Const>()) {
-        auto shifts = Bits::getEffectiveShifts(c);
-        return leftMaxBits + shifts > typeMaxBits;
-      }
-
-      // TODO: check based on rightMaxBits, though it may only help rarely
-      return true;
-    }
-
-    // If we know nothing about a limit on the amount of bits on either side,
-    // give up, as the following patterns depend on that.
     auto rightMaxBits = Bits::getMaxBits(binary->right, this);
     if (std::max(leftMaxBits, rightMaxBits) == typeMaxBits) {
       return true;
