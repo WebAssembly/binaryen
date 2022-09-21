@@ -566,8 +566,6 @@ TEST_F(NominalTest, TestExistingSuperType) {
   EXPECT_NE(B.getHeapType(), A.getHeapType());
 }
 
-#define stringify( name ) # name
-
 // Test reuse of a previously built type as supertype, where in isorecursive
 // mode canonicalization is performed.
 TEST_F(IsorecursiveTest, TestExistingSuperType) {
