@@ -81,7 +81,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
-        info.minBits = 0; // worst-case
+        info.minBits = 0;                                     // worst-case
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
         info.signExtedBits = LocalInfo::kUnknown; // we will never know anything
       } else {
