@@ -10686,34 +10686,22 @@
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
-  ;; CHECK-NEXT:    (f32.const nan:0x400000)
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
-  ;; CHECK-NEXT:    (f32.const -nan:0x400000)
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
-  ;; CHECK-NEXT:    (f32.const nan:0x400000)
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.sub
-  ;; CHECK-NEXT:    (f32.const -nan:0x400000)
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const nan:0x400000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const nan:0x400000)
