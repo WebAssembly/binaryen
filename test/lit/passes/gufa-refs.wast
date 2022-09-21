@@ -2583,6 +2583,82 @@
       )
     )
   )
+
+  (func $ref.test-exact
+    ;; This cast will fail: we know the exact type of the reference, and it is
+    ;; not a subtype.
+    (drop
+      (ref.test $substruct
+        (struct.new $struct
+          (i32.const 0)
+        )
+      )
+    )
+    ;; Casting a thing to itself must succeed.
+    (drop
+      (ref.test $substruct
+        (struct.new $substruct
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+    ;; Casting a thing to a subtype must succeed.
+    (drop
+      (ref.test $substruct
+        (struct.new $subsubstruct
+          (i32.const 3)
+          (i32.const 4)
+          (i32.const 5)
+        )
+      )
+    )
+  )
+
+  (func $ref.test-inexact (export "ref.test-cone") (param $x i32)
+    ;; The input to the ref.test is potentially null, so we cannot infer here.
+    (drop
+      (ref.test $struct
+        (select
+          (struct.new $struct
+            (i32.const 0)
+          )
+          (ref.null any)
+          (local.get $x)
+        )
+      )
+    )
+    ;; The input to the ref.test is either $struct or $substruct, both of which
+    ;; work, so here we can infer a 1.
+    (drop
+      (ref.test $struct
+        (select
+          (struct.new $struct
+            (i32.const 0)
+          )
+          (struct.new $substruct
+            (i32.const 0)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; As above, but now we test with $substruct, so one possibility fails and
+    ;; one succeeds. We cannot infer here.
+    (drop
+      (ref.test $substruct
+        (select
+          (struct.new $struct
+            (i32.const 0)
+          )
+          (struct.new $substruct
+            (i32.const 0)
+          )
+          (local.get $x)
+        )
+      )
+    )
+  )
 )
 
 (module
