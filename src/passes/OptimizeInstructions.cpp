@@ -4046,8 +4046,7 @@ private:
               moveShift();
               orLowerBits();
               return curr;
-            }
-            if (curr->op == Abstract::getBinary(type, GtS)) {
+            } else if (curr->op == Abstract::getBinary(type, GtS)) {
               // E.g.
               //   signed(x & -4) >  (100 << 2) = 400
               //   signed(x & -4) >= 401
