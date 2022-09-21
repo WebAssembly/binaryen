@@ -2618,7 +2618,7 @@
         )
       )
     )
-    ;; Casting a thing to a subtype must succeed.
+    ;; Casting a thing to a supertype must succeed.
     (drop
       (ref.test_static $substruct
         (struct.new $subsubstruct
@@ -2685,7 +2685,7 @@
       )
     )
     ;; The input to the ref.test is either $struct or $substruct, both of which
-    ;; work, so here we can infer a 1.
+    ;; work, so here we can infer a 1 - but we need a cone type for that TODO
     (drop
       (ref.test_static $struct
         (select
