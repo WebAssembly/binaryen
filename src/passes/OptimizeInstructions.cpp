@@ -3607,7 +3607,7 @@ private:
           return c;
         }
         // propagate NaN of RHS but canonicalize it
-        c->value = standardizeNaN(c->value);
+        c->value = Literal::standardizeNaN(c->value);
         return c;
       }
     }

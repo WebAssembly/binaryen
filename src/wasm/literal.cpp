@@ -217,6 +217,20 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
+Literal Literal::standardizeNaN(const Literal& input) {
+  if (!std::isnan(input.getFloat())) {
+    return input;
+  }
+  // Pick a simple canonical payload, and positive.
+  if (input.type == Type::f32) {
+    return Literal(bit_cast<float>(uint32_t(0x7fc00000u)));
+  } else if (input.type == Type::f64) {
+    return Literal(bit_cast<double>(uint64_t(0x7ff8000000000000ull)));
+  } else {
+    WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
@@ -857,20 +871,6 @@ Literal Literal::demote() const {
     return Literal(std::numeric_limits<float>::infinity());
   }
   return Literal(float(getf64()));
-}
-
-Literal standardizeNaN(const Literal& input) {
-  if (!std::isnan(input.getFloat())) {
-    return input;
-  }
-  // Pick a simple canonical payload, and positive.
-  if (input.type == Type::f32) {
-    return Literal(bit_cast<float>(uint32_t(0x7fc00000u)));
-  } else if (input.type == Type::f64) {
-    return Literal(bit_cast<double>(uint64_t(0x7ff8000000000000ull)));
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
 }
 
 Literal Literal::add(const Literal& other) const {
