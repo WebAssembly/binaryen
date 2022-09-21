@@ -726,8 +726,7 @@ struct GCData {
 // valid NaNs, and after optimization the output is still that same set, then
 // the optimization is valid. And if the interpreter picks the same NaN in both
 // cases from that identical set then nothing looks wrong to the fuzzer.
-Literal standardizeNaN(float result);
-Literal standardizeNaN(double result);
+Literal standardizeNaN(const Literal& input);
 
 } // namespace wasm
 
