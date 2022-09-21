@@ -1734,8 +1734,6 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
 }
 
 void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
-  // The possible contents may prove that
-  // ...
   PossibleContents filtered;
   if (contents.isMany()) {
     // Just pass the Many through.

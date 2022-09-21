@@ -2445,10 +2445,10 @@
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
@@ -2670,6 +2670,20 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $subsubstruct
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 7)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 8)
+  ;; CHECK-NEXT:      (i32.const 9)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.test-inexact (export "ref.test-cone") (param $x i32)
     ;; The input to the ref.test is potentially null, so we cannot infer here.
@@ -2711,6 +2725,22 @@
           (struct.new $substruct
             (i32.const 5)
             (i32.const 6)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; Two possible types, both are supertypes, so neither is a subtype, and we
+    ;; can infer a 0 - but we need more precise type info than we have TODO
+    (drop
+      (ref.test_static $subsubstruct
+        (select
+          (struct.new $struct
+            (i32.const 7)
+          )
+          (struct.new $substruct
+            (i32.const 8)
+            (i32.const 9)
           )
           (local.get $x)
         )
