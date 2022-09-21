@@ -3957,6 +3957,7 @@ private:
 
       // (x >> C1) ? C2   ->   x ? (C2 << C1)       if no overflow in <<
       // This may require an adjustment to the constant on the right, see below.
+      // TODO: unsigned shift
       {
         Binary* shift;
         Const* c1;
@@ -4009,7 +4010,7 @@ private:
             //   (x & -4) < x < 400
             //
             // Thus we can optimize this to x < 400, and no special adjustment
-            // is necessary. However, consider <= instead of <:
+            // is necessary. However, consider <= instead of < :
             //
             //   signed(x & -4) <= 400
             //
