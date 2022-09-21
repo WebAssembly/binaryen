@@ -250,10 +250,11 @@ public:
     return lit;
   }
   // Wasm has nondeterministic rules for NaN propagation in some operations. For
-  // example. f32.neg is deterministic and just flips the sign, even of a NaN, but
-  // f32.add is nondeterministic, and if one or more of the inputs is a NaN, then
+  // example. f32.neg is deterministic and just flips the sign, even of a NaN,
+  // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
+  // then
   //
-  //  * if all NaNs are canonical NaNs, the output is some arbitrary canonical NaN
+  //  * if all NaNs are canonical NaNs, the output is some arbitrary canon NaN
   //  * otherwise the output is some arbitrary arithmetic NaN
   //
   // (canonical = NaN payload is 1000..000; arithmetic: 1???..???, that is, the
@@ -267,8 +268,8 @@ public:
   // one consistently, so that it doesn't look like the optimization changed
   // something. In other words, if the valid output of an expression is a set of
   // valid NaNs, and after optimization the output is still that same set, then
-  // the optimization is valid. And if the interpreter picks the same NaN in both
-  // cases from that identical set then nothing looks wrong to the fuzzer.
+  // the optimization is valid. And if the interpreter picks the same NaN in
+  // both cases from that identical set then nothing looks wrong to the fuzzer.
   static Literal standardizeNaN(const Literal& input);
 
   Literal castToF32();
