@@ -3656,9 +3656,9 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     if (type.isBasic()) {
       continue;
     }
-    // Validate the supertype. Supertypes must precede their subtypes.
+    // Validate the supertype. Temporary supertypes must precede their subtypes.
     if (auto super = type.getSuperType()) {
-      if (!indexOfType.count(*super)) {
+      if (isTemp(*super) && !indexOfType.count(*super)) {
         return {{index, TypeBuilder::ErrorReason::ForwardSupertypeReference}};
       }
     }

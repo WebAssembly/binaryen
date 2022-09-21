@@ -535,7 +535,7 @@ TEST_F(NominalTest, TestSubTypes) {
 }
 
 // Test reuse of a previously built type as supertype.
-TEST_F(NominalTest, TestExistingSubType) {
+TEST_F(NominalTest, TestExistingSuperType) {
   // Build an initial type A
   Type A;
   {
@@ -564,4 +564,60 @@ TEST_F(NominalTest, TestExistingSubType) {
   ASSERT_TRUE(superOfB);
   EXPECT_EQ(*superOfB, A.getHeapType());
   EXPECT_NE(B.getHeapType(), A.getHeapType());
+}
+
+#define stringify( name ) # name
+
+// Test reuse of a previously built type as supertype, where in isorecursive
+// mode canonicalization is performed.
+TEST_F(IsorecursiveTest, TestExistingSuperType) {
+  // Build an initial type A1
+  Type A1;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A1 = Type(built[0], Nullable);
+  }
+
+  // Build a separate type A2 identical to A1
+  Type A2;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A2 = Type(built[0], Nullable);
+  }
+
+  // Build a type B1 <: A1 using a new builder
+  Type B1;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    builder.setSubType(0, A1.getHeapType());
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    B1 = Type(built[0], Nullable);
+  }
+
+  // Build a type B2 <: A2 using a new builder
+  Type B2;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    builder.setSubType(0, A2.getHeapType());
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    B2 = Type(built[0], Nullable);
+  }
+
+  // Test that A1 == A2 and B1 == B2
+  EXPECT_EQ(A1.getHeapType(), A2.getHeapType());
+  EXPECT_EQ(B1.getHeapType(), B2.getHeapType());
 }
