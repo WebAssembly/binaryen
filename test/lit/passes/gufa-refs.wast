@@ -2445,13 +2445,17 @@
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
 
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (export "ref.test-inexact" (func $ref.test-inexact))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -2579,6 +2583,166 @@
             (i32.const 6)
           )
           (call $import)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.test-exact (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.test-exact
+    ;; This cast will fail: we know the exact type of the reference, and it is
+    ;; not a subtype.
+    (drop
+      (ref.test_static $substruct
+        (struct.new $struct
+          (i32.const 0)
+        )
+      )
+    )
+    ;; Casting a thing to itself must succeed.
+    (drop
+      (ref.test_static $substruct
+        (struct.new $substruct
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+    ;; Casting a thing to a supertype must succeed.
+    (drop
+      (ref.test_static $substruct
+        (struct.new $subsubstruct
+          (i32.const 3)
+          (i32.const 4)
+          (i32.const 5)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.test-inexact (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $struct
+  ;; CHECK-NEXT:    (select (result anyref)
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $struct
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $substruct
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $subsubstruct
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 7)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 8)
+  ;; CHECK-NEXT:      (i32.const 9)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.test-inexact (export "ref.test-inexact") (param $x i32)
+    ;; The input to the ref.test is potentially null, so we cannot infer here.
+    (drop
+      (ref.test_static $struct
+        (select
+          (struct.new $struct
+            (i32.const 0)
+          )
+          (ref.null any)
+          (local.get $x)
+        )
+      )
+    )
+    ;; The input to the ref.test is either $struct or $substruct, both of which
+    ;; work, so here we can infer a 1 - but we need a cone type for that TODO
+    (drop
+      (ref.test_static $struct
+        (select
+          (struct.new $struct
+            (i32.const 1)
+          )
+          (struct.new $substruct
+            (i32.const 2)
+            (i32.const 3)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; As above, but now we test with $substruct, so one possibility fails and
+    ;; one succeeds. We cannot infer here.
+    (drop
+      (ref.test_static $substruct
+        (select
+          (struct.new $struct
+            (i32.const 4)
+          )
+          (struct.new $substruct
+            (i32.const 5)
+            (i32.const 6)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; Two possible types, both are supertypes, so neither is a subtype, and we
+    ;; can infer a 0 - but we need more precise type info than we have TODO
+    (drop
+      (ref.test_static $subsubstruct
+        (select
+          (struct.new $struct
+            (i32.const 7)
+          )
+          (struct.new $substruct
+            (i32.const 8)
+            (i32.const 9)
+          )
+          (local.get $x)
         )
       )
     )
