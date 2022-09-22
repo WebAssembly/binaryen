@@ -132,7 +132,8 @@ void PossibleContents::combine(const PossibleContents& other) {
   value = Many();
 }
 
-bool PossibleContents::haveIntersection(const PossibleContents& a, const PossibleContents& b) const {
+bool PossibleContents::haveIntersection(const PossibleContents& a,
+                                        const PossibleContents& b) const {
   if (a.isNone() || b.isNone()) {
     // One is the empty set, so nothing can intersect here.
     return false;
