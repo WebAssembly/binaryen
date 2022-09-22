@@ -36,7 +36,9 @@ def do_test_binaryen_js_with(which):
         f = open('a.mjs', 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
         f.write('''
-            console.warn = console.error = console.log;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+console.warn = console.error = console.log;
         ''')
         binaryen_js = open(which).read()
         f.write(binaryen_js)
@@ -82,7 +84,9 @@ def update_binaryen_js_tests():
         f = open('a.mjs', 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
         f.write('''
-            console.warn = console.error = console.log;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+console.warn = console.error = console.log;
         ''')
         f.write(open(shared.BINARYEN_JS).read())
         test_src = open(s).read()
