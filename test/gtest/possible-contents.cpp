@@ -275,6 +275,7 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertHaveIntersection(i32Zero, i32One); // TODO: this could be inferred false
 
   // Due to subtyping, an intersection might exist.
+  assertHaveIntersection(funcGlobal, funcGlobal);
   assertHaveIntersection(funcGlobal, exactFuncSignatureType);
 
   // Neither is a subtype of the other, so no intersection can exist.
