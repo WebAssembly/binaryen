@@ -2841,6 +2841,10 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   auto* target = parseExpression(s[s.size() - 1]);
 
   if (isReturn) {
+    if (!sigType.isSignature()) {
+      throw ParseException(
+        "return_call_ref type annotation should be a signature", s.line, s.col);
+    }
     return Builder(wasm).makeCallRef(
       target, operands, sigType.getSignature().results, isReturn);
   }

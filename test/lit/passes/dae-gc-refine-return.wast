@@ -637,13 +637,17 @@
   (return_call_ref $return_{} (local.get $return_{}))
  )
  ;; CHECK:      (func $tail-caller-call_ref-unreachable (result anyref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $tail-caller-call_ref-unreachable (type $none_=>_anyref) (result anyref)
- ;; NOMNL-NEXT:  (block
- ;; NOMNL-NEXT:   (unreachable)
+ ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (unreachable)
+ ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-unreachable (result anyref)
