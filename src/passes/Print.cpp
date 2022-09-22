@@ -67,7 +67,7 @@ std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
   return o;
 }
 
-static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
+std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   Name name;
   if (func) {
     name = func->getLocalNameOrDefault(index);
@@ -78,9 +78,7 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
-namespace {
-
-static bool maybePrintRefShorthand(std::ostream& o, Type type) {
+bool maybePrintRefShorthand(std::ostream& o, Type type) {
   if (!type.isRef()) {
     return false;
   }
@@ -292,9 +290,7 @@ void TypeNamePrinter::print(const Array& array) {
   os << ']';
 }
 
-} // anonymous namespace
-
-static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
+std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   if (type.isBasic()) {
     o << type;
   } else if (type.isTuple()) {
@@ -321,16 +317,15 @@ static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   return o;
 }
 
-static std::ostream&
-printHeapType(std::ostream& o, HeapType type, Module* wasm) {
+std::ostream& printHeapType(std::ostream& o, HeapType type, Module* wasm) {
   TypeNamePrinter(o, wasm).print(type);
   return o;
 }
 
-static std::ostream& printPrefixedTypes(std::ostream& o,
-                                        const char* prefix,
-                                        Type type,
-                                        Module* wasm) {
+std::ostream& printPrefixedTypes(std::ostream& o,
+                                 const char* prefix,
+                                 Type type,
+                                 Module* wasm) {
   o << '(' << prefix;
   if (type == Type::none) {
     return o << ')';
@@ -350,11 +345,11 @@ static std::ostream& printPrefixedTypes(std::ostream& o,
   return o;
 }
 
-static std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
+std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
   return printPrefixedTypes(o, "result", type, wasm);
 }
 
-static std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
+std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
   return printPrefixedTypes(o, "param", type, wasm);
 }
 
@@ -377,6 +372,42 @@ void processFieldName(Module* wasm, HeapType type, Index index, T func) {
     }
   }
   func(Name());
+}
+
+std::ostream&
+printEscapedString(std::ostream& os, const char* data, size_t len) {
+  os << '"';
+  for (size_t i = 0; i < len; i++) {
+    unsigned char c = data[i];
+    switch (c) {
+      case '\t':
+        os << "\\t";
+        break;
+      case '\n':
+        os << "\\n";
+        break;
+      case '\r':
+        os << "\\r";
+        break;
+      case '"':
+        os << "\\\"";
+        break;
+      case '\'':
+        os << "\\'";
+        break;
+      case '\\':
+        os << "\\\\";
+        break;
+      default: {
+        if (c >= 32 && c < 127) {
+          os << c;
+        } else {
+          os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
+        }
+      }
+    }
+  }
+  return os << '"';
 }
 
 } // anonymous namespace
@@ -2255,9 +2286,8 @@ struct PrintExpressionContents
     }
   }
   void visitStringConst(StringConst* curr) {
-    printMedium(o, "string.const \"");
-    o << curr->string.str;
-    o << '"';
+    printMedium(o, "string.const ");
+    printEscapedString(o, curr->string.c_str(), curr->string.size());
   }
   void visitStringMeasure(StringMeasure* curr) {
     switch (curr->op) {
@@ -3171,44 +3201,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visit(curr->offset);
       o << ' ';
     }
-    o << "\"";
-    for (size_t i = 0; i < curr->data.size(); i++) {
-      unsigned char c = curr->data[i];
-      switch (c) {
-        case '\n':
-          o << "\\n";
-          break;
-        case '\r':
-          o << "\\0d";
-          break;
-        case '\t':
-          o << "\\t";
-          break;
-        case '\f':
-          o << "\\0c";
-          break;
-        case '\b':
-          o << "\\08";
-          break;
-        case '\\':
-          o << "\\\\";
-          break;
-        case '"':
-          o << "\\\"";
-          break;
-        case '\'':
-          o << "\\'";
-          break;
-        default: {
-          if (c >= 32 && c < 127) {
-            o << c;
-          } else {
-            o << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
-          }
-        }
-      }
-    }
-    o << "\")" << maybeNewLine;
+    printEscapedString(o, curr->data.data(), curr->data.size());
+    o << ')' << maybeNewLine;
   }
   void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {
     doIndent(o, indent) << ";; dylink section\n";
