@@ -85,6 +85,7 @@ protected:
     PossibleContents::global("i32Global2", Type::i32);
   PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
   PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
+  PossibleContents funcGlobal = PossibleContents::global("funcGlobal", funcref);
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Signature(Type::none, Type::none)));
@@ -240,6 +241,44 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
   // This will be 42.
   EXPECT_EQ(oracle.getContents(GlobalLocation{"something"}).getLiteral(),
             Literal(int32_t(42)));
+}
+
+// Assets a and b have an intersection (or do not), and checks both orderings.
+void assertHaveIntersection(PossibleContents a, PossibleContents b) {
+  EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
+  EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
+}
+void assertLackIntersection(PossibleContents a, PossibleContents b) {
+  EXPECT_FALSE(PossibleContents::haveIntersection(a, b));
+  EXPECT_FALSE(PossibleContents::haveIntersection(b, a));
+}
+
+TEST_F(PossibleContentsTest, TestIntersection) {
+  // None has no contents, so nothing to intersect.
+  assertLackIntersection(none, none);
+  assertLackIntersection(none, i32Zero);
+  assertLackIntersection(none, many);
+
+  // Many intersects with anything (but none).
+  assertHaveIntersection(many, many);
+  assertHaveIntersection(many, i32Zero);
+
+  // Different exact types cannot intersect.
+  assertLackIntersection(exactI32, exactAnyref);
+  assertLackIntersection(i32Zero, exactAnyref);
+  assertLackIntersection(exactFuncSignatureType, exactAnyref);
+
+  // Identical types might.
+  assertHaveIntersection(exactI32, exactI32);
+  assertHaveIntersection(i32Zero, i32Zero);
+  assertHaveIntersection(exactFuncSignatureType, exactFuncSignatureType);
+  assertHaveIntersection(i32Zero, i32One); // TODO: this could be inferred false
+
+  // Due to subtyping, an intersection might exist.
+  assertHaveIntersection(funcGlobal, exactFuncSignatureType);
+
+  // Neither is a subtype of the other, so no intersection can exist.
+  assertLackIntersection(funcGlobal, anyGlobal);
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
