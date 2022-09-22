@@ -2013,8 +2013,14 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
 }
 
 void BinaryInstWriter::visitCallRef(CallRef* curr) {
-  o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef
-                             : BinaryConsts::CallRef);
+  if (curr->isReturn) {
+    assert(curr->target->type != Type::unreachable);
+    // TODO: `emitUnreachable` if target has bottom type.
+    o << int8_t(BinaryConsts::RetCallRef);
+    parent.writeIndexedHeapType(curr->target->type.getHeapType());
+    return;
+  }
+  o << int8_t(BinaryConsts::CallRef);
 }
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {

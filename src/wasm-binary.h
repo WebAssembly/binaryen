@@ -1727,7 +1727,8 @@ public:
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitCallRef(CallRef* curr);
+  void visitCallRef(CallRef* curr,
+                    std::optional<HeapType> maybeType = std::nullopt);
   void visitRefAs(RefAs* curr, uint8_t code);
 
   [[noreturn]] void throwError(std::string text);

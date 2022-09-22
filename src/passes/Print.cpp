@@ -2043,9 +2043,31 @@ struct PrintExpressionContents
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
+
+  // If we cannot print a valid unreachable instruction (say, a struct.get,
+  // where if the ref is unreachable, we don't know what heap type to print),
+  // then print the children in a block, which is good enough as this
+  // instruction is never reached anyhow.
+  //
+  // This function checks if the input is in fact unreachable, and if so, begins
+  // to emit a replacement for it and returns true.
+  bool printUnreachableReplacement(Expression* curr) {
+    if (curr->type == Type::unreachable) {
+      printMedium(o, "block");
+      return true;
+    }
+    return false;
+  }
+
   void visitCallRef(CallRef* curr) {
     if (curr->isReturn) {
-      printMedium(o, "return_call_ref");
+      if (printUnreachableReplacement(curr->target)) {
+        return;
+      }
+      printMedium(o, "return_call_ref ");
+      assert(curr->target->type != Type::unreachable);
+      // TODO: Workaround if target has bottom type.
+      printHeapType(o, curr->target->type.getHeapType(), wasm);
     } else {
       printMedium(o, "call_ref");
     }
@@ -2106,22 +2128,6 @@ struct PrintExpressionContents
     }
     printName(curr->name, o);
   }
-
-  // If we cannot print a valid unreachable instruction (say, a struct.get,
-  // where if the ref is unreachable, we don't know what heap type to print),
-  // then print the children in a block, which is good enough as this
-  // instruction is never reached anyhow.
-  //
-  // This function checks if the input is in fact unreachable, and if so, begins
-  // to emit a replacement for it and returns true.
-  bool printUnreachableReplacement(Expression* curr) {
-    if (curr->type == Type::unreachable) {
-      printMedium(o, "block");
-      return true;
-    }
-    return false;
-  }
-
   void visitStructNew(StructNew* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
@@ -2747,6 +2753,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printFullLine(&drop);
     }
     decIndent();
+  }
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      maybePrintUnreachableReplacement(curr, curr->target->type);
+    } else {
+      visitExpression(curr);
+    }
   }
   void visitStructNew(StructNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
