@@ -3585,7 +3585,7 @@ private:
       //   x op  NaN'  ==>   NaN',  iff `op` != `copysign` and `x` != C
       Const* c;
       Binary* bin;
-      if (matches(curr, binary(&bin, pure(), fval(&c))) &&
+      if (matches(curr, binary(&bin, any(), fval(&c))) &&
           std::isnan(c->value.getFloat()) &&
           bin->op != getBinary(bin->left->type, CopySign)) {
         if (bin->isRelational()) {
@@ -3601,7 +3601,7 @@ private:
             // x .. NaN  ==>  0
             c->value = Literal::makeZero(Type::i32);
           }
-          return c;
+          return getDroppedChildrenAndAppend(curr, c);
         }
         // propagate NaN of RHS but canonicalize it
         if (c->type == Type::f32) {
@@ -3609,7 +3609,7 @@ private:
         } else {
           c->value = standardizeNaN(c->value.getf64());
         }
-        return c;
+        return getDroppedChildrenAndAppend(curr, c);
       }
     }
     return nullptr;
@@ -3870,15 +3870,15 @@ private:
       // NaN - x   ==>   NaN'
       // NaN / x   ==>   NaN'
       Const* c;
-      if ((matches(curr, binary(Sub, fval(&c), pure())) ||
-           matches(curr, binary(DivS, fval(&c), pure()))) &&
+      if ((matches(curr, binary(Sub, fval(&c), any())) ||
+           matches(curr, binary(DivS, fval(&c), any()))) &&
           std::isnan(c->value.getFloat())) {
         if (c->type == Type::f32) {
           c->value = standardizeNaN(c->value.getf32());
         } else {
           c->value = standardizeNaN(c->value.getf64());
         }
-        return c;
+        return getDroppedChildrenAndAppend(curr, c);
       }
     }
     {
