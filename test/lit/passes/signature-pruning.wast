@@ -43,7 +43,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (f64.const 3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (f64.const 7)
   ;; CHECK-NEXT:   (ref.func $foo)
@@ -107,7 +107,7 @@
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i64.const 5)
   ;; CHECK-NEXT:   (f32.const 6)
   ;; CHECK-NEXT:   (ref.func $foo)
@@ -174,7 +174,7 @@
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (i64.const 5)
   ;; CHECK-NEXT:   (f32.const 6)
@@ -246,7 +246,7 @@
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $caller)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -301,7 +301,7 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $foo)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -501,10 +501,10 @@
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT:  (call $bar)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -527,7 +527,7 @@
 
   ;; CHECK:      (func $caller-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (call $bar)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

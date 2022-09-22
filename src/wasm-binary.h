@@ -1083,7 +1083,8 @@ enum ASTNodes {
 
   // typed function references opcodes
 
-  CallRef = 0x14,
+  CallRefUnannotated = 0x14,
+  CallRef = 0x17,
   RetCallRef = 0x15,
 
   // gc opcodes

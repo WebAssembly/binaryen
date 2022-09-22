@@ -3776,12 +3776,13 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitMemoryGrow(grow);
       break;
     }
-    case BinaryConsts::CallRef:
+    case BinaryConsts::CallRefUnannotated:
       visitCallRef((curr = allocator.alloc<CallRef>())->cast<CallRef>());
       break;
+    case BinaryConsts::CallRef:
     case BinaryConsts::RetCallRef: {
       auto call = allocator.alloc<CallRef>();
-      call->isReturn = true;
+      call->isReturn = code == BinaryConsts::RetCallRef;
       curr = call;
       visitCallRef(call, getTypeByIndex(getU32LEB()));
       break;
@@ -6810,11 +6811,7 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr,
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  if (maybeType) {
-    curr->finalize();
-  } else {
-    curr->finalize(sig.results);
-  }
+  curr->finalize(sig.results);
 }
 
 bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {
