@@ -132,6 +132,38 @@ void PossibleContents::combine(const PossibleContents& other) {
   value = Many();
 }
 
+bool PossibleContents::haveIntersection(const PossibleContents& a, const PossibleContents& b) const {
+  if (a.isNone() || b.isNone()) {
+    // One is the empty set, so nothing can intersect here.
+    return false;
+  }
+
+  if (a.isMany() || b.isMany()) {
+    // One is the set of all things, so definitely something can intersect since
+    // we've ruled out an empty set for both.
+    return true;
+  }
+
+  if (a.hasExactType() && b.hasExactType() && a.getType() != b.getType()) {
+    // The values must be different since their types are different.
+    return false;
+  }
+
+  auto aType = a.getType();
+  auto bType = b.getType();
+  if (!Type::isSubType(aType, bType) && !Type::isSubType(bType, aType)) {
+    // No type can appear in both a and b, so the types differ, so the values
+    // differ.
+    return false;
+  }
+
+  // TODO: we can also optimize things like different Literals, but existing
+  //       passes do such things already so it is low priority.
+
+  // It appears they can intersect.
+  return true;
+}
+
 namespace {
 
 // We are going to do a very large flow operation, potentially, as we create
@@ -378,10 +410,8 @@ struct InfoCollector
       PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
   }
   void visitRefEq(RefEq* curr) {
-    // TODO: optimize when possible (e.g. when both sides must contain the same
-    //       global, or if we infer exact types that are different then the
-    //       result must be 0)
-    addRoot(curr);
+    addChildParentLink(curr->left, curr);
+    addChildParentLink(curr->right, curr);
   }
   void visitTableGet(TableGet* curr) {
     addRoot(curr);
@@ -416,12 +446,9 @@ struct InfoCollector
   }
 
   void visitRefCast(RefCast* curr) {
-    // We will handle this in a special way later during the flow, as ref.cast
-    // only allows valid values to flow through.
     addChildParentLink(curr->ref, curr);
   }
   void visitRefTest(RefTest* curr) {
-    // We will handle this similarly to RefCast.
     addChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
@@ -1114,8 +1141,13 @@ private:
   // values to flow through it.
   void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
-  // The possible contents may allow us to infer an outcome, like with RefCast.
+  // The possible contents may allow us to infer an outcome in various
+  // instructions. If the expression has a single child, that is what is
+  // updated by the new |contents| (which we pass in to avoid doing an extra
+  // lookup); if there is more than one child, then to keep the code simple we
+  // expect the function to look up the children's effects manually.
   void flowRefTest(const PossibleContents& contents, RefTest* test);
+  void flowRefEq(RefEq* eq);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1472,6 +1504,9 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* test = parent->dynCast<RefTest>()) {
       assert(test->ref == child);
       flowRefTest(contents, test);
+    } else if (auto* eq = parent->dynCast<RefEq>()) {
+      assert(eq->left == child || eq->right == child);
+      flowRefEq(eq);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1757,6 +1792,31 @@ void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
   std::cout << '\n';
 #endif
   updateContents(ExpressionLocation{test, 0}, filtered);
+}
+
+void Flower::flowRefEq(RefEq* eq) {
+  auto& leftContents = getContents(eq->left);
+  auto& rightContents = getContents(eq->right);
+
+  PossibleContents filtered;
+  if (leftContents.isMany() || rightContents.isMany()) {
+    // Just pass the Many through.
+    filtered = leftContents;
+  } else if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
+    // The contents prove the two sides cannot contain the same reference, so
+    // we infer 0.
+    filtered = PossibleContents::literal(Literal(int32_t(0)));
+  }
+  // Note that we could also infer 1 in the case of two immutable globals;
+  // however, other passes can already do that so adding that code here would
+  // only speed up how fast we compile, but not allow more things to compile.
+  // Reconsider this when focusing on compiler speed.
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "    ref.eq passing through\n";
+  filtered.dump(std::cout);
+  std::cout << '\n';
+#endif
+  updateContents(ExpressionLocation{eq, 0}, filtered);
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
