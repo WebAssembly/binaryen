@@ -21,10 +21,7 @@
 
 namespace wasm {
 
-extern Name MEMORY_BASE;
-extern Name TABLE_BASE;
 extern Name STACK_POINTER;
-extern Name NEW_SIZE;
 extern Name MODULE;
 extern Name START;
 extern Name FUNC;

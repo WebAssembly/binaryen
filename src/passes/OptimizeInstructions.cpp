@@ -416,8 +416,9 @@ struct OptimizeInstructions
       {
         // -x + y   ==>   y - x
         //   where  x, y  are floating points
-        Expression* x;
-        if (matches(curr, binary(Add, unary(Neg, any(&x)), any()))) {
+        Expression *x, *y;
+        if (matches(curr, binary(Add, unary(Neg, any(&x)), any(&y))) &&
+            canReorder(x, y)) {
           curr->op = Abstract::getBinary(curr->type, Sub);
           curr->left = x;
           std::swap(curr->left, curr->right);

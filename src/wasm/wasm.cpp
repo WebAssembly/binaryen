@@ -54,10 +54,7 @@ const char* MultiMemoriesFeature = "multi-memories";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name MEMORY_BASE("__memory_base");
-Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
-Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
 Name GLOBAL("global");
