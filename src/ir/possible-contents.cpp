@@ -86,7 +86,7 @@ void PossibleContents::combine(const PossibleContents& other) {
     // combination here is if they have the same type (since we've already ruled
     // out the case of them being equal). If they have the same type then
     // neither is a reference and we can emit an exact type (since subtyping is
-    // not relevant for non-references.
+    // not relevant for non-references).
     if (type == otherType) {
       value = ExactType(type);
     } else {
@@ -1806,13 +1806,13 @@ void Flower::flowRefEq(RefEq* eq) {
   auto& rightContents = getContents(eq->right);
 
   PossibleContents filtered;
-  if (leftContents.isMany() || rightContents.isMany()) {
-    // Just pass the Many through.
-    filtered = leftContents;
-  } else if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
+  if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
     // The contents prove the two sides cannot contain the same reference, so
     // we infer 0.
     filtered = PossibleContents::literal(Literal(int32_t(0)));
+  } else {
+    // Otherwise, we don't know anything.
+    filtered = PossibleContents::many();
   }
   // Note that we could also infer 1 in the case of two immutable globals;
   // however, other passes can already do that so adding that code here would

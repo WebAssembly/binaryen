@@ -2448,14 +2448,16 @@
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (export "ref.test-inexact" (func $ref.test-inexact))
+
+  ;; CHECK:      (export "ref.eq-unknown" (func $ref.eq-unknown))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -2741,6 +2743,122 @@
           (struct.new $substruct
             (i32.const 8)
             (i32.const 9)
+          )
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.eq-zero (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.eq-zero
+    ;; We do not track specific references, so only the types can be used here.
+    ;; Using the types, we can infer that two different ExactTypes cannot
+    ;; contain the same reference, so we infer a 0.
+    (drop
+      (ref.eq
+        (struct.new $struct
+          (i32.const 1)
+        )
+        (struct.new $substruct
+          (i32.const 2)
+          (i32.const 3)
+        )
+      )
+    )
+    ;; A null and a non-null reference cannot be identical, so we infer 0.
+    (drop
+      (ref.eq
+        (ref.null $struct)
+        (struct.new $struct
+          (i32.const 5)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.eq-unknown (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select (result (ref $substruct))
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $subsubstruct
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.eq-unknown (export "ref.eq-unknown") (param $x i32)
+    ;; Here we cannot infer as the type is identical. (Though, if we used more
+    ;; than the type, we could see they cannot be identical.)
+    (drop
+      (ref.eq
+        (struct.new $struct
+          (i32.const 4)
+        )
+        (struct.new $struct
+          (i32.const 5)
+        )
+      )
+    )
+    ;; When both are nullable, we cannot infer anything (since, again, we just
+    ;; have the type).
+    (drop
+      (ref.eq
+        (ref.null $struct)
+        (ref.null $struct)
+      )
+    )
+    ;; One side has two possible types, which we see as Many, and so we cannot
+    ;; infer anything here. With a cone type, however, we could infer a 0.
+    ;; TODO: add more tests for cone types here when we get them
+    (drop
+      (ref.eq
+        (struct.new $struct
+          (i32.const 1)
+        )
+        (select
+          (struct.new $substruct
+            (i32.const 2)
+            (i32.const 3)
+          )
+          (struct.new $subsubstruct
+            (i32.const 4)
+            (i32.const 5)
+            (i32.const 6)
           )
           (local.get $x)
         )
