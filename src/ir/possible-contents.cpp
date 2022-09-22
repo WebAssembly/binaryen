@@ -133,7 +133,7 @@ void PossibleContents::combine(const PossibleContents& other) {
 }
 
 bool PossibleContents::haveIntersection(const PossibleContents& a,
-                                        const PossibleContents& b) const {
+                                        const PossibleContents& b) {
   if (a.isNone() || b.isNone()) {
     // One is the empty set, so nothing can intersect here.
     return false;
@@ -1018,6 +1018,12 @@ struct Flower {
   PossibleContents& getContents(LocationIndex index) {
     assert(index < locations.size());
     return locations[index].contents;
+  }
+
+  // Helper for the common case of an expression location that is not a
+  // multivalue.
+  PossibleContents& getContents(Expression* expr) {
+    return getContents(getIndex(ExpressionLocation{expr, 0});
   }
 
 private:

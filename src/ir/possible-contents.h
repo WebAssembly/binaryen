@@ -172,7 +172,7 @@ public:
   // either is None, or if they are both ExactTypes but of different types, then
   // they have no intersection.
   static bool haveIntersection(const PossibleContents& a,
-                               const PossibleContents& b) const;
+                               const PossibleContents& b);
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a
