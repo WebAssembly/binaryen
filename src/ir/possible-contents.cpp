@@ -1023,7 +1023,7 @@ struct Flower {
   // Helper for the common case of an expression location that is not a
   // multivalue.
   PossibleContents& getContents(Expression* expr) {
-    return getContents(getIndex(ExpressionLocation{expr, 0});
+    return getContents(getIndex(ExpressionLocation{expr, 0}));
   }
 
 private:
