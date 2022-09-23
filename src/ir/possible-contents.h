@@ -211,11 +211,11 @@ public:
     } else if (isLiteral()) {
       return size_t(1) | (std::hash<Literal>()(getLiteral()) << 3);
     } else if (isGlobal()) {
-      return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
+      return size_t(hasExactType() ? 2 : 3) | (std::hash<Name>()(getGlobal()) << 3);
     } else if (isExactType()) {
-      return size_t(3) | (std::hash<Type>()(getType()) << 3);
+      return size_t(4) | (std::hash<Type>()(getType()) << 3);
     } else if (isMany()) {
-      return 4;
+      return 5;
     } else {
       WASM_UNREACHABLE("bad variant");
     }
@@ -234,6 +234,9 @@ public:
       }
     } else if (isGlobal()) {
       o << "GlobalInfo $" << getGlobal();
+      if (hasExactType()) {
+        o << " exact";
+      }
     } else if (isExactType()) {
       o << "ExactType " << getType();
       auto t = getType();
