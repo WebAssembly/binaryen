@@ -80,11 +80,11 @@ protected:
     PossibleContents::literal(Literal::makeNull(HeapType::i31));
 
   PossibleContents i32Global1 =
-    PossibleContents::exactGlobal("i32Global1", Type::i32);
+    PossibleContents::inexactGlobal("i32Global1", Type::i32);
   PossibleContents i32Global2 =
-    PossibleContents::exactGlobal("i32Global2", Type::i32);
-  PossibleContents f64Global = PossibleContents::exactGlobal("f64Global", Type::f64);
-  PossibleContents anyGlobal = PossibleContents::exactGlobal("anyGlobal", anyref);
+    PossibleContents::inexactGlobal("i32Global2", Type::i32);
+  PossibleContents f64Global = PossibleContents::inexactGlobal("f64Global", Type::f64);
+  PossibleContents anyGlobal = PossibleContents::inexactGlobal("anyGlobal", anyref);
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Signature(Type::none, Type::none)));

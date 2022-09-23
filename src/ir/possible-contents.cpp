@@ -1552,6 +1552,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
       std::cout << '\n';
     }
 #endif
+    WASM_UNUSED(changed);
   }
 }
 
