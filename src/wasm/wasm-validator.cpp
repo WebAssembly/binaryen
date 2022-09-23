@@ -3195,45 +3195,13 @@ void FunctionValidator::visitFunction(Function* curr) {
 
   if (getModule()->features.hasGC()) {
     // If we have non-nullable locals, verify that local.get are valid.
-    if (!getModule()->features.hasGCNNLocals()) {
-      // Without the special GCNNLocals feature, we implement the spec rules,
-      // that is, a set allows gets until the end of the block.
-      LocalStructuralDominance info(curr, *getModule());
-      for (auto index : info.nonDominatingIndices) {
-        auto localType = curr->getLocalType(index);
-        for (auto type : localType) {
-          shouldBeTrue(!type.isNonNullable(),
-                       index,
-                       "non-nullable local's sets must dominate gets");
-        }
-      }
-    } else {
-      // With the special GCNNLocals feature, we allow gets anywhere, so long as
-      // we can prove they cannot read the null value. (TODO: remove this once
-      // the spec is stable).
-      //
-      // This is slow, so only do it if we find such locals exist at all.
-      bool hasNNLocals = false;
-      for (const auto& var : curr->vars) {
-        if (!var.isDefaultable()) {
-          hasNNLocals = true;
-          break;
-        }
-      }
-      if (hasNNLocals) {
-        LocalGraph graph(curr);
-        for (auto& [get, sets] : graph.getSetses) {
-          auto index = get->index;
-          // It is always ok to read nullable locals, and it is always ok to
-          // read params even if they are non-nullable.
-          if (curr->getLocalType(index).isDefaultable() ||
-              curr->isParam(index)) {
-            continue;
-          }
-          for (auto* set : sets) {
-            shouldBeTrue(!!set, index, "non-nullable local must not read null");
-          }
-        }
+    LocalStructuralDominance info(curr, *getModule());
+    for (auto index : info.nonDominatingIndices) {
+      auto localType = curr->getLocalType(index);
+      for (auto type : localType) {
+        shouldBeTrue(!type.isNonNullable(),
+                     index,
+                     "non-nullable local's sets must dominate gets");
       }
     }
   }

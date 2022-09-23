@@ -36,7 +36,7 @@
 #  )
 # )
 
-RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
+RUN: wasm-opt -all %s.wasm -all --print | filecheck %s
 
 # CHECK:      (module
 # CHECK-NEXT:  (type ${mut:i32} (struct (field (mut i32))))
@@ -48,7 +48,7 @@ RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
 # CHECK-NEXT:   (local $0 (ref null ${mut:i32}))
 # CHECK-NEXT:   (local $1 (ref null ${mut:i32_mut:i32}))
 # CHECK-NEXT:   (local $2 (ref null ${mut:i32_mut:i32}))
-# CHECK-NEXT:   (local $3 ((ref ${mut:i32}) (ref ${mut:i32_mut:i32})))
+# CHECK-NEXT:   (local $3 ((ref null ${mut:i32}) (ref null ${mut:i32_mut:i32})))
 # CHECK-NEXT:   (local $4 (ref ${mut:i32}))
 # CHECK-NEXT:   (local $5 (ref null ${mut:i32}))
 # CHECK-NEXT:   (local $6 (ref null ${mut:i32}))
@@ -63,13 +63,17 @@ RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
 # CHECK-NEXT:     (local.set $0
 # CHECK-NEXT:      (block (result (ref ${mut:i32}))
 # CHECK-NEXT:       (local.set $4
-# CHECK-NEXT:        (tuple.extract 0
-# CHECK-NEXT:         (local.get $3)
+# CHECK-NEXT:        (ref.as_non_null
+# CHECK-NEXT:         (tuple.extract 0
+# CHECK-NEXT:          (local.get $3)
+# CHECK-NEXT:         )
 # CHECK-NEXT:        )
 # CHECK-NEXT:       )
 # CHECK-NEXT:       (local.set $1
-# CHECK-NEXT:        (tuple.extract 1
-# CHECK-NEXT:         (local.get $3)
+# CHECK-NEXT:        (ref.as_non_null
+# CHECK-NEXT:         (tuple.extract 1
+# CHECK-NEXT:          (local.get $3)
+# CHECK-NEXT:         )
 # CHECK-NEXT:        )
 # CHECK-NEXT:       )
 # CHECK-NEXT:       (local.get $4)
@@ -109,4 +113,3 @@ RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
 # CHECK-NEXT:   )
 # CHECK-NEXT:  )
 # CHECK-NEXT: )
-# CHECK-NEXT: 
