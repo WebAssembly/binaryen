@@ -381,6 +381,7 @@ struct InfoCollector
     // indirectly, so add the relevant connections (doing so here ensures that
     // we do not flow values from indirect calls to functions whose address is
     // never taken).
+    assert(getModule());
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back({SignatureParamLocation{func->type, i},
