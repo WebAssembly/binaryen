@@ -2803,11 +2803,10 @@ Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
   return markTemp(impl->typeStore.insert(TypeInfo(type, nullable)));
 }
 
-void TypeBuilder::setSubType(size_t i, size_t j) {
-  assert(i < size() && j < size() && "index out of bounds");
+void TypeBuilder::setSubType(size_t i, HeapType super) {
+  assert(i < size() && "index out of bounds");
   HeapTypeInfo* sub = impl->entries[i].info.get();
-  HeapTypeInfo* super = impl->entries[j].info.get();
-  sub->supertype = super;
+  sub->supertype = getHeapTypeInfo(super);
 }
 
 void TypeBuilder::createRecGroup(size_t i, size_t length) {
@@ -3657,9 +3656,9 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     if (type.isBasic()) {
       continue;
     }
-    // Validate the supertype. Supertypes must precede their subtypes.
+    // Validate the supertype. Temporary supertypes must precede their subtypes.
     if (auto super = type.getSuperType()) {
-      if (!indexOfType.count(*super)) {
+      if (isTemp(*super) && !indexOfType.count(*super)) {
         return {{index, TypeBuilder::ErrorReason::ForwardSupertypeReference}};
       }
     }

@@ -3533,10 +3533,10 @@ BINARYEN_API BinaryenType TypeBuilderGetTempTupleType(TypeBuilderRef builder,
 BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
                                                     BinaryenHeapType heapType,
                                                     int nullable);
-// Sets the type at `index` to be a subtype of the type at `superIndex`.
+// Sets the type at `index` to be a subtype of the given super type.
 BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
                                         BinaryenIndex index,
-                                        BinaryenIndex superIndex);
+                                        BinaryenHeapType superType);
 // Creates a new recursion group in the range `index` inclusive to `index +
 // length` exclusive. Recursion groups must not overlap.
 BINARYEN_API void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
