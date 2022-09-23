@@ -183,13 +183,20 @@ struct GUFAOptimizer
   }
 
   void visitRefEq(RefEq* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+
     auto leftContents = oracle.getContents(curr->left);
     auto rightContents = oracle.getContents(curr->right);
 
     if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
       // The contents prove the two sides cannot contain the same reference, so
       // we infer 0.
-      replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(0))));
+      auto* result = Builder(*getModule()).makeConst(Literal(int32_t(0)));
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, *getModule(), getPassOptions(), result));
     }
   }
 

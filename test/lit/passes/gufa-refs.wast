@@ -2764,6 +2764,19 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.eq-zero (export "ref.eq-zero")
     ;; We do not track specific references, so only the types can be used here.
@@ -2787,6 +2800,18 @@
         (struct.new $struct
           (i32.const 5)
         )
+      )
+    )
+    ;; We can't drop side effects - the call must remain.
+    (drop
+      (ref.eq
+        (block (result eqref)
+          (drop
+            (call $import)
+          )
+          (ref.null $struct)
+        )
+        (ref.null $struct)
       )
     )
   )
@@ -2855,6 +2880,12 @@
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (local.get $nn-struct)
   ;; CHECK-NEXT:    (local.get $nn-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2938,6 +2969,13 @@
       (ref.eq
         (local.get $nn-struct)
         (local.get $nn-other)
+      )
+    )
+    ;; We can ignore unreachable code.
+    (drop
+      (ref.eq
+        (ref.null $struct)
+        (unreachable)
       )
     )
   )
