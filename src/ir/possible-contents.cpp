@@ -1549,7 +1549,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     if (contents.isMany()) {
       contents = PossibleContents::inexactGlobal(global->name, global->type);
       changed = true;
-    } else if (contents.isExactType()) { // TODO
+    } else if (contents.isExactType()) { // TODO waka
       contents = PossibleContents::exactGlobal(global->name, contents.getType());
       changed = true;
     }
