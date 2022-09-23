@@ -3704,10 +3704,10 @@
 
 ;; call_ref types
 (module
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $i1 (func_subtype (param i32) func))
   (type $i1 (func (param i32)))
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
   ;; CHECK:      (type $i2 (func_subtype (param i32) func))
   (type $i2 (func (param i32)))
 
@@ -3726,6 +3726,21 @@
   (func $reffed1 (type $i1) (param $x i32)
     ;; This is called with one possible value, 42, which we can optimize the
     ;; param to.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $not-reffed (type $i1) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-reffed (type $i1) (param $x i32)
+    ;; This function has the same type as the previous one, but it is never
+    ;; taken by reference, which means the call_refs below do not affect it. As
+    ;; there are no other calls, this local.get can be turned into an
+    ;; unreachable.
     (drop
       (local.get $x)
     )
