@@ -384,12 +384,12 @@ struct InfoCollector
     assert(getModule());
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      info.links.push_back({SignatureParamLocation{func->type, i},
-                               LocalLocation{func, i, 0}});
+      info.links.push_back(
+        {SignatureParamLocation{func->type, i}, LocalLocation{func, i, 0}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
-      info.links.push_back({ResultLocation{func, i},
-                               SignatureResultLocation{func->type, i}});
+      info.links.push_back(
+        {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
     }
   }
   void visitRefEq(RefEq* curr) {
