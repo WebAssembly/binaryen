@@ -145,13 +145,19 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     return true;
   }
 
+  auto aType = a.getType();
+  auto bType = b.getType();
+
+  if (aType.isNullable() && bType.isNullable()) {
+    // Null is possible on both sides, regardless of the types.
+    return true;
+  }
+
   if (a.hasExactType() && b.hasExactType() && a.getType() != b.getType()) {
     // The values must be different since their types are different.
     return false;
   }
 
-  auto aType = a.getType();
-  auto bType = b.getType();
   if (!Type::isSubType(aType, bType) && !Type::isSubType(bType, aType)) {
     // No type can appear in both a and b, so the types differ, so the values
     // differ.

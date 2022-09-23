@@ -86,6 +86,7 @@ protected:
   PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
   PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
   PossibleContents funcGlobal = PossibleContents::global("funcGlobal", funcref);
+  PossibleContents nonNullFuncGlobal = PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Signature(Type::none, Type::none)));
@@ -266,7 +267,9 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   // Different exact types cannot intersect.
   assertLackIntersection(exactI32, exactAnyref);
   assertLackIntersection(i32Zero, exactAnyref);
-  assertLackIntersection(exactFuncSignatureType, exactAnyref);
+
+  // But nullable ones can - the null can be the intersection.
+  assertHaveIntersection(exactFuncSignatureType, exactAnyref);
 
   // Identical types might.
   assertHaveIntersection(exactI32, exactI32);
@@ -278,8 +281,16 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertHaveIntersection(funcGlobal, funcGlobal);
   assertHaveIntersection(funcGlobal, exactFuncSignatureType);
 
-  // Neither is a subtype of the other, so no intersection can exist.
-  assertLackIntersection(funcGlobal, anyGlobal);
+  // Neither is a subtype of the other, but nulls are possible, so a null can be
+  // the intersection.
+  assertHaveIntersection(funcGlobal, anyGlobal);
+
+  // Without null on one side, we cannot intersect.
+  assertLackIntersection(nonNullFuncGlobal, anyGlobal);
+
+  // If nulls are possible on both sides, a null may be the intersection,
+  // regardless of the type
+  assertHaveIntersection(anyNull, funcNull);
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {

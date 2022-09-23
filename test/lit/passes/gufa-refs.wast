@@ -2448,14 +2448,23 @@
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+  ;; CHECK:      (type $other (struct_subtype  data))
+  (type $other (struct_subtype data))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (type $ref|$struct|_ref|$other|_=>_none (func_subtype (param (ref $struct) (ref $other)) func))
+
+  ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_=>_none (func_subtype (param i32 (ref null $struct) (ref null $struct) (ref null $other) (ref $struct) (ref $struct)) func))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (export "ref.test-inexact" (func $ref.test-inexact))
+
+  ;; CHECK:      (export "ref.eq-zero" (func $ref.eq-zero))
 
   ;; CHECK:      (export "ref.eq-unknown" (func $ref.eq-unknown))
 
@@ -2750,15 +2759,21 @@
     )
   )
 
-  ;; CHECK:      (func $ref.eq-zero (type $none_=>_none)
+  ;; CHECK:      (func $ref.eq-zero (type $ref|$struct|_ref|$other|_=>_none) (param $nn-struct (ref $struct)) (param $nn-other (ref $other))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $nn-struct)
+  ;; CHECK-NEXT:    (local.get $nn-other)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.eq-zero
+  (func $ref.eq-zero (export "ref.eq-zero") (param $nn-struct (ref $struct)) (param $nn-other (ref $other))
     ;; We do not track specific references, so only the types can be used here.
     ;; Using the types, we can infer that two different ExactTypes cannot
     ;; contain the same reference, so we infer a 0.
@@ -2782,9 +2797,16 @@
         )
       )
     )
+    ;; Non-null on both sides, so we infer 0.
+    (drop
+      (ref.eq
+        (local.get $nn-struct)
+        (local.get $nn-other)
+      )
+    )
   )
 
-  ;; CHECK:      (func $ref.eq-unknown (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $ref.eq-unknown (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_=>_none) (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (struct.new $struct
@@ -2820,8 +2842,32 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (local.get $other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (local.get $struct2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (local.get $nn-struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $nn-struct)
+  ;; CHECK-NEXT:    (local.get $nn-struct2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.eq-unknown (export "ref.eq-unknown") (param $x i32)
+  (func $ref.eq-unknown (export "ref.eq-unknown") (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct))
     ;; Here we cannot infer as the type is identical. (Though, if we used more
     ;; than the type, we could see they cannot be identical.)
     (drop
@@ -2862,6 +2908,36 @@
           )
           (local.get $x)
         )
+      )
+    )
+    ;; When nulls are possible, we cannot infer anything (with or without the
+    ;; same type on both sides).
+    (drop
+      (ref.eq
+        (local.get $struct)
+        (local.get $other)
+      )
+    )
+    (drop
+      (ref.eq
+        (local.get $struct)
+        (local.get $struct2)
+      )
+    )
+    ;; A null is only possible on one side, but the same non-null value could be
+    ;; on both.
+    (drop
+      (ref.eq
+        (local.get $struct)
+        (local.get $nn-struct)
+      )
+    )
+    ;; The type is identical, and non-null, but we don't know if the value is
+    ;; the same or not.
+    (drop
+      (ref.eq
+        (local.get $nn-struct)
+        (local.get $nn-struct2)
       )
     )
   )
