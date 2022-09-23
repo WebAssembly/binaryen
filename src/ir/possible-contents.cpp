@@ -104,7 +104,11 @@ void PossibleContents::combine(const PossibleContents& other) {
     assert(!isNull() || !other.isNull());
     // If only one is a null, but the other's type is known exactly, then the
     // combination is to add nullability (if the type is *not* known exactly,
-    // like for a global, then we cannot do anything useful here).
+    // then we cannot do anything useful here).
+    //
+    // Note that the non-null value is a global with exact type then we still
+    // need to turn this into an ExactType: the possible contents are no longer
+    // identical necessarily to the global.
     if (!isNull() && hasExactType()) {
       value = ExactType(Type(type.getHeapType(), Nullable));
       return;
@@ -122,6 +126,11 @@ void PossibleContents::combine(const PossibleContents& other) {
     // Literal; or both might be ExactTypes and only one might be nullable).
     // In these cases we can emit a proper ExactType here, adding nullability
     // if we need to.
+    //
+    // Note that if one or both are globals with exact type then we still need
+    // to turn this into an ExactType: if it was the same global then we would
+    // have exited before, and if not then the result can no longer be a global
+    // anyhow, and must be an ExactType.
     value = ExactType(Type(
       type.getHeapType(),
       type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
