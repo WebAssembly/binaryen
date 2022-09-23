@@ -1028,13 +1028,6 @@ struct Flower {
     return locations[index].contents;
   }
 
-  // Helper for the common case of an expression location that is not a
-  // multivalue.
-  PossibleContents& getContents(Expression* curr) {
-    assert(curr->type.size() == 1);
-    return getContents(getIndex(ExpressionLocation{curr, 0}));
-  }
-
 private:
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
     assert(index < locations.size());
