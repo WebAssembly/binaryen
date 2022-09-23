@@ -104,7 +104,11 @@ void PossibleContents::combine(const PossibleContents& other) {
     assert(!isNull() || !other.isNull());
     // If only one is a null, but the other's type is known exactly, then the
     // combination is to add nullability (if the type is *not* known exactly,
-    // like for a global, then we cannot do anything useful here).
+    // then we cannot do anything useful here).
+    //
+    // Note that the non-null value is a global with exact type then we still
+    // need to turn this into an ExactType: the possible contents are no longer
+    // identical necessarily to the global.
     if (!isNull() && hasExactType()) {
       value = ExactType(Type(type.getHeapType(), Nullable));
       return;
@@ -122,6 +126,11 @@ void PossibleContents::combine(const PossibleContents& other) {
     // Literal; or both might be ExactTypes and only one might be nullable).
     // In these cases we can emit a proper ExactType here, adding nullability
     // if we need to.
+    //
+    // Note that if one or both are globals with exact type then we still need
+    // to turn this into an ExactType: if it was the same global then we would
+    // have exited before, and if not then the result can no longer be a global
+    // anyhow, and must be an ExactType.
     value = ExactType(Type(
       type.getHeapType(),
       type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
@@ -1535,23 +1544,28 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // This is an immutable global. We never need to consider this value as
     // "Many", since in the worst case we can just use the immutable value. That
     // is, we can always replace this value with (global.get $name) which will
-    // get the right value. Likewise, using the immutable global value is often
-    // better than an exact type, but TODO: we could note both an exact type
-    // *and* that something is equal to a global, in some cases.
-    if (contents.isMany() || contents.isExactType()) {
-      contents = PossibleContents::global(global->name, global->type);
-
-      // TODO: We could do better here, to set global->init->type instead of
-      //       global->type, or even the contents.getType() - either of those
-      //       may be more refined. But other passes will handle that in
-      //       general (by refining the global's type).
+    // get the right value.
+    bool changed = false;
+    if (contents.isMany()) {
+      contents = PossibleContents::inexactGlobal(global->name, global->type);
+      changed = true;
+    } else if (contents.hasExactType() && !contents.isLiteral()) {
+      // If the contents have an exact type, then we can use an exact global
+      // instead. Note that we don't do this for a literal, which is even more
+      // precise than a global.
+      contents =
+        PossibleContents::exactGlobal(global->name, contents.getType());
+      changed = true;
+    }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    if (changed) {
       std::cout << "  setting immglobal to ImmutableGlobal\n";
       contents.dump(std::cout, &wasm);
       std::cout << '\n';
-#endif
     }
+#endif
+    WASM_UNUSED(changed);
   }
 }
 
@@ -1603,7 +1617,7 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.isExactType()) {
+  if (refContents.hasExactType()) {
     // Add a single link to the exact location the reference points to.
     connectDuringFlow(
       DataLocation{refContents.getType().getHeapType(), fieldIndex},

@@ -63,13 +63,26 @@ class PossibleContents {
 
   struct GlobalInfo {
     Name name;
+
     // The type of the global in the module. We stash this here so that we do
     // not need to pass around a module all the time.
     // TODO: could we save size in this variant if we did pass around the
     //       module?
     Type type;
+
+    // Whether we know the type of this global exactly. That is the case when
+    // all the global's inputs are ExactType.
+    //
+    // Note that there are cases where we know an exact type that differs from
+    // the |type| field: say, the type of the global is A but it is only
+    // written things of exact subtype B. However, other optimizations will
+    // refine the global's type as much as possible, after which it will have
+    // type B. So a boolean is simple and sufficient here.
+    bool hasExactType;
+
     bool operator==(const GlobalInfo& other) const {
-      return name == other.name && type == other.type;
+      return name == other.name && type == other.type &&
+             hasExactType == other.hasExactType;
     }
   };
 
@@ -95,8 +108,11 @@ public:
 
   static PossibleContents none() { return PossibleContents{None()}; }
   static PossibleContents literal(Literal c) { return PossibleContents{c}; }
-  static PossibleContents global(Name name, Type type) {
-    return PossibleContents{GlobalInfo{name, type}};
+  static PossibleContents exactGlobal(Name name, Type type) {
+    return PossibleContents{GlobalInfo{name, type, true}};
+  }
+  static PossibleContents inexactGlobal(Name name, Type type) {
+    return PossibleContents{GlobalInfo{name, type, false}};
   }
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
@@ -165,7 +181,12 @@ public:
   // type and also more than just that, which is the case with a Literal.
   //
   // This returns false for None and Many, for whom it is not well-defined.
-  bool hasExactType() const { return isExactType() || isLiteral(); }
+  bool hasExactType() const {
+    if (auto globalInfo = std::get_if<GlobalInfo>(&value)) {
+      return globalInfo->hasExactType;
+    }
+    return isExactType() || isLiteral();
+  }
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a
@@ -191,11 +212,12 @@ public:
     } else if (isLiteral()) {
       return size_t(1) | (std::hash<Literal>()(getLiteral()) << 3);
     } else if (isGlobal()) {
-      return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
+      return size_t(hasExactType() ? 2 : 3) |
+             (std::hash<Name>()(getGlobal()) << 3);
     } else if (isExactType()) {
-      return size_t(3) | (std::hash<Type>()(getType()) << 3);
+      return size_t(4) | (std::hash<Type>()(getType()) << 3);
     } else if (isMany()) {
-      return 4;
+      return 5;
     } else {
       WASM_UNREACHABLE("bad variant");
     }
@@ -214,6 +236,9 @@ public:
       }
     } else if (isGlobal()) {
       o << "GlobalInfo $" << getGlobal();
+      if (hasExactType()) {
+        o << " exact";
+      }
     } else if (isExactType()) {
       o << "ExactType " << getType();
       auto t = getType();
