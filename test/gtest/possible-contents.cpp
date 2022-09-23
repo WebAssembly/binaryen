@@ -83,8 +83,10 @@ protected:
     PossibleContents::inexactGlobal("i32Global1", Type::i32);
   PossibleContents i32Global2 =
     PossibleContents::inexactGlobal("i32Global2", Type::i32);
-  PossibleContents f64Global = PossibleContents::inexactGlobal("f64Global", Type::f64);
-  PossibleContents anyGlobal = PossibleContents::inexactGlobal("anyGlobal", anyref);
+  PossibleContents f64Global =
+    PossibleContents::inexactGlobal("f64Global", Type::f64);
+  PossibleContents anyGlobal =
+    PossibleContents::inexactGlobal("anyGlobal", anyref);
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Signature(Type::none, Type::none)));

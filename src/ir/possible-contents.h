@@ -81,7 +81,8 @@ class PossibleContents {
     bool hasExactType;
 
     bool operator==(const GlobalInfo& other) const {
-      return name == other.name && type == other.type && hasExactType == other.hasExactType;
+      return name == other.name && type == other.type &&
+             hasExactType == other.hasExactType;
     }
   };
 
@@ -211,7 +212,8 @@ public:
     } else if (isLiteral()) {
       return size_t(1) | (std::hash<Literal>()(getLiteral()) << 3);
     } else if (isGlobal()) {
-      return size_t(hasExactType() ? 2 : 3) | (std::hash<Name>()(getGlobal()) << 3);
+      return size_t(hasExactType() ? 2 : 3) |
+             (std::hash<Name>()(getGlobal()) << 3);
     } else if (isExactType()) {
       return size_t(4) | (std::hash<Type>()(getType()) << 3);
     } else if (isMany()) {

@@ -1553,7 +1553,8 @@ void Flower::filterGlobalContents(PossibleContents& contents,
       // If the contents have an exact type, then we can use an exact global
       // instead. Note that we don't do this for a literal, which is even more
       // precise than a global.
-      contents = PossibleContents::exactGlobal(global->name, contents.getType());
+      contents =
+        PossibleContents::exactGlobal(global->name, contents.getType());
       changed = true;
     }
 
