@@ -3783,3 +3783,126 @@
     )
   )
 )
+
+;; Test for exact types in globals
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) $struct))
+  (type $substruct (struct_subtype (field i32) $struct))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (global $global (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $struct)
+    (struct.new $struct
+      (i32.const 10)
+    )
+  )
+
+  ;; CHECK:      (global $subglobal (ref $substruct) (struct.new $substruct
+  ;; CHECK-NEXT:  (i32.const 20)
+  ;; CHECK-NEXT: ))
+  (global $subglobal (ref $substruct)
+    (struct.new $substruct
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:     (global.get $subglobal)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param $x i32)
+    ;; $struct always has 10, and $substruct always has 20. We should infer that
+    ;; even when mixing globals with other things that have exact type info.
+    ;; These can be 10:
+    (drop
+      (struct.get $struct 0
+        (select
+          (global.get $global)
+          (struct.new $struct
+            (i32.const 10)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (select
+          (global.get $global)
+          (global.get $global)
+          (local.get $x)
+        )
+      )
+    )
+    ;; This can be inferred to be 20:
+    (drop
+      (struct.get $substruct 0
+        (select
+          (global.get $subglobal)
+          (struct.new $substruct
+            (i32.const 20)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; Here we cannot infer, as we mix two exact types.
+    (drop
+      (struct.get $struct 0
+        (select
+          (global.get $global)
+          (global.get $subglobal)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (select
+          (global.get $global)
+          (struct.new $substruct
+            (i32.const 20)
+          )
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
