@@ -3803,6 +3803,11 @@
     )
   )
 
+  ;; CHECK:      (global $global-chain (ref $struct) (global.get $global))
+  (global $global-chain (ref $struct)
+    (global.get $global)
+  )
+
   ;; CHECK:      (global $subglobal (ref $substruct) (struct.new $substruct
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: ))
@@ -3812,9 +3817,13 @@
     )
   )
 
-  ;; CHECK:      (export "test" (func $test))
+  ;; CHECK:      (export "yes" (func $yes))
 
-  ;; CHECK:      (func $test (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (export "no" (func $no))
+
+  ;; CHECK:      (export "yes-chain" (func $yes-chain))
+
+  ;; CHECK:      (func $yes (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -3824,28 +3833,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (select (result (ref $struct))
-  ;; CHECK-NEXT:     (global.get $global)
-  ;; CHECK-NEXT:     (global.get $subglobal)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (select (result (ref $struct))
-  ;; CHECK-NEXT:     (global.get $global)
-  ;; CHECK-NEXT:     (struct.new $substruct
-  ;; CHECK-NEXT:      (i32.const 20)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (export "test") (param $x i32)
+  (func $yes (export "yes") (param $x i32)
     ;; $struct always has 10, and $substruct always has 20. We should infer that
     ;; even when mixing globals with other things that have exact type info.
     ;; These can be 10:
@@ -3881,6 +3870,31 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $no (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:     (global.get $subglobal)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no (export "no") (param $x i32)
     ;; Here we cannot infer, as we mix two exact types.
     (drop
       (struct.get $struct 0
@@ -3898,6 +3912,39 @@
           (struct.new $substruct
             (i32.const 20)
           )
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $yes-chain (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $yes-chain (export "yes-chain") (param $x i32)
+    ;; A "chained" global which reads a previous global can also be optimized,
+    ;; as we know it also has an exact type.
+    (drop
+      (struct.get $struct 0
+        (select
+          (global.get $global-chain)
+          (struct.new $struct
+            (i32.const 10)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (select
+          (global.get $global)
+          (global.get $global-chain)
           (local.get $x)
         )
       )
