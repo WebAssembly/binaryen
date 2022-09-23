@@ -3784,7 +3784,7 @@
   )
 )
 
-;; Test for exact types in globals
+;; Test for exact types in globals.
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct_subtype (field i32) data))
