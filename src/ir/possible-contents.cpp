@@ -149,7 +149,10 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto bType = b.getType();
 
   if (aType.isNullable() && bType.isNullable()) {
-    // Null is possible on both sides, regardless of the types.
+    // Null is possible on both sides. Assume that an intersection can exist,
+    // but we could be more precise here and check if the types belong to
+    // different hierarchies, in which case the nulls would differ TODO. For
+    // now we only use this API from the RefEq logic, so this is fully precise.
     return true;
   }
 
@@ -1028,8 +1031,9 @@ struct Flower {
 
   // Helper for the common case of an expression location that is not a
   // multivalue.
-  PossibleContents& getContents(Expression* expr) {
-    return getContents(getIndex(ExpressionLocation{expr, 0}));
+  PossibleContents& getContents(Expression* curr) {
+    assert(curr->type.size() == 1);
+    return getContents(getIndex(ExpressionLocation{curr, 0}));
   }
 
 private:
