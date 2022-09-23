@@ -420,9 +420,7 @@ struct InfoCollector
     // only allows valid values to flow through.
     addChildParentLink(curr->ref, curr);
   }
-  void visitRefTest(RefTest* curr) {
-    addRoot(curr);
-  }
+  void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);

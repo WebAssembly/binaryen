@@ -249,8 +249,8 @@ struct GUFAOptimizer
     if (refType.isRef()) {
       // We have some knowledge of the type here. Use that to optimize: RefTest
       // returns 1 iff the input is not null and is also a subtype.
-      bool isSubType =
-        HeapType::isSubType(refContents.getType().getHeapType(), curr->intendedType);
+      bool isSubType = HeapType::isSubType(refContents.getType().getHeapType(),
+                                           curr->intendedType);
       bool mayBeNull = refContents.getType().isNullable();
       if (!isSubType) {
         replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(0))));
