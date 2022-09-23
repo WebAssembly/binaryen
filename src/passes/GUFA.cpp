@@ -182,6 +182,18 @@ struct GUFAOptimizer
     }
   }
 
+  void visitRefEq(RefEq* curr) {
+    auto leftContents = oracle.getContents(curr->left);
+    auto rightContents = oracle.getContents(curr->right);
+
+    if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
+      // The contents prove the two sides cannot contain the same reference, so
+      // we infer 0.
+      replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(0))));
+    }
+  }
+
+
   // TODO: If an instruction would trap on null, like struct.get, we could
   //       remove it here if it has no possible contents and if we are in
   //       traps-never-happen mode (that is, we'd have proven it can only trap,

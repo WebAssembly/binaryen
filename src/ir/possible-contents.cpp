@@ -420,8 +420,7 @@ struct InfoCollector
       PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
   }
   void visitRefEq(RefEq* curr) {
-    addChildParentLink(curr->left, curr);
-    addChildParentLink(curr->right, curr);
+    addRoot(curr);
   }
   void visitTableGet(TableGet* curr) {
     addRoot(curr);
@@ -1164,7 +1163,6 @@ private:
   // lookup); if there is more than one child, then to keep the code simple we
   // expect the function to look up the children's effects manually.
   void flowRefTest(const PossibleContents& contents, RefTest* test);
-  void flowRefEq(RefEq* eq);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1521,9 +1519,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* test = parent->dynCast<RefTest>()) {
       assert(test->ref == child);
       flowRefTest(contents, test);
-    } else if (auto* eq = parent->dynCast<RefEq>()) {
-      assert(eq->left == child || eq->right == child);
-      flowRefEq(eq);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1786,6 +1781,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
 }
 
 void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
+  // TODO move to gufa pass; this must happen at the end
   PossibleContents filtered;
   if (contents.isMany()) {
     // Just pass the Many through.
@@ -1809,31 +1805,6 @@ void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
   std::cout << '\n';
 #endif
   updateContents(ExpressionLocation{test, 0}, filtered);
-}
-
-void Flower::flowRefEq(RefEq* eq) {
-  auto& leftContents = getContents(eq->left);
-  auto& rightContents = getContents(eq->right);
-
-  PossibleContents filtered;
-  if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
-    // The contents prove the two sides cannot contain the same reference, so
-    // we infer 0.
-    filtered = PossibleContents::literal(Literal(int32_t(0)));
-  } else {
-    // Otherwise, we don't know anything.
-    filtered = PossibleContents::many();
-  }
-  // Note that we could also infer 1 in the case of two immutable globals;
-  // however, other passes can already do that so adding that code here would
-  // only speed up how fast we compile, but not allow more things to compile.
-  // Reconsider this when focusing on compiler speed.
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "    ref.eq passing through\n";
-  filtered.dump(std::cout);
-  std::cout << '\n';
-#endif
-  updateContents(ExpressionLocation{eq, 0}, filtered);
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -1869,8 +1840,6 @@ void Flower::dump(Location location) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
-  } else if (auto* loc = std::get_if<UniqueLocation>(&location)) {
-    std::cout << "  Specialloc " << loc->index << '\n';
   } else {
     std::cout << "  (other)\n";
   }
