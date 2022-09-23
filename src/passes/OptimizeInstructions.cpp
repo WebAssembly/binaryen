@@ -3601,7 +3601,7 @@ private:
             // x .. NaN  ==>  0
             c->value = Literal::makeZero(Type::i32);
           }
-          return getDroppedChildrenAndAppend(curr, c);
+          return getDroppedChildrenAndAppend(curr->left, c);
         }
         // propagate NaN of RHS but canonicalize it
         if (c->type == Type::f32) {
@@ -3609,7 +3609,7 @@ private:
         } else {
           c->value = standardizeNaN(c->value.getf64());
         }
-        return getDroppedChildrenAndAppend(curr, c);
+        return getDroppedChildrenAndAppend(curr->left, c);
       }
     }
     return nullptr;
@@ -3878,7 +3878,7 @@ private:
         } else {
           c->value = standardizeNaN(c->value.getf64());
         }
-        return getDroppedChildrenAndAppend(curr, c);
+        return getDroppedChildrenAndAppend(curr->right, c);
       }
     }
     {
