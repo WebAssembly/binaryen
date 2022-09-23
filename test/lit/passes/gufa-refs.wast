@@ -2455,9 +2455,7 @@
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
-  ;; CHECK:      (type $ref|$struct|_ref|$other|_=>_none (func_subtype (param (ref $struct) (ref $other)) func))
-
-  ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_=>_none (func_subtype (param i32 (ref null $struct) (ref null $struct) (ref null $other) (ref $struct) (ref $struct)) func))
+  ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_ref|$other|_=>_none (func_subtype (param i32 (ref null $struct) (ref null $struct) (ref null $other) (ref $struct) (ref $struct) (ref $other)) func))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -2759,21 +2757,15 @@
     )
   )
 
-  ;; CHECK:      (func $ref.eq-zero (type $ref|$struct|_ref|$other|_=>_none) (param $nn-struct (ref $struct)) (param $nn-other (ref $other))
+  ;; CHECK:      (func $ref.eq-zero (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $nn-struct)
-  ;; CHECK-NEXT:    (local.get $nn-other)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.eq-zero (export "ref.eq-zero") (param $nn-struct (ref $struct)) (param $nn-other (ref $other))
+  (func $ref.eq-zero (export "ref.eq-zero")
     ;; We do not track specific references, so only the types can be used here.
     ;; Using the types, we can infer that two different ExactTypes cannot
     ;; contain the same reference, so we infer a 0.
@@ -2797,16 +2789,9 @@
         )
       )
     )
-    ;; Non-null on both sides, so we infer 0.
-    (drop
-      (ref.eq
-        (local.get $nn-struct)
-        (local.get $nn-other)
-      )
-    )
   )
 
-  ;; CHECK:      (func $ref.eq-unknown (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_=>_none) (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct))
+  ;; CHECK:      (func $ref.eq-unknown (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_ref|$other|_=>_none) (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct)) (param $nn-other (ref $other))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (struct.new $struct
@@ -2866,8 +2851,14 @@
   ;; CHECK-NEXT:    (local.get $nn-struct2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $nn-struct)
+  ;; CHECK-NEXT:    (local.get $nn-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.eq-unknown (export "ref.eq-unknown") (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct))
+  (func $ref.eq-unknown (export "ref.eq-unknown") (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct)) (param $nn-other (ref $other))
     ;; Here we cannot infer as the type is identical. (Though, if we used more
     ;; than the type, we could see they cannot be identical.)
     (drop
@@ -2938,6 +2929,15 @@
       (ref.eq
         (local.get $nn-struct)
         (local.get $nn-struct2)
+      )
+    )
+    ;; Non-null on both sides, and incompatible types, so we should be able to
+    ;; infer 0, but we need cone types for that. Until we have them, these are
+    ;; Many and so we infer nothing. TODO
+    (drop
+      (ref.eq
+        (local.get $nn-struct)
+        (local.get $nn-other)
       )
     )
   )
