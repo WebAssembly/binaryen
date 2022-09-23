@@ -193,7 +193,6 @@ struct GUFAOptimizer
     }
   }
 
-
   // TODO: If an instruction would trap on null, like struct.get, we could
   //       remove it here if it has no possible contents and if we are in
   //       traps-never-happen mode (that is, we'd have proven it can only trap,
