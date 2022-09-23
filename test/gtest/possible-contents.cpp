@@ -86,7 +86,8 @@ protected:
   PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
   PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
   PossibleContents funcGlobal = PossibleContents::global("funcGlobal", funcref);
-  PossibleContents nonNullFuncGlobal = PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
+  PossibleContents nonNullFuncGlobal =
+    PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Signature(Type::none, Type::none)));
