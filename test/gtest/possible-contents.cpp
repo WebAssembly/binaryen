@@ -271,6 +271,8 @@ TEST_F(PossibleContentsTest, TestIntersection) {
 
   // But nullable ones can - the null can be the intersection.
   assertHaveIntersection(exactFuncSignatureType, exactAnyref);
+  assertHaveIntersection(exactFuncSignatureType, funcNull);
+  assertHaveIntersection(anyNull, funcNull);
 
   // Identical types might.
   assertHaveIntersection(exactI32, exactI32);
@@ -288,10 +290,6 @@ TEST_F(PossibleContentsTest, TestIntersection) {
 
   // Without null on one side, we cannot intersect.
   assertLackIntersection(nonNullFuncGlobal, anyGlobal);
-
-  // If nulls are possible on both sides, a null may be the intersection,
-  // regardless of the type
-  assertHaveIntersection(anyNull, funcNull);
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
