@@ -1535,23 +1535,23 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // This is an immutable global. We never need to consider this value as
     // "Many", since in the worst case we can just use the immutable value. That
     // is, we can always replace this value with (global.get $name) which will
-    // get the right value. Likewise, using the immutable global value is often
-    // better than an exact type, but TODO: we could note both an exact type
-    // *and* that something is equal to a global, in some cases.
-    if (contents.isMany() || contents.isExactType()) {
-      contents = PossibleContents::global(global->name, global->type);
-
-      // TODO: We could do better here, to set global->init->type instead of
-      //       global->type, or even the contents.getType() - either of those
-      //       may be more refined. But other passes will handle that in
-      //       general (by refining the global's type).
+    // get the right value.
+    bool changed = false;
+    if (contents.isMany()) {
+      contents = PossibleContents::inexactGlobal(global->name, global->type);
+      changed = true;
+    } else if (contents.isExactType()) {
+      contents = PossibleContents::exactGlobal(global->name, contents.getType());
+      changed = true;
+    }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    if (changed) {
       std::cout << "  setting immglobal to ImmutableGlobal\n";
       contents.dump(std::cout, &wasm);
       std::cout << '\n';
-#endif
     }
+#endif
   }
 }
 
