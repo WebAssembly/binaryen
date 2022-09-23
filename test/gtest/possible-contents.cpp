@@ -245,7 +245,7 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
             Literal(int32_t(42)));
 }
 
-// Assets a and b have an intersection (or do not), and checks both orderings.
+// Asserts a and b have an intersection (or do not), and checks both orderings.
 void assertHaveIntersection(PossibleContents a, PossibleContents b) {
   EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
   EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
