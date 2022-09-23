@@ -158,7 +158,7 @@
  )
 
  ;; CHECK:      (func $fallthrough-bad-type (result i32)
- ;; CHECK-NEXT:  (call_ref
+ ;; CHECK-NEXT:  (call_ref $none_=>_i32
  ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.func $return-nothing)
@@ -188,7 +188,7 @@
  (func $return-nothing)
 
  ;; CHECK:      (func $fallthrough-unreachable
- ;; CHECK-NEXT:  (call_ref
+ ;; CHECK-NEXT:  (call_ref $i32_i32_=>_none
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (block (result (ref $i32_i32_=>_none))
@@ -258,7 +258,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call_ref
+ ;; CHECK-NEXT:  (call_ref $i32_i32_=>_none
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (select (result (ref $i32_i32_=>_none))

@@ -2060,23 +2060,17 @@ struct PrintExpressionContents
   }
 
   void visitCallRef(CallRef* curr) {
-    if (curr->isReturn) {
-      if (printUnreachableReplacement(curr->target)) {
-        return;
-      }
-      printMedium(o, "return_call_ref ");
-      assert(curr->target->type != Type::unreachable);
-      // TODO: Workaround if target has bottom type.
-      printHeapType(o, curr->target->type.getHeapType(), wasm);
-    } else {
-      printMedium(o, "call_ref");
+    // TODO: Workaround if target has bottom type.
+    if (printUnreachableReplacement(curr->target)) {
+      return;
     }
+    printMedium(o, curr->isReturn ? "return_call_ref " : "call_ref ");
+    printHeapType(o, curr->target->type.getHeapType(), wasm);
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test_static ");
     printHeapType(o, curr->intendedType, wasm);
   }
-
   void visitRefCast(RefCast* curr) {
     if (curr->safety == RefCast::Unsafe) {
       printMedium(o, "ref.cast_nop_static ");
@@ -2085,6 +2079,7 @@ struct PrintExpressionContents
     }
     printHeapType(o, curr->intendedType, wasm);
   }
+
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
@@ -2139,7 +2134,6 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
-
   void printFieldName(HeapType type, Index index) {
     processFieldName(wasm, type, index, [&](Name name) {
       if (name.is()) {
@@ -2755,11 +2749,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     decIndent();
   }
   void visitCallRef(CallRef* curr) {
-    if (curr->isReturn) {
-      maybePrintUnreachableReplacement(curr, curr->target->type);
-    } else {
-      visitExpression(curr);
-    }
+    maybePrintUnreachableReplacement(curr, curr->target->type);
   }
   void visitStructNew(StructNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);

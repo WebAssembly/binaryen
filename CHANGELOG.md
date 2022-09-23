@@ -16,7 +16,9 @@ Current Trunk
 -------------
 
 - Add extra `memory64` argument for `BinaryenSetMemory` and new `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
-- `TypeBuilderSetSubType` now takes a super type as the second argument.
+- `TypeBuilderSetSubType` now takes a supertype as the second argument.
+- `call_ref` can now take a signature type immediate in the text format. The
+  type immediate will become mandatory in the future.
 
 v110
 ----

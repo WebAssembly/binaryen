@@ -2831,22 +2831,31 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   Index operandsStart = 1;
-  HeapType sigType;
-  if (isReturn) {
+  std::optional<HeapType> sigType;
+  try {
     sigType = parseHeapType(*s[1]);
     operandsStart = 2;
+  } catch (ParseException& p) {
+    // The type annotation is required for return_call_ref but temporarily
+    // optional for call_ref.
+    if (isReturn) {
+      throw;
+    }
   }
   std::vector<Expression*> operands;
   parseOperands(s, operandsStart, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
 
-  if (isReturn) {
-    if (!sigType.isSignature()) {
+  if (sigType) {
+    if (!sigType->isSignature()) {
       throw ParseException(
-        "return_call_ref type annotation should be a signature", s.line, s.col);
+        std::string(isReturn ? "return_call_ref" : "call_ref") +
+          " type annotation should be a signature",
+        s.line,
+        s.col);
     }
     return Builder(wasm).makeCallRef(
-      target, operands, sigType.getSignature().results, isReturn);
+      target, operands, sigType->getSignature().results, isReturn);
   }
   return ValidatingBuilder(wasm, s.line, s.col)
     .validateAndMakeCallRef(target, operands, isReturn);

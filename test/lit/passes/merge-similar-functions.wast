@@ -328,7 +328,7 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref
+;; CHECK-NEXT:  (call_ref $none_=>_i32
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -352,7 +352,7 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref
+;; CHECK-NEXT:  (call_ref $i32_=>_i32
 ;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )

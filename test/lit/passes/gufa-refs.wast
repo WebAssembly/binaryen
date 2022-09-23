@@ -831,7 +831,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $two-params
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (ref.func $func-2params-a)
@@ -3744,19 +3744,19 @@
   )
 
   ;; CHECK:      (func $do-calls (type $none_=>_none)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $i1
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (ref.func $reffed1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $i1
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (ref.func $reffed1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $i2
   ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:   (ref.func $reffed2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $i2
   ;; CHECK-NEXT:   (i32.const 99999)
   ;; CHECK-NEXT:   (ref.func $reffed2)
   ;; CHECK-NEXT:  )
