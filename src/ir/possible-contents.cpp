@@ -376,6 +376,20 @@ struct InfoCollector
     addRoot(
       curr,
       PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
+
+    // The presence of a RefFunc indicates the function may be called
+    // indirectly, so add the relevant connections (doing so here ensures that
+    // we do not flow values from indirect calls to functions whose address is
+    // never taken).
+    auto* func = getModule()->getFunction(curr->func);
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      info.links.push_back({SignatureParamLocation{func->type, i},
+                               LocalLocation{func, i, 0}});
+    }
+    for (Index i = 0; i < func->getResults().size(); i++) {
+      info.links.push_back({ResultLocation{func, i},
+                               SignatureResultLocation{func->type, i}});
+    }
   }
   void visitRefEq(RefEq* curr) {
     // TODO: optimize when possible (e.g. when both sides must contain the same
@@ -580,9 +594,6 @@ struct InfoCollector
     handleIndirectCall(curr, curr->heapType);
   }
   void visitCallRef(CallRef* curr) {
-    // TODO: Optimize like RefCast etc.: the values reaching us depend on the
-    //       possible values of |target| (which might be nothing, or might be a
-    //       constant function).
     handleIndirectCall(curr, curr->target->type);
   }
 
@@ -1251,24 +1262,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       if (wasm.getGlobal(name)->mutable_) {
         roots[GlobalLocation{name}] = PossibleContents::many();
       }
-    }
-  }
-
-#ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "func phase\n";
-#endif
-
-  // Connect function parameters to their signature, so that any indirect call
-  // of that signature will reach them.
-  // TODO: find which functions are even taken by reference
-  for (auto& func : wasm.functions) {
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      links.insert(getIndexes({SignatureParamLocation{func->type, i},
-                               LocalLocation{func.get(), i, 0}}));
-    }
-    for (Index i = 0; i < func->getResults().size(); i++) {
-      links.insert(getIndexes({ResultLocation{func.get(), i},
-                               SignatureResultLocation{func->type, i}}));
     }
   }
 
