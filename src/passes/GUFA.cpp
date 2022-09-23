@@ -244,6 +244,11 @@ struct GUFAOptimizer
   }
 
   void visitRefTest(RefTest* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+
     auto refContents = oracle.getContents(curr->ref);
     auto refType = refContents.getType();
     if (refType.isRef()) {
@@ -252,10 +257,17 @@ struct GUFAOptimizer
       bool isSubType =
         HeapType::isSubType(refType.getHeapType(), curr->intendedType);
       bool mayBeNull = refType.isNullable();
+
+      auto optimize = [&](int32_t result) {
+        auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, *getModule(), getPassOptions(), last));
+      };
+
       if (!isSubType) {
-        replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(0))));
+        optimize(0);
       } else if (!mayBeNull) {
-        replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(1))));
+        optimize(1);
       }
     }
   }
