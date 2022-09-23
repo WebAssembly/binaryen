@@ -1549,7 +1549,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     if (contents.isMany()) {
       contents = PossibleContents::inexactGlobal(global->name, global->type);
       changed = true;
-    } else if (contents.isExactType()) {
+    } else if (contents.isExactType()) { // TODO
       contents = PossibleContents::exactGlobal(global->name, contents.getType());
       changed = true;
     }
@@ -1613,7 +1613,7 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.isExactType()) {
+  if (refContents.hasExactType()) {
     // Add a single link to the exact location the reference points to.
     connectDuringFlow(
       DataLocation{refContents.getType().getHeapType(), fieldIndex},

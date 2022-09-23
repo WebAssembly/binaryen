@@ -3819,9 +3819,7 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 20)
