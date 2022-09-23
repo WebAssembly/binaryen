@@ -2871,8 +2871,8 @@
         )
       )
     )
-    ;; When both are nullable, we cannot infer anything (since, again, we just
-    ;; have the type).
+    ;; These nulls are identical, so we could infer 1, but we leave that for
+    ;; other passes, and do not infer here.
     (drop
       (ref.eq
         (ref.null $struct)
