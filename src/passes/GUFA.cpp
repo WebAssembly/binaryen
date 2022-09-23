@@ -242,6 +242,23 @@ struct GUFAOptimizer
     runner.add("vacuum");
     runner.runOnFunction(func);
   }
+
+  void visitRefTest(RefTest* curr) {
+    auto refContents = oracle.getContents(curr->ref);
+    auto refType = refContents.getType();
+    if (refType.isRef()) {
+      // We have some knowledge of the type here. Use that to optimize: RefTest
+      // returns 1 iff the input is not null and is also a subtype.
+      bool isSubType =
+        HeapType::isSubType(refContents.getType().getHeapType(), curr->intendedType);
+      bool mayBeNull = refContents.getType().isNullable();
+      if (!isSubType) {
+        replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(0))));
+      } else if (!mayBeNull) {
+        replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(1))));
+      }
+    }
+  }
 };
 
 struct GUFAPass : public Pass {

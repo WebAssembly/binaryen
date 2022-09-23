@@ -529,6 +529,13 @@ public:
     return iter->second;
   }
 
+  // Helper for the common case of an expression location that is not a
+  // multivalue.
+  PossibleContents getContents(Expression* curr) {
+    assert(curr->type.size() == 1);
+    return getContents(ExpressionLocation{curr, 0});
+  }
+
 private:
   std::unordered_map<Location, PossibleContents> locationContents;
 };
