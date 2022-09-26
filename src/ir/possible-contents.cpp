@@ -1399,7 +1399,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
   //
-  // Many is always the worst possible case. An cone type of a non-reference is
+  // Many is always the worst possible case. A cone type of a non-reference is
   // also the worst case, since subtyping is not relevant there, and so if we
   // only know something about the type then we already know nothing beyond what
   // the type in the wasm tells us (and from there we can only go to Many).
