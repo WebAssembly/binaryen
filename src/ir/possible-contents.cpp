@@ -378,10 +378,9 @@ struct InfoCollector
       PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
 
     // The presence of a RefFunc indicates the function may be called
-    // indirectly, so add the relevant connections (doing so here ensures that
-    // we do not flow values from indirect calls to functions whose address is
-    // never taken).
-    assert(getModule());
+    // indirectly, so add the relevant connections for this particular function.
+    // We do so here in the RefFunc so that we only do it for functions that
+    // actually have a RefFunc.
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back(
