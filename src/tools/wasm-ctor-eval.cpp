@@ -408,9 +408,7 @@ private:
   // TODO: handle unaligned too, see shell-interface
   template<typename T> T* getMemory(Address address, Name memoryName) {
     auto it = memories.find(memoryName);
-    if (it == memories.end()) {
-      Fatal() << "memory not found: " << memoryName;
-    }
+    assert(it != memories.end());
     auto& memory = it->second;
     // resize the memory buffer as needed.
     auto max = address + sizeof(T);

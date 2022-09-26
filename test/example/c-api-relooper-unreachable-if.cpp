@@ -29,6 +29,7 @@ int main() {
                       segmentSizes,
                       0,
                       0,
+                      0,
                       "0");
   }
   the_relooper = RelooperCreate(the_module);
@@ -596,6 +597,7 @@ int main() {
                       segmentPassive,
                       segmentOffsets,
                       segmentSizes,
+                      0,
                       0,
                       0,
                       "0");

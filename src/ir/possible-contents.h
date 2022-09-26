@@ -167,6 +167,13 @@ public:
   // This returns false for None and Many, for whom it is not well-defined.
   bool hasExactType() const { return isExactType() || isLiteral(); }
 
+  // Returns whether the given contents have any intersection, that is, whether
+  // some value exists that can appear in both |a| and |b|. For example, if
+  // either is None, or if they are both ExactTypes but of different types, then
+  // they have no intersection.
+  static bool haveIntersection(const PossibleContents& a,
+                               const PossibleContents& b);
+
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a
   // Global (emitting a GlobalGet), but not for anything else yet.
@@ -527,6 +534,13 @@ public:
       return PossibleContents::none();
     }
     return iter->second;
+  }
+
+  // Helper for the common case of an expression location that is not a
+  // multivalue.
+  PossibleContents getContents(Expression* curr) {
+    assert(curr->type.size() == 1);
+    return getContents(ExpressionLocation{curr, 0});
   }
 
 private:

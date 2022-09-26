@@ -365,6 +365,19 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       for (auto* catchBody : curr->catchBodies) {
         typeUpdater.noteRecursiveRemoval(catchBody);
       }
+      return;
+    }
+
+    // The try's body does throw. However, throwing may be the only thing it
+    // does, and if the try has a catch-all, then the entire try including
+    // children may have no effects. Note that this situation can only happen
+    // if we do have a catch-all, so avoid wasted work by checking that first.
+    // Also, we can't do this if a result is returned, so check the type.
+    if (curr->type == Type::none && curr->hasCatchAll() &&
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr)
+           .hasUnremovableSideEffects()) {
+      typeUpdater.noteRecursiveRemoval(curr);
+      ExpressionManipulator::nop(curr);
     }
   }
 
@@ -377,7 +390,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       ExpressionManipulator::nop(curr->body);
     }
     if (curr->getResults() == Type::none &&
-        !EffectAnalyzer(getPassOptions(), *getModule(), curr->body)
+        !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }

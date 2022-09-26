@@ -47,7 +47,6 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
-const char* TypedFunctionReferencesFeature = "typed-function-references";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
@@ -55,10 +54,7 @@ const char* MultiMemoriesFeature = "multi-memories";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name MEMORY_BASE("__memory_base");
-Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
-Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
 Name GLOBAL("global");

@@ -202,8 +202,7 @@ struct MergeSimilarFunctions : public Pass {
 
   // Parameterize direct calls if the module supports func ref values.
   bool isCallIndirectionEnabled(Module* module) const {
-    return module->features.hasReferenceTypes() &&
-           module->features.hasTypedFunctionReferences();
+    return module->features.hasReferenceTypes() && module->features.hasGC();
   }
   bool areInEquvalentClass(Function* lhs, Function* rhs, Module* module);
   void collectEquivalentClasses(std::vector<EquivalentClass>& classes,

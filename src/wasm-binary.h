@@ -434,7 +434,6 @@ extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
-extern const char* TypedFunctionReferencesFeature;
 extern const char* RelaxedSIMDFeature;
 extern const char* ExtendedConstFeature;
 extern const char* StringsFeature;
@@ -1084,7 +1083,8 @@ enum ASTNodes {
 
   // typed function references opcodes
 
-  CallRef = 0x14,
+  CallRefUnannotated = 0x14,
+  CallRef = 0x17,
   RetCallRef = 0x15,
 
   // gc opcodes
@@ -1728,7 +1728,8 @@ public:
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitCallRef(CallRef* curr);
+  void visitCallRef(CallRef* curr,
+                    std::optional<HeapType> maybeType = std::nullopt);
   void visitRefAs(RefAs* curr, uint8_t code);
 
   [[noreturn]] void throwError(std::string text);

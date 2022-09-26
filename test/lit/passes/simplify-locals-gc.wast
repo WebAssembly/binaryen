@@ -391,4 +391,56 @@
       (local.get $a)
     )
   )
+
+  ;; CHECK:      (func $call-vs-mutable-read (param $0 (ref $struct)) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (call $side-effect)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $call-vs-mutable-read (type $ref|$struct|_=>_i32) (param $0 (ref $struct)) (result i32)
+  ;; NOMNL-NEXT:  (local $temp i32)
+  ;; NOMNL-NEXT:  (local.set $temp
+  ;; NOMNL-NEXT:   (call $side-effect)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.get $struct 0
+  ;; NOMNL-NEXT:    (local.get $0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $temp)
+  ;; NOMNL-NEXT: )
+  (func $call-vs-mutable-read (param $0 (ref $struct)) (result i32)
+    (local $temp i32)
+    (local.set $temp
+      ;; This call may have arbitrary side effects, for all we know, as we
+      ;; optimize this function using --simplify-locals.
+      (call $side-effect)
+    )
+    (drop
+      ;; This reads a mutable field, which means the call might modify it.
+      (struct.get $struct 0
+        (local.get $0)
+      )
+    )
+    ;; We should not move the call to here!
+    (local.get $temp)
+  )
+
+  ;; CHECK:      (func $side-effect (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $side-effect (type $none_=>_i32) (result i32)
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $side-effect (result i32)
+    ;; Helper function for the above.
+    (unreachable)
+  )
 )

@@ -53,6 +53,8 @@ namespace wasm {
 
 using namespace cashew;
 
+static IString importObject("importObject");
+
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
@@ -411,7 +413,21 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
-  ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
+  ValueBuilder::appendArgumentToFunction(asmFunc, importObject);
+
+  // Retrieve `env` object from info.  Older version of emscripten pass `env`
+  // *as* `info` so for now we make this conditional.
+  // TODO(sbc): Remove the makeBinary here once emscripten change has landed.
+  Ref envVar = ValueBuilder::makeVar();
+  asmFunc[3]->push_back(envVar);
+  ValueBuilder::appendToVar(
+    envVar,
+    ENV,
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeDot(ValueBuilder::makeName(importObject),
+                            ValueBuilder::makeName(ENV)),
+      "||",
+      ValueBuilder::makeName(importObject)));
 
   // add memory import
   if (!wasm->memories.empty()) {
@@ -572,13 +588,6 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
   addMath(MATH_CEIL, CEIL);
   addMath(MATH_TRUNC, TRUNC);
   addMath(MATH_SQRT, SQRT);
-  // abort function
-  Ref abortVar = ValueBuilder::makeVar();
-  ast->push_back(abortVar);
-  ValueBuilder::appendToVar(
-    abortVar,
-    "abort",
-    ValueBuilder::makeDot(ValueBuilder::makeName(ENV), ABORT_FUNC));
   // TODO: this shouldn't be needed once we stop generating literal asm.js code
   // NaN and Infinity variables
   Ref nanVar = ValueBuilder::makeVar();
@@ -2014,13 +2023,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
                          wasmToJsType(curr->delta->type)));
       } else {
-        return ValueBuilder::makeCall(ABORT_FUNC);
+        ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TRAP);
+        return ValueBuilder::makeCall(ABI::wasm2js::TRAP);
       }
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
     Ref visitUnreachable(Unreachable* curr) {
-      return ValueBuilder::makeCall(ABORT_FUNC);
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TRAP);
+      return ValueBuilder::makeCall(ABI::wasm2js::TRAP);
     }
 
     // Atomics
@@ -2508,7 +2519,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
   ast->push_back(memoryGrowFunc);
 }
 
-// Wasm2JSGlue emits the core of the module - the functions etc. that would
+// Wasm2JSBuilder emits the core of the module - the functions etc. that would
 // be the asm.js function in an asm.js world. This class emits the rest of the
 // "glue" around that.
 class Wasm2JSGlue {
@@ -2570,7 +2581,7 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out << "function instantiate(asmLibraryArg) {\n";
+  out << "function instantiate(info) {\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
@@ -2617,7 +2628,7 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  out << "  return asmFunc(asmLibraryArg);\n}\n";
+  out << "  return asmFunc(info);\n}\n";
 }
 
 void Wasm2JSGlue::emitPostES6() {
@@ -2634,8 +2645,7 @@ void Wasm2JSGlue::emitPostES6() {
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  out << "var ret" << moduleName.str << " = " << moduleName.str << "(";
-  out << "  { abort: function() { throw new Error('abort'); }";
+  out << "var ret" << moduleName.str << " = " << moduleName.str << "({\n";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
@@ -2643,7 +2653,7 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << ",\n    " << asmangle(import->base.str);
+    out << "    " << asmangle(import->base.str) << ",\n";
   });
 
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* import) {
@@ -2652,8 +2662,8 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << ",\n    " << asmangle(import->base.str) << ": { buffer : mem"
-        << moduleName.str << " }";
+    out << "    " << asmangle(import->base.str) << ": { buffer : mem"
+        << moduleName.str << " }\n";
   });
 
   ModuleUtils::iterImportedTables(wasm, [&](Table* import) {
@@ -2662,10 +2672,10 @@ void Wasm2JSGlue::emitPostES6() {
     if (ABI::wasm2js::isHelper(import->base)) {
       return;
     }
-    out << ",\n    " << asmangle(import->base.str);
+    out << "    " << asmangle(import->base.str) << ",\n";
   });
 
-  out << "\n  });\n";
+  out << "});\n";
 
   if (flags.allowAsserts) {
     return;
@@ -2795,9 +2805,18 @@ void Wasm2JSGlue::emitSpecialSupport() {
   // The special support functions are emitted as part of the JS glue, if we
   // need them.
   bool need = false;
+  bool needScratch = false;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (ABI::wasm2js::isHelper(import->base)) {
       need = true;
+    }
+    if (import->base == ABI::wasm2js::SCRATCH_STORE_I32 ||
+        import->base == ABI::wasm2js::SCRATCH_LOAD_I32 ||
+        import->base == ABI::wasm2js::SCRATCH_STORE_F32 ||
+        import->base == ABI::wasm2js::SCRATCH_LOAD_F32 ||
+        import->base == ABI::wasm2js::SCRATCH_STORE_F64 ||
+        import->base == ABI::wasm2js::SCRATCH_LOAD_F64) {
+      needScratch = true;
     }
   });
   if (!need) {
@@ -2856,14 +2875,19 @@ void Wasm2JSGlue::emitSpecialSupport() {
   // optimizer runs), so they are guaranteed to be adjacent (and a JS optimizer
   // that runs later will handle that ok since they are calls, which can always
   // have side effects).
-  out << R"(
+  if (needScratch) {
+    out << R"(
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
   var f32ScratchView = new Float32Array(scratchBuffer);
   var f64ScratchView = new Float64Array(scratchBuffer);
   )";
+  }
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (!ABI::wasm2js::isHelper(import->base)) {
+      return;
+    }
     if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
       out << R"(
   function wasm2js_scratch_store_i32(index, value) {
@@ -2996,6 +3020,10 @@ void Wasm2JSGlue::emitSpecialSupport() {
     return stashedBits;
   }
       )";
+    } else if (import->base == ABI::wasm2js::TRAP) {
+      out << "function wasm2js_trap() { throw new Error('abort'); }\n";
+    } else {
+      WASM_UNREACHABLE("bad helper function");
     }
   });
 

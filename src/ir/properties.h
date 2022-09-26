@@ -42,8 +42,12 @@ inline bool isSymmetric(Binary* binary) {
     case EqInt64:
     case NeInt64:
 
+    case MinFloat32:
+    case MaxFloat32:
     case EqFloat32:
     case NeFloat32:
+    case MinFloat64:
+    case MaxFloat64:
     case EqFloat64:
     case NeFloat64:
       return true;

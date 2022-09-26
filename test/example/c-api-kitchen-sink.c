@@ -361,8 +361,6 @@ void test_features() {
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
   printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
-  printf("BinaryenFeatureTypedFunctionReferences: %d\n",
-         BinaryenFeatureTypedFunctionReferences());
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
@@ -513,6 +511,7 @@ void test_core() {
                     segmentSizes,
                     2,
                     1,
+                    0,
                     "0");
 
   BinaryenExpressionRef valueList[] = {
@@ -1993,6 +1992,7 @@ void test_for_each() {
                       segmentSizes,
                       2,
                       0,
+                      0,
                       "0");
     BinaryenAddGlobal(module,
                       "a-global",
@@ -2161,7 +2161,7 @@ void test_typebuilder() {
                              fieldMutables,
                              2);
   }
-  TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructIndex);
+  TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructHeapType);
 
   // TODO: Rtts (post-MVP?)
 

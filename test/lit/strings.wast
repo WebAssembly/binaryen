@@ -34,8 +34,8 @@
 
   ;; CHECK:      (type $stringref_ref|$array|_ref|$array16|_=>_none (func (param stringref (ref $array) (ref $array16))))
 
-  ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
-  (global $string-const stringref (string.const "string in a global"))
+  ;; CHECK:      (global $string-const stringref (string.const "string in a global \01\ff\t\t\n\n\r\r\"\"\'\'\\\\"))
+  (global $string-const stringref (string.const "string in a global \01\ff\t\09\n\0a\r\0d\"\22\'\27\\\5c"))
 
   ;; CHECK:      (memory $0 10 10)
 

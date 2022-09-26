@@ -272,6 +272,7 @@ INITIAL_CONTENTS_IGNORE = [
     'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings
     'strings.wast',
+    'simplify-locals-strings.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
@@ -1264,6 +1265,7 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
+    ["--discard-global-effects"],
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
@@ -1271,6 +1273,10 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
+    # note that no pass we run here should add effects to a function, so it is
+    # ok to run this pass and let the passes after it use the effects to
+    # optimize
+    ["--generate-global-effects"],
     ["--global-refining"],
     ["--gsi"],
     ["--gto"],
@@ -1382,7 +1388,6 @@ print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
     '--disable-reference-types': ['--disable-gc'],
-    '--disable-typed-function-references': ['--disable-gc'],
 }
 
 print('''
