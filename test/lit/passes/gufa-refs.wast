@@ -3756,7 +3756,7 @@
   ;; CHECK-NEXT: )
   (func $reffed-in-global-code (type $i1) (param $x i32)
     ;; The only ref to this function is in global code, so this tests that we
-    ;; scan that properly. This can be optimiezd like $reffed, that is, we can
+    ;; scan that properly. This can be optimized like $reffed, that is, we can
     ;; infer 42 here.
     (drop
       (local.get $x)
