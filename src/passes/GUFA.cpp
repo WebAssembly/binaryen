@@ -233,6 +233,35 @@ struct GUFAOptimizer
     }
   }
 
+  void visitRefTest(RefTest* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+
+    auto refContents = getContents(curr->ref);
+    auto refType = refContents.getType();
+    if (refType.isRef()) {
+      // We have some knowledge of the type here. Use that to optimize: RefTest
+      // returns 1 iff the input is not null and is also a subtype.
+      bool isSubType =
+        HeapType::isSubType(refType.getHeapType(), curr->intendedType);
+      bool mayBeNull = refType.isNullable();
+
+      auto optimize = [&](int32_t result) {
+        auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, *getModule(), getPassOptions(), last));
+      };
+
+      if (!isSubType) {
+        optimize(0);
+      } else if (!mayBeNull) {
+        optimize(1);
+      }
+    }
+  }
+
   // TODO: If an instruction would trap on null, like struct.get, we could
   //       remove it here if it has no possible contents and if we are in
   //       traps-never-happen mode (that is, we'd have proven it can only trap,
@@ -292,35 +321,6 @@ struct GUFAOptimizer
     //  )
     runner.add("vacuum");
     runner.runOnFunction(func);
-  }
-
-  void visitRefTest(RefTest* curr) {
-    if (curr->type == Type::unreachable) {
-      // Leave this for DCE.
-      return;
-    }
-
-    auto refContents = oracle.getContents(curr->ref);
-    auto refType = refContents.getType();
-    if (refType.isRef()) {
-      // We have some knowledge of the type here. Use that to optimize: RefTest
-      // returns 1 iff the input is not null and is also a subtype.
-      bool isSubType =
-        HeapType::isSubType(refType.getHeapType(), curr->intendedType);
-      bool mayBeNull = refType.isNullable();
-
-      auto optimize = [&](int32_t result) {
-        auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
-        replaceCurrent(getDroppedChildrenAndAppend(
-          curr, *getModule(), getPassOptions(), last));
-      };
-
-      if (!isSubType) {
-        optimize(0);
-      } else if (!mayBeNull) {
-        optimize(1);
-      }
-    }
   }
 };
 
