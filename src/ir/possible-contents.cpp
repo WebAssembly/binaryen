@@ -86,7 +86,7 @@ void PossibleContents::combine(const PossibleContents& other) {
     // combination here is if they have the same type (since we've already ruled
     // out the case of them being equal). If they have the same type then
     // neither is a reference and we can emit an exact type (since subtyping is
-    // not relevant for non-references.
+    // not relevant for non-references).
     if (type == otherType) {
       value = ExactType(type);
     } else {
@@ -130,6 +130,48 @@ void PossibleContents::combine(const PossibleContents& other) {
 
   // Nothing else possible combines in an interesting way; emit a Many.
   value = Many();
+}
+
+bool PossibleContents::haveIntersection(const PossibleContents& a,
+                                        const PossibleContents& b) {
+  if (a.isNone() || b.isNone()) {
+    // One is the empty set, so nothing can intersect here.
+    return false;
+  }
+
+  if (a.isMany() || b.isMany()) {
+    // One is the set of all things, so definitely something can intersect since
+    // we've ruled out an empty set for both.
+    return true;
+  }
+
+  auto aType = a.getType();
+  auto bType = b.getType();
+
+  if (aType.isNullable() && bType.isNullable()) {
+    // Null is possible on both sides. Assume that an intersection can exist,
+    // but we could be more precise here and check if the types belong to
+    // different hierarchies, in which case the nulls would differ TODO. For
+    // now we only use this API from the RefEq logic, so this is fully precise.
+    return true;
+  }
+
+  if (a.hasExactType() && b.hasExactType() && a.getType() != b.getType()) {
+    // The values must be different since their types are different.
+    return false;
+  }
+
+  if (!Type::isSubType(aType, bType) && !Type::isSubType(bType, aType)) {
+    // No type can appear in both a and b, so the types differ, so the values
+    // differ.
+    return false;
+  }
+
+  // TODO: we can also optimize things like different Literals, but existing
+  //       passes do such things already so it is low priority.
+
+  // It appears they can intersect.
+  return true;
 }
 
 namespace {
@@ -378,9 +420,6 @@ struct InfoCollector
       PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
   }
   void visitRefEq(RefEq* curr) {
-    // TODO: optimize when possible (e.g. when both sides must contain the same
-    //       global, or if we infer exact types that are different then the
-    //       result must be 0)
     addRoot(curr);
   }
   void visitTableGet(TableGet* curr) {
@@ -416,8 +455,6 @@ struct InfoCollector
   }
 
   void visitRefCast(RefCast* curr) {
-    // We will handle this in a special way later during the flow, as ref.cast
-    // only allows valid values to flow through.
     addChildParentLink(curr->ref, curr);
   }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
@@ -1757,8 +1794,6 @@ void Flower::dump(Location location) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
-  } else if (auto* loc = std::get_if<UniqueLocation>(&location)) {
-    std::cout << "  Specialloc " << loc->index << '\n';
   } else {
     std::cout << "  (other)\n";
   }
