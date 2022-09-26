@@ -77,6 +77,9 @@ class PossibleContents {
   struct ConeType {
     Type type;
     Index depth;
+    bool operator==(const ConeType& other) const {
+      return type == other.type && depth == other.depth;
+    }
   };
 
   struct Many : public std::monostate {};
@@ -87,6 +90,12 @@ class PossibleContents {
   //       this and disallow ConeType etc., but PCV might get slower.
   using Variant = std::variant<None, Literal, GlobalInfo, ConeType, Many>;
   Variant value;
+
+  // Internal convenience for creating a cone type with depth 0, i.e,, an exact
+  // type.
+  static ConeType ExactType(Type type) {
+    return ConeType{type, 0};
+  }
 
 public:
   PossibleContents() : value(None()) {}
@@ -104,7 +113,7 @@ public:
   }
   // Helper for a cone type with depth 0, i.e., an exact type.
   static PossibleContents exactType(Type type) {
-    return PossibleContents{ConeType(type, 0)};
+    return PossibleContents{ExactType(type)};
   }
   static PossibleContents coneType(Type type, Index depth) {
     WASM_UNREACHABLE("actual cones are not supported yet");
@@ -215,8 +224,8 @@ public:
     } else if (isGlobal()) {
       return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
-      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}(coneType->type,
-                                                               coneType->depth))
+      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}({coneType->type,
+                                                                coneType->depth}))
                           << 3);
     } else if (isMany()) {
       return 4;

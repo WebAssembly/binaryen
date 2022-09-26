@@ -1404,7 +1404,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // know only the type then we already know nothing beyond what the type in the
   // wasm tells us (and from there we can only go to Many).
   bool worthSendingMore = !contents.isMany();
-  if (!contents.getType().isRef() && contents.isExactType()) {
+  if (!contents.getType().isRef() && contents.hasExactType()) {
     worthSendingMore = false;
   }
 
@@ -1569,9 +1569,10 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // "Many", since in the worst case we can just use the immutable value. That
     // is, we can always replace this value with (global.get $name) which will
     // get the right value. Likewise, using the immutable global value is often
-    // better than an exact type, but TODO: we could note both an exact type
-    // *and* that something is equal to a global, in some cases.
-    if (contents.isMany() || contents.isExactType()) {
+    // better than a cone type (even an exact one), but TODO: we could note both
+    // a cone/exact type *and* that something is equal to a global, in some
+    // cases. See https://github.com/WebAssembly/binaryen/pull/5083
+    if (contents.isMany() || contents.isConeType()) {
       contents = PossibleContents::global(global->name, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
@@ -1636,13 +1637,13 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.isExactType()) {
+  if (refContents.hasExactType()) {
     // Add a single link to the exact location the reference points to.
     connectDuringFlow(
       DataLocation{refContents.getType().getHeapType(), fieldIndex},
       ExpressionLocation{read, 0});
   } else {
-    // Otherwise, this is a cone: the declared type of the reference, or any
+    // Otherwise, this is a true cone: the declared type of the reference or any
     // subtype of that, regardless of whether the content is a Many or a Global
     // or anything else.
     // TODO: The Global case may have a different cone type than the heapType,
