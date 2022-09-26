@@ -2466,6 +2466,8 @@
 
   ;; CHECK:      (export "ref.eq-unknown" (func $ref.eq-unknown))
 
+  ;; CHECK:      (export "local-null" (func $ref.eq-local-null))
+
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -2764,19 +2766,6 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.eq-zero (export "ref.eq-zero")
     ;; We do not track specific references, so only the types can be used here.
@@ -2800,18 +2789,6 @@
         (struct.new $struct
           (i32.const 5)
         )
-      )
-    )
-    ;; We can't drop side effects - the call must remain.
-    (drop
-      (ref.eq
-        (block (result eqref)
-          (drop
-            (call $import)
-          )
-          (ref.null $struct)
-        )
-        (ref.null $struct)
       )
     )
   )
@@ -2976,6 +2953,60 @@
       (ref.eq
         (ref.null $struct)
         (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.eq-local-null (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (block (result (ref null $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.eq-updates
+    (local $x (ref null eq))
+    ;; The local.get will be optimized to a ref.null. After that we will leave
+    ;; the ref.eq as it is. This guards against a possible bug of us not
+    ;; setting the contents of the new ref.null expression just created: the
+    ;; parent ref.eq will query the contents right after adding that expression,
+    ;; and the contents must be set or else we'll think nothing is possible
+    ;; there.
+    ;;
+    ;; (We could optimize ref.eq of two nulls to 1, but we leave that for other
+    ;; passes.)
+    (drop
+      (ref.eq
+        (ref.null eq)
+        (local.get $x)
+      )
+    )
+    ;; Another situation we need to be careful with effects of updates. Here
+    ;; we have a block whose result we can infer to a null, but that does not
+    ;; let us optimize the ref.eq, and we also must be careful to not drop side
+    ;; effects - the call must remain.
+    (drop
+      (ref.eq
+        (block (result eqref)
+          (drop
+            (call $import)
+          )
+          (ref.null $struct)
+        )
+        (ref.null $struct)
       )
     )
   )

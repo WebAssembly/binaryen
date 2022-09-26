@@ -543,6 +543,18 @@ public:
     return getContents(ExpressionLocation{curr, 0});
   }
 
+  // Note the contents at a particular location. This is useful while optimizing
+  // if we replace expressions with others: we know the contents of the
+  // replacement and want future queries to getContents to reflect that.
+  void noteContents(Location location, const PossibleContents& contents) {
+    locationContents[location] = contents;
+  }
+
+  void noteContents(Expression* curr, const PossibleContents& contents) {
+    assert(curr->type.size() == 1);
+    noteContents(ExpressionLocation{curr, 0}, contents);
+  }
+
 private:
   std::unordered_map<Location, PossibleContents> locationContents;
 };

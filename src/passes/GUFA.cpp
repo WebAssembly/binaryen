@@ -69,6 +69,16 @@ struct GUFAOptimizer
 
   bool optimized = false;
 
+  Expression* replaceCurrent(Expression* rep) {
+    // The contents of the replacement are identical to the original. Updating
+    // this is important as parents may query the contents of their children.
+    oracle.noteContents(rep, oracle.getContents(getCurrent()));
+
+    return WalkerPass<
+      PostWalker<GUFAOptimizer,
+                 UnifiedExpressionVisitor<GUFAOptimizer>>>::replaceCurrent(rep);
+  }
+
   void visitExpression(Expression* curr) {
     // Skip things we can't improve in any way.
     auto type = curr->type;
@@ -91,7 +101,7 @@ struct GUFAOptimizer
 
     // Ok, this is an interesting location that we might optimize. See what the
     // oracle says is possible there.
-    auto contents = oracle.getContents(ExpressionLocation{curr, 0});
+    auto contents = oracle.getContents(curr);
 
     auto& options = getPassOptions();
     auto& wasm = *getModule();
