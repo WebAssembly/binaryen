@@ -53,6 +53,12 @@ Literal::Literal(Type type) : type(type) {
   if (isData()) {
     assert(!type.isNonNullable());
     new (&gcData) std::shared_ptr<GCData>();
+  } else if (isString()) {
+    assert(!type.isNonNullable());
+    new (&stringData) std::shared_ptr<StringData>();
+  } else if (isStringView()) {
+    assert(!type.isNonNullable());
+    new (&stringViewData) std::shared_ptr<StringViewData>();
   } else {
     // For anything else, zero out all the union data.
     memset(&v128, 0, 16);
@@ -67,6 +73,22 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
   // The type must be a proper type for GC data.
   assert(isData());
+}
+
+Literal::Literal(std::shared_ptr<StringData> stringData, Type type)
+  : stringData(stringData), type(type) {
+  // Null data is only allowed if nullable.
+  assert(stringData || type.isNullable());
+  // The type must be a proper type.
+  assert(isString());
+}
+
+Literal::Literal(std::shared_ptr<StringViewData> stringViewData, Type type)
+  : stringViewData(stringViewData), type(type) {
+  // Null data is only allowed if nullable.
+  assert(stringViewData || type.isNullable());
+  // The type must be a proper type.
+  assert(isStringView());
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -91,6 +113,14 @@ Literal::Literal(const Literal& other) : type(other.type) {
   }
   if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
+    return;
+  }
+  if (other.isString()) {
+    new (&stringData) std::shared_ptr<StringData>(other.stringData);
+    return;
+  }
+  if (other.isStringView()) {
+    new (&stringViewData) std::shared_ptr<StringViewData>(other.stringViewData);
     return;
   }
   if (type.isFunction()) {
@@ -127,6 +157,10 @@ Literal::~Literal() {
   }
   if (isData()) {
     gcData.~shared_ptr();
+  } else if (isString()) {
+    stringData.~shared_ptr();
+  } else if (isStringView()) {
+    stringViewData.~shared_ptr();
   }
 }
 
@@ -227,6 +261,16 @@ std::array<uint8_t, 16> Literal::getv128() const {
 std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isData());
   return gcData;
+}
+
+std::shared_ptr<StringData> Literal::getStringData() const {
+  assert(isString());
+  return stringData;
+}
+
+std::shared_ptr<StringViewData> Literal::getStringViewData() const {
+  assert(isStringView());
+  return stringViewData;
 }
 
 Literal Literal::castToF32() {
@@ -343,6 +387,12 @@ bool Literal::operator==(const Literal& other) const {
     }
     if (type.isData()) {
       return gcData == other.gcData;
+    }
+    if (type.isString()) {
+      return stringData == other.stringData;
+    }
+    if (type.isStringView()) {
+      return stringViewData == other.stringViewData;
     }
     if (type.getHeapType() == HeapType::i31) {
       return i32 == other.i32;
@@ -463,6 +513,19 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       } else {
         o << "[ref null " << literal.type << ']';
       }
+    } else if (literal.isString()) {
+      auto data = literal.getStringData();
+      if (data) {
+        o << "[string";
+        for (auto c : *data) {
+          o << ' ' << int(c);
+        }
+        o << ']';
+      } else {
+        o << "[ref null " << literal.type << ']';
+      }
+    } else if (literal.isStringView()) {
+      o << "[string.view " << literal.type << ']';
     } else {
       switch (literal.type.getHeapType().getBasic()) {
         case HeapType::ext:

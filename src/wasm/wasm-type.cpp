@@ -964,6 +964,24 @@ bool Type::isData() const {
   }
 }
 
+bool Type::isString() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isString();
+  }
+}
+
+bool Type::isStringView() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isStringView();
+  }
+}
+
 bool Type::isNullable() const {
   if (isBasic()) {
     return false;
@@ -1358,6 +1376,13 @@ bool HeapType::isArray() const {
   } else {
     return getHeapTypeInfo(*this)->isArray();
   }
+}
+
+bool HeapType::isString() const { return isBasic() && id == string; }
+
+bool HeapType::isStringView() const {
+  return isBasic() && (id == stringview_wtf8 || id == stringview_wtf16 ||
+                       id == stringview_iter);
 }
 
 Signature HeapType::getSignature() const {

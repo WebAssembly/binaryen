@@ -4,8 +4,11 @@
 ;;
 ;; runs --precompute in order to verify no problems occur in the optimizer's
 ;; invocation of the interpreter.
+;;
+;; runs --rse in order to run a pass that needs to create null values for each
+;; local, verifying no problems occur during that.
 
-;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute --rse -S -o - | filecheck %s
 
 (module
   (memory 10 10)
