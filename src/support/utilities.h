@@ -24,6 +24,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <type_traits>
 
 #include "support/bits.h"
@@ -62,14 +63,16 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 
 // For fatal errors which could arise from input (i.e. not assertion failures)
 class Fatal {
+private:
+  std::stringstream buffer;
 public:
-  Fatal() { std::cerr << "Fatal: "; }
+  Fatal() { buffer << "Fatal: "; }
   template<typename T> Fatal& operator<<(T arg) {
-    std::cerr << arg;
+    buffer << arg;
     return *this;
   }
   [[noreturn]] ~Fatal() {
-    std::cerr << "\n";
+    std::cerr << buffer.str() << std::endl;
     // Use _Exit here to avoid calling static destructors. This avoids deadlocks
     // in (for example) the thread worker pool, where workers hold a lock while
     // performing their work.
