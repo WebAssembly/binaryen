@@ -2466,8 +2466,6 @@
 
   ;; CHECK:      (export "ref.eq-unknown" (func $ref.eq-unknown))
 
-  ;; CHECK:      (export "local-null" (func $ref.eq-local-null))
-
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -2957,7 +2955,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.eq-local-null (type $none_=>_none)
+  ;; CHECK:      (func $ref.eq-updates (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
