@@ -1595,7 +1595,7 @@ void Flower::readFromData(HeapType declaredHeapType,
                           Expression* read) {
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
-  // which DataLocations are relevant: if it is an ExactType then we have a
+  // which DataLocations are relevant: if it is an exact type then we have a
   // single DataLocation to read from, the one type that can be read from there.
   // Otherwise, we might read from any subtype, and so all their DataLocations
   // are relevant.
@@ -1652,7 +1652,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       field from potentially (reading it from the struct.new/array.new
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
-    //       represent them as ExactType).
+    //       represent them as an exact type).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal());
