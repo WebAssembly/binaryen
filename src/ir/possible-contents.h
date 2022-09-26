@@ -93,9 +93,7 @@ class PossibleContents {
 
   // Internal convenience for creating a cone type with depth 0, i.e,, an exact
   // type.
-  static ConeType ExactType(Type type) {
-    return ConeType{type, 0};
-  }
+  static ConeType ExactType(Type type) { return ConeType{type, 0}; }
 
 public:
   PossibleContents() : value(None()) {}
@@ -224,8 +222,8 @@ public:
     } else if (isGlobal()) {
       return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
-      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}({coneType->type,
-                                                                coneType->depth}))
+      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}(
+                            {coneType->type, coneType->depth}))
                           << 3);
     } else if (isMany()) {
       return 4;
