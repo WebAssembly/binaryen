@@ -69,14 +69,32 @@ struct GUFAOptimizer
 
   bool optimized = false;
 
+  // As we optimize, we replace expressions and create new ones. For new ones
+  // we can infer their contents based on what they replaced, e.g., if we
+  // replaced a local.get with a const, then the PossibleContents of the const
+  // are the same as the local.get (in this simple example, we could also just
+  // infer them from the const itself, of course). Rather than update the
+  // ContentOracle with new contents, which is a shared object among threads,
+  // each function-parallel worker stores a map of new things it created to the
+  // contents for them.
+  std::unordered_map<Expression*, PossibleContents> newContents;
+
   Expression* replaceCurrent(Expression* rep) {
-    // The contents of the replacement are identical to the original. Updating
-    // this is important as parents may query the contents of their children.
-    oracle.noteContents(rep, oracle.getContents(getCurrent()));
+    newContents[rep] = oracle.getContents(getCurrent());
 
     return WalkerPass<
       PostWalker<GUFAOptimizer,
                  UnifiedExpressionVisitor<GUFAOptimizer>>>::replaceCurrent(rep);
+  }
+
+  const PossibleContents getContents(Expression* curr) {
+    // If this is something we added ourselves, use that; otherwise the info is
+    // in the oracle.
+    if (auto iter = newContents.find(curr); iter != newContents.end()) {
+      return iter->second;
+    }
+
+    return oracle.getContents(curr);
   }
 
   void visitExpression(Expression* curr) {
@@ -101,7 +119,7 @@ struct GUFAOptimizer
 
     // Ok, this is an interesting location that we might optimize. See what the
     // oracle says is possible there.
-    auto contents = oracle.getContents(curr);
+    auto contents = getContents(curr);
 
     auto& options = getPassOptions();
     auto& wasm = *getModule();
@@ -198,8 +216,8 @@ struct GUFAOptimizer
       return;
     }
 
-    auto leftContents = oracle.getContents(curr->left);
-    auto rightContents = oracle.getContents(curr->right);
+    auto leftContents = getContents(curr->left);
+    auto rightContents = getContents(curr->right);
 
     if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
       // The contents prove the two sides cannot contain the same reference, so
