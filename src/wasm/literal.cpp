@@ -119,7 +119,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&stringData) std::shared_ptr<StringData>(other.stringData);
     return;
   }
-  if (other.isString()) {
+  if (other.isStringView()) {
     new (&stringViewData) std::shared_ptr<StringViewData>(other.stringViewData);
     return;
   }
@@ -269,7 +269,7 @@ std::shared_ptr<StringData> Literal::getStringData() const {
 }
 
 std::shared_ptr<StringViewData> Literal::getStringViewData() const {
-  assert(isString());
+  assert(isStringView());
   return stringViewData;
 }
 
