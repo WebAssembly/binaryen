@@ -524,7 +524,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       } else {
         o << "[ref null " << literal.type << ']';
       }
-    } else if (literal.isString()) {
+    } else if (literal.isStringView()) {
       o << "[string.view " << literal.type << ']';
     } else {
       switch (literal.type.getHeapType().getBasic()) {
