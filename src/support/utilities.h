@@ -73,7 +73,7 @@ public:
     // Use _Exit here to avoid calling static destructors. This avoids deadlocks
     // in (for example) the thread worker pool, where workers hold a lock while
     // performing their work.
-    _Exit(1);
+    _Exit(EXIT_FAILURE);
   }
 };
 
