@@ -222,6 +222,11 @@ struct GUFAOptimizer
     if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
       // The contents prove the two sides cannot contain the same reference, so
       // we infer 0.
+      //
+      // Note that this is fine even if one of the sides is None. In that case,
+      // no value is possible there, and the intersection is empty, so we will
+      // get here and emit a 0. That 0 will never be reached as the None child
+      // will be turned into an unreachable, so it does not cause any problem.
       auto* result = Builder(*getModule()).makeConst(Literal(int32_t(0)));
       replaceCurrent(getDroppedChildrenAndAppend(
         curr, *getModule(), getPassOptions(), result));

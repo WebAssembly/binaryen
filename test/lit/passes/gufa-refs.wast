@@ -2457,6 +2457,8 @@
 
   ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_ref|$other|_=>_none (func_subtype (param i32 (ref null $struct) (ref null $struct) (ref null $other) (ref $struct) (ref $struct) (ref $other)) func))
 
+  ;; CHECK:      (type $none_=>_ref|eq| (func_subtype (result (ref eq)) func))
+
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
@@ -2863,6 +2865,17 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.eq-unknown (export "ref.eq-unknown") (param $x i32) (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct)) (param $nn-other (ref $other))
     ;; Here we cannot infer as the type is identical. (Though, if we used more
@@ -2953,6 +2966,23 @@
         (unreachable)
       )
     )
+    ;; The called function here traps and never returns an actual value, which
+    ;; will lead to an unreachable emitted right after the call. We should not
+    ;; prevent that from happening: an unreachable must be emitted (we will also
+    ;; emit an i32.const 0, which will never be reached, and not cause issues).
+    (drop
+      (ref.eq
+        (ref.null $struct)
+        (call $unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unreachable (type $none_=>_ref|eq|) (result (ref eq))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $unreachable (result (ref eq))
+    (unreachable)
   )
 
   ;; CHECK:      (func $ref.eq-updates (type $none_=>_none)
