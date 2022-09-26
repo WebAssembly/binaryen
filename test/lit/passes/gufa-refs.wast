@@ -3995,10 +3995,10 @@
 
 ;; call_ref types
 (module
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $i1 (func_subtype (param i32) func))
   (type $i1 (func (param i32)))
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+
   ;; CHECK:      (type $i2 (func_subtype (param i32) func))
   (type $i2 (func (param i32)))
 
@@ -4006,6 +4006,9 @@
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (global $func (ref func) (ref.func $reffed-in-global-code))
+  (global $func (ref func) (ref.func $reffed-in-global-code))
 
   ;; CHECK:      (elem declare func $reffed1 $reffed2)
 
@@ -4017,6 +4020,35 @@
   (func $reffed1 (type $i1) (param $x i32)
     ;; This is called with one possible value, 42, which we can optimize the
     ;; param to.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $not-reffed (type $i1) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-reffed (type $i1) (param $x i32)
+    ;; This function has the same type as the previous one, but it is never
+    ;; taken by reference, which means the call_refs below do not affect it. As
+    ;; there are no other calls, this local.get can be turned into an
+    ;; unreachable.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $reffed-in-global-code (type $i1) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffed-in-global-code (type $i1) (param $x i32)
+    ;; The only ref to this function is in global code, so this tests that we
+    ;; scan that properly. This can be optimized like $reffed, that is, we can
+    ;; infer 42 here.
     (drop
       (local.get $x)
     )
