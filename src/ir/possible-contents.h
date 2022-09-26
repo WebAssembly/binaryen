@@ -215,7 +215,9 @@ public:
     } else if (isGlobal()) {
       return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
-      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}(coneType->type, coneType->depth)) << 3);
+      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}(coneType->type,
+                                                               coneType->depth))
+                          << 3);
     } else if (isMany()) {
       return 4;
     } else {
