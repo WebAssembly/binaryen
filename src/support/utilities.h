@@ -71,6 +71,7 @@ public:
     buffer << arg;
     return *this;
   }
+#ifndef THROW_ON_FATAL
   [[noreturn]] ~Fatal() {
     std::cerr << buffer.str() << std::endl;
     // Use _Exit here to avoid calling static destructors. This avoids deadlocks
@@ -78,6 +79,18 @@ public:
     // performing their work.
     _Exit(EXIT_FAILURE);
   }
+#else
+  // This variation is a best-effort attempt to make fatal errors recoverable
+  // for embedders of Binaryen as a library, namely wasm-opt-rs.
+  //
+  // Throwing in destructors is strongly discouraged, since it is easy to
+  // accidentally throw during unwinding, which will trigger an abort. Since
+  // `Fatal` is a special type that only occurs on error paths, we are hoping it
+  // is never constructed during unwinding or while destructing another type.
+  [[noreturn]] ~Fatal() noexcept(false) {
+    throw std::runtime_error(buffer.str());
+  }
+#endif
 };
 
 [[noreturn]] void handle_unreachable(const char* msg = nullptr,
