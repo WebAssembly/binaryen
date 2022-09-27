@@ -3040,6 +3040,1084 @@
   )
 )
 
+;; Test ref.eq on globals.
+(module
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $B (struct_subtype (field i32) $A))
+  (type $B (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (global $a (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $a (ref $A) (struct.new $A
+    (i32.const 0)
+  ))
+
+  ;; CHECK:      (global $a-other (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+  (global $a-other (ref $A) (struct.new $A
+    (i32.const 1)
+  ))
+
+  ;; CHECK:      (global $a-copy (ref $A) (global.get $a))
+  (global $a-copy (ref $A) (global.get $a))
+
+  ;; CHECK:      (global $a-mut (mut (ref $A)) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: ))
+  (global $a-mut (mut (ref $A)) (struct.new $A
+    (i32.const 2)
+  ))
+
+
+
+  ;; CHECK:      (global $b (ref $B) (struct.new $B
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $b (ref $B) (struct.new $B
+    (i32.const 0)
+  ))
+
+  ;; CHECK:      (global $b-other (ref $B) (struct.new $B
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+  (global $b-other (ref $B) (struct.new $B
+    (i32.const 1)
+  ))
+
+  ;; CHECK:      (global $b-copy (ref $B) (global.get $b))
+  (global $b-copy (ref $B) (global.get $b))
+
+  ;; CHECK:      (global $b-mut (mut (ref $B)) (struct.new $B
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: ))
+  (global $b-mut (mut (ref $B)) (struct.new $B
+    (i32.const 2)
+  ))
+
+
+  ;; CHECK:      (global $a-copy-b (ref $A) (global.get $b))
+  (global $a-copy-b (ref $A) (global.get $b))
+
+  ;; CHECK:      (func $compare-a (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-a
+    ;; Comparisons of $a to everything else.
+    ;; Later functions will proceed to compare everything else to everything
+    ;; else.
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-a-other (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-a-other
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-other)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-a-copy (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-a-copy
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-a-mut (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-a-mut
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-mut)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-b (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-b
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-b-other (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-b-other
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-other)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-b-copy (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-b-copy
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-copy)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-b-mut (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-b-mut
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $b-mut)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compare-a-copy-b (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-a-copy-b
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $b)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $b-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $b-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $b-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a-copy-b)
+        (global.get $a-copy-b)
+      )
+    )
+  )
+)
+
 (module
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (ref $A) data))
