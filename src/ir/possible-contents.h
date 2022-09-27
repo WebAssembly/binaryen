@@ -49,6 +49,7 @@ namespace wasm {
 //                     then only the exact type is possible; if the depth is 1
 //                     then either that type or its immediate subtypes, and so
 //                     forth.
+//                     A depth of -1 means unlimited: all subtypes are allowed.
 //                     If the type here is nullable then null is also allowed.
 //                     TODO: Add ConeTypePlusContents or such, which would be
 //                           used on e.g. a struct.new with an immutable field
@@ -95,6 +96,10 @@ class PossibleContents {
   // type.
   static ConeType ExactType(Type type) { return ConeType{type, 0}; }
 
+  // Internal convenience for creating a cone type unbounded depth, i.e., the
+  // full cone of all subtypes for that type.
+  static ConeType FullConeType(Type type) { return ConeType{type, Index(-1)}; }
+
 public:
   PossibleContents() : value(None()) {}
   PossibleContents(const PossibleContents& other) = default;
@@ -113,8 +118,13 @@ public:
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
   }
+  // Helper for a cone with unbounded depth, i.e., the full cone of all subtypes
+  // for that type.
+  static PossibleContents fullConeType(Type type) {
+    return PossibleContents{FullConeType(type)};
+  }
   static PossibleContents coneType(Type type, Index depth) {
-    WASM_UNREACHABLE("actual cones are not supported yet");
+    return PossibleContents{ConeType{type, depth}};
   }
   static PossibleContents many() { return PossibleContents{Many()}; }
 
@@ -148,6 +158,11 @@ public:
     return std::get<GlobalInfo>(value).name;
   }
 
+  Index getDepth() const {
+    assert(isConeType());
+    return std::get<ConeType>(value).depth;
+  }
+
   bool isNull() const { return isLiteral() && getLiteral().isNull(); }
 
   // Return the relevant type here. Note that the *meaning* of the type varies
@@ -171,6 +186,35 @@ public:
     } else {
       WASM_UNREACHABLE("bad value");
     }
+  }
+
+  // Returns cone type info. This can be called on non-cone types as well, and
+  // it returns a code that best describes them. That is, this is like getType()
+  // but it also provides an indication about the depth, if relevant. (If cone
+  // info is not relevant, like when getType() returns none or unreachable, the
+  // depth is set to 0.)
+  ConeType getCone() const {
+    if (auto* literal = std::get_if<Literal>(&value)) {
+      return ExactType(literal->type);
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
+      return FullConeType(global->type);
+    } else if (auto* coneType = std::get_if<ConeType>(&value)) {
+      return *coneType;
+    } else if (std::get_if<None>(&value)) {
+      return ExactType(Type::unreachable);
+    } else if (std::get_if<Many>(&value)) {
+      return ExactType(Type::none);
+    } else {
+      WASM_UNREACHABLE("bad value");
+    }
+  }
+
+  // Whether we know something useful about the type here, enough to define a
+  // particular wasm type, and not "none" (which means all types) or
+  // "unreachable" (which means we know nothing).
+  bool hasUsefulType() const {
+    auto type = getType();
+    return type != Type::none && type != Type::unreachable;
   }
 
   // Returns whether the type we can report here is exact, that is, nothing of a

@@ -102,14 +102,18 @@ void PossibleContents::combine(const PossibleContents& other) {
     // Only one of them can be null here, since we already checked if *this ==
     // other, which would have been true had both been null.
     assert(!isNull() || !other.isNull());
-    // If only one is a null, but the other's type is known exactly, then the
-    // combination is to add nullability (if the type is *not* known exactly,
-    // like for a global, then we cannot do anything useful here).
-    if (!isNull() && hasExactType()) {
-      value = ExactType(Type(type.getHeapType(), Nullable));
+    // If only one is a null then we can use the type info from the other, and
+    // just add in nullability. For example, a literal of type T and a null
+    // becomes an exact type of T that allows nulls, and so forth.
+    auto mixInNull = [](ConeType cone) {
+      cone.type = Type(cone.type.getHeapType(), Nullable);
+      return cone;
+    };
+    if (!isNull()) {
+      value = mixInNull(getCone());
       return;
-    } else if (!other.isNull() && other.hasExactType()) {
-      value = ExactType(Type(otherType.getHeapType(), Nullable));
+    } else if (!other.isNull()) {
+      value = mixInNull(other.getCone());
       return;
     }
   }

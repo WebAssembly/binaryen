@@ -109,6 +109,8 @@ protected:
     Type(Signature(Type::none, Type::none), NonNullable));
 
   PossibleContents many = PossibleContents::many();
+
+  PossibleContents anyrefCone = PossibleContents::fullConeType(anyref);
 };
 
 TEST_F(PossibleContentsTest, TestComparisons) {
@@ -219,10 +221,11 @@ TEST_F(PossibleContentsTest, TestCombinations) {
     nonNullFunc, exactNonNullFuncSignatureType, exactNonNullFuncSignatureType);
   assertCombination(nonNullFunc, exactI32, many);
 
-  // Globals vs nulls.
+  // Globals vs nulls. The result is either the global or a null, so all we can
+  // say is that it is something of the global's type, or a null: a cone.
 
-  assertCombination(anyGlobal, anyNull, many);
-  assertCombination(anyGlobal, i31Null, many);
+  assertCombination(anyGlobal, anyNull, anyrefCone);
+  assertCombination(anyGlobal, i31Null, anyrefCone);
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
