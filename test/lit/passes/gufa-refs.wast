@@ -3042,12 +3042,11 @@
 
 ;; Test ref.eq on globals.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $A (struct_subtype (field i32) data))
   (type $A (struct_subtype (field i32) data))
-  ;; CHECK:      (type $B (struct_subtype (field i32) $A))
   (type $B (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (global $a (ref $A) (struct.new $A
   ;; CHECK-NEXT:  (i32.const 0)
@@ -3073,8 +3072,10 @@
     (i32.const 2)
   ))
 
+  ;; CHECK:      (global $a-mut-copy (mut (ref $A)) (global.get $a))
   (global $a-mut-copy (mut (ref $A)) (global.get $a))
 
+  ;; CHECK:      (global $a-copy-mut (ref $A) (global.get $a-mut))
   (global $a-copy-mut (ref $A) (global.get $a-mut))
 
   ;; CHECK:      (func $compare-a (type $none_=>_none)
@@ -3105,31 +3106,13 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $b-other)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $b)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $b-mut)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $b)
+  ;; CHECK-NEXT:    (global.get $a-copy-mut)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -3168,31 +3151,13 @@
     (drop
       (ref.eq
         (global.get $a)
-        (global.get $b)
+        (global.get $a-mut-copy)
       )
     )
     (drop
       (ref.eq
         (global.get $a)
-        (global.get $b-other)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
-        (global.get $b-copy)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
-        (global.get $b-mut)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
-        (global.get $a-copy-b)
+        (global.get $a-copy-mut)
       )
     )
   )
