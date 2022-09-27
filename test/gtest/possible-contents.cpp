@@ -300,10 +300,9 @@ TEST_F(PossibleContentsTest, TestIntersection) {
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
-return; // XXX
   // Test for a node with many possible types. The pass limits how many it
   // notices to not use excessive memory, so even though 4 are possible here,
-  // we'll just report that more than one is possible ("many").
+  // we'll just report that more than one is possible, a cone of data.
   auto wasm = parse(R"(
     (module
       (type $A (struct_subtype (field i32) data))
@@ -328,7 +327,9 @@ return; // XXX
     )
   )");
   ContentOracle oracle(*wasm);
-  // The function's body should be Many.
-  EXPECT_TRUE(
-    oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0}).isMany());
+  // The body's contents must be a cone of data with depth 1.
+  auto bodyContents = oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
+  ASSERT_TRUE(bodyContents.isConeType());
+  EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
+  EXPECT_TRUE(bodyContents.getCone().depth == 1);
 }
