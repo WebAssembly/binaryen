@@ -471,9 +471,7 @@ struct InfoCollector
   void visitRefCast(RefCast* curr) {
     addChildParentLink(curr->ref, curr);
   }
-  void visitRefTest(RefTest* curr) {
-    addChildParentLink(curr->ref, curr);
-  }
+  void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);
@@ -1161,13 +1159,6 @@ private:
   // values to flow through it.
   void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
-  // The possible contents may allow us to infer an outcome in various
-  // instructions. If the expression has a single child, that is what is
-  // updated by the new |contents| (which we pass in to avoid doing an extra
-  // lookup); if there is more than one child, then to keep the code simple we
-  // expect the function to look up the children's effects manually.
-  void flowRefTest(const PossibleContents& contents, RefTest* test);
-
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1502,9 +1493,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == child);
       flowRefCast(contents, cast);
-    } else if (auto* test = parent->dynCast<RefTest>()) {
-      assert(test->ref == child);
-      flowRefTest(contents, test);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1764,33 +1752,6 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
 #endif
     updateContents(ExpressionLocation{cast, 0}, filtered);
   }
-}
-
-void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
-  // TODO move to gufa pass; this must happen at the end
-  PossibleContents filtered;
-  if (contents.isMany()) {
-    // Just pass the Many through.
-    filtered = contents;
-  } else {
-    // RefTest returns 1 iff the input is not null and is also a subtype.
-    bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), test->intendedType);
-    bool mayBeNull = contents.getType().isNullable();
-    if (!isSubType) {
-      filtered = PossibleContents::literal(Literal(int32_t(0)));
-    } else if (!mayBeNull) {
-      filtered = PossibleContents::literal(Literal(int32_t(1)));
-    } else {
-      filtered = PossibleContents::many();
-    }
-  }
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "    ref.test passing through\n";
-  filtered.dump(std::cout);
-  std::cout << '\n';
-#endif
-  updateContents(ExpressionLocation{test, 0}, filtered);
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
