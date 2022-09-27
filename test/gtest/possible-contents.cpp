@@ -110,7 +110,7 @@ protected:
 
   PossibleContents many = PossibleContents::many();
 
-  PossibleContents anyrefCone = PossibleContents::fullConeType(anyref);
+  PossibleContents coneAnyref = PossibleContents::fullConeType(anyref);
 };
 
 TEST_F(PossibleContentsTest, TestComparisons) {
@@ -224,8 +224,8 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   // Globals vs nulls. The result is either the global or a null, so all we can
   // say is that it is something of the global's type, or a null: a cone.
 
-  assertCombination(anyGlobal, anyNull, anyrefCone);
-  assertCombination(anyGlobal, i31Null, anyrefCone);
+  assertCombination(anyGlobal, anyNull, coneAnyref);
+  assertCombination(anyGlobal, i31Null, coneAnyref);
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
