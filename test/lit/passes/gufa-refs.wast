@@ -3076,27 +3076,27 @@
 
 
   ;; CHECK:      (global $b (ref $B) (struct.new $B
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT:  (i32.const 3)
   ;; CHECK-NEXT: ))
   (global $b (ref $B) (struct.new $B
-    (i32.const 0)
+    (i32.const 3)
   ))
 
   ;; CHECK:      (global $b-other (ref $B) (struct.new $B
-  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (i32.const 4)
   ;; CHECK-NEXT: ))
   (global $b-other (ref $B) (struct.new $B
-    (i32.const 1)
+    (i32.const 4)
   ))
 
   ;; CHECK:      (global $b-copy (ref $B) (global.get $b))
   (global $b-copy (ref $B) (global.get $b))
 
   ;; CHECK:      (global $b-mut (mut (ref $B)) (struct.new $B
-  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT:  (i32.const 5)
   ;; CHECK-NEXT: ))
   (global $b-mut (mut (ref $B)) (struct.new $B
-    (i32.const 2)
+    (i32.const 5)
   ))
 
 
