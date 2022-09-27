@@ -1643,9 +1643,8 @@ void Flower::readFromData(HeapType declaredHeapType,
       DataLocation{refContents.getType().getHeapType(), fieldIndex},
       ExpressionLocation{read, 0});
   } else {
-    // Otherwise, this is a true cone: the declared type of the reference or any
-    // subtype of that, regardless of whether the content is a Many or a Global
-    // or anything else.
+    // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
+    // type of the reference or some of its subtypes.
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
     // TODO: A Global may refer to an immutable global, which we can read the
