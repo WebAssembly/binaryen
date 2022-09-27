@@ -332,4 +332,33 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   ASSERT_TRUE(bodyContents.isConeType());
   EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
   EXPECT_TRUE(bodyContents.getCone().depth == 1);
+
+  // As above, but now C is a supertype of D, so we end up with a code of depth 2.
+  auto wasm = parse(R"(
+    (module
+      (type $A (struct_subtype (field i32) data))
+      (type $B (struct_subtype (field i64) data))
+      (type $C (struct_subtype (field f32) data))
+      (type $D (struct_subtype (field f32) $C))
+      (func $foo (result (ref any))
+        (select (result (ref any))
+          (select (result (ref any))
+            (struct.new $A)
+            (struct.new $B)
+            (i32.const 0)
+          )
+          (select (result (ref any))
+            (struct.new $C)
+            (struct.new $D)
+            (i32.const 0)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+  )");
+  bodyContents = oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
+  ASSERT_TRUE(bodyContents.isConeType());
+  EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
+  EXPECT_TRUE(bodyContents.getCone().depth == 2);
 }
