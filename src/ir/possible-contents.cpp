@@ -118,17 +118,28 @@ void PossibleContents::combine(const PossibleContents& other) {
     }
   }
 
-  if (hasExactType() && other.hasExactType() &&
-      type.getHeapType() == otherType.getHeapType()) {
-    // We know the types here exactly, and even the heap types match, but
-    // there is some other difference that prevents them from being 100%
-    // identical (for example, one might be an ExactType and the other a
-    // Literal; or both might be ExactTypes and only one might be nullable).
-    // In these cases we can emit a proper ExactType here, adding nullability
-    // if we need to.
-    value = ExactType(Type(
-      type.getHeapType(),
-      type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
+  // Before we give up and return Many, try to find a ConeType that describes
+  // both inputs.
+  auto lub = Type::getLeastUpperBound(type, otherType);
+  if (lub != Type::none) {
+std::cout << type << " <> " << otherType << " lub = " << lub << '\n';
+    // We found a shared ancestor. Next we need to find how big a cone we need:
+    // the cone must be big enough to contain both the inputs.
+    // TODO: we could make a single loop that also does the LUB, at the same
+    // time, and also avoids calling getDepth() which loops once more?
+    auto depthFromRoot = type.getHeapType().getDepth();
+    auto otherDepthFromRoot = otherType.getHeapType().getDepth();
+    auto lubDepthFromRoot = lub.getHeapType().getDepth();
+std::cout << "daphety " << depthFromRoot << " , " << otherDepthFromRoot << " , " << lubDepthFromRoot << '\n';
+    assert(lubDepthFromRoot <= depthFromRoot);
+    assert(lubDepthFromRoot <= otherDepthFromRoot);
+    // The depth we need under the lub is how far from the lub we are, plus the
+    // depth of our cone.
+    Index depthUnderLub = depthFromRoot - lubDepthFromRoot + getCone().depth;
+    Index otherDepthUnderLub = otherDepthFromRoot - lubDepthFromRoot + other.getCone().depth;
+std::cout << "DAPTHS " << depthUnderLub << " : " << otherDepthUnderLub << '\n';
+    // The total cone must be big enough to contain all the above.
+    value = ConeType{lub, std::max(depthUnderLub, otherDepthUnderLub)};
     return;
   }
 

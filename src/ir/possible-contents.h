@@ -158,11 +158,6 @@ public:
     return std::get<GlobalInfo>(value).name;
   }
 
-  Index getDepth() const {
-    assert(isConeType());
-    return std::get<ConeType>(value).depth;
-  }
-
   bool isNull() const { return isLiteral() && getLiteral().isNull(); }
 
   // Return the relevant type here. Note that the *meaning* of the type varies
