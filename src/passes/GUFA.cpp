@@ -211,8 +211,6 @@ struct GUFAOptimizer
   }
 
   void visitRefEq(RefEq* curr) {
-// manually call visitExpression if we made no changes
-
     if (curr->type == Type::unreachable) {
       // Leave this for DCE.
       return;

@@ -175,7 +175,8 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     return false;
   }
 
-  if (!HeapType::isSubType(aHeapType, bHeapType) && !HeapType::isSubType(bHeapType, aHeapType)) {
+  if (!HeapType::isSubType(aHeapType, bHeapType) &&
+      !HeapType::isSubType(bHeapType, aHeapType)) {
     // No type can appear in both a and b, so the types differ, so the values
     // differ.
     return false;
