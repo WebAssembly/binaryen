@@ -3078,6 +3078,7 @@
   ;; CHECK:      (global $a-copy-mut (ref $A) (global.get $a-mut))
   (global $a-copy-mut (ref $A) (global.get $a-mut))
 
+  ;; CHECK:      (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
   (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
 
   ;; CHECK:      (func $compare-a (type $none_=>_none)
@@ -3115,6 +3116,15 @@
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (global.get $a)
   ;; CHECK-NEXT:    (global.get $a-copy-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $a-mut-copy-written
+  ;; CHECK-NEXT:   (global.get $a-other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-mut-copy-written)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
