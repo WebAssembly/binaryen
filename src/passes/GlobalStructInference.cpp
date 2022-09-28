@@ -177,7 +177,11 @@ struct GlobalStructInference : public Pass {
     // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
     // ensure determinism.
     for (auto& [type, globals] : typeGlobalsCopy) {
+std::cout << "pre-sort!\n";
+for (auto name : globals) std::cout << "  " << name << '\n';
       std::sort(globals.begin(), globals.end());
+std::cout << "post-sort!\n";
+for (auto name : globals) std::cout << "  " << name << '\n';
     }
 
     // Optimize based on the above.
