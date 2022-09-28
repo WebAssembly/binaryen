@@ -3189,15 +3189,13 @@
   ;; CHECK-NEXT: )
   (func $compare-a
     ;; Comparisons of $a to everything else.
-    ;; Later functions will proceed to compare everything else to everything
-    ;; else.
     ;;
     ;; GUFA does not compute the results of these yet, as it leaves it to other
     ;; passes. This test guards against us doing anything unexpected here.
     ;;
     ;; What we do change here is update a copied global to the original,
     ;; so $a-copy will turn into $a (because that is the only value it can
-    ;; contain). That should happen for the first three only. (For the last, it
+    ;; contain). That should happen for the first three only. (For the 3rd, it
     ;; works even though it is mutable, since there is only a single write
     ;; anywhere.)
     (drop
