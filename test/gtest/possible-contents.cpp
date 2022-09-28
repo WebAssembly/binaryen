@@ -165,11 +165,16 @@ TEST_F(PossibleContentsTest, TestHash) {
   EXPECT_NE(none.hash(), funcGlobal.hash());
   EXPECT_NE(none.hash(), exactAnyref.hash());
   EXPECT_NE(none.hash(), exactFuncSignatureType.hash());
-  // TODO: cones
+  EXPECT_NE(none.hash(), coneAnyref.hash());
+  EXPECT_NE(none.hash(), coneFuncref.hash());
+  EXPECT_NE(none.hash(), coneFuncref1.hash());
 
   EXPECT_NE(i32Zero.hash(), i32One.hash());
   EXPECT_NE(anyGlobal.hash(), funcGlobal.hash());
   EXPECT_NE(exactAnyref.hash(), exactFuncSignatureType.hash());
+  EXPECT_NE(coneAnyref.hash(), coneFuncref.hash());
+  EXPECT_NE(coneAnyref.hash(), coneFuncref1.hash());
+  EXPECT_NE(coneFuncref.hash(), coneFuncref1.hash());
 }
 
 TEST_F(PossibleContentsTest, TestCombinations) {
