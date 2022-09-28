@@ -3049,6 +3049,31 @@
       )
     )
   )
+
+  (func $ref.eq-local-no (export "local-no") (param $x i32)
+    (local $ref (ref $struct))
+    (local $ref-null (ref null $struct))
+    ;; Always set the non-nullable ref, but only sometimes set the nullable.
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 0)
+      )
+    )
+    (if
+      (local.get $x)
+      (local.set $ref-null
+        (local.get $ref)
+      )
+    )
+    ;; If the |if| executed they are equal, but otherwise not, so we can't
+    ;; optimize.
+    (drop
+      (ref.eq
+        (local.get $ref)
+        (local.get $ref-null)
+      )
+    )
+  )
 )
 
 ;; Test ref.eq on globals.
