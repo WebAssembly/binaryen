@@ -173,6 +173,13 @@ struct GlobalStructInference : public Pass {
       return;
     }
 
+    // The above loop on typeGlobalsCopy is on an unsorted data structure, and
+    // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
+    // ensure determinism.
+    for (auto& [type, globals] : typeGlobals) {
+      std::sort(globals.begin(), globals.end());
+    }
+
     // Optimize based on the above.
     struct FunctionOptimizer
       : public WalkerPass<PostWalker<FunctionOptimizer>> {
@@ -219,7 +226,7 @@ struct GlobalStructInference : public Pass {
         //   (i32.const 1337)
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
-        auto& globals = iter->second;
+        const auto& globals = iter->second;
         if (globals.size() < 2) {
           return;
         }
