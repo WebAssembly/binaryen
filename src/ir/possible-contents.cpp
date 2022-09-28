@@ -148,6 +148,14 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto aType = a.getType();
   auto bType = b.getType();
 
+  if (!aType.isRef() || !bType.isRef()) {
+    // At least one is not a reference. The only way they can intersect is if
+    // the type is identical.
+    return aType == bType;
+  }
+
+  // From here on we focus on references.
+
   if (aType.isNullable() && bType.isNullable()) {
     // Null is possible on both sides. Assume that an intersection can exist,
     // but we could be more precise here and check if the types belong to
@@ -156,12 +164,25 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     return true;
   }
 
-  if (a.hasExactType() && b.hasExactType() && a.getType() != b.getType()) {
+  // We ruled out a null on both sides, so at least one is non-nullable. If the
+  // other is a null then no chance for an intersection remains.
+  if (a.isNull() || b.isNull()) {
+    return false;
+  }
+
+  // From here on we focus on references and can ignore the case of null - any
+  // intersection must be of a non-null value, so we can focus on the heap
+  // types.
+  auto aHeapType = aType.getHeapType();
+  auto bHeapType = bType.getHeapType();
+
+  if (a.hasExactType() && b.hasExactType() && aHeapType != bHeapType) {
     // The values must be different since their types are different.
     return false;
   }
 
-  if (!Type::isSubType(aType, bType) && !Type::isSubType(bType, aType)) {
+  if (!HeapType::isSubType(aHeapType, bHeapType) &&
+      !HeapType::isSubType(bHeapType, aHeapType)) {
     // No type can appear in both a and b, so the types differ, so the values
     // differ.
     return false;

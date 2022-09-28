@@ -280,9 +280,16 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertHaveIntersection(exactFuncSignatureType, exactFuncSignatureType);
   assertHaveIntersection(i32Zero, i32One); // TODO: this could be inferred false
 
+  // Exact types only differing by nullability can intersect (not on the null,
+  // but on something else).
+  assertHaveIntersection(exactAnyref, exactNonNullAnyref);
+
   // Due to subtyping, an intersection might exist.
   assertHaveIntersection(funcGlobal, funcGlobal);
   assertHaveIntersection(funcGlobal, exactFuncSignatureType);
+  assertHaveIntersection(nonNullFuncGlobal, exactFuncSignatureType);
+  assertHaveIntersection(funcGlobal, exactNonNullFuncSignatureType);
+  assertHaveIntersection(nonNullFuncGlobal, exactNonNullFuncSignatureType);
 
   // Neither is a subtype of the other, but nulls are possible, so a null can be
   // the intersection.
