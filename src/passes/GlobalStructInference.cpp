@@ -230,6 +230,8 @@ struct GlobalStructInference : public Pass {
         if (globals.size() < 2) {
           return;
         }
+std::cout << "globls!\n";
+for (auto name : globals) std::cout << "  " << name << '\n';
 
         // Find the constant values and which globals correspond to them.
         // TODO: SmallVectors?
@@ -285,8 +287,10 @@ struct GlobalStructInference : public Pass {
         // single comparison. While doing so, ensure that the index we can check
         // on is 0, that is, the first value has a single global.
         if (globalsForValue[0].size() == 1) {
+std::cout << "k1\n";
           // The checked global is already in index 0.
         } else if (globalsForValue[1].size() == 1) {
+std::cout << "k2\n";
           std::swap(values[0], values[1]);
           std::swap(globalsForValue[0], globalsForValue[1]);
         } else {
@@ -294,6 +298,7 @@ struct GlobalStructInference : public Pass {
           // comparison. Give up.
           return;
         }
+std::cout << "k3\n";
 
         // Excellent, we can optimize here! Emit a select.
         //
