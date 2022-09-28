@@ -1002,6 +1002,7 @@ struct InfoCollector
   // verbose code).
   void addRoot(Expression* curr,
                PossibleContents contents = PossibleContents::many()) {
+    // TODO Use a cone type here when relevant
     if (isRelevant(curr)) {
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
