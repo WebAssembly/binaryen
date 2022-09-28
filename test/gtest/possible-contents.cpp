@@ -150,6 +150,28 @@ TEST_F(PossibleContentsTest, TestComparisons) {
   assertNotEqualSymmetric(exactNonNullAnyref, exactAnyref);
 }
 
+TEST_F(PossibleContentsTest, TestHash) {
+  // Hashes should be deterministic.
+  EXPECT_EQ(none.hash(), none.hash());
+  EXPECT_EQ(many.hash(), many.hash());
+
+  // Hashes should be different. (In theory hash collisions could appear here,
+  // but if such simple things collide and the test fails then we should really
+  // rethink our hash functions!)
+  EXPECT_NE(none.hash(), many.hash());
+  EXPECT_NE(none.hash(), i32Zero.hash());
+  EXPECT_NE(none.hash(), i32One.hash());
+  EXPECT_NE(none.hash(), anyGlobal.hash());
+  EXPECT_NE(none.hash(), funcGlobal.hash());
+  EXPECT_NE(none.hash(), exactAnyref.hash());
+  EXPECT_NE(none.hash(), exactFuncSignatureType.hash());
+  // TODO: cones
+
+  EXPECT_NE(i32Zero.hash(), i32One.hash());
+  EXPECT_NE(anyGlobal.hash(), funcGlobal.hash());
+  EXPECT_NE(exactAnyref.hash(), exactFuncSignatureType.hash());
+}
+
 TEST_F(PossibleContentsTest, TestCombinations) {
   // None with anything else becomes the other thing.
   assertCombination(none, none, none);
