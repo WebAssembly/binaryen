@@ -176,12 +176,8 @@ struct GlobalStructInference : public Pass {
     // The above loop on typeGlobalsCopy is on an unsorted data structure, and
     // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
     // ensure determinism.
-    for (auto& [type, globals] : typeGlobalsCopy) {
-std::cout << "pre-sort!\n";
-for (auto name : globals) std::cout << "  " << name << '\n';
+    for (auto& [type, globals] : typeGlobals) {
       std::sort(globals.begin(), globals.end());
-std::cout << "post-sort!\n";
-for (auto name : globals) std::cout << "  " << name << '\n';
     }
 
     // Optimize based on the above.
@@ -230,12 +226,10 @@ for (auto name : globals) std::cout << "  " << name << '\n';
         //   (i32.const 1337)
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
-        auto& globals = iter->second;
+        const auto& globals = iter->second;
         if (globals.size() < 2) {
           return;
         }
-std::cout << "globls!\n";
-for (auto name : globals) std::cout << "  " << name << '\n';
 
         // Find the constant values and which globals correspond to them.
         // TODO: SmallVectors?
@@ -291,10 +285,8 @@ for (auto name : globals) std::cout << "  " << name << '\n';
         // single comparison. While doing so, ensure that the index we can check
         // on is 0, that is, the first value has a single global.
         if (globalsForValue[0].size() == 1) {
-std::cout << "k1\n";
           // The checked global is already in index 0.
         } else if (globalsForValue[1].size() == 1) {
-std::cout << "k2\n";
           std::swap(values[0], values[1]);
           std::swap(globalsForValue[0], globalsForValue[1]);
         } else {
@@ -302,7 +294,6 @@ std::cout << "k2\n";
           // comparison. Give up.
           return;
         }
-std::cout << "k3\n";
 
         // Excellent, we can optimize here! Emit a select.
         //
