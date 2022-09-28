@@ -219,13 +219,12 @@ public:
     if (isNone() || isMany()) {
       // Nothing to add.
     } else if (isLiteral()) {
-      hash_combine(ret, std::hash<Literal>()(getLiteral()));
+      rehash(ret, getLiteral());
     } else if (isGlobal()) {
-      hash_combine(ret, std::hash<Name>()(getGlobal()));
+      rehash(ret, getGlobal());
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
-      hash_combine(
-        ret,
-        std::hash<std::pair<Type, Index>>{}({coneType->type, coneType->depth}));
+      rehash(ret, coneType->type);
+      rehash(ret, coneType->depth);
     } else {
       WASM_UNREACHABLE("bad variant");
     }
