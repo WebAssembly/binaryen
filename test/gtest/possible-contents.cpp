@@ -287,6 +287,9 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   // Due to subtyping, an intersection might exist.
   assertHaveIntersection(funcGlobal, funcGlobal);
   assertHaveIntersection(funcGlobal, exactFuncSignatureType);
+  assertHaveIntersection(nonNullFuncGlobal, exactFuncSignatureType);
+  assertHaveIntersection(funcGlobal, exactNonNullFuncSignatureType);
+  assertHaveIntersection(nonNullFuncGlobal, exactNonNullFuncSignatureType);
 
   // Neither is a subtype of the other, but nulls are possible, so a null can be
   // the intersection.
