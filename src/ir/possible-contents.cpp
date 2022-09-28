@@ -1411,12 +1411,12 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
   //
-  // Many is always the worst possible case. An exact type of a non-reference is
+  // Many is always the worst possible case. A cone type of a non-reference is
   // also the worst case, since subtyping is not relevant there, and so if we
-  // know only the type then we already know nothing beyond what the type in the
-  // wasm tells us (and from there we can only go to Many).
+  // only know something about the type then we already know nothing beyond what
+  // the type in the wasm tells us (and from there we can only go to Many).
   bool worthSendingMore = !contents.isMany();
-  if (!contents.getType().isRef() && contents.isExactType()) {
+  if (!contents.getType().isRef() && contents.isConeType()) {
     worthSendingMore = false;
   }
 
@@ -1578,9 +1578,10 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // "Many", since in the worst case we can just use the immutable value. That
     // is, we can always replace this value with (global.get $name) which will
     // get the right value. Likewise, using the immutable global value is often
-    // better than an exact type, but TODO: we could note both an exact type
-    // *and* that something is equal to a global, in some cases.
-    if (contents.isMany() || contents.isExactType()) {
+    // better than a cone type (even an exact one), but TODO: we could note both
+    // a cone/exact type *and* that something is equal to a global, in some
+    // cases. See https://github.com/WebAssembly/binaryen/pull/5083
+    if (contents.isMany() || contents.isConeType()) {
       contents = PossibleContents::global(global->name, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
@@ -1603,7 +1604,7 @@ void Flower::readFromData(HeapType declaredHeapType,
                           Expression* read) {
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
-  // which DataLocations are relevant: if it is an ExactType then we have a
+  // which DataLocations are relevant: if it is an exact type then we have a
   // single DataLocation to read from, the one type that can be read from there.
   // Otherwise, we might read from any subtype, and so all their DataLocations
   // are relevant.
@@ -1645,22 +1646,21 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.isExactType()) {
+  if (refContents.hasExactType()) {
     // Add a single link to the exact location the reference points to.
     connectDuringFlow(
       DataLocation{refContents.getType().getHeapType(), fieldIndex},
       ExpressionLocation{read, 0});
   } else {
-    // Otherwise, this is a cone: the declared type of the reference, or any
-    // subtype of that, regardless of whether the content is a Many or a Global
-    // or anything else.
+    // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
+    // type of the reference or some of its subtypes.
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
     // TODO: A Global may refer to an immutable global, which we can read the
     //       field from potentially (reading it from the struct.new/array.new
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
-    //       represent them as ExactType).
+    //       represent them as an exact type).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal());
