@@ -215,8 +215,7 @@ public:
 
   size_t hash() const {
     // First hash the index of the variant, then add the internals for each.
-    size_t ret = 0;
-    hash_combine(ret, value.index());
+    size_t ret = std::hash<size_t>()(value.index());
     if (isNone() || isMany()) {
       // Nothing to add.
     } else if (isLiteral()) {
