@@ -164,6 +164,12 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     return true;
   }
 
+  // We ruled out a null on both sides, so at least one is non-nullable. If the
+  // other is a null then no chance for an intersection remains.
+  if (a.isNull() || b.isNull()) {
+    return false;
+  }
+
   // From here on we focus on references and can ignore the case of null - any
   // intersection must be of a non-null value, so we can focus on the heap
   // types.
