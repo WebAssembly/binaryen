@@ -3078,7 +3078,21 @@
   ;; CHECK:      (global $a-copy-mut (ref $A) (global.get $a-mut))
   (global $a-copy-mut (ref $A) (global.get $a-mut))
 
+  (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
+
   ;; CHECK:      (func $compare-a (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (global.get $a)
@@ -3094,19 +3108,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
   ;; CHECK-NEXT:    (global.get $a-mut)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3120,20 +3122,19 @@
     ;; Comparisons of $a to everything else.
     ;; Later functions will proceed to compare everything else to everything
     ;; else.
+    ;;
     ;; GUFA does not compute the results of these yet, as it leaves it to other
-    ;; passes. What it does change is update a copied global to the original,
+    ;; passes. This test guards against us doing anything unexpected here.
+    ;;
+    ;; What we do change here is update a copied global to the original,
     ;; so $a-copy will turn into $a (because that is the only value it can
-    ;; contain).
+    ;; contain). That should happen for the first three only. (For the last, it
+    ;; works even though it is mutable, since there is only a single write
+    ;; anywhere.)
     (drop
       (ref.eq
         (global.get $a)
         (global.get $a)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
-        (global.get $a-other)
       )
     )
     (drop
@@ -3145,19 +3146,34 @@
     (drop
       (ref.eq
         (global.get $a)
-        (global.get $a-mut)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
         (global.get $a-mut-copy)
       )
     )
     (drop
       (ref.eq
         (global.get $a)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
         (global.get $a-copy-mut)
+      )
+    )
+    (global.set $a-mut-copy-written
+      (global.get $a-other)
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-mut-copy-written)
       )
     )
   )
