@@ -163,6 +163,14 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto aType = a.getType();
   auto bType = b.getType();
 
+  if (!aType.isRef() || !bType.isRef()) {
+    // At least one is not a reference. The only way they can intersect is if
+    // the type is identical.
+    return aType == bType;
+  }
+
+  // From here on we focus on references.
+
   if (aType.isNullable() && bType.isNullable()) {
     // Null is possible on both sides. Assume that an intersection can exist,
     // but we could be more precise here and check if the types belong to
@@ -171,12 +179,25 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     return true;
   }
 
-  if (a.hasExactType() && b.hasExactType() && a.getType() != b.getType()) {
+  // We ruled out a null on both sides, so at least one is non-nullable. If the
+  // other is a null then no chance for an intersection remains.
+  if (a.isNull() || b.isNull()) {
+    return false;
+  }
+
+  // From here on we focus on references and can ignore the case of null - any
+  // intersection must be of a non-null value, so we can focus on the heap
+  // types.
+  auto aHeapType = aType.getHeapType();
+  auto bHeapType = bType.getHeapType();
+
+  if (a.hasExactType() && b.hasExactType() && aHeapType != bHeapType) {
     // The values must be different since their types are different.
     return false;
   }
 
-  if (!Type::isSubType(aType, bType) && !Type::isSubType(bType, aType)) {
+  if (!HeapType::isSubType(aHeapType, bHeapType) &&
+      !HeapType::isSubType(bHeapType, aHeapType)) {
     // No type can appear in both a and b, so the types differ, so the values
     // differ.
     return false;
@@ -486,9 +507,7 @@ struct InfoCollector
   void visitRefCast(RefCast* curr) {
     addChildParentLink(curr->ref, curr);
   }
-  void visitRefTest(RefTest* curr) {
-    addChildParentLink(curr->ref, curr);
-  }
+  void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);
@@ -1177,13 +1196,6 @@ private:
   // values to flow through it.
   void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
-  // The possible contents may allow us to infer an outcome in various
-  // instructions. If the expression has a single child, that is what is
-  // updated by the new |contents| (which we pass in to avoid doing an extra
-  // lookup); if there is more than one child, then to keep the code simple we
-  // expect the function to look up the children's effects manually.
-  void flowRefTest(const PossibleContents& contents, RefTest* test);
-
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1518,9 +1530,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == child);
       flowRefCast(contents, cast);
-    } else if (auto* test = parent->dynCast<RefTest>()) {
-      assert(test->ref == child);
-      flowRefTest(contents, test);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1780,33 +1789,6 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
 #endif
     updateContents(ExpressionLocation{cast, 0}, filtered);
   }
-}
-
-void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
-  // TODO move to gufa pass; this must happen at the end
-  PossibleContents filtered;
-  if (contents.isMany()) {
-    // Just pass the Many through.
-    filtered = contents;
-  } else {
-    // RefTest returns 1 iff the input is not null and is also a subtype.
-    bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), test->intendedType);
-    bool mayBeNull = contents.getType().isNullable();
-    if (!isSubType) {
-      filtered = PossibleContents::literal(Literal(int32_t(0)));
-    } else if (!mayBeNull) {
-      filtered = PossibleContents::literal(Literal(int32_t(1)));
-    } else {
-      filtered = PossibleContents::many();
-    }
-  }
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "    ref.test passing through\n";
-  filtered.dump(std::cout);
-  std::cout << '\n';
-#endif
-  updateContents(ExpressionLocation{test, 0}, filtered);
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
