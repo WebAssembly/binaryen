@@ -223,8 +223,9 @@ public:
     } else if (isGlobal()) {
       hash_combine(ret, std::hash<Name>()(getGlobal()));
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
-      hash_combine(ret, std::hash<std::pair<Type, Index>>{}(
-                            {coneType->type, coneType->depth}));
+      hash_combine(
+        ret,
+        std::hash<std::pair<Type, Index>>{}({coneType->type, coneType->depth}));
     } else {
       WASM_UNREACHABLE("bad variant");
     }
