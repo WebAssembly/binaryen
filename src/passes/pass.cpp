@@ -896,7 +896,9 @@ void PassRunner::runPass(Pass* pass) {
     checker = std::unique_ptr<AfterEffectModuleChecker>(
       new AfterEffectModuleChecker(wasm));
   }
-  pass->run(this, wasm);
+  assert(!pass->getPassRunner());
+  pass->setPassRunner(this);
+  pass->run(wasm);
   handleAfterEffects(pass);
   if (getPassDebug()) {
     checker->check();
@@ -925,15 +927,18 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
     bodyBefore << *func->body << '\n';
   }
 
-  // function-parallel passes get a new instance per function
-  auto instance = std::unique_ptr<Pass>(pass->create());
   std::unique_ptr<AfterEffectFunctionChecker> checker;
   if (passDebug) {
-    checker = std::unique_ptr<AfterEffectFunctionChecker>(
-      new AfterEffectFunctionChecker(func));
+    checker = std::make_unique<AfterEffectFunctionChecker>(func);
   }
-  instance->runOnFunction(this, wasm, func);
+
+  // Function-parallel passes get a new instance per function
+  auto instance = pass->create();
+  assert(instance);
+  instance->setPassRunner(this);
+  instance->runOnFunction(wasm, func);
   handleAfterEffects(pass, func);
+
   if (passDebug) {
     checker->check();
   }

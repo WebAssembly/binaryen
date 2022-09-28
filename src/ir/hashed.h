@@ -38,8 +38,8 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   FunctionHasher(Map* output)
     : output(output), customHasher(ExpressionAnalyzer::nothingHasher) {}
 
-  FunctionHasher* create() override {
-    return new FunctionHasher(output, customHasher);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionHasher>(output, customHasher);
   }
 
   static Map createMap(Module* module) {

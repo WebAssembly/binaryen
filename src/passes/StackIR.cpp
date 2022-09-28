@@ -31,7 +31,9 @@ namespace wasm {
 struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new GenerateStackIR; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<GenerateStackIR>();
+  }
 
   bool modifiesBinaryenIR() override { return false; }
 
@@ -336,7 +338,9 @@ private:
 struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeStackIR; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<OptimizeStackIR>();
+  }
 
   bool modifiesBinaryenIR() override { return false; }
 

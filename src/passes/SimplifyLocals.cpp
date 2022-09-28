@@ -71,8 +71,9 @@ struct SimplifyLocals
       SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override {
-    return new SimplifyLocals<allowTee, allowStructure, allowNesting>();
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<
+      SimplifyLocals<allowTee, allowStructure, allowNesting>>();
   }
 
   // information for a local.set we can sink

@@ -3365,9 +3365,9 @@ public:
 
   bool modifiesBinaryenIR() override { return false; }
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     PrintSExpression print(o);
-    print.setDebugInfo(runner->options.debugInfo);
+    print.setDebugInfo(getPassOptions().debugInfo);
     print.visitModule(module);
   }
 };
@@ -3381,10 +3381,10 @@ public:
   MinifiedPrinter() = default;
   MinifiedPrinter(std::ostream* o) : Printer(o) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     PrintSExpression print(o);
     print.setMinify(true);
-    print.setDebugInfo(runner->options.debugInfo);
+    print.setDebugInfo(getPassOptions().debugInfo);
     print.visitModule(module);
   }
 };
@@ -3398,10 +3398,10 @@ public:
   FullPrinter() = default;
   FullPrinter(std::ostream* o) : Printer(o) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     PrintSExpression print(o);
     print.setFull(true);
-    print.setDebugInfo(runner->options.debugInfo);
+    print.setDebugInfo(getPassOptions().debugInfo);
     print.currModule = module;
     print.visitModule(module);
   }
@@ -3416,9 +3416,9 @@ public:
   PrintStackIR() = default;
   PrintStackIR(std::ostream* o) : Printer(o) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     PrintSExpression print(o);
-    print.setDebugInfo(runner->options.debugInfo);
+    print.setDebugInfo(getPassOptions().debugInfo);
     print.setStackIR(true);
     print.currModule = module;
     print.visitModule(module);
@@ -3603,7 +3603,8 @@ namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
   wasm::PassRunner runner(&module);
-  wasm::Printer(&o).run(&runner, &module);
+  runner.add(std::make_unique<wasm::Printer>(&o));
+  runner.run();
   return o;
 }
 

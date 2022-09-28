@@ -58,15 +58,15 @@ struct LegalizeJSInterface : public Pass {
 
   LegalizeJSInterface(bool full) : full(full) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     setTempRet0 = nullptr;
     getTempRet0 = nullptr;
     auto exportOriginals =
-      !runner->options
+      !getPassOptions()
          .getArgumentOrDefault("legalize-js-interface-export-originals", "")
          .empty();
     exportedHelpers =
-      !runner->options
+      !getPassOptions()
          .getArgumentOrDefault("legalize-js-interface-exported-helpers", "")
          .empty();
     // for each illegal export, we must export a legalized stub instead
@@ -129,7 +129,9 @@ struct LegalizeJSInterface : public Pass {
       struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override { return new Fixer(illegalImportsToLegal); }
+        std::unique_ptr<Pass> create() override {
+          return std::make_unique<Fixer>(illegalImportsToLegal);
+        }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
@@ -159,8 +161,8 @@ struct LegalizeJSInterface : public Pass {
       };
 
       Fixer fixer(&illegalImportsToLegal);
-      fixer.run(runner, module);
-      fixer.runOnModuleCode(runner, module);
+      fixer.run(getPassRunner(), module);
+      fixer.runOnModuleCode(getPassRunner(), module);
 
       // Finally we can remove all the now-unused illegal imports
       for (const auto& pair : illegalImportsToLegal) {

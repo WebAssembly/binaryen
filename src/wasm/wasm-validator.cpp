@@ -208,7 +208,9 @@ struct ValidationInfo {
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionValidator(*getModule(), &info); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionValidator>(*getModule(), &info);
+  }
 
   bool modifiesBinaryenIR() override { return false; }
 

@@ -403,7 +403,9 @@ struct MergeBlocks
       PostWalker<MergeBlocks, UnifiedExpressionVisitor<MergeBlocks>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new MergeBlocks; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<MergeBlocks>();
+  }
 
   BranchUtils::BranchSeekerCache branchInfo;
 

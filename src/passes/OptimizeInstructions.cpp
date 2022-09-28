@@ -201,7 +201,9 @@ struct OptimizeInstructions
   : public WalkerPass<PostWalker<OptimizeInstructions>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeInstructions; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<OptimizeInstructions>();
+  }
 
   bool fastMath;
 
