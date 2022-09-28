@@ -21,6 +21,7 @@
 
 #include "ir/possible-constant.h"
 #include "ir/subtypes.h"
+#include "support/hash.h"
 #include "support/small_vector.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -213,23 +214,21 @@ public:
   }
 
   size_t hash() const {
-    // Encode this using three bits for the variant type, then the rest of the
-    // contents.
-    if (isNone()) {
-      return 0;
+    // First hash the index of the variant, then add the internals for each.
+    size_t ret = std::hash<size_t>()(value.index());
+    if (isNone() || isMany()) {
+      // Nothing to add.
     } else if (isLiteral()) {
-      return size_t(1) | (std::hash<Literal>()(getLiteral()) << 3);
+      rehash(ret, getLiteral());
     } else if (isGlobal()) {
-      return size_t(2) | (std::hash<Name>()(getGlobal()) << 3);
+      rehash(ret, getGlobal());
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
-      return size_t(3) | ((std::hash<std::pair<Type, Index>>{}(
-                            {coneType->type, coneType->depth}))
-                          << 3);
-    } else if (isMany()) {
-      return 4;
+      rehash(ret, coneType->type);
+      rehash(ret, coneType->depth);
     } else {
       WASM_UNREACHABLE("bad variant");
     }
+    return ret;
   }
 
   void dump(std::ostream& o, Module* wasm = nullptr) const {

@@ -29,7 +29,7 @@ template<typename T> inline std::size_t hash(const T& value) {
 
 // Combines two digests into the first digest. Use instead of `rehash` if
 // `otherDigest` is another digest and not a `size_t` value.
-static inline void hash_combine(std::size_t& digest, std::size_t otherDigest) {
+inline void hash_combine(std::size_t& digest, const std::size_t otherDigest) {
   // see: boost/container_hash/hash.hpp
   // The constant is the N-bits reciprocal of the golden ratio:
   //  phi = (1 + sqrt(5)) / 2
