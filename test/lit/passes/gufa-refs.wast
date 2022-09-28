@@ -2766,6 +2766,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.eq-zero (export "ref.eq-zero")
     ;; We do not track specific references, so only the types can be used here.
@@ -2789,6 +2792,14 @@
         (struct.new $struct
           (i32.const 5)
         )
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new $struct
+          (i32.const 5)
+        )
+        (ref.null $struct)
       )
     )
   )
