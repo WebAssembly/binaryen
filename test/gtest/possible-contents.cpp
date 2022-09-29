@@ -433,13 +433,17 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
     exactI32,
     exactAnyref,
     exactFuncref,
+    exactDataref,
     exactI31ref,
     exactNonNullAnyref,
     exactNonNullFuncref,
     exactNonNullI31ref,
     exactFuncSignatureType,
     exactNonNullFuncSignatureType,
-    many}; // TODO; add dataref and cones
+    many,
+    coneAnyref,
+    coneFuncref,
+    coneFuncref1};
 
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
