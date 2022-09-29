@@ -300,8 +300,9 @@ TEST_F(PossibleContentsTest, TestCones) {
   auto exactD = PossibleContents::exactType(nullD);
   auto exactE = PossibleContents::exactType(nullE);
 
-  // TODO; add  to fixture and permutations test
+  // TODO; add these to fixture and permutations test
   auto dataref = Type(HeapType::data, Nullable);
+  auto exactData = PossibleContents::exactType(dataref);
 
   assertCombination(exactA, exactA, exactA);
   assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
@@ -309,20 +310,27 @@ TEST_F(PossibleContentsTest, TestCones) {
   assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
   assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
+  assertCombination(exactA, exactData, PossibleContents::coneType(dataref, 1));
 
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
   assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactB, exactData, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactC, exactC, exactC);
   assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
   assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactC, exactData, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactD, exactD, exactD);
   assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
+  assertCombination(exactD, exactData, PossibleContents::coneType(dataref, 3));
 
   assertCombination(exactE, exactE, exactE);
+  assertCombination(exactE, exactData, PossibleContents::coneType(dataref, 1));
+
+  assertCombination(exactData, exactData, exactData);
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
