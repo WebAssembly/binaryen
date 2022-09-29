@@ -258,6 +258,34 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyGlobal, i31Null, coneAnyref);
 }
 
+TEST_F(PossibleContentsTest, TestCones) {
+  /*
+       A
+      / \
+     B   C
+          \
+           D
+  */
+  TypeBuilder builder(4);
+  builder.setHeapType(0, Struct(FieldList{}));
+  builder.setHeapType(1, Struct(FieldList{}));
+  builder.setHeapType(2, Struct(FieldList{}));
+  builder.setHeapType(3, Struct(FieldList{}));
+  builder.setSubType(1, builder.getTempHeapType(0));
+  builder.setSubType(2, builder.getTempHeapType(0));
+  builder.setSubType(3, builder.getTempHeapType(2));
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto types = *result;
+  auto A = types[0];
+  auto B = types[1];
+  auto C = types[2];
+  auto D = types[3];
+  ASSERT_TRUE(B.getSuperType() == A);
+  ASSERT_TRUE(C.getSuperType() == A);
+  ASSERT_TRUE(D.getSuperType() == C);
+}
+
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
   // A minimal test of the public API of PossibleTypesOracle. See the lit test
   // for coverage of all the internals (using lit makes the result more
