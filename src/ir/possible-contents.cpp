@@ -134,7 +134,8 @@ void PossibleContents::combine(const PossibleContents& other) {
     // The depth we need under the lub is how far from the lub we are, plus the
     // depth of our cone.
     Index depthUnderLub = depthFromRoot - lubDepthFromRoot + getCone().depth;
-    Index otherDepthUnderLub = otherDepthFromRoot - lubDepthFromRoot + other.getCone().depth;
+    Index otherDepthUnderLub =
+      otherDepthFromRoot - lubDepthFromRoot + other.getCone().depth;
     // The total cone must be big enough to contain all the above.
     value = ConeType{lub, std::max(depthUnderLub, otherDepthUnderLub)};
     return;
