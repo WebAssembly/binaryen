@@ -402,30 +402,28 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 
   // Start from an initial set of the hardcoded contents we have in our test
   // fixture.
-  std::unordered_set<PossibleContents> initial = {
-    none,
-    f64One,
-    anyNull,
-    funcNull,    
-    i31Null,    
-    i32Global1,    
-    i32Global2,    
-    f64Global,
-    anyGlobal,
-    funcGlobal,
-    nonNullFuncGlobal,
-    nonNullFunc,
-    exactI32,
-    exactAnyref,
-    exactFuncref,
-    exactI31ref,
-    exactNonNullAnyref,    
-    exactNonNullFuncref,    
-    exactNonNullI31ref,    
-    exactFuncSignatureType,
-    exactNonNullFuncSignatureType,
-    many
-  };
+  std::unordered_set<PossibleContents> initial = {none,
+                                                  f64One,
+                                                  anyNull,
+                                                  funcNull,
+                                                  i31Null,
+                                                  i32Global1,
+                                                  i32Global2,
+                                                  f64Global,
+                                                  anyGlobal,
+                                                  funcGlobal,
+                                                  nonNullFuncGlobal,
+                                                  nonNullFunc,
+                                                  exactI32,
+                                                  exactAnyref,
+                                                  exactFuncref,
+                                                  exactI31ref,
+                                                  exactNonNullAnyref,
+                                                  exactNonNullFuncref,
+                                                  exactNonNullI31ref,
+                                                  exactFuncSignatureType,
+                                                  exactNonNullFuncSignatureType,
+                                                  many};
 
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
