@@ -417,28 +417,29 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 
   // Start from an initial set of the hardcoded contents we have in our test
   // fixture.
-  std::unordered_set<PossibleContents> initial = {none,
-                                                  f64One,
-                                                  anyNull,
-                                                  funcNull,
-                                                  i31Null,
-                                                  i32Global1,
-                                                  i32Global2,
-                                                  f64Global,
-                                                  anyGlobal,
-                                                  funcGlobal,
-                                                  nonNullFuncGlobal,
-                                                  nonNullFunc,
-                                                  exactI32,
-                                                  exactAnyref,
-                                                  exactFuncref,
-                                                  exactI31ref,
-                                                  exactNonNullAnyref,
-                                                  exactNonNullFuncref,
-                                                  exactNonNullI31ref,
-                                                  exactFuncSignatureType,
-                                                  exactNonNullFuncSignatureType,
-                                                  many}; // TODO; add dataref and cones
+  std::unordered_set<PossibleContents> initial = {
+    none,
+    f64One,
+    anyNull,
+    funcNull,
+    i31Null,
+    i32Global1,
+    i32Global2,
+    f64Global,
+    anyGlobal,
+    funcGlobal,
+    nonNullFuncGlobal,
+    nonNullFunc,
+    exactI32,
+    exactAnyref,
+    exactFuncref,
+    exactI31ref,
+    exactNonNullAnyref,
+    exactNonNullFuncref,
+    exactNonNullI31ref,
+    exactFuncSignatureType,
+    exactNonNullFuncSignatureType,
+    many}; // TODO; add dataref and cones
 
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
@@ -508,29 +509,35 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
   assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
-  assertCombination(exactA, exactDataref, PossibleContents::coneType(dataref, 1));
+  assertCombination(
+    exactA, exactDataref, PossibleContents::coneType(dataref, 1));
 
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
   assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
-  assertCombination(exactB, exactDataref, PossibleContents::coneType(dataref, 2));
+  assertCombination(
+    exactB, exactDataref, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactC, exactC, exactC);
   assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
   assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
-  assertCombination(exactC, exactDataref, PossibleContents::coneType(dataref, 2));
+  assertCombination(
+    exactC, exactDataref, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactD, exactD, exactD);
   assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
-  assertCombination(exactD, exactDataref, PossibleContents::coneType(dataref, 3));
+  assertCombination(
+    exactD, exactDataref, PossibleContents::coneType(dataref, 3));
 
   assertCombination(exactE, exactE, exactE);
-  assertCombination(exactE, exactDataref, PossibleContents::coneType(dataref, 1));
+  assertCombination(
+    exactE, exactDataref, PossibleContents::coneType(dataref, 1));
 
   assertCombination(exactDataref, exactDataref, exactDataref);
 
-  assertCombination(exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
+  assertCombination(
+    exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
   // TODO: eqref
 
   // Combinations of cones.
