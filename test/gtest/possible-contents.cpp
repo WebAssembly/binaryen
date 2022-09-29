@@ -587,10 +587,9 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   // Intersections. Test with non-nullable types to avoid the null being a
   // possible intersection.
   assertHaveIntersection(nnExactA, nnExactA);
-std::cout << "\n\n\n\n\n";
   assertLackIntersection(nnExactA, nnExactB);
-return;
   assertLackIntersection(nnExactA, nnExactC);
+return;
   assertLackIntersection(nnExactA, nnExactD);
   assertLackIntersection(nnExactA, nnExactE);
 
