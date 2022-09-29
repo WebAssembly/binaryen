@@ -1403,9 +1403,23 @@ size_t HeapType::getDepth() const {
       depth++;
     }
   } else {
-    // The one basic type with an extra super is HeapType::eq, as mentioned.
-    if (*this == HeapType::eq) {
-      depth++;
+    // Some basic types have supers.
+    switch (getBasic()) {
+      case HeapType::ext:
+      case HeapType::func:
+      case HeapType::any:
+        break;
+      case HeapType::eq:
+        depth++;
+        break;
+      case HeapType::i31:
+      case HeapType::data:
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        depth += 2;
+        break;
     }
   }
   return depth;
