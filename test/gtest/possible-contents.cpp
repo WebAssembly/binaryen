@@ -329,9 +329,9 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
   auto doTest = [](std::unordered_set<PossibleContents> set) {
     std::vector<PossibleContents> vec(set.begin(), set.end());
 
-    // Go over all permutations up to a certain size. 4 takes ~100ms, while 5
-    // takes several seconds, so don't go that high.
-    size_t max = 4;
+    // Go over all permutations up to a certain size (this quickly becomes
+    // extremely slow, obviously, so keep this low).
+    size_t max = 3;
 
     auto n = set.size();
 
