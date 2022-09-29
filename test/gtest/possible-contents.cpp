@@ -67,7 +67,7 @@ protected:
   Type anyref = Type(HeapType::any, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
   Type i31ref = Type(HeapType::i31, Nullable);
-  Type eqref = Type(HeapType::eq, Nullable);
+  Type dataref = Type(HeapType::data, Nullable);
 
   PossibleContents none = PossibleContents::none();
 
@@ -97,7 +97,7 @@ protected:
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);
   PossibleContents exactFuncref = PossibleContents::exactType(funcref);
-  PossibleContents exactEqref = PossibleContents::exactType(eqref);
+  PossibleContents exactDataref = PossibleContents::exactType(dataref);
   PossibleContents exactI31ref = PossibleContents::exactType(i31ref);
   PossibleContents exactNonNullAnyref =
     PossibleContents::exactType(Type(HeapType::any, NonNullable));
@@ -308,29 +308,28 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
-return;
-  assertCombination(exactA, exactE, PossibleContents::coneType(eqref, 1));
-  assertCombination(exactA, exactEqref, PossibleContents::coneType(eqref, 2));
+  assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
+  assertCombination(exactA, exactDataref, PossibleContents::coneType(dataref, 1));
 
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
-  assertCombination(exactB, exactE, PossibleContents::coneType(eqref, 3));
-  assertCombination(exactB, exactEqref, PossibleContents::coneType(eqref, 3));
+  assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactB, exactDataref, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactC, exactC, exactC);
   assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
-  assertCombination(exactC, exactE, PossibleContents::coneType(eqref, 3));
-  assertCombination(exactC, exactEqref, PossibleContents::coneType(eqref, 3));
+  assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactC, exactDataref, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactD, exactD, exactD);
-  assertCombination(exactD, exactE, PossibleContents::coneType(eqref, 4));
-  assertCombination(exactD, exactEqref, PossibleContents::coneType(eqref, 4));
+  assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
+  assertCombination(exactD, exactDataref, PossibleContents::coneType(dataref, 3));
 
   assertCombination(exactE, exactE, exactE);
-  assertCombination(exactE, exactEqref, PossibleContents::coneType(eqref, 2));
+  assertCombination(exactE, exactDataref, PossibleContents::coneType(dataref, 1));
 
-  assertCombination(exactEqref, exactEqref, exactEqref);
+  assertCombination(exactDataref, exactDataref, exactDataref);
 
   // Combinations of cones.
   assertCombination(PossibleContents::coneType(nullA, 5),
@@ -350,11 +349,11 @@ return;
 
   assertCombination(PossibleContents::coneType(nullA, 5),
                     PossibleContents::coneType(nullE, 7),
-                    PossibleContents::coneType(eqref, 9));
+                    PossibleContents::coneType(dataref, 8));
 
   assertCombination(PossibleContents::coneType(nullB, 4),
-                    PossibleContents::coneType(eqref, 1),
-                    PossibleContents::coneType(eqref, 7));
+                    PossibleContents::coneType(dataref, 1),
+                    PossibleContents::coneType(dataref, 6));
 
   // Combinations of cones and exact types.
   assertCombination(exactA,
@@ -368,20 +367,19 @@ return;
                     PossibleContents::coneType(nullA, 3));
   assertCombination(exactA,
                     PossibleContents::coneType(nullE, 2),
-                    PossibleContents::coneType(eqref, 3));
+                    PossibleContents::coneType(dataref, 3));
 
   assertCombination(exactA,
-                    PossibleContents::coneType(eqref, 2),
-                    PossibleContents::coneType(eqref, 2));
+                    PossibleContents::coneType(dataref, 1),
+                    PossibleContents::coneType(dataref, 1));
   assertCombination(exactA,
-                    PossibleContents::coneType(eqref, 3),
-                    PossibleContents::coneType(eqref, 3));
+                    PossibleContents::coneType(dataref, 2),
+                    PossibleContents::coneType(dataref, 2));
 
-  assertCombination(exactEqref,
+  assertCombination(exactDataref,
                     PossibleContents::coneType(nullB, 3),
-                    PossibleContents::coneType(eqref, 6));
+                    PossibleContents::coneType(dataref, 5));
 
-  // TODO exany with exeq
   // TODO full cones
 }
 
@@ -565,14 +563,12 @@ return;
                                                   exactAnyref,
                                                   exactFuncref,
                                                   exactI31ref,
-                                                  exactEqref,
                                                   exactNonNullAnyref,
                                                   exactNonNullFuncref,
                                                   exactNonNullI31ref,
                                                   exactFuncSignatureType,
                                                   exactNonNullFuncSignatureType,
-                                                  // TODO: cones
-                                                  many};
+                                                  many}; // TODO; add dataref and cones
 
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
