@@ -352,6 +352,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                     PossibleContents::coneType(nullE, 7),
                     PossibleContents::coneType(dataref, 8));
 
+  assertCombination(PossibleContents::coneType(nullB, 4),
+                    PossibleContents::coneType(dataref, 1),
+                    PossibleContents::coneType(dataref, 6));
+
   // Combinations of cones and exact types.
   assertCombination(exactA,
                     PossibleContents::coneType(nullA, 3),
