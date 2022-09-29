@@ -360,7 +360,6 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
         combination.combine(vec[index]);
       }
       // Note the combination in the set.
-      // TODO: test A+B+C=C+B+A
       set.insert(combination);
 #if BINARYEN_TEST_DEBUG
       for (auto index : indexes) {
