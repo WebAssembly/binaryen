@@ -322,15 +322,22 @@ TEST_F(PossibleContentsTest, TestIntersection) {
 }
 
 TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
-  // Whenever we combine C = A + B, both A and B must intersect with C.
-
+  // Whenever we combine C = A + B, both A and B must intersect with C. This
+  // helper function gets a set of things and checks that property on them. It
+  // returns the set of all contents it ever observed (see below for how we use
+  // that).
   auto doTest = [](std::unordered_set<PossibleContents> set) {
-    auto n = set.size();
     std::vector<PossibleContents> vec(set.begin(), set.end());
 
-    // Go over all permutations. |indexes| contains the indexes of the items in
-    // vec for the current permutation.
-    std::vector<size_t> indexes(n);
+    // Go over all permutations up to a certain size. 4 takes ~100ms, while 5
+    // takes several seconds, so don't go that high.
+    size_t max = 4;
+
+    auto n = set.size();
+
+    // |indexes| contains the indexes of the items in vec for the current
+    // permutation.
+    std::vector<size_t> indexes(max);
     std::fill(indexes.begin(), indexes.end(), 0);
     while (1) {
       // Test the current permutation: Combine all the relevant things, and then
@@ -339,8 +346,37 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
       for (auto index : indexes) {
         combination.combine(vec[index]);
       }
+      // Note the combination in the set.
+      set.insert(combination);
+#if BINARYEN_TEST_DEBUG
       for (auto index : indexes) {
-        assertHaveIntersection(combination, vec[index]);
+        std::cout << index << ' ';
+        combination.combine(vec[index]);
+      }
+      std::cout << '\n';
+#endif
+      for (auto index : indexes) {
+        auto item = vec[index];
+        if (item.isNone()) {
+          assertLackIntersection(combination, item);
+          continue;
+        }
+#if BINARYEN_TEST_DEBUG
+        if (!PossibleContents::haveIntersection(combination, item)) {
+          for (auto index : indexes) {
+            std::cout << index << ' ';
+            combination.combine(item);
+          }
+          std::cout << '\n';
+          std::cout << "combo:\n";
+          combination.dump(std::cout);
+          std::cout << "\ncompared item (index " << index << "):\n";
+          item.dump(std::cout);
+          std::cout << '\n';
+          abort();
+        }
+#endif
+        assertHaveIntersection(combination, item);
       }
 
       // Move to the next permutation.
@@ -351,18 +387,21 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
           // Overflow.
           indexes[i] = 0;
           i++;
-          if (i == n) {
+          if (i == max) {
             // All done.
-            return;
+            return set;
           }
         } else {
           break;
         }
       }
     }
+
+    WASM_UNREACHABLE("loop above returns manually");
   };
 
-  // Start from an initial set.
+  // Start from an initial set of the hardcoded contents we have in our test
+  // fixture.
   std::unordered_set<PossibleContents> initial = {
     none,
     f64One,
@@ -388,8 +427,11 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
     many
   };
 
-  doTest(initial);
-  // TODO moar
+  // After testing on the initial contents, also test using anything new that
+  // showed up while combining them.
+  auto subsequent = doTest(initial);
+  doTest(subsequent);
+  EXPECT_GT(subsequent.size(), initial.size());
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
