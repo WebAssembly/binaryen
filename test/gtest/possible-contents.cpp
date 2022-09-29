@@ -321,6 +321,77 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertLackIntersection(nonNullFuncGlobal, anyGlobal);
 }
 
+TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
+  // Whenever we combine C = A + B, both A and B must intersect with C.
+
+  auto doTest = [](std::unordered_set<PossibleContents> set) {
+    auto n = set.size();
+    std::vector<PossibleContents> vec(set.begin(), set.end());
+
+    // Go over all permutations. |indexes| contains the indexes of the items in
+    // vec for the current permutation.
+    std::vector<size_t> indexes(n);
+    std::fill(indexes.begin(), indexes.end(), 0);
+    while (1) {
+      // Test the current permutation: Combine all the relevant things, and then
+      // check they all have an intersection.
+      PossibleContents combination;
+      for (auto index : indexes) {
+        combination.combine(vec[index]);
+      }
+      for (auto index : indexes) {
+        assertHaveIntersection(combination, vec[index]);
+      }
+
+      // Move to the next permutation.
+      size_t i = 0;
+      while (1) {
+        indexes[i]++;
+        if (indexes[i] == n) {
+          // Overflow.
+          indexes[i] = 0;
+          i++;
+          if (i == n) {
+            // All done.
+            return;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+  };
+
+  // Start from an initial set.
+  std::unordered_set<PossibleContents> initial = {
+    none,
+    f64One,
+    anyNull,
+    funcNull,    
+    i31Null,    
+    i32Global1,    
+    i32Global2,    
+    f64Global,
+    anyGlobal,
+    funcGlobal,
+    nonNullFuncGlobal,
+    nonNullFunc,
+    exactI32,
+    exactAnyref,
+    exactFuncref,
+    exactI31ref,
+    exactNonNullAnyref,    
+    exactNonNullFuncref,    
+    exactNonNullI31ref,    
+    exactFuncSignatureType,
+    exactNonNullFuncSignatureType,
+    many
+  };
+
+  doTest(initial);
+  // TODO moar
+}
+
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   // Test for a node with many possible types. The pass limits how many it
   // notices to not use excessive memory, so even though 4 are possible here,
