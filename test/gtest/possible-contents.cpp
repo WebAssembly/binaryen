@@ -66,6 +66,7 @@ protected:
   Type anyref = Type(HeapType::any, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
   Type i31ref = Type(HeapType::i31, Nullable);
+  Type dataref = Type(HeapType::data, Nullable);
 
   PossibleContents none = PossibleContents::none();
 
@@ -95,6 +96,7 @@ protected:
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);
   PossibleContents exactFuncref = PossibleContents::exactType(funcref);
+  PossibleContents exactDataref = PossibleContents::exactType(dataref);
   PossibleContents exactI31ref = PossibleContents::exactType(i31ref);
   PossibleContents exactNonNullAnyref =
     PossibleContents::exactType(Type(HeapType::any, NonNullable));
@@ -300,37 +302,33 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   auto exactD = PossibleContents::exactType(nullD);
   auto exactE = PossibleContents::exactType(nullE);
 
-  // TODO; add these to fixture and permutations test
-  auto dataref = Type(HeapType::data, Nullable);
-  auto exactData = PossibleContents::exactType(dataref);
-
   assertCombination(exactA, exactA, exactA);
   assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
   assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
   assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
-  assertCombination(exactA, exactData, PossibleContents::coneType(dataref, 1));
+  assertCombination(exactA, exactDataref, PossibleContents::coneType(dataref, 1));
 
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
   assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
-  assertCombination(exactB, exactData, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactB, exactDataref, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactC, exactC, exactC);
   assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
   assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
-  assertCombination(exactC, exactData, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactC, exactDataref, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactD, exactD, exactD);
   assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
-  assertCombination(exactD, exactData, PossibleContents::coneType(dataref, 3));
+  assertCombination(exactD, exactDataref, PossibleContents::coneType(dataref, 3));
 
   assertCombination(exactE, exactE, exactE);
-  assertCombination(exactE, exactData, PossibleContents::coneType(dataref, 1));
+  assertCombination(exactE, exactDataref, PossibleContents::coneType(dataref, 1));
 
-  assertCombination(exactData, exactData, exactData);
+  assertCombination(exactDataref, exactDataref, exactDataref);
 
   // Combinations of cones.
   assertCombination(PossibleContents::coneType(nullA, 5),
@@ -377,7 +375,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                     PossibleContents::coneType(dataref, 2),
                     PossibleContents::coneType(dataref, 2));
 
-  assertCombination(exactData,
+  assertCombination(exactDataref,
                     PossibleContents::coneType(nullB, 3),
                     PossibleContents::coneType(dataref, 5));
 }
@@ -482,6 +480,7 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
         combination.combine(vec[index]);
       }
       // Note the combination in the set.
+      // TODO: test A+B+C=C+B+A
       set.insert(combination);
 #if BINARYEN_TEST_DEBUG
       for (auto index : indexes) {
@@ -604,5 +603,3 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
   EXPECT_TRUE(bodyContents.getCone().depth == 1);
 }
-
-// TODO: test A+B+C=C+B+A (add to that permuations test)
