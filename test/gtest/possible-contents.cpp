@@ -599,6 +599,9 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertCombination(PossibleContents::fullConeType(nullA),
                     PossibleContents::coneType(nullA, 2),
                     PossibleContents::fullConeType(nullA));
+  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::fullConeType(nullA),
+                    PossibleContents::fullConeType(nullA));
 
   // Intersections. Test with non-nullable types to avoid the null being a
   // possible intersection.
