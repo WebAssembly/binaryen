@@ -214,7 +214,6 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(exactFuncref, exactAnyref, many);
   assertCombination(exactFuncref, anyGlobal, many);
   assertCombination(exactFuncref, nonNullFunc, coneFuncref1);
-return; // XXX
   assertCombination(exactFuncref, exactFuncref, exactFuncref);
   assertCombination(exactFuncref, exactNonNullFuncref, exactFuncref);
 
@@ -368,24 +367,4 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   EXPECT_TRUE(bodyContents.getCone().depth == 1);
 }
 
-TEST_F(PossibleContentsTest, TestOracleManyTypes2) {
-  // As above, but now B is a subtype of A, so we end up with a code of depth 2.
-  auto wasm = parse(R"(
-    (module
-      (type $A (struct_subtype (field i32) data))
-      (type $B (struct_subtype (field i32) $A))
-      (func $foo (result (ref any))
-        (select (result (ref any))
-          (struct.new $A)
-          (struct.new $B)
-          (i32.const 0)
-        )
-      )
-    )
-  )");
-  ContentOracle oracle(*wasm);
-  auto bodyContents = oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
-  ASSERT_TRUE(bodyContents.isConeType());
-  EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
-  EXPECT_TRUE(bodyContents.getCone().depth == 2);
-}
+// TODO: test A+B+C=C+B+A (add to that permuations test)
