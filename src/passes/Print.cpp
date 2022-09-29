@@ -3603,8 +3603,12 @@ namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
   wasm::PassRunner runner(&module);
-  runner.add(std::make_unique<wasm::Printer>(&o));
-  runner.run();
+  wasm::Printer printer(&o);
+  // Do not use runner.run(), since that will cause an infinite recursion in
+  // BINARYEN_PASS_DEBUG=3, which prints modules (using this function) as part
+  // of running passes.
+  printer.setPassRunner(&runner);
+  printer.run(&module);
   return o;
 }
 
