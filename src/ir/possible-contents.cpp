@@ -1701,7 +1701,10 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       represent them as an exact type).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
-    assert(refContents.isMany() || refContents.isGlobal());
+    assert(refContents.isMany() || refContents.isGlobal() || refContents.isConeType());
+
+    // TODO: Use the cone depth here for ConeType. Right now we do the
+    //       pessimistic thing and assume a full cone of all subtypes.
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
@@ -1763,9 +1766,11 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
     updateContents(heapLoc, valueContents);
   } else {
-    assert(refContents.isMany() || refContents.isGlobal());
+    assert(refContents.isMany() || refContents.isGlobal() || refContents.isConeType());
 
     // Update all possible subtypes here.
+    // TODO: Use the cone depth here for ConeType. Right now we do the
+    //       pessimistic thing and assume a full cone of all subtypes.
     auto type = ref->type.getHeapType();
     for (auto subType : subTypes->getAllSubTypes(type)) {
       auto heapLoc = DataLocation{subType, fieldIndex};
