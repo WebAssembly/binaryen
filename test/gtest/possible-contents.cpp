@@ -260,131 +260,6 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyGlobal, i31Null, coneAnyref);
 }
 
-TEST_F(PossibleContentsTest, TestStructCones) {
-  /*
-        A       E
-       / \
-      B   C
-           \
-            D
-  */
-  TypeBuilder builder(5);
-  builder.setHeapType(0, Struct(FieldList{}));
-  builder.setHeapType(1, Struct(FieldList{}));
-  builder.setHeapType(2, Struct(FieldList{}));
-  builder.setHeapType(3, Struct(FieldList{}));
-  builder.setHeapType(4, Struct(FieldList{}));
-  builder.setSubType(1, builder.getTempHeapType(0));
-  builder.setSubType(2, builder.getTempHeapType(0));
-  builder.setSubType(3, builder.getTempHeapType(2));
-  auto result = builder.build();
-  ASSERT_TRUE(result);
-  auto types = *result;
-  auto A = types[0];
-  auto B = types[1];
-  auto C = types[2];
-  auto D = types[3];
-  auto E = types[4];
-  ASSERT_TRUE(B.getSuperType() == A);
-  ASSERT_TRUE(C.getSuperType() == A);
-  ASSERT_TRUE(D.getSuperType() == C);
-
-  auto nullA = Type(A, Nullable);
-  auto nullB = Type(B, Nullable);
-  auto nullC = Type(C, Nullable);
-  auto nullD = Type(D, Nullable);
-  auto nullE = Type(E, Nullable);
-
-  // Combinations of exact types.
-  auto exactA = PossibleContents::exactType(nullA);
-  auto exactB = PossibleContents::exactType(nullB);
-  auto exactC = PossibleContents::exactType(nullC);
-  auto exactD = PossibleContents::exactType(nullD);
-  auto exactE = PossibleContents::exactType(nullE);
-
-  assertCombination(exactA, exactA, exactA);
-  assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
-  assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
-  assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
-  assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
-  assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
-  assertCombination(exactA, exactDataref, PossibleContents::coneType(dataref, 1));
-
-  assertCombination(exactB, exactB, exactB);
-  assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
-  assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
-  assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
-  assertCombination(exactB, exactDataref, PossibleContents::coneType(dataref, 2));
-
-  assertCombination(exactC, exactC, exactC);
-  assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
-  assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
-  assertCombination(exactC, exactDataref, PossibleContents::coneType(dataref, 2));
-
-  assertCombination(exactD, exactD, exactD);
-  assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
-  assertCombination(exactD, exactDataref, PossibleContents::coneType(dataref, 3));
-
-  assertCombination(exactE, exactE, exactE);
-  assertCombination(exactE, exactDataref, PossibleContents::coneType(dataref, 1));
-
-  assertCombination(exactDataref, exactDataref, exactDataref);
-
-  assertCombination(exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
-  // TODO: eqref
-
-  // Combinations of cones.
-  assertCombination(PossibleContents::coneType(nullA, 5),
-                    PossibleContents::coneType(nullA, 7),
-                    PossibleContents::coneType(nullA, 7));
-
-  // Increment the cone of D as we go here, until it matters.
-  assertCombination(PossibleContents::coneType(nullA, 5),
-                    PossibleContents::coneType(nullD, 2),
-                    PossibleContents::coneType(nullA, 5));
-  assertCombination(PossibleContents::coneType(nullA, 5),
-                    PossibleContents::coneType(nullD, 3),
-                    PossibleContents::coneType(nullA, 5));
-  assertCombination(PossibleContents::coneType(nullA, 5),
-                    PossibleContents::coneType(nullD, 4),
-                    PossibleContents::coneType(nullA, 6));
-
-  assertCombination(PossibleContents::coneType(nullA, 5),
-                    PossibleContents::coneType(nullE, 7),
-                    PossibleContents::coneType(dataref, 8));
-
-  assertCombination(PossibleContents::coneType(nullB, 4),
-                    PossibleContents::coneType(dataref, 1),
-                    PossibleContents::coneType(dataref, 6));
-
-  // Combinations of cones and exact types.
-  assertCombination(exactA,
-                    PossibleContents::coneType(nullA, 3),
-                    PossibleContents::coneType(nullA, 3));
-  assertCombination(exactA,
-                    PossibleContents::coneType(nullD, 3),
-                    PossibleContents::coneType(nullA, 5));
-  assertCombination(exactD,
-                    PossibleContents::coneType(nullA, 3),
-                    PossibleContents::coneType(nullA, 3));
-  assertCombination(exactA,
-                    PossibleContents::coneType(nullE, 2),
-                    PossibleContents::coneType(dataref, 3));
-
-  assertCombination(exactA,
-                    PossibleContents::coneType(dataref, 1),
-                    PossibleContents::coneType(dataref, 1));
-  assertCombination(exactA,
-                    PossibleContents::coneType(dataref, 2),
-                    PossibleContents::coneType(dataref, 2));
-
-  assertCombination(exactDataref,
-                    PossibleContents::coneType(nullB, 3),
-                    PossibleContents::coneType(dataref, 5));
-
-  // TODO full cones
-}
-
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
   // A minimal test of the public API of PossibleTypesOracle. See the lit test
   // for coverage of all the internals (using lit makes the result more
@@ -572,6 +447,133 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
     initial = subsequent;
     subsequent = doTest(subsequent);
   }
+}
+
+TEST_F(PossibleContentsTest, TestStructCones) {
+  /*
+        A       E
+       / \
+      B   C
+           \
+            D
+  */
+  TypeBuilder builder(5);
+  builder.setHeapType(0, Struct(FieldList{}));
+  builder.setHeapType(1, Struct(FieldList{}));
+  builder.setHeapType(2, Struct(FieldList{}));
+  builder.setHeapType(3, Struct(FieldList{}));
+  builder.setHeapType(4, Struct(FieldList{}));
+  builder.setSubType(1, builder.getTempHeapType(0));
+  builder.setSubType(2, builder.getTempHeapType(0));
+  builder.setSubType(3, builder.getTempHeapType(2));
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto types = *result;
+  auto A = types[0];
+  auto B = types[1];
+  auto C = types[2];
+  auto D = types[3];
+  auto E = types[4];
+  ASSERT_TRUE(B.getSuperType() == A);
+  ASSERT_TRUE(C.getSuperType() == A);
+  ASSERT_TRUE(D.getSuperType() == C);
+
+  auto nullA = Type(A, Nullable);
+  auto nullB = Type(B, Nullable);
+  auto nullC = Type(C, Nullable);
+  auto nullD = Type(D, Nullable);
+  auto nullE = Type(E, Nullable);
+
+  // Combinations of exact types.
+  auto exactA = PossibleContents::exactType(nullA);
+  auto exactB = PossibleContents::exactType(nullB);
+  auto exactC = PossibleContents::exactType(nullC);
+  auto exactD = PossibleContents::exactType(nullD);
+  auto exactE = PossibleContents::exactType(nullE);
+
+  assertCombination(exactA, exactA, exactA);
+  assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
+  assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
+  assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
+  assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
+  assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
+  assertCombination(exactA, exactDataref, PossibleContents::coneType(dataref, 1));
+
+  assertCombination(exactB, exactB, exactB);
+  assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
+  assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
+  assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactB, exactDataref, PossibleContents::coneType(dataref, 2));
+
+  assertCombination(exactC, exactC, exactC);
+  assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
+  assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactC, exactDataref, PossibleContents::coneType(dataref, 2));
+
+  assertCombination(exactD, exactD, exactD);
+  assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
+  assertCombination(exactD, exactDataref, PossibleContents::coneType(dataref, 3));
+
+  assertCombination(exactE, exactE, exactE);
+  assertCombination(exactE, exactDataref, PossibleContents::coneType(dataref, 1));
+
+  assertCombination(exactDataref, exactDataref, exactDataref);
+
+  assertCombination(exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
+  // TODO: eqref
+
+  // Combinations of cones.
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullA, 7),
+                    PossibleContents::coneType(nullA, 7));
+
+  // Increment the cone of D as we go here, until it matters.
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullD, 2),
+                    PossibleContents::coneType(nullA, 5));
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullD, 3),
+                    PossibleContents::coneType(nullA, 5));
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullD, 4),
+                    PossibleContents::coneType(nullA, 6));
+
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullE, 7),
+                    PossibleContents::coneType(dataref, 8));
+
+  assertCombination(PossibleContents::coneType(nullB, 4),
+                    PossibleContents::coneType(dataref, 1),
+                    PossibleContents::coneType(dataref, 6));
+
+  // Combinations of cones and exact types.
+  assertCombination(exactA,
+                    PossibleContents::coneType(nullA, 3),
+                    PossibleContents::coneType(nullA, 3));
+  assertCombination(exactA,
+                    PossibleContents::coneType(nullD, 3),
+                    PossibleContents::coneType(nullA, 5));
+  assertCombination(exactD,
+                    PossibleContents::coneType(nullA, 3),
+                    PossibleContents::coneType(nullA, 3));
+  assertCombination(exactA,
+                    PossibleContents::coneType(nullE, 2),
+                    PossibleContents::coneType(dataref, 3));
+
+  assertCombination(exactA,
+                    PossibleContents::coneType(dataref, 1),
+                    PossibleContents::coneType(dataref, 1));
+  assertCombination(exactA,
+                    PossibleContents::coneType(dataref, 2),
+                    PossibleContents::coneType(dataref, 2));
+
+  assertCombination(exactDataref,
+                    PossibleContents::coneType(nullB, 3),
+                    PossibleContents::coneType(dataref, 5));
+
+  // TODO full cones
+
+  // Intersections.
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
