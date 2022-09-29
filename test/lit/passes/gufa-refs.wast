@@ -2448,12 +2448,12 @@
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
 
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
   ;; CHECK:      (type $other (struct_subtype  data))
   (type $other (struct_subtype data))
 
   ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
   ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_ref|$other|_=>_none (func_subtype (param i32 (ref null $struct) (ref null $struct) (ref null $other) (ref $struct) (ref $struct) (ref $other)) func))
 
@@ -2467,6 +2467,8 @@
   ;; CHECK:      (export "ref.eq-zero" (func $ref.eq-zero))
 
   ;; CHECK:      (export "ref.eq-unknown" (func $ref.eq-unknown))
+
+  ;; CHECK:      (export "local-no" (func $ref.eq-local-no))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -3046,6 +3048,199 @@
           (ref.null $struct)
         )
         (ref.null $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.eq-local-no (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref (ref $struct))
+  ;; CHECK-NEXT:  (local $ref-null (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.set $ref-null
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (local.get $ref-null)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.eq-local-no (export "local-no") (param $x i32)
+    (local $ref (ref $struct))
+    (local $ref-null (ref null $struct))
+    ;; Always set the non-nullable ref, but only sometimes set the nullable.
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 0)
+      )
+    )
+    (if
+      (local.get $x)
+      (local.set $ref-null
+        (local.get $ref)
+      )
+    )
+    ;; If the |if| executed they are equal, but otherwise not, so we can't
+    ;; optimize.
+    (drop
+      (ref.eq
+        (local.get $ref)
+        (local.get $ref-null)
+      )
+    )
+  )
+)
+
+;; Test ref.eq on globals.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  (type $B (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (global $a (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $a (ref $A) (struct.new $A
+    (i32.const 0)
+  ))
+
+  ;; CHECK:      (global $a-other (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+  (global $a-other (ref $A) (struct.new $A
+    (i32.const 1)
+  ))
+
+  ;; CHECK:      (global $a-copy (ref $A) (global.get $a))
+  (global $a-copy (ref $A) (global.get $a))
+
+  ;; CHECK:      (global $a-mut (mut (ref $A)) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: ))
+  (global $a-mut (mut (ref $A)) (struct.new $A
+    (i32.const 2)
+  ))
+
+  ;; CHECK:      (global $a-mut-copy (mut (ref $A)) (global.get $a))
+  (global $a-mut-copy (mut (ref $A)) (global.get $a))
+
+  ;; CHECK:      (global $a-copy-mut (ref $A) (global.get $a-mut))
+  (global $a-copy-mut (ref $A) (global.get $a-mut))
+
+  ;; CHECK:      (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
+  (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
+
+  ;; CHECK:      (func $compare-a (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-copy-mut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $a-mut-copy-written
+  ;; CHECK-NEXT:   (global.get $a-other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (global.get $a)
+  ;; CHECK-NEXT:    (global.get $a-mut-copy-written)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compare-a
+    ;; Comparisons of $a to everything else.
+    ;;
+    ;; GUFA does not compute the results of these yet, as it leaves it to other
+    ;; passes. This test guards against us doing anything unexpected here.
+    ;;
+    ;; What we do change here is update a copied global to the original,
+    ;; so $a-copy will turn into $a (because that is the only value it can
+    ;; contain). That should happen for the first three only. (For the 3rd, it
+    ;; works even though it is mutable, since there is only a single write
+    ;; anywhere.)
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-mut-copy)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-other)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-mut)
+      )
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-copy-mut)
+      )
+    )
+    (global.set $a-mut-copy-written
+      (global.get $a-other)
+    )
+    (drop
+      (ref.eq
+        (global.get $a)
+        (global.get $a-mut-copy-written)
       )
     )
   )
