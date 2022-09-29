@@ -1400,7 +1400,8 @@ size_t HeapType::getDepth() const {
     if (isFunction()) {
       depth++;
     } else if (isStruct() || isArray()) {
-      depth++;
+      // any < eq < data < specific struct types
+      depth += 3;
     }
   } else {
     // Some basic types have supers.

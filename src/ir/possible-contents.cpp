@@ -129,6 +129,10 @@ void PossibleContents::combine(const PossibleContents& other) {
     auto depthFromRoot = type.getHeapType().getDepth();
     auto otherDepthFromRoot = otherType.getHeapType().getDepth();
     auto lubDepthFromRoot = lub.getHeapType().getDepth();
+std::cout << "waka " << type.getHeapType() << " with depth " << depthFromRoot << '\n';
+std::cout << "2aka " << otherType.getHeapType() << " with depth " << otherDepthFromRoot << '\n';
+std::cout << "3aka " << lub.getHeapType() << " with depth " << lubDepthFromRoot << '\n';
+
     assert(lubDepthFromRoot <= depthFromRoot);
     assert(lubDepthFromRoot <= otherDepthFromRoot);
     // The depth we need under the lub is how far from the lub we are, plus the

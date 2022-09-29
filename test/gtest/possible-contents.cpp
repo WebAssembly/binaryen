@@ -331,12 +331,8 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   assertCombination(exactDataref, exactDataref, exactDataref);
 
-auto x = exactDataref;
-x.combine(exactAnyref);
-x.dump(std::cout);
-std::cout << "\nsad\n";
-abort();
-  assertCombination(exactDataref, exactAnyref, PossibleContents::coneType(anyref, 1));
+  assertCombination(exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
+  // TODO: eqref
 
   // Combinations of cones.
   assertCombination(PossibleContents::coneType(nullA, 5),
