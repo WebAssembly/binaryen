@@ -258,13 +258,13 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyGlobal, i31Null, coneAnyref);
 }
 
-TEST_F(PossibleContentsTest, TestCones) {
+TEST_F(PossibleContentsTest, TestStructCones) {
   /*
-       A       E
-      / \
-     B   C
-          \
-           D
+        A       E
+       / \
+      B   C
+           \
+            D
   */
   TypeBuilder builder(5);
   builder.setHeapType(0, Struct(FieldList{}));
@@ -332,7 +332,7 @@ TEST_F(PossibleContentsTest, TestCones) {
 
   assertCombination(exactData, exactData, exactData);
 
-  // Combinations of cone types.
+  // Combinations of cones.
   assertCombination(PossibleContents::coneType(nullA, 5),
                     PossibleContents::coneType(nullA, 7),
                     PossibleContents::coneType(nullA, 7));
@@ -347,6 +347,15 @@ TEST_F(PossibleContentsTest, TestCones) {
   assertCombination(PossibleContents::coneType(nullA, 5),
                     PossibleContents::coneType(nullD, 4),
                     PossibleContents::coneType(nullA, 6));
+
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullE, 7),
+                    PossibleContents::coneType(dataref, 8));
+
+  // Combinations of cones and exact types.
+  assertCombination(exactA,
+                    PossibleContents::coneType(nullA, 3),
+                    PossibleContents::coneType(nullA, 3));
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
