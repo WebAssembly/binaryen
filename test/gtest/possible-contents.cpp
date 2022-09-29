@@ -283,7 +283,7 @@ TEST_F(PossibleContentsTest, TestCones) {
   auto D = types[3];
   ASSERT_TRUE(B.getSuperType() == A);
   ASSERT_TRUE(C.getSuperType() == A);
-  ASSERT_FALSE(D.getSuperType() == C);
+  ASSERT_TRUE(D.getSuperType() == C);
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
