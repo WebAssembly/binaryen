@@ -189,23 +189,33 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto aHeapType = aType.getHeapType();
   auto bHeapType = bType.getHeapType();
 
-  if (a.hasExactType() && b.hasExactType() && aHeapType != bHeapType) {
-    // The values must be different since their types are different.
+  auto aSubB = HeapType::isSubType(aHeapType, bHeapType);
+  auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
+  if (!aSubB && !bSubA) {
+    // No type can appear in both a and b, so the types differ, so the values
+    // do not overlap..
     return false;
   }
 
-  if (!HeapType::isSubType(aHeapType, bHeapType) &&
-      !HeapType::isSubType(bHeapType, aHeapType)) {
-    // No type can appear in both a and b, so the types differ, so the values
-    // differ.
-    return false;
+  auto aDepthFromRoot = aHeapType.getDepth();
+  auto bDepthFromRoot = bHeapType.getDepth();
+
+  if (aSubB) {
+    // A is a subtype of B. For there to be an intersection we need their cones
+    // to intersect, that is, to rule this out:
+    //
+    //  [A + depth]               [B + depth]
+    assert(aDepthFromRoot >= bDepthFromRoot);
+    return aDepthFromRoot - bDepthFromRoot <= b.getCone().depth;
+  } else if (bSubA) {
+    assert(bDepthFromRoot >= aDepthFromRoot);
+    return bDepthFromRoot - aDepthFromRoot <= a.getCone().depth;
+  } else {
+    WASM_UNREACHABLE("we ruled out no subtyping before");
   }
 
   // TODO: we can also optimize things like different Literals, but existing
   //       passes do such things already so it is low priority.
-
-  // It appears they can intersect.
-  return true;
 }
 
 namespace {
