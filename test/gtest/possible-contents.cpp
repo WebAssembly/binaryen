@@ -577,6 +577,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertHaveIntersection(exactA, exactA);
 return;
   assertLackIntersection(exactA, exactB);
+return;
   assertLackIntersection(exactA, exactC);
   assertLackIntersection(exactA, exactD);
   assertLackIntersection(exactA, exactE);
