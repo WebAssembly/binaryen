@@ -369,6 +369,9 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertCombination(exactA,
                     PossibleContents::coneType(nullE, 2),
                     PossibleContents::coneType(dataref, 3));
+  assertCombination(exactA,
+                    PossibleContents::coneType(dataref, 2),
+                    PossibleContents::coneType(dataref, 2));
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
