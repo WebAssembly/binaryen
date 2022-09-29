@@ -430,8 +430,10 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
   auto subsequent = doTest(initial);
-  doTest(subsequent);
-  EXPECT_GT(subsequent.size(), initial.size());
+  while (subsequent.size() > initial.size()) {
+    initial = subsequent;
+    subsequent = doTest(subsequent);
+  }
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
