@@ -134,6 +134,7 @@ void PossibleContents::combine(const PossibleContents& other) {
 
     auto depth = getCone().depth;
     auto otherDepth = other.getCone().depth;
+
     Index newDepth;
     if (depth == FullDepth || otherDepth == FullDepth) {
       // At least one has full (infinite) depth, so we know the new depth must
