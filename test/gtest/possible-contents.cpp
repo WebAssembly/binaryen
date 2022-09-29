@@ -485,7 +485,8 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   )");
   ContentOracle oracle(*wasm);
   // The body's contents must be a cone of data with depth 1.
-  auto bodyContents = oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
+  auto bodyContents =
+    oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
   ASSERT_TRUE(bodyContents.isConeType());
   EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
   EXPECT_TRUE(bodyContents.getCone().depth == 1);

@@ -122,7 +122,6 @@ void PossibleContents::combine(const PossibleContents& other) {
   // both inputs.
   auto lub = Type::getLeastUpperBound(type, otherType);
   if (lub != Type::none) {
-std::cout << type << " <> " << otherType << " lub = " << lub << '\n';
     // We found a shared ancestor. Next we need to find how big a cone we need:
     // the cone must be big enough to contain both the inputs.
     // TODO: we could make a single loop that also does the LUB, at the same
@@ -130,14 +129,12 @@ std::cout << type << " <> " << otherType << " lub = " << lub << '\n';
     auto depthFromRoot = type.getHeapType().getDepth();
     auto otherDepthFromRoot = otherType.getHeapType().getDepth();
     auto lubDepthFromRoot = lub.getHeapType().getDepth();
-std::cout << "daphety " << depthFromRoot << " , " << otherDepthFromRoot << " , " << lubDepthFromRoot << '\n';
     assert(lubDepthFromRoot <= depthFromRoot);
     assert(lubDepthFromRoot <= otherDepthFromRoot);
     // The depth we need under the lub is how far from the lub we are, plus the
     // depth of our cone.
     Index depthUnderLub = depthFromRoot - lubDepthFromRoot + getCone().depth;
     Index otherDepthUnderLub = otherDepthFromRoot - lubDepthFromRoot + other.getCone().depth;
-std::cout << "DAPTHS " << depthUnderLub << " : " << otherDepthUnderLub << '\n';
     // The total cone must be big enough to contain all the above.
     value = ConeType{lub, std::max(depthUnderLub, otherDepthUnderLub)};
     return;
