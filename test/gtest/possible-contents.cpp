@@ -467,7 +467,6 @@ TEST_F(PossibleContentsTest, TestIntersection) {
 }
 
 TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
-return;
   // Whenever we combine C = A + B, both A and B must intersect with C. This
   // helper function gets a set of things and checks that property on them. It
   // returns the set of all contents it ever observed (see below for how we use
