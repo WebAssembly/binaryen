@@ -542,7 +542,6 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   assertCombination(
     exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
-  // TODO: eqref
 
   // Combinations of cones.
   assertCombination(PossibleContents::coneType(nullA, 5),
@@ -593,7 +592,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                     PossibleContents::coneType(nullB, 3),
                     PossibleContents::coneType(dataref, 5));
 
-  // TODO full cones
+  // Full cones.
+  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::coneType(nullA, 2),
+                    PossibleContents::fullConeType(nullA));
 
   // Intersections. Test with non-nullable types to avoid the null being a
   // possible intersection.
