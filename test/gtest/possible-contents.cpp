@@ -574,6 +574,25 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   // TODO full cones
 
   // Intersections.
+  assertHaveIntersection(exactA, exactA);
+return;
+  assertLackIntersection(exactA, exactB);
+  assertLackIntersection(exactA, exactC);
+  assertLackIntersection(exactA, exactD);
+  assertLackIntersection(exactA, exactE);
+
+  assertHaveIntersection(PossibleContents::coneType(nullA, 1), exactB);
+  assertHaveIntersection(PossibleContents::coneType(nullA, 1), exactC);
+  assertHaveIntersection(PossibleContents::coneType(nullA, 2), exactD);
+
+  assertLackIntersection(PossibleContents::coneType(nullA, 1), exactD);
+  assertLackIntersection(PossibleContents::coneType(nullA, 1), exactE);
+  assertLackIntersection(PossibleContents::coneType(nullA, 2), exactE);
+
+  assertHaveIntersection(PossibleContents::coneType(nullA, 1),
+                         PossibleContents::coneType(nullC, 100));
+  assertLackIntersection(PossibleContents::coneType(nullA, 1),
+                         PossibleContents::coneType(nullD, 100));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
