@@ -147,7 +147,6 @@ void PossibleContents::combine(const PossibleContents& other) {
 
 bool PossibleContents::haveIntersection(const PossibleContents& a,
                                         const PossibleContents& b) {
-std::cout << "wala0\n";
   if (a.isNone() || b.isNone()) {
     // One is the empty set, so nothing can intersect here.
     return false;
@@ -190,13 +189,10 @@ std::cout << "wala0\n";
   auto aHeapType = aType.getHeapType();
   auto bHeapType = bType.getHeapType();
 
-std::cout << "wala1\n";
   if (a.hasExactType() && b.hasExactType() && aHeapType != bHeapType) {
-std::cout << "wala2\n";
     // The values must be different since their types are different.
     return false;
   }
-std::cout << "wala3\n";
 
   if (!HeapType::isSubType(aHeapType, bHeapType) &&
       !HeapType::isSubType(bHeapType, aHeapType)) {
