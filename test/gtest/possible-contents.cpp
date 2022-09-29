@@ -484,12 +484,23 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   auto nullD = Type(D, Nullable);
   auto nullE = Type(E, Nullable);
 
-  // Combinations of exact types.
   auto exactA = PossibleContents::exactType(nullA);
   auto exactB = PossibleContents::exactType(nullB);
   auto exactC = PossibleContents::exactType(nullC);
   auto exactD = PossibleContents::exactType(nullD);
   auto exactE = PossibleContents::exactType(nullE);
+
+  auto nnA = Type(A, NonNullable);
+  auto nnB = Type(B, NonNullable);
+  auto nnC = Type(C, NonNullable);
+  auto nnD = Type(D, NonNullable);
+  auto nnE = Type(E, NonNullable);
+
+  auto nnExactA = PossibleContents::exactType(nnA);
+  auto nnExactB = PossibleContents::exactType(nnB);
+  auto nnExactC = PossibleContents::exactType(nnC);
+  auto nnExactD = PossibleContents::exactType(nnD);
+  auto nnExactE = PossibleContents::exactType(nnE);
 
   assertCombination(exactA, exactA, exactA);
   assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
@@ -573,27 +584,28 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   // TODO full cones
 
-  // Intersections.
-  assertHaveIntersection(exactA, exactA);
+  // Intersections. Test with non-nullable types to avoid the null being a
+  // possible intersection.
+  assertHaveIntersection(nnExactA, nnExactA);
+std::cout << "\n\n\n\n\n";
+  assertLackIntersection(nnExactA, nnExactB);
 return;
-  assertLackIntersection(exactA, exactB);
-return;
-  assertLackIntersection(exactA, exactC);
-  assertLackIntersection(exactA, exactD);
-  assertLackIntersection(exactA, exactE);
+  assertLackIntersection(nnExactA, nnExactC);
+  assertLackIntersection(nnExactA, nnExactD);
+  assertLackIntersection(nnExactA, nnExactE);
 
-  assertHaveIntersection(PossibleContents::coneType(nullA, 1), exactB);
-  assertHaveIntersection(PossibleContents::coneType(nullA, 1), exactC);
-  assertHaveIntersection(PossibleContents::coneType(nullA, 2), exactD);
+  assertHaveIntersection(PossibleContents::coneType(nnA, 1), nnExactB);
+  assertHaveIntersection(PossibleContents::coneType(nnA, 1), nnExactC);
+  assertHaveIntersection(PossibleContents::coneType(nnA, 2), nnExactD);
 
-  assertLackIntersection(PossibleContents::coneType(nullA, 1), exactD);
-  assertLackIntersection(PossibleContents::coneType(nullA, 1), exactE);
-  assertLackIntersection(PossibleContents::coneType(nullA, 2), exactE);
+  assertLackIntersection(PossibleContents::coneType(nnA, 1), nnExactD);
+  assertLackIntersection(PossibleContents::coneType(nnA, 1), nnExactE);
+  assertLackIntersection(PossibleContents::coneType(nnA, 2), nnExactE);
 
-  assertHaveIntersection(PossibleContents::coneType(nullA, 1),
-                         PossibleContents::coneType(nullC, 100));
-  assertLackIntersection(PossibleContents::coneType(nullA, 1),
-                         PossibleContents::coneType(nullD, 100));
+  assertHaveIntersection(PossibleContents::coneType(nnA, 1),
+                         PossibleContents::coneType(nnC, 100));
+  assertLackIntersection(PossibleContents::coneType(nnA, 1),
+                         PossibleContents::coneType(nnD, 100));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
