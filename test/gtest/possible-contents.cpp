@@ -260,17 +260,18 @@ TEST_F(PossibleContentsTest, TestCombinations) {
 
 TEST_F(PossibleContentsTest, TestCones) {
   /*
-       A
+       A       E
       / \
      B   C
           \
            D
   */
-  TypeBuilder builder(4);
+  TypeBuilder builder(5);
   builder.setHeapType(0, Struct(FieldList{}));
   builder.setHeapType(1, Struct(FieldList{}));
   builder.setHeapType(2, Struct(FieldList{}));
   builder.setHeapType(3, Struct(FieldList{}));
+  builder.setHeapType(4, Struct(FieldList{}));
   builder.setSubType(1, builder.getTempHeapType(0));
   builder.setSubType(2, builder.getTempHeapType(0));
   builder.setSubType(3, builder.getTempHeapType(2));
@@ -281,6 +282,7 @@ TEST_F(PossibleContentsTest, TestCones) {
   auto B = types[1];
   auto C = types[2];
   auto D = types[3];
+  auto E = types[4];
   ASSERT_TRUE(B.getSuperType() == A);
   ASSERT_TRUE(C.getSuperType() == A);
   ASSERT_TRUE(D.getSuperType() == C);
@@ -289,18 +291,24 @@ TEST_F(PossibleContentsTest, TestCones) {
   auto nullB = Type(B, Nullable);
   auto nullC = Type(C, Nullable);
   auto nullD = Type(D, Nullable);
+  auto nullE = Type(E, Nullable);
 
   // Combinations of exact types.
   auto exactA = PossibleContents::exactType(nullA);
   auto exactB = PossibleContents::exactType(nullB);
   auto exactC = PossibleContents::exactType(nullC);
   auto exactD = PossibleContents::exactType(nullD);
+  auto exactE = PossibleContents::exactType(nullE);
+
+  // TODO; add  to fixture and permutations test
+  auto dataref = Type(HeapType::data, Nullable);
 
   assertCombination(exactA, exactA, exactA);
   assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
   assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
+  assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
 
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
