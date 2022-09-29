@@ -284,6 +284,22 @@ TEST_F(PossibleContentsTest, TestCones) {
   ASSERT_TRUE(B.getSuperType() == A);
   ASSERT_TRUE(C.getSuperType() == A);
   ASSERT_TRUE(D.getSuperType() == C);
+
+  auto nullA = Type(A, Nullable);
+  auto nullB = Type(B, Nullable);
+  auto nullC = Type(C, Nullable);
+  auto nullD = Type(D, Nullable);
+
+  // Combinations of exact types.
+  auto exactA = PossibleContents::exactType(nullA);
+  auto exactB = PossibleContents::exactType(nullB);
+  auto exactC = PossibleContents::exactType(nullC);
+  auto exactD = PossibleContents::exactType(nullD);
+
+  assertCombination(exactA, exactA, PossibleContents::exactType(nullA));
+  assertCombination(exactA, exactA, PossibleContents::coneType(nullA, 0));
+
+  assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
