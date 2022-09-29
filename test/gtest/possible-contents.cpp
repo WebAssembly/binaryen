@@ -456,6 +456,119 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertLackIntersection(nonNullFuncGlobal, anyGlobal);
 }
 
+TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
+  // Whenever we combine C = A + B, both A and B must intersect with C. This
+  // helper function gets a set of things and checks that property on them. It
+  // returns the set of all contents it ever observed (see below for how we use
+  // that).
+  auto doTest = [](std::unordered_set<PossibleContents> set) {
+    std::vector<PossibleContents> vec(set.begin(), set.end());
+
+    // Go over all permutations up to a certain size (this quickly becomes
+    // extremely slow, obviously, so keep this low).
+    size_t max = 3;
+
+    auto n = set.size();
+
+    // |indexes| contains the indexes of the items in vec for the current
+    // permutation.
+    std::vector<size_t> indexes(max);
+    std::fill(indexes.begin(), indexes.end(), 0);
+    while (1) {
+      // Test the current permutation: Combine all the relevant things, and then
+      // check they all have an intersection.
+      PossibleContents combination;
+      for (auto index : indexes) {
+        combination.combine(vec[index]);
+      }
+      // Note the combination in the set.
+      set.insert(combination);
+#if BINARYEN_TEST_DEBUG
+      for (auto index : indexes) {
+        std::cout << index << ' ';
+        combination.combine(vec[index]);
+      }
+      std::cout << '\n';
+#endif
+      for (auto index : indexes) {
+        auto item = vec[index];
+        if (item.isNone()) {
+          assertLackIntersection(combination, item);
+          continue;
+        }
+#if BINARYEN_TEST_DEBUG
+        if (!PossibleContents::haveIntersection(combination, item)) {
+          for (auto index : indexes) {
+            std::cout << index << ' ';
+            combination.combine(item);
+          }
+          std::cout << '\n';
+          std::cout << "combo:\n";
+          combination.dump(std::cout);
+          std::cout << "\ncompared item (index " << index << "):\n";
+          item.dump(std::cout);
+          std::cout << '\n';
+          abort();
+        }
+#endif
+        assertHaveIntersection(combination, item);
+      }
+
+      // Move to the next permutation.
+      size_t i = 0;
+      while (1) {
+        indexes[i]++;
+        if (indexes[i] == n) {
+          // Overflow.
+          indexes[i] = 0;
+          i++;
+          if (i == max) {
+            // All done.
+            return set;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    WASM_UNREACHABLE("loop above returns manually");
+  };
+
+  // Start from an initial set of the hardcoded contents we have in our test
+  // fixture.
+  std::unordered_set<PossibleContents> initial = {none,
+                                                  f64One,
+                                                  anyNull,
+                                                  funcNull,
+                                                  i31Null,
+                                                  i32Global1,
+                                                  i32Global2,
+                                                  f64Global,
+                                                  anyGlobal,
+                                                  funcGlobal,
+                                                  nonNullFuncGlobal,
+                                                  nonNullFunc,
+                                                  exactI32,
+                                                  exactAnyref,
+                                                  exactFuncref,
+                                                  exactI31ref,
+                                                  exactNonNullAnyref,
+                                                  exactNonNullFuncref,
+                                                  exactNonNullI31ref,
+                                                  exactFuncSignatureType,
+                                                  exactNonNullFuncSignatureType,
+                                                  many};
+
+  // After testing on the initial contents, also test using anything new that
+  // showed up while combining them.
+  auto subsequent = doTest(initial);
+  while (subsequent.size() > initial.size()) {
+    initial = subsequent;
+    subsequent = doTest(subsequent);
+  }
+}
+
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   // Test for a node with many possible types. The pass limits how many it
   // notices to not use excessive memory, so even though 4 are possible here,
