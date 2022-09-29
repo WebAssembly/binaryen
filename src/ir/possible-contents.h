@@ -97,9 +97,11 @@ class PossibleContents {
   // type.
   static ConeType ExactType(Type type) { return ConeType{type, 0}; }
 
+  static constexpr Index FullDepth = -1;
+
   // Internal convenience for creating a cone type unbounded depth, i.e., the
   // full cone of all subtypes for that type.
-  static ConeType FullConeType(Type type) { return ConeType{type, Index(-1)}; }
+  static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
 
 public:
   PossibleContents() : value(None()) {}

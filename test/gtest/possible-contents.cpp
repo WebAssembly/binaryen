@@ -599,9 +599,23 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertCombination(PossibleContents::fullConeType(nullA),
                     PossibleContents::coneType(nullA, 2),
                     PossibleContents::fullConeType(nullA));
+
+  // All full cones with A remain full cones, except for E.
   assertCombination(PossibleContents::fullConeType(nullA),
                     PossibleContents::fullConeType(nullA),
                     PossibleContents::fullConeType(nullA));
+  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::fullConeType(nullB),
+                    PossibleContents::fullConeType(nullA));
+  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::fullConeType(nullC),
+                    PossibleContents::fullConeType(nullA));
+  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::fullConeType(nullD),
+                    PossibleContents::fullConeType(nullA));
+  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::fullConeType(nullE),
+                    PossibleContents::fullConeType(dataref));
 
   // Intersections. Test with non-nullable types to avoid the null being a
   // possible intersection.

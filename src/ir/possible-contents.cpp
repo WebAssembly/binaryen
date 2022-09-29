@@ -131,13 +131,26 @@ void PossibleContents::combine(const PossibleContents& other) {
     auto lubDepthFromRoot = lub.getHeapType().getDepth();
     assert(lubDepthFromRoot <= depthFromRoot);
     assert(lubDepthFromRoot <= otherDepthFromRoot);
-    // The depth we need under the lub is how far from the lub we are, plus the
-    // depth of our cone.
-    Index depthUnderLub = depthFromRoot - lubDepthFromRoot + getCone().depth;
-    Index otherDepthUnderLub =
-      otherDepthFromRoot - lubDepthFromRoot + other.getCone().depth;
-    // The total cone must be big enough to contain all the above.
-    value = ConeType{lub, std::max(depthUnderLub, otherDepthUnderLub)};
+
+    auto depth = getCone().depth;
+    auto otherDepth = other.getCone().depth;
+    Index newDepth;
+    if (depth == FullDepth || otherDepth == FullDepth) {
+      // At least one has full (infinite) depth, so we know the new depth must
+      // be the same.
+      newDepth = FullDepth;
+    } else {
+      // The depth we need under the lub is how far from the lub we are, plus
+      // the depth of our cone.
+      Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
+      Index otherDepthUnderLub =
+        otherDepthFromRoot - lubDepthFromRoot + otherDepth;
+
+      // The total cone must be big enough to contain all the above.
+      newDepth = std::max(depthUnderLub, otherDepthUnderLub);
+    }
+
+    value = ConeType{lub, newDepth};
     return;
   }
 
