@@ -594,6 +594,9 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   // Full cones.
   assertCombination(PossibleContents::fullConeType(nullA),
+                    exactA,
+                    PossibleContents::fullConeType(nullA));
+  assertCombination(PossibleContents::fullConeType(nullA),
                     PossibleContents::coneType(nullA, 2),
                     PossibleContents::fullConeType(nullA));
 
