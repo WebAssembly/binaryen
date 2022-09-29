@@ -407,12 +407,6 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
 
 // Asserts a and b have an intersection (or do not), and checks both orderings.
 void assertHaveIntersection(PossibleContents a, PossibleContents b) {
-std::cout << "HAVE?\n";
-a.dump(std::cout);
-std::cout << " with\n";
-b.dump(std::cout);
-std::cout << '\n';
-if(!PossibleContents::haveIntersection(a, b)) while (1) { std::cout << "waka\n"; usleep(1000000); }
   EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
   EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
 }
