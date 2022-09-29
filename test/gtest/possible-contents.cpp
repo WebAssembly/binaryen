@@ -589,13 +589,13 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertHaveIntersection(nnExactA, nnExactA);
   assertLackIntersection(nnExactA, nnExactB);
   assertLackIntersection(nnExactA, nnExactC);
-return;
   assertLackIntersection(nnExactA, nnExactD);
   assertLackIntersection(nnExactA, nnExactE);
 
   assertHaveIntersection(PossibleContents::coneType(nnA, 1), nnExactB);
   assertHaveIntersection(PossibleContents::coneType(nnA, 1), nnExactC);
   assertHaveIntersection(PossibleContents::coneType(nnA, 2), nnExactD);
+return;
 
   assertLackIntersection(PossibleContents::coneType(nnA, 1), nnExactD);
   assertLackIntersection(PossibleContents::coneType(nnA, 1), nnExactE);
