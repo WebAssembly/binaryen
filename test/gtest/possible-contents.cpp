@@ -313,11 +313,14 @@ TEST_F(PossibleContentsTest, TestCones) {
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
+  assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactC, exactC, exactC);
   assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
+  assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
 
   assertCombination(exactD, exactD, exactD);
+  assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
