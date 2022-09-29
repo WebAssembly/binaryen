@@ -336,6 +336,9 @@ TEST_F(PossibleContentsTest, TestCones) {
   assertCombination(PossibleContents::coneType(nullA, 5),
                     PossibleContents::coneType(nullA, 7),
                     PossibleContents::coneType(nullA, 7));
+  assertCombination(PossibleContents::coneType(nullA, 5),
+                    PossibleContents::coneType(nullD, 7),
+                    PossibleContents::coneType(nullA, 9));
 }
 
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
