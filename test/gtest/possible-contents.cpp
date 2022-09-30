@@ -399,13 +399,15 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
           auto intersection = item;
           intersection.intersect(combination);
           EXPECT_EQ(intersection, item);
+#if BINARYEN_TEST_DEBUG
           if (intersection != item) {
             std::cout << "\nFailure: wrong intersection.\n";
             std::cout << "item: " << item << '\n';
             std::cout << "combination: " << combination << '\n';
             std::cout << "intersection: " << intersection << '\n';
-            //abort();
+            abort();
           }
+#endif
         }
       }
 
@@ -715,11 +717,16 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      none);
 
   // Globals stay as globals if their type is in the cone. Otherwise, they lose
-  // the global info and we compute a normal cone intersection on them.
+  // the global info and we compute a normal cone intersection on them. The
+  // same for literals.
   assertIntersection(funcGlobal,
                      PossibleContents::fullConeType(funcref),
                      funcGlobal);
+
   auto signature = Type(Signature(Type::none, Type::none), Nullable);
+  assertIntersection(nonNullFunc,
+                     PossibleContents::fullConeType(signature),
+                     nonNullFunc);
   assertIntersection(funcGlobal,
                      PossibleContents::fullConeType(signature),
                      PossibleContents::fullConeType(signature));

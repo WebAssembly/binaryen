@@ -211,18 +211,18 @@ void PossibleContents::intersect(const PossibleContents& other) {
     return;
   }
 
-  if (isGlobal()) {
-    // The information about the value being identical to a particular immutable
-    // global is not removed by intersection. However, if the intersection would
-    // change the type then we give up on that.
-    // TODO: we could even refine the type here, but then the type on GlobalInfo
-    //       would not match the module, so that needs some refactoring.
+  if (isLiteral() || isGlobal()) {
+    // The information about the value being identical to a particular literal
+    // or immutable global is not removed by intersection, if the type is in the
+    // cone we are intersecting with.
     if (isSubType) {
-      // The type can stay; keep this as a global.
       return;
     }
-    // The type must change, so continue down to the generic code path that
-    // treats this as a full cone with the type of the global.
+
+    // The type must change, so continue down to the generic code path.
+    // TODO: for globals we could perhaps refine the type here, but then the
+    //       type on GlobalInfo would not match the module, so that needs some
+    //       refactoring.
   }
 
   // An interesting non-empty intersection that is a new cone which differs from
