@@ -728,7 +728,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::coneType(nnD, 2));
   assertIntersection(PossibleContents::coneType(nnA, 5),
                      PossibleContents::fullConeType(nnD),
-                     PossibleContents::coneType(nnD, 3));
+                     PossibleContents::coneType(nnD, 2));
 
   assertIntersection(PossibleContents::coneType(nnA, 1),
                      PossibleContents::fullConeType(nnD),
