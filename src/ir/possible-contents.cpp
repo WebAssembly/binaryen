@@ -1919,32 +1919,9 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
-  PossibleContents filtered;
-  if (contents.isMany()) {
-    // Just pass the Many through.
-    // TODO: we could emit a cone type here when we get one, instead of
-    //       emitting a Many in any of these code paths
-    filtered = contents;
-  } else {
-    bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), cast->intendedType);
-    if (isSubType) {
-      // The contents are not Many, but their heap type is a subtype of the
-      // intended type, so we'll pass that through. Note that we pass the entire
-      // contents here, which includes nullability, but that is fine, it would
-      // just overlap with the code below that handles nulls (that is, the code
-      // below only makes a difference when the heap type is *not* a subtype but
-      // the type is nullable).
-      // TODO: When we get cone types, we must filter the cone here! FIXME
-      filtered.combine(contents);
-    }
-    bool mayBeNull = contents.getType().isNullable();
-    if (mayBeNull) {
-      // A null is possible, so pass that along.
-      filtered.combine(
-        PossibleContents::literal(Literal::makeNull(cast->intendedType)));
-    }
-  }
+  auto intendedCone = PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
+  PossibleContents filtered = contents;
+  filtered.intersect(intendedCone);
   if (!filtered.isNone()) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "    ref.cast passing through\n";
