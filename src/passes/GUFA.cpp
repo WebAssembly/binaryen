@@ -255,7 +255,7 @@ struct GUFAOptimizer
 
       if (!PossibleContents::haveIntersection(refContents, intendedContents)) {
         optimize(0);
-      } else if (!PossibleContents::isSubContents(refContents, intendedContents)) {
+      } else if (PossibleContents::isSubContents(refContents, intendedContents)) {
         optimize(1);
       }
     }

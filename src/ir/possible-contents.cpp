@@ -1807,7 +1807,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
       // just overlap with the code below that handles nulls (that is, the code
       // below only makes a difference when the heap type is *not* a subtype but
       // the type is nullable).
-      // TODO: When we get cone types, we could filter the cone here.
+      // TODO: When we get cone types, we must filter the cone here! FIXME
       filtered.combine(contents);
     }
     bool mayBeNull = contents.getType().isNullable();
