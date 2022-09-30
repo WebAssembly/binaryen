@@ -645,6 +645,8 @@ TEST_F(PossibleContentsTest, TestStructCones) {
     exactA, PossibleContents::fullConeType(nnA)));
   EXPECT_TRUE(PossibleContents::isSubContents(
     nnExactA, PossibleContents::fullConeType(nullA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    nnExactD, PossibleContents::fullConeType(nullA)));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
