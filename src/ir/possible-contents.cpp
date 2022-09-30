@@ -232,6 +232,15 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   //       passes do such things already so it is low priority.
 }
 
+bool PossibleContents::isSubContents(const PossibleContents& a,
+                                     const PossibleContents& b) {
+  // TODO: Everything else. For now we only call this when |b| is a full cone
+  //       type.
+  assert(b.isConeType() && b.hasFullCone());
+
+  return Type::isSubType(a.getType(), b.getType());
+}
+
 namespace {
 
 // We are going to do a very large flow operation, potentially, as we create

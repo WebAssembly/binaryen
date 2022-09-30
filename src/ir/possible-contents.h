@@ -231,12 +231,27 @@ public:
     return false;
   }
 
+  // Returns whether this is a cone type that is full, that is, includes all
+  // subtypes.
+  bool hasFullCone() const {
+    if (auto* coneType = std::get_if<ConeType>(&value)) {
+      return coneType->depth == FullDepth;
+    }
+
+    return false;
+  }
+
   // Returns whether the given contents have any intersection, that is, whether
   // some value exists that can appear in both |a| and |b|. For example, if
   // either is None, or if they are different literals, then they have no
   // intersection.
   static bool haveIntersection(const PossibleContents& a,
                                const PossibleContents& b);
+
+  // Returns whether |a| is a subset of |b|, that is, all possible contents of
+  // |a| are also possible in |b|.
+  static bool isSubContents(const PossibleContents& a,
+                            const PossibleContents& b);
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a
