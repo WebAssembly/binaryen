@@ -619,3 +619,41 @@ TEST_F(IsorecursiveTest, TestExistingSuperType) {
   EXPECT_EQ(A1.getHeapType(), A2.getHeapType());
   EXPECT_EQ(B1.getHeapType(), B2.getHeapType());
 }
+
+// Test .depth() helper.
+TEST_F(NominalTest, TestDepth) {
+  HeapType A, B, C;
+  {
+    TypeBuilder builder(3);
+    builder[0] = Struct();
+    builder[1] = Struct();
+    builder[2] = Array(Field(Type::i32, Immutable));
+    builder.setSubType(1, builder.getTempHeapType(0));
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = built[0];
+    B = built[1];
+    C = built[2];
+  }
+
+  // any < eq < data < specific struct and array types
+  EXPECT_EQ(HeapType(HeapType::any).getDepth(), 0U);
+  EXPECT_EQ(HeapType(HeapType::eq).getDepth(), 1U);
+  EXPECT_EQ(HeapType(HeapType::data).getDepth(), 2U);
+  EXPECT_EQ(A.getDepth(), 3U);
+  EXPECT_EQ(B.getDepth(), 4U);
+  EXPECT_EQ(C.getDepth(), 3U);
+
+  // Signature types are subtypes of func.
+  EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);
+  EXPECT_EQ(HeapType(Signature(Type::none, Type::none)).getDepth(), 1U);
+
+  EXPECT_EQ(HeapType(HeapType::ext).getDepth(), 0U);
+
+  EXPECT_EQ(HeapType(HeapType::i31).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::string).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::stringview_wtf8).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::stringview_wtf16).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::stringview_iter).getDepth(), 2U);
+}

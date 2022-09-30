@@ -64,7 +64,7 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 class Fatal {
 public:
   Fatal() { std::cerr << "Fatal: "; }
-  template<typename T> Fatal& operator<<(T arg) {
+  template<typename T> Fatal& operator<<(T&& arg) {
     std::cerr << arg;
     return *this;
   }
