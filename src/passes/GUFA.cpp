@@ -245,7 +245,8 @@ struct GUFAOptimizer
       // We have some knowledge of the type here. Use that to optimize: RefTest
       // returns 1 if the input is of a subtype of the intended type, that is,
       // we are looking for a type in the that cone of types.
-      auto intendedContents = PossibleContents::fullConeType(Type(curr->intendedType, NonNullable));
+      auto intendedContents =
+        PossibleContents::fullConeType(Type(curr->intendedType, NonNullable));
 
       auto optimize = [&](int32_t result) {
         auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
@@ -255,7 +256,8 @@ struct GUFAOptimizer
 
       if (!PossibleContents::haveIntersection(refContents, intendedContents)) {
         optimize(0);
-      } else if (PossibleContents::isSubContents(refContents, intendedContents)) {
+      } else if (PossibleContents::isSubContents(refContents,
+                                                 intendedContents)) {
         optimize(1);
       }
     }
