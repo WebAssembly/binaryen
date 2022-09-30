@@ -164,8 +164,41 @@ void PossibleContents::intersect(const PossibleContents& other) {
   //       cone type.
   assert(other.isConeType() && other.hasFullCone());
 
-// FIXME  if (isSubContents(
-abort();
+  if (!haveIntersection(*this, other)) {
+    // There is no intersection at all.
+    value = None();
+    return;
+  }
+
+  if (isSubContents(*this, other)) {
+    // This is already a subset of |other|, so there is nothing to remove.
+    return;
+  }
+
+  if (isSubContents(other, *this)) {
+    // The intersection is just |other|.
+    value = other.value;
+    return;
+  }
+
+  // An interesting non-empty intersection that is a new cone which differs from
+  // both the original ones. (This must be an intersection of cones, since by
+  // assumption |other| is a cone, and another cone is the only shape that can
+  // have a non-empty intersection with it that differs from them both.)
+  assert(isConeType());
+  auto type = getType();
+  auto otherType = other.getType();
+  auto heapType = type.getHeapType();
+  auto otherHeapType = otherType.getHeapType();
+  auto nullability = type.isNullable() || otherType.isNullable() ? Nullable : NonNullable;
+  auto depthFromRoot = heapType.getDepth();
+  auto otherDepthFromRoot = otherHeapType.getDepth();
+  assert(depthFromRoot != otherDepthFromRoot);
+  if (depthFromRoot < otherDepthFromRoot) {
+    value = ConeType(Type(otherHeapType, nullability), otherDepthFromRoot - depthFromRoot);
+  } else {
+    value = ConeType(Type(heapType, nullability), depthFromRoot - otherDepthFromRoot);
+  }
 }
 
 bool PossibleContents::haveIntersection(const PossibleContents& a,
