@@ -1394,8 +1394,7 @@ size_t HeapType::getDepth() const {
   }
   // In addition to the explicit supertypes we just traversed over, there is
   // implicit supertyping wrt basic types. A signature type always has one more
-  // super, HeapType::func, and arrays and structs have HeapType::eq which is
-  // in turn a subtype of HeapType::any.
+  // super, HeapType::func, etc.
   if (!isBasic()) {
     if (isFunction()) {
       depth++;
