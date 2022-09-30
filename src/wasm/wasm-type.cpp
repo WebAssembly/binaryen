@@ -1392,6 +1392,37 @@ size_t HeapType::getDepth() const {
   for (auto curr = *this; (super = curr.getSuperType()); curr = *super) {
     ++depth;
   }
+  // In addition to the explicit supertypes we just traversed over, there is
+  // implicit supertyping wrt basic types. A signature type always has one more
+  // super, HeapType::func, and arrays and structs have HeapType::eq which is
+  // in turn a subtype of HeapType::any.
+  if (!isBasic()) {
+    if (isFunction()) {
+      depth++;
+    } else if (isStruct() || isArray()) {
+      // any < eq < data < specific struct types
+      depth += 3;
+    }
+  } else {
+    // Some basic types have supers.
+    switch (getBasic()) {
+      case HeapType::ext:
+      case HeapType::func:
+      case HeapType::any:
+        break;
+      case HeapType::eq:
+        depth++;
+        break;
+      case HeapType::i31:
+      case HeapType::data:
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        depth += 2;
+        break;
+    }
+  }
   return depth;
 }
 
