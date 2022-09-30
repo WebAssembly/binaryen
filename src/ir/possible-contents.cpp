@@ -194,15 +194,19 @@ void PossibleContents::intersect(const PossibleContents& other) {
     return;
   }
 
-  // The heap types are not compatible, the intersection is either nothing or a
-  // null.
-  if (!HeapType::isSubType(heapType, otherHeapType) &&
-      !HeapType::isSubType(otherHeapType, heapType)) {
+  auto setNoneOrNull = [&]() {
     if (nullability == Nullable) {
       value = Literal::makeNull(otherHeapType);
     } else {
       value = None();
     }
+  };
+
+  // If the heap types are not compatible then the intersection is either
+  // nothing or a null.
+  if (!HeapType::isSubType(heapType, otherHeapType) &&
+      !HeapType::isSubType(otherHeapType, heapType)) {
+    setNoneOrNull();
     return;
   }
 
@@ -250,7 +254,14 @@ void PossibleContents::intersect(const PossibleContents& other) {
     auto newDepth = getCone().depth;
     if (newHeapType == otherHeapType) {
       assert(depthFromRoot <= otherDepthFromRoot);
-      newDepth -= otherDepthFromRoot - depthFromRoot;
+      auto reduction = otherDepthFromRoot - depthFromRoot;
+      if (reduction > newDepth) {
+        // The cone on heapType does not even reach the cone on otherHeapType,
+        // so the result is not a cone.
+        setNoneOrNull();
+        return;
+      }
+      newDepth -= reduction;
     }
 
     value = ConeType{newType, newDepth};

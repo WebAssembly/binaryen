@@ -693,20 +693,15 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(nnB),
                      none);
 
-std::cout << "A1\n";
-
   assertIntersection(exactA,
                      PossibleContents::fullConeType(nullB),
                      PossibleContents::literal(Literal::makeNull(B)));
-#if 0
   assertIntersection(nnExactA,
                      PossibleContents::fullConeType(nullB),
                      none);
   assertIntersection(exactA,
                      PossibleContents::fullConeType(nnB),
                      none);
-#endif
-
 
   // Subcontents. This API only supports full cone types on the right atm.
   // First, compare exact types to such a cone.
