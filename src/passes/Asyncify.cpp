@@ -1495,51 +1495,48 @@ static std::string getFullImportName(Name module, Name base) {
 
 struct Asyncify : public Pass {
   void run(Module* module) override {
-    bool optimize = getPassOptions().optimizeLevel > 0;
+    auto& options = getPassOptions();
+    bool optimize = options.optimizeLevel > 0;
 
     // Ensure there is a memory, as we need it.
     MemoryUtils::ensureExists(module);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
-      getPassOptions().getArgumentOrDefault("asyncify-imports", "")));
+      options.getArgumentOrDefault("asyncify-imports", "")));
     auto ignoreImports =
-      getPassOptions().getArgumentOrDefault("asyncify-ignore-imports", "");
+      options.getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
     // TODO: consider renaming asyncify-ignore-indirect to
     //       asyncify-ignore-nondirect, but that could break users.
-    auto ignoreNonDirect = getPassOptions().getArgumentOrDefault(
-                             "asyncify-ignore-indirect", "") == "";
+    auto ignoreNonDirect =
+      options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
     std::string removeListInput =
-      getPassOptions().getArgumentOrDefault("asyncify-removelist", "");
+      options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      removeListInput =
-        getPassOptions().getArgumentOrDefault("asyncify-blacklist", "");
+      removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
       String::trim(read_possible_response_file(removeListInput)), ",");
     String::Split addList(
       String::trim(read_possible_response_file(
-        getPassOptions().getArgumentOrDefault("asyncify-addlist", ""))),
+        options.getArgumentOrDefault("asyncify-addlist", ""))),
       ",");
     std::string onlyListInput =
-      getPassOptions().getArgumentOrDefault("asyncify-onlylist", "");
+      options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      onlyListInput =
-        getPassOptions().getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts =
-      getPassOptions().getArgumentOrDefault("asyncify-asserts", "") != "";
-    auto verbose =
-      getPassOptions().getArgumentOrDefault("asyncify-verbose", "") != "";
+    auto asserts = options.getArgumentOrDefault("asyncify-asserts", "") != "";
+    auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
     auto relocatable =
-      getPassOptions().getArgumentOrDefault("asyncify-relocatable", "") != "";
+      options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);

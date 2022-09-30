@@ -195,8 +195,9 @@ struct ConstantFieldPropagation : public Pass {
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
     PCVScanner scanner(functionNewInfos, functionSetInfos);
-    scanner.run(getPassRunner(), module);
-    scanner.runOnModuleCode(getPassRunner(), module);
+    auto* runner = getPassRunner();
+    scanner.run(runner, module);
+    scanner.runOnModuleCode(runner, module);
 
     // Combine the data from the functions.
     PCVStructValuesMap combinedNewInfos, combinedSetInfos;
@@ -247,7 +248,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos).run(getPassRunner(), module);
+    FunctionOptimizer(combinedInfos).run(runner, module);
 
     // TODO: Actually remove the field from the type, where possible? That might
     //       be best in another pass.

@@ -896,6 +896,8 @@ void PassRunner::runPass(Pass* pass) {
     checker = std::unique_ptr<AfterEffectModuleChecker>(
       new AfterEffectModuleChecker(wasm));
   }
+  // Passes can only be run once and we deliberately do not clear the pass
+  // runner after running the pass, so there must not already be a runner here.
   assert(!pass->getPassRunner());
   pass->setPassRunner(this);
   pass->run(wasm);
@@ -934,7 +936,6 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
 
   // Function-parallel passes get a new instance per function
   auto instance = pass->create();
-  assert(instance);
   instance->setPassRunner(this);
   instance->runOnFunction(wasm, func);
   handleAfterEffects(pass, func);

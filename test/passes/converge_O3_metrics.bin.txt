@@ -8,20 +8,20 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 550     
+ [total]        : 551     
  [vars]         : 2       
  Binary         : 12      
  Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
- Const          : 48      
+ Const          : 46      
  Drop           : 3       
  GlobalSet      : 1       
  If             : 2       
  Load           : 16      
- LocalGet       : 14      
- LocalSet       : 5       
+ LocalGet       : 16      
+ LocalSet       : 6       
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
@@ -164,17 +164,19 @@ total
    (local.get $2)
   )
   (i32.store
-   (i32.const 32)
+   (local.tee $0
+    (i32.const 32)
+   )
    (i32.const 1)
   )
-  (i32.store
-   (i32.const 40)
+  (i32.store offset=8
+   (local.get $0)
    (i32.const 2)
   )
   (drop
    (call $import$0
     (i32.const 146)
-    (i32.const 32)
+    (local.get $0)
    )
   )
   (i32.const 1)
@@ -233,19 +235,19 @@ total
  [table-data]   : 429     
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 547           -3
+ [total]        : 547           -4
  [vars]         : 2       
  Binary         : 12      
  Block          : 6       
  Break          : 3       
  Call           : 1       
  CallIndirect   : 4       
- Const          : 46            -2
+ Const          : 46      
  Drop           : 3       
  If             : 2       
  Load           : 16      
- LocalGet       : 14      
- LocalSet       : 5       
+ LocalGet       : 14            -2
+ LocalSet       : 5             -1
  Loop           : 1       
  RefFunc        : 429     
  Store          : 5       
