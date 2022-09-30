@@ -182,6 +182,11 @@ protected:
   }
 
 public:
+  ArenaVectorBase() = default;
+
+  // TODO: Implement safe copying.
+  ArenaVectorBase(const ArenaVectorBase& other) = delete;
+
   struct Iterator;
 
   T& operator[](size_t index) const {
