@@ -164,20 +164,35 @@ void PossibleContents::intersect(const PossibleContents& other) {
   //       cone type.
   assert(other.isFullConeType());
 
+  if (isSubContents(other, *this)) {
+    // The intersection is just |other|.
+    // Note that this code path handles |this| being Many.
+    value = other.value;
+    return;
+  }
+
   if (!haveIntersection(*this, other)) {
     // There is no intersection at all.
+    // Note that this code path handles |this| being None.
     value = None();
     return;
   }
 
-  if (isSubContents(*this, other)) {
-    // This is already a subset of |other|, so there is nothing to remove.
-    return;
-  }
+  auto type = getType();
+  auto otherType = other.getType();
+  auto heapType = type.getHeapType();
+  auto otherHeapType = otherType.getHeapType();
+  auto nullability =
+    type.isNullable() || otherType.isNullable() ? Nullable : NonNullable;
 
-  if (isSubContents(other, *this)) {
-    // The intersection is just |other|.
-    value = other.value;
+  if (!isConeType()) {
+    // This is a non-cone being intersected with a cone. We've ruled out the
+    // trivial cases of Many, None, and not having any intersection at all,
+    // which means there is an intersection. This must have exact type (nothing
+    // else remains), and so the intersection is just what we are already, with
+    // proper nullability.
+    assert(hasExactType());
+    value = ExactType(Type(heapType, nullability));
     return;
   }
 
@@ -186,12 +201,6 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // assumption |other| is a cone, and another cone is the only shape that can
   // have a non-empty intersection with it that differs from them both.)
   assert(isConeType());
-  auto type = getType();
-  auto otherType = other.getType();
-  auto heapType = type.getHeapType();
-  auto otherHeapType = otherType.getHeapType();
-  auto nullability =
-    type.isNullable() || otherType.isNullable() ? Nullable : NonNullable;
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
   assert(depthFromRoot != otherDepthFromRoot);
@@ -279,21 +288,28 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
 
 bool PossibleContents::isSubContents(const PossibleContents& a,
                                      const PossibleContents& b) {
-  // TODO: Everything else. For now we only call this when |b| is a full cone
-  //       type.
-  assert(b.isFullConeType());
+  // TODO: Everything else. For now we only call this when |a| or |b| is a full
+  //       cone type.
+  if (b.isFullConeType()) {
+    if (a.isNone()) {
+      return true;
+    }
+    if (a.isMany()) {
+      return false;
+    }
+    if (a.isNull()) {
+      return b.getType().isNullable();
+    }
+    return Type::isSubType(a.getType(), b.getType());
+  }
 
-  if (a.isNone()) {
-    return true;
-  }
-  if (a.isMany()) {
-    return false;
-  }
-  if (a.isNull()) {
-    return b.getType().isNullable();
+  if (a.isFullConeType()) {
+    // We've already ruled out b being a full cone type before, so the only way
+    // |a| can be contained in |b| is if |b| is everything.
+    return b.isMany();
   }
 
-  return Type::isSubType(a.getType(), b.getType());
+  WASM_UNREACHABLE("a or b must be a full cone");
 }
 
 namespace {
