@@ -637,6 +637,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                          PossibleContents::coneType(nnD, 100));
 
   // Subcontents. This API only supports full cone types on the right atm.
+  // First, compare exact types to such a cone.
   EXPECT_TRUE(PossibleContents::isSubContents(
     exactA, PossibleContents::fullConeType(nullA)));
   EXPECT_TRUE(PossibleContents::isSubContents(
@@ -648,10 +649,29 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   EXPECT_FALSE(PossibleContents::isSubContents(
     exactA, PossibleContents::fullConeType(nnA)));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    exactA, PossibleContents::fullConeType(nullB)));
 
+  // Next, compare cones.
   EXPECT_TRUE(PossibleContents::isSubContents(
     PossibleContents::fullConeType(nullA),
     PossibleContents::fullConeType(nullA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nnA),
+    PossibleContents::fullConeType(nullA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nnA),
+    PossibleContents::fullConeType(nnA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullD),
+    PossibleContents::fullConeType(nullA)));
+
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA),
+    PossibleContents::fullConeType(nnA)));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA),
+    PossibleContents::fullConeType(nullD)));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
