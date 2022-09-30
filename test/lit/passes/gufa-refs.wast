@@ -2445,10 +2445,10 @@
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
-
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
   ;; CHECK:      (type $other (struct_subtype  data))
   (type $other (struct_subtype data))
@@ -2956,6 +2956,63 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new $substruct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new $substruct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select (result (ref $substruct))
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $subsubstruct
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:      (i32.const 7)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new $substruct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select (result (ref $substruct))
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.eq-cone (export "ref.eq-cone") (param $x i32)
                                ;; (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct)) (param $nn-other (ref $other))
@@ -2998,6 +3055,63 @@
             (i32.const 4)
             (i32.const 5)
             (i32.const 6)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new $substruct
+          (i32.const 1)
+          (i32.const 2)
+        )
+        (select
+          (struct.new $struct
+            (i32.const 3)
+          )
+          (struct.new $substruct ;; As above, but with this changed. We still
+            (i32.const 4)        ;; cannot optimize.
+            (i32.const 5)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new $substruct
+          (i32.const 1)
+          (i32.const 2)
+        )
+        (select
+          (struct.new $substruct ;; As above, but with this changed. We still
+            (i32.const 3)        ;; cannot optimize.
+            (i32.const 4)
+          )
+          (struct.new $subsubstruct
+            (i32.const 5)
+            (i32.const 6)
+            (i32.const 7)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new $substruct
+          (i32.const 1)
+          (i32.const 2)
+        )
+        (select
+          (struct.new $substruct
+            (i32.const 3)
+            (i32.const 4)
+          )
+          (struct.new $substruct ;; As above, but with this changed. We still
+            (i32.const 5)        ;; cannot optimize (here the type is actually
+            (i32.const 6)        ;; exact, despite the select).
           )
           (local.get $x)
         )
