@@ -687,6 +687,13 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   auto literalNullA = PossibleContents::literal(Literal::makeNull(A));
 
   assertIntersection(literalNullA,
+                     PossibleContents::fullConeType(nullA),
+                     literalNullA);
+  assertIntersection(literalNullA,
+                     PossibleContents::fullConeType(nnA),
+                     none);
+
+  assertIntersection(literalNullA,
                      PossibleContents::fullConeType(nullB),
                      literalNullA);
   assertIntersection(literalNullA,
@@ -702,6 +709,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertIntersection(exactA,
                      PossibleContents::fullConeType(nnB),
                      none);
+
+  assertIntersection(PossibleContents::coneType(nnA, 1),
+                     PossibleContents::fullConeType(nnB),
+                     nnExactB);
 
   // Subcontents. This API only supports full cone types on the right atm.
   // First, compare exact types to such a cone.
