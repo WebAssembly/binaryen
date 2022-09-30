@@ -2441,19 +2441,20 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field i32) $struct))
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (type $other (struct_subtype  data))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
-
-  ;; CHECK:      (type $other (struct_subtype  data))
   (type $other (struct_subtype data))
-
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_ref?|$other|_ref|$struct|_ref|$struct|_ref|$other|_=>_none (func_subtype (param i32 (ref null $struct) (ref null $struct) (ref null $other) (ref $struct) (ref $struct) (ref $other)) func))
 
@@ -2467,6 +2468,8 @@
   ;; CHECK:      (export "ref.eq-zero" (func $ref.eq-zero))
 
   ;; CHECK:      (export "ref.eq-unknown" (func $ref.eq-unknown))
+
+  ;; CHECK:      (export "ref.eq-cone" (func $ref.eq-cone))
 
   ;; CHECK:      (export "local-no" (func $ref.eq-local-no))
 
@@ -2656,18 +2659,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test_static $struct
-  ;; CHECK-NEXT:    (select (result (ref $struct))
-  ;; CHECK-NEXT:     (struct.new $struct
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (struct.new $substruct
-  ;; CHECK-NEXT:      (i32.const 2)
-  ;; CHECK-NEXT:      (i32.const 3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test_static $substruct
@@ -2684,18 +2676,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test_static $subsubstruct
-  ;; CHECK-NEXT:    (select (result (ref $struct))
-  ;; CHECK-NEXT:     (struct.new $struct
-  ;; CHECK-NEXT:      (i32.const 7)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (struct.new $substruct
-  ;; CHECK-NEXT:      (i32.const 8)
-  ;; CHECK-NEXT:      (i32.const 9)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.test-inexact (export "ref.test-inexact") (param $x i32)
@@ -2712,7 +2693,9 @@
       )
     )
     ;; The input to the ref.test is either $struct or $substruct, both of which
-    ;; work, so here we can infer a 1 - but we need a cone type for that TODO
+    ;; work, so here we can infer a 1. We do so using a cone type: the
+    ;; combination of those two types is a cone on $struct of depth 1, and that
+    ;; cone is 100% a subtype of $struct, so the test will succeed.
     (drop
       (ref.test_static $struct
         (select
@@ -2744,7 +2727,8 @@
       )
     )
     ;; Two possible types, both are supertypes, so neither is a subtype, and we
-    ;; can infer a 0 - but we need more precise type info than we have TODO
+    ;; can infer a 0. The combination of these two is a cone from $struct of
+    ;; depth 1, which does not overlap with $subsubstruct.
     (drop
       (ref.test_static $subsubstruct
         (select
@@ -2825,25 +2809,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (select (result (ref $substruct))
-  ;; CHECK-NEXT:     (struct.new $substruct
-  ;; CHECK-NEXT:      (i32.const 2)
-  ;; CHECK-NEXT:      (i32.const 3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (struct.new $subsubstruct
-  ;; CHECK-NEXT:      (i32.const 4)
-  ;; CHECK-NEXT:      (i32.const 5)
-  ;; CHECK-NEXT:      (i32.const 6)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:    (local.get $other)
   ;; CHECK-NEXT:   )
@@ -2911,28 +2876,6 @@
         (ref.null $struct)
       )
     )
-    ;; One side has two possible types, which we see as Many, and so we cannot
-    ;; infer anything here. With a cone type, however, we could infer a 0.
-    ;; TODO: add more tests for cone types here when we get them
-    (drop
-      (ref.eq
-        (struct.new $struct
-          (i32.const 1)
-        )
-        (select
-          (struct.new $substruct
-            (i32.const 2)
-            (i32.const 3)
-          )
-          (struct.new $subsubstruct
-            (i32.const 4)
-            (i32.const 5)
-            (i32.const 6)
-          )
-          (local.get $x)
-        )
-      )
-    )
     ;; When nulls are possible, we cannot infer anything (with or without the
     ;; same type on both sides).
     (drop
@@ -2987,6 +2930,37 @@
       (ref.eq
         (ref.null $struct)
         (call $unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.eq-cone (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.eq-cone (export "ref.eq-cone") (param $x i32)
+                               ;; (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct)) (param $nn-other (ref $other))
+    ;; One side has two possible types, so we have a cone there. This cone is
+    ;; of subtypes of the other type, which is exact, so we cannot intersect
+    ;; here and we infer a 0.
+    (drop
+      (ref.eq
+        (struct.new $struct
+          (i32.const 1)
+        )
+        (select
+          (struct.new $substruct
+            (i32.const 2)
+            (i32.const 3)
+          )
+          (struct.new $subsubstruct
+            (i32.const 4)
+            (i32.const 5)
+            (i32.const 6)
+          )
+          (local.get $x)
+        )
       )
     )
   )
