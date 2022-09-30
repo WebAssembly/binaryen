@@ -392,8 +392,8 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 #endif
         assertHaveIntersection(combination, item);
 
-        // We also have the intersect() method, which is supported with full
-        // cone types. In that case we can test that the intersection of A with
+        // We also have the intersect() method, which is supported with a full
+        // cone type. In that case we can test that the intersection of A with
         // A + B is simply A.
         if (combination.isFullConeType()) {
           auto intersection = item;
@@ -459,6 +459,14 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
     initial = subsequent;
     subsequent = doTest(subsequent);
   }
+}
+
+void assertIntersection(PossibleContents a,
+                        PossibleContents b,
+                        PossibleContents result) {
+  auto intersection = a;
+  intersection.intersect(b);
+  EXPECT_EQ(intersection, result);
 }
 
 TEST_F(PossibleContentsTest, TestStructCones) {
@@ -644,6 +652,17 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                          PossibleContents::coneType(nnC, 100));
   assertLackIntersection(PossibleContents::coneType(nnA, 1),
                          PossibleContents::coneType(nnD, 100));
+
+  // Computing intersections is supported with a full cone type. 
+  assertIntersection(exactA,
+                     PossibleContents::fullConeType(nullA),
+                     exactA);
+  assertIntersection(nnExactA,
+                     PossibleContents::fullConeType(nullA),
+                     nnExactA);
+  assertIntersection(exactA,
+                     PossibleContents::fullConeType(nnA),
+                     nnExactA);
 
   // Subcontents. This API only supports full cone types on the right atm.
   // First, compare exact types to such a cone.
