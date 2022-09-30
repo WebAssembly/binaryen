@@ -243,7 +243,10 @@ struct GUFAOptimizer
     auto refType = refContents.getType();
     if (refType.isRef()) {
       // We have some knowledge of the type here. Use that to optimize: RefTest
-      // returns 1 iff the input is not null and is also a subtype.
+      // returns 1 iff the input is not null and is also a subtype. Note that
+      // only the type of ref's contents matter, and not whether it is exact or
+      // a limited code etc. - if ref's contents are a subtype of the intended
+      // type then any code under them will also be. XXX but for 0 the cone matterses! ref may not be a subtype, but part of its cone might be...
       bool isSubType =
         HeapType::isSubType(refType.getHeapType(), curr->intendedType);
       bool mayBeNull = refType.isNullable();
