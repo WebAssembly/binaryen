@@ -460,20 +460,17 @@ public:
     }
     // Single-thread running just calls the walkModule traversal.
     setPassRunner(runner);
-    WalkerType::setModule(module);
     WalkerType::walkModule(module);
   }
 
   void
   runOnFunction(PassRunner* runner, Module* module, Function* func) override {
     setPassRunner(runner);
-    WalkerType::setModule(module);
-    WalkerType::walkFunction(func);
+    WalkerType::walkFunctionInModule(func, module);
   }
 
   void runOnModuleCode(PassRunner* runner, Module* module) {
     setPassRunner(runner);
-    WalkerType::setModule(module);
     WalkerType::walkModuleCode(module);
   }
 

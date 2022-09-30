@@ -69,6 +69,34 @@ struct GUFAOptimizer
 
   bool optimized = false;
 
+  // As we optimize, we replace expressions and create new ones. For new ones
+  // we can infer their contents based on what they replaced, e.g., if we
+  // replaced a local.get with a const, then the PossibleContents of the const
+  // are the same as the local.get (in this simple example, we could also just
+  // infer them from the const itself, of course). Rather than update the
+  // ContentOracle with new contents, which is a shared object among threads,
+  // each function-parallel worker stores a map of new things it created to the
+  // contents for them.
+  std::unordered_map<Expression*, PossibleContents> newContents;
+
+  Expression* replaceCurrent(Expression* rep) {
+    newContents[rep] = oracle.getContents(getCurrent());
+
+    return WalkerPass<
+      PostWalker<GUFAOptimizer,
+                 UnifiedExpressionVisitor<GUFAOptimizer>>>::replaceCurrent(rep);
+  }
+
+  const PossibleContents getContents(Expression* curr) {
+    // If this is something we added ourselves, use that; otherwise the info is
+    // in the oracle.
+    if (auto iter = newContents.find(curr); iter != newContents.end()) {
+      return iter->second;
+    }
+
+    return oracle.getContents(curr);
+  }
+
   void visitExpression(Expression* curr) {
     // Skip things we can't improve in any way.
     auto type = curr->type;
@@ -91,7 +119,7 @@ struct GUFAOptimizer
 
     // Ok, this is an interesting location that we might optimize. See what the
     // oracle says is possible there.
-    auto contents = oracle.getContents(ExpressionLocation{curr, 0});
+    auto contents = getContents(curr);
 
     auto& options = getPassOptions();
     auto& wasm = *getModule();
@@ -178,6 +206,58 @@ struct GUFAOptimizer
         // For now, do nothing here, but in some cases we could probably
         // optimize (e.g. by adding a ref.as_non_null in the example) TODO
         assert(c->is<GlobalGet>());
+      }
+    }
+  }
+
+  void visitRefEq(RefEq* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+
+    auto leftContents = getContents(curr->left);
+    auto rightContents = getContents(curr->right);
+
+    if (!PossibleContents::haveIntersection(leftContents, rightContents)) {
+      // The contents prove the two sides cannot contain the same reference, so
+      // we infer 0.
+      //
+      // Note that this is fine even if one of the sides is None. In that case,
+      // no value is possible there, and the intersection is empty, so we will
+      // get here and emit a 0. That 0 will never be reached as the None child
+      // will be turned into an unreachable, so it does not cause any problem.
+      auto* result = Builder(*getModule()).makeConst(Literal(int32_t(0)));
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, *getModule(), getPassOptions(), result));
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+
+    auto refContents = getContents(curr->ref);
+    auto refType = refContents.getType();
+    if (refType.isRef()) {
+      // We have some knowledge of the type here. Use that to optimize: RefTest
+      // returns 1 iff the input is not null and is also a subtype.
+      bool isSubType =
+        HeapType::isSubType(refType.getHeapType(), curr->intendedType);
+      bool mayBeNull = refType.isNullable();
+
+      auto optimize = [&](int32_t result) {
+        auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, *getModule(), getPassOptions(), last));
+      };
+
+      if (!isSubType) {
+        optimize(0);
+      } else if (!mayBeNull) {
+        optimize(1);
       }
     }
   }

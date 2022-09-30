@@ -68,7 +68,7 @@ private:
 
 public:
   Fatal() { buffer << "Fatal: "; }
-  template<typename T> Fatal& operator<<(T arg) {
+  template<typename T> Fatal& operator<<(T&& arg) {
     buffer << arg;
     return *this;
   }
