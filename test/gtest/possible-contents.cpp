@@ -635,6 +635,9 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                          PossibleContents::coneType(nnC, 100));
   assertLackIntersection(PossibleContents::coneType(nnA, 1),
                          PossibleContents::coneType(nnD, 100));
+
+  // Subcontents. This API only supports full cone types on the right atm.
+  EXPECT_TRUE(PossibleContents::isSubContents(exactA, PossibleContents::fullConeType(nullA)));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
