@@ -425,7 +425,10 @@ public:
   std::string name;
 
   PassRunner* getPassRunner() { return runner; }
-  void setPassRunner(PassRunner* runner_) { runner = runner_; }
+  void setPassRunner(PassRunner* runner_) {
+    assert((!runner || runner == runner_) && "Pass already had a runner");
+    runner = runner_;
+  }
 
   PassOptions& getPassOptions() { return runner->options; }
 
