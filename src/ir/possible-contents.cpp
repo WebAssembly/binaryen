@@ -162,7 +162,7 @@ void PossibleContents::combine(const PossibleContents& other) {
 void PossibleContents::intersect(const PossibleContents& other) {
   // TODO: Everything else. For now we only call this when |other| is a full
   //       cone type.
-  assert(other.isConeType() && other.hasFullCone());
+  assert(other.isFullConeType());
 
   if (!haveIntersection(*this, other)) {
     // There is no intersection at all.
@@ -281,7 +281,7 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
                                      const PossibleContents& b) {
   // TODO: Everything else. For now we only call this when |b| is a full cone
   //       type.
-  assert(b.isConeType() && b.hasFullCone());
+  assert(b.isFullConeType());
 
   if (a.isNone()) {
     return true;

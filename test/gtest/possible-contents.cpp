@@ -391,6 +391,15 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
         }
 #endif
         assertHaveIntersection(combination, item);
+
+        // We also have the intersect() method, which is supported with full
+        // cone types. In that case we can test that the intersection of A with
+        // A + B is simply A.
+        if (combination.isFullConeType()) {
+          auto intersection = item;
+          intersection.intersect(combination);
+          EXPECT_EQ(intersection, item);
+        }
       }
 
       // Move to the next permutation.

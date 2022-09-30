@@ -237,11 +237,10 @@ public:
 
   // Returns whether this is a cone type that is full, that is, includes all
   // subtypes.
-  bool hasFullCone() const {
+  bool isFullConeType() const {
     if (auto* coneType = std::get_if<ConeType>(&value)) {
       return coneType->depth == FullDepth;
     }
-
     return false;
   }
 
