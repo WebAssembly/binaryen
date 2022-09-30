@@ -689,6 +689,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
     Module& wasm;
     Scanner& scanner;
     TranslateToFuzzReader& parent;
+    bool needRefinalize = false;
 
     Modder(Module& wasm, Scanner& scanner, TranslateToFuzzReader& parent)
       : wasm(wasm), scanner(scanner), parent(parent) {}
@@ -698,15 +699,21 @@ void TranslateToFuzzReader::recombine(Function* func) {
         // Replace it!
         auto& candidates = scanner.exprsByType[curr->type];
         assert(!candidates.empty()); // this expression itself must be there
+        auto* rep = parent.pick(candidates);
         replaceCurrent(
-          ExpressionManipulator::copy(parent.pick(candidates), wasm));
+          ExpressionManipulator::copy(rep, wasm));
+        if (rep->type != curr->type) {
+          // Subtyping changes require us to finalize later.
+          needRefinalize = true;
+        }
       }
     }
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
-  // Refinalize since we may have replaced a type with a subtype.
-  ReFinalize().walkFunctionInModule(func, &wasm);
+  if (modder.needRefinalize) {
+    ReFinalize().walkFunctionInModule(func, &wasm);
+  }
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
