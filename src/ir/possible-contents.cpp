@@ -190,14 +190,17 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto otherType = other.getType();
   auto heapType = type.getHeapType();
   auto otherHeapType = otherType.getHeapType();
-  auto nullability = type.isNullable() || otherType.isNullable() ? Nullable : NonNullable;
+  auto nullability =
+    type.isNullable() || otherType.isNullable() ? Nullable : NonNullable;
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
   assert(depthFromRoot != otherDepthFromRoot);
   if (depthFromRoot < otherDepthFromRoot) {
-    value = ConeType(Type(otherHeapType, nullability), otherDepthFromRoot - depthFromRoot);
+    value = ConeType(Type(otherHeapType, nullability),
+                     otherDepthFromRoot - depthFromRoot);
   } else {
-    value = ConeType(Type(heapType, nullability), depthFromRoot - otherDepthFromRoot);
+    value =
+      ConeType(Type(heapType, nullability), depthFromRoot - otherDepthFromRoot);
   }
 }
 
