@@ -29,60 +29,28 @@ namespace wasm::MemoryUtils {
 
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
-// If ensuredSegmentSize is provided, then a segment is always emitted,
-// and of at least that size.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
-inline bool flatten(Memory& memory,
-                    Index ensuredSegmentSize = 0,
-                    Module* module = nullptr) {
-  if (memory.segments.size() == 0) {
-    if (ensuredSegmentSize > 0) {
-      assert(module); // must provide a module if ensuring a size.
-      Builder builder(*module);
-      memory.segments.emplace_back(builder.makeConst(int32_t(0)));
-      memory.segments[0].data.resize(ensuredSegmentSize);
-    }
-    return true;
-  }
-  std::vector<char> data;
-  data.resize(ensuredSegmentSize);
-  for (auto& segment : memory.segments) {
-    if (segment.isPassive) {
-      return false;
-    }
-    auto* offset = segment.offset->dynCast<Const>();
-    if (!offset) {
-      return false;
-    }
-  }
-  for (auto& segment : memory.segments) {
-    auto* offset = segment.offset->dynCast<Const>();
-    Index start = offset->value.getInteger();
-    Index end = start + segment.data.size();
-    if (end > data.size()) {
-      data.resize(end);
-    }
-    std::copy(segment.data.begin(), segment.data.end(), data.begin() + start);
-  }
-  memory.segments.resize(1);
-  memory.segments[0].offset->cast<Const>()->value = Literal(int32_t(0));
-  memory.segments[0].data.swap(data);
-  return true;
-}
+// Does not yet support multi-memories
+bool flatten(Module& wasm);
 
-// Ensures that the memory exists (of minimal size).
-inline void ensureExists(Memory& memory) {
-  if (!memory.exists) {
-    memory.exists = true;
-    memory.initial = memory.max = 1;
+// Ensures that a memory exists (of minimal size).
+inline void ensureExists(Module* wasm) {
+  if (wasm->memories.empty()) {
+    auto memory = Builder::makeMemory("0");
+    memory->initial = memory->max = 1;
+    wasm->addMemory(std::move(memory));
   }
 }
 
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
+// Does not yet support multi-memories
 inline bool ensureLimitedSegments(Module& module) {
-  Memory& memory = module.memory;
-  if (memory.segments.size() <= WebLimitations::MaxDataSegments) {
+  if (module.memories.size() > 1) {
+    return false;
+  }
+  auto& dataSegments = module.dataSegments;
+  if (dataSegments.size() <= WebLimitations::MaxDataSegments) {
     return true;
   }
 
@@ -92,25 +60,23 @@ inline bool ensureLimitedSegments(Module& module) {
     return false;
   }
 
-  auto isEmpty = [](Memory::Segment& segment) {
-    return segment.data.size() == 0;
-  };
+  auto isEmpty = [](DataSegment& segment) { return segment.data.size() == 0; };
 
-  auto isConstantOffset = [](Memory::Segment& segment) {
+  auto isConstantOffset = [](DataSegment& segment) {
     return segment.offset && segment.offset->is<Const>();
   };
 
   Index numConstant = 0, numDynamic = 0;
   bool hasPassiveSegments = false;
-  for (auto& segment : memory.segments) {
-    if (!isEmpty(segment)) {
-      if (isConstantOffset(segment)) {
+  for (auto& segment : dataSegments) {
+    if (!isEmpty(*segment)) {
+      if (isConstantOffset(*segment)) {
         numConstant++;
       } else {
         numDynamic++;
       }
     }
-    hasPassiveSegments |= segment.isPassive;
+    hasPassiveSegments |= segment->isPassive;
   }
 
   if (hasPassiveSegments) {
@@ -131,43 +97,43 @@ inline bool ensureLimitedSegments(Module& module) {
     assert(num == WebLimitations::MaxDataSegments - 1);
   }
 
-  std::vector<Memory::Segment> mergedSegments;
+  std::vector<std::unique_ptr<wasm::DataSegment>> mergedSegments;
   mergedSegments.reserve(WebLimitations::MaxDataSegments);
 
   // drop empty segments and pass through dynamic-offset segments
-  for (auto& segment : memory.segments) {
-    if (isEmpty(segment)) {
+  for (auto& segment : dataSegments) {
+    if (isEmpty(*segment)) {
       continue;
     }
-    if (isConstantOffset(segment)) {
+    if (isConstantOffset(*segment)) {
       continue;
     }
-    mergedSegments.push_back(segment);
+    mergedSegments.push_back(std::move(segment));
   }
 
   // from here on, we concern ourselves with non-empty constant-offset
   // segments, the ones which we may need to merge
-  auto isRelevant = [&](Memory::Segment& segment) {
+  auto isRelevant = [&](DataSegment& segment) {
     return !isEmpty(segment) && isConstantOffset(segment);
   };
-  for (Index i = 0; i < memory.segments.size(); i++) {
-    auto& segment = memory.segments[i];
-    if (!isRelevant(segment)) {
+  for (Index i = 0; i < dataSegments.size(); i++) {
+    auto& segment = dataSegments[i];
+    if (!isRelevant(*segment)) {
       continue;
     }
     if (mergedSegments.size() + 2 < WebLimitations::MaxDataSegments) {
-      mergedSegments.push_back(segment);
+      mergedSegments.push_back(std::move(segment));
       continue;
     }
     // we can emit only one more segment! merge everything into one
     // start the combined segment at the bottom of them all
-    auto start = segment.offset->cast<Const>()->value.getInteger();
-    for (Index j = i + 1; j < memory.segments.size(); j++) {
-      auto& segment = memory.segments[j];
-      if (!isRelevant(segment)) {
+    auto start = segment->offset->cast<Const>()->value.getInteger();
+    for (Index j = i + 1; j < dataSegments.size(); j++) {
+      auto& segment = dataSegments[j];
+      if (!isRelevant(*segment)) {
         continue;
       }
-      auto offset = segment.offset->cast<Const>()->value.getInteger();
+      auto offset = segment->offset->cast<Const>()->value.getInteger();
       start = std::min(start, offset);
     }
     // create the segment and add in all the data
@@ -175,26 +141,29 @@ inline bool ensureLimitedSegments(Module& module) {
     c->value = Literal(int32_t(start));
     c->type = Type::i32;
 
-    Memory::Segment combined(c);
-    for (Index j = i; j < memory.segments.size(); j++) {
-      auto& segment = memory.segments[j];
-      if (!isRelevant(segment)) {
+    auto combined = Builder::makeDataSegment();
+    combined->memory = module.memories[0]->name;
+    combined->offset = c;
+    for (Index j = i; j < dataSegments.size(); j++) {
+      auto& segment = dataSegments[j];
+      if (!isRelevant(*segment)) {
         continue;
       }
-      auto offset = segment.offset->cast<Const>()->value.getInteger();
-      auto needed = offset + segment.data.size() - start;
-      if (combined.data.size() < needed) {
-        combined.data.resize(needed);
+      auto offset = segment->offset->cast<Const>()->value.getInteger();
+      auto needed = offset + segment->data.size() - start;
+      if (combined->data.size() < needed) {
+        combined->data.resize(needed);
       }
-      std::copy(segment.data.begin(),
-                segment.data.end(),
-                combined.data.begin() + (offset - start));
+      std::copy(segment->data.begin(),
+                segment->data.end(),
+                combined->data.begin() + (offset - start));
     }
-    mergedSegments.push_back(combined);
+    mergedSegments.push_back(std::move(combined));
     break;
   }
 
-  memory.segments.swap(mergedSegments);
+  dataSegments.swap(mergedSegments);
+  module.updateDataSegmentsMap();
   return true;
 }
 } // namespace wasm::MemoryUtils

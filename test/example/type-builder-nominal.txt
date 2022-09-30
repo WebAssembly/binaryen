@@ -1,96 +1,102 @@
 ;; Test TypeBuilder
 Before setting heap types:
-(ref $sig) => [T](ref [T](func))
-(ref $struct) => [T](ref [T](func))
-(ref $array) => [T](ref [T](func))
-(ref null $array) => [T](ref null [T](func))
-(rtt 0 $array) => [T](rtt 0 [T](func))
-
+$sig => (; temp ;) (func_subtype func)
+$struct => (; temp ;) (func_subtype func)
+$array => (; temp ;) (func_subtype func)
+(ref $sig) => (; temp ;) (ref $0)
+(ref $struct) => (; temp ;) (ref $1)
+(ref $array) => (; temp ;) (ref $2)
+(ref null $array) => (; temp ;) (ref null $2)
 After setting heap types:
-(ref $sig) => [T](ref [T](func (param [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))) (result [T](ref [T](array (mut externref))) i32)))
-(ref $struct) => [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))
-(ref $array) => [T](ref [T](array (mut externref)))
-(ref null $array) => [T](ref null [T](array (mut externref)))
-(rtt 0 $array) => [T](rtt 0 [T](array (mut externref)))
-
+$sig => (; temp ;) (func_subtype (param (; temp ;) (ref $1)) (result (; temp ;) (ref $2) i32) func)
+$struct => (; temp ;) (struct_subtype (field (; temp ;) (ref null $2)) data)
+$array => (; temp ;) (array_subtype (mut anyref) data)
+(ref $sig) => (; temp ;) (ref $0)
+(ref $struct) => (; temp ;) (ref $1)
+(ref $array) => (; temp ;) (ref $2)
+(ref null $array) => (; temp ;) (ref null $2)
 After building types:
-(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
-(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))
-(ref $array) => (ref (array (mut externref)))
-(ref null $array) => (ref null (array (mut externref)))
-(rtt 0 $array) => (rtt 0 (array (mut externref)))
-
+$sig => (func_subtype (param (ref $1)) (result (ref $2) i32) func)
+$struct => (struct_subtype (field (ref null $2)) data)
+$array => (array_subtype (mut anyref) data)
+(ref $sig) => (ref $0)
+(ref $struct) => (ref $1)
+(ref $array) => (ref $2)
+(ref null $array) => (ref null $2)
 ;; Test canonicalization
 ;; Test basic
 ;; Test canonical signatures
 ;; Test recursive types
-(func (result (ref null ...1)))
+(func_subtype (result (ref null $0)) func)
 
-(func (result (ref null (func (result (ref null ...3))))))
-(func (result (ref null (func (result (ref null ...3))))))
+(func_subtype (result (ref null $1)) func)
+(func_subtype (result (ref null $0)) func)
 
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func_subtype (result (ref null $1)) func)
+(func_subtype (result (ref null $2)) func)
+(func_subtype (result (ref null $3)) func)
+(func_subtype (result (ref null $4)) func)
+(func_subtype (result (ref null $0)) func)
 
-(func (result (ref null ...1) (ref null (func))))
-(func (result (ref null ...1) (ref null (func))))
-(func)
-(func)
-(func (result (ref null (func (result ...1 (ref null (func)))))))
-(func (result (ref null (func (result ...1 (ref null (func)))))))
+(func_subtype (result (ref null $0) (ref null $2)) func)
+(func_subtype (result (ref null $1) (ref null $3)) func)
+(func_subtype func)
+(func_subtype func)
+(func_subtype (result (ref null $0)) func)
+(func_subtype (result (ref null $1)) func)
 
-(func (result (ref null ...1)))
-(func (result (ref null (func (result ...1)))))
+(func_subtype (result (ref null $0)) func)
+(func_subtype (result (ref null $0)) func)
 
 ;; Test subtyping
 ;; Test TypeBuilder
 Before setting heap types:
-(ref $sig) => [T](ref [T](func))
-(ref $struct) => [T](ref [T](func))
-(ref $array) => [T](ref [T](func))
-(ref null $array) => [T](ref null [T](func))
-(rtt 0 $array) => [T](rtt 0 [T](func))
-
+$sig => (; temp ;) (func_subtype func)
+$struct => (; temp ;) (func_subtype func)
+$array => (; temp ;) (func_subtype func)
+(ref $sig) => (; temp ;) (ref $0)
+(ref $struct) => (; temp ;) (ref $1)
+(ref $array) => (; temp ;) (ref $2)
+(ref null $array) => (; temp ;) (ref null $2)
 After setting heap types:
-(ref $sig) => [T](ref [T](func (param [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))) (result [T](ref [T](array (mut externref))) i32)))
-(ref $struct) => [T](ref [T](struct (field [T](ref null [T](array (mut externref))) (mut [T](rtt 0 [T](array (mut externref)))))))
-(ref $array) => [T](ref [T](array (mut externref)))
-(ref null $array) => [T](ref null [T](array (mut externref)))
-(rtt 0 $array) => [T](rtt 0 [T](array (mut externref)))
-
+$sig => (; temp ;) (func_subtype (param (; temp ;) (ref $1)) (result (; temp ;) (ref $2) i32) func)
+$struct => (; temp ;) (struct_subtype (field (; temp ;) (ref null $2)) data)
+$array => (; temp ;) (array_subtype (mut anyref) data)
+(ref $sig) => (; temp ;) (ref $0)
+(ref $struct) => (; temp ;) (ref $1)
+(ref $array) => (; temp ;) (ref $2)
+(ref null $array) => (; temp ;) (ref null $2)
 After building types:
-(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
-(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))
-(ref $array) => (ref (array (mut externref)))
-(ref null $array) => (ref null (array (mut externref)))
-(rtt 0 $array) => (rtt 0 (array (mut externref)))
-
+$sig => (func_subtype (param (ref $1)) (result (ref $2) i32) func)
+$struct => (struct_subtype (field (ref null $2)) data)
+$array => (array_subtype (mut anyref) data)
+(ref $sig) => (ref $0)
+(ref $struct) => (ref $1)
+(ref $array) => (ref $2)
+(ref null $array) => (ref null $2)
 ;; Test canonicalization
 ;; Test basic
 ;; Test canonical signatures
 ;; Test recursive types
-(func (result (ref null ...1)))
+(func_subtype (result (ref null $0)) func)
 
-(func (result (ref null (func (result (ref null ...3))))))
-(func (result (ref null (func (result (ref null ...3))))))
+(func_subtype (result (ref null $1)) func)
+(func_subtype (result (ref null $0)) func)
 
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
-(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func_subtype (result (ref null $1)) func)
+(func_subtype (result (ref null $2)) func)
+(func_subtype (result (ref null $3)) func)
+(func_subtype (result (ref null $4)) func)
+(func_subtype (result (ref null $0)) func)
 
-(func (result (ref null ...1) (ref null (func))))
-(func (result (ref null ...1) (ref null (func))))
-(func)
-(func)
-(func (result (ref null (func (result ...1 (ref null (func)))))))
-(func (result (ref null (func (result ...1 (ref null (func)))))))
+(func_subtype (result (ref null $0) (ref null $2)) func)
+(func_subtype (result (ref null $1) (ref null $3)) func)
+(func_subtype func)
+(func_subtype func)
+(func_subtype (result (ref null $0)) func)
+(func_subtype (result (ref null $1)) func)
 
-(func (result (ref null ...1)))
-(func (result (ref null (func (result ...1)))))
+(func_subtype (result (ref null $0)) func)
+(func_subtype (result (ref null $0)) func)
 
 ;; Test subtyping

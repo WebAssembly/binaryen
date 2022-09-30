@@ -84,6 +84,8 @@ struct OptInfo {
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   Scanner(OptInfo& optInfo) : optInfo(optInfo) {}
 
   Scanner* create() override { return new Scanner(optInfo); }

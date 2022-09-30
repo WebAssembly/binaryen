@@ -17,7 +17,6 @@
 #include "ir/eh-utils.h"
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
-#include "ir/type-updating.h"
 
 namespace wasm {
 
@@ -100,65 +99,95 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   }
 }
 
-bool isPopValid(Expression* catchBody) {
+bool containsValidDanglingPop(Expression* catchBody) {
   bool isPopNested = false;
   Expression** popPtr = nullptr;
   auto* pop = getFirstPop(catchBody, isPopNested, popPtr);
   return pop != nullptr && !isPopNested;
 }
 
+void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
+  Builder builder(wasm);
+  for (Index i = 0; i < try_->catchTags.size(); i++) {
+    Name tagName = try_->catchTags[i];
+    auto* tag = wasm.getTag(tagName);
+    if (tag->sig.params == Type::none) {
+      continue;
+    }
+
+    auto* catchBody = try_->catchBodies[i];
+    bool isPopNested = false;
+    Expression** popPtr = nullptr;
+    Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
+    assert(pop && "Pop has not been found in this catch");
+
+    // Change code like
+    // (catch $e
+    //   ...
+    //   (block
+    //     (pop i32)
+    //   )
+    // )
+    // into
+    // (catch $e
+    //   (local.set $new
+    //     (pop i32)
+    //   )
+    //   ...
+    //   (block
+    //     (local.get $new)
+    //   )
+    // )
+    if (isPopNested) {
+      assert(popPtr);
+      Index newLocal = builder.addVar(func, pop->type);
+      try_->catchBodies[i] =
+        builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
+      *popPtr = builder.makeLocalGet(newLocal, pop->type);
+    }
+  }
+}
+
 void handleBlockNestedPops(Function* func, Module& wasm) {
   if (!wasm.features.hasExceptionHandling()) {
     return;
   }
-
-  Builder builder(wasm);
   FindAll<Try> trys(func->body);
   for (auto* try_ : trys.list) {
-    for (Index i = 0; i < try_->catchTags.size(); i++) {
-      Name tagName = try_->catchTags[i];
-      auto* tag = wasm.getTag(tagName);
-      if (tag->sig.params == Type::none) {
-        continue;
-      }
+    handleBlockNestedPop(try_, func, wasm);
+  }
+}
 
-      auto* catchBody = try_->catchBodies[i];
-      bool isPopNested = false;
-      Expression** popPtr = nullptr;
-      Expression* pop = getFirstPop(catchBody, isPopNested, popPtr);
-      assert(pop && "Pop has not been found in this catch");
+Pop* findPop(Expression* expr) {
+  auto pops = findPops(expr);
+  if (pops.size() == 0) {
+    return nullptr;
+  }
+  assert(pops.size() == 1);
+  return pops[0];
+}
 
-      // Change code like
-      // (catch $e
-      //   ...
-      //   (block
-      //     (pop i32)
-      //   )
-      // )
-      // into
-      // (catch $e
-      //   (local.set $new
-      //     (pop i32)
-      //   )
-      //   ...
-      //   (block
-      //     (local.get $new)
-      //   )
-      // )
-      if (isPopNested) {
-        assert(popPtr);
-        Index newLocal = builder.addVar(func, pop->type);
-        try_->catchBodies[i] =
-          builder.makeSequence(builder.makeLocalSet(newLocal, pop), catchBody);
-        *popPtr = builder.makeLocalGet(newLocal, pop->type);
+SmallVector<Pop*, 1> findPops(Expression* expr) {
+  SmallVector<Pop*, 1> pops;
+  SmallVector<Expression*, 8> work;
+  work.push_back(expr);
+  while (!work.empty()) {
+    auto* curr = work.back();
+    work.pop_back();
+    if (auto* pop = curr->dynCast<Pop>()) {
+      pops.push_back(pop);
+    } else if (auto* try_ = curr->dynCast<Try>()) {
+      // We don't go into inner catch bodies; pops in inner catch bodies
+      // belong to the inner catches
+      work.push_back(try_->body);
+    } else {
+      for (auto* child : ChildIterator(curr)) {
+        work.push_back(child);
       }
     }
   }
-
-  // Pops we handled can be of non-defaultable types, so we may have created
-  // non-nullable type locals. Fix them.
-  TypeUpdating::handleNonDefaultableLocals(func, wasm);
-}
+  return pops;
+};
 
 } // namespace EHUtils
 

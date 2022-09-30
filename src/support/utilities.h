@@ -36,8 +36,11 @@ template<class Destination, class Source>
 inline Destination bit_cast(const Source& source) {
   static_assert(sizeof(Destination) == sizeof(Source),
                 "bit_cast needs to be between types of the same size");
-  static_assert(std::is_pod<Destination>::value, "non-POD bit_cast undefined");
-  static_assert(std::is_pod<Source>::value, "non-POD bit_cast undefined");
+  static_assert(std::is_trivial_v<Destination> &&
+                  std::is_standard_layout_v<Destination>,
+                "non-POD bit_cast undefined");
+  static_assert(std::is_trivial_v<Source> && std::is_standard_layout_v<Source>,
+                "non-POD bit_cast undefined");
   Destination destination;
   std::memcpy(&destination, &source, sizeof(destination));
   return destination;
@@ -65,7 +68,7 @@ public:
     std::cerr << arg;
     return *this;
   }
-  WASM_NORETURN ~Fatal() {
+  [[noreturn]] ~Fatal() {
     std::cerr << "\n";
     // Use _Exit here to avoid calling static destructors. This avoids deadlocks
     // in (for example) the thread worker pool, where workers hold a lock while
@@ -74,9 +77,9 @@ public:
   }
 };
 
-WASM_NORETURN void handle_unreachable(const char* msg = nullptr,
-                                      const char* file = nullptr,
-                                      unsigned line = 0);
+[[noreturn]] void handle_unreachable(const char* msg = nullptr,
+                                     const char* file = nullptr,
+                                     unsigned line = 0);
 
 // If control flow reaches the point of the WASM_UNREACHABLE(), the program is
 // undefined.

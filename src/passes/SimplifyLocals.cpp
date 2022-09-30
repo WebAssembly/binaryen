@@ -53,6 +53,7 @@
 #include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -119,6 +120,9 @@ struct SimplifyLocals
 
   // local => # of local.gets for it
   LocalGetCounter getCounter;
+
+  // In rare cases we make a change to a type that requires a refinalize.
+  bool refinalize = false;
 
   static void
   doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
@@ -254,6 +258,23 @@ struct SimplifyLocals
       if (oneUse) {
         // with just one use, we can sink just the value
         this->replaceCurrent(set->value);
+
+        // We are replacing a local.get with the value of the local.set. That
+        // may require a refinalize in certain cases, like this:
+        //
+        //  (struct.get $X 0
+        //    (local.get $x)
+        //  )
+        //
+        // If we replace the local.get with a more refined type then the
+        // struct.get may read a more refined type (if the subtype has a more
+        // refined type for that particular field). Note that this cannot happen
+        // in the other arm of this if-else, where we replace the local.get with
+        // a tee, since tees have the type of the local, so no types change
+        // there.
+        if (set->value->type != curr->type) {
+          refinalize = true;
+        }
       } else {
         this->replaceCurrent(set);
         assert(!set->isTee());
@@ -299,13 +320,16 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Expressions that may throw cannot be sinked into 'try'. At the start of
-    // 'try', we drop all sinkables that may throw.
+    // Certain expressions cannot be sinked into 'try', and so at the start of
+    // 'try' we forget about them.
     if (curr->is<Try>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
+        // Expressions that may throw cannot be moved into a try (which might
+        // catch them, unlike before the move).
         if (info.effects.throws()) {
           invalidated.push_back(index);
+          continue;
         }
       }
       for (auto index : invalidated) {
@@ -736,7 +760,48 @@ struct SimplifyLocals
     if (sinkables.empty()) {
       return;
     }
+
+    // Check if the type makes sense. A non-nullable local might be dangerous
+    // here, as creating new local.gets for such locals is risky:
+    //
+    //  (func $silly
+    //    (local $x (ref $T))
+    //    (if
+    //      (condition)
+    //      (local.set $x ..)
+    //    )
+    //  )
+    //
+    // That local is silly as the write is never read. If we optimize it and add
+    // a local.get, however, then we'd no longer validate (as no set would
+    // dominate that new get in the if's else arm). Fixups would add a
+    // ref.as_non_null around the local.get, which will then trap at runtime:
+    //
+    //  (func $silly
+    //    (local $x (ref null $T))
+    //    (local.set $x
+    //      (if
+    //        (condition)
+    //        (..)
+    //        (ref.as_non_null
+    //          (local.get $x)
+    //        )
+    //      )
+    //    )
+    //  )
+    //
+    // In other words, local.get is not necessarily free of effects if the local
+    // is non-nullable - it must have been set already. We could check that
+    // here, but running that linear-time check may not be worth it as this
+    // optimization is fairly minor, so just skip the non-nullable case.
+    //
+    // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
+    auto localType = this->getFunction()->getLocalType(goodIndex);
+    if (localType.isNonNullable()) {
+      return;
+    }
+
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
@@ -745,6 +810,9 @@ struct SimplifyLocals
       ifsToEnlarge.push_back(iff);
       return;
     }
+
+    // We can optimize!
+
     // Update the ifTrue side.
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
@@ -754,8 +822,7 @@ struct SimplifyLocals
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(
-      set->index, this->getFunction()->getLocalType(set->index));
+    iff->ifFalse = builder.makeLocalGet(set->index, localType);
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
@@ -842,6 +909,10 @@ struct SimplifyLocals
         }
       }
     } while (anotherCycle);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
   }
 
   bool runMainOptimizations(Function* func) {

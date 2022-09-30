@@ -17,25 +17,3 @@
   (nop)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 1,
-  "declares": [
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "_start"
-  ],
-  "namedGlobals": {
-    "__heap_base" : "66112",
-    "__data_end" : "576"
-  },
-  "invokeFuncs": [
-  ],
-  "features": [
-  ]
-}
--- END METADATA --
-;)

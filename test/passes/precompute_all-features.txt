@@ -171,7 +171,7 @@
     (block
      (select
       (i64.const 1)
-      (block $block
+      (block
        (global.set $global-mut
         (i32.const 1)
        )

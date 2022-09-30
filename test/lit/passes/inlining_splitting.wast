@@ -14,8 +14,6 @@
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
-
   ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
 
   ;; CHECK:      (import "out" "func" (func $import))
@@ -163,12 +161,10 @@
   ;; CHECK-NEXT:  (block $toplevel
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (block $block
-  ;; CHECK-NEXT:     (if
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (br $toplevel)
-  ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (br $toplevel)
+  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -203,19 +199,8 @@
     (call $br-to-toplevel (i32.const 2))
   )
 
-  ;; CHECK:      (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $l
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (br $l)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
-    ;; The RTT param here prevents us from even being inlined, even with
-    ;; splitting.
+  (func $nondefaultable-param (param $x i32) (param $y (ref $struct))
+    ;; We can inline despite the non-initial, non-defaultable param.
     (if
       (local.get $x)
       (return)
@@ -227,13 +212,30 @@
   )
 
   ;; CHECK:      (func $call-nondefaultable-param
-  ;; CHECK-NEXT:  (call $nondefaultable-param
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (rtt.canon $struct)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 (ref $struct))
+  ;; CHECK-NEXT:  (block $__inlined_func$nondefaultable-param
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (br $__inlined_func$nondefaultable-param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (loop $l
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (br $l)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $__inlined_func$nondefaultable-param)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-nondefaultable-param
-    (call $nondefaultable-param (i32.const 0) (rtt.canon $struct))
+    (call $nondefaultable-param (i32.const 0) (struct.new $struct))
   )
 
   (func $many-params (param $x i64) (param $y i32) (param $z f64)
@@ -882,7 +884,7 @@
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -926,7 +928,7 @@
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -1214,7 +1216,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if0 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (ref.null func)
+  ;; CHECK-NEXT:      (ref.null data)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -1244,7 +1246,7 @@
   ;; CHECK-NEXT: )
   (func $call-multi-if
     (drop (call $multi-if (ref.null any)))
-    (drop (call $multi-if (ref.null func)))
+    (drop (call $multi-if (ref.null data)))
   )
 
   ;; CHECK:      (func $too-many-ifs (param $x anyref) (result anyref)
@@ -1323,13 +1325,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many-ifs
-  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null data)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-too-many-ifs
     (drop (call $too-many-ifs (ref.null any)))
-    (drop (call $too-many-ifs (ref.null func)))
+    (drop (call $too-many-ifs (ref.null data)))
   )
 )
 
@@ -1392,17 +1394,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$error-if-null (param $x anyref) (result anyref)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (param $x anyref)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
+;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$multi-if_0 (param $x anyref)

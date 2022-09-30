@@ -12,18 +12,6 @@
   // 5
   // BinaryenTypeVec128: 6
   // 6
-  // BinaryenTypeFuncref: 7
-  // 7
-  // BinaryenTypeExternref: 8
-  // 8
-  // BinaryenTypeAnyref: 9
-  // 9
-  // BinaryenTypeEqref: 10
-  // 10
-  // BinaryenTypeI31ref: 11
-  // 11
-  // BinaryenTypeDataref: 12
-  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -41,9 +29,11 @@ Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
 Features.Memory64: 2048
-Features.TypedFunctionReferences: 4096
-Features.RelaxedSIMD: 16384
-Features.All: 32767
+Features.RelaxedSIMD: 8192
+Features.ExtendedConst: 16384
+Features.Strings: 32768
+Features.MultiMemories: 65536
+Features.All: 126975
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -103,16 +93,29 @@ CallRefId: 56
 RefTestId: 57
 RefCastId: 58
 BrOnId: 59
-RttCanonId: 60
-RttSubId: 61
-StructNewId: 62
-StructGetId: 63
-StructSetId: 64
-ArrayNewId: 65
-ArrayInitId: 66
-ArrayGetId: 67
-ArraySetId: 68
-ArrayLenId: 69
+StructNewId: 60
+StructGetId: 61
+StructSetId: 62
+ArrayNewId: 63
+ArrayInitId: 64
+ArrayGetId: 65
+ArraySetId: 66
+ArrayLenId: 67
+ArrayCopy: 68
+RefAs: 69
+StringNew: 70
+StringConst: 71
+StringMeasure: 72
+StringEncode: 73
+StringConcat: 74
+StringEq: 75
+StringAs: 76
+StringWTF8Advance: 77
+StringWTF16Get: 78
+StringIterNext: 79
+StringIterMove: 80
+StringSliceWTF: 81
+StringSliceIter: 82
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -142,10 +145,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) "$kitchen()sinker")
  (tag $a-tag (param i32))
+ (export "mem" (memory $0))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
- (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
@@ -2173,10 +2176,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop eqref)
       )
       (drop
-       (pop i31ref)
+       (pop (ref i31))
       )
       (drop
-       (pop dataref)
+       (pop (ref data))
+      )
+      (drop
+       (pop stringref)
+      )
+      (drop
+       (pop stringview_wtf8)
+      )
+      (drop
+       (pop stringview_wtf16)
+      )
+      (drop
+       (pop stringview_iter)
       )
       (drop
        (memory.size)
@@ -2234,10 +2249,10 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) "$kitchen()sinker")
  (tag $a-tag (param i32))
+ (export "mem" (memory $0))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
- (export "mem" (memory $0))
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
@@ -4265,10 +4280,22 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop eqref)
       )
       (drop
-       (pop i31ref)
+       (pop (ref i31))
       )
       (drop
-       (pop dataref)
+       (pop (ref data))
+      )
+      (drop
+       (pop stringref)
+      )
+      (drop
+       (pop stringview_wtf8)
+      )
+      (drop
+       (pop stringview_wtf16)
+      )
+      (drop
+       (pop stringview_iter)
       )
       (drop
        (memory.size)
@@ -4785,7 +4812,7 @@ module loaded from binary form:
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
- (tag $tag$0 (param i32 i32))
+ (tag $a-tag (param i32 i32))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -4859,6 +4886,7 @@ sizeof Literal: 24
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
+ (data "hello, passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))

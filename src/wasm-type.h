@@ -17,11 +17,17 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
-#include "support/name.h"
-#include "wasm-features.h"
+#include <functional>
 #include <optional>
 #include <ostream>
+#include <string>
+#include <variant>
 #include <vector>
+
+#include "support/index.h"
+#include "support/name.h"
+#include "support/parent_index_iterator.h"
+#include "wasm-features.h"
 
 // TODO: At various code locations we were assuming that single types are basic
 // types, but this is going to change with the introduction of the compound
@@ -29,13 +35,14 @@
 // prepare for this change, the following macro marks affected code locations.
 #define TODO_SINGLE_COMPOUND(type)                                             \
   assert(!type.isTuple() && "Unexpected tuple type");                          \
-  assert(!type.isCompound() && "TODO: handle compound types");
+  assert(type.isBasic() && "TODO: handle compound types");
 
 namespace wasm {
 
 enum class TypeSystem {
   Equirecursive,
   Nominal,
+  Isorecursive,
 };
 
 // This should only ever be called before any Types or HeapTypes have been
@@ -44,20 +51,36 @@ void setTypeSystem(TypeSystem system);
 
 TypeSystem getTypeSystem();
 
+// Dangerous! Frees all types and heap types that have ever been created and
+// resets the type system's internal state. This is only really meant to be used
+// for tests.
+void destroyAllTypesForTestingPurposesOnly();
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.
 class Type;
 class HeapType;
+class RecGroup;
 struct Tuple;
 struct Signature;
 struct Field;
 struct Struct;
 struct Array;
-struct Rtt;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
+
+// HeapType name information used for printing.
+struct TypeNames {
+  // The name of the type.
+  Name name;
+  // For a Struct, names of fields.
+  std::unordered_map<Index, Name> fieldNames;
+};
+
+// Used to generate HeapType names.
+using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
@@ -82,14 +105,8 @@ public:
     f32,
     f64,
     v128,
-    funcref,
-    externref,
-    anyref,
-    eqref,
-    i31ref,
-    dataref,
   };
-  static constexpr BasicType _last_basic_type = dataref;
+  static constexpr BasicType _last_basic_type = v128;
 
   Type() : id(none) {}
 
@@ -110,9 +127,6 @@ public:
   // Signature, Struct or Array via implicit conversion to HeapType.
   Type(HeapType, Nullability nullable);
 
-  // Construct from rtt description
-  Type(Rtt);
-
   // Predicates
   //                 Compound Concrete
   //   Type        Basic │ Single│
@@ -127,18 +141,15 @@ public:
   // │ v128        ║ x │   │ x │ x │     V │ ┘
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  n_ullable
-  // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
-  // │ i31ref      ║ x │   │ x │ x │       │ │ │
-  // │ dataref     ║ x │   │ x │ x │       │ │ ┘
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ i31ref      ║ x │   │ x │ x │    n  │ │
+  // │ dataref     ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
-  // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
   constexpr bool isBasic() const { return id <= _last_basic_type; }
-  constexpr bool isCompound() const { return id > _last_basic_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
@@ -158,7 +169,6 @@ public:
   // is irrelevant. (For that reason, this is only the negation of isNullable()
   // on references, but both return false on non-references.)
   bool isNonNullable() const;
-  bool isRtt() const;
   bool isStruct() const;
   bool isArray() const;
   bool isDefaultable() const;
@@ -214,11 +224,8 @@ public:
   const Tuple& getTuple() const;
 
   // Gets the heap type corresponding to this type, assuming that it is a
-  // reference or Rtt type.
+  // reference type.
   HeapType getHeapType() const;
-
-  // Gets the Rtt for this type, assuming that it is an Rtt type.
-  Rtt getRtt() const;
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -262,72 +269,42 @@ public:
     return lub;
   }
 
-  std::string toString() const;
-
-  struct Iterator {
-    // Iterator traits
-    using iterator_category = std::random_access_iterator_tag;
-    using value_type = Type;
-    using difference_type = std::ptrdiff_t;
-    using pointer = const Type*;
-    using reference = const Type&;
-
-    const Type* parent;
-    size_t index;
-    Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
-    bool operator==(const Iterator& other) const {
-      return index == other.index && parent == other.parent;
-    }
-    bool operator!=(const Iterator& other) const { return !(*this == other); }
-    Iterator& operator++() {
-      ++index;
-      return *this;
-    }
-    Iterator& operator--() {
-      --index;
-      return *this;
-    }
-    Iterator operator++(int) {
-      auto it = *this;
-      index++;
-      return it;
-    }
-    Iterator operator--(int) {
-      auto it = *this;
-      index--;
-      return it;
-    }
-    Iterator& operator+=(difference_type off) {
-      index += off;
-      return *this;
-    }
-    Iterator operator+(difference_type off) const {
-      return Iterator(*this) += off;
-    }
-    Iterator& operator-=(difference_type off) {
-      index -= off;
-      return *this;
-    }
-    Iterator operator-(difference_type off) const {
-      return Iterator(*this) -= off;
-    }
-    difference_type operator-(const Iterator& other) const {
-      assert(parent == other.parent);
-      return index - other.index;
-    }
-    const value_type& operator*() const;
+  // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
+  // a `TypeID` because `Type` is incomplete at this point and using a reference
+  // makes it less convenient to use.
+  struct Printed {
+    TypeID typeID;
+    HeapTypeNameGenerator generateName;
   };
 
-  Iterator begin() const { return Iterator(this, 0); }
-  Iterator end() const;
+  // Given a function for generating non-basic HeapType names, print this Type
+  // to `os`.`generateName` should return the same name each time it is called
+  // with the same HeapType and it should return different names for different
+  // types.
+  Printed print(HeapTypeNameGenerator generateName) {
+    return Printed{getID(), generateName};
+  }
+
+  std::string toString() const;
+
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const Type*, Iterator> {
+    using value_type = Type;
+    using pointer = const Type*;
+    using reference = const Type&;
+    reference operator*() const;
+  };
+
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
   std::reverse_iterator<Iterator> rbegin() const {
     return std::make_reverse_iterator(end());
   }
   std::reverse_iterator<Iterator> rend() const {
     return std::make_reverse_iterator(begin());
   }
-  size_t size() const { return end() - begin(); }
-  const Type& operator[](size_t i) const;
+  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 class HeapType {
@@ -339,14 +316,18 @@ class HeapType {
 
 public:
   enum BasicHeapType : uint32_t {
-    func,
     ext,
+    func,
     any,
     eq,
     i31,
     data,
+    string,
+    stringview_wtf8,
+    stringview_wtf16,
+    stringview_iter,
   };
-  static constexpr BasicHeapType _last_basic_type = data;
+  static constexpr BasicHeapType _last_basic_type = stringview_iter;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -372,7 +353,6 @@ public:
   HeapType(Array array);
 
   constexpr bool isBasic() const { return id <= _last_basic_type; }
-  constexpr bool isCompound() const { return id > _last_basic_type; }
   bool isFunction() const;
   bool isData() const;
   bool isSignature() const;
@@ -384,21 +364,16 @@ public:
   Array getArray() const;
 
   // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
-  // else an empty optional. Nominal types (in the sense of isNominal,
-  // i.e. Milestone 4 nominal types) may always have supertypes and other types
-  // may have supertypes in `TypeSystem::Nominal` mode but not in
-  // `TypeSystem::Equirecursive` mode.
+  // else an empty optional.
   std::optional<HeapType> getSuperType() const;
 
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.
   size_t getDepth() const;
 
-  // Whether this is a nominal type in the sense of being a GC Milestone 4
-  // nominal type. Although all non-basic HeapTypes are nominal in
-  // `TypeSystem::Nominal` mode, this will still return false unless the type is
-  // specifically constructed as a Milestone 4 nominal type.
-  bool isNominal() const;
+  // Get the recursion group for this non-basic type.
+  RecGroup getRecGroup() const;
+  size_t getRecGroupIndex() const;
 
   constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
@@ -418,12 +393,58 @@ public:
   static bool isSubType(HeapType left, HeapType right);
 
   // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren();
+  std::vector<HeapType> getHeapTypeChildren() const;
 
-  // Return the LUB of two HeapTypes. The LUB always exists.
-  static HeapType getLeastUpperBound(HeapType a, HeapType b);
+  // Similar to `getHeapTypeChildren`, but also includes the supertype if it
+  // exists.
+  std::vector<HeapType> getReferencedHeapTypes() const;
+
+  // Return the LUB of two HeapTypes, which may or may not exist.
+  static std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
+
+  // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
+  // a `TypeID` because `Type` is incomplete at this point and using a reference
+  // makes it less convenient to use.
+  struct Printed {
+    TypeID typeID;
+    HeapTypeNameGenerator generateName;
+  };
+
+  // Given a function for generating HeapType names, print the definition of
+  // this HeapType to `os`. `generateName` should return the same
+  // name each time it is called with the same HeapType and it should return
+  // different names for different types.
+  Printed print(HeapTypeNameGenerator generateName) {
+    return Printed{getID(), generateName};
+  }
 
   std::string toString() const;
+};
+
+// A recursion group consisting of one or more HeapTypes. HeapTypes with single
+// members are encoded without using any additional memory, which is why
+// `getHeapTypes` has to return a vector by value; it might have to create one
+// on the fly.
+class RecGroup {
+  uintptr_t id;
+
+public:
+  explicit RecGroup(uintptr_t id) : id(id) {}
+  constexpr TypeID getID() const { return id; }
+  bool operator==(const RecGroup& other) const { return id == other.id; }
+  bool operator!=(const RecGroup& other) const { return id != other.id; }
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const RecGroup*, Iterator> {
+    using value_type = HeapType;
+    using pointer = const HeapType*;
+    using reference = const HeapType&;
+    value_type operator*() const;
+  };
+
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
+  HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
 typedef std::vector<Type> TypeList;
@@ -436,12 +457,6 @@ struct Tuple {
   Tuple(std::initializer_list<Type> types) : types(types) { validate(); }
   Tuple(const TypeList& types) : types(types) { validate(); }
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
-
-  // Allow copies when constructing.
-  Tuple(const Tuple& other) : types(other.types) { validate(); }
-
-  // Prevent accidental copies.
-  Tuple& operator=(const Tuple&) = delete;
 
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
@@ -531,21 +546,6 @@ struct Array {
   std::string toString() const;
 };
 
-struct Rtt {
-  // An Rtt can have no depth specified
-  static constexpr uint32_t NoDepth = -1;
-  uint32_t depth;
-  HeapType heapType;
-  Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
-  Rtt(uint32_t depth, HeapType heapType) : depth(depth), heapType(heapType) {}
-  bool operator==(const Rtt& other) const {
-    return depth == other.depth && heapType == other.heapType;
-  }
-  bool operator!=(const Rtt& other) const { return !(*this == other); }
-  bool hasDepth() const { return depth != uint32_t(NoDepth); }
-  std::string toString() const;
-};
-
 // TypeBuilder - allows for the construction of recursive types. Contains a
 // table of `n` mutable HeapTypes and can construct temporary types that are
 // backed by those HeapTypes, refering to them by reference. Those temporary
@@ -593,27 +593,53 @@ struct TypeBuilder {
   HeapType getTempHeapType(size_t i);
 
   // Gets a temporary type or heap type for use in initializing the
-  // TypeBuilder's HeapTypes. For Ref and Rtt types, the HeapType may be a
-  // temporary HeapType owned by this builder or a canonical HeapType.
+  // TypeBuilder's HeapTypes. For Ref types, the HeapType may be a temporary
+  // HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
   Type getTempRefType(HeapType heapType, Nullability nullable);
-  Type getTempRttType(Rtt rtt);
 
   // In nominal mode, or for nominal types, declare the HeapType being built at
   // index `i` to be an immediate subtype of the HeapType being built at index
   // `j`. Does nothing for equirecursive types.
   void setSubType(size_t i, size_t j);
 
-  // Make this type nominal in the sense of the Milestone 4 GC spec, independent
-  // of the current TypeSystem configuration.
-  void setNominal(size_t i);
+  // Create a new recursion group covering slots [i, i + length). Groups must
+  // not overlap or go out of bounds.
+  void createRecGroup(size_t i, size_t length);
+
+  enum class ErrorReason {
+    // There is a cycle in the supertype relation.
+    SelfSupertype,
+    // The declared supertype of a type is invalid.
+    InvalidSupertype,
+    // The declared supertype is an invalid forward reference.
+    ForwardSupertypeReference,
+    // A child of the type is an invalid forward reference.
+    ForwardChildReference,
+  };
+
+  struct Error {
+    // The index of the type causing the failure.
+    size_t index;
+    ErrorReason reason;
+  };
+
+  struct BuildResult : std::variant<std::vector<HeapType>, Error> {
+    operator bool() const {
+      return bool(std::get_if<std::vector<HeapType>>(this));
+    }
+    const std::vector<HeapType>& operator*() const {
+      return std::get<std::vector<HeapType>>(*this);
+    }
+    const Error* getError() const { return std::get_if<Error>(this); }
+  };
 
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
   // mode, all of the constructed HeapTypes will be fresh and distinct. In
   // nominal mode, will also produce a fatal error if the declared subtype
   // relationships are not valid.
-  std::vector<HeapType> build();
+  BuildResult build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType
   // and getTempHeapType methods.
@@ -646,23 +672,21 @@ struct TypeBuilder {
       builder.setSubType(index, other.index);
       return *this;
     }
-    Entry& setNominal() {
-      builder.setNominal(index);
-      return *this;
-    }
   };
 
   Entry operator[](size_t i) { return Entry{*this, i}; }
 };
 
 std::ostream& operator<<(std::ostream&, Type);
+std::ostream& operator<<(std::ostream&, Type::Printed);
 std::ostream& operator<<(std::ostream&, HeapType);
+std::ostream& operator<<(std::ostream&, HeapType::Printed);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, Rtt);
+std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
 
 } // namespace wasm
 
@@ -696,9 +720,9 @@ template<> class hash<wasm::HeapType> {
 public:
   size_t operator()(const wasm::HeapType&) const;
 };
-template<> class hash<wasm::Rtt> {
+template<> class hash<wasm::RecGroup> {
 public:
-  size_t operator()(const wasm::Rtt&) const;
+  size_t operator()(const wasm::RecGroup&) const;
 };
 
 } // namespace std

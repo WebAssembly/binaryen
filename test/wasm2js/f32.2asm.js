@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -10,7 +11,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0(x, y) {
@@ -80,14 +80,12 @@ function asmFunc(env) {
   var$1 = Math_fround(Math_floor(var$0));
   var$2 = Math_fround(var$0 - var$1);
   if (!(var$2 < Math_fround(.5))) {
-   block : {
-    var$0 = Math_fround(Math_ceil(var$0));
-    if (var$2 > Math_fround(.5)) {
-     return Math_fround(var$0)
-    }
-    var$2 = Math_fround(var$1 * Math_fround(.5));
-    var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
+   var$0 = Math_fround(Math_ceil(var$0));
+   if (var$2 > Math_fround(.5)) {
+    return Math_fround(var$0)
    }
+   var$2 = Math_fround(var$1 * Math_fround(.5));
+   var$1 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0) ? var$1 : var$0;
   }
   return Math_fround(var$1);
  }
@@ -107,8 +105,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var add = retasmFunc.add;
 export var sub = retasmFunc.sub;
 export var mul = retasmFunc.mul;

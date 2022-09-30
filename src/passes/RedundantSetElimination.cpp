@@ -67,6 +67,9 @@ struct RedundantSetElimination
 
   Index numLocals;
 
+  // In rare cases we make a change to a type that requires a refinalize.
+  bool refinalize = false;
+
   // cfg traversal work
 
   static void doVisitLocalSet(RedundantSetElimination* self,
@@ -94,6 +97,10 @@ struct RedundantSetElimination
     flowValues(func);
     // remove redundant sets
     optimize();
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
   }
 
   // Use a value numbering for the values of expressions.
@@ -175,9 +182,9 @@ struct RedundantSetElimination
             std::cout << "new param value for " << i << '\n';
 #endif
             start[i] = getUniqueValue();
-          } else if (type.isNonNullable()) {
+          } else if (!LiteralUtils::canMakeZero(type)) {
 #ifdef RSE_DEBUG
-            std::cout << "new unique value for non-nullable " << i << '\n';
+            std::cout << "new unique value for non-zeroable " << i << '\n';
 #endif
             start[i] = getUniqueValue();
           } else {
@@ -346,6 +353,20 @@ struct RedundantSetElimination
       drop->value = value;
       drop->finalize();
     } else {
+      // If we are replacing the set with something of a more specific type,
+      // then we need to refinalize, for example:
+      //
+      //  (struct.get $X 0
+      //    (local.tee $x
+      //      (..something of type $Y, a subtype of $X..)
+      //    )
+      //  )
+      //
+      // After the replacement the struct.get will read from $Y, whose field may
+      // have a more refined type.
+      if (value->type != set->type) {
+        refinalize = true;
+      }
       *setp = value;
     }
   }

@@ -95,13 +95,18 @@ struct InliningOptions {
   Index partialInliningIfs = 0;
 };
 
+// Forward declaration for FuncEffectsMap.
+class EffectAnalyzer;
+
+using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
+
 struct PassOptions {
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
   // Whether to run the validator to check for errors.
   bool validate = true;
   // When validating validate globally and not just locally
-  bool validateGlobally = false;
+  bool validateGlobally = true;
   // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int optimizeLevel = 0;
   // 0, 1, 2 correspond to -O0, -Os, -Oz
@@ -140,6 +145,25 @@ struct PassOptions {
   // neither of those can happen (and it is undefined behavior if they do).
   //
   // TODO: deprecate and remove ignoreImplicitTraps.
+  //
+  // Since trapsNeverHappen assumes a trap is never reached, it can in principle
+  // remove code like this:
+  //
+  //   (i32.store ..)
+  //   (unreachable)
+  //
+  // The trap isn't reached, by assumption, and if we reach the store then we'd
+  // reach the trap, so we can assume that isn't reached either, and TNH can
+  // remove both. We do have a specific limitation here, however, which is that
+  // trapsNeverHappen cannot remove calls to *imports*. We assume that an import
+  // might do things we cannot understand, so we never eliminate it. For
+  // example, in LLVM output we might see this:
+  //
+  //   (call $abort) ;; a noreturn import - the process is halted with an error
+  //   (unreachable)
+  //
+  // That trap is never actually reached since the abort halts execution. In TNH
+  // we can remove the trap but not the call right before it.
   bool trapsNeverHappen = false;
   // Optimize assuming that the low 1K of memory is not valid memory for the
   // application to use. In that case, we can optimize load/store offsets in
@@ -166,10 +190,21 @@ struct PassOptions {
   // passes.
   std::map<std::string, std::string> arguments;
 
+  // Effect info computed for functions. One pass can generate this and then
+  // other passes later can benefit from it. It is up to the sequence of passes
+  // to update or discard this when necessary - in particular, when new effects
+  // are added to a function this must be changed or we may optimize
+  // incorrectly (however, it is extremely rare for a pass to *add* effects;
+  // passes normally only remove effects).
+  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
+
+  // -Os is our default
+  static constexpr const int DEFAULT_OPTIMIZE_LEVEL = 2;
+  static constexpr const int DEFAULT_SHRINK_LEVEL = 1;
+
   void setDefaultOptimizationOptions() {
-    // -Os is our default
-    optimizeLevel = 2;
-    shrinkLevel = 1;
+    optimizeLevel = DEFAULT_OPTIMIZE_LEVEL;
+    shrinkLevel = DEFAULT_SHRINK_LEVEL;
   }
 
   static PassOptions getWithDefaultOptimizationOptions() {
@@ -382,6 +417,15 @@ public:
   // Some passes modify the wasm in a way that we cannot update DWARF properly
   // for. This is used to issue a proper warning about that.
   virtual bool invalidatesDWARF() { return false; }
+
+  // Whether this pass modifies Binaryen IR in ways that may require fixups for
+  // non-nullable locals to validate according to the wasm spec. If the pass
+  // adds locals not in that form, or moves code around in ways that might break
+  // that validation, this must return true. In that case the pass runner will
+  // automatically run the necessary fixups afterwards.
+  //
+  // For more details see the LocalStructuralDominance class.
+  virtual bool requiresNonNullableLocalFixups() { return true; }
 
   std::string name;
 

@@ -42,7 +42,7 @@ struct TrapException {};
 // GC memory may be allocated, but hosts have limits.)
 struct HostLimitException {};
 
-struct ShellExternalInterface : ModuleInstance::ExternalInterface {
+struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
   // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
   // properly. Avoid emitting unaligned load/store by checking for alignment
@@ -57,8 +57,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
       return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
     }
-    Memory(Memory&) = delete;
-    Memory& operator=(const Memory&) = delete;
 
   public:
     Memory() = default;
@@ -92,19 +90,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
         return loaded;
       }
     }
-  } memory;
+  };
 
+  std::map<Name, Memory> memories;
   std::unordered_map<Name, std::vector<Literal>> tables;
-  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances;
 
   ShellExternalInterface(
-    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances_ = {})
-    : memory() {
+    std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances_ = {}) {
     linkedInstances.swap(linkedInstances_);
   }
   virtual ~ShellExternalInterface() = default;
 
-  ModuleInstance* getImportInstance(Importable* import) {
+  ModuleRunner* getImportInstance(Importable* import) {
     auto it = linkedInstances.find(import->module);
     if (it == linkedInstances.end()) {
       Fatal() << "importGlobals: unknown import: " << import->module.str << "."
@@ -113,10 +111,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return it->second.get();
   }
 
-  void init(Module& wasm, ModuleInstance& instance) override {
-    if (wasm.memory.exists && !wasm.memory.imported()) {
-      memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-    }
+  void init(Module& wasm, ModuleRunner& instance) override {
+    ModuleUtils::iterDefinedMemories(wasm, [&](wasm::Memory* memory) {
+      auto shellMemory = Memory();
+      shellMemory.resize(memory->initial * wasm::Memory::kPageSize);
+      memories[memory->name] = shellMemory;
+    });
     ModuleUtils::iterDefinedTables(
       wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
   }
@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, LiteralList& arguments) override {
+  Literals callImport(Function* import, Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -153,9 +153,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   Literals callTable(Name tableName,
                      Index index,
                      HeapType sig,
-                     LiteralList& arguments,
+                     Literals& arguments,
                      Type results,
-                     ModuleInstance& instance) override {
+                     ModuleRunner& instance) override {
 
     auto it = tables.find(tableName);
     if (it == tables.end()) {
@@ -195,31 +195,91 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
-  int8_t load8s(Address addr) override { return memory.get<int8_t>(addr); }
-  uint8_t load8u(Address addr) override { return memory.get<uint8_t>(addr); }
-  int16_t load16s(Address addr) override { return memory.get<int16_t>(addr); }
-  uint16_t load16u(Address addr) override { return memory.get<uint16_t>(addr); }
-  int32_t load32s(Address addr) override { return memory.get<int32_t>(addr); }
-  uint32_t load32u(Address addr) override { return memory.get<uint32_t>(addr); }
-  int64_t load64s(Address addr) override { return memory.get<int64_t>(addr); }
-  uint64_t load64u(Address addr) override { return memory.get<uint64_t>(addr); }
-  std::array<uint8_t, 16> load128(Address addr) override {
+  int8_t load8s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<int8_t>(addr);
+  }
+  uint8_t load8u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<uint8_t>(addr);
+  }
+  int16_t load16s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<int16_t>(addr);
+  }
+  uint16_t load16u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<uint16_t>(addr);
+  }
+  int32_t load32s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<int32_t>(addr);
+  }
+  uint32_t load32u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<uint32_t>(addr);
+  }
+  int64_t load64s(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<int64_t>(addr);
+  }
+  uint64_t load64u(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
+    return memory.get<uint64_t>(addr);
+  }
+  std::array<uint8_t, 16> load128(Address addr, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
     return memory.get<std::array<uint8_t, 16>>(addr);
   }
 
-  void store8(Address addr, int8_t value) override {
+  void store8(Address addr, int8_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
     memory.set<int8_t>(addr, value);
   }
-  void store16(Address addr, int16_t value) override {
+  void store16(Address addr, int16_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
     memory.set<int16_t>(addr, value);
   }
-  void store32(Address addr, int32_t value) override {
+  void store32(Address addr, int32_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
     memory.set<int32_t>(addr, value);
   }
-  void store64(Address addr, int64_t value) override {
+  void store64(Address addr, int64_t value, Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
     memory.set<int64_t>(addr, value);
   }
-  void store128(Address addr, const std::array<uint8_t, 16>& value) override {
+  void store128(Address addr,
+                const std::array<uint8_t, 16>& value,
+                Name memoryName) override {
+    auto it = memories.find(memoryName);
+    assert(it != memories.end());
+    auto& memory = it->second;
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
@@ -250,12 +310,18 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     return table[index];
   }
 
-  bool growMemory(Address /*oldSize*/, Address newSize) override {
+  bool
+  growMemory(Name memoryName, Address /*oldSize*/, Address newSize) override {
     // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
     // interpreter.
     if (newSize > 1024 * 1024 * 1024) {
       return false;
     }
+    auto it = memories.find(memoryName);
+    if (it == memories.end()) {
+      trap("growMemory on non-existing memory");
+    }
+    auto& memory = it->second;
     memory.resize(newSize);
     return true;
   }

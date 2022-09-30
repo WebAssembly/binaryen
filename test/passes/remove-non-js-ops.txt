@@ -17,6 +17,7 @@
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
  (import "env" "wasm2js_scratch_load_i32" (func $wasm2js_scratch_load_i32 (param i32) (result i32)))
  (import "env" "wasm2js_scratch_store_i32" (func $wasm2js_scratch_store_i32 (param i32 i32)))
  (import "env" "wasm2js_scratch_load_f32" (func $wasm2js_scratch_load_f32 (result f32)))
@@ -30,6 +31,7 @@
  (import "env" "wasm2js_atomic_wait_i32" (func $wasm2js_atomic_wait_i32 (param i32 i32 i32 i32) (result i32)))
  (import "env" "wasm2js_atomic_rmw_i64" (func $wasm2js_atomic_rmw_i64 (param i32 i32 i32 i32 i32 i32) (result i32)))
  (import "env" "wasm2js_get_stashed_bits" (func $wasm2js_get_stashed_bits (result i32)))
+ (import "env" "wasm2js_trap" (func $wasm2js_trap))
  (global $__wasm-intrinsics-temp-i64 (mut i64) (i64.const 0))
  (memory $0 1)
  (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
@@ -377,7 +379,7 @@
                 )
                )
               )
-              (block $block
+              (block
                (br_if $label$11
                 (i32.eqz
                  (local.tee $var$3
@@ -671,7 +673,7 @@
     (block $label$13
      (if
       (local.get $var$2)
-      (block $block3
+      (block
        (local.set $var$8
         (i64.add
          (local.get $var$1)
@@ -831,7 +833,7 @@
      (f32.const 0.5)
     )
    )
-   (block $block
+   (block
     (local.set $var$0
      (f32.ceil
       (local.get $var$0)
@@ -889,7 +891,7 @@
      (f64.const 0.5)
     )
    )
-   (block $block
+   (block
     (local.set $var$0
      (f64.ceil
       (local.get $var$0)

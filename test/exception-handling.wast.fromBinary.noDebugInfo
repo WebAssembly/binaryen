@@ -3,11 +3,11 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (type $anyref_=>_none (func (param anyref)))
+ (type $eqref_=>_none (func (param eqref)))
  (tag $tag$0 (param i32))
  (tag $tag$1 (param i64))
  (tag $tag$2 (param i32 i64))
- (tag $tag$3 (param anyref))
+ (tag $tag$3 (param eqref))
  (tag $tag$4 (param))
  (func $0
   (nop)
@@ -403,7 +403,7 @@
    )
    (catch $tag$3
     (drop
-     (pop anyref)
+     (pop eqref)
     )
    )
   )
@@ -423,6 +423,19 @@
     )
    )
   )
+ )
+ (func $7
+  (block $label$1
+   (block $label$2
+   )
+   (try $label$5
+    (do
+     (nop)
+    )
+    (delegate 1)
+   )
+  )
+  (nop)
  )
 )
 

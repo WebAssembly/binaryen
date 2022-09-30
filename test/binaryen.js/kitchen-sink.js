@@ -68,24 +68,6 @@ function test_types() {
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
   console.log("  //", binaryen.expandType(binaryen.v128).join(","));
 
-  console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
-  console.log("  //", binaryen.expandType(binaryen.funcref).join(","));
-
-  console.log("  // BinaryenTypeExternref: " + binaryen.externref);
-  console.log("  //", binaryen.expandType(binaryen.externref).join(","));
-
-  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
-
-  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
-  console.log("  //", binaryen.expandType(binaryen.eqref).join(","));
-
-  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
-  console.log("  //", binaryen.expandType(binaryen.i31ref).join(","));
-
-  console.log("  // BinaryenTypeDataref: " + binaryen.dataref);
-  console.log("  //", binaryen.expandType(binaryen.dataref).join(","));
-
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
@@ -114,8 +96,10 @@ function test_features() {
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
   console.log("Features.GC: " + binaryen.Features.GC);
   console.log("Features.Memory64: " + binaryen.Features.Memory64);
-  console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
+  console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
+  console.log("Features.Strings: " + binaryen.Features.Strings);
+  console.log("Features.MultiMemories: " + binaryen.Features.MultiMemories);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -179,8 +163,6 @@ function test_ids() {
   console.log("RefTestId: " + binaryen.RefTestId);
   console.log("RefCastId: " + binaryen.RefCastId);
   console.log("BrOnId: " + binaryen.BrOnId);
-  console.log("RttCanonId: " + binaryen.RttCanonId);
-  console.log("RttSubId: " + binaryen.RttSubId);
   console.log("StructNewId: " + binaryen.StructNewId);
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);
@@ -189,6 +171,21 @@ function test_ids() {
   console.log("ArrayGetId: " + binaryen.ArrayGetId);
   console.log("ArraySetId: " + binaryen.ArraySetId);
   console.log("ArrayLenId: " + binaryen.ArrayLenId);
+  console.log("ArrayCopy: " + binaryen.ArrayCopyId);
+  console.log("RefAs: " + binaryen.RefAsId);
+  console.log("StringNew: " + binaryen.StringNewId);
+  console.log("StringConst: " + binaryen.StringConstId);
+  console.log("StringMeasure: " + binaryen.StringMeasureId);
+  console.log("StringEncode: " + binaryen.StringEncodeId);
+  console.log("StringConcat: " + binaryen.StringConcatId);
+  console.log("StringEq: " + binaryen.StringEqId);
+  console.log("StringAs: " + binaryen.StringAsId);
+  console.log("StringWTF8Advance: " + binaryen.StringWTF8AdvanceId);
+  console.log("StringWTF16Get: " + binaryen.StringWTF16GetId);
+  console.log("StringIterNext: " + binaryen.StringIterNextId);
+  console.log("StringIterMove: " + binaryen.StringIterMoveId);
+  console.log("StringSliceWTF: " + binaryen.StringSliceWTFId);
+  console.log("StringSliceIter: " + binaryen.StringSliceIterId);
 }
 
 function test_core() {
@@ -196,6 +193,19 @@ function test_core() {
   // Module creation
 
   module = new binaryen.Module();
+  // Memory
+  module.setMemory(1, 256, "mem", [
+    {
+      passive: false,
+      offset: module.i32.const(10),
+      data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
+    },
+    {
+      passive: true,
+      offset: null,
+      data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
+    }
+  ], true);
 
   // Create a tag
   var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
@@ -649,6 +659,10 @@ function test_core() {
     module.eqref.pop(),
     module.i31ref.pop(),
     module.dataref.pop(),
+    module.stringref.pop(),
+    module.stringview_wtf8.pop(),
+    module.stringview_wtf16.pop(),
+    module.stringview_iter.pop(),
 
     // Memory
     module.memory.size(),
@@ -736,21 +750,6 @@ function test_core() {
   module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
-
-  // Memory. One per module
-
-  module.setMemory(1, 256, "mem", [
-    {
-      passive: false,
-      offset: module.i32.const(10),
-      data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
-    },
-    {
-      passive: true,
-      offset: null,
-      data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
-    }
-  ], true);
 
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
@@ -1090,9 +1089,9 @@ function test_for_each() {
     assert(module.getExportByIndex(i) === exps[i]);
   }
 
-  var expected_offsets = [10, 125];
-  var expected_data = ["hello, world", "segment data 2"];
-  var expected_passive = [false, false];
+  var expected_offsets = [10, 125, null];
+  var expected_data = ["hello, world", "segment data 2", "hello, passive"];
+  var expected_passive = [false, false, true];
 
   var glos = [
     module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1])),
@@ -1114,6 +1113,11 @@ function test_for_each() {
       passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
+    },
+    {
+      passive: expected_passive[2],
+      offset: expected_offsets[2],
+      data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
@@ -1150,6 +1154,7 @@ function test_for_each() {
 
 function test_expression_info() {
   module = new binaryen.Module();
+  module.setMemory(1, 1, null);
 
   // Issue #2392
   console.log("getExpressionInfo(memory.grow)=" + JSON.stringify(binaryen.getExpressionInfo(module.memory.grow(1))));

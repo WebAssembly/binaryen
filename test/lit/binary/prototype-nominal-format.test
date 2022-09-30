@@ -1,0 +1,27 @@
+;; Test the we can properly parse the prototype nominal binary format that we no
+;; longer emit.
+
+;; RUN: wasm-dis %s.wasm -all --nominal | filecheck %s
+
+;; CHECK:      (module
+;; CHECK-NEXT:  (type $super-struct (struct_subtype (field i32) data))
+;; CHECK-NEXT:  (type $sub-struct (struct_subtype (field i32) (field i64) data))
+;; CHECK-NEXT:  (type $none_=>_ref|$super-struct| (func_subtype (result (ref $super-struct)) func))
+;; CHECK-NEXT:  (type $none_=>_ref|$sub-struct| (func_subtype (result (ref $sub-struct)) func))
+;; CHECK-NEXT:  (type $none_=>_ref|$super-array| (func_subtype (result (ref $super-array)) func))
+;; CHECK-NEXT:  (type $none_=>_ref|$sub-array| (func_subtype (result (ref $sub-array)) func))
+;; CHECK-NEXT:  (type $super-array (array_subtype (ref $super-struct) data))
+;; CHECK-NEXT:  (type $sub-array (array_subtype (ref $sub-struct) data))
+;; CHECK-NEXT:  (func $make-super-struct (type $none_=>_ref|$super-struct|) (result (ref $super-struct))
+;; CHECK-NEXT:   (call $make-sub-struct)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (func $make-sub-struct (type $none_=>_ref|$sub-struct|) (result (ref $sub-struct))
+;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (func $make-super-array (type $none_=>_ref|$super-array|) (result (ref $super-array))
+;; CHECK-NEXT:   (call $make-sub-array)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (func $make-sub-array (type $none_=>_ref|$sub-array|) (result (ref $sub-array))
+;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )

@@ -41,12 +41,12 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
 
   void analyze(Function* func) {
     auto num = func->getNumLocals();
+    numSets.clear();
     numSets.resize(num);
-    std::fill(numSets.begin(), numSets.end(), 0);
+    numGets.clear();
     numGets.resize(num);
-    std::fill(numGets.begin(), numGets.end(), 0);
+    sfa.clear();
     sfa.resize(num);
-    std::fill(sfa.begin(), sfa.begin() + func->getNumParams(), false);
     std::fill(sfa.begin() + func->getNumParams(), sfa.end(), true);
     walk(func->body);
     for (Index i = 0; i < num; i++) {
@@ -161,11 +161,21 @@ private:
     // everything that matters if you want to be pushed past the pushPoint
     EffectAnalyzer cumulativeEffects(passOptions, module);
     cumulativeEffects.walk(list[pushPoint]);
-    // it is ok to ignore the branching here, that is the crucial point of this
-    // opt
-    // TODO: it would be ok to ignore thrown exceptions here, if we know they
-    //       could not be caught and must go outside of the function
-    cumulativeEffects.ignoreBranches();
+    // It is ok to ignore branching out of the block here, that is the crucial
+    // point of this optimization. That is, we are in a situation like this:
+    //
+    // {
+    //   x = value;
+    //   if (..) break;
+    //   foo(x);
+    // }
+    //
+    // If the branch is taken, then that's fine, it will jump out of this block
+    // and reach some outer scope, and in that case we never need x at all
+    // (since we've proven before that x is not used outside of this block, see
+    // numGetsSoFar which we use for that). Similarly, control flow could
+    // transfer away via a return or an exception and that would be ok as well.
+    cumulativeEffects.ignoreControlFlowTransfers();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
@@ -234,6 +244,11 @@ private:
 struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass moves code forward in blocks, but a local.set would not be moved
+  // after a local.get with the same index (effects prevent breaking things that
+  // way), so validation will be preserved.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   Pass* create() override { return new CodePushing; }
 
   LocalAnalyzer analyzer;
@@ -245,8 +260,8 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     // pre-scan to find which vars are sfa, and also count their gets&sets
     analyzer.analyze(func);
     // prepare to walk
+    numGetsSoFar.clear();
     numGetsSoFar.resize(func->getNumLocals());
-    std::fill(numGetsSoFar.begin(), numGetsSoFar.end(), 0);
     // walk and optimize
     walk(func->body);
   }

@@ -37,7 +37,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
@@ -45,6 +44,7 @@
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "param-utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -86,19 +86,8 @@ struct DAEFunctionInfo {
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
 
-// Information in a basic block
-struct DAEBlockInfo {
-  // A local may be read, written, or not accessed in this block.
-  // If it is both read and written, we just care about the first
-  // action (if it is read first, that's all the info we are
-  // looking for; if it is written first, it can't be read later).
-  enum LocalUse { Read, Written };
-  std::unordered_map<Index, LocalUse> localUses;
-};
-
 struct DAEScanner
-  : public WalkerPass<
-      CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
+  : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DAEScanner(infoMap); }
@@ -109,28 +98,6 @@ struct DAEScanner
   DAEFunctionInfo* info;
 
   Index numParams;
-
-  // cfg traversal work
-
-  void visitLocalGet(LocalGet* curr) {
-    if (currBasicBlock) {
-      auto& localUses = currBasicBlock->contents.localUses;
-      auto index = curr->index;
-      if (localUses.count(index) == 0) {
-        localUses[index] = DAEBlockInfo::Read;
-      }
-    }
-  }
-
-  void visitLocalSet(LocalSet* curr) {
-    if (currBasicBlock) {
-      auto& localUses = currBasicBlock->contents.localUses;
-      auto index = curr->index;
-      if (localUses.count(index) == 0) {
-        localUses[index] = DAEBlockInfo::Written;
-      }
-    }
-  }
 
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
@@ -176,8 +143,7 @@ struct DAEScanner
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
     info = &((*infoMap)[func->name]);
-    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
-      func);
+    PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
     // If there are relevant params, check if they are used. If we can't
     // optimize the function anyhow, there's no point (note that our check here
     // is technically racy - another thread could update hasUnseenCalls to true
@@ -189,68 +155,11 @@ struct DAEScanner
     // part of, say if we are exported, or if another parallel function finds a
     // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      findUnusedParams();
-    }
-  }
-
-  void findUnusedParams() {
-    // Flow the incoming parameter values, see if they reach a read.
-    // Once we've seen a parameter at a block, we need never consider it there
-    // again.
-    std::unordered_map<BasicBlock*, SortedVector> seenBlockIndexes;
-    // Start with all the incoming parameters.
-    SortedVector initial;
-    for (Index i = 0; i < numParams; i++) {
-      initial.push_back(i);
-    }
-    // The used params, which we now compute.
-    std::unordered_set<Index> usedParams;
-    // An item of work is a block plus the values arriving there.
-    typedef std::pair<BasicBlock*, SortedVector> Item;
-    std::vector<Item> work;
-    work.emplace_back(entry, initial);
-    while (!work.empty()) {
-      auto [block, indexes] = std::move(work.back());
-      work.pop_back();
-      // Ignore things we've already seen, or we've already seen to be used.
-      auto& seenIndexes = seenBlockIndexes[block];
-      indexes.filter([&](const Index i) {
-        if (seenIndexes.has(i) || usedParams.count(i)) {
-          return false;
-        } else {
-          seenIndexes.insert(i);
-          return true;
+      auto usedParams = ParamUtils::getUsedParams(func);
+      for (Index i = 0; i < numParams; i++) {
+        if (usedParams.count(i) == 0) {
+          info->unusedParams.insert(i);
         }
-      });
-      if (indexes.empty()) {
-        continue; // nothing more to flow
-      }
-      auto& localUses = block->contents.localUses;
-      SortedVector remainingIndexes;
-      for (auto i : indexes) {
-        auto iter = localUses.find(i);
-        if (iter != localUses.end()) {
-          auto use = iter->second;
-          if (use == DAEBlockInfo::Read) {
-            usedParams.insert(i);
-          }
-          // Whether it was a read or a write, we can stop looking at that local
-          // here.
-        } else {
-          remainingIndexes.insert(i);
-        }
-      }
-      // If there are remaining indexes, flow them forward.
-      if (!remainingIndexes.empty()) {
-        for (auto* next : block->out) {
-          work.emplace_back(next, remainingIndexes);
-        }
-      }
-    }
-    // We can now compute the unused params.
-    for (Index i = 0; i < numParams; i++) {
-      if (usedParams.count(i) == 0) {
-        info->unusedParams.insert(i);
       }
     }
   }
@@ -316,7 +225,6 @@ struct DAE : public Pass {
         continue;
       }
       auto* func = module->getFunction(name);
-      auto numParams = func->getNumParams();
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
@@ -325,39 +233,12 @@ struct DAE : public Pass {
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
       }
-      // Check if all calls pass the same constant for a particular argument.
-      for (Index i = 0; i < numParams; i++) {
-        Literal value;
-        for (auto* call : calls) {
-          assert(call->target == name);
-          assert(call->operands.size() == numParams);
-          auto* operand = call->operands[i];
-          // TODO: refnull etc.
-          if (auto* c = operand->dynCast<Const>()) {
-            if (value.type == Type::none) {
-              // This is the first value seen.
-              value = c->value;
-            } else if (value != c->value) {
-              // Not identical, give up
-              value = Literal(Type::none);
-              break;
-            }
-          } else {
-            // Not a constant, give up
-            value = Literal(Type::none);
-            break;
-          }
-        }
-        if (value.type != Type::none) {
-          // Success! We can just apply the constant in the function, which
-          // makes the parameter value unused, which lets us remove it later.
-          Builder builder(*module);
-          func->body = builder.makeSequence(
-            builder.makeLocalSet(i, builder.makeConst(value)), func->body);
-          // Mark it as unused, which we know it now is (no point to
-          // re-scan just for that).
-          infoMap[name].unusedParams.insert(i);
-        }
+      auto optimizedIndexes =
+        ParamUtils::applyConstantValues({func}, calls, {}, module);
+      for (auto i : optimizedIndexes) {
+        // Mark it as unused, which we know it now is (no point to re-scan just
+        // for that).
+        infoMap[name].unusedParams.insert(i);
       }
     }
     if (refinedReturnTypes) {
@@ -378,37 +259,11 @@ struct DAE : public Pass {
       if (numParams == 0) {
         continue;
       }
-      // Iterate downwards, as we may remove more than one.
-      Index i = numParams - 1;
-      while (1) {
-        if (infoMap[name].unusedParams.has(i)) {
-          // Great, it's not used. Check if none of the calls has a param with
-          // side effects, as that would prevent us removing them (flattening
-          // should have been done earlier).
-          bool callParamsAreValid =
-            std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-              auto* operand = call->operands[i];
-              return EffectAnalyzer(runner->options, *module, operand)
-                .hasSideEffects();
-            });
-          // The type must be valid for us to handle as a local (since we
-          // replace the parameter with a local).
-          // TODO: if there are no references at all, we can avoid creating a
-          //       local
-          bool typeIsValid =
-            TypeUpdating::canHandleAsLocal(func->getLocalType(i));
-          if (callParamsAreValid && typeIsValid) {
-            // Wonderful, nothing stands in our way! Do it.
-            // TODO: parallelize this?
-            removeParameter(func, i, calls);
-            TypeUpdating::handleNonDefaultableLocals(func, *module);
-            changed.insert(func);
-          }
-        }
-        if (i == 0) {
-          break;
-        }
-        i--;
+      auto removedIndexes = ParamUtils::removeParameters(
+        {func}, infoMap[name].unusedParams, calls, {}, module, runner);
+      if (!removedIndexes.empty()) {
+        // Success!
+        changed.insert(func);
       }
     }
     // We can also tell which calls have all their return values dropped. Note
@@ -456,42 +311,6 @@ struct DAE : public Pass {
 
 private:
   std::unordered_map<Call*, Expression**> allDroppedCalls;
-
-  void removeParameter(Function* func, Index i, std::vector<Call*>& calls) {
-    // It's cumbersome to adjust local names - TODO don't clear them?
-    Builder::clearLocalNames(func);
-    // Remove the parameter from the function. We must add a new local
-    // for uses of the parameter, but cannot make it use the same index
-    // (in general).
-    auto paramsType = func->getParams();
-    std::vector<Type> params(paramsType.begin(), paramsType.end());
-    auto type = params[i];
-    params.erase(params.begin() + i);
-    func->setParams(Type(params));
-    Index newIndex = Builder::addVar(func, type);
-    // Update local operations.
-    struct LocalUpdater : public PostWalker<LocalUpdater> {
-      Index removedIndex;
-      Index newIndex;
-      LocalUpdater(Function* func, Index removedIndex, Index newIndex)
-        : removedIndex(removedIndex), newIndex(newIndex) {
-        walk(func->body);
-      }
-      void visitLocalGet(LocalGet* curr) { updateIndex(curr->index); }
-      void visitLocalSet(LocalSet* curr) { updateIndex(curr->index); }
-      void updateIndex(Index& index) {
-        if (index == removedIndex) {
-          index = newIndex;
-        } else if (index > removedIndex) {
-          index--;
-        }
-      }
-    } localUpdater(func, i, newIndex);
-    // Remove the arguments from the calls.
-    for (auto* call : calls) {
-      call->operands.erase(call->operands.begin() + i);
-    }
-  }
 
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {

@@ -52,9 +52,16 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       // We don't check nullability here.
       case BrOnNull:
       case BrOnNonNull:
-      // Casts can only be known at runtime using RTTs.
-      case BrOnCast:
       case BrOnCastFail:
+        flip = true;
+        [[fallthrough]];
+      case BrOnCast:
+        // Note that the type must be non-nullable for us to succeed since a
+        // null would make us fail.
+        if (Type::isSubType(br->ref->type,
+                            Type(br->intendedType, NonNullable))) {
+          return flip ? Failure : Success;
+        }
         return Unknown;
       case BrOnNonFunc:
         flip = true;
@@ -93,7 +100,7 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
         expected = I31;
         break;
       default:
-        WASM_UNREACHABLE("unhandled BrOn");
+        WASM_UNREACHABLE("unhandled RefIs");
     }
     child = is->value;
   } else if (auto* as = curr->dynCast<RefAs>()) {
@@ -110,8 +117,12 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       case RefAsI31:
         expected = I31;
         break;
+      case ExternInternalize:
+      case ExternExternalize:
+        // These instructions can never be removed.
+        return Unknown;
       default:
-        WASM_UNREACHABLE("unhandled BrOn");
+        WASM_UNREACHABLE("unhandled RefAs");
     }
     child = as->value;
   } else {

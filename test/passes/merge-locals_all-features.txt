@@ -333,7 +333,7 @@
    (drop
     (local.get $x)
    )
-   (block $block
+   (block
     (if
      (i32.const 1)
      (local.set $x
@@ -389,11 +389,11 @@
         )
        )
        (i32.const 0)
-       (block $block (result i32)
+       (block (result i32)
         (local.set $var$3
          (if (result i32)
           (i32.const 0)
-          (block $block13 (result i32)
+          (block (result i32)
            (block $label$7
             (block $label$8
              (local.set $var$0
@@ -403,7 +403,7 @@
            )
            (local.get $var$3)
           )
-          (block $block14 (result i32)
+          (block (result i32)
            (if
             (i32.eqz
              (global.get $global$0)
@@ -459,8 +459,8 @@
  )
  (func $subtype-test
   (local $0 anyref)
-  (local $1 funcref)
-  (local $2 funcref)
+  (local $1 i31ref)
+  (local $2 i31ref)
   (local.set $0
    (local.get $1)
   )

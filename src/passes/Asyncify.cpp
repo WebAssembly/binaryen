@@ -296,6 +296,7 @@
 //      of their original range.
 //
 
+#include "asmjs/shared-constants.h"
 #include "cfg/liveness-traversal.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
@@ -793,7 +794,9 @@ static bool doesCall(Expression* curr) {
 
 class AsyncifyBuilder : public Builder {
 public:
-  AsyncifyBuilder(Module& wasm) : Builder(wasm) {}
+  Module& wasm;
+
+  AsyncifyBuilder(Module& wasm) : Builder(wasm), wasm(wasm) {}
 
   Expression* makeGetStackPos() {
     return makeLoad(4,
@@ -801,7 +804,8 @@ public:
                     int32_t(DataOffset::BStackPos),
                     4,
                     makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                    Type::i32);
+                    Type::i32,
+                    wasm.memories[0]->name);
   }
 
   Expression* makeIncStackPos(int32_t by) {
@@ -814,7 +818,8 @@ public:
       4,
       makeGlobalGet(ASYNCIFY_DATA, Type::i32),
       makeBinary(AddInt32, makeGetStackPos(), makeConst(Literal(by))),
-      Type::i32);
+      Type::i32,
+      wasm.memories[0]->name);
   }
 
   Expression* makeStateCheck(State value) {
@@ -881,9 +886,6 @@ private:
   Index callIndex = 0;
 
   Expression* process(Expression* curr) {
-    if (!analyzer->canChangeState(curr, func)) {
-      return makeMaybeSkip(curr);
-    }
     // The IR is in flat form, which makes this much simpler: there are no
     // unnecessarily nested side effects or control flow, so we can add
     // skips for rewinding in an easy manner, putting a single if around
@@ -917,85 +919,164 @@ private:
     // Note that temp locals added in this way are just normal locals, and in
     // particular they are saved and loaded. That way if we resume from the
     // first if arm we will avoid the second.
-    if (auto* block = curr->dynCast<Block>()) {
-      // At least one of our children may change the state. Clump them as
-      // necessary.
-      Index i = 0;
-      auto& list = block->list;
-      while (i < list.size()) {
-        if (analyzer->canChangeState(list[i], func)) {
-          list[i] = process(list[i]);
-          i++;
-        } else {
-          Index end = i + 1;
-          while (end < list.size() &&
-                 !analyzer->canChangeState(list[end], func)) {
-            end++;
-          }
-          // We have a range of [i, end) in which the state cannot change,
-          // so all we need to do is skip it if rewinding.
-          if (end == i + 1) {
-            list[i] = makeMaybeSkip(list[i]);
-          } else {
-            auto* block = builder->makeBlock();
-            for (auto j = i; j < end; j++) {
-              block->list.push_back(list[j]);
-            }
-            block->finalize();
-            list[i] = makeMaybeSkip(block);
-            for (auto j = i + 1; j < end; j++) {
-              list[j] = builder->makeNop();
-            }
-          }
-          i = end;
-        }
+
+    // To avoid recursion, we use stacks here. We process the work for each
+    // node in two phases as follows:
+    //
+    //  1. The "Scan" phase finds children we need to process (ones that may
+    //     change the state), and adds Scan tasks for them to the work stack.
+    //  2. The "Finish" phase runs after all children have been Scanned and
+    //     Finished. It pops the children's results from the results stack (if
+    //     there were relevant children), and then it pushes its own result.
+    //
+    struct Work {
+      Expression* curr;
+      enum { Scan, Finish } phase;
+    };
+
+    std::vector<Work> work;
+    std::vector<Expression*> results;
+    std::unordered_set<Expression*> processed;
+
+    work.push_back(Work{curr, Work::Scan});
+
+    while (!work.empty()) {
+      auto item = work.back();
+      work.pop_back();
+      processed.insert(item.curr);
+      auto* curr = item.curr;
+      auto phase = item.phase;
+
+      if (phase == Work::Scan && !analyzer->canChangeState(curr, func)) {
+        results.push_back(makeMaybeSkip(curr));
+        continue;
       }
-      return block;
-    } else if (auto* iff = curr->dynCast<If>()) {
-      // The state change cannot be in the condition due to flat form, so it
-      // must be in one of the children.
-      assert(!analyzer->canChangeState(iff->condition, func));
-      // We must linearize this, which means we pass through both arms if we
-      // are rewinding.
-      if (!iff->ifFalse) {
+
+      if (auto* block = curr->dynCast<Block>()) {
+        auto& list = block->list;
+
+        // Find the children we need to process. They will be Scanned and
+        // Finished before we reach our own Finish phase.
+        if (phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          // Add Scan tasks in reverse order, so that we process them in
+          // execution order.
+          for (size_t i = list.size(); i > 0; i--) {
+            auto* child = list[i - 1];
+            if (analyzer->canChangeState(child, func)) {
+              work.push_back(Work{child, Work::Scan});
+            }
+          }
+          continue;
+        }
+        Index i = list.size() - 1;
+        // At least one of our children may change the state. Clump them as
+        // necessary.
+        while (1) {
+          if (processed.count(list[i])) {
+            list[i] = results.back();
+            results.pop_back();
+          } else {
+            Index begin = i;
+            while (begin > 0 && !processed.count(list[begin - 1])) {
+              begin--;
+            }
+            // We have a range of [begin, i] in which the state cannot change,
+            // so all we need to do is skip it if rewinding.
+            if (begin == i) {
+              list[i] = makeMaybeSkip(list[i]);
+            } else {
+              auto* block = builder->makeBlock();
+              for (auto j = begin; j <= i; j++) {
+                block->list.push_back(list[j]);
+              }
+              block->finalize();
+              list[begin] = makeMaybeSkip(block);
+              for (auto j = begin + 1; j <= i; j++) {
+                list[j] = builder->makeNop();
+              }
+            }
+            i = begin;
+          }
+          if (i == 0) {
+            break;
+          } else {
+            i--;
+          }
+        }
+        results.push_back(block);
+        continue;
+      } else if (auto* iff = curr->dynCast<If>()) {
+        // The state change cannot be in the condition due to flat form, so it
+        // must be in one of the children.
+        assert(!analyzer->canChangeState(iff->condition, func));
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          // Add ifTrue later so that we process it first.
+          if (iff->ifFalse) {
+            work.push_back(Work{iff->ifFalse, Work::Scan});
+          }
+          work.push_back(Work{iff->ifTrue, Work::Scan});
+          continue;
+        }
+        // We must linearize this, which means we pass through both arms if we
+        // are rewinding.
+        if (!iff->ifFalse) {
+          iff->condition = builder->makeBinary(
+            OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
+          iff->ifTrue = results.back();
+          results.pop_back();
+          iff->finalize();
+          results.push_back(iff);
+          continue;
+        }
+        auto* newIfFalse = results.back();
+        results.pop_back();
+        auto* newIfTrue = results.back();
+        results.pop_back();
+        auto conditionTemp = builder->addVar(func, Type::i32);
+        // TODO: can avoid pre if the condition is a get or a const
+        auto* pre =
+          makeMaybeSkip(builder->makeLocalSet(conditionTemp, iff->condition));
+        iff->condition = builder->makeLocalGet(conditionTemp, Type::i32);
         iff->condition = builder->makeBinary(
           OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
-        iff->ifTrue = process(iff->ifTrue);
+        iff->ifTrue = newIfTrue;
+        iff->ifFalse = nullptr;
         iff->finalize();
-        return iff;
+        // Add support for the second arm as well.
+        auto* otherIf = builder->makeIf(
+          builder->makeBinary(
+            OrInt32,
+            builder->makeUnary(EqZInt32,
+                               builder->makeLocalGet(conditionTemp, Type::i32)),
+            builder->makeStateCheck(State::Rewinding)),
+          newIfFalse);
+        otherIf->finalize();
+        results.push_back(builder->makeBlock({pre, iff, otherIf}));
+        continue;
+      } else if (auto* loop = curr->dynCast<Loop>()) {
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          work.push_back(Work{loop->body, Work::Scan});
+          continue;
+        }
+        loop->body = results.back();
+        results.pop_back();
+        results.push_back(loop);
+        continue;
+      } else if (doesCall(curr)) {
+        results.push_back(makeCallSupport(curr));
+        continue;
       }
-      auto conditionTemp = builder->addVar(func, Type::i32);
-      // TODO: can avoid pre if the condition is a get or a const
-      auto* pre =
-        makeMaybeSkip(builder->makeLocalSet(conditionTemp, iff->condition));
-      iff->condition = builder->makeLocalGet(conditionTemp, Type::i32);
-      iff->condition = builder->makeBinary(
-        OrInt32, iff->condition, builder->makeStateCheck(State::Rewinding));
-      iff->ifTrue = process(iff->ifTrue);
-      auto* otherArm = iff->ifFalse;
-      iff->ifFalse = nullptr;
-      iff->finalize();
-      // Add support for the second arm as well.
-      auto* otherIf = builder->makeIf(
-        builder->makeBinary(
-          OrInt32,
-          builder->makeUnary(EqZInt32,
-                             builder->makeLocalGet(conditionTemp, Type::i32)),
-          builder->makeStateCheck(State::Rewinding)),
-        process(otherArm));
-      otherIf->finalize();
-      return builder->makeBlock({pre, iff, otherIf});
-    } else if (auto* loop = curr->dynCast<Loop>()) {
-      loop->body = process(loop->body);
-      return loop;
-    } else if (doesCall(curr)) {
-      return makeCallSupport(curr);
+      // We must handle all control flow above, and all things that can change
+      // the state, so there should be nothing that can reach here - add it
+      // earlier as necessary.
+      // std::cout << *curr << '\n';
+      WASM_UNREACHABLE("unexpected expression type");
     }
-    // We must handle all control flow above, and all things that can change
-    // the state, so there should be nothing that can reach here - add it
-    // earlier as necessary.
-    // std::cout << *curr << '\n';
-    WASM_UNREACHABLE("unexpected expression type");
+    assert(results.size() == 1);
+    return results.back();
   }
 
   // Possibly skip some code, if rewinding.
@@ -1145,8 +1226,13 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
         builder->makeIncStackPos(-4),
         builder->makeLocalSet(
           rewindIndex,
-          builder->makeLoad(
-            4, false, 0, 4, builder->makeGetStackPos(), Type::i32))));
+          builder->makeLoad(4,
+                            false,
+                            0,
+                            4,
+                            builder->makeGetStackPos(),
+                            Type::i32,
+                            getModule()->memories[0]->name))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
@@ -1267,14 +1353,6 @@ private:
 
     RelevantLiveLocalsWalker walker;
     walker.setFunction(func);
-    if (!walker.canRun(func)) {
-      // We can proceed without this optimization, which will cause more
-      // spilling - assume all locals are relevant.
-      for (Index i = 0; i < func->getNumLocals(); i++) {
-        relevantLiveLocals.insert(i);
-      }
-      return;
-    }
     walker.walkFunctionInModule(func, getModule());
     // The relevant live locals are ones that are alive at an unwind/rewind
     // location. TODO look more precisely inside basic blocks, as one might stop
@@ -1323,7 +1401,8 @@ private:
                             offset,
                             STACK_ALIGN,
                             builder->makeLocalGet(tempIndex, Type::i32),
-                            type));
+                            type,
+                            getModule()->memories[0]->name));
         offset += size;
       }
       Expression* load;
@@ -1371,7 +1450,8 @@ private:
                              STACK_ALIGN,
                              builder->makeLocalGet(tempIndex, Type::i32),
                              localGet,
-                             type));
+                             type,
+                             getModule()->memories[0]->name));
         offset += size;
         ++j;
       }
@@ -1389,7 +1469,8 @@ private:
                          4,
                          builder->makeGetStackPos(),
                          builder->makeLocalGet(tempIndex, Type::i32),
-                         Type::i32),
+                         Type::i32,
+                         getModule()->memories[0]->name),
       builder->makeIncStackPos(4));
   }
 
@@ -1414,7 +1495,7 @@ struct Asyncify : public Pass {
     bool optimize = runner->options.optimizeLevel > 0;
 
     // Ensure there is a memory, as we need it.
-    MemoryUtils::ensureExists(module->memory);
+    MemoryUtils::ensureExists(module);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
@@ -1454,6 +1535,8 @@ struct Asyncify : public Pass {
       runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
     auto verbose =
       runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
+    auto relocatable =
+      runner->options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1488,7 +1571,7 @@ struct Asyncify : public Pass {
                             verbose);
 
     // Add necessary globals before we emit code to use them.
-    addGlobals(module);
+    addGlobals(module, relocatable);
 
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
@@ -1543,16 +1626,28 @@ struct Asyncify : public Pass {
   }
 
 private:
-  void addGlobals(Module* module) {
+  void addGlobals(Module* module, bool imported) {
     Builder builder(*module);
-    module->addGlobal(builder.makeGlobal(ASYNCIFY_STATE,
-                                         Type::i32,
-                                         builder.makeConst(int32_t(0)),
-                                         Builder::Mutable));
-    module->addGlobal(builder.makeGlobal(ASYNCIFY_DATA,
-                                         Type::i32,
-                                         builder.makeConst(int32_t(0)),
-                                         Builder::Mutable));
+
+    auto asyncifyState = builder.makeGlobal(ASYNCIFY_STATE,
+                                            Type::i32,
+                                            builder.makeConst(int32_t(0)),
+                                            Builder::Mutable);
+    if (imported) {
+      asyncifyState->module = ENV;
+      asyncifyState->base = ASYNCIFY_STATE;
+    }
+    module->addGlobal(std::move(asyncifyState));
+
+    auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
+                                           Type::i32,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable);
+    if (imported) {
+      asyncifyData->module = ENV;
+      asyncifyData->base = ASYNCIFY_DATA;
+    }
+    module->addGlobal(std::move(asyncifyData));
   }
 
   void addFunctions(Module* module) {
@@ -1576,14 +1671,16 @@ private:
                          int32_t(DataOffset::BStackPos),
                          4,
                          builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                         Type::i32);
+                         Type::i32,
+                         module->memories[0]->name);
       auto* stackEnd =
         builder.makeLoad(4,
                          false,
                          int32_t(DataOffset::BStackEnd),
                          4,
                          builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                         Type::i32);
+                         Type::i32,
+                         module->memories[0]->name);
       body->list.push_back(
         builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
                        builder.makeUnreachable()));

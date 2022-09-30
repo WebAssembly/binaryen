@@ -34,7 +34,6 @@ enum Op {
   Mul,
   DivU,
   DivS,
-  Rem,
   RemU,
   RemS,
   Shl,
@@ -45,6 +44,7 @@ enum Op {
   And,
   Or,
   Xor,
+  CopySign,
   // Relational
   EqZ,
   Eq,
@@ -59,11 +59,15 @@ enum Op {
   GeU
 };
 
-inline bool hasAnyShift(BinaryOp op) {
-  return op == ShlInt32 || op == ShrSInt32 || op == ShrUInt32 ||
-         op == RotLInt32 || op == RotRInt32 || op == ShlInt64 ||
-         op == ShrSInt64 || op == ShrUInt64 || op == RotLInt64 ||
+inline bool hasAnyRotateShift(BinaryOp op) {
+  return op == RotLInt32 || op == RotRInt32 || op == RotLInt64 ||
          op == RotRInt64;
+}
+
+inline bool hasAnyShift(BinaryOp op) {
+  return hasAnyRotateShift(op) || op == ShlInt32 || op == ShrSInt32 ||
+         op == ShrUInt32 || op == ShlInt64 || op == ShrSInt64 ||
+         op == ShrUInt64;
 }
 
 inline bool hasAnyReinterpret(UnaryOp op) {
@@ -121,12 +125,6 @@ inline UnaryOp getUnary(Type type, Op op) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidUnary;
@@ -263,6 +261,8 @@ inline BinaryOp getBinary(Type type, Op op) {
           return DivFloat32;
         case DivS:
           return DivFloat32;
+        case CopySign:
+          return CopySignFloat32;
         case Eq:
           return EqFloat32;
         case Ne:
@@ -284,6 +284,8 @@ inline BinaryOp getBinary(Type type, Op op) {
           return DivFloat64;
         case DivS:
           return DivFloat64;
+        case CopySign:
+          return CopySignFloat64;
         case Eq:
           return EqFloat64;
         case Ne:
@@ -294,12 +296,6 @@ inline BinaryOp getBinary(Type type, Op op) {
       break;
     }
     case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable: {
       return InvalidBinary;

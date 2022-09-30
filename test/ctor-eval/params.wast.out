@@ -1,0 +1,7 @@
+(module
+ (type $i32_=>_none (func (param i32)))
+ (export "test1" (func $0))
+ (func $0 (param $x i32)
+  (nop)
+ )
+)

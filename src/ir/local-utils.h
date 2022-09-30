@@ -31,8 +31,8 @@ struct LocalGetCounter : public PostWalker<LocalGetCounter> {
 
   void analyze(Function* func) { analyze(func, func->body); }
   void analyze(Function* func, Expression* ast) {
+    num.clear();
     num.resize(func->getNumLocals());
-    std::fill(num.begin(), num.end(), 0);
     walk(ast);
   }
 

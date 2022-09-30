@@ -247,6 +247,7 @@ struct Updater : public PostWalker<Updater> {
   Module* module;
   std::map<Index, Index> localMapping;
   Name returnName;
+  bool isReturn;
   Builder* builder;
   void visitReturn(Return* curr) {
     replaceCurrent(builder->makeBreak(returnName, curr->value));
@@ -257,6 +258,14 @@ struct Updater : public PostWalker<Updater> {
   // not cause unbounded stack growth because inlining and return calling both
   // avoid creating a new stack frame.
   template<typename T> void handleReturnCall(T* curr, HeapType targetType) {
+    if (isReturn) {
+      // If the inlined callsite was already a return_call, then we can keep
+      // return_calls in the inlined function rather than downgrading them.
+      // That is, if A->B and B->C and both those calls are return_calls
+      // then after inlining A->B we want to now have A->C be a
+      // return_call.
+      return;
+    }
     curr->isReturn = false;
     curr->type = targetType.getSignature().results;
     if (curr->type.isConcrete()) {
@@ -329,6 +338,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   Updater updater;
   updater.module = module;
   updater.returnName = block->name;
+  updater.isReturn = call->isReturn;
   updater.builder = &builder;
   // Set up a locals mapping
   for (Index i = 0; i < from->getNumLocals(); i++) {
@@ -343,9 +353,9 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   // zero-init value
   for (Index i = 0; i < from->vars.size(); i++) {
     auto type = from->vars[i];
-    if (type.isNonNullable()) {
-      // Non-nullable locals do not need to be zeroed out. They have no zero
-      // value, and by definition should not be used before being written to, so
+    if (!LiteralUtils::canMakeZero(type)) {
+      // Non-zeroable locals do not need to be zeroed out. As they have no zero
+      // value they by definition should not be used before being written to, so
       // any value we set here would not be observed anyhow.
       continue;
     }

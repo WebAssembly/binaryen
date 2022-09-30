@@ -33,12 +33,15 @@ struct ToolOptions : public Options {
   bool quiet = false;
   IRProfile profile = IRProfile::Normal;
 
+  constexpr static const char* ToolOptionsCategory = "Tool options";
+
   ToolOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
     (*this)
       .add("--mvp-features",
            "-mvp",
            "Disable all non-MVP features",
+           ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) {
              enabledFeatures.setMVP();
@@ -47,6 +50,7 @@ struct ToolOptions : public Options {
       .add("--all-features",
            "-all",
            "Enable all features",
+           ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) {
              enabledFeatures.setAll();
@@ -55,17 +59,20 @@ struct ToolOptions : public Options {
       .add("--detect-features",
            "",
            "(deprecated - this flag does nothing)",
+           ToolOptionsCategory,
            Arguments::Zero,
            [](Options*, const std::string&) {})
       .add("--quiet",
            "-q",
            "Emit less verbose output and hide trivial warnings.",
+           ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) { quiet = true; })
       .add(
         "--experimental-poppy",
         "",
         "Parse wast files as Poppy IR for testing purposes.",
+        ToolOptionsCategory,
         Arguments::Zero,
         [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
     (*this)
@@ -82,13 +89,35 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
       .addFeature(FeatureSet::GC, "garbage collection")
       .addFeature(FeatureSet::Memory64, "memory64")
-      .addFeature(FeatureSet::TypedFunctionReferences,
-                  "typed function references")
       .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
+      .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
+      .addFeature(FeatureSet::Strings, "strings")
+      .addFeature(FeatureSet::MultiMemories, "multi-memories")
+      .add("--enable-typed-function-references",
+           "",
+           "Deprecated compatibility flag",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             std::cerr
+               << "Warning: Typed function references have been made part of "
+                  "GC and --enable-typed-function-references is deprecated\n";
+           })
+      .add("--disable-typed-function-references",
+           "",
+           "Deprecated compatibility flag",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             std::cerr
+               << "Warning: Typed function references have been made part of "
+                  "GC and --disable-typed-function-references is deprecated\n";
+           })
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
+           ToolOptionsCategory,
            Options::Arguments::Zero,
            [this](Options* o, const std::string& argument) {
              passOptions.validate = false;
@@ -97,6 +126,7 @@ struct ToolOptions : public Options {
            "-pa",
            "An argument passed along to optimization passes being run. Must be "
            "in the form KEY@VALUE",
+           ToolOptionsCategory,
            Options::Arguments::N,
            [this](Options*, const std::string& argument) {
              std::string key, value;
@@ -113,6 +143,7 @@ struct ToolOptions : public Options {
       .add("--nominal",
            "",
            "Force all GC type definitions to be parsed as nominal.",
+           ToolOptionsCategory,
            Options::Arguments::Zero,
            [](Options* o, const std::string& argument) {
              setTypeSystem(TypeSystem::Nominal);
@@ -121,9 +152,19 @@ struct ToolOptions : public Options {
            "",
            "Force all GC type definitions to be parsed as structural "
            "(i.e. equirecursive). This is the default.",
+           ToolOptionsCategory,
            Options::Arguments::Zero,
            [](Options* o, const std::string& argument) {
              setTypeSystem(TypeSystem::Equirecursive);
+           })
+      .add("--hybrid",
+           "",
+           "Force all GC type definitions to be parsed using the isorecursive "
+           "hybrid type system.",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             setTypeSystem(TypeSystem::Isorecursive);
            });
   }
 
@@ -133,8 +174,9 @@ struct ToolOptions : public Options {
       .add(std::string("--enable-") + FeatureSet::toString(feature),
            "",
            std::string("Enable ") + description,
+           ToolOptionsCategory,
            Arguments::Zero,
-           [=](Options*, const std::string&) {
+           [this, feature](Options*, const std::string&) {
              enabledFeatures.set(feature, true);
              disabledFeatures.set(feature, false);
            })
@@ -142,8 +184,9 @@ struct ToolOptions : public Options {
       .add(std::string("--disable-") + FeatureSet::toString(feature),
            "",
            std::string("Disable ") + description,
+           ToolOptionsCategory,
            Arguments::Zero,
-           [=](Options*, const std::string&) {
+           [this, feature](Options*, const std::string&) {
              enabledFeatures.set(feature, false);
              disabledFeatures.set(feature, true);
            });
@@ -153,6 +196,12 @@ struct ToolOptions : public Options {
   void applyFeatures(Module& module) const {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
+    // Non-default type systems only make sense with GC enabled. TODO: Error on
+    // non-GC equirecursive types as well once we make isorecursive the default
+    // if we don't remove equirecursive types entirely.
+    if (!module.features.hasGC() && getTypeSystem() == TypeSystem::Nominal) {
+      Fatal() << "Nominal typing is only allowed when GC is enabled";
+    }
   }
 
 private:

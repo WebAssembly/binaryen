@@ -64,31 +64,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 1,
-  "declares": [
-    "puts"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "main",
-    "dynCall_ffd",
-    "dynCall_fdd"
-  ],
-  "namedGlobals": {
-    "__heap_base" : "66128",
-    "__data_end" : "581"
-  },
-  "invokeFuncs": [
-    "invoke_ffd"
-  ],
-  "mainReadsParams": 1,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

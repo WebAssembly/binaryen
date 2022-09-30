@@ -89,16 +89,9 @@ private:
         size = value.type.getByteSize();
         break;
       }
-        // not implemented yet
+      // not implemented yet
       case Type::v128:
-      case Type::funcref:
-      case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-      case Type::dataref: {
         return false;
-      }
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");

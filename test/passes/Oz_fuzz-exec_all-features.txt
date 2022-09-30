@@ -9,18 +9,8 @@
 [LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
-[fuzz-exec] calling rtts
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
-[trap unreachable]
 [fuzz-exec] calling br_on_failed_cast-1
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_failed_cast-2
@@ -44,12 +34,10 @@
 [fuzz-exec] calling ref-as-func-of-data
 [trap not a func]
 [fuzz-exec] calling ref-as-func-of-func
-[fuzz-exec] calling rtt-and-cast-on-func
+[fuzz-exec] calling cast-on-func
 [LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 1337]
-[LoggingExternalInterface logging 3]
+[LoggingExternalInterface logging 1]
 [trap cast error]
 [fuzz-exec] calling array-alloc-failure
 [host limit allocation failure]
@@ -63,10 +51,6 @@
 [LoggingExternalInterface logging 99]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 10]
-[fuzz-exec] calling rtt_Fresh
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
 [fuzz-exec] calling array.init
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
@@ -79,7 +63,7 @@
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
 [fuzz-exec] calling static-br_on_cast
 [LoggingExternalInterface logging 3]
 [fuzz-exec] calling static-br_on_cast_fail
@@ -88,40 +72,37 @@
  (type $void_func (func))
  (type $bytes (array (mut i8)))
  (type $struct (struct (field (mut i32))))
- (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $i32_=>_none (func (param i32)))
+ (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $anyref_=>_none (func (param anyref)))
  (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (global $rtt (mut (rtt $extendedstruct)) (rtt.canon $extendedstruct))
  (export "structs" (func $0))
  (export "arrays" (func $1))
- (export "rtts" (func $2))
- (export "br_on_cast" (func $3))
- (export "br_on_failed_cast-1" (func $4))
- (export "br_on_failed_cast-2" (func $5))
- (export "cast-null-anyref-to-gc" (func $6))
- (export "br_on_data" (func $8))
- (export "br_on_non_data-null" (func $9))
- (export "br_on_non_data-data" (func $10))
- (export "br_on_non_data-other" (func $9))
- (export "br-on_non_null" (func $9))
- (export "br-on_non_null-2" (func $13))
- (export "ref-as-data-of-func" (func $14))
- (export "ref-as-data-of-data" (func $9))
- (export "ref-as-func-of-data" (func $14))
- (export "ref-as-func-of-func" (func $9))
- (export "rtt-and-cast-on-func" (func $19))
- (export "array-alloc-failure" (func $9))
- (export "init-array-packed" (func $21))
- (export "cast-func-to-struct" (func $14))
- (export "array-copy" (func $24))
- (export "rtt_Fresh" (func $25))
- (export "array.init" (func $26))
- (export "array.init-packed" (func $27))
- (export "static-casts" (func $28))
- (export "static-br_on_cast" (func $29))
- (export "static-br_on_cast_fail" (func $30))
+ (export "br_on_cast" (func $2))
+ (export "br_on_failed_cast-1" (func $3))
+ (export "br_on_failed_cast-2" (func $4))
+ (export "cast-null-anyref-to-gc" (func $5))
+ (export "br_on_data" (func $7))
+ (export "br_on_non_data-null" (func $8))
+ (export "br_on_non_data-data" (func $9))
+ (export "br_on_non_data-other" (func $8))
+ (export "br-on_non_null" (func $8))
+ (export "br-on_non_null-2" (func $12))
+ (export "ref-as-data-of-func" (func $13))
+ (export "ref-as-data-of-data" (func $8))
+ (export "ref-as-func-of-data" (func $13))
+ (export "ref-as-func-of-func" (func $8))
+ (export "cast-on-func" (func $18))
+ (export "array-alloc-failure" (func $8))
+ (export "init-array-packed" (func $20))
+ (export "cast-func-to-struct" (func $13))
+ (export "array-copy" (func $23))
+ (export "array.init" (func $24))
+ (export "array.init-packed" (func $25))
+ (export "static-casts" (func $26))
+ (export "static-br_on_cast" (func $2))
+ (export "static-br_on_cast_fail" (func $28))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -140,14 +121,13 @@
   )
  )
  (func $1 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
+  (local $0 (ref $bytes))
   (call $log
    (array.len $bytes
     (local.tee $0
-     (array.new_with_rtt $bytes
+     (array.new $bytes
       (i32.const 42)
       (i32.const 50)
-      (rtt.canon $bytes)
      )
     )
    )
@@ -184,42 +164,13 @@
  )
  (func $2 (; has Stack IR ;)
   (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 1)
+   (i32.const 3)
   )
  )
  (func $3 (; has Stack IR ;)
-  (call $log
-   (i32.const 3)
-  )
-  (unreachable)
- )
- (func $4 (; has Stack IR ;)
-  (local $0 (ref null $struct))
+  (local $0 (ref $struct))
   (local.set $0
-   (struct.new_default_with_rtt $struct
-    (rtt.canon $struct)
-   )
+   (struct.new_default $struct)
   )
   (drop
    (block $any (result anyref)
@@ -227,9 +178,8 @@
      (i32.const 1)
     )
     (drop
-     (br_on_cast_fail $any
+     (br_on_cast_static_fail $any $extendedstruct
       (local.get $0)
-      (rtt.canon $extendedstruct)
      )
     )
     (call $log
@@ -239,7 +189,7 @@
    )
   )
  )
- (func $5 (; has Stack IR ;)
+ (func $4 (; has Stack IR ;)
   (call $log
    (i32.const 1)
   )
@@ -247,14 +197,14 @@
    (i32.const 999)
   )
  )
- (func $6 (; has Stack IR ;)
+ (func $5 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
  )
- (func $8 (; has Stack IR ;) (param $0 anyref)
+ (func $7 (; has Stack IR ;) (param $0 anyref)
   (drop
-   (block $data (result dataref)
+   (block $data (result (ref data))
     (drop
      (br_on_data $data
       (local.get $0)
@@ -263,21 +213,19 @@
     (call $log
      (i32.const 1)
     )
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
+    (struct.new_default $struct)
    )
   )
  )
- (func $9 (; has Stack IR ;)
+ (func $8 (; has Stack IR ;)
   (nop)
  )
- (func $10 (; has Stack IR ;)
+ (func $9 (; has Stack IR ;)
   (call $log
    (i32.const 1)
   )
  )
- (func $13 (; has Stack IR ;)
+ (func $12 (; has Stack IR ;)
   (drop
    (block
     (call $log
@@ -287,47 +235,39 @@
    )
   )
  )
- (func $14 (; has Stack IR ;)
+ (func $13 (; has Stack IR ;)
   (drop
    (unreachable)
   )
  )
- (func $19 (; has Stack IR ;)
+ (func $18 (; has Stack IR ;)
   (call $log
    (i32.const 0)
-  )
-  (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 2)
   )
   (call $log
    (i32.const 1337)
   )
   (call $log
-   (i32.const 3)
+   (i32.const 1)
   )
   (unreachable)
  )
- (func $21 (; has Stack IR ;) (result i32)
+ (func $20 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
-   (array.new_with_rtt $bytes
+   (array.new $bytes
     (i32.const -43)
     (i32.const 50)
-    (rtt.canon $bytes)
    )
    (i32.const 10)
   )
  )
- (func $24 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
-  (local $1 (ref null $bytes))
+ (func $23 (; has Stack IR ;)
+  (local $0 (ref $bytes))
+  (local $1 (ref $bytes))
   (array.set $bytes
    (local.tee $1
-    (array.new_default_with_rtt $bytes
+    (array.new_default $bytes
      (i32.const 200)
-     (rtt.canon $bytes)
     )
    )
    (i32.const 42)
@@ -336,10 +276,9 @@
   (call $log
    (array.get_u $bytes
     (local.tee $0
-     (array.new_with_rtt $bytes
+     (array.new $bytes
       (i32.const 10)
       (i32.const 100)
-      (rtt.canon $bytes)
      )
     )
     (i32.const 10)
@@ -377,36 +316,14 @@
    )
   )
  )
- (func $25 (; has Stack IR ;)
-  (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (global.set $rtt
-   (rtt.fresh_sub $extendedstruct
-    (rtt.canon $struct)
-   )
-  )
-  (call $log
-   (ref.test
-    (struct.new_default_with_rtt $extendedstruct
-     (global.get $rtt)
-    )
-    (global.get $rtt)
-   )
-  )
- )
- (func $26 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
+ (func $24 (; has Stack IR ;)
+  (local $0 (ref $bytes))
   (call $log
    (array.len $bytes
     (local.tee $0
-     (array.init $bytes
+     (array.init_static $bytes
       (i32.const 42)
       (i32.const 50)
-      (rtt.canon $bytes)
      )
     )
    )
@@ -424,43 +341,37 @@
    )
   )
  )
- (func $27 (; has Stack IR ;)
+ (func $25 (; has Stack IR ;)
   (call $log
    (array.get_u $bytes
-    (array.init $bytes
+    (array.init_static $bytes
      (i32.const -11512)
-     (rtt.canon $bytes)
     )
     (i32.const 0)
    )
   )
  )
+ (func $26 (; has Stack IR ;)
+  (call $log
+   (i32.const 1)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (i32.const 1)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (i32.const 1)
+  )
+ )
  (func $28 (; has Stack IR ;)
-  (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 1)
-  )
-  (call $log
-   (i32.const 0)
-  )
-  (call $log
-   (i32.const 1)
-  )
- )
- (func $29 (; has Stack IR ;)
-  (call $log
-   (i32.const 3)
-  )
- )
- (func $30 (; has Stack IR ;)
   (call $log
    (i32.const -2)
   )
@@ -477,18 +388,8 @@
 [LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
-[fuzz-exec] calling rtts
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
-[trap unreachable]
 [fuzz-exec] calling br_on_failed_cast-1
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_failed_cast-2
@@ -512,12 +413,10 @@
 [fuzz-exec] calling ref-as-func-of-data
 [trap unreachable]
 [fuzz-exec] calling ref-as-func-of-func
-[fuzz-exec] calling rtt-and-cast-on-func
+[fuzz-exec] calling cast-on-func
 [LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 1337]
-[LoggingExternalInterface logging 3]
+[LoggingExternalInterface logging 1]
 [trap unreachable]
 [fuzz-exec] calling array-alloc-failure
 [fuzz-exec] calling init-array-packed
@@ -530,10 +429,6 @@
 [LoggingExternalInterface logging 99]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 10]
-[fuzz-exec] calling rtt_Fresh
-[LoggingExternalInterface logging 1]
-[LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
 [fuzz-exec] calling array.init
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]

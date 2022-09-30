@@ -201,6 +201,88 @@
       )
     )
   )
+
+  (func (export "try_delegate_caught") (result i32)
+    (try $l0 (result i32)
+      (do
+        (try (result i32)
+          (do
+            (try (result i32)
+              (do
+                 (throw $e-i32 (i32.const 3))
+              )
+              (delegate $l0)
+            )
+          )
+          (catch_all
+            (i32.const 0)
+          )
+        )
+      )
+      (catch $e-i32
+        (pop i32)
+      )
+    )
+  )
+
+  (func (export "try_delegate_to_catchless_try") (result i32)
+    (try $l0 (result i32)
+      (do
+        (try (result i32)
+          (do
+            (try (result i32)
+              (do
+                 (throw $e-i32 (i32.const 3))
+              )
+              (delegate $l0)
+            )
+          )
+          (catch_all
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  (func (export "try_delegate_to_delegate") (result i32)
+    (try $l0 (result i32)
+      (do
+        (try $l1 (result i32)
+          (do
+            (try (result i32)
+              (do
+                 (throw $e-i32 (i32.const 3))
+              )
+              (delegate $l1)
+            )
+          )
+          (delegate $l0)
+        )
+      )
+      (catch $e-i32
+        (pop i32)
+      )
+    )
+  )
+
+  (func (export "try_delegate_to_caller")
+    (try $l0
+      (do
+        (try $l1
+          (do
+            (try
+              (do
+                 (throw $e-i32 (i32.const 3))
+              )
+              (delegate 2) ;; to caller
+            )
+          )
+        )
+      )
+      (catch_all)
+    )
+  )
 )
 
 (assert_trap (invoke "throw_single_value"))
@@ -216,6 +298,10 @@
 (assert_return (invoke "rethrow_target_test1") (i32.const 2))
 (assert_return (invoke "rethrow_target_test2") (i32.const 1))
 (assert_return (invoke "rethrow_target_test3") (i32.const 1))
+(assert_return (invoke "try_delegate_caught") (i32.const 3))
+(assert_trap (invoke "try_delegate_to_catchless_try"))
+(assert_return (invoke "try_delegate_to_delegate") (i32.const 3))
+(assert_trap (invoke "try_delegate_to_caller"))
 
 (assert_invalid
   (module

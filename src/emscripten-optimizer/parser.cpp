@@ -107,6 +107,8 @@ IString ATOMICS("Atomics");
 IString COMPARE_EXCHANGE("compareExchange");
 IString LOAD("load");
 IString STORE("store");
+IString GETTER("get");
+IString SETTER("set");
 
 IStringSet
   keywords("var const function if else do while for break continue return "

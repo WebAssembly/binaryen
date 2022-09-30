@@ -27,14 +27,11 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
-#include <variant>
-
 #include "ir/module-utils.h"
-#include "ir/properties.h"
+#include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -42,120 +39,6 @@
 namespace wasm {
 
 namespace {
-
-// No possible value.
-struct None : public std::monostate {};
-
-// Many possible values, and so this represents unknown data: we cannot infer
-// anything there.
-struct Many : public std::monostate {};
-
-// Represents data about what constant values are possible in a particular
-// place. There may be no values, or one, or many, or if a non-constant value is
-// possible, then all we can say is that the value is "unknown" - it can be
-// anything. The values can either be literal values (Literal) or the names of
-// immutable globals (Name).
-//
-// Currently this just looks for a single constant value, and even two constant
-// values are treated as unknown. It may be worth optimizing more than that TODO
-struct PossibleConstantValues {
-private:
-  using Variant = std::variant<None, Literal, Name, Many>;
-  Variant value;
-
-public:
-  PossibleConstantValues() : value(None()) {}
-
-  // Note a written value as we see it, and update our internal knowledge based
-  // on it and all previous values noted. This can be called using either a
-  // Literal or a Name, so it uses a template.
-  template<typename T> void note(T curr) {
-    if (std::get_if<None>(&value)) {
-      // This is the first value.
-      value = curr;
-      return;
-    }
-
-    if (std::get_if<Many>(&value)) {
-      // This was already representing multiple values; nothing changes.
-      return;
-    }
-
-    // This is a subsequent value. Check if it is different from all previous
-    // ones.
-    if (Variant(curr) != value) {
-      noteUnknown();
-    }
-  }
-
-  // Notes a value that is unknown - it can be anything. We have failed to
-  // identify a constant value here.
-  void noteUnknown() { value = Many(); }
-
-  // Combine the information in a given PossibleConstantValues to this one. This
-  // is the same as if we have called note*() on us with all the history of
-  // calls to that other object.
-  //
-  // Returns whether we changed anything.
-  bool combine(const PossibleConstantValues& other) {
-    if (std::get_if<None>(&other.value)) {
-      return false;
-    }
-
-    if (std::get_if<None>(&value)) {
-      value = other.value;
-      return true;
-    }
-
-    if (std::get_if<Many>(&value)) {
-      return false;
-    }
-
-    if (other.value != value) {
-      value = Many();
-      return true;
-    }
-
-    return false;
-  }
-
-  // Check if all the values are identical and constant.
-  bool isConstant() const {
-    return !std::get_if<None>(&value) && !std::get_if<Many>(&value);
-  }
-
-  bool isConstantLiteral() const { return std::get_if<Literal>(&value); }
-
-  bool isConstantGlobal() const { return std::get_if<Name>(&value); }
-
-  // Returns the single constant value.
-  Literal getConstantLiteral() const {
-    assert(isConstant());
-    return std::get<Literal>(value);
-  }
-
-  Name getConstantGlobal() const {
-    assert(isConstant());
-    return std::get<Name>(value);
-  }
-
-  // Returns whether we have ever noted a value.
-  bool hasNoted() const { return !std::get_if<None>(&value); }
-
-  void dump(std::ostream& o) {
-    o << '[';
-    if (!hasNoted()) {
-      o << "unwritten";
-    } else if (!isConstant()) {
-      o << "unknown";
-    } else if (isConstantLiteral()) {
-      o << getConstantLiteral();
-    } else if (isConstantGlobal()) {
-      o << '$' << getConstantGlobal();
-    }
-    o << ']';
-  }
-};
 
 using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
@@ -168,6 +51,9 @@ using PCVFunctionStructValuesMap =
 //      no struct.news).
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
+
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
 
   Pass* create() override { return new FunctionOptimizer(infos); }
 
@@ -216,12 +102,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    Expression* value;
-    if (info.isConstantLiteral()) {
-      value = builder.makeConstantExpression(info.getConstantLiteral());
-    } else {
-      value = builder.makeGlobalGet(info.getConstantGlobal(), curr->type);
-    }
+    Expression* value = info.makeExpression(*getModule());
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
@@ -260,23 +141,7 @@ struct PCVScanner
                       HeapType type,
                       Index index,
                       PossibleConstantValues& info) {
-    // If this is a constant literal value, note that.
-    if (Properties::isConstantExpression(expr)) {
-      info.note(Properties::getLiteral(expr));
-      return;
-    }
-
-    // If this is an immutable global that we get, note that.
-    if (auto* get = expr->dynCast<GlobalGet>()) {
-      auto* global = getModule()->getGlobal(get->name);
-      if (global->mutable_ == Immutable) {
-        info.note(get->name);
-        return;
-      }
-    }
-
-    // Otherwise, this is not something we can reason about.
-    info.noteUnknown();
+    info.note(expr, *getModule());
   }
 
   void noteDefault(Type fieldType,
@@ -313,7 +178,13 @@ struct PCVScanner
 };
 
 struct ConstantFieldPropagation : public Pass {
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "ConstantFieldPropagation requires nominal typing";
     }

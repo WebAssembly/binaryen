@@ -3,11 +3,11 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (type $anyref_=>_none (func (param anyref)))
+ (type $eqref_=>_none (func (param eqref)))
  (tag $e-i32 (param i32))
  (tag $e-i64 (param i64))
  (tag $e-i32-i64 (param i32 i64))
- (tag $e-anyref (param anyref))
+ (tag $e-eqref (param eqref))
  (tag $e-empty (param))
  (func $foo
   (nop)
@@ -372,9 +372,9 @@
    (do
     (nop)
    )
-   (catch $e-anyref
+   (catch $e-eqref
     (drop
-     (pop funcref)
+     (pop anyref)
     )
    )
   )
@@ -392,5 +392,18 @@
     )
    )
   )
+ )
+ (func $nested-block-and-try
+  (block $l0
+   (block $l1
+   )
+   (try $try
+    (do
+     (nop)
+    )
+    (delegate 1)
+   )
+  )
+  (nop)
  )
 )

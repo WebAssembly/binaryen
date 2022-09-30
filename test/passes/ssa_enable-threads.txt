@@ -152,7 +152,7 @@
       (i32.const 6)
      )
     )
-    (block $block
+    (block
      (local.set $10
       (i32.const 7)
      )
@@ -177,7 +177,7 @@
   (block
    (if
     (i32.const 1)
-    (block $block
+    (block
      (local.set $1
       (local.tee $2
        (i32.const 1)
@@ -239,7 +239,7 @@
    )
    (if
     (i32.const 3)
-    (block $block
+    (block
      (local.set $2
       (local.tee $6
        (i32.const 1)

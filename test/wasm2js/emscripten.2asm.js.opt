@@ -1,4 +1,4 @@
-function instantiate(asmLibraryArg) {
+function instantiate(info) {
   var bufferView;
   var base64ReverseLookup = new Uint8Array(123/*'z'+1*/);
   for (var i = 25; i >= 0; --i) {
@@ -36,7 +36,10 @@ function initActiveSegments(imports) {
   base64DecodeToExistingUint8Array(bufferView, 1501, "DA==");
   base64DecodeToExistingUint8Array(bufferView, 1513, "DAAAAAAMAAAAAAkMAAAAAAAMAAAMAAAwMTIzNDU2Nzg5QUJDREVGLTBYKzBYIDBYLTB4KzB4IDB4AGluZgBJTkYAbmFuAE5BTgAu");
 }
-function asmFunc(env) {
+function wasm2js_trap() { throw new Error('abort'); }
+
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var buffer = new ArrayBuffer(16777216);
  var FUNCTION_TABLE = env.table;
  var HEAP8 = new Int8Array(buffer);
@@ -57,7 +60,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var syscall$6 = env.__syscall6;
@@ -75,7 +77,7 @@ function asmFunc(env) {
  }
  
  function foo() {
-  abort();
+  wasm2js_trap();
  }
  
  function bar() {
@@ -166,7 +168,7 @@ function asmFunc(env) {
  
  function __growWasmMemory($0) {
   $0 = $0 | 0;
-  return abort() | 0;
+  return wasm2js_trap() | 0;
  }
  
  function internal($0) {
@@ -201,7 +203,7 @@ function asmFunc(env) {
    bools(2)
   }
   bools(!($0 ^ 1));
-  abort();
+  wasm2js_trap();
  }
  
  // EMSCRIPTEN_END_FUNCS
@@ -226,5 +228,5 @@ function asmFunc(env) {
  };
 }
 
-  return asmFunc(asmLibraryArg);
+  return asmFunc(info);
 }

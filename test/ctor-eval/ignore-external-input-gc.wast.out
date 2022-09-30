@@ -1,0 +1,19 @@
+(module
+ (type $ref|any|_=>_none (func (param (ref any))))
+ (type $none_=>_i32 (func (result i32)))
+ (global $global1 (mut i32) (i32.const 11))
+ (global $global2 (mut i32) (i32.const 20))
+ (export "test2" (func $1))
+ (export "keepalive" (func $2))
+ (func $1 (param $any (ref any))
+  (global.set $global2
+   (i32.const 22)
+  )
+ )
+ (func $2 (result i32)
+  (i32.add
+   (global.get $global1)
+   (global.get $global2)
+  )
+ )
+)

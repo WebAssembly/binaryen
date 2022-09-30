@@ -10,5 +10,6 @@
  (tag $e-params0 (param i32 f32))
  (tag $e-params1 (param i32 f32))
  (tag $e-export (param i32))
+ (export "ex0" (tag $e-export))
  (export "ex1" (tag $e))
 )

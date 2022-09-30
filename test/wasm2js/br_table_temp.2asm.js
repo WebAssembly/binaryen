@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -10,7 +11,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function dummy() {
@@ -12556,12 +12556,12 @@ function asmFunc(env) {
  
  function $20() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
-  fake_return_waka123 : {
+  __binaryen_fake_return : {
    loop_in : while (1) {
     $1_1 = 3;
     switch (0 | 0) {
     default:
-     break fake_return_waka123;
+     break __binaryen_fake_return;
     };
    };
   }
@@ -12570,13 +12570,13 @@ function asmFunc(env) {
  
  function $21() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
-  fake_return_waka123 : {
+  __binaryen_fake_return : {
    loop_in : while (1) {
     dummy();
     $1_1 = 4;
     switch (-1 | 0) {
     default:
-     break fake_return_waka123;
+     break __binaryen_fake_return;
     };
    };
   }
@@ -12585,13 +12585,13 @@ function asmFunc(env) {
  
  function $22() {
   var $1_1 = 0;
-  fake_return_waka123 : {
+  __binaryen_fake_return : {
    loop_in : while (1) {
     dummy();
     $1_1 = 5;
     switch (1 | 0) {
     default:
-     break fake_return_waka123;
+     break __binaryen_fake_return;
     };
    };
   }
@@ -13264,8 +13264,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var type_i32 = retasmFunc.type_i32;
 export var type_i64 = retasmFunc.type_i64;
 export var type_f32 = retasmFunc.type_f32;

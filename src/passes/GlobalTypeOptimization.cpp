@@ -21,17 +21,15 @@
 //  * Immutability: If a field has no struct.set, it can become immutable.
 //  * Fields that are never read from can be removed entirely.
 //
-// TODO: Specialize field types.
-//
 
 #include "ir/effects.h"
 #include "ir/localize.h"
+#include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/small_set.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -115,6 +113,9 @@ struct GlobalTypeOptimization : public Pass {
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalTypeOptimization requires nominal typing";
     }
@@ -137,6 +138,17 @@ struct GlobalTypeOptimization : public Pass {
     //    read in any sub or supertype, as such a read may alias any of those
     //    types (where the field is present).
     //
+    //    Note that we *can* propagate reads only to supertypes, but we are
+    //    limited in what we optimize. If type A has fields {a, b}, and its
+    //    subtype B has the same fields, and if field a is only used in reads of
+    //    type B, then we still cannot remove it. If we removed it then A would
+    //    have fields {b}, that is, field b would be at index 0, while type B
+    //    would still be {a, b} which has field b at index 1, which is not
+    //    compatible. The only case in which we can optimize is to remove a
+    //    field from the end, that is, we could remove field b from A.
+    //    Otherwise, as mentioned before we can only remove a field if we also
+    //    remove it from all sub- and super-types.
+    //
     //  * For immutability, this is necessary because we cannot have a
     //    supertype's field be immutable while a subtype's is not - they must
     //    match for us to preserve subtyping.
@@ -147,7 +159,10 @@ struct GlobalTypeOptimization : public Pass {
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
     StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
+    auto subSupers = combinedSetGetInfos;
+    propagator.propagateToSuperAndSubTypes(subSupers);
+    auto subs = std::move(combinedSetGetInfos);
+    propagator.propagateToSubTypes(subs);
 
     // Process the propagated info.
     for (auto type : propagator.subTypes.types) {
@@ -155,7 +170,8 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& infos = combinedSetGetInfos[type];
+      auto& subSuper = subSupers[type];
+      auto& sub = subs[type];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
@@ -164,7 +180,7 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
 
-        if (infos[i].hasWrite) {
+        if (subSuper[i].hasWrite) {
           // A set exists.
           continue;
         }
@@ -175,16 +191,42 @@ struct GlobalTypeOptimization : public Pass {
         vec[i] = true;
       }
 
-      // Process removability. First, see if we can remove anything before we
-      // start to allocate info for that.
-      if (std::any_of(infos.begin(), infos.end(), [&](const FieldInfo& info) {
-            return !info.hasRead;
-          })) {
+      // Process removability. We check separately for the ability to
+      // remove in a general way based on sub+super-propagated info (that is,
+      // fields that are not used in sub- or super-types, and so we can
+      // definitely remove them from all the relevant types) and also in the
+      // specific way that only works for removing at the end, which as
+      // mentioned above only looks at super-types.
+      std::set<Index> removableIndexes;
+      for (Index i = 0; i < fields.size(); i++) {
+        if (!subSuper[i].hasRead) {
+          removableIndexes.insert(i);
+        }
+      }
+      for (int i = int(fields.size()) - 1; i >= 0; i--) {
+        // Unlike above, a write would stop us here: above we propagated to both
+        // sub- and super-types, which means if we see no reads then there is no
+        // possible read of the data at all. But here we just propagated to
+        // subtypes, and so we need to care about the case where the parent
+        // writes to a field but does not read from it - we still need those
+        // writes to happen as children may read them. (Note that if no child
+        // reads this field, and since we check for reads in parents here, that
+        // means the field is not read anywhere at all, and we would have
+        // handled that case in the previous loop anyhow.)
+        if (!sub[i].hasRead && !sub[i].hasWrite) {
+          removableIndexes.insert(i);
+        } else {
+          // Once we see something we can't remove, we must stop, as we can only
+          // remove from the end in this case.
+          break;
+        }
+      }
+      if (!removableIndexes.empty()) {
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
         for (Index i = 0; i < fields.size(); i++) {
-          if (infos[i].hasRead) {
+          if (!removableIndexes.count(i)) {
             indexesAfterRemoval[i] = i - skip;
           } else {
             indexesAfterRemoval[i] = RemovedField;
@@ -324,7 +366,6 @@ struct GlobalTypeOptimization : public Pass {
           block->list.push_back(curr);
           block->finalize(curr->type);
           replaceCurrent(block);
-          addedLocals = true;
         }
 
         // Remove the unneeded operands.
@@ -351,10 +392,18 @@ struct GlobalTypeOptimization : public Pass {
           // Map to the new index.
           curr->index = newIndex;
         } else {
-          // This field was removed, so just emit drops of our children.
+          // This field was removed, so just emit drops of our children, plus a
+          // trap if the ref is null. Note that we must preserve the order of
+          // operations here: the trap on a null ref happens after the value,
+          // which might have side effects.
           Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                              builder.makeDrop(curr->value)));
+          auto flipped = getResultOfFirst(curr->ref,
+                                          builder.makeDrop(curr->value),
+                                          getFunction(),
+                                          getModule(),
+                                          getPassOptions());
+          replaceCurrent(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
         }
       }
 
@@ -369,15 +418,7 @@ struct GlobalTypeOptimization : public Pass {
         curr->index = newIndex;
       }
 
-      void visitFunction(Function* curr) {
-        if (addedLocals) {
-          TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
-        }
-      }
-
     private:
-      bool addedLocals = false;
-
       Index getNewIndex(HeapType type, Index index) {
         auto iter = parent.indexesAfterRemovals.find(type);
         if (iter == parent.indexesAfterRemovals.end()) {

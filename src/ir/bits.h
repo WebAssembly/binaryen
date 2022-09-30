@@ -17,10 +17,11 @@
 #ifndef wasm_ir_bits_h
 #define wasm_ir_bits_h
 
+#include "ir/boolean.h"
 #include "ir/literal-utils.h"
+#include "ir/load-utils.h"
 #include "support/bits.h"
 #include "wasm-builder.h"
-#include <ir/load-utils.h>
 
 namespace wasm::Bits {
 
@@ -125,6 +126,9 @@ struct DummyLocalInfoProvider {
 template<typename LocalInfoProvider = DummyLocalInfoProvider>
 Index getMaxBits(Expression* curr,
                  LocalInfoProvider* localInfoProvider = nullptr) {
+  if (Properties::emitsBoolean(curr)) {
+    return 1;
+  }
   if (auto* c = curr->dynCast<Const>()) {
     switch (curr->type.getBasic()) {
       case Type::i32:
@@ -363,7 +367,7 @@ Index getMaxBits(Expression* curr,
       case LeFloat64:
       case GtFloat64:
       case GeFloat64:
-        return 1;
+        WASM_UNREACHABLE("relationals handled before");
       default: {
       }
     }
@@ -379,7 +383,7 @@ Index getMaxBits(Expression* curr,
         return 7;
       case EqZInt32:
       case EqZInt64:
-        return 1;
+        WASM_UNREACHABLE("relationals handled before");
       case WrapInt64:
       case ExtendUInt32:
         return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
@@ -431,6 +435,17 @@ Index getMaxBits(Expression* curr,
     default:
       WASM_UNREACHABLE("invalid type");
   }
+}
+
+// As getMaxBits, but returns the minimum amount of bits.
+inline Index getMinBits(Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    // Constants are simple: the min and max are identical.
+    return getMaxBits(c);
+  }
+
+  // TODO: everything else
+  return 0;
 }
 
 } // namespace wasm::Bits

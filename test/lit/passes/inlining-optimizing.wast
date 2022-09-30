@@ -30,12 +30,10 @@
   (call $0)
   (drop
    (call_ref
-    (ref.cast
+    (ref.cast_static $none_=>_i32
      (ref.func $0)
-     (rtt.canon $none_=>_i32)
     )
    )
   )
  )
 )
-

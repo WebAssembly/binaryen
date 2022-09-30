@@ -94,7 +94,6 @@ cashew::IString WASM_I64_SREM("__wasm_i64_srem");
 cashew::IString WASM_I64_UREM("__wasm_i64_urem");
 
 cashew::IString ASM_FUNC("asmFunc");
-cashew::IString ABORT_FUNC("abort");
 cashew::IString FUNCTION_TABLE("FUNCTION_TABLE");
 cashew::IString NO_RESULT("wasm2js$noresult"); // no result at all
 // result in an expression, no temp var
@@ -116,6 +115,7 @@ cashew::IString DATA_DROP("wasm2js_data_drop");
 cashew::IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
 cashew::IString ATOMIC_RMW_I64("wasm2js_atomic_rmw_i64");
 cashew::IString GET_STASHED_BITS("wasm2js_get_stashed_bits");
+cashew::IString TRAP("wasm2js_trap");
 
 } // namespace wasm2js
 } // namespace ABI

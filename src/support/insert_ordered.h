@@ -96,7 +96,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
   const_iterator begin() const { return List.begin(); }
   const_iterator end() const { return List.end(); }
 
-  std::pair<iterator, bool> insert(std::pair<const Key, T>& kv) {
+  std::pair<iterator, bool> insert(const std::pair<const Key, T>& kv) {
     // Try inserting with a placeholder list iterator.
     auto inserted = Map.insert({kv.first, List.end()});
     if (inserted.second) {
@@ -111,6 +111,8 @@ template<typename Key, typename T> struct InsertOrderedMap {
     std::pair<const Key, T> kv = {k, {}};
     return insert(kv).first->second;
   }
+
+  T& at(const Key& k) { return Map.at(k)->second; }
 
   iterator find(const Key& k) {
     auto it = Map.find(k);

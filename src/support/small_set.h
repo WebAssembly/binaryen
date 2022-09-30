@@ -165,7 +165,7 @@ public:
     using pointer = const value_type*;
     using reference = const value_type&;
 
-    Parent* parent;
+    const Parent* parent;
 
     using Iterator = IteratorBase<Parent, FlexibleIterator>;
 
@@ -176,7 +176,7 @@ public:
     size_t fixedIndex;
     FlexibleIterator flexibleIterator;
 
-    IteratorBase(Parent* parent)
+    IteratorBase(const Parent* parent)
       : parent(parent), usingFixed(parent->usingFixed()) {}
 
     void setBegin() {

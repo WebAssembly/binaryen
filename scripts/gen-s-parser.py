@@ -503,7 +503,7 @@ instructions = [
     ("i64x2.extend_high_i32x4_s", "makeUnary(s, UnaryOp::ExtendHighSVecI32x4ToVecI64x2)"),
     ("i64x2.extend_low_i32x4_u",  "makeUnary(s, UnaryOp::ExtendLowUVecI32x4ToVecI64x2)"),
     ("i64x2.extend_high_i32x4_u", "makeUnary(s, UnaryOp::ExtendHighUVecI32x4ToVecI64x2)"),
-    ("i8x16.swizzle",             "makeBinary(s, BinaryOp::SwizzleVec8x16)"),
+    ("i8x16.swizzle",             "makeBinary(s, BinaryOp::SwizzleVecI8x16)"),
     ("i16x8.extadd_pairwise_i8x16_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI8x16ToI16x8)"),
     ("i16x8.extadd_pairwise_i8x16_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8)"),
     ("i32x4.extadd_pairwise_i16x8_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4)"),
@@ -516,7 +516,7 @@ instructions = [
     ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
 
     # relaxed SIMD ops
-    ("i8x16.relaxed_swizzle", "makeBinary(s, BinaryOp::RelaxedSwizzleVec8x16)"),
+    ("i8x16.relaxed_swizzle", "makeBinary(s, BinaryOp::RelaxedSwizzleVecI8x16)"),
     ("i32x4.relaxed_trunc_f32x4_s", "makeUnary(s, UnaryOp::RelaxedTruncSVecF32x4ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f32x4_u", "makeUnary(s, UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4)"),
     ("i32x4.relaxed_trunc_f64x2_s_zero", "makeUnary(s, UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4)"),
@@ -533,6 +533,9 @@ instructions = [
     ("f32x4.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF32x4)"),
     ("f64x2.relaxed_min", "makeBinary(s, BinaryOp::RelaxedMinVecF64x2)"),
     ("f64x2.relaxed_max", "makeBinary(s, BinaryOp::RelaxedMaxVecF64x2)"),
+    ("i16x8.relaxed_q15mulr_s", "makeBinary(s, BinaryOp::RelaxedQ15MulrSVecI16x8)"),
+    ("i16x8.dot_i8x16_i7x16_s", "makeBinary(s, BinaryOp::DotI8x16I7x16SToVecI16x8)"),
+    ("i32x4.dot_i8x16_i7x16_add_s", "makeSIMDTernary(s, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4)"),
 
     # reference types instructions
     ("ref.null",             "makeRefNull(s)"),
@@ -564,10 +567,9 @@ instructions = [
     ("i31.new",              "makeI31New(s)"),
     ("i31.get_s",            "makeI31Get(s, true)"),
     ("i31.get_u",            "makeI31Get(s, false)"),
-    ("ref.test",             "makeRefTest(s)"),
     ("ref.test_static",      "makeRefTestStatic(s)"),
-    ("ref.cast",             "makeRefCast(s)"),
     ("ref.cast_static",      "makeRefCastStatic(s)"),
+    ("ref.cast_nop_static",  "makeRefCastNopStatic(s)"),
     ("br_on_null",           "makeBrOn(s, BrOnNull)"),
     ("br_on_non_null",       "makeBrOn(s, BrOnNonNull)"),
     ("br_on_cast",           "makeBrOn(s, BrOnCast)"),
@@ -580,22 +582,14 @@ instructions = [
     ("br_on_non_data",       "makeBrOn(s, BrOnNonData)"),
     ("br_on_i31",            "makeBrOn(s, BrOnI31)"),
     ("br_on_non_i31",        "makeBrOn(s, BrOnNonI31)"),
-    ("rtt.canon",            "makeRttCanon(s)"),
-    ("rtt.sub",              "makeRttSub(s)"),
-    ("rtt.fresh_sub",        "makeRttFreshSub(s)"),
-    ("struct.new_with_rtt",  "makeStructNew(s, false)"),
-    ("struct.new_default_with_rtt", "makeStructNew(s, true)"),
     ("struct.new",           "makeStructNewStatic(s, false)"),
     ("struct.new_default",   "makeStructNewStatic(s, true)"),
     ("struct.get",           "makeStructGet(s)"),
     ("struct.get_s",         "makeStructGet(s, true)"),
     ("struct.get_u",         "makeStructGet(s, false)"),
     ("struct.set",           "makeStructSet(s)"),
-    ("array.new_with_rtt",   "makeArrayNew(s, false)"),
-    ("array.new_default_with_rtt", "makeArrayNew(s, true)"),
     ("array.new",            "makeArrayNewStatic(s, false)"),
     ("array.new_default",    "makeArrayNewStatic(s, true)"),
-    ("array.init",           "makeArrayInit(s)"),
     ("array.init_static",    "makeArrayInitStatic(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),
@@ -610,6 +604,34 @@ instructions = [
     ("ref.as_func",          "makeRefAs(s, RefAsFunc)"),
     ("ref.as_data",          "makeRefAs(s, RefAsData)"),
     ("ref.as_i31",           "makeRefAs(s, RefAsI31)"),
+    ("extern.internalize",   "makeRefAs(s, ExternInternalize)"),
+    ("extern.externalize",   "makeRefAs(s, ExternExternalize)"),
+    ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8)"),
+    ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
+    ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array)"),
+    ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array)"),
+    ("string.const",         "makeStringConst(s)"),
+    ("string.measure_wtf8",  "makeStringMeasure(s, StringMeasureWTF8)"),
+    ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),
+    ("string.is_usv_sequence", "makeStringMeasure(s, StringMeasureIsUSV)"),
+    ("string.encode_wtf8",   "makeStringEncode(s, StringEncodeWTF8)"),
+    ("string.encode_wtf16",  "makeStringEncode(s, StringEncodeWTF16)"),
+    ("string.encode_wtf8_array",   "makeStringEncode(s, StringEncodeWTF8Array)"),
+    ("string.encode_wtf16_array",  "makeStringEncode(s, StringEncodeWTF16Array)"),
+    ("string.concat",        "makeStringConcat(s)"),
+    ("string.eq",            "makeStringEq(s)"),
+    ("string.as_wtf8",       "makeStringAs(s, StringAsWTF8)"),
+    ("string.as_wtf16",      "makeStringAs(s, StringAsWTF16)"),
+    ("string.as_iter",       "makeStringAs(s, StringAsIter)"),
+    ("stringview_wtf8.advance",       "makeStringWTF8Advance(s)"),
+    ("stringview_wtf16.get_codeunit", "makeStringWTF16Get(s)"),
+    ("stringview_iter.next",          "makeStringIterNext(s)"),
+    ("stringview_iter.advance",       "makeStringIterMove(s, StringIterMoveAdvance)"),
+    ("stringview_iter.rewind",        "makeStringIterMove(s, StringIterMoveRewind)"),
+    ("stringview_wtf8.slice",         "makeStringSliceWTF(s, StringSliceWTF8)"),
+    ("stringview_wtf16.slice",        "makeStringSliceWTF(s, StringSliceWTF16)"),
+    ("stringview_iter.slice",         "makeStringSliceIter(s)"),
+    ("stringview_wtf16.length",       "makeStringMeasure(s, StringMeasureWTF16View)"),
 ]
 
 
@@ -679,7 +701,7 @@ class Node:
         self.do_insert(inst, inst, expr)
 
 
-def instruction_parser():
+def instruction_parser(new_parser=False):
     """Build a trie out of all the instructions, then emit it as C++ code."""
     trie = Node()
     inst_length = 0
@@ -689,12 +711,23 @@ def instruction_parser():
 
     printer = CodePrinter()
 
-    printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
-    printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
+    if not new_parser:
+        printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
+        printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
     def print_leaf(expr, inst):
-        printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
-                           .format(inst=inst, expr=expr))
+        if new_parser:
+            expr = expr.replace("()", "(ctx)")
+            expr = expr.replace("(s", "(ctx, in")
+            printer.print_line("if (op == \"{inst}\"sv) {{".format(inst=inst))
+            with printer.indent():
+                printer.print_line("auto ret = {expr};".format(expr=expr))
+                printer.print_line("CHECK_ERR(ret);")
+                printer.print_line("return *ret;")
+            printer.print_line("}")
+        else:
+            printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
+                               .format(inst=inst, expr=expr))
         printer.print_line("goto parse_error;")
 
     def emit(node, idx=0):
@@ -723,7 +756,10 @@ def instruction_parser():
     emit(trie)
     printer.print_line("parse_error:")
     with printer.indent():
-        printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
+        if new_parser:
+            printer.print_line("return in.err(\"unrecognized instruction\");")
+        else:
+            printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 
 
 def print_header():
@@ -749,6 +785,8 @@ def main():
         sys.exit(1)
     print_header()
     generate_with_guard(instruction_parser, "INSTRUCTION_PARSER")
+    print()
+    generate_with_guard(lambda: instruction_parser(True), "NEW_INSTRUCTION_PARSER")
     print_footer()
 
 

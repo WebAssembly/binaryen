@@ -35,6 +35,9 @@ int main(int argc, const char* argv[]) {
   std::string symbolMap;
   std::string sourceMapFilename;
   std::string sourceMapUrl;
+
+  const std::string WasmAsOption = "wasm-as options";
+
   ToolOptions options("wasm-as",
                       "Assemble a .wat (WebAssembly text format) into a .wasm "
                       "(WebAssembly binary format)");
@@ -43,6 +46,7 @@ int main(int argc, const char* argv[]) {
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
+         WasmAsOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
@@ -51,6 +55,7 @@ int main(int argc, const char* argv[]) {
     .add("--validate",
          "-v",
          "Control validation of the output module",
+         WasmAsOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            if (argument != "web" && argument != "none" && argument != "wasm") {
@@ -62,11 +67,13 @@ int main(int argc, const char* argv[]) {
     .add("--debuginfo",
          "-g",
          "Emit names section and debug info",
+         WasmAsOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; })
     .add("--source-map",
          "-sm",
          "Emit source map to the specified file",
+         WasmAsOption,
          Options::Arguments::One,
          [&sourceMapFilename](Options* o, const std::string& argument) {
            sourceMapFilename = argument;
@@ -74,6 +81,7 @@ int main(int argc, const char* argv[]) {
     .add("--source-map-url",
          "-su",
          "Use specified string as source map URL",
+         WasmAsOption,
          Options::Arguments::One,
          [&sourceMapUrl](Options* o, const std::string& argument) {
            sourceMapUrl = argument;
@@ -81,6 +89,7 @@ int main(int argc, const char* argv[]) {
     .add("--symbolmap",
          "-s",
          "Emit a symbol map (indexes => names)",
+         WasmAsOption,
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { symbolMap = argument; })
     .add_positional("INFILE",

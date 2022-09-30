@@ -26,26 +26,3 @@
   (call $__original_main)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 1,
-  "declares": [
-    "puts"
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "main"
-  ],
-  "namedGlobals": {
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

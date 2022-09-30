@@ -286,12 +286,3 @@
   )
  )
 )
-(module ;; functions referenced by ref.func cannot be removed
- (export "test" $test)
- (func $foo)
- (func $test
-  (drop
-   (ref.func $foo)
-  )
- )
-)

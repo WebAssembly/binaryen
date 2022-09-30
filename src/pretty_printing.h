@@ -26,10 +26,7 @@
 #include "support/colors.h"
 
 inline std::ostream& doIndent(std::ostream& o, unsigned indent) {
-  for (unsigned i = 0; i < indent; i++) {
-    o << " ";
-  }
-  return o;
+  return o << std::string(indent, ' ');
 }
 
 inline std::ostream& prepareMajorColor(std::ostream& o) {

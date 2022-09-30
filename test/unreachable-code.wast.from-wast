@@ -14,20 +14,16 @@
   )
  )
  (func $a-block
-  (block $block
-   (if
-    (i32.const 1)
-    (unreachable)
-   )
+  (if
+   (i32.const 1)
+   (unreachable)
   )
  )
  (func $b-block
-  (block $block
-   (if
-    (i32.const 1)
-    (unreachable)
-    (unreachable)
-   )
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-prepost
@@ -49,7 +45,7 @@
  )
  (func $a-block-prepost
   (nop)
-  (block $block
+  (block
    (if
     (i32.const 1)
     (unreachable)
@@ -59,7 +55,7 @@
  )
  (func $b-block-prepost
   (nop)
-  (block $block
+  (block
    (if
     (i32.const 1)
     (unreachable)

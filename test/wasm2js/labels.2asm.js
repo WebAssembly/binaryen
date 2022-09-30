@@ -1,5 +1,6 @@
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -10,7 +11,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
@@ -116,56 +116,52 @@ function asmFunc(env) {
  function $7() {
   var i = 0;
   i = 0;
-  block : {
-   l : {
-    break l;
-   }
-   i = i + 1 | 0;
-   l1 : {
-    break l1;
-   }
-   i = i + 1 | 0;
-   l2 : {
-    break l2;
-   }
-   i = i + 1 | 0;
-   l3 : {
-    break l3;
-   }
-   i = i + 1 | 0;
-   l4 : {
-    break l4;
-   }
-   i = i + 1 | 0;
+  l : {
+   break l;
   }
+  i = i + 1 | 0;
+  l1 : {
+   break l1;
+  }
+  i = i + 1 | 0;
+  l2 : {
+   break l2;
+  }
+  i = i + 1 | 0;
+  l3 : {
+   break l3;
+  }
+  i = i + 1 | 0;
+  l4 : {
+   break l4;
+  }
+  i = i + 1 | 0;
   return i | 0;
  }
  
  function $8() {
   var i = 0;
   i = 0;
-  block : {
-   if_ : {
-    break if_;
-   }
-   i = i + 1 | 0;
-   if5 : {
-    break if5;
-   }
-   i = i + 1 | 0;
-   if6 : {
-    break if6;
-   }
-   i = i + 1 | 0;
-   if7 : {
-    break if7;
-   }
-   i = i + 1 | 0;
-   if8 : {
-    break if8;
-   }
-   i = i + 1 | 0;
+  if_ : {
+   break if_;
   }
+  i = i + 1 | 0;
+  if5 : {
+   break if5;
+  }
+  i = i + 1 | 0;
+  if6 : {
+   break if6;
+  }
+  i = i + 1 | 0;
+  if7 : {
+   break if7;
+  }
+  i = i + 1 | 0;
+  if8 : {
+   break if8;
+  }
+  i = i + 1 | 0;
   return i | 0;
  }
  
@@ -342,8 +338,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+});
 export var block = retasmFunc.block;
 export var loop1 = retasmFunc.loop1;
 export var loop2 = retasmFunc.loop2;

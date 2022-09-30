@@ -1,0 +1,26 @@
+(module
+ (type $none_=>_none (func))
+ (import "import" "import" (func $import))
+ (memory $0 256 256)
+ (data (i32.const 10) "__s______________")
+ (export "test1" (func $test1_0))
+ (export "keepalive" (func $test1))
+ (func $test1
+  (i32.store8
+   (i32.const 12)
+   (i32.const 115)
+  )
+  (call $import)
+  (i32.store8
+   (i32.const 13)
+   (i32.const 114)
+  )
+ )
+ (func $test1_0
+  (call $import)
+  (i32.store8
+   (i32.const 13)
+   (i32.const 114)
+  )
+ )
+)

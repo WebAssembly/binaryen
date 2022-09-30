@@ -10,8 +10,10 @@
 --enable-multivalue
 --enable-gc
 --enable-memory64
---enable-typed-function-references
 --enable-relaxed-simd
+--enable-extended-const
+--enable-strings
+--enable-multi-memories
 (module
  (type $none_=>_v128_externref (func (result v128 externref)))
  (func $foo (result v128 externref)

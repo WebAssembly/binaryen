@@ -1,42 +1,45 @@
 total
- [exports]      : 8       
- [funcs]        : 9       
+ [exports]      : 14      
+ [funcs]        : 19      
  [globals]      : 6       
  [imports]      : 5       
+ [memories]     : 1       
  [memory-data]  : 22      
- [table-data]   : 4       
+ [table-data]   : 12      
  [tables]       : 1       
- [tags]         : 1       
- [total]        : 465     
- [vars]         : 10      
+ [tags]         : 2       
+ [total]        : 771     
+ [vars]         : 27      
  ArrayInit      : 1       
  AtomicCmpxchg  : 1       
- AtomicNotify   : 1       
- Binary         : 64      
- Block          : 51      
- Break          : 6       
- Call           : 19      
- Const          : 121     
+ AtomicFence    : 1       
+ AtomicRMW      : 1       
+ Binary         : 82      
+ Block          : 105     
+ Break          : 19      
+ Call           : 23      
+ CallIndirect   : 3       
+ CallRef        : 2       
+ Const          : 145     
  DataDrop       : 1       
- Drop           : 6       
- GlobalGet      : 22      
- GlobalSet      : 12      
- If             : 20      
- Load           : 13      
- LocalGet       : 22      
- LocalSet       : 18      
- Loop           : 3       
- MemoryFill     : 1       
- Nop            : 20      
- RefAs          : 1       
- RefFunc        : 5       
- RefIs          : 3       
- RefNull        : 3       
- Return         : 18      
- SIMDExtract    : 3       
+ Drop           : 7       
+ GlobalGet      : 65      
+ GlobalSet      : 31      
+ I31New         : 3       
+ If             : 35      
+ Load           : 21      
+ LocalGet       : 48      
+ LocalSet       : 26      
+ Loop           : 12      
+ Nop            : 16      
+ RefEq          : 1       
+ RefFunc        : 17      
+ RefNull        : 4       
+ Return         : 35      
+ SIMDExtract    : 1       
  Select         : 1       
- Store          : 3       
- StructNew      : 3       
+ Store          : 6       
+ StructNew      : 1       
  TupleExtract   : 2       
- TupleMake      : 4       
- Unary          : 17      
+ TupleMake      : 8       
+ Unary          : 47      

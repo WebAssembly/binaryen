@@ -1,0 +1,9 @@
+false
+true
+{"module":"","base":"","initial":1,"shared":false,"is64":false,"max":64}
+true
+{"module":"","base":"","initial":1,"shared":true,"is64":false,"max":64}
+true
+{"module":"env","base":"memory","initial":0,"shared":false,"is64":false,"max":65536}
+true
+{"module":"env","base":"memory","initial":0,"shared":true,"is64":false,"max":65536}

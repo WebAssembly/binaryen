@@ -22,7 +22,6 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "pass.h"
-#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -107,6 +106,32 @@ inline Table* copyTable(const Table* table, Module& out) {
   return out.addTable(std::move(ret));
 }
 
+inline Memory* copyMemory(const Memory* memory, Module& out) {
+  auto ret = Builder::makeMemory(memory->name);
+  ret->hasExplicitName = memory->hasExplicitName;
+  ret->initial = memory->initial;
+  ret->max = memory->max;
+  ret->shared = memory->shared;
+  ret->indexType = memory->indexType;
+
+  return out.addMemory(std::move(ret));
+}
+
+inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
+  auto ret = Builder::makeDataSegment();
+  ret->name = segment->name;
+  ret->hasExplicitName = segment->hasExplicitName;
+  ret->memory = segment->memory;
+  ret->isPassive = segment->isPassive;
+  if (!segment->isPassive) {
+    auto offset = ExpressionManipulator::copy(segment->offset, out);
+    ret->offset = offset;
+  }
+  ret->data = segment->data;
+
+  return out.addDataSegment(std::move(ret));
+}
+
 inline void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -128,10 +153,11 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
-
-  out.memory = in.memory;
-  for (auto& segment : out.memory.segments) {
-    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+  for (auto& curr : in.memories) {
+    copyMemory(curr.get(), out);
+  }
+  for (auto& curr : in.dataSegments) {
+    copyDataSegment(curr.get(), out);
   }
   out.start = in.start;
   out.userSections = in.userSections;
@@ -150,40 +176,43 @@ inline void clearModule(Module& wasm) {
 // Rename functions along with all their uses.
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
-// call this redirect all of its uses.
+// call this to redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& [oldName, newName] : map) {
-    if (Function* F = wasm.getFunctionOrNull(oldName)) {
-      assert(!wasm.getFunctionOrNull(newName) || F->name == newName);
-      F->name = newName;
+    if (Function* func = wasm.getFunctionOrNull(oldName)) {
+      assert(!wasm.getFunctionOrNull(newName) || func->name == newName);
+      func->name = newName;
     }
   }
   wasm.updateMaps();
-  // Update other global things.
-  auto maybeUpdate = [&](Name& name) {
-    auto iter = map.find(name);
-    if (iter != map.end()) {
-      name = iter->second;
-    }
-  };
-  maybeUpdate(wasm.start);
-  ElementUtils::iterAllElementFunctionNames(&wasm, maybeUpdate);
-  for (auto& exp : wasm.exports) {
-    if (exp->kind == ExternalKind::Function) {
-      maybeUpdate(exp->value);
-    }
-  }
-  // Update call instructions.
-  for (auto& func : wasm.functions) {
-    // TODO: parallelize
-    if (!func->imported()) {
-      FindAll<Call> calls(func->body);
-      for (auto* call : calls.list) {
-        maybeUpdate(call->target);
+
+  // Update all references to it.
+  struct Updater : public WalkerPass<PostWalker<Updater>> {
+    bool isFunctionParallel() override { return true; }
+
+    T& map;
+
+    void maybeUpdate(Name& name) {
+      if (auto iter = map.find(name); iter != map.end()) {
+        name = iter->second;
       }
     }
-  }
+
+    Updater(T& map) : map(map) {}
+
+    Updater* create() override { return new Updater(map); }
+
+    void visitCall(Call* curr) { maybeUpdate(curr->target); }
+
+    void visitRefFunc(RefFunc* curr) { maybeUpdate(curr->func); }
+  };
+
+  Updater updater(map);
+  updater.maybeUpdate(wasm.start);
+  PassRunner runner(&wasm);
+  updater.run(&runner, &wasm);
+  updater.runOnModuleCode(&runner, &wasm);
 }
 
 inline void renameFunction(Module& wasm, Name oldName, Name newName) {
@@ -195,14 +224,36 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 // Convenient iteration over imported/non-imported module elements
 
 template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    if (!segment->isPassive && segment->memory == memory) {
+      visitor(segment.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterActiveDataSegments(Module& wasm, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    if (!segment->isPassive) {
+      visitor(segment.get());
+    }
   }
 }
 
@@ -304,10 +355,14 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
-// The operation performend should not modify the wasm module in any way.
-// TODO: enforce this
+// The operation performed should not modify the wasm module in any way, by
+// default - otherwise, set the Mutability to Mutable. (This is not enforced at
+// compile time - TODO find a way - but at runtime in pass-debug mode it is
+// checked.)
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
-template<typename T, template<typename, typename> class MapT = DefaultMap>
+template<typename T,
+         Mutability Mut = Immutable,
+         template<typename, typename> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
   Module& wasm;
 
@@ -332,7 +387,7 @@ struct ParallelFunctionAnalysis {
 
     struct Mapper : public WalkerPass<PostWalker<Mapper>> {
       bool isFunctionParallel() override { return true; }
-      bool modifiesBinaryenIR() override { return false; }
+      bool modifiesBinaryenIR() override { return Mut; }
 
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
@@ -456,165 +511,19 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting all the types that are declared in a module,
-// which means the HeapTypes (that are non-basic, that is, not eqref etc., which
-// do not need to be defined).
-//
-// Used when emitting or printing a module to give HeapTypes canonical
-// indices. HeapTypes are sorted in order of decreasing frequency to minize the
-// size of their collective encoding. Both a vector mapping indices to
-// HeapTypes and a map mapping HeapTypes to indices are produced.
-inline void collectHeapTypes(Module& wasm,
-                             std::vector<HeapType>& types,
-                             std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public InsertOrderedMap<HeapType, size_t> {
-    void note(HeapType type) {
-      if (!type.isBasic()) {
-        (*this)[type]++;
-      }
-    }
-    void note(Type type) {
-      for (HeapType ht : type.getHeapTypeChildren()) {
-        note(ht);
-      }
-    }
-  };
+// Helper function for collecting all the non-basic heap types used in the
+// module, i.e. the types that would appear in the type section.
+std::vector<HeapType> collectHeapTypes(Module& wasm);
 
-  struct CodeScanner
-    : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
-    Counts& counts;
+struct IndexedHeapTypes {
+  std::vector<HeapType> types;
+  std::unordered_map<HeapType, Index> indices;
+};
 
-    CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
-      setModule(&wasm);
-    }
-
-    void visitExpression(Expression* curr) {
-      if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->heapType);
-      } else if (curr->is<RefNull>()) {
-        counts.note(curr->type);
-      } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-        counts.note(curr->type.getRtt().heapType);
-      } else if (auto* make = curr->dynCast<StructNew>()) {
-        // Some operations emit a HeapType in the binary format, if they are
-        // static and not dynamic (if dynamic, the RTT provides the heap type).
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayNew>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* make = curr->dynCast<ArrayInit>()) {
-        if (!make->rtt && make->type != Type::unreachable) {
-          counts.note(make->type.getHeapType());
-        }
-      } else if (auto* cast = curr->dynCast<RefCast>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<RefTest>()) {
-        if (!cast->rtt && cast->type != Type::unreachable) {
-          counts.note(cast->getIntendedType());
-        }
-      } else if (auto* cast = curr->dynCast<BrOn>()) {
-        if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-          if (!cast->rtt && cast->type != Type::unreachable) {
-            counts.note(cast->getIntendedType());
-          }
-        }
-      } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.note(get->ref->type);
-      } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.note(set->ref->type);
-      } else if (Properties::isControlFlowStructure(curr)) {
-        if (curr->type.isTuple()) {
-          // TODO: Allow control flow to have input types as well
-          counts.note(Signature(Type::none, curr->type));
-        } else {
-          counts.note(curr->type);
-        }
-      }
-    }
-  };
-
-  // Collect module-level info.
-  Counts counts;
-  CodeScanner(wasm, counts).walkModuleCode(&wasm);
-  for (auto& curr : wasm.tags) {
-    counts.note(curr->sig);
-  }
-  for (auto& curr : wasm.tables) {
-    counts.note(curr->type);
-  }
-  for (auto& curr : wasm.elementSegments) {
-    counts.note(curr->type);
-  }
-
-  // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
-    wasm, [&](Function* func, Counts& counts) {
-      counts.note(func->type);
-      for (auto type : func->vars) {
-        counts.note(type);
-      }
-      if (!func->imported()) {
-        CodeScanner(wasm, counts).walk(func->body);
-      }
-    });
-
-  // Combine the function info with the module info.
-  for (auto& [_, functionCounts] : analysis.map) {
-    for (auto& [sig, count] : functionCounts) {
-      counts[sig] += count;
-    }
-  }
-
-  // Recursively traverse each reference type, which may have a child type that
-  // is itself a reference type. This reflects an appearance in the binary
-  // format that is in the type section itself.
-  // As we do this we may find more and more types, as nested children of
-  // previous ones. Each such type will appear in the type section once, so
-  // we just need to visit it once.
-  InsertOrderedSet<HeapType> newTypes;
-  for (auto& [type, _] : counts) {
-    newTypes.insert(type);
-  }
-  while (!newTypes.empty()) {
-    auto iter = newTypes.begin();
-    auto ht = *iter;
-    newTypes.erase(iter);
-    for (HeapType child : ht.getHeapTypeChildren()) {
-      if (!child.isBasic()) {
-        if (!counts.count(child)) {
-          newTypes.insert(child);
-        }
-        counts.note(child);
-      }
-    }
-
-    if (auto super = ht.getSuperType()) {
-      if (!counts.count(*super)) {
-        newTypes.insert(*super);
-        // We should unconditionally count supertypes, but while the type system
-        // is in flux, skip counting them to keep the type orderings in nominal
-        // test outputs more similar to the orderings in the equirecursive
-        // outputs. FIXME
-        counts.note(*super);
-      }
-    }
-  }
-
-  // Sort by frequency and then original insertion order.
-  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
-  std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    return a.second > b.second;
-  });
-  for (Index i = 0; i < sorted.size(); ++i) {
-    typeIndices[sorted[i].first] = i;
-    types.push_back(sorted[i].first);
-  }
-}
+// Similar to `collectHeapTypes`, but provides fast lookup of the index for each
+// type as well. Also orders the types to be valid and sorts the types by
+// frequency of use to minimize code size.
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm);
 
 } // namespace wasm::ModuleUtils
 

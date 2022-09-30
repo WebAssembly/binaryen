@@ -245,19 +245,19 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_multivalue(module, 'Multivalue block type ' +
                               '(multivalue is not enabled)')
 
-    def test_anyref_global(self):
+    def test_i31_global(self):
         module = '''
         (module
-         (global $foo anyref (ref.null any))
+         (global $foo (ref null i31) (ref.null i31))
         )
         '''
         self.check_gc(module, 'all used types should be allowed')
 
-    def test_anyref_local(self):
+    def test_i31_local(self):
         module = '''
         (module
          (func $foo
-          (local $0 anyref)
+          (local $0 (ref null i31))
          )
         )
         '''
@@ -330,7 +330,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         filename = 'reference_types_target_feature.wasm'
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types'])
-        self.assertIn('externref', self.disassemble(filename))
+        self.assertIn('anyref', self.disassemble(filename))
 
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
@@ -343,7 +343,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types', 'gc'])
         disassembly = self.disassemble(filename)
-        self.assertIn('anyref', disassembly)
+        self.assertIn('externref', disassembly)
         self.assertIn('eqref', disassembly)
 
     def test_superset(self):
@@ -395,6 +395,8 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-multivalue',
             '--enable-gc',
             '--enable-memory64',
-            '--enable-typed-function-references',
             '--enable-relaxed-simd',
+            '--enable-extended-const',
+            '--enable-strings',
+            '--enable-multi-memories',
         ], p2.stdout.splitlines())

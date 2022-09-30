@@ -40,6 +40,8 @@ typedef std::unordered_map<Name, std::atomic<Index>> NameCountMap;
 struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
 
   CallCountScanner* create() override { return new CallCountScanner(counts); }
@@ -55,6 +57,9 @@ private:
 };
 
 struct ReorderFunctions : public Pass {
+  // Only reorders functions, does not change their contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
     NameCountMap counts;
     // fill in info, as we operate on it in parallel (each function to its own

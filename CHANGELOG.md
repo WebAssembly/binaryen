@@ -15,8 +15,75 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add extra `memory64` argument for `BinaryenSetMemory` and new `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
+
+v110
+----
+
+- Add support for non-nullable locals in wasm GC. (#4959)
+- Add support for multiple memories. (#4811)
+- Add support for the wasm Strings proposal. (see PRs with [Strings] in name)
+- Add a new flag to Directize, `--pass-arg=directize-initial-contents-immutable`
+  which indicates the initial table contents are immutable. That is the case for
+  LLVM, for example, and it allows us to optimize more indirect calls to direct
+  ones. (#4942)
+- Change constant values of some reference types in the C and JS APIs. This is
+  only observable if you hardcode specific values instead of calling the
+  relevant methods (like `BinaryenTypeDataref()`). (#4755)
+- `BinaryenModulePrintStackIR`, `BinaryenModuleWriteStackIR` and
+  `BinaryenModuleAllocateAndWriteStackIR` now have an extra boolean
+  argument `optimize`. (#4832)
+- Remove support for the `let` instruction that has been removed from the typed
+  function references spec.
+- HeapType::ext has been restored but is no longer a subtype of HeapType::any to
+  match the latest updates in the GC spec. (#4898)
+- `i31ref` and `dataref` are now nullable to match the latest GC spec. (#4843)
+- Add support for `extern.externalize` and `extern.internalize`. (#4975)
+
+v109
+----
+
+- Add Global Struct Inference pass (#4659) (#4714)
+- Restore and fix SpillPointers pass (#4570)
+- Update relaxed SIMD instructions to latest spec
+
+v108
+----
+
+- Add CMake flag BUILD_TOOLS to control building tools (#4655)
+- Add CMake flag JS_OF_OCAML for js_of_ocaml (#4637)
+- Remove externref (#4633)
+
+v107
+----
+
+- Update the wasm GC type section binary format (#4625, #4631)
+- Lift the restriction in liveness-traversal.h on max 65535 locals (#4567)
+- Switch to nominal fuzzing by default (#4610)
+- Refactor Feature::All to match FeatureSet.setAll() (#4557)
+- New Signature Pruning pass (#4545)
+- Add support for extended-const proposal (#4529)
+- Add BUILD_TESTS CMake option to make gtest dependency optional.
+- Updated tests to use filecheck 0.0.22 (#4537). Updating is required to
+  successfully run the lit tests. This can be done with
+  `pip3 install -r requirements-dev.txt`.
+
+v106
+----
+
+- [wasm2js] Support exports of Globals (#4523)
+- MergeSimilarFunctions optimization pass (#4414)
+- Various wasm-ctor-eval improvements, including support for GC.
+
+v105
+----
+
+- This release contains binaries for ARM64 MacOS devices (#4397)
+- Otherwise, mostly bug fixes and incremental optimization improvements.
+
 v104
 ----
+
 - Bugfixes only, release created due to incorrect github release artifacts in
   v103 release (#4398).
 
@@ -49,6 +116,8 @@ v102
 
 - Replace `BinaryenExpressionGetSideEffects`'s features parameter with a module
   parameter.
+
+- OptimizeInstructions now lifts identical code in `select`/`if` arms (#3828). This may cause direct `BinaryenTupleExtract(BinaryenTupleMake(...))` to [use multivalue types](https://github.com/grain-lang/grain/pull/1158).
 
 v101
 ----
@@ -124,6 +193,13 @@ v100
 v99
 ---
 
+- Fix optimization behavior on assuming memory is zero-filled. We made that
+  assumption before, but it is incorrect in general, which caused problems.
+  The fixed behavior is to not assume it, but require the user to pass it in as
+  a flag, `--zero-filled-memory`. Large binaries with lots of empty bytes in the
+  data section may regress without that flag. Toolchains like Emscripten can
+  pass the flag automatically for users if they know it is right to assume,
+  which can avoid any regressions. (#3306)
 - `RefFunc` C and JS API constructors (`BinaryenRefFunc` and `ref.func`
   respectively) now take an extra `type` parameter, similar to `RefNull`. This
   is necessary for typed function references support.

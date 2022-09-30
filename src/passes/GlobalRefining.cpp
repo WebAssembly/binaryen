@@ -31,7 +31,13 @@ namespace wasm {
 namespace {
 
 struct GlobalRefining : public Pass {
+  // Only modifies globals and global.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   void run(PassRunner* runner, Module* module) override {
+    if (!module->features.hasGC()) {
+      return;
+    }
     if (getTypeSystem() != TypeSystem::Nominal) {
       Fatal() << "GlobalRefining requires nominal typing";
     }
@@ -98,6 +104,9 @@ struct GlobalRefining : public Pass {
     // now return the new type for any globals that we modified.
     struct GetUpdater : public WalkerPass<PostWalker<GetUpdater>> {
       bool isFunctionParallel() override { return true; }
+
+      // Only modifies global.get operations.
+      bool requiresNonNullableLocalFixups() override { return false; }
 
       GlobalRefining& parent;
       Module& wasm;

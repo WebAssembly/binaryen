@@ -190,7 +190,7 @@ public:
     } else {
       *canonical = *newGCData;
     }
-    return Literal(canonical, curr->type);
+    return Literal(canonical, curr->type.getHeapType());
   }
 };
 
@@ -249,7 +249,8 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::funcref) {
+        } else if (singleValue.type.isRef() &&
+                   singleValue.type.getHeapType() == HeapType::func) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();
@@ -513,9 +514,8 @@ private:
     if (type.isRef()) {
       return false;
     }
-    // For now, don't try to precompute an Rtt. TODO figure out when that would
-    // be safe and useful.
-    return !type.isRtt();
+
+    return true;
   }
 };
 

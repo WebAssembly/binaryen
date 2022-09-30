@@ -34,14 +34,28 @@ namespace wasm {
 //
 //   (temp = first, second, temp)
 //
-Expression* getResultOfFirst(Expression* first,
-                             Expression* second,
-                             Function* func,
-                             Module* wasm,
-                             const PassOptions& passOptions) {
+// The first expression is assumed to not be unreachable (otherwise, there is no
+// value to get the result of). If the second is unreachable, this returns
+// something with type unreachable (that avoids returning something with a
+// concrete type, which might replace something with unreachable type - we want
+// to keep the type the same, in most cases).
+inline Expression* getResultOfFirst(Expression* first,
+                                    Expression* second,
+                                    Function* func,
+                                    Module* wasm,
+                                    const PassOptions& passOptions) {
   assert(first->type.isConcrete());
 
   Builder builder(*wasm);
+
+  if (second->type == Type::unreachable) {
+    // No value is actually consumed here. Emit something with unreachable type.
+    // (Note that if we continued to the canReorder code after us, and emitted
+    // second followed by first, then the block would have a concrete type due
+    // to the last element having such a type - which would not have unreachable
+    // type.)
+    return builder.makeSequence(builder.makeDrop(first), second);
+  }
 
   if (EffectAnalyzer::canReorder(passOptions, *wasm, first, second)) {
     return builder.makeSequence(second, first);

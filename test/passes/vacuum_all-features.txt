@@ -4,6 +4,7 @@
  (type $1 (func (param i32)))
  (type $2 (func (result f32)))
  (type $4 (func (param i32 f64 i32 i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_f64 (func (result f64)))
  (import "env" "int" (func $int (result i32)))
  (global $Int i32 (i32.const 0))
@@ -11,7 +12,7 @@
  (func $b
   (nop)
  )
- (func $l
+ (func $l (result i32)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -23,6 +24,7 @@
   (local.set $x
    (local.get $y)
   )
+  (local.get $x)
  )
  (func $loopy (param $0 i32)
   (nop)
@@ -181,11 +183,11 @@
    )
   )
  )
- (func $if-1-block (param $x i32)
+ (func $if-1-block (param $x i32) (result i32)
   (block $out
    (if
     (local.get $x)
-    (block $block9
+    (block
      (local.set $x
       (local.get $x)
      )
@@ -193,6 +195,7 @@
     )
    )
   )
+  (local.get $x)
  )
  (func $block-resize-br-gone
   (block $out
@@ -208,16 +211,14 @@
   (nop)
  )
  (func $a
-  (block $block
-   (i32.store
-    (i32.const 1)
-    (i32.const 2)
-   )
-   (f64.div
-    (f64.const -nan:0xfffffffffa361)
-    (loop $label$1
-     (br $label$1)
-    )
+  (i32.store
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (f64.div
+   (f64.const -nan:0xfffffffffa361)
+   (loop $label$1
+    (br $label$1)
    )
   )
  )
@@ -248,7 +249,7 @@
  )
  (func $load-may-have-side-effects (result i32)
   (i64.ge_s
-   (block $block (result i64)
+   (block (result i64)
     (drop
      (i64.load32_s
       (i32.const 678585719)
@@ -385,7 +386,7 @@
    (call $_deflateInit2_
     (local.get $3)
    )
-   (block $block
+   (block
     (global.set $global$1
      (local.get $3)
     )
@@ -402,7 +403,7 @@
      )
      (i32.const 1)
     )
-    (block $block1 (result i32)
+    (block (result i32)
      (i32.store
       (local.get $1)
       (i32.load offset=20
@@ -419,7 +420,7 @@
      )
      (i32.const 0)
     )
-    (block $block2 (result i32)
+    (block (result i32)
      (drop
       (call $_deflateEnd
        (local.get $3)

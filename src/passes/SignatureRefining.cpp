@@ -26,6 +26,7 @@
 // type, and all call_refs using it).
 //
 
+#include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
@@ -35,13 +36,14 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
-using namespace std;
-
 namespace wasm {
 
 namespace {
 
 struct SignatureRefining : public Pass {
+  // Only changes heap types and parameter types (but not locals).
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // Maps each heap type to the possible refinement of the types in their
   // signatures. We will fill this during analysis and then use it while doing
   // an update of the types. If a type has no improvement that we can find, it
@@ -49,8 +51,12 @@ struct SignatureRefining : public Pass {
   std::unordered_map<HeapType, Signature> newSignatures;
 
   void run(PassRunner* runner, Module* module) override {
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SignatureRefining requires nominal typing";
+    if (!module->features.hasGC()) {
+      return;
+    }
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "SignatureRefining requires nominal/hybrid typing";
     }
 
     if (!module->tables.empty()) {
@@ -71,11 +77,21 @@ struct SignatureRefining : public Pass {
 
       // A possibly improved LUB for the results.
       LUBFinder resultsLUB;
+
+      // Normally we can optimize, but some cases prevent a particular signature
+      // type from being changed at all, see below.
+      bool canModify = true;
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    // This analysis also modifies the wasm as it goes, as the getResultsLUB()
+    // operation has side effects (see comment on header declaration).
+    ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
+          // Avoid changing the types of imported functions. Spec and VM support
+          // for that is not yet stable.
+          // TODO: optimize this when possible in the future
+          info.canModify = false;
           return;
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
@@ -106,6 +122,25 @@ struct SignatureRefining : public Pass {
       // Add the function's return LUB to the one for the heap type of that
       // function.
       allInfo[func->type].resultsLUB.combine(info.resultsLUB);
+
+      // If one function cannot be modified, that entire type cannot be.
+      if (!info.canModify) {
+        allInfo[func->type].canModify = false;
+      }
+    }
+
+    // We cannot alter the signature of an exported function, as the outside may
+    // notice us doing so. For example, if we turn a parameter from nullable
+    // into non-nullable then callers sending a null will break. Put another
+    // way, we need to see all callers to refine types, and for exports we
+    // cannot do so.
+    // TODO If a function type is passed we should also mark the types used
+    //      there, etc., recursively. For now this code just handles the top-
+    //      level type, which is enough to keep the fuzzer from erroring. More
+    //      generally, we need to decide about adding a "closed-world" flag of
+    //      some kind.
+    for (auto* exportedFunc : ExportUtils::getExportedFunctions(*module)) {
+      allInfo[exportedFunc->type].canModify = false;
     }
 
     bool refinedResults = false;
@@ -115,6 +150,11 @@ struct SignatureRefining : public Pass {
     for (auto& func : module->functions) {
       auto type = func->type;
       if (!seen.insert(type).second) {
+        continue;
+      }
+
+      auto& info = allInfo[type];
+      if (!info.canModify) {
         continue;
       }
 
@@ -129,7 +169,6 @@ struct SignatureRefining : public Pass {
         }
       };
 
-      auto& info = allInfo[type];
       for (auto* call : info.calls) {
         updateLUBs(call->operands);
       }
@@ -205,6 +244,10 @@ struct SignatureRefining : public Pass {
     struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
 
+      // Updating parameter types cannot affect validation (only updating var
+      // types types might).
+      bool requiresNonNullableLocalFixups() override { return false; }
+
       SignatureRefining& parent;
       Module& wasm;
 
@@ -220,30 +263,22 @@ struct SignatureRefining : public Pass {
           for (auto param : iter->second.params) {
             newParamsTypes.push_back(param);
           }
-          TypeUpdating::updateParamTypes(func, newParamsTypes, wasm);
+          // Do not update local.get/local.tee here, as we will do so in
+          // GlobalTypeRewriter::updateSignatures, below. (Doing an update here
+          // would leave the IR in an inconsistent state of a partial update;
+          // instead, do the full update at the end.)
+          TypeUpdating::updateParamTypes(
+            func,
+            newParamsTypes,
+            wasm,
+            TypeUpdating::LocalUpdatingMode::DoNotUpdate);
         }
       }
     };
     CodeUpdater(*this, *module).run(runner, module);
 
     // Rewrite the types.
-    class TypeRewriter : public GlobalTypeRewriter {
-      SignatureRefining& parent;
-
-    public:
-      TypeRewriter(Module& wasm, SignatureRefining& parent)
-        : GlobalTypeRewriter(wasm), parent(parent) {}
-
-      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = parent.newSignatures.find(oldSignatureType);
-        if (iter != parent.newSignatures.end()) {
-          sig.params = getTempType(iter->second.params);
-          sig.results = getTempType(iter->second.results);
-        }
-      }
-    };
-
-    TypeRewriter(*module, *this).update();
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
     if (refinedResults) {
       // After return types change we need to propagate.

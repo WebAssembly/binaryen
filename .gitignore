@@ -22,6 +22,7 @@ CMakeFiles
 /bin/
 /lib/
 /config.h
+/emcc-build
 compile_commands.json
 test/lit/lit.site.cfg.py
 
@@ -43,3 +44,9 @@ test/lit/lit.site.cfg.py
 # files related to VS Code
 /.history
 /.vscode
+
+# files related to Emsdk installation
+.emsdk_version
+
+# files related to clangd cache
+.cache/*

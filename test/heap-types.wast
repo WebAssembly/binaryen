@@ -29,22 +29,15 @@
   (type $bytes (array (mut i8)))
   (type $words (array (mut i32)))
 
-  ;; RTT
   (type $parent (struct))
   (type $child (struct i32))
   (type $grandchild (struct i32 i64))
-  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
-  (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
-  (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
-  (global $rttfreshgrandchild (rtt 2 $grandchild) (rtt.fresh_sub $grandchild (global.get $rttchild)))
 
   (type $nested-child-struct (struct (field (mut (ref $child)))))
   (type $nested-child-array (array (mut (ref $child))))
 
   (global $struct.new-in-global (ref $struct.A)
-    (struct.new_default_with_rtt $struct.A
-      (rtt.canon $struct.A)
-    )
+    (struct.new_default $struct.A)
   )
 
   (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
@@ -120,16 +113,13 @@
       )
     )
     (drop
-      (struct.new_default_with_rtt $struct.A
-        (rtt.canon $struct.A)
-      )
+      (struct.new_default $struct.A)
     )
     (drop
-      (struct.new_with_rtt $struct.A
+      (struct.new $struct.A
         (i32.const 1)
         (f32.const 2.345)
         (f64.const 3.14159)
-        (rtt.canon $struct.A)
       )
     )
     (unreachable)
@@ -140,16 +130,14 @@
     (local $tb (ref null $bytes))
     (local $tw (ref null $words))
     (drop
-      (array.new_with_rtt $vector
+      (array.new $vector
         (f64.const 3.14159)
         (i32.const 3)
-        (rtt.canon $vector)
       )
     )
     (drop
-      (array.new_default_with_rtt $matrix
+      (array.new_default $matrix
         (i32.const 10)
-        (rtt.canon $matrix)
       )
     )
     (drop
@@ -195,42 +183,6 @@
       )
     )
     (unreachable)
-  )
-  ;; RTT types as parameters
-  (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))
-  (func $rtt-param-without-depth (param $rtt (rtt $parent)))
-  (func $rtt-operations
-    (local $temp.A (ref null $struct.A))
-    (local $temp.B (ref null $struct.B))
-    (drop
-      (ref.test (ref.null $struct.A) (rtt.canon $struct.B))
-    )
-    (drop
-      (ref.cast (ref.null $struct.A) (rtt.canon $struct.B))
-    )
-    (drop
-      (block $out (result (ref $struct.B))
-        ;; set the value to a local with type $struct.A, showing that the value
-        ;; flowing out has the right type
-        (local.set $temp.A
-          (br_on_cast $out (ref.null $struct.A) (rtt.canon $struct.B))
-        )
-        ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
-        ;; RTT in binaryen IR to find the cast type.
-        (br_on_cast $out (ref.null $struct.A) (unreachable))
-        (unreachable)
-      )
-    )
-    (drop
-      (block $out2 (result (ref null $struct.A))
-        ;; set the value to a local with type $struct.A, showing that the value
-        ;; flowing out has the right type
-        (local.set $temp.B
-          (br_on_cast_fail $out2 (ref.null $struct.A) (rtt.canon $struct.B))
-        )
-        (ref.null $struct.A)
-      )
-    )
   )
   (func $ref.is_X (param $x anyref)
     (if (ref.is_func (local.get $x)) (unreachable))
@@ -363,13 +315,6 @@
       )
     )
   )
-  (func $unreachables-7
-    (drop
-      (struct.new_default_with_rtt $struct.A
-        (unreachable)
-      )
-    )
-  )
   (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
     (array.copy $vector $vector
       (local.get $x)
@@ -380,20 +325,18 @@
     )
   )
   (func $array-init (result (ref $vector))
-    (array.init $vector
+    (array.init_static $vector
       (f64.const 1)
       (f64.const 2)
       (f64.const 4)
       (f64.const 8)
-      (rtt.canon $vector)
     )
   )
   (func $array-init-packed (result (ref $bytes))
-    (array.init $bytes
+    (array.init_static $bytes
       (i32.const 4)
       (i32.const 2)
       (i32.const 1)
-      (rtt.canon $bytes)
     )
   )
   (func $static-operations
@@ -419,37 +362,6 @@
           (br_on_cast_static_fail $out-A $struct.B (ref.null $struct.A))
         )
         (unreachable)
-      )
-    )
-  )
-  (func $static-constructions
-    (drop
-      (struct.new_default $struct.A)
-    )
-    (drop
-      (struct.new $struct.A
-        (i32.const 1)
-        (f32.const 2.345)
-        (f64.const 3.14159)
-      )
-    )
-    (drop
-      (array.new $vector
-        (f64.const 3.14159)
-        (i32.const 3)
-      )
-    )
-    (drop
-      (array.new_default $matrix
-        (i32.const 10)
-      )
-    )
-    (drop
-      (array.init_static $vector
-        (f64.const 1)
-        (f64.const 2)
-        (f64.const 4)
-        (f64.const 8)
       )
     )
   )

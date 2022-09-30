@@ -32,10 +32,8 @@ namespace wasm {
 
 namespace {
 
-// We use a LUBFinder to track field info. A LUBFinder keeps track of the best
-// possible LUB so far. The only extra functionality we need here is whether
-// there is a default null value (which would force us to keep the type
-// nullable).
+// We use a LUBFinder to track field info, which includes the best LUB possible
+// as well as relevant nulls (nulls force us to keep the type nullable).
 using FieldInfo = LUBFinder;
 
 struct FieldInfoScanner
@@ -74,14 +72,39 @@ struct FieldInfoScanner
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
   }
+
+  Properties::FallthroughBehavior getFallthroughBehavior() {
+    // Looking at fallthrough values may be dangerous here, because it ignores
+    // intermediate steps. Consider this:
+    //
+    // (struct.set $T 0
+    //   (local.tee
+    //     (struct.get $T 0)))
+    //
+    // This is a copy of a field to itself - normally something we can ignore
+    // (see above). But in this case, if we refine the field then that will
+    // update the struct.get, but the local.tee will still have the old type,
+    // which may not be refined enough. We could in theory always fix this up
+    // using casts later, but those casts may be expensive (especially ref.casts
+    // as opposed to ref.as_non_null), so for now just ignore tee fallthroughs.
+    // TODO: investigate more
+    return Properties::FallthroughBehavior::NoTeeBrIf;
+  }
 };
 
 struct TypeRefining : public Pass {
+  // Only affects GC type declarations and struct.gets.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
   void run(PassRunner* runner, Module* module) override {
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "TypeRefining requires nominal typing";
+    if (!module->features.hasGC()) {
+      return;
+    }
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "TypeRefining requires nominal/hybrid typing";
     }
 
     // Find and analyze struct operations inside each function.
@@ -193,14 +216,66 @@ struct TypeRefining : public Pass {
         }
       }
 
-      for (auto subType : subTypes.getSubTypes(type)) {
+      for (auto subType : subTypes.getStrictSubTypes(type)) {
         work.push(subType);
       }
     }
 
     if (canOptimize) {
+      updateInstructions(*module, runner);
       updateTypes(*module, runner);
     }
+  }
+
+  // If we change types then some instructions may need to be modified.
+  // Specifically, we assume that reads from structs impose no constraints on
+  // us, so that we can optimize maximally. If a struct is never created nor
+  // written to, but only read from, then we have literally no constraints on it
+  // at all, and we can end up with a situation where we alter the type to
+  // something that is invalid for that read. To ensure the code still
+  // validates, simply remove such reads.
+  void updateInstructions(Module& wasm, PassRunner* runner) {
+    struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      // Only affects struct.gets.
+      bool requiresNonNullableLocalFixups() override { return false; }
+
+      TypeRefining& parent;
+
+      ReadUpdater(TypeRefining& parent) : parent(parent) {}
+
+      ReadUpdater* create() override { return new ReadUpdater(parent); }
+
+      void visitStructGet(StructGet* curr) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        auto oldType = curr->ref->type.getHeapType();
+        auto newFieldType =
+          parent.finalInfos[oldType][curr->index].getBestPossible();
+        if (!Type::isSubType(newFieldType, curr->type)) {
+          // This instruction is invalid, so it must be the result of the
+          // situation described above: we ignored the read during our
+          // inference, and optimized accordingly, and so now we must remove it
+          // to keep the module validating. It doesn't matter what we emit here,
+          // since there are no struct.new or struct.sets for this type, so this
+          // code is logically unreachable.
+          //
+          // Note that we emit an unreachable here, which changes the type, and
+          // so we should refinalize. However, we will be refinalizing later
+          // anyhow in updateTypes, so there is no need.
+          Builder builder(*getModule());
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
+        }
+      }
+    };
+
+    ReadUpdater updater(*this);
+    updater.run(runner, &wasm);
+    updater.runOnModuleCode(runner, &wasm);
   }
 
   void updateTypes(Module& wasm, PassRunner* runner) {

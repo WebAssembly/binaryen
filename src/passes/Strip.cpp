@@ -28,6 +28,8 @@
 namespace wasm {
 
 struct Strip : public Pass {
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // A function that returns true if the method should be removed.
   typedef std::function<bool(UserSection&)> Decider;
   Decider decider;

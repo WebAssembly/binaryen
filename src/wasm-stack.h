@@ -122,7 +122,10 @@ public:
   MappedLocals mappedLocals;
 
 private:
-  void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
+  void emitMemoryAccess(size_t alignment,
+                        size_t bytes,
+                        uint64_t offset,
+                        Name memory);
   int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;
@@ -197,10 +200,21 @@ template<typename SubType> void BinaryenIRWriter<SubType>::write() {
   emitFunctionEnd();
 }
 
-// emits a node, but if it is a block with no name, emit a list of its contents
+// Emits a node in a position that can contain a list of contents, like an if
+// arm. This will emit the node, but if it is a block with no name, just emit
+// its contents. This is ok to do because a list of contents is ok in the wasm
+// binary format in such positions anyhow. When we read such code in Binaryen
+// we will end up creating a block for it (note that while doing so we create a
+// block without a name, since nothing branches to it, which makes it easy to
+// handle in optimization passes and when writing the binary out again).
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
+  // Even if the block has a name, check if the name is necessary (if it has no
+  // uses, it is equivalent to not having one). Scanning the children of the
+  // block means that this takes quadratic time, but it will be N^2 for a fairly
+  // small N since the number of nested non-block control flow structures tends
+  // to be very reasonable.
   if (!block || BranchUtils::BranchSeeker::has(block, block->name)) {
     visit(curr);
     return;
@@ -260,6 +274,26 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
       ++from;
     }
   };
+
+  // A block with no name never needs to be emitted: we can just emit its
+  // contents. In some cases that will end up as "stacky" code, which is valid
+  // in wasm but not in Binaryen IR. This is similar to what we do in
+  // visitPossibleBlockContents(), and like there, when we reload such a binary
+  // we'll end up creating a block for it then.
+  //
+  // Note that in visitPossibleBlockContents() we also optimize the case of a
+  // block with a name but the name actually has no uses - that handles more
+  // cases, but it requires more work. It is reasonable to do it in
+  // visitPossibleBlockContents() which handles the common cases of blocks that
+  // are children of control flow structures (like an if arm); doing it here
+  // would affect every block, including highly-nested block stacks, which would
+  // end up as quadratic time. In optimized code the name will not exist if it's
+  // not used anyhow, so a minor optimization for the unoptimized case that
+  // leads to potential quadratic behavior is not worth it here.
+  if (!curr->name.is()) {
+    visitChildren(curr, 0);
+    return;
+  }
 
   auto afterChildren = [this](Block* curr) {
     emitScopeEnd(curr);
@@ -471,6 +505,8 @@ private:
   BinaryInstWriter writer;
   Function* func;
 };
+
+std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize);
 
 } // namespace wasm
 

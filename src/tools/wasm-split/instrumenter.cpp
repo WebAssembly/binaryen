@@ -22,25 +22,31 @@
 
 namespace wasm {
 
-Instrumenter::Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash)
-  : options(options), moduleHash(moduleHash) {}
+Instrumenter::Instrumenter(const InstrumenterConfig& config,
+                           uint64_t moduleHash)
+  : config(config), moduleHash(moduleHash) {}
 
 void Instrumenter::run(PassRunner* runner, Module* wasm) {
   this->runner = runner;
   this->wasm = wasm;
-  addGlobals();
+
+  size_t numFuncs = 0;
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
+
+  addGlobals(numFuncs);
+  addSecondaryMemory(numFuncs);
   instrumentFuncs();
-  addProfileExport();
+  addProfileExport(numFuncs);
 }
 
-void Instrumenter::addGlobals() {
-  if (options.storageKind != WasmSplitOptions::StorageKind::InGlobals) {
+void Instrumenter::addGlobals(size_t numFuncs) {
+  if (config.storageKind != WasmSplitOptions::StorageKind::InGlobals) {
     // Don't need globals
     return;
   }
   // Create fresh global names (over-reserves, but that's ok)
   counterGlobal = Names::getValidGlobalName(*wasm, "monotonic_counter");
-  functionGlobals.reserve(wasm->functions.size());
+  functionGlobals.reserve(numFuncs);
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     functionGlobals.push_back(Names::getValidGlobalName(
       *wasm, std::string(func->name.c_str()) + "_timestamp"));
@@ -62,11 +68,31 @@ void Instrumenter::addGlobals() {
   }
 }
 
+void Instrumenter::addSecondaryMemory(size_t numFuncs) {
+  if (config.storageKind != WasmSplitOptions::StorageKind::InSecondaryMemory) {
+    // Don't need secondary memory
+    return;
+  }
+  if (!wasm->features.hasMultiMemories()) {
+    Fatal()
+      << "error: --in-secondary-memory requires multi-memories to be enabled";
+  }
+
+  secondaryMemory =
+    Names::getValidMemoryName(*wasm, config.secondaryMemoryName);
+  // Create a memory with enough pages to write into
+  size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
+  auto mem = Builder::makeMemory(secondaryMemory, pages, pages, true);
+  mem->module = config.importNamespace;
+  mem->base = config.secondaryMemoryName;
+  wasm->addMemory(std::move(mem));
+}
+
 void Instrumenter::instrumentFuncs() {
   // Inject code at the beginning of each function to advance the monotonic
   // counter and set the function's timestamp if it hasn't already been set.
   Builder builder(*wasm);
-  switch (options.storageKind) {
+  switch (config.storageKind) {
     case WasmSplitOptions::StorageKind::InGlobals: {
       // (if (i32.eqz (global.get $timestamp))
       //   (block
@@ -102,19 +128,30 @@ void Instrumenter::instrumentFuncs() {
       });
       break;
     }
-    case WasmSplitOptions::StorageKind::InMemory: {
+    case WasmSplitOptions::StorageKind::InMemory:
+    case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       if (!wasm->features.hasAtomics()) {
-        Fatal() << "error: --in-memory requires atomics to be enabled";
+        const char* command =
+          config.storageKind == WasmSplitOptions::StorageKind::InMemory
+            ? "in-memory"
+            : "in-secondary-memory";
+        Fatal() << "error: --" << command << " requires atomics to be enabled";
       }
       // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       Index funcIdx = 0;
+      assert(!wasm->memories.empty());
+      Name memoryName =
+        config.storageKind == WasmSplitOptions::StorageKind::InMemory
+          ? wasm->memories[0]->name
+          : secondaryMemory;
       ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
         func->body = builder.makeSequence(
           builder.makeAtomicStore(1,
                                   funcIdx,
-                                  builder.makeConstPtr(0),
+                                  builder.makeConstPtr(0, Type::i32),
                                   builder.makeConst(uint32_t(1)),
-                                  Type::i32),
+                                  Type::i32,
+                                  memoryName),
           func->body,
           func->body->type);
         ++funcIdx;
@@ -139,20 +176,17 @@ void Instrumenter::instrumentFuncs() {
 // otherwise. Functions with smaller non-zero timestamps were called earlier in
 // the instrumented run than funtions with larger timestamps.
 
-void Instrumenter::addProfileExport() {
+void Instrumenter::addProfileExport(size_t numFuncs) {
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
   // writes the profile if the given space is sufficient to hold it.
-  auto name = Names::getValidFunctionName(*wasm, options.profileExport);
+  auto name = Names::getValidFunctionName(*wasm, config.profileExport);
   auto writeProfile = Builder::makeFunction(
     name, Signature({Type::i32, Type::i32}, Type::i32), {});
   writeProfile->hasExplicitName = true;
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
-
-  size_t numFuncs = 0;
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
 
   // Calculate the size of the profile:
   //   8 bytes module hash +
@@ -168,12 +202,25 @@ void Instrumenter::addProfileExport() {
     return builder.makeConst(int32_t(profileSize));
   };
 
+  // Also make sure there is a memory with enough pages to write into
+  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
+  if (wasm->memories.empty()) {
+    wasm->addMemory(Builder::makeMemory("0"));
+    wasm->memories[0]->initial = pages;
+    wasm->memories[0]->max = pages;
+  } else if (wasm->memories[0]->initial < pages) {
+    wasm->memories[0]->initial = pages;
+    if (wasm->memories[0]->max < pages) {
+      wasm->memories[0]->max = pages;
+    }
+  }
+
   // Write the hash followed by all the time stamps
-  Expression* writeData =
-    builder.makeStore(8, 0, 1, getAddr(), hashConst(), Type::i64);
+  Expression* writeData = builder.makeStore(
+    8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
 
-  switch (options.storageKind) {
+  switch (config.storageKind) {
     case WasmSplitOptions::StorageKind::InGlobals: {
       for (const auto& global : functionGlobals) {
         writeData = builder.blockify(
@@ -183,17 +230,23 @@ void Instrumenter::addProfileExport() {
                             1,
                             getAddr(),
                             builder.makeGlobalGet(global, Type::i32),
-                            Type::i32));
+                            Type::i32,
+                            wasm->memories[0]->name));
         offset += 4;
       }
       break;
     }
-    case WasmSplitOptions::StorageKind::InMemory: {
+    case WasmSplitOptions::StorageKind::InMemory:
+    case WasmSplitOptions::StorageKind::InSecondaryMemory: {
       Index funcIdxVar =
         Builder::addVar(writeProfile.get(), "funcIdx", Type::i32);
       auto getFuncIdx = [&]() {
         return builder.makeLocalGet(funcIdxVar, Type::i32);
       };
+      Name loadMemoryName =
+        config.storageKind == WasmSplitOptions::StorageKind::InMemory
+          ? wasm->memories[0]->name
+          : secondaryMemory;
       // (block $outer
       //   (loop $l
       //     (br_if $outer (i32.eq (local.get $fucIdx) (i32.const numFuncs))
@@ -232,8 +285,10 @@ void Instrumenter::addProfileExport() {
                   getAddr(),
                   builder.makeBinary(
                     MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
-                builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32),
-                Type::i32),
+                builder.makeAtomicLoad(
+                  1, 0, getFuncIdx(), Type::i32, loadMemoryName),
+                Type::i32,
+                wasm->memories[0]->name),
               builder.makeLocalSet(
                 funcIdxVar,
                 builder.makeBinary(
@@ -251,23 +306,10 @@ void Instrumenter::addProfileExport() {
   // Create an export for the function
   wasm->addFunction(std::move(writeProfile));
   wasm->addExport(
-    Builder::makeExport(options.profileExport, name, ExternalKind::Function));
-
-  // Also make sure there is a memory with enough pages to write into
-  size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
-  if (!wasm->memory.exists) {
-    wasm->memory.exists = true;
-    wasm->memory.initial = pages;
-    wasm->memory.max = pages;
-  } else if (wasm->memory.initial < pages) {
-    wasm->memory.initial = pages;
-    if (wasm->memory.max < pages) {
-      wasm->memory.max = pages;
-    }
-  }
+    Builder::makeExport(config.profileExport, name, ExternalKind::Function));
 
   // Export the memory if it is not already exported or imported.
-  if (!wasm->memory.imported()) {
+  if (!wasm->memories[0]->imported()) {
     bool memoryExported = false;
     for (auto& ex : wasm->exports) {
       if (ex->kind == ExternalKind::Memory) {
@@ -276,10 +318,10 @@ void Instrumenter::addProfileExport() {
       }
     }
     if (!memoryExported) {
-      wasm->addExport(
-        Builder::makeExport("profile-memory",
-                            Names::getValidExportName(*wasm, wasm->memory.name),
-                            ExternalKind::Memory));
+      wasm->addExport(Builder::makeExport(
+        "profile-memory",
+        Names::getValidExportName(*wasm, wasm->memories[0]->name),
+        ExternalKind::Memory));
     }
   }
 }

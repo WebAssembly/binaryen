@@ -41,12 +41,192 @@ static bool isInvoke(Function* F) {
   return F->imported() && F->module == ENV && F->base.startsWith("invoke_");
 }
 
+struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
+  SegmentRemover(Index segment) : segment(segment) {}
+
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new SegmentRemover(segment); }
+
+  void visitMemoryInit(MemoryInit* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
+                                      builder.makeDrop(curr->offset),
+                                      builder.makeDrop(curr->size)));
+    }
+  }
+
+  void visitDataDrop(DataDrop* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeNop());
+    }
+  }
+
+  Index segment;
+};
+
+static void calcSegmentOffsets(Module& wasm,
+                               std::vector<Address>& segmentOffsets) {
+  const Address UNKNOWN_OFFSET(uint32_t(-1));
+
+  std::unordered_map<Index, Address> passiveOffsets;
+  if (wasm.features.hasBulkMemory()) {
+    // Fetch passive segment offsets out of memory.init instructions
+    struct OffsetSearcher : PostWalker<OffsetSearcher> {
+      std::unordered_map<Index, Address>& offsets;
+      OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
+        : offsets(offsets) {}
+      void visitMemoryInit(MemoryInit* curr) {
+        // The desitination of the memory.init is either a constant
+        // or the result of an addition with __memory_base in the
+        // case of PIC code.
+        auto* dest = curr->dest->dynCast<Const>();
+        if (!dest) {
+          auto* add = curr->dest->dynCast<Binary>();
+          if (!add) {
+            return;
+          }
+          dest = add->left->dynCast<Const>();
+          if (!dest) {
+            return;
+          }
+        }
+        auto it = offsets.find(curr->segment);
+        if (it != offsets.end()) {
+          Fatal() << "Cannot get offset of passive segment initialized "
+                     "multiple times";
+        }
+        offsets[curr->segment] = dest->value.getInteger();
+      }
+    } searcher(passiveOffsets);
+    searcher.walkModule(&wasm);
+  }
+  for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
+    auto& segment = wasm.dataSegments[i];
+    if (segment->isPassive) {
+      auto it = passiveOffsets.find(i);
+      if (it != passiveOffsets.end()) {
+        segmentOffsets.push_back(it->second);
+      } else {
+        // This was a non-constant offset (perhaps TLS)
+        segmentOffsets.push_back(UNKNOWN_OFFSET);
+      }
+    } else if (auto* addrConst = segment->offset->dynCast<Const>()) {
+      auto address = addrConst->value.getUnsigned();
+      segmentOffsets.push_back(address);
+    } else {
+      // TODO(sbc): Wasm shared libraries have data segments with non-const
+      // offset.
+      segmentOffsets.push_back(0);
+    }
+  }
+}
+
+static void removeSegment(Module& wasm, Index segment) {
+  PassRunner runner(&wasm);
+  SegmentRemover(segment).run(&runner, &wasm);
+  // Resize the segment to zero.  In theory we should completely remove it
+  // but that would mean re-numbering the segments that follow which is
+  // non-trivial.
+  wasm.dataSegments[segment]->data.resize(0);
+}
+
+static Address getExportedAddress(Module& wasm, Export* export_) {
+  Global* g = wasm.getGlobal(export_->value);
+  auto* addrConst = g->init->dynCast<Const>();
+  return addrConst->value.getUnsigned();
+}
+
+static void removeData(Module& wasm,
+                       const std::vector<Address>& segmentOffsets,
+                       Name start_sym,
+                       Name end_sym) {
+  Export* start = wasm.getExportOrNull(start_sym);
+  Export* end = wasm.getExportOrNull(end_sym);
+  if (!start && !end) {
+    BYN_TRACE("removeData: start/stop symbols not found (" << start_sym << ", "
+                                                           << end_sym << ")\n");
+    return;
+  }
+
+  if (!start || !end) {
+    Fatal() << "Found only one of " << start_sym << " and " << end_sym;
+  }
+
+  Address startAddress = getExportedAddress(wasm, start);
+  Address endAddress = getExportedAddress(wasm, end);
+  for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    Address segmentStart = segmentOffsets[i];
+    size_t segmentSize = wasm.dataSegments[i]->data.size();
+    if (segmentStart <= startAddress &&
+        segmentStart + segmentSize >= endAddress) {
+
+      if (segmentStart == startAddress &&
+          segmentStart + segmentSize == endAddress) {
+        BYN_TRACE("removeData: removing whole segment\n");
+        removeSegment(wasm, i);
+      } else {
+        // If we can't remove the whole segment then just set the string
+        // data to zero.
+        BYN_TRACE("removeData: removing part of segment\n");
+        size_t segmentOffset = startAddress - segmentStart;
+        char* startElem = &wasm.dataSegments[i]->data[segmentOffset];
+        memset(startElem, 0, endAddress - startAddress);
+      }
+      return;
+    }
+  }
+  Fatal() << "Segment data not found between symbols " << start_sym << " ("
+          << startAddress << ") and " << end_sym << " (" << endAddress << ")";
+}
+
+cashew::IString EM_JS_PREFIX("__em_js__");
+
+struct EmJsWalker : public PostWalker<EmJsWalker> {
+  std::vector<Export> toRemove;
+
+  void visitExport(Export* curr) {
+    if (curr->name.startsWith(EM_JS_PREFIX.str)) {
+      toRemove.push_back(*curr);
+    }
+  }
+};
+
 } // namespace
 
 struct PostEmscripten : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    removeExports(runner, *module);
+    removeEmJsExports(runner, *module);
     // Optimize exceptions
     optimizeExceptions(runner, module);
+  }
+
+  void removeExports(PassRunner* runner, Module& module) {
+    std::vector<Address> segmentOffsets; // segment index => address offset
+    calcSegmentOffsets(module, segmentOffsets);
+
+    removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
+    removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
+    module.removeExport("__start_em_asm");
+    module.removeExport("__stop_em_asm");
+    module.removeExport("__start_em_js");
+    module.removeExport("__stop_em_js");
+  }
+
+  void removeEmJsExports(PassRunner* runner, Module& module) {
+    EmJsWalker walker;
+    walker.walkModule(&module);
+    for (const Export& exp : walker.toRemove) {
+      if (exp.kind == ExternalKind::Function) {
+        module.removeFunction(exp.value);
+      } else {
+        module.removeGlobal(exp.value);
+      }
+      module.removeExport(exp.name);
+    }
   }
 
   // Optimize exceptions (and setjmp) by removing unnecessary invoke* calls.

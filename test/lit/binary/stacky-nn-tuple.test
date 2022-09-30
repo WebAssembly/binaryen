@@ -1,0 +1,112 @@
+# Verify stacky non-nullable tuples binary can be parsed correctly. The wasm
+# contains code that uses pops to get a tuple and store it in a local, then
+# reads those values. The file contains this:
+#
+# (module
+#  (type $A (struct (field (mut i32))))
+#  (type $B (struct (field (mut i32)) (field (mut i32))))
+#  (tag $tag$0 (param (ref $A) (ref $B)))
+#  (func $foo
+#   (local $temp ((ref null $A) (ref null $B)))
+#   (try $label$3
+#    (do
+#     (nop)
+#    )
+#    (catch $tag$0
+#     (local.set $temp
+#      (pop (ref $A) (ref $B))
+#     )
+#     (drop
+#      (ref.as_non_null
+#       (tuple.extract 0
+#        (local.get $temp)
+#       )
+#      )
+#     )
+#     (drop
+#      (ref.as_non_null
+#       (tuple.extract 1
+#        (local.get $temp)
+#       )
+#      )
+#     )
+#     (unreachable)
+#    )
+#   )
+#  )
+# )
+
+RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
+
+# CHECK:      (module
+# CHECK-NEXT:  (type ${mut:i32} (struct (field (mut i32))))
+# CHECK-NEXT:  (type ${mut:i32_mut:i32} (struct (field (mut i32)) (field (mut i32))))
+# CHECK-NEXT:  (type $ref|{mut:i32}|_ref|{mut:i32_mut:i32}|_=>_none (func (param (ref ${mut:i32}) (ref ${mut:i32_mut:i32}))))
+# CHECK-NEXT:  (type $none_=>_none (func))
+# CHECK-NEXT:  (tag $tag$0 (param (ref ${mut:i32}) (ref ${mut:i32_mut:i32})))
+# CHECK-NEXT:  (func $0
+# CHECK-NEXT:   (local $0 (ref null ${mut:i32}))
+# CHECK-NEXT:   (local $1 (ref null ${mut:i32_mut:i32}))
+# CHECK-NEXT:   (local $2 (ref null ${mut:i32_mut:i32}))
+# CHECK-NEXT:   (local $3 ((ref ${mut:i32}) (ref ${mut:i32_mut:i32})))
+# CHECK-NEXT:   (local $4 (ref ${mut:i32}))
+# CHECK-NEXT:   (local $5 (ref null ${mut:i32}))
+# CHECK-NEXT:   (local $6 (ref null ${mut:i32}))
+# CHECK-NEXT:   (try $label$3
+# CHECK-NEXT:    (do
+# CHECK-NEXT:     (nop)
+# CHECK-NEXT:    )
+# CHECK-NEXT:    (catch $tag$0
+# CHECK-NEXT:     (local.set $3
+# CHECK-NEXT:      (pop (ref ${mut:i32}) (ref ${mut:i32_mut:i32}))
+# CHECK-NEXT:     )
+# CHECK-NEXT:     (local.set $0
+# CHECK-NEXT:      (block (result (ref ${mut:i32}))
+# CHECK-NEXT:       (local.set $4
+# CHECK-NEXT:        (tuple.extract 0
+# CHECK-NEXT:         (local.get $3)
+# CHECK-NEXT:        )
+# CHECK-NEXT:       )
+# CHECK-NEXT:       (local.set $1
+# CHECK-NEXT:        (tuple.extract 1
+# CHECK-NEXT:         (local.get $3)
+# CHECK-NEXT:        )
+# CHECK-NEXT:       )
+# CHECK-NEXT:       (local.get $4)
+# CHECK-NEXT:      )
+# CHECK-NEXT:     )
+# CHECK-NEXT:     (drop
+# CHECK-NEXT:      (ref.as_non_null
+# CHECK-NEXT:       (block (result (ref null ${mut:i32}))
+# CHECK-NEXT:        (local.set $5
+# CHECK-NEXT:         (local.get $0)
+# CHECK-NEXT:        )
+# CHECK-NEXT:        (drop
+# CHECK-NEXT:         (local.get $1)
+# CHECK-NEXT:        )
+# CHECK-NEXT:        (local.get $5)
+# CHECK-NEXT:       )
+# CHECK-NEXT:      )
+# CHECK-NEXT:     )
+# CHECK-NEXT:     (drop
+# CHECK-NEXT:      (block (result (ref null ${mut:i32}))
+# CHECK-NEXT:       (local.set $6
+# CHECK-NEXT:        (local.get $0)
+# CHECK-NEXT:       )
+# CHECK-NEXT:       (local.set $2
+# CHECK-NEXT:        (local.get $1)
+# CHECK-NEXT:       )
+# CHECK-NEXT:       (local.get $6)
+# CHECK-NEXT:      )
+# CHECK-NEXT:     )
+# CHECK-NEXT:     (drop
+# CHECK-NEXT:      (ref.as_non_null
+# CHECK-NEXT:       (local.get $2)
+# CHECK-NEXT:      )
+# CHECK-NEXT:     )
+# CHECK-NEXT:     (unreachable)
+# CHECK-NEXT:    )
+# CHECK-NEXT:   )
+# CHECK-NEXT:  )
+# CHECK-NEXT: )
+# CHECK-NEXT: 

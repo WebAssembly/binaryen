@@ -16,6 +16,7 @@
 
 #include "type-updating.h"
 #include "find_all.h"
+#include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
@@ -26,15 +27,24 @@ namespace wasm {
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() {
-  ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
-  if (types.empty()) {
+  indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(wasm);
+  if (indexedTypes.types.empty()) {
     return;
   }
-  typeBuilder.grow(types.size());
+  typeBuilder.grow(indexedTypes.types.size());
+
+  // All the input types are distinct, so we need to make sure the output types
+  // are distinct as well. Further, the new types may have more recursions than
+  // the original types, so the old recursion groups may not be sufficient any
+  // more. Both of these problems are solved by putting all the new types into a
+  // single large recursion group.
+  // TODO: When we properly analyze which types are external and which are
+  // internal to the module, only optimize internal types.
+  typeBuilder.createRecGroup(0, typeBuilder.size());
 
   // Create the temporary heap types.
-  for (Index i = 0; i < types.size(); i++) {
-    auto type = types[i];
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    auto type = indexedTypes.types[i];
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;
@@ -46,7 +56,7 @@ void GlobalTypeRewriter::update() {
       }
       Signature newSig(typeBuilder.getTempTupleType(newParams),
                        typeBuilder.getTempTupleType(newResults));
-      modifySignature(types[i], newSig);
+      modifySignature(indexedTypes.types[i], newSig);
       typeBuilder.setHeapType(i, newSig);
     } else if (type.isStruct()) {
       auto struct_ = type.getStruct();
@@ -55,14 +65,14 @@ void GlobalTypeRewriter::update() {
       for (auto& field : newStruct.fields) {
         field.type = getTempType(field.type);
       }
-      modifyStruct(types[i], newStruct);
+      modifyStruct(indexedTypes.types[i], newStruct);
       typeBuilder.setHeapType(i, newStruct);
     } else if (type.isArray()) {
       auto array = type.getArray();
       // Start with a copy to get mutability/packing/etc.
       auto newArray = array;
       newArray.element.type = getTempType(newArray.element.type);
-      modifyArray(types[i], newArray);
+      modifyArray(indexedTypes.types[i], newArray);
       typeBuilder.setHeapType(i, newArray);
     } else {
       WASM_UNREACHABLE("bad type");
@@ -70,19 +80,26 @@ void GlobalTypeRewriter::update() {
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(i, typeIndices[*super]);
+      typeBuilder.setSubType(i, indexedTypes.indices[*super]);
     }
   }
 
-  auto newTypes = typeBuilder.build();
+  auto buildResults = typeBuilder.build();
+#ifndef NDEBUG
+  if (auto* err = buildResults.getError()) {
+    Fatal() << "Internal GlobalTypeRewriter build error: " << err->reason
+            << " at index " << err->index;
+  }
+#endif
+  auto& newTypes = *buildResults;
 
   // Map the old types to the new ones. This uses the fact that type indices
   // are the same in the old and new types, that is, we have not added or
   // removed types, just modified them.
   using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
   OldToNewTypes oldToNewTypes;
-  for (Index i = 0; i < types.size(); i++) {
-    oldToNewTypes[types[i]] = newTypes[i];
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
   }
 
   // Replace all the old types in the module with the new ones.
@@ -100,9 +117,6 @@ void GlobalTypeRewriter::update() {
     Type getNew(Type type) {
       if (type.isRef()) {
         return Type(getNew(type.getHeapType()), type.getNullability());
-      }
-      if (type.isRtt()) {
-        return Type(Rtt(type.getRtt().depth, getNew(type.getHeapType())));
       }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
@@ -130,6 +144,26 @@ void GlobalTypeRewriter::update() {
     }
 
     void visitExpression(Expression* curr) {
+      // local.get and local.tee are special in that their type is tied to the
+      // type of the local in the function, which is tied to the signature. That
+      // means we must update it based on the signature, and not on the old type
+      // in the local.
+      //
+      // We have already updated function signatures by the time we get here,
+      // which means we can just apply the current local type that we see (there
+      // is no need to call getNew(), which we already did on the function's
+      // signature itself).
+      if (auto* get = curr->dynCast<LocalGet>()) {
+        curr->type = getFunction()->getLocalType(get->index);
+        return;
+      } else if (auto* tee = curr->dynCast<LocalSet>()) {
+        // Rule out a local.set and unreachable code.
+        if (tee->type != Type::none && tee->type != Type::unreachable) {
+          curr->type = getFunction()->getLocalType(tee->index);
+        }
+        return;
+      }
+
       // Update the type to the new one.
       curr->type = getNew(curr->type);
 
@@ -165,6 +199,16 @@ void GlobalTypeRewriter::update() {
 
   CodeUpdater updater(oldToNewTypes);
   PassRunner runner(&wasm);
+
+  // Update functions first, so that we see the updated types for locals (which
+  // can change if the function signature changes).
+  for (auto& func : wasm.functions) {
+    func->type = updater.getNew(func->type);
+    for (auto& var : func->vars) {
+      var = updater.getNew(var);
+    }
+  }
+
   updater.run(&runner, &wasm);
   updater.walkModuleCode(&wasm);
 
@@ -177,12 +221,6 @@ void GlobalTypeRewriter::update() {
   }
   for (auto& global : wasm.globals) {
     global->type = updater.getNew(global->type);
-  }
-  for (auto& func : wasm.functions) {
-    func->type = updater.getNew(func->type);
-    for (auto& var : func->vars) {
-      var = updater.getNew(var);
-    }
   }
   for (auto& tag : wasm.tags) {
     tag->sig = updater.getNew(tag->sig);
@@ -202,25 +240,14 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (!typeIndices.count(heapType)) {
+    if (!indexedTypes.indices.count(heapType)) {
       // This type was not present in the module, but is now being used when
       // defining new types. That is fine; just use it.
       return type;
     }
     return typeBuilder.getTempRefType(
-      typeBuilder.getTempHeapType(typeIndices[heapType]),
+      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
       type.getNullability());
-  }
-  if (type.isRtt()) {
-    auto rtt = type.getRtt();
-    auto newRtt = rtt;
-    auto heapType = type.getHeapType();
-    if (!typeIndices.count(heapType)) {
-      // See above with references.
-      return type;
-    }
-    newRtt.heapType = typeBuilder.getTempHeapType(typeIndices[heapType]);
-    return typeBuilder.getTempRttType(newRtt);
   }
   if (type.isTuple()) {
     auto& tuple = type.getTuple();
@@ -242,8 +269,12 @@ bool canHandleAsLocal(Type type) {
 }
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
-  // Check if this is an issue.
   if (wasm.features.hasGCNNLocals()) {
+    // We have nothing to fix up: all locals are allowed.
+    return;
+  }
+  if (!wasm.features.hasReferenceTypes()) {
+    // No references, so no non-nullable ones at all.
     return;
   }
   bool hasNonNullable = false;
@@ -254,6 +285,26 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     }
   }
   if (!hasNonNullable) {
+    // No non-nullable types exist in practice.
+    return;
+  }
+
+  // Non-nullable locals exist, which we may need to fix up. See if they
+  // validate as they are, that is, if they fall within the validation rules of
+  // the wasm spec. We do not need to modify such locals.
+  LocalStructuralDominance info(
+    func, wasm, LocalStructuralDominance::NonNullableOnly);
+  std::unordered_set<Index> badIndexes;
+  for (auto index : info.nonDominatingIndices) {
+    badIndexes.insert(index);
+
+    // LocalStructuralDominance should have only looked at non-nullable indexes
+    // since we told it to ignore nullable ones. Also, params always dominate
+    // and should not appear here.
+    assert(func->getLocalType(index).isNonNullable());
+    assert(!func->isParam(index));
+  }
+  if (badIndexes.empty()) {
     return;
   }
 
@@ -261,11 +312,9 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
     auto* get = (*getp)->cast<LocalGet>();
-    if (!func->isVar(get->index)) {
-      // We do not need to process params, which can legally be non-nullable.
-      continue;
+    if (badIndexes.count(get->index)) {
+      *getp = fixLocalGet(get, wasm);
     }
-    *getp = fixLocalGet(get, wasm);
   }
 
   // Update tees, whose type must match the local (if the wasm spec changes for
@@ -281,8 +330,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     if (!set->isTee() || set->type == Type::unreachable) {
       continue;
     }
-    auto type = func->getLocalType(set->index);
-    if (type.isNonNullable()) {
+    if (badIndexes.count(set->index)) {
+      auto type = func->getLocalType(set->index);
       set->type = Type(type.getHeapType(), Nullable);
       *setp = builder.makeRefAs(RefAsNonNull, set);
     }
@@ -290,12 +339,14 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
-  for (auto& type : func->vars) {
-    type = getValidLocalType(type, wasm.features);
+  for (auto index : badIndexes) {
+    func->vars[index - func->getNumParams()] =
+      getValidLocalType(func->getLocalType(index), wasm.features);
   }
 }
 
 Type getValidLocalType(Type type, FeatureSet features) {
+  // TODO: this should handle tuples with a non-nullable item
   assert(canHandleAsLocal(type));
   if (type.isNonNullable() && !features.hasGCNNLocals()) {
     type = Type(type.getHeapType(), Nullable);
@@ -315,7 +366,8 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm) {
 
 void updateParamTypes(Function* func,
                       const std::vector<Type>& newParamTypes,
-                      Module& wasm) {
+                      Module& wasm,
+                      LocalUpdatingMode localUpdating) {
   // Before making this update, we must be careful if the param was "reused",
   // specifically, if it is assigned a less-specific type in the body then
   // we'd get a validation error when we refine it. To handle that, if a less-
@@ -361,7 +413,11 @@ void updateParamTypes(Function* func,
       if (iter != paramFixups.end()) {
         auto fixup = iter->second;
         contents.push_back(builder.makeLocalSet(
-          fixup, builder.makeLocalGet(index, newParamTypes[index])));
+          fixup,
+          builder.makeLocalGet(index,
+                               localUpdating == Update
+                                 ? newParamTypes[index]
+                                 : func->getLocalType(index))));
       }
     }
     contents.push_back(func->body);
@@ -383,17 +439,19 @@ void updateParamTypes(Function* func,
   }
 
   // Update local.get/local.tee operations that use the modified param type.
-  for (auto* get : gets.list) {
-    auto index = get->index;
-    if (func->isParam(index)) {
-      get->type = newParamTypes[index];
+  if (localUpdating == Update) {
+    for (auto* get : gets.list) {
+      auto index = get->index;
+      if (func->isParam(index)) {
+        get->type = newParamTypes[index];
+      }
     }
-  }
-  for (auto* set : sets.list) {
-    auto index = set->index;
-    if (func->isParam(index) && set->isTee()) {
-      set->type = newParamTypes[index];
-      set->finalize();
+    for (auto* set : sets.list) {
+      auto index = set->index;
+      if (func->isParam(index) && set->isTee()) {
+        set->type = newParamTypes[index];
+        set->finalize();
+      }
     }
   }
 

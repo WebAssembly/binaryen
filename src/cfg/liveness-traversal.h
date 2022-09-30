@@ -24,6 +24,7 @@
 #include "cfg-traversal.h"
 #include "ir/utils.h"
 #include "support/sorted_vector.h"
+#include "support/sparse_square_matrix.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -105,10 +106,10 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   Index numLocals;
   std::unordered_set<BasicBlock*> liveBlocks;
-  // canonicalized - accesses should check (low, high)
-  // TODO: use a map for high N, as this tends to be sparse? or don't look at
-  // copies at all for big N?
-  std::vector<uint8_t> copies;
+  // access as a upper triangular matrix: i.e. when accessing a pair (i,j),
+  // should access the cell i < j.
+  sparse_square_matrix<uint8_t> copies;
+
   // total # of copies for each local, with all others
   std::vector<Index> totalCopies;
 
@@ -118,7 +119,27 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, ignore
     if (!self->currBasicBlock) {
-      *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
+      Builder builder(*self->getModule());
+      auto* rep = builder.replaceWithIdenticalType(curr);
+      if (rep->is<LocalGet>()) {
+        // We failed to replace the node with something simpler. This can happen
+        // if the local is non-nullable, for example. We still need to remove
+        // this node entirely, however, as it is unreachable and so we will not
+        // see it in the analysis we perform (for example, we may be changing
+        // local indexes). Replace it with something completely different, even
+        // if it is larger, a block with a forced type that has unreachable
+        // contents,
+        //
+        //  (block (result X)
+        //   (unreachable))
+        //
+        // That pattern lets us set any type we wish.
+        //
+        // TODO: Make a helper function for this, if it is useful in other
+        //       places.
+        rep = builder.makeBlock({builder.makeUnreachable()}, curr->type);
+      }
+      *currp = rep;
       return;
     }
     self->currBasicBlock->contents.actions.emplace_back(
@@ -171,30 +192,13 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     return nullptr;
   }
 
-  // If there are too many locals, we cannot run currently as
-  // numLocals * numLocals might overflow. We may want to add an option for
-  // a sparse matrix at some point TODO
-  bool canRun(Function* func) {
-    Index numLocals = func->getNumLocals();
-    if (uint64_t(numLocals) * uint64_t(numLocals) <=
-        std::numeric_limits<Index>::max()) {
-      return true;
-    }
-    std::cerr << "warning: too many locals (" << numLocals
-              << ") to run liveness analysis in " << this->getFunction()->name
-              << '\n';
-    return false;
-  }
-
   // main entry point
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
-    assert(canRun(func));
-    copies.resize(numLocals * numLocals);
-    std::fill(copies.begin(), copies.end(), 0);
+    copies.recreate(numLocals);
+    totalCopies.clear();
     totalCopies.resize(numLocals);
-    std::fill(totalCopies.begin(), totalCopies.end(), 0);
     // create the CFG by walking the IR
     CFGWalker<SubType, VisitorType, Liveness>::doWalkFunction(func);
     // ignore links to dead blocks, so they don't confuse us and we can see
@@ -277,14 +281,19 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   }
 
   void addCopy(Index i, Index j) {
-    auto k = std::min(i, j) * numLocals + std::max(i, j);
-    copies[k] = std::min(copies[k], uint8_t(254)) + 1;
+    if (j > i) {
+      std::swap(i, j);
+    }
+    copies.set(i, j, std::min(copies.get(i, j), uint8_t(254)) + 1);
     totalCopies[i]++;
     totalCopies[j]++;
   }
 
   uint8_t getCopies(Index i, Index j) {
-    return copies[std::min(i, j) * numLocals + std::max(i, j)];
+    if (j > i) {
+      std::swap(i, j);
+    }
+    return copies.get(i, j);
   }
 };
 

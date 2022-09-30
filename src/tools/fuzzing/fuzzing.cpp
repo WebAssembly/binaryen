@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
 
@@ -32,7 +33,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging externref or anyref because these are opaque
+  // - there's no point in logging anyref because it is opaque
   // - don't bother logging tuples
   loggableTypes = {Type::i32, Type::i64, Type::f32, Type::f64};
   if (wasm.features.hasSIMD()) {
@@ -185,32 +186,38 @@ void TranslateToFuzzReader::build() {
 
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
-  MemoryUtils::ensureExists(wasm.memory);
+  MemoryUtils::ensureExists(&wasm);
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
     size_t numSegments = upTo(8) + 1;
     for (size_t i = 0; i < numSegments; i++) {
-      Memory::Segment segment;
-      segment.isPassive = bool(upTo(2));
+      auto segment = builder.makeDataSegment();
+      segment->setName(Name::fromInt(i), false);
+      segment->isPassive = bool(upTo(2));
       size_t segSize = upTo(USABLE_MEMORY * 2);
-      segment.data.resize(segSize);
+      segment->data.resize(segSize);
       for (size_t j = 0; j < segSize; j++) {
-        segment.data[j] = upTo(512);
+        segment->data[j] = upTo(512);
       }
-      if (!segment.isPassive) {
-        segment.offset = builder.makeConst(int32_t(memCovered));
+      if (!segment->isPassive) {
+        segment->offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
+        segment->memory = wasm.memories[0]->name;
       }
-      wasm.memory.segments.push_back(segment);
+      wasm.dataSegments.push_back(std::move(segment));
     }
   } else {
     // init some data
-    wasm.memory.segments.emplace_back(builder.makeConst(int32_t(0)));
+    auto segment = builder.makeDataSegment();
+    segment->memory = wasm.memories[0]->name;
+    segment->offset = builder.makeConst(int32_t(0));
+    segment->setName(Name::fromInt(0), false);
+    wasm.dataSegments.push_back(std::move(segment));
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
-      wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
+      wasm.dataSegments[0]->data.push_back(value >= 256 ? 0 : (value & 0xff));
     }
   }
   // Add memory hasher helper (for the hash, see hash.h). The function looks
@@ -225,7 +232,7 @@ void TranslateToFuzzReader::setupMemory() {
   std::vector<Expression*> contents;
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
   for (Index i = 0; i < USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
@@ -237,7 +244,13 @@ void TranslateToFuzzReader::setupMemory() {
                              builder.makeLocalGet(0, Type::i32),
                              builder.makeConst(uint32_t(5))),
           builder.makeLocalGet(0, Type::i32)),
-        builder.makeLoad(1, false, i, 1, builder.makeConst(zero), Type::i32))));
+        builder.makeLoad(1,
+                         false,
+                         i,
+                         1,
+                         builder.makeConst(zero),
+                         Type::i32,
+                         wasm.memories[0]->name))));
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
@@ -247,7 +260,8 @@ void TranslateToFuzzReader::setupMemory() {
     builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   // Export memory so JS fuzzing can use it
   if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
+    wasm.addExport(builder.makeExport(
+      "memory", wasm.memories[0]->name, ExternalKind::Memory));
   }
 }
 
@@ -256,15 +270,15 @@ void TranslateToFuzzReader::setupTables() {
   // Ensure a funcref element segment and table exist. Segments with more
   // specific function types may have a smaller chance of getting functions.
   Table* table = nullptr;
-  auto iter =
-    std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
-      return table->type == Type::funcref;
-    });
+  Type funcref = Type(HeapType::func, Nullable);
+  auto iter = std::find_if(wasm.tables.begin(),
+                           wasm.tables.end(),
+                           [&](auto& table) { return table->type == funcref; });
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
     auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), Type::funcref, 0, 0);
+      Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -273,7 +287,7 @@ void TranslateToFuzzReader::setupTables() {
     std::any_of(wasm.elementSegments.begin(),
                 wasm.elementSegments.end(),
                 [&](auto& segment) {
-                  return segment->table.is() && segment->type == Type::funcref;
+                  return segment->table.is() && segment->type == funcref;
                 });
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
@@ -326,10 +340,10 @@ void TranslateToFuzzReader::setupTags() {
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
-  for (auto& segment : wasm.memory.segments) {
-    Address maxOffset = segment.data.size();
-    if (!segment.isPassive) {
-      if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
+  for (auto& segment : wasm.dataSegments) {
+    Address maxOffset = segment->data.size();
+    if (!segment->isPassive) {
+      if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
         // Using a non-imported global in a segment offset is not valid in
         // wasm. This can occur due to us making what used to be an imported
         // global, in initial contents, be not imported any more. To fix that,
@@ -342,33 +356,34 @@ void TranslateToFuzzReader::finalizeMemory() {
         if (!wasm.getGlobal(offset->name)->imported()) {
           // TODO: It would be better to avoid segment overlap so that
           //       MemoryPacking can run.
-          segment.offset =
+          segment->offset =
             builder.makeConst(Literal::makeFromInt32(0, Type::i32));
         }
       }
-      if (auto* offset = segment.offset->dynCast<Const>()) {
+      if (auto* offset = segment->offset->dynCast<Const>()) {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
-    wasm.memory.initial = std::max(
-      wasm.memory.initial,
+    wasm.memories[0]->initial = std::max(
+      wasm.memories[0]->initial,
       Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
   }
-  wasm.memory.initial = std::max(wasm.memory.initial, USABLE_MEMORY);
+  wasm.memories[0]->initial =
+    std::max(wasm.memories[0]->initial, USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways.
-  if (wasm.memory.max == Memory::kUnlimitedSize) {
-    wasm.memory.max = wasm.memory.initial;
+  if (wasm.memories[0]->max == Memory::kUnlimitedSize) {
+    wasm.memories[0]->max = wasm.memories[0]->initial;
   }
-  if (wasm.memory.max <= wasm.memory.initial) {
+  if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
-    wasm.memory.max =
-      std::min(Address(wasm.memory.initial + 1), Address(Memory::kMaxSize32));
+    wasm.memories[0]->max = std::min(Address(wasm.memories[0]->initial + 1),
+                                     Address(Memory::kMaxSize32));
   }
   // Avoid an imported memory (which the fuzz harness would need to handle).
-  wasm.memory.module = wasm.memory.base = Name();
+  wasm.memories[0]->module = wasm.memories[0]->base = Name();
 }
 
 void TranslateToFuzzReader::finalizeTable() {
@@ -447,6 +462,9 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
+
+  // We must ensure non-nullable locals validate.
+  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {
@@ -489,7 +507,8 @@ Function* TranslateToFuzzReader::addFunction() {
     params.push_back(type);
   }
   auto paramType = Type(params);
-  func->type = Signature(paramType, getControlFlowType());
+  auto resultType = getControlFlowType();
+  func->type = Signature(paramType, resultType);
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -531,13 +550,29 @@ Function* TranslateToFuzzReader::addFunction() {
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Only functions
-  // with defaultable params can be exported because the trap fuzzer depends on
-  // that (TODO: fix this).
-  bool defaultableParams =
-    std::all_of(paramType.begin(), paramType.end(), [](Type t) {
-      return t.isDefaultable();
+  // with valid params and returns can be exported because the trap fuzzer
+  // depends on that (TODO: fix this).
+  auto validExportType = [](Type t) {
+    if (!t.isRef()) {
+      return true;
+    }
+    auto heapType = t.getHeapType();
+    return heapType == HeapType::ext || heapType == HeapType::func ||
+           heapType == HeapType::string;
+  };
+  bool validExportParams =
+    std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
+      return validExportType(t) && t.isDefaultable();
     });
-  if (defaultableParams && (numAddedFunctions == 0 || oneIn(2)) &&
+  // Note: spec discussions around JS API integration are still ongoing, and it
+  // is not clear if we should allow nondefaultable types in exports or not
+  // (in imports, we cannot allow them in the fuzzer anyhow, since it can't
+  // construct such values in JS to send over to the wasm from the fuzzer
+  // harness).
+  bool validExportResults =
+    std::all_of(resultType.begin(), resultType.end(), validExportType);
+  if (validExportParams && validExportResults &&
+      (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
     export_->name = func->name;
@@ -581,14 +616,18 @@ void TranslateToFuzzReader::recombine(Function* func) {
   // First, scan and group all expressions by type.
   struct Scanner
     : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+    TranslateToFuzzReader& parent;
     // A map of all expressions, categorized by type.
     InsertOrderedMap<Type, std::vector<Expression*>> exprsByType;
+    Scanner(TranslateToFuzzReader& parent) : parent(parent) {}
 
     void visitExpression(Expression* curr) {
-      exprsByType[curr->type].push_back(curr);
+      if (parent.canBeArbitrarilyReplaced(curr)) {
+        exprsByType[curr->type].push_back(curr);
+      }
     }
   };
-  Scanner scanner;
+  Scanner scanner(*this);
   scanner.walk(func->body);
   // Potentially trim the list of possible picks, so replacements are more
   // likely to collide.
@@ -899,8 +938,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            WeightedOption{&Self::makeBreak, Important},
            &Self::makeCall,
            &Self::makeCallIndirect)
-      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
-           &Self::makeCallRef);
+      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
   }
   if (type.isSingle()) {
     options
@@ -910,7 +948,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeSelect)
       .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
   }
-  if (type.isSingle() && !type.isRef() && !type.isRtt()) {
+  if (type.isSingle() && !type.isRef()) {
     options.add(FeatureSet::MVP, {&Self::makeLoad, Important});
     options.add(FeatureSet::SIMD, &Self::makeSIMD);
   }
@@ -926,7 +964,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
   }
-  if (type == Type::i31ref) {
+  if (type.isRef() && type.getHeapType() == HeapType::i31) {
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
   }
   // TODO: struct.get and other GC things
@@ -960,8 +998,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
-         &Self::makeCallRef);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
   return (this->*pick(options))(Type::none);
 }
 
@@ -986,8 +1023,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeSwitch,
          &Self::makeDrop,
          &Self::makeReturn)
-    .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
-         &Self::makeCallRef);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
 
@@ -1395,12 +1431,12 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memory.indexType);
+  auto* ret = make(wasm.memories[0]->indexType);
   // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
   // most memory ops will just trap
   if (!allowOOB || !oneIn(10)) {
-    if (wasm.memory.is64()) {
+    if (wasm.memories[0]->is64()) {
       ret = builder.makeBinary(
         AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
     } else {
@@ -1419,11 +1455,19 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
       bool signed_ = get() & 1;
       switch (upTo(3)) {
         case 0:
-          return builder.makeLoad(1, signed_, offset, 1, ptr, type);
+          return builder.makeLoad(
+            1, signed_, offset, 1, ptr, type, wasm.memories[0]->name);
         case 1:
-          return builder.makeLoad(2, signed_, offset, pick(1, 2), ptr, type);
+          return builder.makeLoad(
+            2, signed_, offset, pick(1, 2), ptr, type, wasm.memories[0]->name);
         case 2:
-          return builder.makeLoad(4, signed_, offset, pick(1, 2, 4), ptr, type);
+          return builder.makeLoad(4,
+                                  signed_,
+                                  offset,
+                                  pick(1, 2, 4),
+                                  ptr,
+                                  type,
+                                  wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("unexpected value");
     }
@@ -1431,36 +1475,50 @@ Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
       bool signed_ = get() & 1;
       switch (upTo(4)) {
         case 0:
-          return builder.makeLoad(1, signed_, offset, 1, ptr, type);
-        case 1:
-          return builder.makeLoad(2, signed_, offset, pick(1, 2), ptr, type);
-        case 2:
-          return builder.makeLoad(4, signed_, offset, pick(1, 2, 4), ptr, type);
-        case 3:
           return builder.makeLoad(
-            8, signed_, offset, pick(1, 2, 4, 8), ptr, type);
+            1, signed_, offset, 1, ptr, type, wasm.memories[0]->name);
+        case 1:
+          return builder.makeLoad(
+            2, signed_, offset, pick(1, 2), ptr, type, wasm.memories[0]->name);
+        case 2:
+          return builder.makeLoad(4,
+                                  signed_,
+                                  offset,
+                                  pick(1, 2, 4),
+                                  ptr,
+                                  type,
+                                  wasm.memories[0]->name);
+        case 3:
+          return builder.makeLoad(8,
+                                  signed_,
+                                  offset,
+                                  pick(1, 2, 4, 8),
+                                  ptr,
+                                  type,
+                                  wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("unexpected value");
     }
     case Type::f32: {
-      return builder.makeLoad(4, false, offset, pick(1, 2, 4), ptr, type);
+      return builder.makeLoad(
+        4, false, offset, pick(1, 2, 4), ptr, type, wasm.memories[0]->name);
     }
     case Type::f64: {
-      return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
+      return builder.makeLoad(
+        8, false, offset, pick(1, 2, 4, 8), ptr, type, wasm.memories[0]->name);
     }
     case Type::v128: {
       if (!wasm.features.hasSIMD()) {
         return makeTrivial(type);
       }
-      return builder.makeLoad(
-        16, false, offset, pick(1, 2, 4, 8, 16), ptr, type);
+      return builder.makeLoad(16,
+                              false,
+                              offset,
+                              pick(1, 2, 4, 8, 16),
+                              ptr,
+                              type,
+                              wasm.memories[0]->name);
     }
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -1482,7 +1540,7 @@ Expression* TranslateToFuzzReader::makeLoad(Type type) {
   }
   // make it atomic
   auto* load = ret->cast<Load>();
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   load->isAtomic = true;
   load->signed_ = false;
   load->align = load->bytes;
@@ -1509,6 +1567,7 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
         store->value = make(Type::unreachable);
         break;
     }
+    store->memory = wasm.memories[0]->name;
     store->finalize();
     return store;
   }
@@ -1524,47 +1583,59 @@ Expression* TranslateToFuzzReader::makeNonAtomicStore(Type type) {
     case Type::i32: {
       switch (upTo(3)) {
         case 0:
-          return builder.makeStore(1, offset, 1, ptr, value, type);
+          return builder.makeStore(
+            1, offset, 1, ptr, value, type, wasm.memories[0]->name);
         case 1:
-          return builder.makeStore(2, offset, pick(1, 2), ptr, value, type);
+          return builder.makeStore(
+            2, offset, pick(1, 2), ptr, value, type, wasm.memories[0]->name);
         case 2:
-          return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
+          return builder.makeStore(
+            4, offset, pick(1, 2, 4), ptr, value, type, wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("invalid value");
     }
     case Type::i64: {
       switch (upTo(4)) {
         case 0:
-          return builder.makeStore(1, offset, 1, ptr, value, type);
-        case 1:
-          return builder.makeStore(2, offset, pick(1, 2), ptr, value, type);
-        case 2:
-          return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
-        case 3:
           return builder.makeStore(
-            8, offset, pick(1, 2, 4, 8), ptr, value, type);
+            1, offset, 1, ptr, value, type, wasm.memories[0]->name);
+        case 1:
+          return builder.makeStore(
+            2, offset, pick(1, 2), ptr, value, type, wasm.memories[0]->name);
+        case 2:
+          return builder.makeStore(
+            4, offset, pick(1, 2, 4), ptr, value, type, wasm.memories[0]->name);
+        case 3:
+          return builder.makeStore(8,
+                                   offset,
+                                   pick(1, 2, 4, 8),
+                                   ptr,
+                                   value,
+                                   type,
+                                   wasm.memories[0]->name);
       }
       WASM_UNREACHABLE("invalid value");
     }
     case Type::f32: {
-      return builder.makeStore(4, offset, pick(1, 2, 4), ptr, value, type);
+      return builder.makeStore(
+        4, offset, pick(1, 2, 4), ptr, value, type, wasm.memories[0]->name);
     }
     case Type::f64: {
-      return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
+      return builder.makeStore(
+        8, offset, pick(1, 2, 4, 8), ptr, value, type, wasm.memories[0]->name);
     }
     case Type::v128: {
       if (!wasm.features.hasSIMD()) {
         return makeTrivial(type);
       }
-      return builder.makeStore(
-        16, offset, pick(1, 2, 4, 8, 16), ptr, value, type);
+      return builder.makeStore(16,
+                               offset,
+                               pick(1, 2, 4, 8, 16),
+                               ptr,
+                               value,
+                               type,
+                               wasm.memories[0]->name);
     }
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
@@ -1588,7 +1659,7 @@ Expression* TranslateToFuzzReader::makeStore(Type type) {
     return store;
   }
   // make it atomic
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   store->isAtomic = true;
   store->align = store->bytes;
   return store;
@@ -1695,12 +1766,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::f64:
           return Literal(getDouble());
         case Type::v128:
-        case Type::funcref:
-        case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("invalid type");
@@ -1742,12 +1807,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
         case Type::f64:
           return Literal(double(small));
         case Type::v128:
-        case Type::funcref:
-        case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1812,12 +1871,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
                                        std::numeric_limits<uint64_t>::max()));
           break;
         case Type::v128:
-        case Type::funcref:
-        case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1841,12 +1894,6 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
           value = Literal(double(int64_t(1) << upTo(64)));
           break;
         case Type::v128:
-        case Type::funcref:
-        case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1858,135 +1905,69 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
-  // ref.as_non_null is allowed in globals and we don't yet support func.ref in
-  // globals because we create globals before we create functions. As a result,
-  // we can only create non-nullable function references if we are in a function
-  // context for now.
-  // TODO: Generate trivial functions to support ref.func in globals.
-  assert(type.isNullable() || funcContext);
-  if (!funcContext || (type.isNullable() && oneIn(8))) {
-    return builder.makeRefNull(type);
-  }
-
   auto heapType = type.getHeapType();
   if (heapType == HeapType::func) {
     // First set to target to the last created function, and try to select
     // among other existing function if possible.
-    Function* target = funcContext->func;
-    if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
+    Function* target = funcContext ? funcContext->func : nullptr;
+    // If there is no last function, and we have others, pick between them. Also
+    // pick between them with some random probability even if there is a last
+    // function.
+    if (!target || (!wasm.functions.empty() && !oneIn(wasm.functions.size()))) {
       target = pick(wasm.functions).get();
     }
-    return builder.makeRefFunc(target->name, target->type);
-  } else {
-    // TODO: randomize the order
-    for (auto& func : wasm.functions) {
-      if (Type::isSubType(type, Type(func->type, NonNullable))) {
-        return builder.makeRefFunc(func->name, func->type);
-      }
+    if (target) {
+      return builder.makeRefFunc(target->name, target->type);
     }
-    // We don't have a matching function, so create a null with high probability
-    // if the type is nullable or otherwise create and cast a null with low
-    // probability.
-    if ((type.isNullable() && !oneIn(8)) || oneIn(8)) {
-      Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
-      if (!type.isNullable()) {
-        ret = builder.makeRefAs(RefAsNonNull, ret);
-      }
-      return ret;
-    }
-    // As a final option, create a new function with the correct signature.
-    auto* func = wasm.addFunction(
-      builder.makeFunction(Names::getValidFunctionName(wasm, "ref_func_target"),
-                           heapType,
-                           {},
-                           builder.makeUnreachable()));
-    return builder.makeRefFunc(func->name, heapType);
   }
+  if (heapType == HeapType::func) {
+    // From here on we need a specific signature type, as we want to create a
+    // RefFunc or even a Function out of it. Pick an arbitrary one if we only
+    // had generic 'func' here.
+    heapType = Signature(Type::none, Type::none);
+  }
+  // TODO: randomize the order
+  for (auto& func : wasm.functions) {
+    if (Type::isSubType(type, Type(func->type, NonNullable))) {
+      return builder.makeRefFunc(func->name, func->type);
+    }
+  }
+  // We don't have a matching function. Create a null some of the time here,
+  // but only rarely if the type is non-nullable (because in that case we'd need
+  // to add a ref.as_non_null to validate, and the code will trap when we get
+  // here).
+  if ((type.isNullable() && oneIn(2)) || (type.isNonNullable() && oneIn(16))) {
+    Expression* ret = builder.makeRefNull(Type(heapType, Nullable));
+    if (!type.isNullable()) {
+      ret = builder.makeRefAs(RefAsNonNull, ret);
+    }
+    return ret;
+  }
+  // As a final option, create a new function with the correct signature. If it
+  // returns a value, write a trap as we do not want to create any more code
+  // here (we might end up recursing). Note that a trap in the function lets us
+  // execute more code then the ref.as_non_null path just before us, which traps
+  // even if we never call the function.
+  auto* body = heapType.getSignature().results == Type::none
+                 ? (Expression*)builder.makeNop()
+                 : (Expression*)builder.makeUnreachable();
+  auto* func = wasm.addFunction(builder.makeFunction(
+    Names::getValidFunctionName(wasm, "ref_func_target"), heapType, {}, body));
+  return builder.makeRefFunc(func->name, heapType);
 }
 
 Expression* TranslateToFuzzReader::makeConst(Type type) {
   if (type.isRef()) {
     assert(wasm.features.hasReferenceTypes());
+    // With a low chance, just emit a null if that is valid.
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type);
     }
-    auto heapType = type.getHeapType();
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic()) {
-        case HeapType::func:
-          return makeRefFuncConst(type);
-        case HeapType::ext:
-          // No trivial way to create an externref.
-          break;
-        case HeapType::any: {
-          // Choose a subtype we can materialize a constant for. We cannot
-          // materialize non-nullable refs to func or i31 in global contexts.
-          Nullability nullability = getSubType(type.getNullability());
-          HeapType subtype;
-          if (funcContext || nullability == Nullable) {
-            subtype = pick(HeapType::func, HeapType::i31, HeapType::data);
-          } else {
-            subtype = HeapType::data;
-          }
-          return makeConst(Type(subtype, nullability));
-        }
-        case HeapType::eq: {
-          auto nullability = getSubType(type.getNullability());
-          // i31.new is not allowed in initializer expressions.
-          HeapType subtype;
-          if (funcContext) {
-            subtype = pick(HeapType::i31, HeapType::data);
-          } else {
-            subtype = HeapType::data;
-          }
-          return makeConst(Type(subtype, nullability));
-        }
-        case HeapType::i31:
-          // i31.new is not allowed in initializer expressions.
-          if (funcContext) {
-            return builder.makeI31New(makeConst(Type::i32));
-          } else {
-            assert(type.isNullable());
-            return builder.makeRefNull(type);
-          }
-        case HeapType::data:
-          // TODO: Construct nontrivial types. For now just create a hard coded
-          // struct or array.
-          if (oneIn(2)) {
-            // Use a local static to avoid creating a fresh nominal types in
-            // --nominal mode.
-            static HeapType trivialStruct = HeapType(Struct());
-            return builder.makeStructNew(trivialStruct,
-                                         std::vector<Expression*>{});
-          } else {
-            // Use a local static to avoid creating a fresh nominal types in
-            // --nominal mode.
-            static HeapType trivialArray =
-              HeapType(Array(Field(Field::PackedType::i8, Immutable)));
-            return builder.makeArrayInit(trivialArray, {});
-          }
-      }
-    } else if (heapType.isSignature()) {
-      return makeRefFuncConst(type);
+    if (type.getHeapType().isBasic()) {
+      return makeConstBasicRef(type);
     } else {
-      // TODO: Handle nontrivial array and struct types.
+      return makeConstCompoundRef(type);
     }
-    // We weren't able to directly materialize a non-null constant. Try again to
-    // create a null.
-    if (type.isNullable()) {
-      return builder.makeRefNull(type);
-    }
-    // We have to produce a non-null value. Possibly create a null and cast it
-    // to non-null even though that will trap at runtime. We must have a
-    // function context because the cast is not allowed in globals.
-    if (!funcContext) {
-      std::cerr << type << "\n";
-    }
-    assert(funcContext);
-    return builder.makeRefAs(RefAsNonNull,
-                             builder.makeRefNull(Type(heapType, Nullable)));
-  } else if (type.isRtt()) {
-    return builder.makeRtt(type);
   } else if (type.isTuple()) {
     std::vector<Expression*> operands;
     for (const auto& t : type) {
@@ -1996,6 +1977,117 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
   } else {
     assert(type.isBasic());
     return builder.makeConst(makeLiteral(type));
+  }
+}
+
+Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
+  assert(type.isRef());
+  auto heapType = type.getHeapType();
+  assert(heapType.isBasic());
+  assert(wasm.features.hasReferenceTypes());
+  switch (heapType.getBasic()) {
+    case HeapType::ext: {
+      auto null = builder.makeRefNull(HeapType::ext);
+      // TODO: support actual non-nullable externrefs via imported globals or
+      // similar.
+      if (!type.isNullable()) {
+        return builder.makeRefAs(RefAsNonNull, null);
+      }
+      return null;
+    }
+    case HeapType::func: {
+      return makeRefFuncConst(type);
+    }
+    case HeapType::any: {
+      // Choose a subtype we can materialize a constant for. We cannot
+      // materialize non-nullable refs to func or i31 in global contexts.
+      Nullability nullability = getSubType(type.getNullability());
+      HeapType subtype = oneIn(2) ? HeapType::i31 : HeapType::data;
+      return makeConst(Type(subtype, nullability));
+    }
+    case HeapType::eq: {
+      if (!wasm.features.hasGC()) {
+        // Without wasm GC all we have is an "abstract" eqref type, which is
+        // a subtype of anyref, but we cannot create constants of it, except
+        // for null.
+        assert(type.isNullable());
+        return builder.makeRefNull(type);
+      }
+      auto nullability = getSubType(type.getNullability());
+      // i31.new is not allowed in initializer expressions.
+      HeapType subtype;
+      if (funcContext) {
+        subtype = pick(HeapType::i31, HeapType::data);
+      } else {
+        subtype = HeapType::data;
+      }
+      return makeConst(Type(subtype, nullability));
+    }
+    case HeapType::i31: {
+      assert(wasm.features.hasGC());
+      if (type.isNullable() && oneIn(4)) {
+        return builder.makeRefNull(type);
+      }
+      return builder.makeI31New(makeConst(Type::i32));
+    }
+    case HeapType::data: {
+      assert(wasm.features.hasGC());
+      // TODO: Construct nontrivial types. For now just create a hard coded
+      // struct or array.
+      if (oneIn(2)) {
+        // Use a local static to avoid creating a fresh nominal types in
+        // --nominal mode.
+        static HeapType trivialStruct = HeapType(Struct());
+        return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
+      } else {
+        // Use a local static to avoid creating a fresh nominal types in
+        // --nominal mode.
+        static HeapType trivialArray =
+          HeapType(Array(Field(Field::PackedType::i8, Immutable)));
+        return builder.makeArrayInit(trivialArray, {});
+      }
+    }
+    default: {
+      WASM_UNREACHABLE("invalid basic ref type");
+    }
+  }
+}
+
+Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
+  assert(type.isRef());
+  auto heapType = type.getHeapType();
+  assert(!heapType.isBasic());
+  assert(wasm.features.hasReferenceTypes());
+  if (heapType.isSignature()) {
+    return makeRefFuncConst(type);
+  }
+
+  // We weren't able to directly materialize a non-null constant. Try again to
+  // create a null.
+  if (type.isNullable()) {
+    return builder.makeRefNull(type);
+  }
+
+  // We have to produce a non-null value. Possibly create a null and cast it
+  // to non-null even though that will trap at runtime. We must have a
+  // function context for this because the cast is not allowed in globals.
+  if (funcContext) {
+    return builder.makeRefAs(RefAsNonNull,
+                             builder.makeRefNull(Type(heapType, Nullable)));
+  }
+
+  // Otherwise, we are not in a function context. This can happen if we need
+  // to make a constant for the initializer of a global, for example. We've
+  // already handled simple cases of this above, for basic heap types, so what
+  // we have left here are user-defined heap types like structs.
+  // TODO: support non-defaultable fields. for now, just use default values.
+  if (type.isStruct()) {
+    return builder.makeStructNew(type.getHeapType(),
+                                 std::vector<Expression*>{});
+  } else if (type.isArray()) {
+    return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32));
+  } else {
+    WASM_UNREACHABLE("bad user-defined ref type");
   }
 }
 
@@ -2012,14 +2104,15 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
     // give up
     return makeTrivial(type);
   }
-  // There are no unary ops for reference or RTT types.
-  if (type.isRef() || type.isRtt()) {
+  // There are no unary ops for reference types.
+  // TODO: not quite true if you count struct.new and array.new.
+  if (type.isRef()) {
     return makeTrivial(type);
   }
   switch (type.getBasic()) {
     case Type::i32: {
       auto singleConcreteType = getSingleConcreteType();
-      if (singleConcreteType.isRef() || singleConcreteType.isRtt()) {
+      if (singleConcreteType.isRef()) {
         // TODO: Do something more interesting here.
         return makeTrivial(type);
       }
@@ -2062,12 +2155,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                                   AllTrueVecI32x4),
                              make(Type::v128)});
         }
-        case Type::funcref:
-        case Type::externref:
-        case Type::anyref:
-        case Type::eqref:
-        case Type::i31ref:
-        case Type::dataref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -2203,12 +2290,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
       }
       WASM_UNREACHABLE("invalid value");
     }
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2230,8 +2311,9 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
     // give up
     return makeTrivial(type);
   }
-  // There are no binary ops for reference or RTT types.
-  if (type.isRef() || type.isRtt()) {
+  // There are no binary ops for reference types.
+  // TODO: Use struct.new
+  if (type.isRef()) {
     return makeTrivial(type);
   }
   switch (type.getBasic()) {
@@ -2438,16 +2520,10 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                NarrowUVecI16x8ToVecI8x16,
                                NarrowSVecI32x4ToVecI16x8,
                                NarrowUVecI32x4ToVecI16x8,
-                               SwizzleVec8x16),
+                               SwizzleVecI8x16),
                           make(Type::v128),
                           make(Type::v128)});
     }
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2525,7 +2601,7 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
   if (!allowMemory) {
     return makeTrivial(type);
   }
-  wasm.memory.shared = true;
+  wasm.memories[0]->shared = true;
   if (type == Type::none) {
     return builder.makeAtomicFence();
   }
@@ -2535,12 +2611,17 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       auto expectedType = pick(Type::i32, Type::i64);
       auto* expected = make(expectedType);
       auto* timeout = make(Type::i64);
-      return builder.makeAtomicWait(
-        ptr, expected, timeout, expectedType, logify(get()));
+      return builder.makeAtomicWait(ptr,
+                                    expected,
+                                    timeout,
+                                    expectedType,
+                                    logify(get()),
+                                    wasm.memories[0]->name);
     } else {
       auto* ptr = makePointer();
       auto* count = make(Type::i32);
-      return builder.makeAtomicNotify(ptr, count, logify(get()));
+      return builder.makeAtomicNotify(
+        ptr, count, logify(get()), wasm.memories[0]->name);
     }
   }
   Index bytes;
@@ -2593,12 +2674,13 @@ Expression* TranslateToFuzzReader::makeAtomic(Type type) {
       offset,
       ptr,
       value,
-      type);
+      type,
+      wasm.memories[0]->name);
   } else {
     auto* expected = make(type);
     auto* replacement = make(type);
     return builder.makeAtomicCmpxchg(
-      bytes, offset, ptr, expected, replacement, type);
+      bytes, offset, ptr, expected, replacement, type, wasm.memories[0]->name);
   }
 }
 
@@ -2650,12 +2732,6 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       op = ExtractLaneVecF64x2;
       break;
     case Type::v128:
-    case Type::funcref:
-    case Type::externref:
-    case Type::anyref:
-    case Type::eqref:
-    case Type::i31ref:
-    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -2805,7 +2881,7 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
       WASM_UNREACHABLE("Unexpected SIMD loads");
   }
   Expression* ptr = makePointer();
-  return builder.makeSIMDLoad(op, offset, align, ptr);
+  return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
@@ -2843,7 +2919,7 @@ Expression* TranslateToFuzzReader::makeRefEq(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
-  assert(type == Type::i31ref);
+  assert(type.isRef() && type.getHeapType() == HeapType::i31);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   auto* value = make(Type::i32);
   return builder.makeI31New(value);
@@ -2852,7 +2928,9 @@ Expression* TranslateToFuzzReader::makeI31New(Type type) {
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  auto* i31 = make(Type::i31ref);
+  // TODO: Maybe this should be nullable?
+  // https://github.com/WebAssembly/gc/issues/312
+  auto* i31 = make(Type(HeapType::i31, NonNullable));
   return builder.makeI31Get(i31, bool(oneIn(2)));
 }
 
@@ -2860,21 +2938,22 @@ Expression* TranslateToFuzzReader::makeMemoryInit() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  uint32_t segment = upTo(wasm.memory.segments.size());
-  size_t totalSize = wasm.memory.segments[segment].data.size();
+  uint32_t segment = upTo(wasm.dataSegments.size());
+  size_t totalSize = wasm.dataSegments[segment]->data.size();
   size_t offsetVal = upTo(totalSize);
   size_t sizeVal = upTo(totalSize - offsetVal);
   Expression* dest = makePointer();
   Expression* offset = builder.makeConst(int32_t(offsetVal));
   Expression* size = builder.makeConst(int32_t(sizeVal));
-  return builder.makeMemoryInit(segment, dest, offset, size);
+  return builder.makeMemoryInit(
+    segment, dest, offset, size, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeDataDrop() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  return builder.makeDataDrop(upTo(wasm.memory.segments.size()));
+  return builder.makeDataDrop(upTo(wasm.dataSegments.size()));
 }
 
 Expression* TranslateToFuzzReader::makeMemoryCopy() {
@@ -2883,8 +2962,9 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   }
   Expression* dest = makePointer();
   Expression* source = makePointer();
-  Expression* size = make(wasm.memory.indexType);
-  return builder.makeMemoryCopy(dest, source, size);
+  Expression* size = make(wasm.memories[0]->indexType);
+  return builder.makeMemoryCopy(
+    dest, source, size, wasm.memories[0]->name, wasm.memories[0]->name);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryFill() {
@@ -2893,8 +2973,8 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   }
   Expression* dest = makePointer();
   Expression* value = make(Type::i32);
-  Expression* size = make(wasm.memory.indexType);
-  return builder.makeMemoryFill(dest, value, size);
+  Expression* size = make(wasm.memories[0]->indexType);
+  return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
@@ -2909,12 +2989,14 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      WeightedOption{Type::f32, VeryImportant},
                      WeightedOption{Type::f64, VeryImportant})
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
-                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+                .add(FeatureSet::ReferenceTypes,
+                     Type(HeapType::func, Nullable),
+                     Type(HeapType::ext, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
                      // Type(HeapType::ext, NonNullable),
                      Type(HeapType::any, Nullable),
-                     Type(HeapType::any, NonNullable),
+                     // Type(HeapType::any, NonNullable),
                      Type(HeapType::eq, Nullable),
                      Type(HeapType::eq, NonNullable),
                      Type(HeapType::i31, Nullable),
@@ -2925,11 +3007,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 
 Type TranslateToFuzzReader::getReferenceType() {
   return pick(FeatureOptions<Type>()
-                .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+                // TODO: Add externref here.
+                .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
-                     Type(HeapType::ext, NonNullable),
-                     Type(HeapType::any, Nullable),
                      Type(HeapType::any, NonNullable),
                      Type(HeapType::eq, Nullable),
                      Type(HeapType::eq, NonNullable),
@@ -3002,8 +3083,19 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
 }
 
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
-  return nullability == NonNullable ? NonNullable
-                                    : oneIn(2) ? Nullable : NonNullable;
+  if (nullability == NonNullable) {
+    return NonNullable;
+  }
+  // Without wasm GC, avoid non-nullable types as we cannot create any values
+  // of such types. For example, reference types adds eqref, but there is no
+  // way to create such a value, only to receive it from the outside, while GC
+  // adds i31/struct/array creation. Without GC, we will likely need to create a
+  // null of this type (unless we are lucky enough to have a non-null value
+  // arriving from an import), so avoid a non-null type if possible.
+  if (wasm.features.hasGC() && oneIn(2)) {
+    return NonNullable;
+  }
+  return Nullable;
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
@@ -3016,31 +3108,28 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return HeapType::ext;
       case HeapType::any:
         // TODO: nontrivial types as well.
-        return pick(HeapType::func,
-                    HeapType::ext,
-                    HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::data);
+        assert(wasm.features.hasReferenceTypes());
+        assert(wasm.features.hasGC());
+        return pick(HeapType::any, HeapType::eq, HeapType::i31, HeapType::data);
       case HeapType::eq:
         // TODO: nontrivial types as well.
+        assert(wasm.features.hasReferenceTypes());
+        assert(wasm.features.hasGC());
         return pick(HeapType::eq, HeapType::i31, HeapType::data);
       case HeapType::i31:
         return HeapType::i31;
       case HeapType::data:
         // TODO: nontrivial types as well.
         return HeapType::data;
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        WASM_UNREACHABLE("TODO: fuzz strings");
     }
   }
   // TODO: nontrivial types as well.
   return type;
-}
-
-Rtt TranslateToFuzzReader::getSubType(Rtt rtt) {
-  uint32_t depth = rtt.depth != Rtt::NoDepth
-                     ? rtt.depth
-                     : oneIn(2) ? Rtt::NoDepth : upTo(MAX_RTT_DEPTH + 1);
-  return Rtt(depth, rtt.heapType);
 }
 
 Type TranslateToFuzzReader::getSubType(Type type) {
@@ -3054,8 +3143,6 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     auto heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
     return Type(heapType, nullability);
-  } else if (type.isRtt()) {
-    return Type(getSubType(type.getRtt()));
   } else {
     // This is an MVP type without subtypes.
     assert(type.isBasic());

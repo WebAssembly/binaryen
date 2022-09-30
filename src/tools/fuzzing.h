@@ -31,6 +31,7 @@ high chance for set at start of loop
 #include "ir/memory-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
+#include <ir/eh-utils.h>
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
@@ -75,8 +76,9 @@ public:
 
   void build();
 
-private:
   Module& wasm;
+
+private:
   Builder builder;
   Random random;
 
@@ -180,10 +182,14 @@ private:
 
   // Recombination and mutation can replace a node with another node of the same
   // type, but should not do so for certain types that are dangerous. For
-  // example, it would be bad to add an RTT in a tuple, as that would force us
-  // to use temporary locals for the tuple, but RTTs are not defaultable.
+  // example, it would be bad to add a non-nullable reference to a tuple, as
+  // that would force us to use temporary locals for the tuple, but non-nullable
+  // references cannot always be stored in locals. Also, the 'pop' pseudo
+  // instruction for EH is supposed to exist only at the beginning of a 'catch'
+  // block, so it shouldn't be moved around or deleted freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
-    return curr->type.isDefaultable();
+    return curr->type.isDefaultable() &&
+           !EHUtils::containsValidDanglingPop(curr);
   }
   void recombine(Function* func);
   void mutate(Function* func);
@@ -252,7 +258,18 @@ private:
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
   Expression* makeRefFuncConst(Type type);
+
+  // Emit a constant expression for a given type, as best we can. We may not be
+  // able to emit a literal Const, like say if the type is a function reference
+  // then we may emit a RefFunc, but also we may have other requirements, like
+  // we may add a GC cast to fixup the type.
   Expression* makeConst(Type type);
+
+  // Like makeConst, but for a type that is a reference type. One function
+  // handles basic types, and the other compound ones.
+  Expression* makeConstBasicRef(Type type);
+  Expression* makeConstCompoundRef(Type type);
+
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
   Expression* buildBinary(const BinaryArgs& args);
@@ -296,7 +313,6 @@ private:
   bool isLoggableType(Type type);
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
-  Rtt getSubType(Rtt rtt);
   Type getSubType(Type type);
 
   // Utilities

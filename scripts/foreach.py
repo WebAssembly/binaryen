@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 import subprocess
 
@@ -31,6 +32,7 @@ def main():
     tempfile = sys.argv[2]
     cmd = sys.argv[3:]
     returncode = 0
+    all_modules = open(infile).read()
     for i, (module, asserts) in enumerate(support.split_wast(infile)):
         tempname = tempfile + '.' + str(i)
         with open(tempname, 'w') as temp:
@@ -39,6 +41,9 @@ def main():
         result = subprocess.run(new_cmd)
         if result.returncode != 0:
             returncode = result.returncode
+            module_char_start = all_modules.find(module)
+            module_line_start = all_modules[:module_char_start].count(os.linesep)
+            print(f'[Failing module at line {module_line_start}]', file=sys.stderr)
     sys.exit(returncode)
 
 

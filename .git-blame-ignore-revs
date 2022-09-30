@@ -1,0 +1,9 @@
+# This file contains a list of revisions that are ignored by git blame
+# These revisions are unlikely what you are interested in when blaming.
+# You can set this file as a default ignore file for blame by running
+# the following command.
+#
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Mass change to apply clang-format to everything
+db9124f1de0478dcac525009b6f1589b44a7edd8

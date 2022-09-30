@@ -531,10 +531,9 @@
   ;; As above, but add a write in the sub, which prevents optimization.
 
 
-  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
-
   ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
   (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $ref|$sub|_=>_none (func_subtype (param (ref $sub)) func))

@@ -3,7 +3,6 @@
  (type $0 (func (param i32) (result i32)))
  (type $2 (func (result i32)))
  (import "env" "memory" (memory $0 0))
- (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (import "env" "__memory_base" (global $gimport$2 i32))
@@ -15,6 +14,7 @@
  (global $global$0 i32 (i32.const 16))
  (global $global$1 i32 (i32.const 20))
  (global $global i32 (i32.const 42))
+ (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))
@@ -53,35 +53,3 @@
   )
  )
 )
-(;
---BEGIN METADATA --
-{
-  "tableSize": 0,
-  "declares": [
-    "puts"
-  ],
-  "globalImports": [
-    "__stack_pointer",
-    "__memory_base",
-    "__table_base",
-    "external_var",
-    "puts",
-    "_Z13print_messagev"
-  ],
-  "exports": [
-    "__wasm_call_ctors",
-    "_Z13print_messagev"
-  ],
-  "namedGlobals": {
-    "ptr_puts" : "16",
-    "ptr_local_func" : "20",
-    "__data_end" : "42"
-  },
-  "invokeFuncs": [
-  ],
-  "mainReadsParams": 0,
-  "features": [
-  ]
-}
--- END METADATA --
-;)

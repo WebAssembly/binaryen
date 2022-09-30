@@ -277,6 +277,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
             break;
           }
         }
+        WASM_UNUSED(found);
         assert(found);
         continue;
       }
@@ -392,7 +393,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::CallId:
-      case Expression::Id::CallIndirectId: {
+      case Expression::Id::CallIndirectId:
+      case Expression::Id::CallRefId: {
         self->pushTask(SubType::doEndCall, currp);
         break;
       }

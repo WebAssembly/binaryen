@@ -104,8 +104,8 @@
 (module
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256))
- (data (i32.const 1) "hello, world!")
  (import "env" "table" (table $timport$0 1 funcref))
+ (data (i32.const 1) "hello, world!")
  (elem (i32.const 0) $waka)
  (func $waka
   (nop)
@@ -219,10 +219,10 @@
 (module
  (type $none_=>_none (func))
  (import "env" "memory" (memory $0 256))
- (data (global.get $memoryBase) "hello, world!")
  (import "env" "table" (table $timport$0 0 funcref))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
+ (data (global.get $memoryBase) "hello, world!")
  (elem (global.get $tableBase) $waka)
  (func $waka
   (nop)
@@ -292,19 +292,6 @@
    )
    (f64.const 1)
    (f64.const 0)
-  )
- )
-)
-(module
- (type $none_=>_none (func))
- (elem declare func $foo)
- (export "test" (func $test))
- (func $foo
-  (nop)
- )
- (func $test
-  (drop
-   (ref.func $foo)
   )
  )
 )

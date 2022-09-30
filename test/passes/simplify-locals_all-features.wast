@@ -1657,7 +1657,7 @@
 )
 (module
  (func $subtype-test (result anyref)
-  (local $0 externref)
+  (local $0 eqref)
   (local $1 anyref)
   (local $2 anyref)
   (block

@@ -76,7 +76,8 @@ bool usesExpressions(ElementSegment* curr, Module* module) {
   // declare a type that is a subtype of that, so it must use the post-MVP form
   // of using expressions.
   bool hasTableOfSpecializedType =
-    curr->table.is() && module->getTable(curr->table)->type != Type::funcref;
+    curr->table.is() &&
+    module->getTable(curr->table)->type != Type(HeapType::func, Nullable);
 
   return !allElementsRefFunc || hasTableOfSpecializedType;
 }

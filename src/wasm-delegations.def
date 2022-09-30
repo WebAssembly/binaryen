@@ -73,8 +73,6 @@ DELEGATE(CallRef);
 DELEGATE(RefTest);
 DELEGATE(RefCast);
 DELEGATE(BrOn);
-DELEGATE(RttCanon);
-DELEGATE(RttSub);
 DELEGATE(StructNew);
 DELEGATE(StructGet);
 DELEGATE(StructSet);
@@ -85,5 +83,18 @@ DELEGATE(ArraySet);
 DELEGATE(ArrayLen);
 DELEGATE(ArrayCopy);
 DELEGATE(RefAs);
+DELEGATE(StringNew);
+DELEGATE(StringConst);
+DELEGATE(StringMeasure);
+DELEGATE(StringEncode);
+DELEGATE(StringConcat);
+DELEGATE(StringEq);
+DELEGATE(StringAs);
+DELEGATE(StringWTF8Advance);
+DELEGATE(StringWTF16Get);
+DELEGATE(StringIterNext);
+DELEGATE(StringIterMove);
+DELEGATE(StringSliceWTF);
+DELEGATE(StringSliceIter);
 
 #undef DELEGATE

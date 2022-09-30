@@ -52,22 +52,6 @@ inline std::string generateSpecWrapper(Module& wasm) {
         case Type::v128:
           ret += "(v128.const i32x4 0 0 0 0)";
           break;
-        case Type::funcref:
-          ret += "(ref.null func)";
-          break;
-        case Type::externref:
-          ret += "(ref.null extern)";
-          break;
-        case Type::anyref:
-          ret += "(ref.null any)";
-          break;
-        case Type::eqref:
-          ret += "(ref.null eq)";
-          break;
-        case Type::i31ref:
-          WASM_UNREACHABLE("TODO: i31ref");
-        case Type::dataref:
-          WASM_UNREACHABLE("TODO: dataref");
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

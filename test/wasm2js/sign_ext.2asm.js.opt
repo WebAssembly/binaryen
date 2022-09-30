@@ -1,5 +1,7 @@
+import { setTempRet0 } from 'env';
 
-function asmFunc(env) {
+function asmFunc(importObject) {
+ var env = importObject.env || importObject;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -10,9 +12,10 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
+ var setTempRet0 = env.setTempRet0;
+ var i64toi32_i32$HIGH_BITS = 0;
  function $0($0_1) {
   $0_1 = $0_1 | 0;
   return $0_1 << 24 >> 24;
@@ -23,13 +26,40 @@ function asmFunc(env) {
   return $0_1 << 16 >> 16;
  }
  
+ function legalstub$2($0_1, $1_1) {
+  $0_1 = $0_1 << 24 >> 24;
+  i64toi32_i32$HIGH_BITS = $0_1 >> 31;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $0_1;
+ }
+ 
+ function legalstub$3($0_1, $1_1) {
+  $0_1 = $0_1 << 16 >> 16;
+  i64toi32_i32$HIGH_BITS = $0_1 >> 31;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $0_1;
+ }
+ 
+ function legalstub$4($0_1, $1_1) {
+  i64toi32_i32$HIGH_BITS = $0_1 >> 31;
+  setTempRet0(i64toi32_i32$HIGH_BITS | 0);
+  return $0_1;
+ }
+ 
  return {
   "test8": $0, 
-  "test16": $1
+  "test16": $1, 
+  "test8_i64": legalstub$2, 
+  "test16_i64": legalstub$3, 
+  "test32_i64": legalstub$4
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({
+    setTempRet0,
+});
 export var test8 = retasmFunc.test8;
 export var test16 = retasmFunc.test16;
+export var test8_i64 = retasmFunc.test8_i64;
+export var test16_i64 = retasmFunc.test16_i64;
+export var test32_i64 = retasmFunc.test32_i64;
