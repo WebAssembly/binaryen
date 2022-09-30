@@ -194,16 +194,20 @@ void PossibleContents::intersect(const PossibleContents& other) {
     return;
   }
 
-  if (!isConeType()) {
-    // This is a non-cone being intersected with a cone. We've ruled out the
-    // trivial cases of Many, None, and not having any intersection at all,
-    // which means there is an intersection. This must have exact type (nothing
-    // else remains), and so the intersection is just what we are already, with
-    // proper nullability.
-    assert(hasExactType());
-    value = ExactType(Type(heapType, nullability));
+  // The heap types are not compatible, the intersection is either nothing or a
+  // null.
+  if (!HeapType::isSubType(heapType, otherHeapType) &&
+      !HeapType::isSubType(otherHeapType, heapType)) {
+    if (nullability == Nullable) {
+      value = Literal::makeNull(otherHeapType);
+    } else {
+      value = None();
+    }
     return;
   }
+
+  // We've ruled out everything else.
+  assert(isConeType());
 
   // An interesting non-empty intersection that is a new cone which differs from
   // both the original ones. (This must be an intersection of cones, since by

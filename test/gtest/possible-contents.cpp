@@ -693,10 +693,12 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(nnB),
                      none);
 
-#if 0
+std::cout << "A1\n";
+
   assertIntersection(exactA,
                      PossibleContents::fullConeType(nullB),
-                     PossibleContents::literal(Literal::makeNull(A)));
+                     PossibleContents::literal(Literal::makeNull(B)));
+#if 0
   assertIntersection(nnExactA,
                      PossibleContents::fullConeType(nullB),
                      none);
