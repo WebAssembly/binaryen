@@ -65,6 +65,7 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 class Fatal {
 private:
   std::stringstream buffer;
+
 public:
   Fatal() { buffer << "Fatal: "; }
   template<typename T> Fatal& operator<<(T arg) {
