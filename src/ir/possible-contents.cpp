@@ -200,16 +200,47 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // both the original ones. (This must be an intersection of cones, since by
   // assumption |other| is a cone, and another cone is the only shape that can
   // have a non-empty intersection with it that differs from them both.)
-  assert(isConeType());
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
-  assert(depthFromRoot != otherDepthFromRoot);
+
+  // To compute the new cone, find the new heap type for it, and to compute its
+  // depth, consider the adjustments to the existing depths that stem from the
+  // choice of new heap type.
+  Type newHeapType;
+
   if (depthFromRoot < otherDepthFromRoot) {
-    value = ConeType{Type(otherHeapType, nullability),
-                     Index(otherDepthFromRoot - depthFromRoot)};
+    newHeapType = otherHeapType;
   } else {
-    value = ConeType{Type(heapType, nullability),
-                     Index(depthFromRoot - otherDepthFromRoot)};
+    newHeapType = heapType;
+  }
+
+  auto newType = Type(newHeapType, nullability);
+
+  // By assumption |other| has full depth. Consider the other cone.
+  if (isFullConeType()) {
+    // Both are full cones, so the result is as well.
+    value = FullConeType(newType);
+  } else {
+    // The result is a partial cone. If the cone starts in |otherHeapType| then
+    // we need to adjust the depth down, since it will be smaller than the
+    // original cone:
+    //
+    //                             ..
+    //                            /
+    //              otherHeapType
+    //            /               \
+    //   heapType                  ..
+    //            \
+    //
+    // So if |this| was a cone of size 10, and |otherHeapType| is an immediate
+    // subtype of ours, then the new cone must be of size 9.
+    auto newDepth = getCone().depth;
+    if (newHeapType == otherHeapType) {
+      assert(depthFromRoot < otherDepthFromRoot);
+      newDepth -= otherDepthFromRoot - depthFromRoot;
+    }
+
+    value = ConeType{newType, newDepth};
   }
 }
 
