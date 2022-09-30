@@ -623,8 +623,38 @@ void TranslateToFuzzReader::recombine(Function* func) {
 
     void visitExpression(Expression* curr) {
       if (parent.canBeArbitrarilyReplaced(curr)) {
-        exprsByType[curr->type].push_back(curr);
+        for (auto type : getRelevantTypes(curr->type)) {
+          exprsByType[type].push_back(curr);
+        }
       }
+    }
+
+    std::vector<Type> getRelevantTypes(Type type) {
+      // Given an expression of a type, we can replace not only other
+      // expressions with the same type, but also supertypes - since then we'd
+      // be replacing with a subtype, which is valid.
+      if (!type.isRef()) {
+        return {type};
+      }
+
+      std::vector<Type> ret;
+      auto heapType = type.getHeapType();
+      auto nullability = type.getNullability();
+
+      if (nullability == NonNullable) {
+        ret = getRelevantTypes(Type(heapType, Nullable));
+      }
+
+      while (1) {
+        ret.push_back(Type(heapType, nullability));
+        auto super = heapType.getSuperType();
+        if (!super) {
+          break;
+        }
+        heapType = *super;
+      }
+
+      return ret;
     }
   };
   Scanner scanner(*this);
@@ -653,7 +683,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
     }
   }
   // Second, with some probability replace an item with another item having
-  // the same type. (This is not always valid due to nesting of labels, but
+  // a proper type. (This is not always valid due to nesting of labels, but
   // we'll fix that up later.)
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
@@ -675,6 +705,8 @@ void TranslateToFuzzReader::recombine(Function* func) {
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
+  // Refinalize since we may have replaced a type with a subtype.
+  ReFinalize().walkFunctionInModule(func, &wasm);
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
