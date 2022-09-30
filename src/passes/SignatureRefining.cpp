@@ -50,7 +50,7 @@ struct SignatureRefining : public Pass {
   // will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -254,7 +254,9 @@ struct SignatureRefining : public Pass {
       CodeUpdater(SignatureRefining& parent, Module& wasm)
         : parent(parent), wasm(wasm) {}
 
-      CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<CodeUpdater>(parent, wasm);
+      }
 
       void doWalkFunction(Function* func) {
         auto iter = parent.newSignatures.find(func->type);
@@ -275,7 +277,7 @@ struct SignatureRefining : public Pass {
         }
       }
     };
-    CodeUpdater(*this, *module).run(runner, module);
+    CodeUpdater(*this, *module).run(getPassRunner(), module);
 
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
@@ -283,7 +285,7 @@ struct SignatureRefining : public Pass {
     if (refinedResults) {
       // After return types change we need to propagate.
       // TODO: we could do this only in relevant functions perhaps
-      ReFinalize().run(runner, module);
+      ReFinalize().run(getPassRunner(), module);
     }
   }
 };

@@ -56,7 +56,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
   bool isFunctionParallel() override { return false; }
 
-  Pass* create() override { return new RemoveNonJSOpsPass; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<RemoveNonJSOpsPass>();
+  }
 
   void doWalkModule(Module* module) {
     // Intrinsics may use scratch memory, ensure it.
@@ -339,7 +341,9 @@ struct StubUnsupportedJSOpsPass
   : public WalkerPass<PostWalker<StubUnsupportedJSOpsPass>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new StubUnsupportedJSOpsPass; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<StubUnsupportedJSOpsPass>();
+  }
 
   void visitUnary(Unary* curr) {
     switch (curr->op) {

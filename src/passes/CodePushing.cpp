@@ -249,7 +249,9 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   // way), so validation will be preserved.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  Pass* create() override { return new CodePushing; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CodePushing>();
+  }
 
   LocalAnalyzer analyzer;
 

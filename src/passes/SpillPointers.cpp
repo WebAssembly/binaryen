@@ -37,7 +37,9 @@ struct SpillPointers
   : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SpillPointers; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<SpillPointers>();
+  }
 
   // a mapping of the pointers to all the spillable things. We need to know
   // how to replace them, and as we spill we may modify them. This map

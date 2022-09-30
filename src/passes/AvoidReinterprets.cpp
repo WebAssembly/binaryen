@@ -76,7 +76,9 @@ static bool isReinterpret(Unary* curr) {
 struct AvoidReinterprets : public WalkerPass<PostWalker<AvoidReinterprets>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new AvoidReinterprets; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AvoidReinterprets>();
+  }
 
   struct Info {
     // Info used when analyzing.

@@ -201,7 +201,9 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
 
     Updater(T& map) : map(map) {}
 
-    Updater* create() override { return new Updater(map); }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Updater>(map);
+    }
 
     void visitCall(Call* curr) { maybeUpdate(curr->target); }
 
@@ -392,7 +394,9 @@ struct ParallelFunctionAnalysis {
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
 
-      Mapper* create() override { return new Mapper(module, map, work); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Mapper>(module, map, work);
+      }
 
       void doWalkFunction(Function* curr) {
         assert(map.count(curr));

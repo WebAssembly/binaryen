@@ -41,7 +41,6 @@ struct InstrumenterConfig {
 // at the beginning of each function to set its timestamp, and a new exported
 // function for dumping the profile data.
 struct Instrumenter : public Pass {
-  PassRunner* runner = nullptr;
   Module* wasm = nullptr;
 
   const InstrumenterConfig& config;
@@ -54,7 +53,7 @@ struct Instrumenter : public Pass {
 
   Instrumenter(const InstrumenterConfig& config, uint64_t moduleHash);
 
-  void run(PassRunner* runner, Module* wasm) override;
+  void run(Module* wasm) override;
 
 private:
   void addGlobals(size_t numFuncs);

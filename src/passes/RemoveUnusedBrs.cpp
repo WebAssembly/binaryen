@@ -117,7 +117,9 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new RemoveUnusedBrs; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<RemoveUnusedBrs>();
+  }
 
   bool anotherCycle;
 

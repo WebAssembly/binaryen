@@ -732,7 +732,9 @@ struct Heap2LocalOptimizer {
 struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Heap2Local(); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Heap2Local>();
+  }
 
   void doWalkFunction(Function* func) {
     // Multiple rounds of optimization may work in theory, as once we turn one

@@ -199,7 +199,9 @@ struct Precompute
       PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Precompute(propagate); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Precompute>(propagate);
+  }
 
   bool propagate = false;
 

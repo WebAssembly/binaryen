@@ -99,7 +99,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   // TODO: allow module-level transformations in parallel passes
   bool isFunctionParallel() override { return false; }
 
-  Pass* create() override { return new I64ToI32Lowering; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<I64ToI32Lowering>();
+  }
 
   void doWalkModule(Module* module) {
     if (!builder) {

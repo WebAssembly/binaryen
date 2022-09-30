@@ -51,7 +51,9 @@ struct CoalesceLocals
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new CoalesceLocals; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CoalesceLocals>();
+  }
 
   // main entry point
 
@@ -580,7 +582,9 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
 }
 
 struct CoalesceLocalsWithLearning : public CoalesceLocals {
-  virtual Pass* create() override { return new CoalesceLocalsWithLearning; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CoalesceLocalsWithLearning>();
+  }
 
   virtual void pickIndices(std::vector<Index>& indices) override;
 };

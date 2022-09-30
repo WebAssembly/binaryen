@@ -44,7 +44,9 @@ struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
 
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
 
-  CallCountScanner* create() override { return new CallCountScanner(counts); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CallCountScanner>(counts);
+  }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
@@ -60,7 +62,7 @@ struct ReorderFunctions : public Pass {
   // Only reorders functions, does not change their contents.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     NameCountMap counts;
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
@@ -68,7 +70,7 @@ struct ReorderFunctions : public Pass {
       counts[func->name];
     }
     // find counts on function calls
-    CallCountScanner(&counts).run(runner, module);
+    CallCountScanner(&counts).run(getPassRunner(), module);
     // find counts on global usages
     if (module->start.is()) {
       counts[module->start]++;

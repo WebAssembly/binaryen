@@ -526,7 +526,9 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new LocalCSE(); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<LocalCSE>();
+  }
 
   void doWalkFunction(Function* func) {
     auto& options = getPassOptions();

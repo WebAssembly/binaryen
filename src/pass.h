@@ -271,9 +271,7 @@ struct PassRunner {
   }
 
   // Add a pass given an instance.
-  template<class P> void add(std::unique_ptr<P> pass) {
-    doAdd(std::move(pass));
-  }
+  void add(std::unique_ptr<Pass> pass) { doAdd(std::move(pass)); }
 
   // Adds the pass if there are no DWARF-related issues. There is an issue if
   // there is DWARF and if the pass does not support DWARF (as defined by the
@@ -311,9 +309,6 @@ struct PassRunner {
 
   // Run the passes on a specific function
   void runOnFunction(Function* func);
-
-  // Get the last pass that was already executed of a certain type.
-  template<class P> P* getLast();
 
   // When running a pass runner within another pass runner, this
   // flag should be set. This influences how pass debugging works,
@@ -367,18 +362,18 @@ private:
 // Core pass class
 //
 class Pass {
+  PassRunner* runner = nullptr;
+  friend PassRunner;
+
 public:
   virtual ~Pass() = default;
 
   // Implement this with code to run the pass on the whole module
-  virtual void run(PassRunner* runner, Module* module) {
-    WASM_UNREACHABLE("unimplemented");
-  }
+  virtual void run(Module* module) { WASM_UNREACHABLE("unimplemented"); }
 
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
-  virtual void
-  runOnFunction(PassRunner* runner, Module* module, Function* function) {
+  virtual void runOnFunction(Module* module, Function* function) {
     WASM_UNREACHABLE("unimplemented");
   }
 
@@ -404,7 +399,7 @@ public:
   // This method is used to create instances per function for a
   // function-parallel pass. You may need to override this if you subclass a
   // Walker, as otherwise this will create the parent class.
-  virtual Pass* create() { WASM_UNREACHABLE("unimplenented"); }
+  virtual std::unique_ptr<Pass> create() { WASM_UNREACHABLE("unimplenented"); }
 
   // Whether this pass modifies the Binaryen IR in the module. This is true for
   // most passes, except for passes that have no side effects, or passes that
@@ -429,6 +424,14 @@ public:
 
   std::string name;
 
+  PassRunner* getPassRunner() { return runner; }
+  void setPassRunner(PassRunner* runner_) {
+    assert((!runner || runner == runner_) && "Pass already had a runner");
+    runner = runner_;
+  }
+
+  PassOptions& getPassOptions() { return runner->options; }
+
 protected:
   Pass() = default;
   Pass(Pass&) = default;
@@ -441,44 +444,49 @@ protected:
 //
 template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
-  PassRunner* runner = nullptr;
 
 protected:
   typedef WalkerPass<WalkerType> super;
 
 public:
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
+    assert(getPassRunner());
     // Parallel pass running is implemented in the PassRunner.
     if (isFunctionParallel()) {
-      PassRunner runner(module);
+      // TODO: We should almost certainly be propagating pass options here, but
+      // that is a widespread change, so make sure it doesn't unacceptably
+      // regress compile times.
+      PassRunner runner(module /*, getPassOptions()*/);
       runner.setIsNested(true);
-      std::unique_ptr<Pass> copy;
-      copy.reset(create());
-      runner.add(std::move(copy));
+      runner.add(create());
       runner.run();
       return;
     }
     // Single-thread running just calls the walkModule traversal.
-    setPassRunner(runner);
     WalkerType::walkModule(module);
   }
 
-  void
-  runOnFunction(PassRunner* runner, Module* module, Function* func) override {
+  // Utility for ad-hoc running.
+  void run(PassRunner* runner, Module* module) {
     setPassRunner(runner);
+    run(module);
+  }
+
+  void runOnFunction(Module* module, Function* func) override {
+    assert(getPassRunner());
     WalkerType::walkFunctionInModule(func, module);
+  }
+
+  // Utility for ad-hoc running.
+  void runOnFunction(PassRunner* runner, Module* module, Function* func) {
+    setPassRunner(runner);
+    runOnFunction(module, func);
   }
 
   void runOnModuleCode(PassRunner* runner, Module* module) {
     setPassRunner(runner);
     WalkerType::walkModuleCode(module);
   }
-
-  PassRunner* getPassRunner() { return runner; }
-
-  PassOptions& getPassOptions() { return runner->options; }
-
-  void setPassRunner(PassRunner* runner_) { runner = runner_; }
 };
 
 } // namespace wasm

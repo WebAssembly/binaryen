@@ -59,7 +59,7 @@ private:
   // Generates minified names that are valid in JS.
   // Names are computed lazily.
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // Minify the imported names.
     Names::MinifiedNameGenerator names;
     std::map<Name, Name> oldToNew;
