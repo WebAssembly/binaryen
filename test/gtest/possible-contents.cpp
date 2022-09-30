@@ -396,9 +396,16 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
         // cone type. In that case we can test that the intersection of A with
         // A + B is simply A.
         if (combination.isFullConeType()) {
-    //      auto intersection = item;
-//          intersection.intersect(combination);
-  //        EXPECT_EQ(intersection, item); // FIXME
+          auto intersection = item;
+          intersection.intersect(combination);
+          EXPECT_EQ(intersection, item);
+          if (intersection != item) {
+            std::cout << "\nFailure: wrong intersection.\n";
+            std::cout << "item: " << item << '\n';
+            std::cout << "combination: " << combination << '\n';
+            std::cout << "intersection: " << intersection << '\n';
+            abort();
+          }
         }
       }
 
@@ -653,10 +660,8 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertLackIntersection(PossibleContents::coneType(nnA, 1),
                          PossibleContents::coneType(nnD, 100));
 
-  // Computing intersections is supported with a full cone type. 
-  assertIntersection(none,
-                     PossibleContents::fullConeType(nnA),
-                     none);
+  // Computing intersections is supported with a full cone type.
+  assertIntersection(none, PossibleContents::fullConeType(nnA), none);
   assertIntersection(many,
                      PossibleContents::fullConeType(nnA),
                      PossibleContents::fullConeType(nnA));
@@ -664,58 +669,33 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(nullA),
                      PossibleContents::fullConeType(nullA));
 
-  assertIntersection(exactA,
-                     PossibleContents::fullConeType(nullA),
-                     exactA);
-  assertIntersection(nnExactA,
-                     PossibleContents::fullConeType(nullA),
-                     nnExactA);
-  assertIntersection(exactA,
-                     PossibleContents::fullConeType(nnA),
-                     nnExactA);
+  assertIntersection(exactA, PossibleContents::fullConeType(nullA), exactA);
+  assertIntersection(nnExactA, PossibleContents::fullConeType(nullA), nnExactA);
+  assertIntersection(exactA, PossibleContents::fullConeType(nnA), nnExactA);
 
-  assertIntersection(exactB,
-                     PossibleContents::fullConeType(nullA),
-                     exactB);
-  assertIntersection(nnExactB,
-                     PossibleContents::fullConeType(nullA),
-                     nnExactB);
-  assertIntersection(exactB,
-                     PossibleContents::fullConeType(nnA),
-                     nnExactB);
+  assertIntersection(exactB, PossibleContents::fullConeType(nullA), exactB);
+  assertIntersection(nnExactB, PossibleContents::fullConeType(nullA), nnExactB);
+  assertIntersection(exactB, PossibleContents::fullConeType(nnA), nnExactB);
 
   auto literalNullA = PossibleContents::literal(Literal::makeNull(A));
 
-  assertIntersection(literalNullA,
-                     PossibleContents::fullConeType(nullA),
-                     literalNullA);
-  assertIntersection(literalNullA,
-                     PossibleContents::fullConeType(nnA),
-                     none);
+  assertIntersection(
+    literalNullA, PossibleContents::fullConeType(nullA), literalNullA);
+  assertIntersection(literalNullA, PossibleContents::fullConeType(nnA), none);
 
-  assertIntersection(literalNullA,
-                     PossibleContents::fullConeType(nullB),
-                     literalNullA);
-  assertIntersection(literalNullA,
-                     PossibleContents::fullConeType(nnB),
-                     none);
+  assertIntersection(
+    literalNullA, PossibleContents::fullConeType(nullB), literalNullA);
+  assertIntersection(literalNullA, PossibleContents::fullConeType(nnB), none);
 
-  assertIntersection(literalNullA,
-                     PossibleContents::fullConeType(nullE),
-                     literalNullA);
-  assertIntersection(literalNullA,
-                     PossibleContents::fullConeType(nnE),
-                     none);
+  assertIntersection(
+    literalNullA, PossibleContents::fullConeType(nullE), literalNullA);
+  assertIntersection(literalNullA, PossibleContents::fullConeType(nnE), none);
 
   assertIntersection(exactA,
                      PossibleContents::fullConeType(nullB),
                      PossibleContents::literal(Literal::makeNull(B)));
-  assertIntersection(nnExactA,
-                     PossibleContents::fullConeType(nullB),
-                     none);
-  assertIntersection(exactA,
-                     PossibleContents::fullConeType(nnB),
-                     none);
+  assertIntersection(nnExactA, PossibleContents::fullConeType(nullB), none);
+  assertIntersection(exactA, PossibleContents::fullConeType(nnB), none);
 
   assertIntersection(PossibleContents::coneType(nnA, 1),
                      PossibleContents::fullConeType(nnB),

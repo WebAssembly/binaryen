@@ -191,7 +191,7 @@ public:
   }
 
   // Returns cone type info. This can be called on non-cone types as well, and
-  // it returns a code that best describes them. That is, this is like getType()
+  // it returns a cone that best describes them. That is, this is like getType()
   // but it also provides an indication about the depth, if relevant. (If cone
   // info is not relevant, like when getType() returns none or unreachable, the
   // depth is set to 0.)

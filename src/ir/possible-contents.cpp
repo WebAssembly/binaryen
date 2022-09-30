@@ -210,9 +210,6 @@ void PossibleContents::intersect(const PossibleContents& other) {
     return;
   }
 
-  // We've ruled out everything else.
-  assert(isConeType());
-
   // An interesting non-empty intersection that is a new cone which differs from
   // both the original ones. (This must be an intersection of cones, since by
   // assumption |other| is a cone, and another cone is the only shape that can
@@ -1919,7 +1916,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
-  auto intendedCone = PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
+  auto intendedCone =
+    PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
   PossibleContents filtered = contents;
   filtered.intersect(intendedCone);
   if (!filtered.isNone()) {
