@@ -719,14 +719,12 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   // Globals stay as globals if their type is in the cone. Otherwise, they lose
   // the global info and we compute a normal cone intersection on them. The
   // same for literals.
-  assertIntersection(funcGlobal,
-                     PossibleContents::fullConeType(funcref),
-                     funcGlobal);
+  assertIntersection(
+    funcGlobal, PossibleContents::fullConeType(funcref), funcGlobal);
 
   auto signature = Type(Signature(Type::none, Type::none), Nullable);
-  assertIntersection(nonNullFunc,
-                     PossibleContents::fullConeType(signature),
-                     nonNullFunc);
+  assertIntersection(
+    nonNullFunc, PossibleContents::fullConeType(signature), nonNullFunc);
   assertIntersection(funcGlobal,
                      PossibleContents::fullConeType(signature),
                      PossibleContents::fullConeType(signature));

@@ -213,17 +213,13 @@ public:
 
   // Returns whether the relevant cone for this, as computed by getCone(), is of
   // full size, that is, includes all subtypes.
-  bool hasFullCone() const {
-    return getCone().depth == FullDepth;
-  }
+  bool hasFullCone() const { return getCone().depth == FullDepth; }
 
   // Returns whether this is a cone type and also is of full size. This differs
   // from hasFullCone() in that the former can return true for a global, for
   // example, while this cannot (a global is not a cone type, but the
   // information we have about its cone is that it is full).
-  bool isFullConeType() const {
-    return isConeType() && hasFullCone();
-  }
+  bool isFullConeType() const { return isConeType() && hasFullCone(); }
 
   // Whether we know something useful about the type here, enough to define a
   // particular wasm type, and not "none" (which means all types) or
