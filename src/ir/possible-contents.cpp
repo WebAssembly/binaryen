@@ -185,6 +185,15 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto nullability =
     type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
 
+  if (isNull()) {
+    // The intersection is either the null, or nothing if a null is not
+    // allowed.
+    if (nullability != Nullable) {
+      value = None();
+    }
+    return;
+  }
+
   if (!isConeType()) {
     // This is a non-cone being intersected with a cone. We've ruled out the
     // trivial cases of Many, None, and not having any intersection at all,
