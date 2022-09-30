@@ -2445,10 +2445,10 @@
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
-
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
   ;; CHECK:      (type $other (struct_subtype  data))
   (type $other (struct_subtype data))
@@ -2461,6 +2461,8 @@
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (export "test-cones" (func $test-cones))
 
   ;; CHECK:      (export "ref.test-inexact" (func $ref.test-inexact))
 
@@ -2598,6 +2600,114 @@
             (i32.const 6)
           )
           (call $import)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-cones (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (select (result anyref)
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $struct
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $substruct
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $substruct
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-cones (export "test-cones") (param $x i32)
+    ;; The input to the ref.cast is potentially null, so we cannot infer here.
+    (drop
+      (ref.cast_static $struct
+        (select
+          (struct.new $struct
+            (i32.const 0)
+          )
+          (ref.null any)
+          (local.get $x)
+        )
+      )
+    )
+    ;; The input to the ref.cast is either $struct or $substruct, both of which
+    ;; work, so we cannot optimize anything here away.
+    (drop
+      (ref.cast_static $struct
+        (select
+          (struct.new $struct
+            (i32.const 1)
+          )
+          (struct.new $substruct
+            (i32.const 2)
+            (i32.const 3)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; As above, but now we test with $substruct, so one possibility fails and
+    ;; one succeeds. We cannot infer here either.
+    (drop
+      (ref.cast_static $substruct
+        (select
+          (struct.new $struct
+            (i32.const 4)
+          )
+          (struct.new $substruct
+            (i32.const 5)
+            (i32.const 6)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; Two possible types, both are supertypes, so neither is a subtype, and we
+    ;; can infer an unreachable. The combination of these two is a cone from
+    ;; $struct of depth 1, which does not overlap with $subsubstruct.
+    (drop
+      (ref.cast_static $subsubstruct
+        (select
+          (struct.new $struct
+            (i32.const 7)
+          )
+          (struct.new $substruct
+            (i32.const 8)
+            (i32.const 9)
+          )
+          (local.get $x)
         )
       )
     )
