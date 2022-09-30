@@ -672,6 +672,21 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   EXPECT_FALSE(PossibleContents::isSubContents(
     PossibleContents::fullConeType(nullA),
     PossibleContents::fullConeType(nullD)));
+
+  // Trivial values.
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::none(),
+    PossibleContents::fullConeType(nullA)));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::many(),
+    PossibleContents::fullConeType(nullA)));
+
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    anyNull,
+    PossibleContents::fullConeType(nullA)));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    anyNull,
+    PossibleContents::fullConeType(nnA)));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {

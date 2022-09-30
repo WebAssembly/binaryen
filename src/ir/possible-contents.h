@@ -145,6 +145,10 @@ public:
   // contents here will then include whatever content was possible in |other|.
   void combine(const PossibleContents& other);
 
+  // Removes anything not in |other| from this object, so that it ends up with
+  // only their intersection.
+  void intersect(const PossibleContents& other);
+
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }
   bool isGlobal() const { return std::get_if<GlobalInfo>(&value); }
