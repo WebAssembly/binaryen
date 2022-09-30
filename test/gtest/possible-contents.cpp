@@ -700,6 +700,13 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(nnB),
                      none);
 
+  assertIntersection(literalNullA,
+                     PossibleContents::fullConeType(nullE),
+                     literalNullA);
+  assertIntersection(literalNullA,
+                     PossibleContents::fullConeType(nnE),
+                     none);
+
   assertIntersection(exactA,
                      PossibleContents::fullConeType(nullB),
                      PossibleContents::literal(Literal::makeNull(B)));
@@ -716,6 +723,12 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertIntersection(PossibleContents::coneType(nnB, 1),
                      PossibleContents::fullConeType(nnA),
                      PossibleContents::coneType(nnB, 1));
+  assertIntersection(PossibleContents::coneType(nnD, 2),
+                     PossibleContents::fullConeType(nnA),
+                     PossibleContents::coneType(nnD, 2));
+  assertIntersection(PossibleContents::coneType(nnA, 5),
+                     PossibleContents::fullConeType(nnD),
+                     PossibleContents::coneType(nnD, 3));
 
   assertIntersection(PossibleContents::coneType(nnA, 1),
                      PossibleContents::fullConeType(nnD),
