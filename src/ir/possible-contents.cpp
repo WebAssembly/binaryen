@@ -183,7 +183,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto heapType = type.getHeapType();
   auto otherHeapType = otherType.getHeapType();
   auto nullability =
-    type.isNullable() || otherType.isNullable() ? Nullable : NonNullable;
+    type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
 
   if (!isConeType()) {
     // This is a non-cone being intersected with a cone. We've ruled out the
@@ -206,7 +206,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // To compute the new cone, find the new heap type for it, and to compute its
   // depth, consider the adjustments to the existing depths that stem from the
   // choice of new heap type.
-  Type newHeapType;
+  HeapType newHeapType;
 
   if (depthFromRoot < otherDepthFromRoot) {
     newHeapType = otherHeapType;
@@ -224,19 +224,19 @@ void PossibleContents::intersect(const PossibleContents& other) {
     // The result is a partial cone. If the cone starts in |otherHeapType| then
     // we need to adjust the depth down, since it will be smaller than the
     // original cone:
-    //
+    /*
     //                             ..
     //                            /
     //              otherHeapType
     //            /               \
     //   heapType                  ..
     //            \
-    //
+    */
     // So if |this| was a cone of size 10, and |otherHeapType| is an immediate
     // subtype of ours, then the new cone must be of size 9.
     auto newDepth = getCone().depth;
     if (newHeapType == otherHeapType) {
-      assert(depthFromRoot < otherDepthFromRoot);
+      assert(depthFromRoot <= otherDepthFromRoot);
       newDepth -= otherDepthFromRoot - depthFromRoot;
     }
 
