@@ -700,8 +700,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
         auto& candidates = scanner.exprsByType[curr->type];
         assert(!candidates.empty()); // this expression itself must be there
         auto* rep = parent.pick(candidates);
-        replaceCurrent(
-          ExpressionManipulator::copy(rep, wasm));
+        replaceCurrent(ExpressionManipulator::copy(rep, wasm));
         if (rep->type != curr->type) {
           // Subtyping changes require us to finalize later.
           needRefinalize = true;
