@@ -204,10 +204,25 @@ void PossibleContents::intersect(const PossibleContents& other) {
 
   // If the heap types are not compatible then the intersection is either
   // nothing or a null.
-  if (!HeapType::isSubType(heapType, otherHeapType) &&
-      !HeapType::isSubType(otherHeapType, heapType)) {
+  auto isSubType = HeapType::isSubType(heapType, otherHeapType);
+  auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
+  if (!isSubType && !otherIsSubType) {
     setNoneOrNull();
     return;
+  }
+
+  if (isGlobal()) {
+    // The information about the value being identical to a particular immutable
+    // global is not removed by intersection. However, if the intersection would
+    // change the type then we give up on that.
+    // TODO: we could even refine the type here, but then the type on GlobalInfo
+    //       would not match the module, so that needs some refactoring.
+    if (isSubType) {
+      // The type can stay; keep this as a global.
+      return;
+    }
+    // The type must change, so continue down to the generic code path that
+    // treats this as a full cone with the type of the global.
   }
 
   // An interesting non-empty intersection that is a new cone which differs from
@@ -231,7 +246,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto newType = Type(newHeapType, nullability);
 
   // By assumption |other| has full depth. Consider the other cone.
-  if (isFullConeType()) {
+  if (hasFullCone()) {
     // Both are full cones, so the result is as well.
     value = FullConeType(newType);
   } else {

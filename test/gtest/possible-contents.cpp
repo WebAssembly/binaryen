@@ -404,7 +404,7 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
             std::cout << "item: " << item << '\n';
             std::cout << "combination: " << combination << '\n';
             std::cout << "intersection: " << intersection << '\n';
-            abort();
+            //abort();
           }
         }
       }
@@ -713,6 +713,16 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertIntersection(PossibleContents::coneType(nnA, 1),
                      PossibleContents::fullConeType(nnD),
                      none);
+
+  // Globals stay as globals if their type is in the cone. Otherwise, they lose
+  // the global info and we compute a normal cone intersection on them.
+  assertIntersection(funcGlobal,
+                     PossibleContents::fullConeType(funcref),
+                     funcGlobal);
+  auto signature = Type(Signature(Type::none, Type::none), Nullable);
+  assertIntersection(funcGlobal,
+                     PossibleContents::fullConeType(signature),
+                     PossibleContents::fullConeType(signature));
 
   // Subcontents. This API only supports full cone types on the right atm.
   // First, compare exact types to such a cone.
