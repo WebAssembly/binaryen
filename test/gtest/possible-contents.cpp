@@ -653,40 +653,35 @@ TEST_F(PossibleContentsTest, TestStructCones) {
     exactA, PossibleContents::fullConeType(nullB)));
 
   // Next, compare cones.
+  EXPECT_TRUE(
+    PossibleContents::isSubContents(PossibleContents::fullConeType(nullA),
+                                    PossibleContents::fullConeType(nullA)));
+  EXPECT_TRUE(
+    PossibleContents::isSubContents(PossibleContents::fullConeType(nnA),
+                                    PossibleContents::fullConeType(nullA)));
   EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA),
-    PossibleContents::fullConeType(nullA)));
-  EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nnA),
-    PossibleContents::fullConeType(nullA)));
-  EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nnA),
-    PossibleContents::fullConeType(nnA)));
-  EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullD),
-    PossibleContents::fullConeType(nullA)));
+    PossibleContents::fullConeType(nnA), PossibleContents::fullConeType(nnA)));
+  EXPECT_TRUE(
+    PossibleContents::isSubContents(PossibleContents::fullConeType(nullD),
+                                    PossibleContents::fullConeType(nullA)));
 
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA),
-    PossibleContents::fullConeType(nnA)));
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA),
-    PossibleContents::fullConeType(nullD)));
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(PossibleContents::fullConeType(nullA),
+                                    PossibleContents::fullConeType(nnA)));
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(PossibleContents::fullConeType(nullA),
+                                    PossibleContents::fullConeType(nullD)));
 
   // Trivial values.
   EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::none(),
-    PossibleContents::fullConeType(nullA)));
+    PossibleContents::none(), PossibleContents::fullConeType(nullA)));
   EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::many(),
-    PossibleContents::fullConeType(nullA)));
+    PossibleContents::many(), PossibleContents::fullConeType(nullA)));
 
   EXPECT_TRUE(PossibleContents::isSubContents(
-    anyNull,
-    PossibleContents::fullConeType(nullA)));
+    anyNull, PossibleContents::fullConeType(nullA)));
   EXPECT_FALSE(PossibleContents::isSubContents(
-    anyNull,
-    PossibleContents::fullConeType(nnA)));
+    anyNull, PossibleContents::fullConeType(nnA)));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {

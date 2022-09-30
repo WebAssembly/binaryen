@@ -196,11 +196,11 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto otherDepthFromRoot = otherHeapType.getDepth();
   assert(depthFromRoot != otherDepthFromRoot);
   if (depthFromRoot < otherDepthFromRoot) {
-    value = ConeType(Type(otherHeapType, nullability),
-                     otherDepthFromRoot - depthFromRoot);
+    value = ConeType{Type(otherHeapType, nullability),
+                     otherDepthFromRoot - depthFromRoot};
   } else {
     value =
-      ConeType(Type(heapType, nullability), depthFromRoot - otherDepthFromRoot);
+      ConeType{Type(heapType, nullability), depthFromRoot - otherDepthFromRoot};
   }
 }
 
