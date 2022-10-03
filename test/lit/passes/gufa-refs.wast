@@ -4560,50 +4560,30 @@
   ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
   (type $C (struct_subtype (field (mut i32)) $B))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $i32_ref|$A|_ref|$B|_ref|$C|_=>_none (func_subtype (param i32 (ref $A) (ref $B) (ref $C)) func))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
   ;; CHECK:      (export "reads" (func $reads))
 
-  ;; CHECK:      (func $writes (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $reads (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local.set $A
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $B
   ;; CHECK-NEXT:   (struct.new $B
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $C
   ;; CHECK-NEXT:   (struct.new $C
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $writes
-    (drop
-      (struct.new $A
-        (i32.const 10)
-      )
-    )
-    (drop
-      (struct.new $B
-        (i32.const 20)
-      )
-    )
-    (drop
-      (struct.new $C
-        (i32.const 20)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $reads (type $i32_ref|$A|_ref|$B|_ref|$C|_=>_none) (param $x i32) (param $A (ref $A)) (param $B (ref $B)) (param $C (ref $C))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
@@ -4623,34 +4603,53 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $reads (export "reads") (param $x i32) (param $A (ref $A)) (param $B (ref $B)) (param $C (ref $C))
-    ;; Limited cone reads: A :> B :> C, and we read from a code of size 1 at C,
-    ;; which includes C and B but not A. We can optimize this to 20.
+  (func $reads (export "reads") (param $x i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+    ;; B and C agree on their value.
+    (local.set $A
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (i32.const 20)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (i32.const 20)
+      )
+    )
+    ;; We can optimize the last of these, which mixes B and C, into 20.
     (drop
       (struct.get $A 0
         (select
+          (local.get $A)
           (local.get $B)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $A)
           (local.get $C)
           (local.get $x)
         )
       )
     )
-    ;; In these cases we cannot optimize: mixing $A means 10 is possible and not
-    ;; just 20.
     (drop
       (struct.get $A 0
         (select
-          (local.get $A)
           (local.get $B)
-          (local.get $x)
-        )
-      )
-    )
-    (drop
-      (struct.get $A 0
-        (select
-          (local.get $A)
           (local.get $C)
           (local.get $x)
         )
@@ -4668,48 +4667,47 @@
   ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
   (type $C (struct_subtype (field (mut i32)) $B))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $i32_ref|$A|_ref|$B|_ref|$C|_=>_none (func_subtype (param i32 (ref $A) (ref $B) (ref $C)) func))
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
   ;; CHECK:      (export "reads" (func $reads))
 
-  ;; CHECK:      (func $writes (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $reads (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local.set $A
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $B
   ;; CHECK-NEXT:   (struct.new $B
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (local.set $C
   ;; CHECK-NEXT:   (struct.new $C
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $writes
-    (drop
-      (struct.new $A
-        (i32.const 10)
-      )
-    )
-    (drop
-      (struct.new $B
-        (i32.const 10) ;; This line changed.
-      )
-    )
-    (drop
-      (struct.new $C
-        (i32.const 20)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $reads (type $i32_ref|$A|_ref|$B|_ref|$C|_=>_none) (param $x i32) (param $A (ref $A)) (param $B (ref $B)) (param $C (ref $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:     (local.get $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
   ;; CHECK-NEXT:    (select (result (ref $B))
@@ -4719,50 +4717,50 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (select (result (ref $A))
-  ;; CHECK-NEXT:     (local.get $A)
-  ;; CHECK-NEXT:     (local.get $B)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (select (result (ref $A))
-  ;; CHECK-NEXT:     (local.get $A)
-  ;; CHECK-NEXT:     (local.get $C)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $reads (export "reads") (param $x i32) (param $A (ref $A)) (param $B (ref $B)) (param $C (ref $C))
+  (func $reads (export "reads") (param $x i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+    ;; A and B agree on their value.
+    (local.set $A
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (i32.const 10)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (i32.const 20)
+      )
+    )
+    ;; We can optimize the first of these, which mixes A and B, into 10.
     (drop
       (struct.get $A 0
         (select
+          (local.get $A)
           (local.get $B)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $A)
           (local.get $C)
           (local.get $x)
         )
       )
     )
-    ;; This get is the only one we can optimize, since A and B agree on the
-    ;; value, and we can infer 10.
     (drop
       (struct.get $A 0
         (select
-          (local.get $A)
           (local.get $B)
-          (local.get $x)
-        )
-      )
-    )
-    (drop
-      (struct.get $A 0
-        (select
-          (local.get $A)
           (local.get $C)
           (local.get $x)
         )
