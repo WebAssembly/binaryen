@@ -376,13 +376,15 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   WASM_UNREACHABLE("a or b must be a full cone");
 }
 
-void optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
+void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
   assert(isConeType());
+
+  auto* cone = &std::get<ConeType>(value);
 
   // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
   // those in our work queue to avoid allocations.
   struct Item {
-    std::vector<HeapType>* vec;
+    const std::vector<HeapType>* vec;
     Index depth;
   };
 
@@ -391,7 +393,7 @@ void optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
 
   // Start with the subtypes of the base type. Those have depth 1.
   work.push_back(
-    {&subTypes->getStrictSubTypes(getCone().type.getHeapType()), 1});
+    {&subTypes->getStrictSubTypes(cone->type.getHeapType()), 1});
 
   while (!work.empty()) {
     auto& item = work.back();
@@ -403,7 +405,7 @@ void optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
     }
   }
 
-  return maxDepth;
+  cone->depth = maxDepth;
 }
 
 namespace {
@@ -1901,14 +1903,14 @@ void Flower::readFromData(HeapType declaredHeapType,
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
-    auto coneReadLocation = ConeReadLocation{cone.type, cone.depth, fieldIndex};
+    auto coneReadLocation = ConeReadLocation{cone.type.getHeapType(), cone.depth, fieldIndex};
     if (!hasIndex(coneReadLocation)) {
       // This is the first time we use this location, so create the links for it
       // in the graph.
 
       // getStrictSubTypes() returns vectors of subtypes, so for efficiency
       // store those in our work queue to avoid allocations.
-      SmallVector<std::vector<HeapType>*, 10> work;
+      SmallVector<const std::vector<HeapType>*, 10> work;
       work.push_back(&subTypes->getStrictSubTypes(cone.type.getHeapType()));
       while (!work.empty()) {
         auto& vec = *work.back();
