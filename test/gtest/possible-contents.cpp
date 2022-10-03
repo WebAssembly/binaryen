@@ -729,7 +729,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(signature),
                      PossibleContents::fullConeType(signature));
 
-  // Subcontents. This API only supports full cone types on the right atm.
+  // Subcontents. This API only supports full cone types on at least one side.
   // First, compare exact types to such a cone.
   EXPECT_TRUE(PossibleContents::isSubContents(
     exactA, PossibleContents::fullConeType(nullA)));
