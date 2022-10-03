@@ -52,13 +52,13 @@ struct MultiMemoryLowering : public Pass {
   // each memory
   std::vector<Name> adjustOffsetNames;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // If there are no memories or 1 memory, skip this pass
     if (module->memories.size() <= 1) {
       return;
     }
 
-    this->runner = runner;
+    this->runner = getPassRunner();
     this->wasm = module;
 
     addCombinedMemory();
