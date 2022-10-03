@@ -180,6 +180,8 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto otherType = other.getType();
   auto heapType = type.getHeapType();
   auto otherHeapType = otherType.getHeapType();
+
+  // If both inputs are nullable then the intersection is nullable as well.
   auto nullability =
     type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
 
