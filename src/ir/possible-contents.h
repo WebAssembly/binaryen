@@ -99,7 +99,7 @@ class PossibleContents {
 
   static constexpr Index FullDepth = -1;
 
-  // Internal convenience for creating a cone type unbounded depth, i.e., the
+  // Internal convenience for creating a cone type of unbounded depth, i.e., the
   // full cone of all subtypes for that type.
   static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
 
@@ -220,14 +220,6 @@ public:
   // example, while this cannot (a global is not a cone type, but the
   // information we have about its cone is that it is full).
   bool isFullConeType() const { return isConeType() && hasFullCone(); }
-
-  // Whether we know something useful about the type here, enough to define a
-  // particular wasm type, and not "none" (which means all types) or
-  // "unreachable" (which means we know nothing).
-  bool hasUsefulType() const {
-    auto type = getType();
-    return type != Type::none && type != Type::unreachable;
-  }
 
   // Returns whether the type we can report here is exact, that is, nothing of a
   // strict subtype might show up - the contents here have an exact type.
