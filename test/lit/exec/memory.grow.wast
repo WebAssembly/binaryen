@@ -5,7 +5,9 @@
 (module
   (memory $0 1)
 
-  (func $grow2 (export "grow2") (result i32)
+  ;; CHECK:      [fuzz-exec] calling grow_twice
+  ;; CHECK-NEXT: [fuzz-exec] note result: grow_twice => 3
+  (func "grow_twice" (result i32)
     ;; The nested grow will increase the size from 1 to 3, and return the old
     ;; size, 1. Then the outer grow will grow by that amount 1, from 3 to 4.
     (memory.grow
@@ -15,7 +17,9 @@
     )
   )
 
-  (func $measure (export "measure") (result i32)
+  ;; CHECK:      [fuzz-exec] calling measure
+  ;; CHECK-NEXT: [fuzz-exec] note result: measure => 4
+  (func "measure" (export "measure") (result i32)
     ;; This should return the final size, 4.
     (memory.size)
   )
