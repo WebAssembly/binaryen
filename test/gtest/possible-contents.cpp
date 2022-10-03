@@ -729,7 +729,8 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(signature),
                      PossibleContents::fullConeType(signature));
 
-  // Subcontents. This API only supports full cone types on at least one side.
+  // Subcontents. This API only supports the case where one of the inputs is a
+  // full cone type.
   // First, compare exact types to such a cone.
   EXPECT_TRUE(PossibleContents::isSubContents(
     exactA, PossibleContents::fullConeType(nullA)));
@@ -775,6 +776,23 @@ TEST_F(PossibleContentsTest, TestStructCones) {
     anyNull, PossibleContents::fullConeType(nullA)));
   EXPECT_FALSE(PossibleContents::isSubContents(
     anyNull, PossibleContents::fullConeType(nnA)));
+
+  // Tests cases with a full cone only on the left. Such a cone is only a sub-
+  // contents of Many.
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA), exactA));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA), nnexactA));
+
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA), PossibleContents::none()));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA), PossibleContents::many()));
+
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nullA), anyNull));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::fullConeType(nnA), anyNull));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
