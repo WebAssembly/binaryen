@@ -243,7 +243,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
 
   auto newType = Type(newHeapType, nullability);
 
-  // By assumption |other| has full depth. Consider the other cone.
+  // By assumption |other| has full depth. Consider the other cone in |this|.
   if (hasFullCone()) {
     // Both are full cones, so the result is as well.
     value = FullConeType(newType);
@@ -259,8 +259,8 @@ void PossibleContents::intersect(const PossibleContents& other) {
     //   heapType                  ..
     //            \
     */
-    // So if |this| was a cone of size 10, and |otherHeapType| is an immediate
-    // subtype of ours, then the new cone must be of size 9.
+    // E.g. if |this| is a cone of size 10, and |otherHeapType| is an immediate
+    // subtype of |this|, then the new cone must be of size 9.
     auto newDepth = getCone().depth;
     if (newHeapType == otherHeapType) {
       assert(depthFromRoot <= otherDepthFromRoot);
@@ -326,7 +326,7 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
   if (!aSubB && !bSubA) {
     // No type can appear in both a and b, so the types differ, so the values
-    // do not overlap..
+    // do not overlap.
     return false;
   }
 
@@ -335,9 +335,8 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
 
   if (aSubB) {
     // A is a subtype of B. For there to be an intersection we need their cones
-    // to intersect, that is, to rule this out:
-    //
-    //  [A + depth]               [B + depth]
+    // to intersect, that is, to rule out the case where the cone from B is not
+    // deep enough to reach A.
     assert(aDepthFromRoot >= bDepthFromRoot);
     return aDepthFromRoot - bDepthFromRoot <= b.getCone().depth;
   } else if (bSubA) {
