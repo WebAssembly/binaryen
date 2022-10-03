@@ -392,8 +392,7 @@ void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
   SmallVector<Item, 10> work;
 
   // Start with the subtypes of the base type. Those have depth 1.
-  work.push_back(
-    {&subTypes->getStrictSubTypes(cone->type.getHeapType()), 1});
+  work.push_back({&subTypes->getStrictSubTypes(cone->type.getHeapType()), 1});
 
   while (!work.empty()) {
     auto& item = work.back();
@@ -1903,7 +1902,8 @@ void Flower::readFromData(HeapType declaredHeapType,
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
-    auto coneReadLocation = ConeReadLocation{cone.type.getHeapType(), cone.depth, fieldIndex};
+    auto coneReadLocation =
+      ConeReadLocation{cone.type.getHeapType(), cone.depth, fieldIndex};
     if (!hasIndex(coneReadLocation)) {
       // This is the first time we use this location, so create the links for it
       // in the graph.
