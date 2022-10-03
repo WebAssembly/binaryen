@@ -38,10 +38,6 @@ struct MultiMemoryLowering : public Pass {
   // have a size that is one less than the count of memories at the time this
   // pass is run
   std::vector<Name> offsetGlobalNames;
-  // Maps from the name of the memory to its initial offset. Used to set the
-  // offsets for active DataSegments which are evaluated during instantiation
-  // so the initial offsets are correct here
-  // std::unordered_map<Name, Address> initialOffsetMap;
   // Maps from the name of the memory to its index as seen in the
   // module->memories vector
   std::unordered_map<Name, Index> memoryIdxMap;
@@ -150,7 +146,6 @@ struct MultiMemoryLowering : public Pass {
 
     size_t totalInitialPages = 0;
     for (auto& memory : wasm->memories) {
-      // initialOffsetMap[memory->name] = memory->initial;
       totalInitialPages += memory->initial;
     }
 
@@ -198,8 +193,6 @@ struct MultiMemoryLowering : public Pass {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
       assert(dataSegment->offset->is<Const>());
-      // auto iter = initialOffsetMap.find(dataSegment->memory);
-      // assert(iter != initialOffsetMap.end());
       auto iter = memoryIdxMap.find(dataSegment->memory);
       assert(iter != memoryIdxMap.end());
       dataSegment->memory = combinedMemory;
