@@ -192,9 +192,7 @@ public:
 
   // Returns cone type info. This can be called on non-cone types as well, and
   // it returns a cone that best describes them. That is, this is like getType()
-  // but it also provides an indication about the depth, if relevant. (If cone
-  // info is not relevant, like when getType() returns none or unreachable, the
-  // depth is set to 0.)
+  // but it also provides an indication about the depth, if relevant.
   ConeType getCone() const {
     if (auto* literal = std::get_if<Literal>(&value)) {
       return ExactType(literal->type);
@@ -203,9 +201,13 @@ public:
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       return *coneType;
     } else if (std::get_if<None>(&value)) {
+      // None doesn't really have a meaningful depth, but "exactly none" is the
+      // closest thing.
       return ExactType(Type::unreachable);
     } else if (std::get_if<Many>(&value)) {
-      return ExactType(Type::none);
+      // None doesn't really have a meaningful depth, but "all subtypes" is the
+      // closest thing.
+      return FullConeType(Type::none);
     } else {
       WASM_UNREACHABLE("bad value");
     }
