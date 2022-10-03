@@ -623,8 +623,39 @@ void TranslateToFuzzReader::recombine(Function* func) {
 
     void visitExpression(Expression* curr) {
       if (parent.canBeArbitrarilyReplaced(curr)) {
-        exprsByType[curr->type].push_back(curr);
+        for (auto type : getRelevantTypes(curr->type)) {
+          exprsByType[type].push_back(curr);
+        }
       }
+    }
+
+    std::vector<Type> getRelevantTypes(Type type) {
+      // Given an expression of a type, we can replace not only other
+      // expressions with the same type, but also supertypes - since then we'd
+      // be replacing with a subtype, which is valid.
+      if (!type.isRef()) {
+        return {type};
+      }
+
+      std::vector<Type> ret;
+      auto heapType = type.getHeapType();
+      auto nullability = type.getNullability();
+
+      if (nullability == NonNullable) {
+        ret = getRelevantTypes(Type(heapType, Nullable));
+      }
+
+      while (1) {
+        ret.push_back(Type(heapType, nullability));
+        // TODO: handle basic supertypes too
+        auto super = heapType.getSuperType();
+        if (!super) {
+          break;
+        }
+        heapType = *super;
+      }
+
+      return ret;
     }
   };
   Scanner scanner(*this);
@@ -653,12 +684,13 @@ void TranslateToFuzzReader::recombine(Function* func) {
     }
   }
   // Second, with some probability replace an item with another item having
-  // the same type. (This is not always valid due to nesting of labels, but
+  // a proper type. (This is not always valid due to nesting of labels, but
   // we'll fix that up later.)
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     Scanner& scanner;
     TranslateToFuzzReader& parent;
+    bool needRefinalize = false;
 
     Modder(Module& wasm, Scanner& scanner, TranslateToFuzzReader& parent)
       : wasm(wasm), scanner(scanner), parent(parent) {}
@@ -668,13 +700,20 @@ void TranslateToFuzzReader::recombine(Function* func) {
         // Replace it!
         auto& candidates = scanner.exprsByType[curr->type];
         assert(!candidates.empty()); // this expression itself must be there
-        replaceCurrent(
-          ExpressionManipulator::copy(parent.pick(candidates), wasm));
+        auto* rep = parent.pick(candidates);
+        replaceCurrent(ExpressionManipulator::copy(rep, wasm));
+        if (rep->type != curr->type) {
+          // Subtyping changes require us to finalize later.
+          needRefinalize = true;
+        }
       }
     }
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
+  if (modder.needRefinalize) {
+    ReFinalize().walkFunctionInModule(func, &wasm);
+  }
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {

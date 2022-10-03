@@ -244,7 +244,9 @@ struct MetaDCEGraph {
 
       Scanner(MetaDCEGraph* parent) : parent(parent) {}
 
-      Scanner* create() override { return new Scanner(parent); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Scanner>(parent);
+      }
 
       void visitCall(Call* curr) {
         if (!getModule()->getFunction(curr->target)->imported()) {

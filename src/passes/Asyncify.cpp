@@ -839,12 +839,13 @@ struct AsyncifyFlow : public Pass {
 
   ModuleAnalyzer* analyzer;
 
-  AsyncifyFlow* create() override { return new AsyncifyFlow(analyzer); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AsyncifyFlow>(analyzer);
+  }
 
   AsyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
-  void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
+  void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
     func = func_;
     builder = make_unique<AsyncifyBuilder>(*module);
@@ -1213,7 +1214,9 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
 
   ModuleAnalyzer* analyzer;
 
-  AsyncifyLocals* create() override { return new AsyncifyLocals(analyzer); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AsyncifyLocals>(analyzer);
+  }
 
   AsyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
 
@@ -1491,52 +1494,49 @@ static std::string getFullImportName(Name module, Name base) {
 }
 
 struct Asyncify : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    bool optimize = runner->options.optimizeLevel > 0;
+  void run(Module* module) override {
+    auto& options = getPassOptions();
+    bool optimize = options.optimizeLevel > 0;
 
     // Ensure there is a memory, as we need it.
     MemoryUtils::ensureExists(module);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
-      runner->options.getArgumentOrDefault("asyncify-imports", "")));
+      options.getArgumentOrDefault("asyncify-imports", "")));
     auto ignoreImports =
-      runner->options.getArgumentOrDefault("asyncify-ignore-imports", "");
+      options.getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
     // TODO: consider renaming asyncify-ignore-indirect to
     //       asyncify-ignore-nondirect, but that could break users.
-    auto ignoreNonDirect = runner->options.getArgumentOrDefault(
-                             "asyncify-ignore-indirect", "") == "";
+    auto ignoreNonDirect =
+      options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
     std::string removeListInput =
-      runner->options.getArgumentOrDefault("asyncify-removelist", "");
+      options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      removeListInput =
-        runner->options.getArgumentOrDefault("asyncify-blacklist", "");
+      removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
       String::trim(read_possible_response_file(removeListInput)), ",");
     String::Split addList(
       String::trim(read_possible_response_file(
-        runner->options.getArgumentOrDefault("asyncify-addlist", ""))),
+        options.getArgumentOrDefault("asyncify-addlist", ""))),
       ",");
     std::string onlyListInput =
-      runner->options.getArgumentOrDefault("asyncify-onlylist", "");
+      options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      onlyListInput =
-        runner->options.getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts =
-      runner->options.getArgumentOrDefault("asyncify-asserts", "") != "";
-    auto verbose =
-      runner->options.getArgumentOrDefault("asyncify-verbose", "") != "";
+    auto asserts = options.getArgumentOrDefault("asyncify-asserts", "") != "";
+    auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
     auto relocatable =
-      runner->options.getArgumentOrDefault("asyncify-relocatable", "") != "";
+      options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1716,8 +1716,9 @@ struct ModAsyncify
       ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>>> {
   bool isFunctionParallel() override { return true; }
 
-  ModAsyncify* create() override {
-    return new ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>();
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<
+      ModAsyncify<neverRewind, neverUnwind, importsAlwaysUnwind>>();
   }
 
   void doWalkFunction(Function* func) {
@@ -1840,7 +1841,7 @@ Pass* createModAsyncifyAlwaysOnlyUnwindPass() {
 // Assume that we never unwind, but may still rewind.
 //
 struct ModAsyncifyNeverUnwind : public Pass {
-  void run(PassRunner* runner, Module* module) override {}
+  void run(Module* module) override {}
 };
 
 Pass* createModAsyncifyNeverUnwindPass() {

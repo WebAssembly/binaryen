@@ -39,7 +39,9 @@ static void optimizeWasm(Module& wasm, PassOptions options) {
   struct OptimizeForJS : public WalkerPass<PostWalker<OptimizeForJS>> {
     bool isFunctionParallel() override { return true; }
 
-    Pass* create() override { return new OptimizeForJS; }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<OptimizeForJS>();
+    }
 
     void visitBinary(Binary* curr) {
       // x - -c (where c is a constant) is larger than x + c, in js (but not

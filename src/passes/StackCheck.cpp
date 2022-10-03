@@ -70,8 +70,8 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
   // Only affects linear memory operations.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  Pass* create() override {
-    return new EnforceStackLimits(
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<EnforceStackLimits>(
       stackPointer, stackBase, stackLimit, builder, handler);
   }
 
@@ -126,7 +126,7 @@ private:
 };
 
 struct StackCheck : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     Global* stackPointer = getStackPointerGlobal(*module);
     if (!stackPointer) {
       BYN_DEBUG(std::cerr << "no stack pointer found\n");
@@ -139,7 +139,7 @@ struct StackCheck : public Pass {
 
     Name handler;
     auto handlerName =
-      runner->options.getArgumentOrDefault("stack-check-handler", "");
+      getPassOptions().getArgumentOrDefault("stack-check-handler", "");
     if (handlerName != "") {
       handler = handlerName;
       importStackOverflowHandler(
@@ -163,9 +163,8 @@ struct StackCheck : public Pass {
                                            Builder::Mutable));
 
     // Instrument all the code.
-    PassRunner innerRunner(module);
     EnforceStackLimits(stackPointer, stackBase, stackLimit, builder, handler)
-      .run(&innerRunner, module);
+      .run(getPassRunner(), module);
 
     // Generate the exported function.
     auto limitsFunc = builder.makeFunction(

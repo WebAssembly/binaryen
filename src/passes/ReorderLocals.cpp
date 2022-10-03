@@ -35,7 +35,9 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   // Sorting and removing unused locals cannot affect validation.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  Pass* create() override { return new ReorderLocals; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<ReorderLocals>();
+  }
 
   // local index => times it is used
   std::vector<Index> counts;

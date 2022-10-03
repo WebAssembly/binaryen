@@ -110,7 +110,6 @@ void instrumentModule(const WasmSplitOptions& options) {
   }
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
-  PassRunner runner(&wasm, options.passOptions);
   InstrumenterConfig config;
   if (options.importNamespace.size()) {
     config.importNamespace = options.importNamespace;
@@ -120,7 +119,10 @@ void instrumentModule(const WasmSplitOptions& options) {
   }
   config.storageKind = options.storageKind;
   config.profileExport = options.profileExport;
-  Instrumenter(config, moduleHash).run(&runner, &wasm);
+
+  PassRunner runner(&wasm, options.passOptions);
+  runner.add(std::make_unique<Instrumenter>(config, moduleHash));
+  runner.run();
 
   adjustTableSize(wasm, options.initialTableSize);
 

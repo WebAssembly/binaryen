@@ -64,7 +64,7 @@ struct GlobalStructInference : public Pass {
   // them. If a global is not present here, it cannot be optimized.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -185,7 +185,9 @@ struct GlobalStructInference : public Pass {
       : public WalkerPass<PostWalker<FunctionOptimizer>> {
       bool isFunctionParallel() override { return true; }
 
-      Pass* create() override { return new FunctionOptimizer(parent); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<FunctionOptimizer>(parent);
+      }
 
       FunctionOptimizer(GlobalStructInference& parent) : parent(parent) {}
 
@@ -312,7 +314,7 @@ struct GlobalStructInference : public Pass {
       GlobalStructInference& parent;
     };
 
-    FunctionOptimizer(*this).run(runner, module);
+    FunctionOptimizer(*this).run(getPassRunner(), module);
   }
 };
 

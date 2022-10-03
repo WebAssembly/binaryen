@@ -28,8 +28,8 @@ struct SetGlobals : public Pass {
   // Only modifies globals.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  void run(PassRunner* runner, Module* module) override {
-    Name input = runner->options.getArgument(
+  void run(Module* module) override {
+    Name input = getPassRunner()->options.getArgument(
       "set-globals",
       "SetGlobals usage:  wasm-opt --pass-arg=set-globals@x=y,z=w");
 

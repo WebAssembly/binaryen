@@ -97,7 +97,9 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
   GlobalUseScanner(GlobalInfoMap* infos) : infos(infos) {}
 
-  GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<GlobalUseScanner>(infos);
+  }
 
   void visitGlobalSet(GlobalSet* curr) {
     (*infos)[curr->name].written++;
@@ -307,8 +309,8 @@ struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
   GlobalUseModifier(NameNameMap* copiedParentMap)
     : copiedParentMap(copiedParentMap) {}
 
-  GlobalUseModifier* create() override {
-    return new GlobalUseModifier(copiedParentMap);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<GlobalUseModifier>(copiedParentMap);
   }
 
   void visitGlobalGet(GlobalGet* curr) {
@@ -331,8 +333,8 @@ struct ConstantGlobalApplier
   ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
     : constantGlobals(constantGlobals), optimize(optimize) {}
 
-  ConstantGlobalApplier* create() override {
-    return new ConstantGlobalApplier(constantGlobals, optimize);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<ConstantGlobalApplier>(constantGlobals, optimize);
   }
 
   void visitExpression(Expression* curr) {
@@ -377,8 +379,7 @@ struct ConstantGlobalApplier
 
   void visitFunction(Function* curr) {
     if (replaced && optimize) {
-      PassRunner runner(getModule(), getPassRunner()->options);
-      runner.setIsNested(true);
+      PassRunner runner(getPassRunner());
       runner.addDefaultFunctionOptimizationPasses();
       runner.runOnFunction(curr);
     }
@@ -399,8 +400,8 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
 
   bool isFunctionParallel() override { return true; }
 
-  GlobalSetRemover* create() override {
-    return new GlobalSetRemover(toRemove, optimize);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<GlobalSetRemover>(toRemove, optimize);
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -412,8 +413,7 @@ struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
 
   void visitFunction(Function* curr) {
     if (removed && optimize) {
-      PassRunner runner(getModule(), getPassRunner()->options);
-      runner.setIsNested(true);
+      PassRunner runner(getPassRunner());
       runner.addDefaultFunctionOptimizationPasses();
       runner.runOnFunction(curr);
     }
@@ -428,7 +428,6 @@ private:
 } // anonymous namespace
 
 struct SimplifyGlobals : public Pass {
-  PassRunner* runner;
   Module* module;
 
   GlobalInfoMap map;
@@ -436,8 +435,7 @@ struct SimplifyGlobals : public Pass {
 
   SimplifyGlobals(bool optimize = false) : optimize(optimize) {}
 
-  void run(PassRunner* runner_, Module* module_) override {
-    runner = runner_;
+  void run(Module* module_) override {
     module = module_;
 
     while (iteration()) {
@@ -475,7 +473,7 @@ struct SimplifyGlobals : public Pass {
         map[ex->value].exported = true;
       }
     }
-    GlobalUseScanner(&map).run(runner, module);
+    GlobalUseScanner(&map).run(getPassRunner(), module);
     // We now know which are immutable in practice.
     for (auto& global : module->globals) {
       auto& info = map[global->name];
@@ -564,7 +562,8 @@ struct SimplifyGlobals : public Pass {
     // then see that since the global has no writes, it is a constant, which
     // will lead to removal of gets, and after removing them, the global itself
     // will be removed as well.
-    GlobalSetRemover(&globalsNotNeedingSets, optimize).run(runner, module);
+    GlobalSetRemover(&globalsNotNeedingSets, optimize)
+      .run(getPassRunner(), module);
 
     return more;
   }
@@ -595,7 +594,7 @@ struct SimplifyGlobals : public Pass {
         }
       }
       // Apply to the gets.
-      GlobalUseModifier(&copiedParentMap).run(runner, module);
+      GlobalUseModifier(&copiedParentMap).run(getPassRunner(), module);
     }
   }
 
@@ -633,7 +632,8 @@ struct SimplifyGlobals : public Pass {
         constantGlobals.insert(global->name);
       }
     }
-    ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
+    ConstantGlobalApplier(&constantGlobals, optimize)
+      .run(getPassRunner(), module);
   }
 };
 

@@ -26,11 +26,11 @@
 namespace wasm {
 
 struct GenerateGlobalEffects : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // TODO: Full transitive closure of effects. For now, we just look at each
     //       function by itself.
 
-    auto& funcEffectsMap = runner->options.funcEffectsMap;
+    auto& funcEffectsMap = getPassOptions().funcEffectsMap;
 
     // First, clear any previous effects.
     funcEffectsMap.reset();
@@ -50,7 +50,7 @@ struct GenerateGlobalEffects : public Pass {
 
         // Gather the effects.
         auto effects =
-          std::make_unique<EffectAnalyzer>(runner->options, *module, func);
+          std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
 
         // If the body has a call, give up - that means we can't infer a more
         // specific set of effects than the pessimistic case of just assuming
@@ -80,9 +80,7 @@ struct GenerateGlobalEffects : public Pass {
 };
 
 struct DiscardGlobalEffects : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    runner->options.funcEffectsMap.reset();
-  }
+  void run(Module* module) override { getPassOptions().funcEffectsMap.reset(); }
 };
 
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }

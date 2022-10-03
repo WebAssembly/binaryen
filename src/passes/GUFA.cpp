@@ -63,8 +63,8 @@ struct GUFAOptimizer
   GUFAOptimizer(ContentOracle& oracle, bool optimizing)
     : oracle(oracle), optimizing(optimizing) {}
 
-  GUFAOptimizer* create() override {
-    return new GUFAOptimizer(oracle, optimizing);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<GUFAOptimizer>(oracle, optimizing);
   }
 
   bool optimized = false;
@@ -290,8 +290,7 @@ struct GUFAOptimizer
       return;
     }
 
-    PassRunner runner(getModule(), getPassOptions());
-    runner.setIsNested(true);
+    PassRunner runner(getPassRunner());
     // New unreachables we added have created dead code we can remove. If we do
     // not do this, then running GUFA repeatedly can actually increase code size
     // (by adding multiple unneeded unreachables).
@@ -330,9 +329,9 @@ struct GUFAPass : public Pass {
 
   GUFAPass(bool optimizing) : optimizing(optimizing) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     ContentOracle oracle(*module);
-    GUFAOptimizer(oracle, optimizing).run(runner, module);
+    GUFAOptimizer(oracle, optimizing).run(getPassRunner(), module);
   }
 };
 
