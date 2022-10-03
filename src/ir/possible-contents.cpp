@@ -397,6 +397,10 @@ void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
   while (!work.empty()) {
     auto& item = work.back();
     work.pop_back();
+    auto& vec = *item.vec;
+    if (vec.empty()) {
+      break;
+    }
     auto currDepth = item.depth;
     maxDepth = std::max(currDepth, maxDepth);
     for (auto type : (*item.vec)) {
@@ -1908,10 +1912,16 @@ void Flower::readFromData(HeapType declaredHeapType,
       // This is the first time we use this location, so create the links for it
       // in the graph.
 
+      // First, connect the base type itself.
+      auto coneType = cone.type.getHeapType();
+      connectDuringFlow(DataLocation{coneType, fieldIndex}, coneReadLocation);
+
+      // Next, connect strict subtypes.
+      //
       // getStrictSubTypes() returns vectors of subtypes, so for efficiency
       // store those in our work queue to avoid allocations.
       SmallVector<const std::vector<HeapType>*, 10> work;
-      work.push_back(&subTypes->getStrictSubTypes(cone.type.getHeapType()));
+      work.push_back(&subTypes->getStrictSubTypes(coneType));
       while (!work.empty()) {
         auto& vec = *work.back();
         work.pop_back();
