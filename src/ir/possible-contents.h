@@ -569,7 +569,8 @@ template<> struct hash<wasm::NullLocation> {
 
 template<> struct hash<wasm::ConeReadLocation> {
   size_t operator()(const wasm::ConeReadLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, std::pair<wasm::Index, wasm::Index>>>{}(
+    return std::hash<
+      std::pair<wasm::HeapType, std::pair<wasm::Index, wasm::Index>>>{}(
       {size_t(loc.type), {loc.depth, loc.index}});
   }
 };

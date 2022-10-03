@@ -390,7 +390,8 @@ void optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
   SmallVector<Item, 10> work;
 
   // Start with the subtypes of the base type. Those have depth 1.
-  work.push_back({&subTypes->getStrictSubTypes(getCone().type.getHeapType()), 1});
+  work.push_back(
+    {&subTypes->getStrictSubTypes(getCone().type.getHeapType()), 1});
 
   while (!work.empty()) {
     auto& item = work.back();
@@ -1881,7 +1882,8 @@ void Flower::readFromData(HeapType declaredHeapType,
     if (refContents.isMany()) {
       // If |refContents| is Many, we can filter it to what the wasm type system
       // allows, which is the declared heap type and all subtypes.
-      filteredRefContents = PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
+      filteredRefContents =
+        PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
     } else {
       // Otherwise, just look at the cone here, discarding information about
       // this being a global, for example, if we had that. All that matters from
@@ -1904,8 +1906,8 @@ void Flower::readFromData(HeapType declaredHeapType,
       // This is the first time we use this location, so create the links for it
       // in the graph.
 
-      // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
-      // those in our work queue to avoid allocations.
+      // getStrictSubTypes() returns vectors of subtypes, so for efficiency
+      // store those in our work queue to avoid allocations.
       SmallVector<std::vector<HeapType>*, 10> work;
       work.push_back(&subTypes->getStrictSubTypes(cone.type.getHeapType()));
       while (!work.empty()) {
