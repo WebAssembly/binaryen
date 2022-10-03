@@ -84,6 +84,7 @@ Pass* createMinifyImportsPass();
 Pass* createMinifyImportsAndExportsPass();
 Pass* createMinifyImportsAndExportsAndModulesPass();
 Pass* createMetricsPass();
+Pass* createMultiMemoryLoweringPass();
 Pass* createNameListPass();
 Pass* createNameTypesPass();
 Pass* createOnceReductionPass();

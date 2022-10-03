@@ -232,6 +232,9 @@
 ;; CHECK-NEXT:   --mod-asyncify-never-unwind                   apply the assumption that
 ;; CHECK-NEXT:                                                 asyncify never unwinds
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --multi-memory-lowering                       combines multiple memories into
+;; CHECK-NEXT:                                                 a single memory
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --name-types                                  (re)name all heap types
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --nm                                          name list
