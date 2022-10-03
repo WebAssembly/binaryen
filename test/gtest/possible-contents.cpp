@@ -782,7 +782,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   EXPECT_FALSE(PossibleContents::isSubContents(
     PossibleContents::fullConeType(nullA), exactA));
   EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA), nnexactA));
+    PossibleContents::fullConeType(nullA), nnExactA));
 
   EXPECT_FALSE(PossibleContents::isSubContents(
     PossibleContents::fullConeType(nullA), PossibleContents::none()));
