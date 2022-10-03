@@ -15,20 +15,21 @@
  */
 
 //
-// Condensing Multi-Memories into a single memory for browsers that don’t support multiple memories.
+// Condensing Multi-Memories into a single memory for browsers that don’t
+// support multiple memories.
 //
 
-#include "ir/names.h"
 #include "ir/module-utils.h"
-#include <pass.h>
+#include "ir/names.h"
 #include "wasm-builder.h"
+#include <pass.h>
 #include <wasm.h>
 
 namespace wasm {
 
 struct MultiMemoryLowering : public Pass {
-  PassRunner *runner = nullptr;
-  Module *wasm = nullptr;
+  PassRunner* runner = nullptr;
+  Module* wasm = nullptr;
   // The name of the single memory that exists after this pass is run
   Name combinedMemory;
   // The type of the single memory
@@ -40,14 +41,15 @@ struct MultiMemoryLowering : public Pass {
   // Maps from the name of the memory to its initial offset. Used to set the
   // offsets for active DataSegments which are evaluated during instantiation
   // so the initial offsets are correct here
-  //std::unordered_map<Name, Address> initialOffsetMap;
+  // std::unordered_map<Name, Address> initialOffsetMap;
   // Maps from the name of the memory to its index as seen in the
   // module->memories vector
   std::unordered_map<Name, Index> memoryIdxMap;
-  // A vector of the memory size function names that were created proactively for each
-  // memory
+  // A vector of the memory size function names that were created proactively
+  // for each memory
   std::vector<Name> memorySizeNames;
-  // A vector of the adjust offset functions that were created proactively for each memory
+  // A vector of the adjust offset functions that were created proactively for
+  // each memory
   std::vector<Name> adjustOffsetNames;
 
   void run(PassRunner* runner, Module* module) override {
@@ -87,46 +89,56 @@ struct MultiMemoryLowering : public Pass {
         super::walkFunction(func);
       }
 
-      void visitMemoryGrow(MemoryGrow *curr) {
+      void visitMemoryGrow(MemoryGrow* curr) {
         auto iter = parent.memoryIdxMap.find(curr->memory);
         assert(iter != parent.memoryIdxMap.end());
         Name funcName = parent.adjustOffsetNames[iter->second];
         replaceCurrent(builder.makeCall(funcName, {curr->delta}, curr->type));
       }
 
-      void visitMemorySize(MemorySize *curr) {
+      void visitMemorySize(MemorySize* curr) {
         auto iter = parent.memoryIdxMap.find(curr->memory);
         assert(iter != parent.memoryIdxMap.end());
         Name funcName = parent.memorySizeNames[iter->second];
         replaceCurrent(builder.makeCall(funcName, {}, curr->type));
       }
 
-      // We diverge from the spec here and are not trapping if the offset + type / 8 is larger than the length of the memory's data
-      // Warning, out-of-bounds loads and stores can read junk out of or corrupt other memories instead of trapping
-      void visitLoad(Load *curr) {
+      // We diverge from the spec here and are not trapping if the offset + type
+      // / 8 is larger than the length of the memory's data Warning,
+      // out-of-bounds loads and stores can read junk out of or corrupt other
+      // memories instead of trapping
+      void visitLoad(Load* curr) {
         curr->memory = parent.combinedMemory;
         auto iter = parent.memoryIdxMap.find(curr->memory);
         assert(iter != parent.memoryIdxMap.end());
         // No need to change the offset for the first memory
-        if (iter->second == 0) { return; }
-        // There is no offset global for the first memory, so we need to subtract one when
-        // indexing into the offsetGlobalName vector
+        if (iter->second == 0) {
+          return;
+        }
+        // There is no offset global for the first memory, so we need to
+        // subtract one when indexing into the offsetGlobalName vector
         Index idx = iter->second - 1;
-        curr->ptr = builder.makeGlobalGet(parent.offsetGlobalNames[idx], parent.pointerType);
+        curr->ptr = builder.makeGlobalGet(parent.offsetGlobalNames[idx],
+                                          parent.pointerType);
       }
 
-      // We diverge from the spec here and are not trapping if the offset + type / 8 is larger than the length of the memory's data
-      // Warning, out-of-bounds loads and stores can read junk out of or corrupt other memories instead of trapping
-      void visitStore(Store *curr) {
+      // We diverge from the spec here and are not trapping if the offset + type
+      // / 8 is larger than the length of the memory's data Warning,
+      // out-of-bounds loads and stores can read junk out of or corrupt other
+      // memories instead of trapping
+      void visitStore(Store* curr) {
         curr->memory = parent.combinedMemory;
         auto iter = parent.memoryIdxMap.find(curr->memory);
         assert(iter != parent.memoryIdxMap.end());
         // No need to change the offset for the first memory
-        if (iter->second == 0) { return; }
-        // There is no offset global for the first memory, so we need to subtract one when
-        // indexing into the offsetGlobalName vector
+        if (iter->second == 0) {
+          return;
+        }
+        // There is no offset global for the first memory, so we need to
+        // subtract one when indexing into the offsetGlobalName vector
         Index idx = iter->second - 1;
-        curr->ptr = builder.makeGlobalGet(parent.offsetGlobalNames[idx], parent.pointerType);
+        curr->ptr = builder.makeGlobalGet(parent.offsetGlobalNames[idx],
+                                          parent.pointerType);
       }
     };
     Replacer(*this, *wasm).run(runner, wasm);
@@ -138,7 +150,7 @@ struct MultiMemoryLowering : public Pass {
 
     size_t totalInitialPages = 0;
     for (auto& memory : wasm->memories) {
-      //initialOffsetMap[memory->name] = memory->initial;
+      // initialOffsetMap[memory->name] = memory->initial;
       totalInitialPages += memory->initial;
     }
 
@@ -155,12 +167,14 @@ struct MultiMemoryLowering : public Pass {
   void addOffsetGlobals() {
     auto addGlobal = [&](Name name, size_t offset) {
       auto global = Builder::makeGlobal(
-          name,
-          pointerType,
-          Builder(*wasm).makeConst(pointerType == Type::i32 ? Literal(int32_t(offset)) : Literal(int64_t(offset))),
-          Builder::Mutable);
-        global->hasExplicitName = true;
-        wasm->addGlobal(std::move(global));
+        name,
+        pointerType,
+        Builder(*wasm).makeConst(pointerType == Type::i32
+                                   ? Literal(int32_t(offset))
+                                   : Literal(int64_t(offset))),
+        Builder::Mutable);
+      global->hasExplicitName = true;
+      wasm->addGlobal(std::move(global));
     };
 
     size_t offsetRunningTotal = 0;
@@ -171,11 +185,12 @@ struct MultiMemoryLowering : public Pass {
       auto& memory = wasm->memories[i];
       memoryIdxMap[memory->name] = i;
       if (i != 0) {
-        Name name = Names::getValidGlobalName(*wasm, std::string(memory->name.c_str()) + "_page_offset");
+        Name name = Names::getValidGlobalName(
+          *wasm, std::string(memory->name.c_str()) + "_page_offset");
         offsetGlobalNames.push_back(std::move(name));
         addGlobal(name, offsetRunningTotal);
       }
-      offsetRunningTotal+=memory->initial;
+      offsetRunningTotal += memory->initial;
     }
   }
 
@@ -183,8 +198,8 @@ struct MultiMemoryLowering : public Pass {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
       assert(dataSegment->offset->is<Const>());
-      //auto iter = initialOffsetMap.find(dataSegment->memory);
-      //assert(iter != initialOffsetMap.end());
+      // auto iter = initialOffsetMap.find(dataSegment->memory);
+      // assert(iter != initialOffsetMap.end());
       auto iter = memoryIdxMap.find(dataSegment->memory);
       assert(iter != memoryIdxMap.end());
       dataSegment->memory = combinedMemory;
@@ -194,9 +209,9 @@ struct MultiMemoryLowering : public Pass {
         // first memory
         auto offsetGlobalName = offsetGlobalNames[iter->second - 1];
         dataSegment->offset = builder.makeBinary(
-              pointerType == Type::i32 ? AddInt32 : AddInt64,
-              builder.makeGlobalGet(offsetGlobalName, pointerType),
-              dataSegment->offset);
+          pointerType == Type::i32 ? AddInt32 : AddInt64,
+          builder.makeGlobalGet(offsetGlobalName, pointerType),
+          dataSegment->offset);
       }
     });
   }
@@ -227,18 +242,18 @@ struct MultiMemoryLowering : public Pass {
   // instruction to grow.
   std::unique_ptr<Function> adjustOffsetGlobals(Index memIdx) {
     Builder builder(*wasm);
-    Name functionName = Names::getValidFunctionName(*wasm, "adjust_memory_offsets");
-    auto function = Builder::makeFunction(functionName, Signature(pointerType, pointerType), {});
+    Name functionName =
+      Names::getValidFunctionName(*wasm, "adjust_memory_offsets");
+    auto function = Builder::makeFunction(
+      functionName, Signature(pointerType, pointerType), {});
     function->hasExplicitName = true;
     function->setLocalName(0, "page_delta");
     auto getPageDelta = [&]() { return builder.makeLocalGet(0, pointerType); };
-    Expression *functionBody;
+    Expression* functionBody;
 
     Index returnLocal = Builder::addVar(function.get(), pointerType);
-    functionBody = builder.blockify(
-        builder.makeLocalSet(
-            returnLocal,
-            builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
+    functionBody = builder.blockify(builder.makeLocalSet(
+      returnLocal, builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
@@ -246,22 +261,22 @@ struct MultiMemoryLowering : public Pass {
       // This offset is the starting pt for copying
       auto& offsetGlobalName = offsetGlobalNames[memIdx];
       functionBody = builder.blockify(
-          functionBody,
-          builder.makeMemoryCopy(
-            // destination
-            builder.makeBinary(
-              pointerType == Type::i32 ? AddInt32 : AddInt64,
-              builder.makeGlobalGet(offsetGlobalName, pointerType),
-              getPageDelta()),
-            // source
+        functionBody,
+        builder.makeMemoryCopy(
+          // destination
+          builder.makeBinary(
+            pointerType == Type::i32 ? AddInt32 : AddInt64,
             builder.makeGlobalGet(offsetGlobalName, pointerType),
-            // size
-            builder.makeBinary(
-              pointerType == Type::i32 ? SubInt32 : SubInt64,
-              builder.makeMemorySize(combinedMemory),
-              builder.makeGlobalGet(offsetGlobalName, pointerType)),
-            combinedMemory,
-            combinedMemory));
+            getPageDelta()),
+          // source
+          builder.makeGlobalGet(offsetGlobalName, pointerType),
+          // size
+          builder.makeBinary(
+            pointerType == Type::i32 ? SubInt32 : SubInt64,
+            builder.makeMemorySize(combinedMemory),
+            builder.makeGlobalGet(offsetGlobalName, pointerType)),
+          combinedMemory,
+          combinedMemory));
     }
 
     // Adjust the offsets of the globals impacted by the memory.grow call
@@ -270,16 +285,15 @@ struct MultiMemoryLowering : public Pass {
       functionBody = builder.blockify(
         functionBody,
         builder.makeGlobalSet(
-            offsetGlobalName,
-            builder.makeBinary(
-                  pointerType == Type::i32 ? AddInt32 : AddInt64,
-                  builder.makeGlobalGet(offsetGlobalName, pointerType),
-                  getPageDelta())));
+          offsetGlobalName,
+          builder.makeBinary(
+            pointerType == Type::i32 ? AddInt32 : AddInt64,
+            builder.makeGlobalGet(offsetGlobalName, pointerType),
+            getPageDelta())));
     }
 
     functionBody = builder.blockify(
-        functionBody,
-        builder.makeLocalGet(returnLocal, pointerType));
+      functionBody, builder.makeLocalGet(returnLocal, pointerType));
 
     function->body = functionBody;
     return function;
@@ -290,9 +304,10 @@ struct MultiMemoryLowering : public Pass {
   std::unique_ptr<Function> memorySize(Index memIdx) {
     Builder builder(*wasm);
     Name functionName = Names::getValidFunctionName(*wasm, "multi_memory_size");
-    auto function = Builder::makeFunction(functionName, Signature(Type::none, pointerType), {});
+    auto function = Builder::makeFunction(
+      functionName, Signature(Type::none, pointerType), {});
     function->hasExplicitName = true;
-    Expression *functionBody;
+    Expression* functionBody;
 
     // offsetGlobalNames does not keep track of a global for the offset of
     // wasm->memories[0] because it's always 0. As a result, the below
@@ -301,22 +316,21 @@ struct MultiMemoryLowering : public Pass {
     // the size of wasm->memories[0].
     if (memIdx == 0) {
       auto& offsetGlobalName = offsetGlobalNames[0];
-      functionBody = builder.makeReturn(builder.makeGlobalGet(offsetGlobalName, pointerType));
+      functionBody = builder.makeReturn(
+        builder.makeGlobalGet(offsetGlobalName, pointerType));
     } else if (memIdx == offsetGlobalNames.size()) {
       auto& offsetGlobalName = offsetGlobalNames[memIdx - 1];
-      functionBody = builder.makeReturn(
-            builder.makeBinary(
-              pointerType == Type::i32 ? SubInt32 : SubInt64,
-              builder.makeMemorySize(combinedMemory),
-              builder.makeGlobalGet(offsetGlobalName, pointerType)));
+      functionBody = builder.makeReturn(builder.makeBinary(
+        pointerType == Type::i32 ? SubInt32 : SubInt64,
+        builder.makeMemorySize(combinedMemory),
+        builder.makeGlobalGet(offsetGlobalName, pointerType)));
     } else {
       auto& offsetGlobalName = offsetGlobalNames[memIdx];
-      auto& nextOffsetGlobalName = offsetGlobalNames[memIdx+1];
-      functionBody = builder.makeReturn(
-            builder.makeBinary(
-              pointerType == Type::i32 ? SubInt32 : SubInt64,
-              builder.makeGlobalGet(nextOffsetGlobalName, pointerType),
-              builder.makeGlobalGet(offsetGlobalName, pointerType)));
+      auto& nextOffsetGlobalName = offsetGlobalNames[memIdx + 1];
+      functionBody = builder.makeReturn(builder.makeBinary(
+        pointerType == Type::i32 ? SubInt32 : SubInt64,
+        builder.makeGlobalGet(nextOffsetGlobalName, pointerType),
+        builder.makeGlobalGet(offsetGlobalName, pointerType)));
     }
 
     function->body = functionBody;
