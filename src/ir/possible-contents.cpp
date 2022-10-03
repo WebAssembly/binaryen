@@ -124,17 +124,8 @@ void PossibleContents::combine(const PossibleContents& other) {
   if (lub != Type::none) {
     // We found a shared ancestor. Next we need to find how big a cone we need:
     // the cone must be big enough to contain both the inputs.
-    // TODO: we could make a single loop that also does the LUB, at the same
-    // time, and also avoids calling getDepth() which loops once more?
-    auto depthFromRoot = type.getHeapType().getDepth();
-    auto otherDepthFromRoot = otherType.getHeapType().getDepth();
-    auto lubDepthFromRoot = lub.getHeapType().getDepth();
-    assert(lubDepthFromRoot <= depthFromRoot);
-    assert(lubDepthFromRoot <= otherDepthFromRoot);
-
     auto depth = getCone().depth;
     auto otherDepth = other.getCone().depth;
-
     Index newDepth;
     if (depth == FullDepth || otherDepth == FullDepth) {
       // At least one has full (infinite) depth, so we know the new depth must
@@ -143,6 +134,13 @@ void PossibleContents::combine(const PossibleContents& other) {
     } else {
       // The depth we need under the lub is how far from the lub we are, plus
       // the depth of our cone.
+      // TODO: we could make a single loop that also does the LUB, at the same
+      // time, and also avoids calling getDepth() which loops once more?
+      auto depthFromRoot = type.getHeapType().getDepth();
+      auto otherDepthFromRoot = otherType.getHeapType().getDepth();
+      auto lubDepthFromRoot = lub.getHeapType().getDepth();
+      assert(lubDepthFromRoot <= depthFromRoot);
+      assert(lubDepthFromRoot <= otherDepthFromRoot);
       Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
       Index otherDepthUnderLub =
         otherDepthFromRoot - lubDepthFromRoot + otherDepth;
