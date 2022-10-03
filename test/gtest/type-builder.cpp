@@ -25,12 +25,12 @@ TEST_F(TypeTest, TypeIterator) {
 
   EXPECT_EQ(none.size(), 0u);
   EXPECT_EQ(none.begin(), none.end());
-  EXPECT_EQ(none.end() - none.begin(), 0u);
+  EXPECT_EQ(none.end() - none.begin(), 0);
   EXPECT_EQ(none.begin() + 0, none.end());
 
   EXPECT_EQ(i32.size(), 1u);
   EXPECT_NE(i32.begin(), i32.end());
-  EXPECT_EQ(i32.end() - i32.begin(), 1u);
+  EXPECT_EQ(i32.end() - i32.begin(), 1);
 
   EXPECT_EQ(*i32.begin(), i32);
   EXPECT_EQ(i32[0], i32);
@@ -56,7 +56,7 @@ TEST_F(TypeTest, TypeIterator) {
 
   EXPECT_EQ(tuple.size(), 4u);
   EXPECT_NE(tuple.begin(), tuple.end());
-  EXPECT_EQ(tuple.end() - tuple.begin(), 4u);
+  EXPECT_EQ(tuple.end() - tuple.begin(), 4);
 
   EXPECT_EQ(*tuple.begin(), i32);
   EXPECT_EQ(*(tuple.begin() + 1), i64);
