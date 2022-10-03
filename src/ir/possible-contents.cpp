@@ -185,15 +185,6 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto nullability =
     type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
 
-  if (isNull()) {
-    // The intersection is either the null, or nothing if a null is not
-    // allowed.
-    if (nullability != Nullable) {
-      value = None();
-    }
-    return;
-  }
-
   auto setNoneOrNull = [&]() {
     if (nullability == Nullable) {
       value = Literal::makeNull(otherHeapType);
@@ -201,6 +192,13 @@ void PossibleContents::intersect(const PossibleContents& other) {
       value = None();
     }
   };
+
+  if (isNull()) {
+    // The intersection is either this null itself, or nothing if a null is not
+    // allowed.
+    setNoneOrNull();
+    return;
+  }
 
   // If the heap types are not compatible then the intersection is either
   // nothing or a null.
