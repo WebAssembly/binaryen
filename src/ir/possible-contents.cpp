@@ -1927,6 +1927,7 @@ void Flower::readFromData(HeapType declaredHeapType,
         work.pop_back();
         for (auto type : vec) {
           connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
+          work.push_back(&subTypes->getStrictSubTypes(type));
         }
       }
 
