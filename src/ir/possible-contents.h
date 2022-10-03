@@ -265,6 +265,13 @@ public:
     }
   }
 
+  // Use subtype info to optimize the depth so that it is as small as possible.
+  // In particular, if this is a full cone, then we can always pick the actual
+  // maximal depth and use that instead of FullDepth==-1. For a non-full code,
+  // we also reduce the depth as much as possible, so it is equal to the maximum
+  // depth of an existing subtype.
+  void optimizeDepth(std::unique_ptr<SubTypes>& subTypes);
+
   size_t hash() const {
     // First hash the index of the variant, then add the internals for each.
     size_t ret = std::hash<size_t>()(value.index());
@@ -438,8 +445,10 @@ struct NullLocation {
 
 // A special type of location that does not refer to something concrete in the
 // wasm, but is used to optimize the graph. A "cone read" is a struct.get or
-// array.get of a type that is not exact, so it can read the "cone" of all the
-// subtypes. In general a read of a cone type (as opposed to an exact type) will
+// array.get of a type that is not exact, so it can read from either that type
+// of some of the subtypes (up to a particular subtype depth).
+//
+// In general a read of a cone type + depth (as opposed to an exact type) will
 // require N incoming links, from each of the N subtypes - and we need that
 // for each struct.get of a cone. If there are M such gets then we have N * M
 // edges for this. Instead, we make a single canonical "cone read" location, and
@@ -448,11 +457,15 @@ struct NullLocation {
 // data to flow along).
 struct ConeReadLocation {
   HeapType type;
+  // As in PossibleContents, this represents the how deep we go with subtypes.
+  // 0 means an exact type, 1 means immediate subtypes, etc. (Note that 0 is not
+  // needed since that is what DataLocation already is.)
+  Index depth;
   // The index of the field in a struct, or 0 for an array (where we do not
   // attempt to differentiate by index).
   Index index;
   bool operator==(const ConeReadLocation& other) const {
-    return type == other.type && index == other.index;
+    return type == other.type && depth == other.depth && index == other.index;
   }
 };
 
@@ -556,8 +569,8 @@ template<> struct hash<wasm::NullLocation> {
 
 template<> struct hash<wasm::ConeReadLocation> {
   size_t operator()(const wasm::ConeReadLocation& loc) const {
-    return std::hash<std::pair<wasm::HeapType, wasm::Index>>{}(
-      {loc.type, loc.index});
+    return std::hash<std::pair<wasm::HeapType, std::pair<wasm::Index, wasm::Index>>>{}(
+      {size_t(loc.type), {loc.depth, loc.index}});
   }
 };
 

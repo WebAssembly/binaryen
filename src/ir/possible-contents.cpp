@@ -376,6 +376,35 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   WASM_UNREACHABLE("a or b must be a full cone");
 }
 
+void optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
+  assert(isConeType());
+
+  // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
+  // those in our work queue to avoid allocations.
+  struct Item {
+    std::vector<HeapType>* vec;
+    Index depth;
+  };
+
+  Index maxDepth = 0;
+  SmallVector<Item, 10> work;
+
+  // Start with the subtypes of the base type. Those have depth 1.
+  work.push_back({&subTypes->getStrictSubTypes(getCone().type.getHeapType()), 1});
+
+  while (!work.empty()) {
+    auto& item = work.back();
+    work.pop_back();
+    auto currDepth = item.depth;
+    maxDepth = std::max(currDepth, maxDepth);
+    for (auto type : (*item.vec)) {
+      work.push_back({&subTypes->getStrictSubTypes(type), currDepth + 1});
+    }
+  }
+
+  return maxDepth;
+}
+
 namespace {
 
 // We are going to do a very large flow operation, potentially, as we create
@@ -1848,25 +1877,48 @@ void Flower::readFromData(HeapType declaredHeapType,
     assert(refContents.isMany() || refContents.isGlobal() ||
            refContents.isConeType());
 
-    // TODO: Use the cone depth here for ConeType. Right now we do the
-    //       pessimistic thing and assume a full cone of all subtypes.
+    auto filteredRefContents = refContents;
+    if (refContents.isMany()) {
+      // If |refContents| is Many, we can filter it to what the wasm type system
+      // allows, which is the declared heap type and all subtypes.
+      filteredRefContents = PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
+    } else {
+      // Otherwise, just look at the cone here, discarding information about
+      // this being a global, for example, if we had that. All that matters from
+      // now is the cone.
+      auto cone = refContents.getCone();
+      filteredRefContents = PossibleContents::coneType(cone.type, cone.depth);
+    }
+
+    // Optimize the depth so it is never larger than the actual existing
+    // subtypes, which could cause wasted work later.
+    filteredRefContents.optimizeDepth(subTypes);
+
+    // We can read from anything in the relevant cone.
+    auto cone = filteredRefContents.getCone();
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
-    // TODO: A cone with no subtypes needs no canonical location, just
-    //       add one direct link here.
-    auto coneReadLocation = ConeReadLocation{declaredHeapType, fieldIndex};
+    auto coneReadLocation = ConeReadLocation{cone.type, cone.depth, fieldIndex};
     if (!hasIndex(coneReadLocation)) {
       // This is the first time we use this location, so create the links for it
       // in the graph.
-      for (auto type : subTypes->getAllSubTypes(declaredHeapType)) {
-        connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
+
+      // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
+      // those in our work queue to avoid allocations.
+      SmallVector<std::vector<HeapType>*, 10> work;
+      work.push_back(&subTypes->getStrictSubTypes(cone.type.getHeapType()));
+      while (!work.empty()) {
+        auto& vec = *work.back();
+        work.pop_back();
+        for (auto type : vec) {
+          connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
+        }
       }
 
-      // TODO: if the old contents here were an exact type then we have an old
-      //       link here that we could remove as it is redundant (the cone
-      //       contains the exact type among the others). But removing links
-      //       is not efficient, so maybe not worth it.
+      // TODO: we can end up with redundant links here if we see one cone first
+      //       and then a larger one later. But removing links is not efficient,
+      //       so for now just leave that.
     }
 
     // Link to the canonical location.
