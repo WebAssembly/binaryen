@@ -254,7 +254,7 @@ public:
   // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
   // then
   //
-  //  * if all NaNs are canonical NaNs, the output is some arbitrary canon NaN
+  //  * if all NaNs are canonical, the output is some arbitrary canonical NaN
   //  * otherwise the output is some arbitrary arithmetic NaN
   //
   // (canonical = NaN payload is 1000..000; arithmetic: 1???..???, that is, the
