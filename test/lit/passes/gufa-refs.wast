@@ -2946,10 +2946,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (local.get $nn-struct)
-  ;; CHECK-NEXT:    (local.get $nn-other)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
@@ -3020,9 +3017,7 @@
         (local.get $nn-struct2)
       )
     )
-    ;; Non-null on both sides, and incompatible types, so we should be able to
-    ;; infer 0, but we need cone types for that. Until we have them, these are
-    ;; Many and so we infer nothing. TODO
+    ;; Non-null on both sides, and incompatible types. We can infer 0 here.
     (drop
       (ref.eq
         (local.get $nn-struct)
