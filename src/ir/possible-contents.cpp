@@ -383,9 +383,10 @@ void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
 
   Index maxDepth = 0;
 
-  subTypes->traverseSubTypes(cone->type, cone->depth, [&](HeapType type, Index depth) {
-    maxDepth = std::max(currDepth, maxDepth);
-  });
+  subTypes->traverseSubTypes(
+    cone->type, cone->depth, [&](HeapType type, Index depth) {
+      maxDepth = std::max(currDepth, maxDepth);
+    });
 
   assert(depth <= cone->depth);
 
@@ -1863,7 +1864,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal() ||
            refContents.isConeType());
-std::cout << "waka read1 " << refContents << '\n';
+    std::cout << "waka read1 " << refContents << '\n';
 
     auto filteredRefContents = refContents;
     if (refContents.isMany()) {
@@ -1882,7 +1883,7 @@ std::cout << "waka read1 " << refContents << '\n';
     // Optimize the depth so it is never larger than the actual existing
     // subtypes, which could cause wasted work later.
     filteredRefContents.optimizeDepth(subTypes);
-std::cout << "waka read2 " << filteredRefContents << '\n';
+    std::cout << "waka read2 " << filteredRefContents << '\n';
 
     // We can read from anything in the relevant cone.
     auto cone = filteredRefContents.getCone();
@@ -1901,10 +1902,11 @@ std::cout << "waka read2 " << filteredRefContents << '\n';
 
       // Next, connect strict subtypes.
 
-      subTypes->traverseSubTypes(cone->type, cone->depth, [&](HeapType type, Index depth) {
-std::cout << "connect to " << type << '\n';
-        connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
-      });
+      subTypes->traverseSubTypes(
+        cone->type, cone->depth, [&](HeapType type, Index depth) {
+          std::cout << "connect to " << type << '\n';
+          connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
+        });
 
       // TODO: we can end up with redundant links here if we see one cone first
       //       and then a larger one later. But removing links is not efficient,

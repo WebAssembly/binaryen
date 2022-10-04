@@ -126,7 +126,7 @@ private:
 
   // Keep a canonical empty vector, so we have something to return without doing
   // an allocation in getStrictSubTypes.
-  std::vectorHeapType> emptyVec;
+  std::vectorHeapType > emptyVec;
 };
 
 } // namespace wasm
