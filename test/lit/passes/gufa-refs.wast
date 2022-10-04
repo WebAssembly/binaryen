@@ -4875,3 +4875,101 @@
     )
   )
 )
+
+;; Cone writes.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+  (type $A (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+  (type $B (struct_subtype (field (mut i32)) $A))
+  ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
+  (type $C (struct_subtype (field (mut i32)) $B))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (export "write" (func $write))
+
+  ;; CHECK:      (func $write (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $C
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (select (result (ref $A))
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $write (export "write") (param $x i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+    ;; A and B agree on their value.
+    (local.set $A
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (i32.const 10)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (i32.const 20)
+      )
+    )
+    ;; Do a cone write. This writes the same value as they already have.
+    (struct.set $A 0
+      (select
+        (local.get $A)
+        (local.get $B)
+        (local.get $x)
+      )
+      (i32.const 10)
+    )
+    ;; Read from all the locals. We can optimize them all, to 10, 10, 20.
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    (drop
+      (struct.get $C 0
+        (local.get $C)
+      )
+    )
+  )
+)
