@@ -2769,6 +2769,7 @@ function wrapModule(module, self = {}) {
 Module['wrapModule'] = wrapModule;
 
 // 'Relooper' interface
+/** @constructor */
 Module['Relooper'] = function(module) {
   assert(module && typeof module === 'object' && module['ptr'] && module['block'] && module['if']); // guard against incorrect old API usage
   const relooper = Module['_RelooperCreate'](module['ptr']);
@@ -2792,6 +2793,7 @@ Module['Relooper'] = function(module) {
 };
 
 // 'ExpressionRunner' interface
+/** @constructor */
 Module['ExpressionRunner'] = function(module, flags, maxDepth, maxLoopIterations) {
   const runner = Module['_ExpressionRunnerCreate'](module['ptr'], flags, maxDepth, maxLoopIterations);
   this['ptr'] = runner;
@@ -3562,6 +3564,7 @@ const thisPtr = Symbol();
 function makeExpressionWrapper(ownStaticMembers) {
   /**
    * @constructor
+   * @extends Expression
    */
   function SpecificExpression(expr) {
     // can call the constructor without `new`
@@ -3594,6 +3597,7 @@ function deriveWrapperInstanceMembers(prototype, staticMembers) {
     const member = staticMembers[memberName];
     if (typeof member === "function") {
       // Instance method calls the respective static method with `this` bound.
+      /** @this {Expression} */
       prototype[memberName] = function(...args) {
         return this.constructor[memberName](this[thisPtr], ...args);
       };
@@ -3607,9 +3611,11 @@ function deriveWrapperInstanceMembers(prototype, staticMembers) {
         const propertyName = memberName.charAt(index).toLowerCase() + memberName.substring(index + 1);
         const setterIfAny = staticMembers["set" + memberName.substring(index)];
         Object.defineProperty(prototype, propertyName, {
+          /** @this {Expression} */
           get() {
             return member(this[thisPtr]);
           },
+          /** @this {Expression} */
           set(value) {
             if (setterIfAny) setterIfAny(this[thisPtr], value);
             else throw Error("property '" + propertyName + "' has no setter");
@@ -3621,6 +3627,7 @@ function deriveWrapperInstanceMembers(prototype, staticMembers) {
 }
 
 // Base class of all expression wrappers
+/** @constructor */
 function Expression(expr) {
   if (!expr) throw Error("expression reference must not be null");
   this[thisPtr] = expr;
@@ -4867,6 +4874,7 @@ Module['I31Get'] = makeExpressionWrapper({
 
 Module['Function'] = (() => {
   // Closure compiler doesn't allow multiple `Function`s at top-level, so:
+  /** @constructor */
   function Function(func) {
     if (!(this instanceof Function)) {
       if (!func) return null;

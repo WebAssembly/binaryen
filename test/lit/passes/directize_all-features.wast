@@ -1242,6 +1242,42 @@
   )
  )
 
+ ;; CHECK:      (func $select-non-nullable-unreachable-arm
+ ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:   (ref.func $select-non-nullable)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (f32.const 3.141590118408203)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $select-non-nullable-unreachable-arm
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
+ ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
+ ;; IMMUT-NEXT:   (select
+ ;; IMMUT-NEXT:    (f32.const 3.141590118408203)
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:    (i32.const 1)
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $select-non-nullable-unreachable-arm
+  ;; Test we ignore an unreachable arm and don't make any changes at all
+  ;; to the code (in particular, we shouldn't add any vars).
+  (call_indirect (type $F)
+   (ref.func $select-non-nullable)
+   (select
+    ;; Note how the type here is not even an i32, so we must not even try to
+    ;; look into the select's values at all - the select is unreachable and we
+    ;; should give up on optimizing.
+    (f32.const 3.14159)
+    (unreachable)
+    (i32.const 1)
+   )
+  )
+ )
+
  ;; CHECK:      (func $select-non-nullable-unreachable-arg (param $x i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $F)
  ;; CHECK-NEXT:   (unreachable)

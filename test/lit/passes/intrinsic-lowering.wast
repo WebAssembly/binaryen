@@ -27,7 +27,7 @@
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $none
   ;; CHECK-NEXT:   (ref.null $none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)

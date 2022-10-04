@@ -6266,8 +6266,8 @@ BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
 }
 void TypeBuilderSetSubType(TypeBuilderRef builder,
                            BinaryenIndex index,
-                           BinaryenIndex superIndex) {
-  ((TypeBuilder*)builder)->setSubType(index, superIndex);
+                           BinaryenHeapType superType) {
+  ((TypeBuilder*)builder)->setSubType(index, HeapType(superType));
 }
 void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
                                BinaryenIndex index,

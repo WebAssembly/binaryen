@@ -62,7 +62,9 @@ struct MergeLocals
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new MergeLocals(); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<MergeLocals>();
+  }
 
   void doWalkFunction(Function* func) {
     // first, instrument the graph by modifying each copy

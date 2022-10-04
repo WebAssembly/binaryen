@@ -69,8 +69,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
 
   bool isFunctionParallel() override { return true; }
 
-  AccessInstrumenter* create() override {
-    return new AccessInstrumenter(ignoreFunctions);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AccessInstrumenter>(ignoreFunctions);
   }
 
   AccessInstrumenter(std::set<Name> ignoreFunctions)
@@ -131,10 +131,8 @@ static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
 }
 
 struct SafeHeap : public Pass {
-  PassOptions options;
 
-  void run(PassRunner* runner, Module* module) override {
-    options = runner->options;
+  void run(Module* module) override {
     assert(!module->memories.empty());
     // add imports
     addImports(module);
@@ -147,7 +145,7 @@ struct SafeHeap : public Pass {
     // not available until after it has run.
     std::set<Name> ignoreFunctions = findCalledFunctions(module, module->start);
     ignoreFunctions.insert(getSbrkPtr);
-    AccessInstrumenter(ignoreFunctions).run(runner, module);
+    AccessInstrumenter(ignoreFunctions).run(getPassRunner(), module);
     // add helper checking funcs and imports
     addGlobals(module, module->features);
   }
@@ -394,9 +392,10 @@ struct SafeHeap : public Pass {
                               Type indexType,
                               bool is64,
                               Name memory) {
-    auto upperOp = is64 ? options.lowMemoryUnused ? LtUInt64 : EqInt64
-                        : options.lowMemoryUnused ? LtUInt32 : EqInt32;
-    auto upperBound = options.lowMemoryUnused ? PassOptions::LowMemoryBound : 0;
+    bool lowMemUnused = getPassOptions().lowMemoryUnused;
+    auto upperOp = is64 ? lowMemUnused ? LtUInt64 : EqInt64
+                        : lowMemUnused ? LtUInt32 : EqInt32;
+    auto upperBound = lowMemUnused ? PassOptions::LowMemoryBound : 0;
     Expression* brkLocation;
     if (sbrk.is()) {
       brkLocation =

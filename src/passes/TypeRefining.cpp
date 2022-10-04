@@ -38,8 +38,9 @@ using FieldInfo = LUBFinder;
 
 struct FieldInfoScanner
   : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
-  Pass* create() override {
-    return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FieldInfoScanner>(functionNewInfos,
+                                              functionSetGetInfos);
   }
 
   FieldInfoScanner(
@@ -98,7 +99,7 @@ struct TypeRefining : public Pass {
 
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -111,8 +112,8 @@ struct TypeRefining : public Pass {
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
-    scanner.run(runner, module);
-    scanner.runOnModuleCode(runner, module);
+    scanner.run(getPassRunner(), module);
+    scanner.runOnModuleCode(getPassRunner(), module);
 
     // Combine the data from the functions.
     StructUtils::StructValuesMap<FieldInfo> combinedNewInfos;
@@ -222,8 +223,8 @@ struct TypeRefining : public Pass {
     }
 
     if (canOptimize) {
-      updateInstructions(*module, runner);
-      updateTypes(*module, runner);
+      updateInstructions(*module);
+      updateTypes(*module);
     }
   }
 
@@ -234,7 +235,7 @@ struct TypeRefining : public Pass {
   // at all, and we can end up with a situation where we alter the type to
   // something that is invalid for that read. To ensure the code still
   // validates, simply remove such reads.
-  void updateInstructions(Module& wasm, PassRunner* runner) {
+  void updateInstructions(Module& wasm) {
     struct ReadUpdater : public WalkerPass<PostWalker<ReadUpdater>> {
       bool isFunctionParallel() override { return true; }
 
@@ -245,7 +246,9 @@ struct TypeRefining : public Pass {
 
       ReadUpdater(TypeRefining& parent) : parent(parent) {}
 
-      ReadUpdater* create() override { return new ReadUpdater(parent); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<ReadUpdater>(parent);
+      }
 
       void visitStructGet(StructGet* curr) {
         if (curr->ref->type == Type::unreachable) {
@@ -274,11 +277,11 @@ struct TypeRefining : public Pass {
     };
 
     ReadUpdater updater(*this);
-    updater.run(runner, &wasm);
-    updater.runOnModuleCode(runner, &wasm);
+    updater.run(getPassRunner(), &wasm);
+    updater.runOnModuleCode(getPassRunner(), &wasm);
   }
 
-  void updateTypes(Module& wasm, PassRunner* runner) {
+  void updateTypes(Module& wasm) {
     class TypeRewriter : public GlobalTypeRewriter {
       TypeRefining& parent;
 
@@ -303,7 +306,7 @@ struct TypeRefining : public Pass {
 
     TypeRewriter(wasm, *this).update();
 
-    ReFinalize().run(runner, &wasm);
+    ReFinalize().run(getPassRunner(), &wasm);
   }
 };
 

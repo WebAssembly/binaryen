@@ -23,7 +23,7 @@ struct StripTargetFeatures : public Pass {
 
   bool isStripped = false;
   StripTargetFeatures(bool isStripped) : isStripped(isStripped) {}
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     module->hasFeaturesSection = !isStripped;
   }
 };

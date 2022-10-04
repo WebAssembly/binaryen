@@ -85,6 +85,9 @@ protected:
     PossibleContents::global("i32Global2", Type::i32);
   PossibleContents f64Global = PossibleContents::global("f64Global", Type::f64);
   PossibleContents anyGlobal = PossibleContents::global("anyGlobal", anyref);
+  PossibleContents funcGlobal = PossibleContents::global("funcGlobal", funcref);
+  PossibleContents nonNullFuncGlobal =
+    PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(
     Literal("func", Signature(Type::none, Type::none)));
@@ -141,6 +144,28 @@ TEST_F(PossibleContentsTest, TestComparisons) {
 
   assertEqualSymmetric(exactNonNullAnyref, exactNonNullAnyref);
   assertNotEqualSymmetric(exactNonNullAnyref, exactAnyref);
+}
+
+TEST_F(PossibleContentsTest, TestHash) {
+  // Hashes should be deterministic.
+  EXPECT_EQ(none.hash(), none.hash());
+  EXPECT_EQ(many.hash(), many.hash());
+
+  // Hashes should be different. (In theory hash collisions could appear here,
+  // but if such simple things collide and the test fails then we should really
+  // rethink our hash functions!)
+  EXPECT_NE(none.hash(), many.hash());
+  EXPECT_NE(none.hash(), i32Zero.hash());
+  EXPECT_NE(none.hash(), i32One.hash());
+  EXPECT_NE(none.hash(), anyGlobal.hash());
+  EXPECT_NE(none.hash(), funcGlobal.hash());
+  EXPECT_NE(none.hash(), exactAnyref.hash());
+  EXPECT_NE(none.hash(), exactFuncSignatureType.hash());
+  // TODO: cones
+
+  EXPECT_NE(i32Zero.hash(), i32One.hash());
+  EXPECT_NE(anyGlobal.hash(), funcGlobal.hash());
+  EXPECT_NE(exactAnyref.hash(), exactFuncSignatureType.hash());
 }
 
 TEST_F(PossibleContentsTest, TestCombinations) {
@@ -240,6 +265,173 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
   // This will be 42.
   EXPECT_EQ(oracle.getContents(GlobalLocation{"something"}).getLiteral(),
             Literal(int32_t(42)));
+}
+
+// Asserts a and b have an intersection (or do not), and checks both orderings.
+void assertHaveIntersection(PossibleContents a, PossibleContents b) {
+  EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
+  EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
+}
+void assertLackIntersection(PossibleContents a, PossibleContents b) {
+  EXPECT_FALSE(PossibleContents::haveIntersection(a, b));
+  EXPECT_FALSE(PossibleContents::haveIntersection(b, a));
+}
+
+TEST_F(PossibleContentsTest, TestIntersection) {
+  // None has no contents, so nothing to intersect.
+  assertLackIntersection(none, none);
+  assertLackIntersection(none, i32Zero);
+  assertLackIntersection(none, many);
+
+  // Many intersects with anything (but none).
+  assertHaveIntersection(many, many);
+  assertHaveIntersection(many, i32Zero);
+
+  // Different exact types cannot intersect.
+  assertLackIntersection(exactI32, exactAnyref);
+  assertLackIntersection(i32Zero, exactAnyref);
+
+  // But nullable ones can - the null can be the intersection.
+  assertHaveIntersection(exactFuncSignatureType, exactAnyref);
+  assertHaveIntersection(exactFuncSignatureType, funcNull);
+  assertHaveIntersection(anyNull, funcNull);
+
+  // Identical types might.
+  assertHaveIntersection(exactI32, exactI32);
+  assertHaveIntersection(i32Zero, i32Zero);
+  assertHaveIntersection(exactFuncSignatureType, exactFuncSignatureType);
+  assertHaveIntersection(i32Zero, i32One); // TODO: this could be inferred false
+
+  // Exact types only differing by nullability can intersect (not on the null,
+  // but on something else).
+  assertHaveIntersection(exactAnyref, exactNonNullAnyref);
+
+  // Due to subtyping, an intersection might exist.
+  assertHaveIntersection(funcGlobal, funcGlobal);
+  assertHaveIntersection(funcGlobal, exactFuncSignatureType);
+  assertHaveIntersection(nonNullFuncGlobal, exactFuncSignatureType);
+  assertHaveIntersection(funcGlobal, exactNonNullFuncSignatureType);
+  assertHaveIntersection(nonNullFuncGlobal, exactNonNullFuncSignatureType);
+
+  // Neither is a subtype of the other, but nulls are possible, so a null can be
+  // the intersection.
+  assertHaveIntersection(funcGlobal, anyGlobal);
+
+  // Without null on one side, we cannot intersect.
+  assertLackIntersection(nonNullFuncGlobal, anyGlobal);
+}
+
+TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
+  // Whenever we combine C = A + B, both A and B must intersect with C. This
+  // helper function gets a set of things and checks that property on them. It
+  // returns the set of all contents it ever observed (see below for how we use
+  // that).
+  auto doTest = [](std::unordered_set<PossibleContents> set) {
+    std::vector<PossibleContents> vec(set.begin(), set.end());
+
+    // Go over all permutations up to a certain size (this quickly becomes
+    // extremely slow, obviously, so keep this low).
+    size_t max = 3;
+
+    auto n = set.size();
+
+    // |indexes| contains the indexes of the items in vec for the current
+    // permutation.
+    std::vector<size_t> indexes(max);
+    std::fill(indexes.begin(), indexes.end(), 0);
+    while (1) {
+      // Test the current permutation: Combine all the relevant things, and then
+      // check they all have an intersection.
+      PossibleContents combination;
+      for (auto index : indexes) {
+        combination.combine(vec[index]);
+      }
+      // Note the combination in the set.
+      set.insert(combination);
+#if BINARYEN_TEST_DEBUG
+      for (auto index : indexes) {
+        std::cout << index << ' ';
+        combination.combine(vec[index]);
+      }
+      std::cout << '\n';
+#endif
+      for (auto index : indexes) {
+        auto item = vec[index];
+        if (item.isNone()) {
+          assertLackIntersection(combination, item);
+          continue;
+        }
+#if BINARYEN_TEST_DEBUG
+        if (!PossibleContents::haveIntersection(combination, item)) {
+          for (auto index : indexes) {
+            std::cout << index << ' ';
+            combination.combine(item);
+          }
+          std::cout << '\n';
+          std::cout << "combo:\n";
+          combination.dump(std::cout);
+          std::cout << "\ncompared item (index " << index << "):\n";
+          item.dump(std::cout);
+          std::cout << '\n';
+          abort();
+        }
+#endif
+        assertHaveIntersection(combination, item);
+      }
+
+      // Move to the next permutation.
+      size_t i = 0;
+      while (1) {
+        indexes[i]++;
+        if (indexes[i] == n) {
+          // Overflow.
+          indexes[i] = 0;
+          i++;
+          if (i == max) {
+            // All done.
+            return set;
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    WASM_UNREACHABLE("loop above returns manually");
+  };
+
+  // Start from an initial set of the hardcoded contents we have in our test
+  // fixture.
+  std::unordered_set<PossibleContents> initial = {none,
+                                                  f64One,
+                                                  anyNull,
+                                                  funcNull,
+                                                  i31Null,
+                                                  i32Global1,
+                                                  i32Global2,
+                                                  f64Global,
+                                                  anyGlobal,
+                                                  funcGlobal,
+                                                  nonNullFuncGlobal,
+                                                  nonNullFunc,
+                                                  exactI32,
+                                                  exactAnyref,
+                                                  exactFuncref,
+                                                  exactI31ref,
+                                                  exactNonNullAnyref,
+                                                  exactNonNullFuncref,
+                                                  exactNonNullI31ref,
+                                                  exactFuncSignatureType,
+                                                  exactNonNullFuncSignatureType,
+                                                  many};
+
+  // After testing on the initial contents, also test using anything new that
+  // showed up while combining them.
+  auto subsequent = doTest(initial);
+  while (subsequent.size() > initial.size()) {
+    initial = subsequent;
+    subsequent = doTest(subsequent);
+  }
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {

@@ -41,7 +41,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   // type to be non-nullable if it would validate.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  Pass* create() override { return new LocalSubtyping(); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<LocalSubtyping>();
+  }
 
   void doWalkFunction(Function* func) {
     if (!getModule()->features.hasGC()) {

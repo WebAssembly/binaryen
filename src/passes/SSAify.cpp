@@ -73,7 +73,9 @@ struct SSAify : public Pass {
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new SSAify(allowMerges); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<SSAify>(allowMerges);
+  }
 
   SSAify(bool allowMerges) : allowMerges(allowMerges) {}
 
@@ -84,8 +86,7 @@ struct SSAify : public Pass {
   // things we add to the function prologue
   std::vector<Expression*> functionPrepends;
 
-  void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
+  void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
     func = func_;
     LocalGraph graph(func);

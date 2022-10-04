@@ -53,6 +53,10 @@ struct CodeScanner
   void visitExpression(Expression* curr) {
     if (auto* call = curr->dynCast<CallIndirect>()) {
       counts.note(call->heapType);
+    } else if (auto* call = curr->dynCast<CallRef>()) {
+      if (call->isReturn && call->target->type.isFunction()) {
+        counts.note(call->target->type);
+      }
     } else if (curr->is<RefNull>()) {
       counts.note(curr->type);
     } else if (auto* make = curr->dynCast<StructNew>()) {

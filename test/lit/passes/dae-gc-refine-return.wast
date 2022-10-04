@@ -586,20 +586,20 @@
  )
  ;; CHECK:      (func $tail-caller-call_ref-yes (result (ref ${}))
  ;; CHECK-NEXT:  (local $return_{} (ref null $return_{}))
- ;; CHECK-NEXT:  (return_call_ref
+ ;; CHECK-NEXT:  (return_call_ref $return_{}
  ;; CHECK-NEXT:   (local.get $return_{})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $tail-caller-call_ref-yes (type $return_{}) (result (ref ${}))
  ;; NOMNL-NEXT:  (local $return_{} (ref null $return_{}))
- ;; NOMNL-NEXT:  (return_call_ref
+ ;; NOMNL-NEXT:  (return_call_ref $return_{}
  ;; NOMNL-NEXT:   (local.get $return_{})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-yes (result anyref)
   (local $return_{} (ref null $return_{}))
 
-  (return_call_ref (local.get $return_{}))
+  (return_call_ref $return_{} (local.get $return_{}))
  )
  ;; CHECK:      (func $tail-caller-call_ref-no (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
@@ -610,7 +610,7 @@
  ;; CHECK-NEXT:    (local.get $any)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (return_call_ref
+ ;; CHECK-NEXT:  (return_call_ref $return_{}
  ;; CHECK-NEXT:   (local.get $return_{})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -623,7 +623,7 @@
  ;; NOMNL-NEXT:    (local.get $any)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (return_call_ref
+ ;; NOMNL-NEXT:  (return_call_ref $return_{}
  ;; NOMNL-NEXT:   (local.get $return_{})
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
@@ -634,18 +634,26 @@
   (if (i32.const 1)
    (return (local.get $any))
   )
-  (return_call_ref (local.get $return_{}))
+  (return_call_ref $return_{} (local.get $return_{}))
  )
- ;; CHECK:      (func $tail-caller-call_ref-unreachable
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK:      (func $tail-caller-call_ref-unreachable (result anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $tail-caller-call_ref-unreachable (type $none_=>_none)
- ;; NOMNL-NEXT:  (unreachable)
+ ;; NOMNL:      (func $tail-caller-call_ref-unreachable (type $none_=>_anyref) (result anyref)
+ ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; NOMNL-NEXT:   (drop
+ ;; NOMNL-NEXT:    (unreachable)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-unreachable (result anyref)
   ;; An unreachable means there is no function signature to even look at. We
   ;; should not hit an assertion on such things.
-  (return_call_ref (unreachable))
+  (return_call_ref $return_{} (unreachable))
  )
  ;; CHECK:      (func $tail-call-caller-call_ref
  ;; CHECK-NEXT:  (drop
@@ -654,7 +662,9 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $tail-caller-call_ref-no)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $tail-caller-call_ref-unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller-call_ref-unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $tail-call-caller-call_ref (type $none_=>_none)
  ;; NOMNL-NEXT:  (drop
@@ -663,7 +673,9 @@
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (call $tail-caller-call_ref-no)
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (call $tail-caller-call_ref-unreachable)
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (call $tail-caller-call_ref-unreachable)
+ ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $tail-call-caller-call_ref
   (drop

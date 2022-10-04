@@ -2161,7 +2161,7 @@ void test_typebuilder() {
                              fieldMutables,
                              2);
   }
-  TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructIndex);
+  TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructHeapType);
 
   // TODO: Rtts (post-MVP?)
 

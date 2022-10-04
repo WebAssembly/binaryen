@@ -174,7 +174,7 @@ struct EquivalentClass {
 struct MergeSimilarFunctions : public Pass {
   bool invalidatesDWARF() override { return true; }
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     std::vector<EquivalentClass> classes;
     collectEquivalentClasses(classes, module);
     std::sort(

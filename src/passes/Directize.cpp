@@ -69,7 +69,9 @@ using TableInfoMap = std::unordered_map<Name, TableInfo>;
 struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionDirectizer(tables); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionDirectizer>(tables);
+  }
 
   FunctionDirectizer(const TableInfoMap& tables) : tables(tables) {}
 
@@ -199,14 +201,14 @@ private:
 };
 
 struct Directize : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (module->tables.empty()) {
       return;
     }
 
     // TODO: consider a per-table option here
     auto initialContentsImmutable =
-      runner->options.getArgumentOrDefault(
+      getPassOptions().getArgumentOrDefault(
         "directize-initial-contents-immutable", "") != "";
 
     // Set up the initial info.
@@ -273,7 +275,7 @@ struct Directize : public Pass {
     }
 
     // We can optimize!
-    FunctionDirectizer(tables).run(runner, module);
+    FunctionDirectizer(tables).run(getPassRunner(), module);
   }
 };
 

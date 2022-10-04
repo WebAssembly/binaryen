@@ -53,7 +53,7 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
@@ -92,7 +92,7 @@
   ;; CHECK-NEXT:  (call $func
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.as_data
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
@@ -286,7 +286,7 @@
   ;; CHECK-NEXT:  (call $func
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
@@ -322,7 +322,7 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
@@ -393,7 +393,7 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig-2
   ;; CHECK-NEXT:   (local.get $i31)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (ref.func $func-2)
@@ -547,7 +547,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref $struct))
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call_ref
+  ;; CHECK-NEXT:    (call_ref $sig-can-refine
   ;; CHECK-NEXT:     (ref.func $func-can-refine)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)

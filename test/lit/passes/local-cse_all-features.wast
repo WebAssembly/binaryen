@@ -12,13 +12,13 @@
 
   ;; CHECK:      (func $calls (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:   (call_ref $i32_=>_i32
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (ref.func $calls)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:   (call_ref $i32_=>_i32
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (ref.func $calls)
   ;; CHECK-NEXT:   )

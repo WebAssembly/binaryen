@@ -3776,14 +3776,15 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitMemoryGrow(grow);
       break;
     }
-    case BinaryConsts::CallRef:
+    case BinaryConsts::CallRefUnannotated:
       visitCallRef((curr = allocator.alloc<CallRef>())->cast<CallRef>());
       break;
+    case BinaryConsts::CallRef:
     case BinaryConsts::RetCallRef: {
       auto call = allocator.alloc<CallRef>();
-      call->isReturn = true;
+      call->isReturn = code == BinaryConsts::RetCallRef;
       curr = call;
-      visitCallRef(call);
+      visitCallRef(call, getTypeByIndex(getU32LEB()));
       break;
     }
     case BinaryConsts::AtomicPrefix: {
@@ -6777,22 +6778,32 @@ void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
+void WasmBinaryBuilder::visitCallRef(CallRef* curr,
+                                     std::optional<HeapType> maybeType) {
   BYN_TRACE("zz node: CallRef\n");
   curr->target = popNonVoidExpression();
-  auto type = curr->target->type;
-  if (type == Type::unreachable) {
-    // If our input is unreachable, then we cannot even find out how many inputs
-    // we have, and just set ourselves to unreachable as well.
-    curr->finalize(type);
-    return;
+  HeapType heapType;
+  if (maybeType) {
+    heapType = *maybeType;
+    if (!Type::isSubType(curr->target->type, Type(heapType, Nullable))) {
+      throwError("Call target has invalid type: " +
+                 curr->target->type.toString());
+    }
+  } else {
+    auto type = curr->target->type;
+    if (type == Type::unreachable) {
+      // If our input is unreachable, then we cannot even find out how many
+      // inputs we have, and just set ourselves to unreachable as well.
+      curr->finalize(type);
+      return;
+    }
+    if (!type.isRef()) {
+      throwError("Non-ref type for a call_ref: " + type.toString());
+    }
+    heapType = type.getHeapType();
   }
-  if (!type.isRef()) {
-    throwError("Non-ref type for a call_ref: " + type.toString());
-  }
-  auto heapType = type.getHeapType();
   if (!heapType.isSignature()) {
-    throwError("Invalid reference type for a call_ref: " + type.toString());
+    throwError("Invalid reference type for a call_ref: " + heapType.toString());
   }
   auto sig = heapType.getSignature();
   auto num = sig.params.size();

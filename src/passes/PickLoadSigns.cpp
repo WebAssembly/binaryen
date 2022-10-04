@@ -28,7 +28,9 @@ namespace wasm {
 struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new PickLoadSigns; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<PickLoadSigns>();
+  }
 
   struct Usage {
     Index signedUsages = 0;

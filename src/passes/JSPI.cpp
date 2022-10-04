@@ -40,7 +40,7 @@ struct JSPI : public Pass {
 
   Type externref = Type(HeapType::ext, Nullable);
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     Builder builder(*module);
     // Create a global to store the suspender that is passed into exported
     // functions and will then need to be passed out to the imported functions.

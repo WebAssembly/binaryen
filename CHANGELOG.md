@@ -16,6 +16,12 @@ Current Trunk
 -------------
 
 - Add extra `memory64` argument for `BinaryenSetMemory` and new `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
+- `TypeBuilderSetSubType` now takes a supertype as the second argument.
+- `call_ref` can now take a signature type immediate in the text format. The
+  type immediate will become mandatory in the future.
+- If `THROW_ON_FATAL` is defined at compile-time, then fatal errors will throw a
+  `std::runtime_error` instead of terminating the process. This may be used by
+  embedders of Binaryen to recover from errors.
 
 v110
 ----

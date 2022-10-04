@@ -140,8 +140,8 @@ struct FunctionInfoScanner
 
   FunctionInfoScanner(NameInfoMap* infos) : infos(infos) {}
 
-  FunctionInfoScanner* create() override {
-    return new FunctionInfoScanner(infos);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionInfoScanner>(infos);
   }
 
   void visitLoop(Loop* curr) {
@@ -209,7 +209,9 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
 
   Planner(InliningState* state) : state(state) {}
 
-  Planner* create() override { return new Planner(state); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Planner>(state);
+  }
 
   void visitCall(Call* curr) {
     // plan to inline if we know this is valid to inline, and if the call is
@@ -832,11 +834,9 @@ struct Inlining : public Pass {
 
   std::unique_ptr<FunctionSplitter> functionSplitter;
 
-  PassRunner* runner = nullptr;
   Module* module = nullptr;
 
-  void run(PassRunner* runner_, Module* module_) override {
-    runner = runner_;
+  void run(Module* module_) override {
     module = module_;
 
     // No point to do more iterations than the number of functions, as it means
@@ -919,9 +919,8 @@ struct Inlining : public Pass {
       infos[func->name];
     }
     {
-      PassRunner runner(module);
       FunctionInfoScanner scanner(&infos);
-      scanner.run(&runner, module);
+      scanner.run(getPassRunner(), module);
       scanner.walkModuleCode(module);
     }
     for (auto& ex : module->exports) {
@@ -935,9 +934,9 @@ struct Inlining : public Pass {
 
     // When optimizing heavily for size, we may potentially split functions in
     // order to inline parts of them.
-    if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
+    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
       functionSplitter =
-        std::make_unique<FunctionSplitter>(module, runner->options);
+        std::make_unique<FunctionSplitter>(module, getPassOptions());
     }
   }
 
@@ -962,7 +961,7 @@ struct Inlining : public Pass {
       funcNames.push_back(func->name);
     }
     // find and plan inlinings
-    Planner(&state).run(runner, module);
+    Planner(&state).run(getPassRunner(), module);
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
     // which functions were inlined into
@@ -1015,7 +1014,7 @@ struct Inlining : public Pass {
       wasm::UniqueNameMapper::uniquify(func->body);
     }
     if (optimize && inlinedInto.size() > 0) {
-      OptUtils::optimizeAfterInlining(inlinedInto, module, runner);
+      OptUtils::optimizeAfterInlining(inlinedInto, module, getPassRunner());
     }
     // remove functions that we no longer need after inlining
     module->removeFunctions([&](Function* func) {
@@ -1028,7 +1027,7 @@ struct Inlining : public Pass {
 
   bool worthInlining(Name name) {
     // Check if the function itself is worth inlining as it is.
-    if (infos[name].worthInlining(runner->options)) {
+    if (infos[name].worthInlining(getPassOptions())) {
       return true;
     }
 
@@ -1051,7 +1050,7 @@ struct Inlining : public Pass {
   // are guaranteed to inline after this.
   Function* getActuallyInlinedFunction(Function* func) {
     // If we want to inline this function itself, do so.
-    if (infos[func->name].worthInlining(runner->options)) {
+    if (infos[func->name].worthInlining(getPassOptions())) {
       return func;
     }
 
@@ -1095,7 +1094,7 @@ static const char* MAIN = "main";
 static const char* ORIGINAL_MAIN = "__original_main";
 
 struct InlineMainPass : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     auto* main = module->getFunctionOrNull(MAIN);
     auto* originalMain = module->getFunctionOrNull(ORIGINAL_MAIN);
     if (!main || main->imported() || !originalMain ||

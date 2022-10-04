@@ -201,7 +201,9 @@ struct OptimizeInstructions
   : public WalkerPass<PostWalker<OptimizeInstructions>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeInstructions; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<OptimizeInstructions>();
+  }
 
   bool fastMath;
 
@@ -416,8 +418,9 @@ struct OptimizeInstructions
       {
         // -x + y   ==>   y - x
         //   where  x, y  are floating points
-        Expression* x;
-        if (matches(curr, binary(Add, unary(Neg, any(&x)), any()))) {
+        Expression *x, *y;
+        if (matches(curr, binary(Add, unary(Neg, any(&x)), any(&y))) &&
+            canReorder(x, y)) {
           curr->op = Abstract::getBinary(curr->type, Sub);
           curr->left = x;
           std::swap(curr->left, curr->right);
