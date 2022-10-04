@@ -376,7 +376,7 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   WASM_UNREACHABLE("a or b must be a full cone");
 }
 
-void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
+void PossibleContents::normalizeDepth(std::unique_ptr<SubTypes>& subTypes) {
   assert(isConeType());
 
   auto* cone = &std::get<ConeType>(value);
@@ -1856,6 +1856,11 @@ void Flower::readFromData(HeapType declaredHeapType,
   } else {
     // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
     // type of the reference or some of its subtypes.
+    //
+    // Note that this cannot be Many - we should be emitting a cone for the
+    // relevant reference type in that case. That is, at worst we should have
+    // a cone here of the same type as the declared type of the read.
+    //
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
     // TODO: A Global may refer to an immutable global, which we can read the
@@ -1865,30 +1870,18 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       represent them as an exact type).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
-    assert(refContents.isMany() || refContents.isGlobal() ||
-           refContents.isConeType());
+    assert(refContents.isGlobal() || refContents.isConeType());
 
-    auto filteredRefContents = refContents;
-    if (refContents.isMany()) {
-      // If |refContents| is Many, we can filter it to what the wasm type system
-      // allows, which is the declared heap type and all subtypes.
-      filteredRefContents =
-        PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
-abort();
-    } else {
-      // Otherwise, just look at the cone here, discarding information about
-      // this being a global, for example, if we had that. All that matters from
-      // now is the cone.
-      auto cone = refContents.getCone();
-      filteredRefContents = PossibleContents::coneType(cone.type, cone.depth);
-    }
-
-    // Optimize the depth so it is never larger than the actual existing
-    // subtypes, which could cause wasted work later.
-    filteredRefContents.optimizeDepth(subTypes);
+    // Just look at the cone here, discarding information about this being a
+    // global, if it was one. All that matters from now is the cone. We also
+    // normalize the cone which can avoid wasted work later (we don't want two
+    // cone depths which refer to the same types in practice).
+    auto cone = refContents.getCone();
+    auto adjustedRefContents = PossibleContents::coneType(cone.type, cone.depth);
+    adjustedRefContents.normalizeDepth(subTypes);
 
     // We can read from anything in the relevant cone.
-    auto cone = filteredRefContents.getCone();
+    auto cone = adjustedRefContents.getCone();
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
@@ -1956,32 +1949,14 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
     updateContents(heapLoc, valueContents);
   } else {
-    assert(refContents.isMany() || refContents.isGlobal() ||
-           refContents.isConeType());
+    // This cannot be Many for the same reasons as in readFromData().
+    assert(refContents.isGlobal() || refContents.isConeType());
 
-    // Update all relevant subtypes here.
-    auto filteredRefContents = refContents;
-    if (refContents.isMany()) { // TODO; share this with read?
-      // If |refContents| is Many, we can filter it to what the wasm type system
-      // allows, which is the declared heap type and all subtypes.
-      filteredRefContents =
-        PossibleContents::fullConeType(Type(ref->type.getHeapType(), NonNullable));
-      // FIXME: perhaps this is hit too often? read as well?
-abort();
-    } else {
-      // Otherwise, just look at the cone here, discarding information about
-      // this being a global, for example, if we had that. All that matters from
-      // now is the cone.
-      auto cone = refContents.getCone();
-      filteredRefContents = PossibleContents::coneType(cone.type, cone.depth);
-    }
-
-    // Optimize the depth so it is never larger than the actual existing
-    // subtypes, which could cause wasted work later.
-    filteredRefContents.optimizeDepth(subTypes);
-
-    // We can read from anything in the relevant cone.
-    auto cone = filteredRefContents.getCone();
+    // As in readFromData, normalize to the proper cone.
+    auto cone = refContents.getCone();
+    auto adjustedRefContents = PossibleContents::coneType(cone.type, cone.depth);
+    adjustedRefContents.normalizeDepth(subTypes);
+    auto cone = adjustedRefContents.getCone();
 
     subTypes->traverseSubTypes(
       cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {

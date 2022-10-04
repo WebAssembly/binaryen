@@ -265,12 +265,12 @@ public:
     }
   }
 
-  // Use subtype info to optimize the depth so that it is as small as possible.
+  // Use subtype info to normalize the depth so that it is as small as possible.
   // In particular, if this is a full cone, then we can always pick the actual
   // maximal depth and use that instead of FullDepth==-1. For a non-full code,
   // we also reduce the depth as much as possible, so it is equal to the maximum
   // depth of an existing subtype.
-  void optimizeDepth(std::unique_ptr<SubTypes>& subTypes);
+  void normalizeDepth(std::unique_ptr<SubTypes>& subTypes);
 
   size_t hash() const {
     // First hash the index of the variant, then add the internals for each.
