@@ -4763,4 +4763,115 @@
   )
 )
 
-;; TODO: test with B and C both children of A. No opts there
+;; As above but now A has two subtypes, instead of a chain A->B->C
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+  (type $A (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+  (type $B (struct_subtype (field (mut i32)) $A))
+  ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $A))
+  (type $C (struct_subtype (field (mut i32)) $A)) ;; This line changed.
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (export "reads" (func $reads))
+
+  ;; CHECK:      (func $reads (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $C
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:     (local.get $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reads (export "reads") (param $x i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+    ;; A and B agree on their value.
+    (local.set $A
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (i32.const 10)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (i32.const 20)
+      )
+    )
+    ;; We cannot optimize any of these. The first is optimizable in theory,
+    ;; since A and B agree on the value, but we end up with a cone on A of depth
+    ;; 1, and that includes B and C. To optimize this we'd need a sum type.
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $A)
+          (local.get $B)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $A)
+          (local.get $C)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $B)
+          (local.get $C)
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
