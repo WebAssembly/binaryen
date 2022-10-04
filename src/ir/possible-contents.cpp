@@ -403,6 +403,10 @@ void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
     }
     auto currDepth = item.depth;
     maxDepth = std::max(currDepth, maxDepth);
+    if (maxDepth >= cone->depth) {
+      // We never need to increase the depth, just decrease it, so stop here.
+      break;
+    }
     for (auto type : (*item.vec)) {
       work.push_back({&subTypes->getStrictSubTypes(type), currDepth + 1});
     }
@@ -1882,6 +1886,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal() ||
            refContents.isConeType());
+std::cout << "waka read1 " << refContents << '\n';
 
     auto filteredRefContents = refContents;
     if (refContents.isMany()) {
@@ -1900,6 +1905,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     // Optimize the depth so it is never larger than the actual existing
     // subtypes, which could cause wasted work later.
     filteredRefContents.optimizeDepth(subTypes);
+std::cout << "waka read2 " << filteredRefContents << '\n';
 
     // We can read from anything in the relevant cone.
     auto cone = filteredRefContents.getCone();
