@@ -26,8 +26,7 @@ Instrumenter::Instrumenter(const InstrumenterConfig& config,
                            uint64_t moduleHash)
   : config(config), moduleHash(moduleHash) {}
 
-void Instrumenter::run(PassRunner* runner, Module* wasm) {
-  this->runner = runner;
+void Instrumenter::run(Module* wasm) {
   this->wasm = wasm;
 
   size_t numFuncs = 0;

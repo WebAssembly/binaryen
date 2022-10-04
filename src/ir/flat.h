@@ -118,7 +118,9 @@ inline void verifyFlatness(Module* module) {
 
     bool modifiesBinaryenIR() override { return false; }
 
-    VerifyFlatness* create() override { return new VerifyFlatness(); }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<VerifyFlatness>();
+    }
 
     void doVisitFunction(Function* func) { verifyFlatness(func); }
   };

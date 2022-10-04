@@ -48,7 +48,7 @@ struct SignaturePruning : public Pass {
   // type has no improvement that we can find, it will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -193,8 +193,12 @@ struct SignaturePruning : public Pass {
       }
 
       auto oldParams = sig.params;
-      auto removedIndexes = ParamUtils::removeParameters(
-        funcs, unusedParams, info.calls, info.callRefs, module, runner);
+      auto removedIndexes = ParamUtils::removeParameters(funcs,
+                                                         unusedParams,
+                                                         info.calls,
+                                                         info.callRefs,
+                                                         module,
+                                                         getPassRunner());
       if (removedIndexes.empty()) {
         continue;
       }

@@ -2830,9 +2830,33 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
+  Index operandsStart = 1;
+  std::optional<HeapType> sigType;
+  try {
+    sigType = parseHeapType(*s[1]);
+    operandsStart = 2;
+  } catch (ParseException& p) {
+    // The type annotation is required for return_call_ref but temporarily
+    // optional for call_ref.
+    if (isReturn) {
+      throw;
+    }
+  }
   std::vector<Expression*> operands;
-  parseOperands(s, 1, s.size() - 1, operands);
+  parseOperands(s, operandsStart, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
+
+  if (sigType) {
+    if (!sigType->isSignature()) {
+      throw ParseException(
+        std::string(isReturn ? "return_call_ref" : "call_ref") +
+          " type annotation should be a signature",
+        s.line,
+        s.col);
+    }
+    return Builder(wasm).makeCallRef(
+      target, operands, sigType->getSignature().results, isReturn);
+  }
   return ValidatingBuilder(wasm, s.line, s.col)
     .validateAndMakeCallRef(target, operands, isReturn);
 }
@@ -3049,7 +3073,17 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
-  return Builder(wasm).makeStringConst(s[1]->str());
+  Name rawStr = s[1]->str();
+  size_t len = rawStr.size();
+  std::vector<char> data;
+  stringToBinary(rawStr.c_str(), len, data);
+  data.push_back('\0');
+  Name str = data.empty() ? "" : &data[0];
+  if (str.size() != data.size() - 1) {
+    throw ParseException(
+      "zero bytes not yet supported in string constants", s.line, s.col);
+  }
+  return Builder(wasm).makeStringConst(str);
 }
 
 Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
@@ -3157,7 +3191,19 @@ void SExpressionWasmBuilder::stringToBinary(const char* input,
       break;
     }
     if (input[0] == '\\') {
-      if (input[1] == '"') {
+      if (input[1] == 't') {
+        *write++ = '\t';
+        input += 2;
+        continue;
+      } else if (input[1] == 'n') {
+        *write++ = '\n';
+        input += 2;
+        continue;
+      } else if (input[1] == 'r') {
+        *write++ = '\r';
+        input += 2;
+        continue;
+      } else if (input[1] == '"') {
         *write++ = '"';
         input += 2;
         continue;
@@ -3167,14 +3213,6 @@ void SExpressionWasmBuilder::stringToBinary(const char* input,
         continue;
       } else if (input[1] == '\\') {
         *write++ = '\\';
-        input += 2;
-        continue;
-      } else if (input[1] == 'n') {
-        *write++ = '\n';
-        input += 2;
-        continue;
-      } else if (input[1] == 't') {
-        *write++ = '\t';
         input += 2;
         continue;
       } else {

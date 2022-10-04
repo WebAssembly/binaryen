@@ -1157,7 +1157,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call_ref
+ ;; CHECK-NEXT:   (call_ref $func-return-i32
  ;; CHECK-NEXT:    (local.get $temp)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1169,7 +1169,7 @@
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (call_ref
+ ;; NOMNL-NEXT:   (call_ref $func-return-i32
  ;; NOMNL-NEXT:    (local.get $temp)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )

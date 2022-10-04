@@ -76,7 +76,9 @@ struct Flatten
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new Flatten; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Flatten>();
+  }
 
   // For each expression, a bunch of expressions that should execute right
   // before it

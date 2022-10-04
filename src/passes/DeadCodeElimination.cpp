@@ -48,7 +48,9 @@ struct DeadCodeElimination
   // local.get might have prevented validation).
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  Pass* create() override { return new DeadCodeElimination; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<DeadCodeElimination>();
+  }
 
   // as we remove code, we must keep the types of other nodes valid
   TypeUpdater typeUpdater;

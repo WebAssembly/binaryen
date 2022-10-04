@@ -3322,15 +3322,15 @@ public:
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
+    Flow flow = self()->visit(curr->delta);
+    if (flow.breaking()) {
+      return flow;
+    }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
     auto indexType = memory->indexType;
     auto fail = Literal::makeFromInt64(-1, memory->indexType);
-    Flow flow = self()->visit(curr->delta);
-    if (flow.breaking()) {
-      return flow;
-    }
     Flow ret = Literal::makeFromInt64(memorySize, indexType);
     uint64_t delta = flow.getSingleValue().getUnsigned();
     if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {

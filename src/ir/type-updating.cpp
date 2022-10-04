@@ -80,7 +80,8 @@ void GlobalTypeRewriter::update() {
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(i, indexedTypes.indices[*super]);
+      typeBuilder.setSubType(
+        i, typeBuilder.getTempHeapType(indexedTypes.indices[*super]));
     }
   }
 
@@ -112,7 +113,9 @@ void GlobalTypeRewriter::update() {
 
     CodeUpdater(OldToNewTypes& oldToNewTypes) : oldToNewTypes(oldToNewTypes) {}
 
-    CodeUpdater* create() override { return new CodeUpdater(oldToNewTypes); }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<CodeUpdater>(oldToNewTypes);
+    }
 
     Type getNew(Type type) {
       if (type.isRef()) {

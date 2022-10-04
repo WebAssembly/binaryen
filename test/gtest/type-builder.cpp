@@ -25,12 +25,12 @@ TEST_F(TypeTest, TypeIterator) {
 
   EXPECT_EQ(none.size(), 0u);
   EXPECT_EQ(none.begin(), none.end());
-  EXPECT_EQ(none.end() - none.begin(), 0u);
+  EXPECT_EQ(none.end() - none.begin(), 0);
   EXPECT_EQ(none.begin() + 0, none.end());
 
   EXPECT_EQ(i32.size(), 1u);
   EXPECT_NE(i32.begin(), i32.end());
-  EXPECT_EQ(i32.end() - i32.begin(), 1u);
+  EXPECT_EQ(i32.end() - i32.begin(), 1);
 
   EXPECT_EQ(*i32.begin(), i32);
   EXPECT_EQ(i32[0], i32);
@@ -56,7 +56,7 @@ TEST_F(TypeTest, TypeIterator) {
 
   EXPECT_EQ(tuple.size(), 4u);
   EXPECT_NE(tuple.begin(), tuple.end());
-  EXPECT_EQ(tuple.end() - tuple.begin(), 4u);
+  EXPECT_EQ(tuple.end() - tuple.begin(), 4);
 
   EXPECT_EQ(*tuple.begin(), i32);
   EXPECT_EQ(*(tuple.begin() + 1), i64);
@@ -532,4 +532,128 @@ TEST_F(NominalTest, TestSubTypes) {
               subTypes0Inclusive[1] == built[0]);
   auto subTypes1 = subTypes.getStrictSubTypes(built[1]);
   EXPECT_EQ(subTypes1.size(), 0u);
+}
+
+// Test reuse of a previously built type as supertype.
+TEST_F(NominalTest, TestExistingSuperType) {
+  // Build an initial type A
+  Type A;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = Type(built[0], Nullable);
+  }
+
+  // Build a type B <: A using a new builder
+  Type B;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    builder.setSubType(0, A.getHeapType());
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    B = Type(built[0], Nullable);
+  }
+
+  // Test that B <: A where A is the initial type A
+  auto superOfB = B.getHeapType().getSuperType();
+  ASSERT_TRUE(superOfB);
+  EXPECT_EQ(*superOfB, A.getHeapType());
+  EXPECT_NE(B.getHeapType(), A.getHeapType());
+}
+
+// Test reuse of a previously built type as supertype, where in isorecursive
+// mode canonicalization is performed.
+TEST_F(IsorecursiveTest, TestExistingSuperType) {
+  // Build an initial type A1
+  Type A1;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A1 = Type(built[0], Nullable);
+  }
+
+  // Build a separate type A2 identical to A1
+  Type A2;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A2 = Type(built[0], Nullable);
+  }
+
+  // Build a type B1 <: A1 using a new builder
+  Type B1;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    builder.setSubType(0, A1.getHeapType());
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    B1 = Type(built[0], Nullable);
+  }
+
+  // Build a type B2 <: A2 using a new builder
+  Type B2;
+  {
+    TypeBuilder builder(1);
+    builder[0] = Struct();
+    builder.setSubType(0, A2.getHeapType());
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    B2 = Type(built[0], Nullable);
+  }
+
+  // Test that A1 == A2 and B1 == B2
+  EXPECT_EQ(A1.getHeapType(), A2.getHeapType());
+  EXPECT_EQ(B1.getHeapType(), B2.getHeapType());
+}
+
+// Test .depth() helper.
+TEST_F(NominalTest, TestDepth) {
+  HeapType A, B, C;
+  {
+    TypeBuilder builder(3);
+    builder[0] = Struct();
+    builder[1] = Struct();
+    builder[2] = Array(Field(Type::i32, Immutable));
+    builder.setSubType(1, builder.getTempHeapType(0));
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = built[0];
+    B = built[1];
+    C = built[2];
+  }
+
+  // any < eq < data < specific struct and array types
+  EXPECT_EQ(HeapType(HeapType::any).getDepth(), 0U);
+  EXPECT_EQ(HeapType(HeapType::eq).getDepth(), 1U);
+  EXPECT_EQ(HeapType(HeapType::data).getDepth(), 2U);
+  EXPECT_EQ(A.getDepth(), 3U);
+  EXPECT_EQ(B.getDepth(), 4U);
+  EXPECT_EQ(C.getDepth(), 3U);
+
+  // Signature types are subtypes of func.
+  EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);
+  EXPECT_EQ(HeapType(Signature(Type::none, Type::none)).getDepth(), 1U);
+
+  EXPECT_EQ(HeapType(HeapType::ext).getDepth(), 0U);
+
+  EXPECT_EQ(HeapType(HeapType::i31).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::string).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::stringview_wtf8).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::stringview_wtf16).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::stringview_iter).getDepth(), 2U);
 }

@@ -13,8 +13,10 @@
  )
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call_ref
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

@@ -201,7 +201,9 @@ struct OptimizeInstructions
   : public WalkerPass<PostWalker<OptimizeInstructions>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeInstructions; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<OptimizeInstructions>();
+  }
 
   bool fastMath;
 
@@ -3604,11 +3606,7 @@ private:
           return getDroppedChildrenAndAppend(curr->left, c);
         }
         // propagate NaN of RHS but canonicalize it
-        if (c->type == Type::f32) {
-          c->value = standardizeNaN(c->value.getf32());
-        } else {
-          c->value = standardizeNaN(c->value.getf64());
-        }
+        c->value = Literal::standardizeNaN(c->value);
         return getDroppedChildrenAndAppend(curr->left, c);
       }
     }

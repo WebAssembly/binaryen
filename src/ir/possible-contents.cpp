@@ -86,7 +86,7 @@ void PossibleContents::combine(const PossibleContents& other) {
     // combination here is if they have the same type (since we've already ruled
     // out the case of them being equal). If they have the same type then
     // neither is a reference and we can emit an exact type (since subtyping is
-    // not relevant for non-references.
+    // not relevant for non-references).
     if (type == otherType) {
       value = ExactType(type);
     } else {
@@ -130,6 +130,69 @@ void PossibleContents::combine(const PossibleContents& other) {
 
   // Nothing else possible combines in an interesting way; emit a Many.
   value = Many();
+}
+
+bool PossibleContents::haveIntersection(const PossibleContents& a,
+                                        const PossibleContents& b) {
+  if (a.isNone() || b.isNone()) {
+    // One is the empty set, so nothing can intersect here.
+    return false;
+  }
+
+  if (a.isMany() || b.isMany()) {
+    // One is the set of all things, so definitely something can intersect since
+    // we've ruled out an empty set for both.
+    return true;
+  }
+
+  auto aType = a.getType();
+  auto bType = b.getType();
+
+  if (!aType.isRef() || !bType.isRef()) {
+    // At least one is not a reference. The only way they can intersect is if
+    // the type is identical.
+    return aType == bType;
+  }
+
+  // From here on we focus on references.
+
+  if (aType.isNullable() && bType.isNullable()) {
+    // Null is possible on both sides. Assume that an intersection can exist,
+    // but we could be more precise here and check if the types belong to
+    // different hierarchies, in which case the nulls would differ TODO. For
+    // now we only use this API from the RefEq logic, so this is fully precise.
+    return true;
+  }
+
+  // We ruled out a null on both sides, so at least one is non-nullable. If the
+  // other is a null then no chance for an intersection remains.
+  if (a.isNull() || b.isNull()) {
+    return false;
+  }
+
+  // From here on we focus on references and can ignore the case of null - any
+  // intersection must be of a non-null value, so we can focus on the heap
+  // types.
+  auto aHeapType = aType.getHeapType();
+  auto bHeapType = bType.getHeapType();
+
+  if (a.hasExactType() && b.hasExactType() && aHeapType != bHeapType) {
+    // The values must be different since their types are different.
+    return false;
+  }
+
+  if (!HeapType::isSubType(aHeapType, bHeapType) &&
+      !HeapType::isSubType(bHeapType, aHeapType)) {
+    // No type can appear in both a and b, so the types differ, so the values
+    // differ.
+    return false;
+  }
+
+  // TODO: we can also optimize things like different Literals, but existing
+  //       passes do such things already so it is low priority.
+
+  // It appears they can intersect.
+  return true;
 }
 
 namespace {
@@ -376,11 +439,22 @@ struct InfoCollector
     addRoot(
       curr,
       PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
+
+    // The presence of a RefFunc indicates the function may be called
+    // indirectly, so add the relevant connections for this particular function.
+    // We do so here in the RefFunc so that we only do it for functions that
+    // actually have a RefFunc.
+    auto* func = getModule()->getFunction(curr->func);
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      info.links.push_back(
+        {SignatureParamLocation{func->type, i}, LocalLocation{func, i, 0}});
+    }
+    for (Index i = 0; i < func->getResults().size(); i++) {
+      info.links.push_back(
+        {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
+    }
   }
   void visitRefEq(RefEq* curr) {
-    // TODO: optimize when possible (e.g. when both sides must contain the same
-    //       global, or if we infer exact types that are different then the
-    //       result must be 0)
     addRoot(curr);
   }
   void visitTableGet(TableGet* curr) {
@@ -416,14 +490,9 @@ struct InfoCollector
   }
 
   void visitRefCast(RefCast* curr) {
-    // We will handle this in a special way later during the flow, as ref.cast
-    // only allows valid values to flow through.
     addChildParentLink(curr->ref, curr);
   }
-  void visitRefTest(RefTest* curr) {
-    // We will handle this similarly to RefCast.
-    addChildParentLink(curr->ref, curr);
-  }
+  void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);
@@ -580,9 +649,6 @@ struct InfoCollector
     handleIndirectCall(curr, curr->heapType);
   }
   void visitCallRef(CallRef* curr) {
-    // TODO: Optimize like RefCast etc.: the values reaching us depend on the
-    //       possible values of |target| (which might be nothing, or might be a
-    //       constant function).
     handleIndirectCall(curr, curr->target->type);
   }
 
@@ -1114,9 +1180,6 @@ private:
   // values to flow through it.
   void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
-  // The possible contents may allow us to infer an outcome, like with RefCast.
-  void flowRefTest(const PossibleContents& contents, RefTest* test);
-
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
@@ -1255,24 +1318,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "func phase\n";
-#endif
-
-  // Connect function parameters to their signature, so that any indirect call
-  // of that signature will reach them.
-  // TODO: find which functions are even taken by reference
-  for (auto& func : wasm.functions) {
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      links.insert(getIndexes({SignatureParamLocation{func->type, i},
-                               LocalLocation{func.get(), i, 0}}));
-    }
-    for (Index i = 0; i < func->getResults().size(); i++) {
-      links.insert(getIndexes({ResultLocation{func.get(), i},
-                               SignatureResultLocation{func->type, i}}));
-    }
-  }
-
-#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "struct phase\n";
 #endif
 
@@ -1366,12 +1411,12 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
   //
-  // Many is always the worst possible case. An exact type of a non-reference is
+  // Many is always the worst possible case. A cone type of a non-reference is
   // also the worst case, since subtyping is not relevant there, and so if we
-  // know only the type then we already know nothing beyond what the type in the
-  // wasm tells us (and from there we can only go to Many).
+  // only know something about the type then we already know nothing beyond what
+  // the type in the wasm tells us (and from there we can only go to Many).
   bool worthSendingMore = !contents.isMany();
-  if (!contents.getType().isRef() && contents.isExactType()) {
+  if (!contents.getType().isRef() && contents.isConeType()) {
     worthSendingMore = false;
   }
 
@@ -1469,9 +1514,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* cast = parent->dynCast<RefCast>()) {
       assert(cast->ref == child);
       flowRefCast(contents, cast);
-    } else if (auto* test = parent->dynCast<RefTest>()) {
-      assert(test->ref == child);
-      flowRefTest(contents, test);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1536,9 +1578,10 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // "Many", since in the worst case we can just use the immutable value. That
     // is, we can always replace this value with (global.get $name) which will
     // get the right value. Likewise, using the immutable global value is often
-    // better than an exact type, but TODO: we could note both an exact type
-    // *and* that something is equal to a global, in some cases.
-    if (contents.isMany() || contents.isExactType()) {
+    // better than a cone type (even an exact one), but TODO: we could note both
+    // a cone/exact type *and* that something is equal to a global, in some
+    // cases. See https://github.com/WebAssembly/binaryen/pull/5083
+    if (contents.isMany() || contents.isConeType()) {
       contents = PossibleContents::global(global->name, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
@@ -1561,7 +1604,7 @@ void Flower::readFromData(HeapType declaredHeapType,
                           Expression* read) {
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
-  // which DataLocations are relevant: if it is an ExactType then we have a
+  // which DataLocations are relevant: if it is an exact type then we have a
   // single DataLocation to read from, the one type that can be read from there.
   // Otherwise, we might read from any subtype, and so all their DataLocations
   // are relevant.
@@ -1603,22 +1646,21 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.isExactType()) {
+  if (refContents.hasExactType()) {
     // Add a single link to the exact location the reference points to.
     connectDuringFlow(
       DataLocation{refContents.getType().getHeapType(), fieldIndex},
       ExpressionLocation{read, 0});
   } else {
-    // Otherwise, this is a cone: the declared type of the reference, or any
-    // subtype of that, regardless of whether the content is a Many or a Global
-    // or anything else.
+    // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
+    // type of the reference or some of its subtypes.
     // TODO: The Global case may have a different cone type than the heapType,
     //       which we could use here.
     // TODO: A Global may refer to an immutable global, which we can read the
     //       field from potentially (reading it from the struct.new/array.new
     //       in the definition of it, if it is not imported; or, we could track
     //       the contents of immutable fields of allocated objects, and not just
-    //       represent them as ExactType).
+    //       represent them as an exact type).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
     assert(refContents.isMany() || refContents.isGlobal());
@@ -1733,32 +1775,6 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   }
 }
 
-void Flower::flowRefTest(const PossibleContents& contents, RefTest* test) {
-  PossibleContents filtered;
-  if (contents.isMany()) {
-    // Just pass the Many through.
-    filtered = contents;
-  } else {
-    // RefTest returns 1 iff the input is not null and is also a subtype.
-    bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), test->intendedType);
-    bool mayBeNull = contents.getType().isNullable();
-    if (!isSubType) {
-      filtered = PossibleContents::literal(Literal(int32_t(0)));
-    } else if (!mayBeNull) {
-      filtered = PossibleContents::literal(Literal(int32_t(1)));
-    } else {
-      filtered = PossibleContents::many();
-    }
-  }
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "    ref.test passing through\n";
-  filtered.dump(std::cout);
-  std::cout << '\n';
-#endif
-  updateContents(ExpressionLocation{test, 0}, filtered);
-}
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
 void Flower::dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
@@ -1792,8 +1808,6 @@ void Flower::dump(Location location) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
-  } else if (auto* loc = std::get_if<UniqueLocation>(&location)) {
-    std::cout << "  Specialloc " << loc->index << '\n';
   } else {
     std::cout << "  (other)\n";
   }

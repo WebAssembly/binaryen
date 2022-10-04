@@ -64,7 +64,7 @@ struct GlobalStructInference : public Pass {
   // them. If a global is not present here, it cannot be optimized.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -173,12 +173,21 @@ struct GlobalStructInference : public Pass {
       return;
     }
 
+    // The above loop on typeGlobalsCopy is on an unsorted data structure, and
+    // that can lead to nondeterminism in typeGlobals. Sort the vectors there to
+    // ensure determinism.
+    for (auto& [type, globals] : typeGlobals) {
+      std::sort(globals.begin(), globals.end());
+    }
+
     // Optimize based on the above.
     struct FunctionOptimizer
       : public WalkerPass<PostWalker<FunctionOptimizer>> {
       bool isFunctionParallel() override { return true; }
 
-      Pass* create() override { return new FunctionOptimizer(parent); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<FunctionOptimizer>(parent);
+      }
 
       FunctionOptimizer(GlobalStructInference& parent) : parent(parent) {}
 
@@ -219,7 +228,7 @@ struct GlobalStructInference : public Pass {
         //   (i32.const 1337)
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
-        auto& globals = iter->second;
+        const auto& globals = iter->second;
         if (globals.size() < 2) {
           return;
         }
@@ -305,7 +314,7 @@ struct GlobalStructInference : public Pass {
       GlobalStructInference& parent;
     };
 
-    FunctionOptimizer(*this).run(runner, module);
+    FunctionOptimizer(*this).run(getPassRunner(), module);
   }
 };
 

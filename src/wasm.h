@@ -746,6 +746,15 @@ public:
 
   Expression(Id id) : _id(id) {}
 
+protected:
+  // An expression cannot be constructed without knowing what kind of expression
+  // it should be.
+  Expression(const Expression& other) = default;
+  Expression(Expression&& other) = default;
+  Expression& operator=(Expression& other) = default;
+  Expression& operator=(Expression&& other) = default;
+
+public:
   void finalize() {}
 
   template<class T> bool is() const {

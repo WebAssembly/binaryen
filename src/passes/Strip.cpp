@@ -36,7 +36,7 @@ struct Strip : public Pass {
 
   Strip(Decider decider) : decider(decider) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // Remove name and debug sections.
     auto& sections = module->userSections;
     sections.erase(std::remove_if(sections.begin(), sections.end(), decider),

@@ -1392,6 +1392,36 @@ size_t HeapType::getDepth() const {
   for (auto curr = *this; (super = curr.getSuperType()); curr = *super) {
     ++depth;
   }
+  // In addition to the explicit supertypes we just traversed over, there is
+  // implicit supertyping wrt basic types. A signature type always has one more
+  // super, HeapType::func, etc.
+  if (!isBasic()) {
+    if (isFunction()) {
+      depth++;
+    } else if (isData()) {
+      // specific struct types <: data <: eq <: any
+      depth += 3;
+    }
+  } else {
+    // Some basic types have supers.
+    switch (getBasic()) {
+      case HeapType::ext:
+      case HeapType::func:
+      case HeapType::any:
+        break;
+      case HeapType::eq:
+        depth++;
+        break;
+      case HeapType::i31:
+      case HeapType::data:
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        depth += 2;
+        break;
+    }
+  }
   return depth;
 }
 
@@ -2803,11 +2833,10 @@ Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
   return markTemp(impl->typeStore.insert(TypeInfo(type, nullable)));
 }
 
-void TypeBuilder::setSubType(size_t i, size_t j) {
-  assert(i < size() && j < size() && "index out of bounds");
+void TypeBuilder::setSubType(size_t i, HeapType super) {
+  assert(i < size() && "index out of bounds");
   HeapTypeInfo* sub = impl->entries[i].info.get();
-  HeapTypeInfo* super = impl->entries[j].info.get();
-  sub->supertype = super;
+  sub->supertype = getHeapTypeInfo(super);
 }
 
 void TypeBuilder::createRecGroup(size_t i, size_t length) {
@@ -3657,9 +3686,9 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     if (type.isBasic()) {
       continue;
     }
-    // Validate the supertype. Supertypes must precede their subtypes.
+    // Validate the supertype. Temporary supertypes must precede their subtypes.
     if (auto super = type.getSuperType()) {
-      if (!indexOfType.count(*super)) {
+      if (isTemp(*super) && !indexOfType.count(*super)) {
         return {{index, TypeBuilder::ErrorReason::ForwardSupertypeReference}};
       }
     }

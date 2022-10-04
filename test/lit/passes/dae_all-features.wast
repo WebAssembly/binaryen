@@ -504,7 +504,7 @@
   (unreachable)
  )
  ;; CHECK:      (func $1
- ;; CHECK-NEXT:  (call_ref
+ ;; CHECK-NEXT:  (call_ref $i64
  ;; CHECK-NEXT:   (i64.const 0)
  ;; CHECK-NEXT:   (global.get $global$0)
  ;; CHECK-NEXT:  )

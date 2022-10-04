@@ -18,7 +18,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-B)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
@@ -80,7 +80,7 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -119,13 +119,13 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -181,13 +181,13 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.null $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

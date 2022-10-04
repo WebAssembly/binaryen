@@ -31,7 +31,7 @@ namespace wasm {
 struct Untee : public WalkerPass<PostWalker<Untee>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Untee; }
+  std::unique_ptr<Pass> create() override { return std::make_unique<Untee>(); }
 
   void visitLocalSet(LocalSet* curr) {
     if (curr->isTee()) {

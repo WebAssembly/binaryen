@@ -217,6 +217,20 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
+Literal Literal::standardizeNaN(const Literal& input) {
+  if (!std::isnan(input.getFloat())) {
+    return input;
+  }
+  // Pick a simple canonical payload, and positive.
+  if (input.type == Type::f32) {
+    return Literal(bit_cast<float>(uint32_t(0x7fc00000u)));
+  } else if (input.type == Type::f64) {
+    return Literal(bit_cast<double>(uint64_t(0x7ff8000000000000ull)));
+  } else {
+    WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
@@ -859,22 +873,6 @@ Literal Literal::demote() const {
   return Literal(float(getf64()));
 }
 
-Literal standardizeNaN(float result) {
-  if (!std::isnan(result)) {
-    return Literal(result);
-  }
-  // Pick a simple canonical payload, and positive.
-  return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
-}
-
-Literal standardizeNaN(double result) {
-  if (!std::isnan(result)) {
-    return Literal(result);
-  }
-  // Pick a simple canonical payload, and positive.
-  return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
-}
-
 Literal Literal::add(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
@@ -882,9 +880,9 @@ Literal Literal::add(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) + uint64_t(other.i64));
     case Type::f32:
-      return standardizeNaN(getf32() + other.getf32());
+      return standardizeNaN(Literal(getf32() + other.getf32()));
     case Type::f64:
-      return standardizeNaN(getf64() + other.getf64());
+      return standardizeNaN(Literal(getf64() + other.getf64()));
     case Type::v128:
     case Type::none:
     case Type::unreachable:
@@ -900,9 +898,9 @@ Literal Literal::sub(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) - uint64_t(other.i64));
     case Type::f32:
-      return standardizeNaN(getf32() - other.getf32());
+      return standardizeNaN(Literal(getf32() - other.getf32()));
     case Type::f64:
-      return standardizeNaN(getf64() - other.getf64());
+      return standardizeNaN(Literal(getf64() - other.getf64()));
     case Type::v128:
     case Type::none:
     case Type::unreachable:
@@ -997,9 +995,9 @@ Literal Literal::mul(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
     case Type::f32:
-      return standardizeNaN(getf32() * other.getf32());
+      return standardizeNaN(Literal(getf32() * other.getf32()));
     case Type::f64:
-      return standardizeNaN(getf64() * other.getf64());
+      return standardizeNaN(Literal(getf64() * other.getf64()));
     case Type::v128:
     case Type::none:
     case Type::unreachable:
@@ -1018,7 +1016,7 @@ Literal Literal::div(const Literal& other) const {
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
             case FP_ZERO:
-              return standardizeNaN(lhs / rhs);
+              return standardizeNaN(Literal(lhs / rhs));
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -1031,7 +1029,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          return standardizeNaN(lhs / rhs);
+          return standardizeNaN(Literal(lhs / rhs));
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -1044,7 +1042,7 @@ Literal Literal::div(const Literal& other) const {
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
             case FP_ZERO:
-              return standardizeNaN(lhs / rhs);
+              return standardizeNaN(Literal(lhs / rhs));
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -1057,7 +1055,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          return standardizeNaN(lhs / rhs);
+          return standardizeNaN(Literal(lhs / rhs));
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -1393,10 +1391,10 @@ Literal Literal::min(const Literal& other) const {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
@@ -1406,10 +1404,10 @@ Literal Literal::min(const Literal& other) const {
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
@@ -1426,10 +1424,10 @@ Literal Literal::max(const Literal& other) const {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
@@ -1439,10 +1437,10 @@ Literal Literal::max(const Literal& other) const {
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
