@@ -376,21 +376,23 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   WASM_UNREACHABLE("a or b must be a full cone");
 }
 
-void PossibleContents::normalizeDepth(std::unique_ptr<SubTypes>& subTypes) {
-  assert(isConeType());
+PossibleContents::ConeType PossibleContents::getNormalizedCone(std::unique_ptr<SubTypes>& subTypes) const {
+  auto cone = getCone();
 
-  auto* cone = &std::get<ConeType>(value);
+  if (cone.type.isRef()) {
+    Index maxDepth = 0;
 
-  Index maxDepth = 0;
+    subTypes->traverseSubTypes(
+      cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
+        maxDepth = std::max(depth, maxDepth);
+      });
 
-  subTypes->traverseSubTypes(
-    cone->type.getHeapType(), cone->depth, [&](HeapType type, Index depth) {
-      maxDepth = std::max(depth, maxDepth);
-    });
+    assert(maxDepth <= cone.depth);
 
-  assert(maxDepth <= cone->depth);
+    cone.depth = maxDepth;
+  }
 
-  cone->depth = maxDepth;
+  return cone;
 }
 
 namespace {
@@ -1876,13 +1878,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     // global, if it was one. All that matters from now is the cone. We also
     // normalize the cone which can avoid wasted work later (we don't want two
     // cone depths which refer to the same types in practice).
-    auto cone = refContents.getCone();
-    auto adjustedRefContents =
-      PossibleContents::coneType(cone.type, cone.depth);
-    adjustedRefContents.normalizeDepth(subTypes);
-
-    // We can read from anything in the relevant cone.
-    auto cone = adjustedRefContents.getCone();
+    auto cone = refContents.getNormalizedCone(subTypes);
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
@@ -1954,11 +1950,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     assert(refContents.isGlobal() || refContents.isConeType());
 
     // As in readFromData, normalize to the proper cone.
-    auto cone = refContents.getCone();
-    auto adjustedRefContents =
-      PossibleContents::coneType(cone.type, cone.depth);
-    adjustedRefContents.normalizeDepth(subTypes);
-    auto cone = adjustedRefContents.getCone();
+    auto cone = refContents.getNormalizedCone(subTypes);
 
     subTypes->traverseSubTypes(
       cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
