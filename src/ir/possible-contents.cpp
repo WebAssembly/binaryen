@@ -1,3 +1,4 @@
+#define POSSIBLE_CONTENTS_DEBUG 2
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -1207,10 +1208,10 @@ struct InfoCollector
   // verbose code).
   void addRoot(Expression* curr,
                PossibleContents contents = PossibleContents::many()) {
+std::cout << "addRoot " << *curr << " : " << curr->type << '\n';
     if (isRelevant(curr)) {
-      if (contents.isMany() && curr->type.isRef()) {
-        // The contents must be a subtype of the declared type.
-        contents = PossibleContents::fullConeType(curr->type);
+      if (contents.isMany()) {
+        contents = PossibleContents::fromType(curr->type);
       }
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
@@ -1407,7 +1408,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       if (func->imported()) {
         // Imports return unknown values.
         for (Index i = 0; i < func->getResults().size(); i++) {
-          finder.addRoot(ResultLocation{func, i}, PossibleContents::many());
+          finder.addRoot(ResultLocation{func, i});
         }
         return;
       }
@@ -1430,7 +1431,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   for (auto& global : wasm.globals) {
     if (global->imported()) {
       // Imports are unknown values.
-      finder.addRoot(GlobalLocation{global->name}, PossibleContents::many());
+      finder.addRoot(GlobalLocation{global->name});
       continue;
     }
     auto* init = global->init;
@@ -1484,8 +1485,9 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // that we can't see, so anything might arrive there.
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[LocalLocation{func, i, 0}] = PossibleContents::many();
+    auto params = func->getParams();
+    for (Index i = 0; i < params.size(); i++) {
+      roots[LocalLocation{func, i, 0}] = PossibleContents::fromType(params[i]);
     }
   };
 
@@ -1516,8 +1518,9 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       // Exported mutable globals are roots, since the outside may write any
       // value to them.
       auto name = ex->value;
-      if (wasm.getGlobal(name)->mutable_) {
-        roots[GlobalLocation{name}] = PossibleContents::many();
+      auto* global = wasm.getGlobal(name);
+      if (global->mutable_) {
+        roots[GlobalLocation{name}] = PossibleContents::fromType(global->type);
       }
     }
   }

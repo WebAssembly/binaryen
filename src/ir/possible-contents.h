@@ -131,6 +131,18 @@ public:
   }
   static PossibleContents many() { return PossibleContents{Many()}; }
 
+  // Helper for creating a PossibleContents based on a wasm type, that is, where
+  // all we know is the wasm type.
+  static PossibleContents fromType(Type type) {
+    // For a reference, subtyping matters, so emit a cone. Otherwise, just emit
+    // many.
+    if (type.isRef()) {
+      return fullConeType(type);
+    }
+
+    return many();
+  }
+
   PossibleContents& operator=(const PossibleContents& other) = default;
 
   bool operator==(const PossibleContents& other) const {
