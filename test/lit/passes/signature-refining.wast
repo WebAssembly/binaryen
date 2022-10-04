@@ -36,10 +36,11 @@
 (module
   ;; As above, but the call is via call_ref.
 
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -71,10 +72,11 @@
   ;; call uses a nullable $struct, the other a non-nullable dataref, so the LUB
   ;; is a nullable dataref.
 
+  ;; CHECK:      (type $sig (func_subtype (param dataref) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param dataref) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -266,10 +268,11 @@
   ;; An unreachable value does not prevent optimization: we will update the
   ;; param to be $struct.
 
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -356,9 +359,10 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
+  ;; CHECK:      (type $sig-2 (func_subtype (param eqref (ref $struct)) func))
+
   ;; CHECK:      (type $sig-1 (func_subtype (param dataref anyref) func))
   (type $sig-1 (func_subtype (param anyref) (param anyref) func))
-  ;; CHECK:      (type $sig-2 (func_subtype (param eqref (ref $struct)) func))
   (type $sig-2 (func_subtype (param anyref) (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
