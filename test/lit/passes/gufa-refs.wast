@@ -2545,14 +2545,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $struct
-  ;; CHECK-NEXT:    (select (result eqref)
-  ;; CHECK-NEXT:     (ref.null $struct)
-  ;; CHECK-NEXT:     (i31.new
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast_static $struct
+  ;; CHECK-NEXT:      (select (result eqref)
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (i31.new
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $import)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
