@@ -4974,7 +4974,7 @@
   )
 )
 
-;; As above, but write a different cone.
+;; As above, but write a different value.
 (module
   ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct_subtype (field (mut i32)) data))
@@ -5054,6 +5054,105 @@
         (local.get $x)
       )
       (i32.const 10)
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    (drop
+      (struct.get $C 0
+        (local.get $C)
+      )
+    )
+  )
+)
+
+;; As above, but write a different cone.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+  (type $A (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+  (type $B (struct_subtype (field (mut i32)) $A))
+  ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
+  (type $C (struct_subtype (field (mut i32)) $B))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (export "write" (func $write))
+
+  ;; CHECK:      (func $write (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $C
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (select (result (ref $B))
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:    (local.get $C)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $write (export "write") (param $x i32)
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+    (local.set $A
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (i32.const 10)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (i32.const 20)
+      )
+    )
+    ;; Write a different value now: 20. This prevents us from optimizing B, but
+    ;; we can still optimize A and C.
+    (struct.set $A 0
+      (select
+        (local.get $B)
+        (local.get $C)
+        (local.get $x)
+      )
+      (i32.const 20)
     )
     (drop
       (struct.get $A 0
