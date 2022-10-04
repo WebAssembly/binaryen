@@ -238,7 +238,6 @@ struct MultiMemoryLowering : public Pass {
       Names::getValidFunctionName(*wasm, "adjust_memory_offsets");
     auto function = Builder::makeFunction(
       functionName, Signature(pointerType, pointerType), {});
-    function->hasExplicitName = true;
     function->setLocalName(0, "page_delta");
     auto getPageDelta = [&]() { return builder.makeLocalGet(0, pointerType); };
     Expression* functionBody;
@@ -302,7 +301,6 @@ struct MultiMemoryLowering : public Pass {
     Name functionName = Names::getValidFunctionName(*wasm, "multi_memory_size");
     auto function = Builder::makeFunction(
       functionName, Signature(Type::none, pointerType), {});
-    function->hasExplicitName = true;
     Expression* functionBody;
 
     // offsetGlobalNames does not keep track of a global for the offset of
