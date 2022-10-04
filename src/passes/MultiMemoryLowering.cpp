@@ -28,7 +28,6 @@
 namespace wasm {
 
 struct MultiMemoryLowering : public Pass {
-  PassRunner* runner = nullptr;
   Module* wasm = nullptr;
   // The name of the single memory that exists after this pass is run
   Name combinedMemory;
@@ -54,7 +53,6 @@ struct MultiMemoryLowering : public Pass {
       return;
     }
 
-    this->runner = getPassRunner();
     this->wasm = module;
 
     addCombinedMemory();
@@ -120,7 +118,7 @@ struct MultiMemoryLowering : public Pass {
       }
 
       // We diverge from the spec here and are not trapping if the offset + type
-      // / 8 is larger than the length of the memory's data Warning,
+      // / 8 is larger than the length of the memory's data. Warning,
       // out-of-bounds loads and stores can read junk out of or corrupt other
       // memories instead of trapping
       void visitStore(Store* curr) {
@@ -166,8 +164,8 @@ struct MultiMemoryLowering : public Pass {
         name,
         pointerType,
         Builder(*wasm).makeConst(pointerType == Type::i32
-                                   ? Literal(int32_t(offset))
-                                   : Literal(int64_t(offset))),
+                                   ? Literal::makeFromInt32(offset, pointerType)
+                                   : Literal::makeFromInt64(offset, pointerType)),
         Builder::Mutable);
       global->hasExplicitName = true;
       wasm->addGlobal(std::move(global));
@@ -203,7 +201,7 @@ struct MultiMemoryLowering : public Pass {
         // first memory
         auto offsetGlobalName = offsetGlobalNames[iter->second - 1];
         dataSegment->offset = builder.makeBinary(
-          pointerType == Type::i32 ? AddInt32 : AddInt64,
+          Abstract::getBinary(pointerType, Abstract::Add),
           builder.makeGlobalGet(offsetGlobalName, pointerType),
           dataSegment->offset);
       }
@@ -259,14 +257,14 @@ struct MultiMemoryLowering : public Pass {
         builder.makeMemoryCopy(
           // destination
           builder.makeBinary(
-            pointerType == Type::i32 ? AddInt32 : AddInt64,
+            Abstract::getBinary(pointerType, Abstract::Add),
             builder.makeGlobalGet(offsetGlobalName, pointerType),
             getPageDelta()),
           // source
           builder.makeGlobalGet(offsetGlobalName, pointerType),
           // size
           builder.makeBinary(
-            pointerType == Type::i32 ? SubInt32 : SubInt64,
+            Abstract::getBinary(pointerType, Abstract::Sub),
             builder.makeMemorySize(combinedMemory),
             builder.makeGlobalGet(offsetGlobalName, pointerType)),
           combinedMemory,
@@ -281,7 +279,7 @@ struct MultiMemoryLowering : public Pass {
         builder.makeGlobalSet(
           offsetGlobalName,
           builder.makeBinary(
-            pointerType == Type::i32 ? AddInt32 : AddInt64,
+            Abstract::getBinary(pointerType, Abstract::Add),
             builder.makeGlobalGet(offsetGlobalName, pointerType),
             getPageDelta())));
     }
@@ -315,14 +313,14 @@ struct MultiMemoryLowering : public Pass {
     } else if (memIdx == offsetGlobalNames.size()) {
       auto& offsetGlobalName = offsetGlobalNames[memIdx - 1];
       functionBody = builder.makeReturn(builder.makeBinary(
-        pointerType == Type::i32 ? SubInt32 : SubInt64,
+        Abstract::getBinary(pointerType, Abstract::Sub),
         builder.makeMemorySize(combinedMemory),
         builder.makeGlobalGet(offsetGlobalName, pointerType)));
     } else {
       auto& offsetGlobalName = offsetGlobalNames[memIdx];
       auto& nextOffsetGlobalName = offsetGlobalNames[memIdx + 1];
       functionBody = builder.makeReturn(builder.makeBinary(
-        pointerType == Type::i32 ? SubInt32 : SubInt64,
+        Abstract::getBinary(pointerType, Abstract::Sub),
         builder.makeGlobalGet(nextOffsetGlobalName, pointerType),
         builder.makeGlobalGet(offsetGlobalName, pointerType)));
     }
