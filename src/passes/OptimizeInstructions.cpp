@@ -3610,11 +3610,7 @@ private:
           return c;
         }
         // propagate NaN of RHS but canonicalize it
-        if (c->type == Type::f32) {
-          c->value = standardizeNaN(c->value.getf32());
-        } else {
-          c->value = standardizeNaN(c->value.getf64());
-        }
+        c->value = Literal::standardizeNaN(c->value);
         return c;
       }
     }
