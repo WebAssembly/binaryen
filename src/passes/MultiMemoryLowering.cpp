@@ -99,10 +99,11 @@ struct MultiMemoryLowering : public Pass {
         replaceCurrent(builder.makeCall(funcName, {}, curr->type));
       }
 
-      // We diverge from the spec here and are not trapping if the offset + type
-      // / 8 is larger than the length of the memory's data Warning,
+      // We diverge from the spec here and are not trapping if the offset + write
+      // size is larger than the length of the memory's data. Warning,
       // out-of-bounds loads and stores can read junk out of or corrupt other
-      // memories instead of trapping
+      // memories instead of trapping.
+      // TODO: Add an option to add bounds checks.
       void visitLoad(Load* curr) {
         curr->memory = parent.combinedMemory;
         auto iter = parent.memoryIdxMap.find(curr->memory);
@@ -137,7 +138,7 @@ struct MultiMemoryLowering : public Pass {
                                           parent.pointerType);
       }
     };
-    Replacer(*this, *wasm).run(runner, wasm);
+    Replacer(*this, *wasm).run(getPassRunner(), wasm);
   }
 
   void addCombinedMemory() {
@@ -150,7 +151,7 @@ struct MultiMemoryLowering : public Pass {
     }
 
     // Create the new combined memory
-    combinedMemory = Names::getValidFunctionName(*wasm, "combined_memory");
+    combinedMemory = Names::getValidMemoryName(*wasm, "combined_memory");
     auto memory = Builder::makeMemory(combinedMemory);
     // We are assuming that each memory is configured the same as the first
     memory->shared = wasm->memories[0]->shared;
@@ -192,7 +193,7 @@ struct MultiMemoryLowering : public Pass {
   void adjustActiveDataSegmentOffsets() {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
-      assert(dataSegment->offset->is<Const>());
+      assert(dataSegment->offset->is<Const>() && "TODO: handle non-const segment offsets");
       auto iter = memoryIdxMap.find(dataSegment->memory);
       assert(iter != memoryIdxMap.end());
       dataSegment->memory = combinedMemory;
