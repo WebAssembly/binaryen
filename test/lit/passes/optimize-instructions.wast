@@ -10375,12 +10375,7 @@
   )
   ;; CHECK:      (func $add-sub-zero-reorder-2 (param $temp i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (i32.sub
-  ;; CHECK-NEXT:    (local.tee $temp
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $temp)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -11160,6 +11155,8 @@
     ))
   )
   ;; CHECK:      (func $rhs-is-const (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
+  ;; CHECK-NEXT:  (local $fx2 f32)
+  ;; CHECK-NEXT:  (local $fy2 f64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -11375,8 +11372,98 @@
   ;; CHECK-NEXT:    (local.get $fy)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.neg
+  ;; CHECK-NEXT:    (f32.abs
+  ;; CHECK-NEXT:     (local.get $fx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $fy)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.neg
+  ;; CHECK-NEXT:    (f32.abs
+  ;; CHECK-NEXT:     (local.get $fx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $fy)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.neg
+  ;; CHECK-NEXT:    (f32.abs
+  ;; CHECK-NEXT:     (local.get $fx)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $fy)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $fx)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $fy)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $fx2
+  ;; CHECK-NEXT:    (local.get $fx)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $fy2
+  ;; CHECK-NEXT:    (local.get $fy)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $rhs-is-const (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
+    (local $fx2 f32)
+    (local $fy2 f64)
     ;; signed divs
     ;; i32(x) / -2147483648  ->  x == -2147483648
     (drop (i32.div_s
@@ -11617,6 +11704,30 @@
       )
       (f64.const -5)
     ))
+    ;; copysign(x, -0.0)  ->  neg(abs(x))
+    (drop (f32.copysign (local.get $fx) (f32.const -0)))
+    (drop (f64.copysign (local.get $fy) (f64.const -0)))
+    ;; copysign(x, +0.0)  ->  abs(x)
+    (drop (f32.copysign (local.get $fx) (f32.const 0)))
+    (drop (f64.copysign (local.get $fy) (f64.const 0)))
+    ;; copysign(x, -inf)  ->  neg(abs(x))
+    (drop (f32.copysign (local.get $fx) (f32.const -inf)))
+    (drop (f64.copysign (local.get $fy) (f64.const -inf)))
+    ;; copysign(x, +inf)  ->  abs(x)
+    (drop (f32.copysign (local.get $fx) (f32.const inf)))
+    (drop (f64.copysign (local.get $fy) (f64.const inf)))
+    ;; copysign(x, -0.5)  ->  neg(abs(x))
+    (drop (f32.copysign (local.get $fx) (f32.const -0.5)))
+    (drop (f64.copysign (local.get $fy) (f64.const -0.5)))
+    ;; copysign(x, +0.5)  ->  abs(x)
+    (drop (f32.copysign (local.get $fx) (f32.const 0.5)))
+    (drop (f64.copysign (local.get $fy) (f64.const 0.5)))
+    ;; copysign(x, x)  ->  x
+    (drop (f32.copysign (local.get $fx) (local.get $fx)))
+    (drop (f64.copysign (local.get $fy) (local.get $fy)))
+    ;; copysign(x2 = x, x2)  ->  x2
+    (drop (f32.copysign (local.tee $fx2 (local.get $fx)) (local.get $fx2)))
+    (drop (f64.copysign (local.tee $fy2 (local.get $fy)) (local.get $fy2)))
   )
   ;; CHECK:      (func $rhs-is-const-nan (param $x f32) (param $y f64)
   ;; CHECK-NEXT:  (drop
@@ -11674,21 +11785,20 @@
   ;; CHECK-NEXT:   (f64.const nan:0x8000000000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:   (f32.abs
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f32.const nan:0x400000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f32.copysign
+  ;; CHECK-NEXT:   (f32.abs
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (f32.const nan:0x200000)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.copysign
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (f64.const -nan:0x8000000000000)
+  ;; CHECK-NEXT:   (f64.neg
+  ;; CHECK-NEXT:    (f64.abs
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -13638,11 +13748,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.or
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.or
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -13658,15 +13765,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.xor
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.xor
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.xor

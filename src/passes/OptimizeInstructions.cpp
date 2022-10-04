@@ -817,11 +817,9 @@ struct OptimizeInstructions
     }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
-    if (!effects(curr->left).hasSideEffects()) {
-      if (ExpressionAnalyzer::equal(curr->left, curr->right)) {
-        if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
-          return replaceCurrent(ret);
-        }
+    if (areConsecutiveInputsEqualAndFoldable(curr->left, curr->right)) {
+      if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
+        return replaceCurrent(ret);
       }
     }
 
@@ -3618,6 +3616,23 @@ private:
         return c;
       }
     }
+    {
+      // copysign(x, +C)   ==>   abs(x)
+      // copysign(x, -C)   ==>   neg(abs(x))
+      Const* c;
+      Expression* x;
+      if (matches(curr, binary(CopySign, any(&x), fval(&c)))) {
+        Builder builder(*getModule());
+        if (std::signbit(c->value.getFloat())) {
+          // copysign(x, -C)   ==>   neg(abs(x))
+          return builder.makeUnary(getUnary(type, Neg),
+                                   builder.makeUnary(getUnary(type, Abs), x));
+        } else {
+          // copysign(x, +C)   ==>   abs(x)
+          return builder.makeUnary(getUnary(type, Abs), x);
+        }
+      }
+    }
     return nullptr;
   }
 
@@ -4519,8 +4534,10 @@ private:
         return LiteralUtils::makeZero(Type::i32, *getModule());
       case AndInt32:
       case OrInt32:
+      case CopySignFloat32:
       case AndInt64:
       case OrInt64:
+      case CopySignFloat64:
         return binary->left;
       case EqInt32:
       case LeSInt32:
