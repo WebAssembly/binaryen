@@ -1928,10 +1928,12 @@ std::cout << "waka read2 " << filteredRefContents << '\n';
       // store those in our work queue to avoid allocations.
       SmallVector<const std::vector<HeapType>*, 10> work;
       work.push_back(&subTypes->getStrictSubTypes(coneType));
+      // NO, go only to a certain depthh...
       while (!work.empty()) {
         auto& vec = *work.back();
         work.pop_back();
         for (auto type : vec) {
+std::cout << "connect to " << type << '\n';
           connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
           work.push_back(&subTypes->getStrictSubTypes(type));
         }
