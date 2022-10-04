@@ -1877,7 +1877,8 @@ void Flower::readFromData(HeapType declaredHeapType,
     // normalize the cone which can avoid wasted work later (we don't want two
     // cone depths which refer to the same types in practice).
     auto cone = refContents.getCone();
-    auto adjustedRefContents = PossibleContents::coneType(cone.type, cone.depth);
+    auto adjustedRefContents =
+      PossibleContents::coneType(cone.type, cone.depth);
     adjustedRefContents.normalizeDepth(subTypes);
 
     // We can read from anything in the relevant cone.
@@ -1954,7 +1955,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
     // As in readFromData, normalize to the proper cone.
     auto cone = refContents.getCone();
-    auto adjustedRefContents = PossibleContents::coneType(cone.type, cone.depth);
+    auto adjustedRefContents =
+      PossibleContents::coneType(cone.type, cone.depth);
     adjustedRefContents.normalizeDepth(subTypes);
     auto cone = adjustedRefContents.getCone();
 
