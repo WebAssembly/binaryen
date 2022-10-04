@@ -33,8 +33,6 @@
 
 namespace wasm {
 
-cashew::IString EM_JS_PREFIX("__em_js__");
-
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
   auto export_ = new Export;

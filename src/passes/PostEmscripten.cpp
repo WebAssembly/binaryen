@@ -185,12 +185,16 @@ static void removeData(Module& wasm,
 }
 
 cashew::IString EM_JS_PREFIX("__em_js__");
+cashew::IString EM_JS_DEPS_PREFIX("__em_lib_deps_");
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
   std::vector<Export> toRemove;
 
   void visitExport(Export* curr) {
     if (curr->name.startsWith(EM_JS_PREFIX.str)) {
+      toRemove.push_back(*curr);
+    }
+    if (curr->name.startsWith(EM_JS_DEPS_PREFIX.str)) {
       toRemove.push_back(*curr);
     }
   }
@@ -212,10 +216,14 @@ struct PostEmscripten : public Pass {
 
     removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
     removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
+    removeData(
+      module, segmentOffsets, "__start_em_lib_deps", "__stop_em_lib_deps");
     module.removeExport("__start_em_asm");
     module.removeExport("__stop_em_asm");
     module.removeExport("__start_em_js");
     module.removeExport("__stop_em_js");
+    module.removeExport("__start_em_lib_deps");
+    module.removeExport("__stop_em_lib_deps");
   }
 
   void removeEmJsExports(Module& module) {
