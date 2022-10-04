@@ -37,7 +37,7 @@ struct SubTypes {
   }
 
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
-    if (auto iter = typeSubTypes.find(type); type != typeSubTypes.end()) {
+    if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
       return iter->second;
     }
 
@@ -88,7 +88,7 @@ struct SubTypes {
     SmallVector<Item, 10> work;
 
     // Start with the subtypes of the base type. Those have depth 1.
-    work.push_back({&subTypes->getStrictSubTypes(cone->type.getHeapType()), 1});
+    work.push_back({&getStrictSubTypes(type), 1});
 
     while (!work.empty()) {
       auto& item = work.back();
@@ -101,7 +101,7 @@ struct SubTypes {
       }
       for (auto type : (*item.vec)) {
         func(type, currDepth);
-        work.push_back({&subTypes->getStrictSubTypes(type), currDepth + 1});
+        work.push_back({&getStrictSubTypes(type), currDepth + 1});
       }
     }
   }
@@ -126,7 +126,7 @@ private:
 
   // Keep a canonical empty vector, so we have something to return without doing
   // an allocation in getStrictSubTypes.
-  std::vectorHeapType > emptyVec;
+  std::vector<HeapType> emptyVec;
 };
 
 } // namespace wasm

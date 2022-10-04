@@ -384,11 +384,11 @@ void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
   Index maxDepth = 0;
 
   subTypes->traverseSubTypes(
-    cone->type, cone->depth, [&](HeapType type, Index depth) {
-      maxDepth = std::max(currDepth, maxDepth);
+    cone->type.getHeapType(), cone->depth, [&](HeapType type, Index depth) {
+      maxDepth = std::max(depth, maxDepth);
     });
 
-  assert(depth <= cone->depth);
+  assert(maxDepth <= cone->depth);
 
   cone->depth = maxDepth;
 }
@@ -1903,7 +1903,7 @@ void Flower::readFromData(HeapType declaredHeapType,
       // Next, connect strict subtypes.
 
       subTypes->traverseSubTypes(
-        cone->type, cone->depth, [&](HeapType type, Index depth) {
+        cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
           std::cout << "connect to " << type << '\n';
           connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
         });
