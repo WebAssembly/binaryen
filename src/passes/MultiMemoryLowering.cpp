@@ -97,8 +97,8 @@ struct MultiMemoryLowering : public Pass {
         replaceCurrent(builder.makeCall(funcName, {}, curr->type));
       }
 
-      // We diverge from the spec here and are not trapping if the offset + write
-      // size is larger than the length of the memory's data. Warning,
+      // We diverge from the spec here and are not trapping if the offset +
+      // write size is larger than the length of the memory's data. Warning,
       // out-of-bounds loads and stores can read junk out of or corrupt other
       // memories instead of trapping.
       // TODO: Add an option to add bounds checks.
@@ -160,13 +160,14 @@ struct MultiMemoryLowering : public Pass {
 
   void addOffsetGlobals() {
     auto addGlobal = [&](Name name, size_t offset) {
-      auto global = Builder::makeGlobal(
-        name,
-        pointerType,
-        Builder(*wasm).makeConst(pointerType == Type::i32
-                                   ? Literal::makeFromInt32(offset, pointerType)
-                                   : Literal::makeFromInt64(offset, pointerType)),
-        Builder::Mutable);
+      auto global =
+        Builder::makeGlobal(name,
+                            pointerType,
+                            Builder(*wasm).makeConst(
+                              pointerType == Type::i32
+                                ? Literal::makeFromInt32(offset, pointerType)
+                                : Literal::makeFromInt64(offset, pointerType)),
+                            Builder::Mutable);
       global->hasExplicitName = true;
       wasm->addGlobal(std::move(global));
     };
@@ -191,7 +192,8 @@ struct MultiMemoryLowering : public Pass {
   void adjustActiveDataSegmentOffsets() {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
-      assert(dataSegment->offset->is<Const>() && "TODO: handle non-const segment offsets");
+      assert(dataSegment->offset->is<Const>() &&
+             "TODO: handle non-const segment offsets");
       auto iter = memoryIdxMap.find(dataSegment->memory);
       assert(iter != memoryIdxMap.end());
       dataSegment->memory = combinedMemory;
@@ -246,10 +248,9 @@ struct MultiMemoryLowering : public Pass {
     functionBody = builder.blockify(builder.makeLocalSet(
       returnLocal, builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
 
-   functionBody = builder.blockify(
-       functionBody,
-       builder.makeDrop(
-        builder.makeMemoryGrow(getPageDelta(), combinedMemory)));
+    functionBody = builder.blockify(
+      functionBody,
+      builder.makeDrop(builder.makeMemoryGrow(getPageDelta(), combinedMemory)));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
