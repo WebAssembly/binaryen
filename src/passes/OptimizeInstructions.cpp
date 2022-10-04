@@ -3871,11 +3871,7 @@ private:
       if ((matches(curr, binary(Sub, fval(&c), any())) ||
            matches(curr, binary(DivS, fval(&c), any()))) &&
           std::isnan(c->value.getFloat())) {
-        if (c->type == Type::f32) {
-          c->value = standardizeNaN(c->value.getf32());
-        } else {
-          c->value = standardizeNaN(c->value.getf64());
-        }
+        c->value = Literal::standardizeNaN(c->value);
         return getDroppedChildrenAndAppend(curr->right, c);
       }
     }
