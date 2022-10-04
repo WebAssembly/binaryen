@@ -590,9 +590,11 @@ struct InfoCollector
     handleCall(
       curr,
       [&](Index i) {
+        assert(i <= target->getParams().size());
         return LocalLocation{target, i, 0};
       },
       [&](Index i) {
+        assert(i <= target->getResults().size());
         return ResultLocation{target, i};
       });
   }
@@ -600,9 +602,11 @@ struct InfoCollector
     handleCall(
       curr,
       [&](Index i) {
+        assert(i <= targetType.getSignature().params.size());
         return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
+        assert(i <= targetType.getSignature().results.size());
         return SignatureResultLocation{targetType, i};
       });
   }
@@ -630,6 +634,11 @@ struct InfoCollector
     // makes us ignore the function ref that flows to an import, so we are not
     // aware that it is actually called.)
     auto* target = curr->operands.back();
+
+    // We must ignore the last element when handling the call - the target is
+    // used to perform the call, and not sent during the call.
+    curr->operands.pop_back();
+
     if (auto* refFunc = target->dynCast<RefFunc>()) {
       // We can see exactly where this goes.
       handleDirectCall(curr, refFunc->func);
@@ -642,6 +651,9 @@ struct InfoCollector
       // a workaround.)
       handleIndirectCall(curr, target->type);
     }
+
+    // Restore the target.
+    curr->operands.push_back(target);
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: the table identity could also be used here
