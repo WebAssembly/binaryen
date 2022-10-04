@@ -832,6 +832,11 @@ struct InfoCollector
     // makes us ignore the function ref that flows to an import, so we are not
     // aware that it is actually called.)
     auto* target = curr->operands.back();
+
+    // We must ignore the last element when handling the call - the target is
+    // used to perform the call, and not sent during the call.
+    curr->operands.pop_back();
+
     if (auto* refFunc = target->dynCast<RefFunc>()) {
       // We can see exactly where this goes.
       handleDirectCall(curr, refFunc->func);
@@ -844,6 +849,9 @@ struct InfoCollector
       // a workaround.)
       handleIndirectCall(curr, target->type);
     }
+
+    // Restore the target.
+    curr->operands.push_back(target);
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: the table identity could also be used here
@@ -2001,7 +2009,7 @@ void Flower::dump(Location location) {
     std::cout << "  localloc " << loc->func->name << " : " << loc->index
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
-    std::cout << "  resultloc " << loc->func->name << " : " << loc->index
+    std::cout << "  resultloc $" << loc->func->name << " : " << loc->index
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';
