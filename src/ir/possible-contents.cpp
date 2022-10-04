@@ -1204,8 +1204,11 @@ struct InfoCollector
   // verbose code).
   void addRoot(Expression* curr,
                PossibleContents contents = PossibleContents::many()) {
-    // TODO Use a cone type here when relevant
     if (isRelevant(curr)) {
+      if (contents.isMany() && curr->type.isRef()) {
+        // The contents must be a subtype of the declared type.
+        contents = PossibleContents::fullConeType(curr->type);
+      }
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
   }
@@ -1887,8 +1890,6 @@ abort();
     // We can read from anything in the relevant cone.
     auto cone = filteredRefContents.getCone();
 
-assert(cone.depth <= 20);
-
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
     auto coneReadLocation =
@@ -1981,7 +1982,6 @@ abort();
 
     // We can read from anything in the relevant cone.
     auto cone = filteredRefContents.getCone();
-assert(cone.depth <= 20);
 
     subTypes->traverseSubTypes(
       cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
