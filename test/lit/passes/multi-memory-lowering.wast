@@ -43,6 +43,11 @@
 ;; CHECK-NEXT:  (local.set $1
 ;; CHECK-NEXT:   (call $multi_memory_size)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (memory.grow
+;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (memory.copy
 ;; CHECK-NEXT:   (i32.add
 ;; CHECK-NEXT:    (global.get $memory2_page_offset)
@@ -67,6 +72,11 @@
 ;; CHECK-NEXT:  (local $1 i32)
 ;; CHECK-NEXT:  (local.set $1
 ;; CHECK-NEXT:   (call $multi_memory_size_0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (memory.grow
+;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (local.get $1)
 ;; CHECK-NEXT: )

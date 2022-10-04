@@ -248,7 +248,8 @@ struct MultiMemoryLowering : public Pass {
 
    functionBody = builder.blockify(
        functionBody,
-       builder.makeMemoryGrow(getPageDelta(), combinedMemory));
+       builder.makeDrop(
+        builder.makeMemoryGrow(getPageDelta(), combinedMemory)));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
