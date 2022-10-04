@@ -1845,7 +1845,7 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.hasExactType()) {
+  if (refContents.hasExactType()) { // FIXME remove this as a no-op
     // Add a single link to the exact location the reference points to.
     connectDuringFlow(
       DataLocation{refContents.getType().getHeapType(), fieldIndex},
@@ -1902,7 +1902,6 @@ void Flower::readFromData(HeapType declaredHeapType,
 
       subTypes->traverseSubTypes(
         cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
-          std::cout << "connect to " << type << '\n';
           connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
         });
 
@@ -1956,14 +1955,33 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     assert(refContents.isMany() || refContents.isGlobal() ||
            refContents.isConeType());
 
-    // Update all possible subtypes here.
-    // TODO: Use the cone depth here for ConeType. Right now we do the
-    //       pessimistic thing and assume a full cone of all subtypes.
-    auto type = ref->type.getHeapType();
-    for (auto subType : subTypes->getAllSubTypes(type)) {
-      auto heapLoc = DataLocation{subType, fieldIndex};
-      updateContents(heapLoc, valueContents);
+    // Update all relevant subtypes here.
+    auto filteredRefContents = refContents;
+    if (refContents.isMany()) { // TODO; share this with read?
+      // If |refContents| is Many, we can filter it to what the wasm type system
+      // allows, which is the declared heap type and all subtypes.
+      filteredRefContents =
+        PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
+    } else {
+      // Otherwise, just look at the cone here, discarding information about
+      // this being a global, for example, if we had that. All that matters from
+      // now is the cone.
+      auto cone = refContents.getCone();
+      filteredRefContents = PossibleContents::coneType(cone.type, cone.depth);
     }
+
+    // Optimize the depth so it is never larger than the actual existing
+    // subtypes, which could cause wasted work later.
+    filteredRefContents.optimizeDepth(subTypes);
+
+    // We can read from anything in the relevant cone.
+    auto cone = filteredRefContents.getCone();
+
+    subTypes->traverseSubTypes(
+      cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
+        auto heapLoc = DataLocation{type, fieldIndex};
+        updateContents(heapLoc, valueContents);
+      });
   }
 }
 
