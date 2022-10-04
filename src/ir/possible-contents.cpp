@@ -791,9 +791,11 @@ struct InfoCollector
     handleCall(
       curr,
       [&](Index i) {
+        assert(i <= target->getParams().size());
         return LocalLocation{target, i, 0};
       },
       [&](Index i) {
+        assert(i <= target->getResults().size());
         return ResultLocation{target, i};
       });
   }
@@ -801,9 +803,11 @@ struct InfoCollector
     handleCall(
       curr,
       [&](Index i) {
+        assert(i <= targetType.getSignature().params.size());
         return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
+        assert(i <= targetType.getSignature().results.size());
         return SignatureResultLocation{targetType, i};
       });
   }
