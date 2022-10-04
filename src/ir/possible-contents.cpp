@@ -1871,6 +1871,7 @@ void Flower::readFromData(HeapType declaredHeapType,
       // allows, which is the declared heap type and all subtypes.
       filteredRefContents =
         PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
+abort();
     } else {
       // Otherwise, just look at the cone here, discarding information about
       // this being a global, for example, if we had that. All that matters from
@@ -1962,6 +1963,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       // allows, which is the declared heap type and all subtypes.
       filteredRefContents =
         PossibleContents::fullConeType(Type(ref->type.getHeapType(), NonNullable));
+      // FIXME: perhaps this is hit too often? read as well?
+abort();
     } else {
       // Otherwise, just look at the cone here, discarding information about
       // this being a global, for example, if we had that. All that matters from
