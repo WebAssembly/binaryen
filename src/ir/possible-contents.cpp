@@ -381,36 +381,13 @@ void PossibleContents::optimizeDepth(std::unique_ptr<SubTypes>& subTypes) {
 
   auto* cone = &std::get<ConeType>(value);
 
-  // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
-  // those in our work queue to avoid allocations.
-  struct Item {
-    const std::vector<HeapType>* vec;
-    Index depth;
-  };
-
   Index maxDepth = 0;
-  SmallVector<Item, 10> work;
 
-  // Start with the subtypes of the base type. Those have depth 1.
-  work.push_back({&subTypes->getStrictSubTypes(cone->type.getHeapType()), 1});
-
-  while (!work.empty()) {
-    auto& item = work.back();
-    work.pop_back();
-    auto& vec = *item.vec;
-    if (vec.empty()) {
-      break;
-    }
-    auto currDepth = item.depth;
+  subTypes->traverseSubTypes(cone->type, cone->depth, [&](HeapType type, Index depth) {
     maxDepth = std::max(currDepth, maxDepth);
-    if (maxDepth >= cone->depth) {
-      // We never need to increase the depth, just decrease it, so stop here.
-      break;
-    }
-    for (auto type : (*item.vec)) {
-      work.push_back({&subTypes->getStrictSubTypes(type), currDepth + 1});
-    }
-  }
+  });
+
+  assert(depth <= cone->depth);
 
   cone->depth = maxDepth;
 }
@@ -1923,21 +1900,11 @@ std::cout << "waka read2 " << filteredRefContents << '\n';
       connectDuringFlow(DataLocation{coneType, fieldIndex}, coneReadLocation);
 
       // Next, connect strict subtypes.
-      //
-      // getStrictSubTypes() returns vectors of subtypes, so for efficiency
-      // store those in our work queue to avoid allocations.
-      SmallVector<const std::vector<HeapType>*, 10> work;
-      work.push_back(&subTypes->getStrictSubTypes(coneType));
-      // NO, go only to a certain depthh...
-      while (!work.empty()) {
-        auto& vec = *work.back();
-        work.pop_back();
-        for (auto type : vec) {
+
+      subTypes->traverseSubTypes(cone->type, cone->depth, [&](HeapType type, Index depth) {
 std::cout << "connect to " << type << '\n';
-          connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
-          work.push_back(&subTypes->getStrictSubTypes(type));
-        }
-      }
+        connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
+      });
 
       // TODO: we can end up with redundant links here if we see one cone first
       //       and then a larger one later. But removing links is not efficient,
