@@ -1961,7 +1961,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       // If |refContents| is Many, we can filter it to what the wasm type system
       // allows, which is the declared heap type and all subtypes.
       filteredRefContents =
-        PossibleContents::fullConeType(Type(declaredHeapType, NonNullable));
+        PossibleContents::fullConeType(Type(ref->type.getHeapType(), NonNullable));
     } else {
       // Otherwise, just look at the cone here, discarding information about
       // this being a global, for example, if we had that. All that matters from
