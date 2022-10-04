@@ -376,7 +376,8 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   WASM_UNREACHABLE("a or b must be a full cone");
 }
 
-PossibleContents::ConeType PossibleContents::getNormalizedCone(std::unique_ptr<SubTypes>& subTypes) const {
+PossibleContents::ConeType
+PossibleContents::getNormalizedCone(std::unique_ptr<SubTypes>& subTypes) const {
   auto cone = getCone();
 
   if (cone.type.isRef()) {
