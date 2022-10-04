@@ -43,9 +43,9 @@ struct MultiMemoryLowering : public Pass {
   // A vector of the memory size function names that were created proactively
   // for each memory
   std::vector<Name> memorySizeNames;
-  // A vector of the adjust offset functions that were created proactively for
+  // A vector of the memory grow functions that were created proactively for
   // each memory
-  std::vector<Name> adjustOffsetNames;
+  std::vector<Name> memoryGrowNames;
 
   void run(Module* module) override {
     // If there are no memories or 1 memory, skip this pass
@@ -59,7 +59,7 @@ struct MultiMemoryLowering : public Pass {
     addOffsetGlobals();
     adjustActiveDataSegmentOffsets();
     createMemorySizeFunctions();
-    createAdjustOffsetGlobalFunctions();
+    createMemoryGrowFunctions();
     removeExistingMemories();
 
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -75,7 +75,7 @@ struct MultiMemoryLowering : public Pass {
             return;
           }
         }
-        for (Name funcName : parent.adjustOffsetNames) {
+        for (Name funcName : parent.memoryGrowNames) {
           if (funcName == func->name) {
             return;
           }
@@ -86,7 +86,7 @@ struct MultiMemoryLowering : public Pass {
       void visitMemoryGrow(MemoryGrow* curr) {
         auto iter = parent.memoryIdxMap.find(curr->memory);
         assert(iter != parent.memoryIdxMap.end());
-        Name funcName = parent.adjustOffsetNames[iter->second];
+        Name funcName = parent.memoryGrowNames[iter->second];
         replaceCurrent(builder.makeCall(funcName, {curr->delta}, curr->type));
       }
 
@@ -218,12 +218,12 @@ struct MultiMemoryLowering : public Pass {
     }
   }
 
-  void createAdjustOffsetGlobalFunctions() {
+  void createMemoryGrowFunctions() {
     // Don't create a memory size function for the last memory in the vector as
     // its the combinedMemory we just added
     for (Index i = 0; i < wasm->memories.size() - 1; i++) {
-      auto function = adjustOffsetGlobals(i);
-      adjustOffsetNames.push_back(function->name);
+      auto function = memoryGrow(i);
+      memoryGrowNames.push_back(function->name);
       wasm->addFunction(std::move(function));
     }
   }
@@ -232,7 +232,7 @@ struct MultiMemoryLowering : public Pass {
   // Because the multiple discrete memories are lowered into a single memory,
   // we need to adjust offsets as a particular memory receives an
   // instruction to grow.
-  std::unique_ptr<Function> adjustOffsetGlobals(Index memIdx) {
+  std::unique_ptr<Function> memoryGrow(Index memIdx) {
     Builder builder(*wasm);
     Name functionName =
       Names::getValidFunctionName(*wasm, "adjust_memory_offsets");
