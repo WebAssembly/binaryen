@@ -3586,14 +3586,14 @@ private:
       //   x <=> NaN   ==>   0
       //   x op  NaN'  ==>   NaN',  iff `op` != `copysign` and `x` != C
       Const* c;
-      Binary* bin;
-      if (matches(curr, binary(&bin, any(), fval(&c))) &&
+      Type type = curr->left->type;
+      if (matches(curr, binary(any(), fval(&c))) &&
           std::isnan(c->value.getFloat()) &&
-          bin->op != getBinary(bin->left->type, CopySign)) {
-        if (bin->isRelational()) {
+          curr->op != getBinary(type, CopySign)) {
+        if (curr->isRelational()) {
           // reuse "c" (nan) constant
           c->type = Type::i32;
-          if (bin->op == getBinary(bin->left->type, Ne)) {
+          if (curr->op == getBinary(type, Ne)) {
             // x != NaN  ==>  1
             c->value = Literal::makeOne(Type::i32);
           } else {
@@ -3603,10 +3603,10 @@ private:
             // x .. NaN  ==>  0
             c->value = Literal::makeZero(Type::i32);
           }
-          return getDroppedChildrenAndAppend(curr->left, c);
+        } else {
+          // propagate NaN of RHS but canonicalize it
+          c->value = Literal::standardizeNaN(c->value);
         }
-        // propagate NaN of RHS but canonicalize it
-        c->value = Literal::standardizeNaN(c->value);
         return getDroppedChildrenAndAppend(curr->left, c);
       }
     }
