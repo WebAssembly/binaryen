@@ -1219,7 +1219,6 @@ struct InfoCollector
       if (contents.isMany()) {
         contents = PossibleContents::fromType(curr->type);
       }
-std::cout << "addRoot " << *curr << " : " << curr->type << " => " << contents << '\n';
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
   }
@@ -1416,7 +1415,6 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
         // Imports return unknown values.
         auto results = func->getResults();
         for (Index i = 0; i < results.size(); i++) {
-std::cout << "Add import root waka " << func->name << " : " << func->type << " : " << results << " : " << results[i] << " : " << PossibleContents::fromType(results[i]) << '\n';
           finder.addRoot(ResultLocation{func, i}, PossibleContents::fromType(results[i]));
         }
         return;
