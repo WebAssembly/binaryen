@@ -247,6 +247,10 @@ struct MultiMemoryLowering : public Pass {
     functionBody = builder.blockify(builder.makeLocalSet(
       returnLocal, builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
 
+   functionBody = builder.blockify(
+       functionBody,
+       builder.makeMemoryGrow(getPageDelta(), combinedMemory));
+
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
     if (memIdx != offsetGlobalNames.size()) {
