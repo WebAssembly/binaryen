@@ -134,13 +134,17 @@ public:
   // Helper for creating a PossibleContents based on a wasm type, that is, where
   // all we know is the wasm type.
   static PossibleContents fromType(Type type) {
-    // For a reference, subtyping matters, so emit a cone. Otherwise, just emit
-    // many.
+    assert(type != Type::none);
+
     if (type.isRef()) {
+      // For a reference, subtyping matters.
       return fullConeType(type);
+    } else if (type == Type::unreachable) {
+      // Nothing is possible here.
+      return none();
     }
 
-    return many();
+    return many(); // XXX could be exactType(type) perhaps, but no benefit
   }
 
   PossibleContents& operator=(const PossibleContents& other) = default;
