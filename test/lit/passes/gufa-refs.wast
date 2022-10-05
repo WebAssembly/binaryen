@@ -322,7 +322,7 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.null any)
@@ -346,11 +346,8 @@
     (local.set $z
       (struct.new $struct)
     )
-    ;; Get the 3 locals, to check that we optimize. We can replace x and y with
-    ;; a null constant. (x will not actually contain null since the call will
-    ;; trap, but the only value we see x can contain is the default value, and
-    ;; we don't use SSA yet, so all values written to x anywhere are considered
-    ;; possible at all local.gets)
+    ;; Get the 3 locals, to check that we optimize. We can replace x with an
+    ;; unreachable and y with a null constant.
     (drop
       (local.get $x)
     )
@@ -1388,9 +1385,11 @@
   ;; CHECK:      (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
-  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $child (ref null $child))
   ;; CHECK-NEXT:  (local $parent (ref null $parent))
   ;; CHECK-NEXT:  (local.set $parent
@@ -1398,17 +1397,20 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.set $parent
+  ;; CHECK-NEXT:    (local.tee $child
+  ;; CHECK-NEXT:     (struct.new $child
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (local.get $parent)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $parent
-  ;; CHECK-NEXT:   (local.tee $child
-  ;; CHECK-NEXT:    (struct.new $child
-  ;; CHECK-NEXT:     (i32.const 20)
-  ;; CHECK-NEXT:     (i32.const 30)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1422,12 +1424,24 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func
+  (func $func (export "func") (param $x i32)
     (local $child (ref null $child))
     (local $parent (ref null $parent))
     (local.set $parent
       (struct.new $parent
         (i32.const 10)
+      )
+    )
+    ;; Another, optional, set to $parent.
+    (if
+      (local.get $x)
+      (local.set $parent
+        (local.tee $child
+          (struct.new $child
+            (i32.const 20)
+            (i32.const 30)
+          )
+        )
       )
     )
     ;; This get cannot be optimized because later down the local is written a
@@ -1436,15 +1450,6 @@
     (drop
       (struct.get $parent 0
         (local.get $parent)
-      )
-    )
-    ;; This extra local.set to $parent is added here.
-    (local.set $parent
-      (local.tee $child
-        (struct.new $child
-          (i32.const 20)
-          (i32.const 30)
-        )
       )
     )
     ;; But this one can be optimized as $child can only contain a child.
