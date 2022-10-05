@@ -404,7 +404,6 @@ struct ConeReadLocation {
 using Location = std::variant<ExpressionLocation,
                               ParamLocation,
                               ResultLocation,
-                              LocalLocation,
                               BreakTargetLocation,
                               GlobalLocation,
                               SignatureParamLocation,

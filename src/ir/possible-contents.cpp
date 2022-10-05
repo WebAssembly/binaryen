@@ -449,7 +449,7 @@ struct InfoCollector
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back(
-        {SignatureParamLocation{func->type, i}, ParamLocation{func, i, 0}});
+        {SignatureParamLocation{func->type, i}, ParamLocation{func, i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
@@ -608,7 +608,7 @@ struct InfoCollector
       curr,
       [&](Index i) {
         assert(i <= target->getParams().size());
-        return ParamLocation{target, i, 0};
+        return ParamLocation{target, i};
       },
       [&](Index i) {
         assert(i <= target->getResults().size());
@@ -962,8 +962,10 @@ struct InfoCollector
     localGraph = std::make_unique<LocalGraph>(func);
     localGraph->computeSetInfluences();
 
-    super::doWalkFunction(func);
+    PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>>::doWalkFunction(func);
+  }
 
+  void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.
     addResult(func->body);
 
@@ -1304,7 +1306,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[ParamLocation{func, i, 0}] = PossibleContents::many();
+      roots[ParamLocation{func, i}] = PossibleContents::many();
     }
   };
 
