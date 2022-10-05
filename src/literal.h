@@ -92,7 +92,7 @@ public:
   bool isFunction() const { return type.isFunction(); }
   bool isData() const { return type.isData(); }
 
-  bool isNull() const { return type.isRef() && type.getHeapType().isBottom(); }
+  bool isNull() const { return type.isNull(); }
 
   bool isZero() const {
     switch (type.getBasic()) {

@@ -2079,10 +2079,6 @@ void FunctionValidator::visitSelect(Select* curr) {
 }
 
 void FunctionValidator::visitDrop(Drop* curr) {
-  if (!curr->value->type.isConcrete() &&
-      curr->value->type != Type::unreachable) {
-    assert(false);
-  }
   shouldBeTrue(curr->value->type.isConcrete() ||
                  curr->value->type == Type::unreachable,
                curr,
@@ -2118,9 +2114,8 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
         curr->type.isNullable(), curr, "ref.null types must be nullable")) {
     return;
   }
-  shouldBeTrue(curr->type.getHeapType().isBottom(),
-               curr,
-               "ref.null must have a bottom heap type");
+  shouldBeTrue(
+    curr->type.isNull(), curr, "ref.null must have a bottom heap type");
 }
 
 void FunctionValidator::visitRefIs(RefIs* curr) {

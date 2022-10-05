@@ -703,7 +703,7 @@ public:
     return ret;
   }
   RefNull* makeRefNull(Type type) {
-    assert(type.isNullable() && type.getHeapType().isBottom());
+    assert(type.isNullable() && type.isNull());
     auto* ret = wasm.allocator.alloc<RefNull>();
     ret->finalize(type);
     return ret;
@@ -1266,7 +1266,7 @@ public:
     if (curr->type.isTuple() && curr->type.isDefaultable()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
-    if (curr->type.isNullable() && curr->type.getHeapType().isBottom()) {
+    if (curr->type.isNullable() && curr->type.isNull()) {
       return ExpressionManipulator::refNull(curr, curr->type);
     }
     if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {

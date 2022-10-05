@@ -283,8 +283,7 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      auto* func = module->getFunction(curr->target);
-      handleReturnCall(curr, func->type.getSignature().results);
+      handleReturnCall(curr, module->getFunction(curr->target)->getResults());
     }
   }
   void visitCallIndirect(CallIndirect* curr) {

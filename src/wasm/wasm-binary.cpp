@@ -2899,7 +2899,9 @@ void WasmBinaryBuilder::skipUnreachableCode() {
       return;
     }
     if (curr->type == Type::unreachable) {
-      // Don't want to pop back past the unreachable.
+      // Nothing before this unreachable should be available to future
+      // expressions. They will get `(unreachable)`s if they try to pop past
+      // this point.
       expressionStack.clear();
     } else {
       pushExpression(curr);
