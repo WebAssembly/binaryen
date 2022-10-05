@@ -2028,10 +2028,11 @@
   ;; Test a global type other than i32. Arrays of structs are a realistic case
   ;; as they are used to implement itables.
 
+  ;; CHECK:      (type $itable (array_subtype (ref $vtable) data))
+
   ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
   (type $vtable (struct funcref))
 
-  ;; CHECK:      (type $itable (array_subtype (ref $vtable) data))
   (type $itable (array (ref $vtable)))
 
   ;; CHECK:      (type $object (struct_subtype (field $itable (ref $itable)) data))

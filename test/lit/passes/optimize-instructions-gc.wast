@@ -18,14 +18,12 @@
   ;; NOMNL:      (type $A (struct_subtype (field i32) data))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
-
   ;; CHECK:      (type $array (array (mut i8)))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-
   ;; NOMNL:      (type $array (array_subtype (mut i8) data))
   (type $array (array (mut i8)))
 
+  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct (field i32) (field i32) (field f32) (field i64)))

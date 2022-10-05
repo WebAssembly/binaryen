@@ -54,17 +54,15 @@ struct CodeScanner
     if (auto* call = curr->dynCast<CallIndirect>()) {
       counts.note(call->heapType);
     } else if (auto* call = curr->dynCast<CallRef>()) {
-      if (call->isReturn && call->target->type.isFunction()) {
-        counts.note(call->target->type);
-      }
+      counts.note(call->target->type);
     } else if (curr->is<RefNull>()) {
       counts.note(curr->type);
-    } else if (auto* make = curr->dynCast<StructNew>()) {
-      handleMake(make);
-    } else if (auto* make = curr->dynCast<ArrayNew>()) {
-      handleMake(make);
-    } else if (auto* make = curr->dynCast<ArrayInit>()) {
-      handleMake(make);
+    } else if (curr->is<StructNew>()) {
+      counts.note(curr->type);
+    } else if (curr->is<ArrayNew>()) {
+      counts.note(curr->type);
+    } else if (curr->is<ArrayInit>()) {
+      counts.note(curr->type);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
       counts.note(cast->intendedType);
     } else if (auto* cast = curr->dynCast<RefTest>()) {
@@ -77,6 +75,11 @@ struct CodeScanner
       counts.note(get->ref->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       counts.note(set->ref->type);
+    } else if (auto* get = curr->dynCast<ArrayGet>()) {
+      counts.note(get->ref->type);
+    } else if (auto* set = curr->dynCast<ArraySet>()) {
+      counts.note(set->ref->type);
+
     } else if (Properties::isControlFlowStructure(curr)) {
       if (curr->type.isTuple()) {
         // TODO: Allow control flow to have input types as well
@@ -84,12 +87,6 @@ struct CodeScanner
       } else {
         counts.note(curr->type);
       }
-    }
-  }
-
-  template<typename T> void handleMake(T* curr) {
-    if (curr->type != Type::unreachable) {
-      counts.note(curr->type.getHeapType());
     }
   }
 };

@@ -8,10 +8,11 @@
 (module
  (type $anyref_=>_none (func (param anyref)))
 
+ ;; CHECK:      (type $array (array (mut i32)))
+
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (field (mut i32))))
 
- ;; CHECK:      (type $array (array (mut i32)))
  (type $array (array (mut i32)))
 
  ;; CHECK:      (func $br_on_to_drop

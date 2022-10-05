@@ -4203,10 +4203,10 @@
 (module
   ;; CHECK:      (type $i1 (func_subtype (param i32) func))
   (type $i1 (func (param i32)))
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $i2 (func_subtype (param i32) func))
   (type $i2 (func (param i32)))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 

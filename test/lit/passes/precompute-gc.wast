@@ -15,12 +15,14 @@
 
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
+
  ;; CHECK:      (type $B (struct (field (mut f64))))
+ ;; NOMNL:      (type $func-return-i32 (func_subtype (result i32) func))
+
  ;; NOMNL:      (type $B (struct_subtype (field (mut f64)) data))
  (type $B (struct (field (mut f64))))
 
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
- ;; NOMNL:      (type $func-return-i32 (func_subtype (result i32) func))
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
