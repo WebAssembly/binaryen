@@ -962,7 +962,8 @@ struct InfoCollector
     localGraph = std::make_unique<LocalGraph>(func);
     localGraph->computeSetInfluences();
 
-    PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>>::doWalkFunction(func);
+    PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>>::doWalkFunction(
+      func);
   }
 
   void visitFunction(Function* func) {
