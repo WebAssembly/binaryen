@@ -956,7 +956,7 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
-  void doWalkFunction(Function* func)
+  void doWalkFunction(Function* func) {
     // Compute the local graph so that LocalGet/Set know what to connect to
     // where. TODO perhaps avoid this overhead if optimizeLevel < 3?
     localGraph = std::make_unique<LocalGraph>(func);
