@@ -272,7 +272,7 @@ struct OptimizeInstructions
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
 
-  decltype(auto) pure(Expression** binder) {
+  decltype(auto) pure(Expression** binder = nullptr) {
     using namespace Match::Internal;
     return Matcher<PureMatcherKind<OptimizeInstructions>>(binder, this);
   }
@@ -519,16 +519,13 @@ struct OptimizeInstructions
         // TODO: Use getDroppedChildrenAndAppend() here, so we can optimize even
         //       if pure.
         Const* c;
-        Expression* x;
-        if (matches(curr, binary(GeU, pure(&x), ival(&c))) &&
-            c->value.isZero()) {
+        if (matches(curr, binary(GeU, pure(), ival(&c))) && c->value.isZero()) {
           c->value = Literal::makeOne(Type::i32);
           c->type = Type::i32;
           return replaceCurrent(c);
         }
         // unsigned(x) < 0   =>   i32(0)
-        if (matches(curr, binary(LtU, pure(&x), ival(&c))) &&
-            c->value.isZero()) {
+        if (matches(curr, binary(LtU, pure(), ival(&c))) && c->value.isZero()) {
           c->value = Literal::makeZero(Type::i32);
           c->type = Type::i32;
           return replaceCurrent(c);
@@ -2380,14 +2377,14 @@ private:
       // Constant condition, we can just pick the correct side (barring side
       // effects)
       Expression *ifTrue, *ifFalse;
-      if (matches(curr, select(pure(&ifTrue), any(&ifFalse), i32(0)))) {
+      if (matches(curr, select(pure(), any(&ifFalse), i32(0)))) {
         return ifFalse;
       }
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), i32(0)))) {
         return builder.makeSequence(builder.makeDrop(ifTrue), ifFalse);
       }
       int32_t cond;
-      if (matches(curr, select(any(&ifTrue), pure(&ifFalse), i32(&cond)))) {
+      if (matches(curr, select(any(&ifTrue), pure(), i32(&cond)))) {
         // The condition must be non-zero because a zero would have matched one
         // of the previous patterns.
         assert(cond != 0);
@@ -3293,8 +3290,8 @@ private:
         matches(curr, binary(Xor, any(&left), ival(0)))) {
       return left;
     }
-    if (matches(curr, binary(Mul, pure(&left), ival(0))) ||
-        matches(curr, binary(And, pure(&left), ival(0)))) {
+    if (matches(curr, binary(Mul, pure(), ival(0))) ||
+        matches(curr, binary(And, pure(), ival(0)))) {
       return right;
     }
     // -x * C   ==>    x * -C,   if  shrinkLevel != 0  or  C != C_pot
@@ -3321,7 +3318,7 @@ private:
     }
     // Operations on one
     // (signed)x % 1   ==>   0
-    if (matches(curr, binary(RemS, pure(&left), ival(1)))) {
+    if (matches(curr, binary(RemS, pure(), ival(1)))) {
       right->value = Literal::makeZero(type);
       return right;
     }
@@ -3390,11 +3387,11 @@ private:
       return left;
     }
     // x | -1   ==>   -1
-    if (matches(curr, binary(Or, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(Or, pure(), ival(-1)))) {
       return right;
     }
     // (signed)x % -1   ==>   0
-    if (matches(curr, binary(RemS, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(RemS, pure(), ival(-1)))) {
       right->value = Literal::makeZero(type);
       return right;
     }
@@ -3416,25 +3413,25 @@ private:
       return builder.makeUnary(ExtendUInt32, curr);
     }
     // (unsigned)x < 0   ==>   i32(0)
-    if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
+    if (matches(curr, binary(LtU, pure(), ival(0)))) {
       right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
     // (unsigned)x <= -1  ==>   i32(1)
-    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(LeU, pure(), ival(-1)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }
     // (unsigned)x > -1   ==>   i32(0)
-    if (matches(curr, binary(GtU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(GtU, pure(), ival(-1)))) {
       right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
       return right;
     }
     // (unsigned)x >= 0   ==>   i32(1)
-    if (matches(curr, binary(GeU, pure(&left), ival(0)))) {
+    if (matches(curr, binary(GeU, pure(), ival(0)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
@@ -3464,28 +3461,28 @@ private:
     {
       Const* c;
       // (signed)x < (i32|i64).min_s   ==>   i32(0)
-      if (matches(curr, binary(LtS, pure(&left), ival(&c))) &&
+      if (matches(curr, binary(LtS, pure(), ival(&c))) &&
           c->value.isSignedMin()) {
         right->value = Literal::makeZero(Type::i32);
         right->type = Type::i32;
         return right;
       }
       // (signed)x <= (i32|i64).max_s   ==>   i32(1)
-      if (matches(curr, binary(LeS, pure(&left), ival(&c))) &&
+      if (matches(curr, binary(LeS, pure(), ival(&c))) &&
           c->value.isSignedMax()) {
         right->value = Literal::makeOne(Type::i32);
         right->type = Type::i32;
         return right;
       }
       // (signed)x > (i32|i64).max_s   ==>   i32(0)
-      if (matches(curr, binary(GtS, pure(&left), ival(&c))) &&
+      if (matches(curr, binary(GtS, pure(), ival(&c))) &&
           c->value.isSignedMax()) {
         right->value = Literal::makeZero(Type::i32);
         right->type = Type::i32;
         return right;
       }
       // (signed)x >= (i32|i64).min_s   ==>   i32(1)
-      if (matches(curr, binary(GeS, pure(&left), ival(&c))) &&
+      if (matches(curr, binary(GeS, pure(), ival(&c))) &&
           c->value.isSignedMin()) {
         right->value = Literal::makeOne(Type::i32);
         right->type = Type::i32;
@@ -3589,15 +3586,14 @@ private:
       //   x <=> NaN   ==>   0
       //   x op  NaN'  ==>   NaN',  iff `op` != `copysign` and `x` != C
       Const* c;
-      Binary* bin;
-      Expression* x;
-      if (matches(curr, binary(&bin, pure(&x), fval(&c))) &&
+      Type type = curr->left->type;
+      if (matches(curr, binary(any(), fval(&c))) &&
           std::isnan(c->value.getFloat()) &&
-          bin->op != getBinary(x->type, CopySign)) {
-        if (bin->isRelational()) {
+          curr->op != getBinary(type, CopySign)) {
+        if (curr->isRelational()) {
           // reuse "c" (nan) constant
           c->type = Type::i32;
-          if (bin->op == getBinary(x->type, Ne)) {
+          if (curr->op == getBinary(type, Ne)) {
             // x != NaN  ==>  1
             c->value = Literal::makeOne(Type::i32);
           } else {
@@ -3607,11 +3603,11 @@ private:
             // x .. NaN  ==>  0
             c->value = Literal::makeZero(Type::i32);
           }
-          return c;
+        } else {
+          // propagate NaN of RHS but canonicalize it
+          c->value = Literal::standardizeNaN(c->value);
         }
-        // propagate NaN of RHS but canonicalize it
-        c->value = Literal::standardizeNaN(c->value);
-        return c;
+        return getDroppedChildrenAndAppend(curr->left, c);
       }
     }
     return nullptr;
@@ -3869,7 +3865,18 @@ private:
       }
     }
     {
-      // fval(C) / -x   ==>  -C / x
+      // NaN - x   ==>   NaN'
+      // NaN / x   ==>   NaN'
+      Const* c;
+      if ((matches(curr, binary(Sub, fval(&c), any())) ||
+           matches(curr, binary(DivS, fval(&c), any()))) &&
+          std::isnan(c->value.getFloat())) {
+        c->value = Literal::standardizeNaN(c->value);
+        return getDroppedChildrenAndAppend(curr->right, c);
+      }
+    }
+    {
+      // fval(C) / -x   ==>   -C / x
       Expression* right;
       if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
         left->value = left->value.neg();
