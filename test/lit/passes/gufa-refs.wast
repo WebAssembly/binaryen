@@ -3125,7 +3125,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.eq-cone (export "ref.eq-cone") (param $x i32)
-                               ;; (param $struct (ref null $struct)) (param $struct2 (ref null $struct)) (param $other (ref null $other)) (param $nn-struct (ref $struct)) (param $nn-struct2 (ref $struct)) (param $nn-other (ref $other))
     ;; One side has two possible types, so we have a cone there. This cone is
     ;; of subtypes of the other type, which is exact, so we cannot intersect
     ;; here and we infer a 0.
