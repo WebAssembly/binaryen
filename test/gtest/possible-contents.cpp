@@ -392,12 +392,12 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 #endif
         assertHaveIntersection(combination, item);
 
-        // We also have the intersect() method, which is supported with a full
+        // Test intersectWithFullCone() method, which is supported with a full
         // cone type. In that case we can test that the intersection of A with
         // A + B is simply A.
         if (combination.isFullConeType()) {
           auto intersection = item;
-          intersection.intersect(combination);
+          intersection.intersectWithFullCone(combination);
           EXPECT_EQ(intersection, item);
 #if BINARYEN_TEST_DEBUG
           if (intersection != item) {
@@ -474,7 +474,7 @@ void assertIntersection(PossibleContents a,
                         PossibleContents b,
                         PossibleContents result) {
   auto intersection = a;
-  intersection.intersect(b);
+  intersection.intersectWithFullCone(b);
   EXPECT_EQ(intersection, result);
 }
 

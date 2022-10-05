@@ -157,9 +157,7 @@ void PossibleContents::combine(const PossibleContents& other) {
   value = Many();
 }
 
-void PossibleContents::intersect(const PossibleContents& other) {
-  // TODO: Everything else. For now we only call this when |other| is a full
-  //       cone type.
+void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
   assert(other.isFullConeType());
 
   if (isSubContents(other, *this)) {
@@ -1981,7 +1979,7 @@ void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   auto intendedCone =
     PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
   PossibleContents filtered = contents;
-  filtered.intersect(intendedCone);
+  filtered.intersectWithFullCone(intendedCone);
   if (!filtered.isNone()) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "    ref.cast passing through\n";
