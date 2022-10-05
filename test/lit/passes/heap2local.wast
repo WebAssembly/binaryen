@@ -1278,38 +1278,28 @@
     )
   )
 
-  ;; CHECK:      (func $set-value
+  ;; CHECK:      (func $set-value (param $struct.recursive (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:  (struct.set $struct.recursive 0
+  ;; CHECK-NEXT:   (local.get $struct.recursive)
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new_default $struct.recursive)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.tee $ref
-  ;; CHECK-NEXT:     (struct.new_default $struct.recursive)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $set-value (type $none_=>_none)
+  ;; NOMNL:      (func $set-value (type $ref?|$struct.recursive|_=>_none) (param $struct.recursive (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (local $ref (ref null $struct.recursive))
-  ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:  (struct.set $struct.recursive 0
+  ;; NOMNL-NEXT:   (local.get $struct.recursive)
+  ;; NOMNL-NEXT:   (local.tee $ref
+  ;; NOMNL-NEXT:    (struct.new_default $struct.recursive)
   ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (local.tee $ref
-  ;; NOMNL-NEXT:     (struct.new_default $struct.recursive)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $set-value
+  (func $set-value (param $struct.recursive (ref null $struct.recursive))
     (local $ref (ref null $struct.recursive))
     (struct.set $struct.recursive 0
-      (ref.null $struct.recursive)
+      (local.get $struct.recursive)
       ;; As above, but operands reversed: the allocation is now the value, not
       ;; the reference, and so it escapes.
       (local.tee $ref

@@ -3605,11 +3605,14 @@
 (module
   (type $A (struct_subtype data))
 
-  (type $B (array (mut anyref)))
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $B (array_subtype (mut anyref) data))
+  (type $B (array (mut anyref)))
+
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
 
   ;; CHECK:      (memory $0 10)
 
@@ -3903,20 +3906,23 @@
     )
   )
 
-  ;; CHECK:      (func $arrays (type $none_=>_none)
+  ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:   (array.len $B
+  ;; CHECK-NEXT:    (array.init_static $B
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $arrays
+  (func $arrays (param $B (ref $B))
     (drop
       (array.len $B
-        (ref.null $B)
+        (array.init_static $B
+          (ref.null none)
+          (ref.null none)
+        )
       )
     )
   )

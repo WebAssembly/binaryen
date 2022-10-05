@@ -795,15 +795,15 @@
   ;; CHECK:      (type $Leaf2-Inner (struct_subtype  $Root-Inner))
   (type $Leaf2-Inner (struct_subtype  $Root-Inner))
 
+  ;; CHECK:      (type $ref?|$Leaf1-Outer|_=>_none (func_subtype (param (ref null $Leaf1-Outer)) func))
+
+  ;; CHECK:      (type $Root-Outer (struct_subtype (field (ref $Leaf2-Inner)) data))
+
+  ;; CHECK:      (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
+
+  ;; CHECK:      (type $Leaf1-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
   (type $Leaf1-Outer (struct_subtype (field (ref $Leaf1-Inner)) $Root-Outer))
 
- ;; CHECK:      (type $none_=>_none (func_subtype func))
-
- ;; CHECK:      (type $Leaf1-Inner (struct_subtype (field i32) $Root-Inner))
-
- ;; CHECK:      (type $Root-Outer (struct_subtype (field (ref $Leaf2-Inner)) data))
-
- ;; CHECK:      (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
  (type $Leaf2-Outer (struct_subtype (field (ref $Leaf2-Inner)) $Root-Outer))
 
   (type $Root-Outer (struct_subtype (field (ref $Root-Inner)) data))
@@ -812,15 +812,18 @@
 
   (type $Leaf1-Inner (struct_subtype (field i32) $Root-Inner))
 
-  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK:      (func $func (type $ref?|$Leaf1-Outer|_=>_none) (param $Leaf1-Outer (ref null $Leaf1-Outer))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $Leaf1-Inner 0
-  ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $Leaf1-Outer)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -829,7 +832,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func
+  (func $func (param $Leaf1-Outer (ref null $Leaf1-Outer))
     (drop
       ;; The situation here is that we have only a get for some types, and no
       ;; other constraints. As we ignore gets, we work under no constraints at
@@ -851,7 +854,7 @@
       ;; unreachable here.
       (struct.get $Leaf1-Inner 0
         (struct.get $Leaf1-Outer 0
-          (ref.null $Leaf1-Outer)
+          (local.get $Leaf1-Outer)
         )
       )
     )
@@ -867,53 +870,37 @@
   ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $A))) data))
   (type $A (struct_subtype (field (mut (ref null $A))) data))
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CHECK:      (type $ref|$A|_ref?|$A|_=>_none (func_subtype (param (ref $A) (ref null $A)) func))
 
-  ;; CHECK:      (func $non-nullability (type $ref|$A|_=>_none) (param $nn (ref $A))
+  ;; CHECK:      (func $non-nullability (type $ref|$A|_ref?|$A|_=>_none) (param $nn (ref $A)) (param $A (ref null $A))
   ;; CHECK-NEXT:  (local $temp (ref null $A))
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $nn)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A)
+  ;; CHECK-NEXT:   (local.get $nn)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.tee $temp
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A)
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (local.get $A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (local.tee $temp
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $non-nullability (param $nn (ref $A))
+  (func $non-nullability (param $nn (ref $A)) (param $A (ref null $A))
     (local $temp (ref null $A))
     ;; Set a non-null value to the field.
     (struct.set $A 0
-      (ref.null $A)
+      (local.get $A)
       (local.get $nn)
     )
     ;; Set a get of the same field to the field - this is a copy. However, the
@@ -922,10 +909,10 @@
     ;; the local. We could add casts perhaps, but for now we do not optimize,
     ;; and type $A's field will remain nullable.
     (struct.set $A 0
-      (ref.null $A)
+      (local.get $A)
       (local.tee $temp
         (struct.get $A 0
-          (ref.null $A)
+          (local.get $A)
         )
       )
     )
@@ -934,7 +921,7 @@
       (struct.new $A
         (local.tee $temp
           (struct.get $A 0
-            (ref.null $A)
+            (local.get $A)
           )
         )
       )
@@ -948,9 +935,9 @@
   ;; CHECK:      (type $B (struct_subtype (field (ref null $B)) $A))
   (type $B (struct_subtype (field (ref null $A)) $A))
 
-  ;; CHECK:      (type $ref?|$B|_=>_none (func_subtype (param (ref null $B)) func))
+  ;; CHECK:      (type $ref?|$B|_ref?|$A|_=>_none (func_subtype (param (ref null $B) (ref null $A)) func))
 
-  ;; CHECK:      (func $heap-type (type $ref?|$B|_=>_none) (param $b (ref null $B))
+  ;; CHECK:      (func $heap-type (type $ref?|$B|_ref?|$A|_=>_none) (param $b (ref null $B)) (param $A (ref null $A))
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $B
@@ -960,17 +947,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (local.tee $a
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $heap-type (param $b (ref null $B))
+  (func $heap-type (param $b (ref null $B)) (param $A (ref null $A))
     (local $a (ref null $A))
     ;; Similar to the above, but instead of non-nullability being the issue,
     ;; now it is the heap type. We write a B to B's field, so we can trivially
@@ -987,7 +971,7 @@
       (struct.new $A
         (local.tee $a
           (struct.get $A 0
-            (ref.null $A)
+            (local.get $A)
           )
         )
       )
@@ -996,68 +980,52 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $A))) data))
+  ;; CHECK:      (type $A (struct_subtype (field (mut (ref $A))) data))
   (type $A (struct_subtype (field (mut (ref null $A))) data))
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CHECK:      (type $ref|$A|_ref?|$A|_=>_none (func_subtype (param (ref $A) (ref null $A)) func))
 
-  ;; CHECK:      (func $non-nullability-block (type $ref|$A|_=>_none) (param $nn (ref $A))
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $nn)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK:      (func $non-nullability-block (type $ref|$A|_ref?|$A|_=>_none) (param $nn (ref $A)) (param $A (ref null $A))
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A)
+  ;; CHECK-NEXT:   (local.get $nn)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (if (result (ref null $A))
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A)
+  ;; CHECK-NEXT:   (if (result (ref $A))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (local.get $A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
-  ;; CHECK-NEXT:    (if (result (ref null $A))
+  ;; CHECK-NEXT:    (if (result (ref $A))
   ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $non-nullability-block (param $nn (ref $A))
+  (func $non-nullability-block (param $nn (ref $A)) (param $A (ref null $A))
     (struct.set $A 0
-      (ref.null $A)
+      (local.get $A)
       (local.get $nn)
     )
     ;; As above, but instead of a local.tee fallthrough, use an if. We *can*
     ;; optimize in this case, as ifs etc do not pose a problem (we'll refinalize
     ;; the ifs to the proper, non-nullable type, the same as the field).
     (struct.set $A 0
-      (ref.null $A)
+      (local.get $A)
       (if (result (ref null $A))
         (i32.const 1)
         (struct.get $A 0
-          (ref.null $A)
+          (local.get $A)
         )
         (unreachable)
       )
@@ -1067,7 +1035,7 @@
         (if (result (ref null $A))
           (i32.const 1)
           (struct.get $A 0
-            (ref.null $A)
+            (local.get $A)
           )
           (unreachable)
         )
