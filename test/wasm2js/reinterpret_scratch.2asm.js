@@ -18,8 +18,7 @@
     f32ScratchView[2] = value;
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
