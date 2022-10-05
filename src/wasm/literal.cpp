@@ -342,11 +342,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  // The types must be identical, unless both are references - in that case,
-  // nulls of different types *do* compare equal.
-  if (type.isRef() && other.type.isRef() && (isNull() || other.isNull())) {
-    return isNull() && other.isNull();
-  }
   if (type != other.type) {
     return false;
   }
@@ -367,7 +362,9 @@ bool Literal::operator==(const Literal& other) const {
     }
   } else if (type.isRef()) {
     assert(type.isRef());
-    // Note that we've already handled nulls earlier.
+    if (type.isNull()) {
+      return true;
+    }
     if (type.isFunction()) {
       assert(func.is() && other.func.is());
       return func == other.func;
@@ -378,8 +375,6 @@ bool Literal::operator==(const Literal& other) const {
     if (type.getHeapType() == HeapType::i31) {
       return i32 == other.i32;
     }
-    // other non-null reference type literals cannot represent concrete values,
-    // i.e. there is no concrete anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
