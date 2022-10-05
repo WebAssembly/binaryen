@@ -1508,7 +1508,7 @@ BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
                                       BinaryenType type) {
   Type type_(type);
   assert(type_.isNullable());
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_));
+  return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_.getHeapType()));
 }
 
 BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
