@@ -594,7 +594,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   switch (a) {
     case HeapType::ext:
     case HeapType::func:
-      return {};
+      return std::nullopt;
     case HeapType::any:
       return {HeapType::any};
     case HeapType::eq:
