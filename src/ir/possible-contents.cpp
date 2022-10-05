@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "wasm.h"
@@ -226,7 +227,8 @@ template<typename T> void disallowDuplicates(const T& targets) {
 
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a link from a LocalLocation to a ResultLocation.
+// we have a link from the ExpressionLocation of that local.get to a
+// ResultLocation.
 template<typename T> struct Link {
   T from;
   T to;
@@ -447,7 +449,7 @@ struct InfoCollector
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back(
-        {SignatureParamLocation{func->type, i}, LocalLocation{func, i, 0}});
+        {SignatureParamLocation{func->type, i}, ParamLocation{func, i, 0}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
@@ -591,7 +593,7 @@ struct InfoCollector
       curr,
       [&](Index i) {
         assert(i <= target->getParams().size());
-        return LocalLocation{target, i, 0};
+        return ParamLocation{target, i, 0};
       },
       [&](Index i) {
         assert(i <= target->getResults().size());
@@ -939,27 +941,21 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
-  void visitFunction(Function* curr) {
-    // Vars have an initial value.
-    for (Index i = 0; i < curr->getNumLocals(); i++) {
-      if (curr->isVar(i)) {
-        Index j = 0;
-        for (auto t : curr->getLocalType(i)) {
-          if (t.isDefaultable()) {
-            info.links.push_back(
-              {getNullLocation(t), LocalLocation{curr, i, j}});
-          }
-          j++;
-        }
-      }
-    }
+  void doWalkFunction(Function* func)
+    // Compute the local graph so that LocalGet/Set know what to connect to
+    // where. TODO perhaps avoid this overhead if optimizeLevel < 3?
+    localGraph = std::make_unique<LocalGraph>(func);
+
+    super::doWalkFunction(func);
 
     // Functions with a result can flow a value out from their body.
-    addResult(curr->body);
+    addResult(func->body);
 
     // See visitPop().
     assert(handledPops == totalPops);
   }
+
+  std::unique_ptr<LocalGraph> localGraph;
 
   // Helpers
 
@@ -1292,7 +1288,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[LocalLocation{func, i, 0}] = PossibleContents::many();
+      roots[ParamLocation{func, i, 0}] = PossibleContents::many();
     }
   };
 
@@ -1801,8 +1797,8 @@ void Flower::dump(Location location) {
     std::cout << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
-  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+  } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
+    std::cout << "  paramloc " << loc->func->name << " : " << loc->index
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc " << loc->func->name << " : " << loc->index
