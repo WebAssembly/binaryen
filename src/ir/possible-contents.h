@@ -146,8 +146,9 @@ public:
   void combine(const PossibleContents& other);
 
   // Removes anything not in |other| from this object, so that it ends up with
-  // only their intersection.
-  void intersect(const PossibleContents& other);
+  // only their intersection. At this only handles an intersection with a full
+  // cone.
+  void intersectWithFullCone(const PossibleContents& other);
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }
