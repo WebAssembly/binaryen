@@ -246,7 +246,7 @@
 
   ;; CHECK:      (func $param-yes (param $param i32) (result i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (local.set $param
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -254,19 +254,16 @@
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $param-yes (param $param i32) (result i32)
+    ;; As above, but now the function is not exported. That means it has no
+    ;; callers, so the first local.get can contain nothing, and will become an
+    ;; unreachable. The other local.get later down can only contain the
+    ;; local.set in the if, so we'll optimize it to 1.
     (if
       (local.get $param)
       (local.set $param
         (i32.const 1)
       )
     )
-    ;; As above, but now the function is not exported. That means it has no
-    ;; callers, so the only possible contents for $param are the local.set here,
-    ;; as this code is unreachable. We will infer a constant of 1 for all values
-    ;; of $param here. (With an SSA analysis, we could see that the first
-    ;; local.get must be unreachable, and optimize even better; as things are,
-    ;; we see the local.set and it is the only thing that sends values to the
-    ;; local.)
     (local.get $param)
   )
 
