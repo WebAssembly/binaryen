@@ -1267,6 +1267,10 @@ struct OptimizeInstructions
   }
 
   void visitCallRef(CallRef* curr) {
+    skipNonNullCast(curr->target);
+    if (trapOnNull(curr, curr->target)) {
+      return;
+    }
     if (curr->target->type == Type::unreachable) {
       // The call_ref is not reached; leave this for DCE.
       return;
