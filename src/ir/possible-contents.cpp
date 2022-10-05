@@ -506,12 +506,24 @@ struct InfoCollector
   }
 
   // Locals read and write to their index.
-  // TODO: we could use a LocalGraph for SSA-like precision
   void visitLocalGet(LocalGet* curr) {
     if (isRelevant(curr->type)) {
-      for (Index i = 0; i < curr->type.size(); i++) {
-        info.links.push_back({LocalLocation{getFunction(), curr->index, i},
-                              ExpressionLocation{curr, i}});
+      // The get reads from all relevant sets.
+      for (auto* set : localGraph->getSetses[curr]) {
+        for (Index i = 0; i < curr->type.size(); i++) {
+          // A null set means it is the default value for that local, for which
+          // there is no local.set: either the parameter's value, if this is a
+          // parameter, or the null default value.
+          Location source;
+          if (set) {
+            source = ExpressionLocation{set, i};
+          } else if (getFunction()->isParam(curr->index)) {
+            source = ParamLocation{getFunction(), curr->index};
+          } else {
+            source = getNullLocation(curr->type[i]);
+          }
+          info.links.push_back({source, ExpressionLocation{curr, i}});
+        }
       }
     }
   }
@@ -519,9 +531,12 @@ struct InfoCollector
     if (!isRelevant(curr->value->type)) {
       return;
     }
-    for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.links.push_back({ExpressionLocation{curr->value, i},
-                            LocalLocation{getFunction(), curr->index, i}});
+    // The set writes to all relevant gets.
+    for (auto* get : localGraph->setInfluences[curr]) {
+      for (Index i = 0; i < curr->value->type.size(); i++) {
+        info.links.push_back({ExpressionLocation{curr->value, i},
+                              ExpressionLocation{get, i}});
+      }
     }
 
     // Tees also flow out the value (receiveChildValue will see if this is a tee
@@ -945,6 +960,7 @@ struct InfoCollector
     // Compute the local graph so that LocalGet/Set know what to connect to
     // where. TODO perhaps avoid this overhead if optimizeLevel < 3?
     localGraph = std::make_unique<LocalGraph>(func);
+    localGraph->computeSetInfluences();
 
     super::doWalkFunction(func);
 
