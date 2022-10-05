@@ -2,8 +2,8 @@
   var bufferView;
 function wasm2js_trap() { throw new Error('abort'); }
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
+ var env = imports.env;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);
@@ -46,6 +46,8 @@ function asmFunc(importObject) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({
+  "env": {
     memory: { buffer : memasmFunc }
+  },
 });
 export var foo = retasmFunc.foo;

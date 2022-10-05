@@ -1,7 +1,6 @@
-import { print_i32 } from 'spectest';
+import * as spectest from 'spectest';
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -14,7 +13,8 @@ function asmFunc(importObject) {
  var Math_sqrt = Math.sqrt;
  var nan = NaN;
  var infinity = Infinity;
- var print = env.print_i32;
+ var spectest = imports.spectest;
+ var print = spectest.print_i32;
  function $3() {
   return 13 | 0;
  }
@@ -43,15 +43,14 @@ function asmFunc(importObject) {
 }
 
 var retasmFunc = asmFunc({
-    print_i32,
+  "spectest": spectest,
 });
 export var one = retasmFunc.one;
 export var two = retasmFunc.two;
 export var three = retasmFunc.three;
 export var four = retasmFunc.four;
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -106,8 +105,7 @@ var retasmFunc = asmFunc({
 export var callt = retasmFunc.callt;
 export var callu = retasmFunc.callu;
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;

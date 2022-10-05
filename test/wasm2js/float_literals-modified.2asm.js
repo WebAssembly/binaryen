@@ -1,4 +1,4 @@
-import { setTempRet0 } from 'env';
+import * as env from 'env';
 
 
   var scratchBuffer = new ArrayBuffer(16);
@@ -18,8 +18,7 @@ import { setTempRet0 } from 'env';
     f32ScratchView[2] = value;
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -32,6 +31,7 @@ function asmFunc(importObject) {
  var Math_sqrt = Math.sqrt;
  var nan = NaN;
  var infinity = Infinity;
+ var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
@@ -1149,7 +1149,7 @@ function asmFunc(importObject) {
 }
 
 var retasmFunc = asmFunc({
-    setTempRet0,
+  "env": env,
 });
 export var f32_nan = retasmFunc.f32_nan;
 export var f32_positive_nan = retasmFunc.f32_positive_nan;

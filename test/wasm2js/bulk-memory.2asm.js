@@ -1,6 +1,5 @@
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -30,8 +29,7 @@ var retasmFunc = asmFunc({
     bufferView.fill(value, dest, dest + size);
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -133,8 +131,7 @@ function initActiveSegments(imports) {
     bufferView.copyWithin(dest, source, source + size);
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -169,7 +166,7 @@ function asmFunc(importObject) {
  }
  
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(imports);
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -214,8 +211,7 @@ memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -324,8 +320,7 @@ function initActiveSegments(imports) {
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -364,7 +359,7 @@ function asmFunc(importObject) {
  }
  
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(imports);
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }

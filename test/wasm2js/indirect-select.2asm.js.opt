@@ -1,7 +1,7 @@
-import { table } from 'env';
+import * as env from 'env';
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
+ var env = imports.env;
  var FUNCTION_TABLE = env.table;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
@@ -32,7 +32,7 @@ function asmFunc(importObject) {
 }
 
 var retasmFunc = asmFunc({
-    table,
+  "env": env,
 });
 export var foo_true = retasmFunc.foo_true;
 export var foo_false = retasmFunc.foo_false;

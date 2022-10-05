@@ -26,9 +26,9 @@ function initActiveSegments(imports) {
 }
 function wasm2js_trap() { throw new Error('abort'); }
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(16777216);
+ var env = imports.env;
  var FUNCTION_TABLE = env.table;
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -214,7 +214,7 @@ function asmFunc(importObject) {
  // EMSCRIPTEN_END_FUNCS
 ;
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(imports);
  FUNCTION_TABLE[1] = foo;
  FUNCTION_TABLE[2] = bar;
  FUNCTION_TABLE[3] = tabled;

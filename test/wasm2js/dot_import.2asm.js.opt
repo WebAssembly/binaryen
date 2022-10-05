@@ -1,7 +1,6 @@
-import { ba_se } from 'mod.ule';
+import * as mod_ule from 'mod.ule';
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -14,7 +13,8 @@ function asmFunc(importObject) {
  var Math_sqrt = Math.sqrt;
  var nan = NaN;
  var infinity = Infinity;
- var base = env.ba_se;
+ var mod_ule = imports["mod.ule"];
+ var base = mod_ule["ba.se"];
  function $0() {
   base();
  }
@@ -25,6 +25,6 @@ function asmFunc(importObject) {
 }
 
 var retasmFunc = asmFunc({
-    ba_se,
+  "mod.ule": mod_ule,
 });
 export var exported = retasmFunc.exported;
