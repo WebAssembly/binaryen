@@ -534,8 +534,8 @@ struct InfoCollector
     // The set writes to all relevant gets.
     for (auto* get : localGraph->setInfluences[curr]) {
       for (Index i = 0; i < curr->value->type.size(); i++) {
-        info.links.push_back({ExpressionLocation{curr->value, i},
-                              ExpressionLocation{get, i}});
+        info.links.push_back(
+          {ExpressionLocation{curr->value, i}, ExpressionLocation{get, i}});
       }
     }
 
@@ -960,18 +960,19 @@ struct InfoCollector
     // Compute the local graph so that LocalGet/Set know what to connect to
     // where. TODO perhaps avoid this overhead if optimizeLevel < 3?
     localGraph = std::make_unique<LocalGraph>(func);
-    localGraph->computeSetInfluences();
+  localGraph->computeSetInfluences();
 
-    super::doWalkFunction(func);
+  super::doWalkFunction(func);
 
-    // Functions with a result can flow a value out from their body.
-    addResult(func->body);
+  // Functions with a result can flow a value out from their body.
+  addResult(func->body);
 
-    // See visitPop().
-    assert(handledPops == totalPops);
-  }
+  // See visitPop().
+  assert(handledPops == totalPops);
+}
 
-  std::unique_ptr<LocalGraph> localGraph;
+std::unique_ptr<LocalGraph>
+  localGraph;
 
   // Helpers
 
