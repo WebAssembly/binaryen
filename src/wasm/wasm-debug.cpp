@@ -162,8 +162,8 @@ struct LineState {
           }
           default: {
             // An unknown opcode, ignore.
-            std::cerr << "warning: unknown subopcopde " << opcode.SubOpcode
-                      << '\n';
+            std::cerr << "warning: unknown subopcode " << opcode.SubOpcode
+                      << " (this may be an unsupported version of DWARF)\n";
           }
         }
         break;
