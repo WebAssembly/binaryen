@@ -17,7 +17,6 @@ class WebLimitations(utils.BinaryenTestCase):
         )
         ''' % params
         p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
-                               input=module, check=False, capture_output=True)
-        self.assertEqual(p.returncode, 0)
+                               input=module, capture_output=True)
         self.assertIn('Some VMs may not accept this binary because it has a large number of parameters in function foo.',
                       p.stderr)
