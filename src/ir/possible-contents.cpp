@@ -505,43 +505,16 @@ struct InfoCollector
     receiveChildValue(curr->value, curr);
   }
 
-  // Locals read and write to their index.
-  void visitLocalGet(LocalGet* curr) {
-    if (isRelevant(curr->type)) {
-      // The get reads from all relevant sets.
-      for (auto* set : localGraph->getSetses[curr]) {
-        for (Index i = 0; i < curr->type.size(); i++) {
-          // A null set means it is the default value for that local, for which
-          // there is no local.set: either the parameter's value, if this is a
-          // parameter, or the null default value.
-          Location source;
-          if (set) {
-            source = ExpressionLocation{set, i};
-          } else if (getFunction()->isParam(curr->index)) {
-            source = ParamLocation{getFunction(), curr->index};
-          } else {
-            source = getNullLocation(curr->type[i]);
-          }
-          info.links.push_back({source, ExpressionLocation{curr, i}});
-        }
-      }
-    }
-  }
   void visitLocalSet(LocalSet* curr) {
     if (!isRelevant(curr->value->type)) {
       return;
     }
-    // The set writes to all relevant gets.
-    for (auto* get : localGraph->setInfluences[curr]) {
-      for (Index i = 0; i < curr->value->type.size(); i++) {
-        info.links.push_back(
-          {ExpressionLocation{curr->value, i}, ExpressionLocation{get, i}});
-      }
-    }
 
-    // Tees also flow out the value (receiveChildValue will see if this is a tee
+    // Tees flow out the value (receiveChildValue will see if this is a tee
     // based on the type, automatically).
     receiveChildValue(curr->value, curr);
+
+    // We handle connecting local.gets to local.sets below, in visitFunction.
   }
 
   // Globals read and write from their location.
@@ -956,25 +929,43 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
-  void doWalkFunction(Function* func) {
-    // Compute the local graph so that LocalGet/Set know what to connect to
-    // where. TODO perhaps avoid this overhead if optimizeLevel < 3?
-    localGraph = std::make_unique<LocalGraph>(func);
-    localGraph->computeSetInfluences();
-
-    PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>>::doWalkFunction(
-      func);
-  }
-
   void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.
     addResult(func->body);
 
     // See visitPop().
     assert(handledPops == totalPops);
-  }
 
-  std::unique_ptr<LocalGraph> localGraph;
+    // Handle local.get/sets: each set must write to the proper gets.
+    LocalGraph localGraph(func);
+
+    for (auto& [get, setsForGet] : localGraph.getSetses) {
+      auto type = func->getLocalType(get->index);
+      if (!isRelevant(type)) {
+        continue;
+      }
+
+      auto index = get->index;
+
+      // Each get reads from its relevant sets.
+      for (auto* set : setsForGet) {
+        for (Index i = 0; i < type.size(); i++) {
+          Location source;
+          if (set) {
+            // This is a normal local.set.
+            source = ExpressionLocation{set, i};
+          } else if (getFunction()->isParam(index)) {
+            // This is a parameter.
+            source = ParamLocation{getFunction(), index};
+          } else {
+            // This is the default value from the function entry, a null.
+            source = getNullLocation(type[i]);
+          }
+          info.links.push_back({source, ExpressionLocation{get, i}});
+        }
+      }
+    }
+  }
 
   // Helpers
 
