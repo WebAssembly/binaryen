@@ -183,7 +183,10 @@ struct LineState {
         return true;
       }
       case llvm::dwarf::DW_LNS_advance_pc: {
-        assert(table.MinInstLength == 1);
+        if (table.MinInstLength != 1) {
+          std::cerr << "warning: bad MinInstLength "
+                       "(this may be an unsupported DWARF version)";
+        }
         addr += opcode.Data;
         break;
       }
