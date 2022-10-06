@@ -28,7 +28,6 @@
    )
   )
 
-  ;; Now we are in unreachable parsing mode. Due to the bug, we would have
   (array.get_u $array
    (local.get $x)
 
