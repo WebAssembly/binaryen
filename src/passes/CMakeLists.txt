@@ -51,6 +51,7 @@ set(passes_SOURCES
   JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
+  LLVM.cpp
   LocalCSE.cpp
   LocalSubtyping.cpp
   LogExecution.cpp

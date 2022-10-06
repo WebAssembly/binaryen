@@ -151,6 +151,34 @@ if(NOT EMSCRIPTEN)
   endif()
 endif()
 
+option(BUILD_LLVM "Build with LLVM integration" OFF)
+if(BUILD_LLVM)
+  # To build with LLVM, use something like:
+  #
+  # cmake -DBUILD_LLVM=1 -DBUILD_LLVM_DWARF=0 -DLLVM_DIR=/usr/lib/llvm-14/cmake
+  #
+  # Setting LLVM_DIR lets you pick the right LLVM on your system (otherwise, it
+  # will use whichever it finds first).
+
+  if(BUILD_LLVM_DWARF)
+    # Linking with real LLVM while also building our small DWARF library from
+    # LLVM is not supported - symbols overlap etc.
+    message(SEND_ERROR "Please disable BUILD_LLVM_DWARF to use BUILD_LLVM")
+  endif()
+
+  find_package(LLVM REQUIRED CONFIG)
+
+  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+  message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
+
+  include_directories(${LLVM_INCLUDE_DIRS})
+  separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+  add_definitions(${LLVM_DEFINITIONS_LIST})
+
+  llvm_map_components_to_libnames(llvm_libs support core irreader) # XXX which?
+endif()
+
 # Compiler setup.
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -391,25 +419,7 @@ if(NOT BYN_INSTALL_TOOLS_ONLY)
   install(FILES src/binaryen-c.h src/wasm-delegations.def DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-option(BUILD_LLVM "Build with LLVM integration" OFF)
 if(BUILD_LLVM)
-  # To build with LLVM, use something like:
-  #
-  # cmake -DBUILD_LLVM=1 -DLLVM_DIR=/usr/lib/llvm-14/cmake
-  #
-  # Setting LLVM_DIR lets you pick the right LLVM on your system (otherwise, it
-  # will use whichever it finds first).
-  find_package(LLVM REQUIRED CONFIG)
-
-  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-  include_directories(${LLVM_INCLUDE_DIRS})
-  separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-  add_definitions(${LLVM_DEFINITIONS_LIST})
-
-  llvm_map_components_to_libnames(llvm_libs support core irreader) # XXX which?
-
   target_link_libraries(binaryen ${llvm_libs})
 endif()
 
