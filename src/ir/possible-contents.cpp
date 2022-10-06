@@ -516,6 +516,9 @@ struct InfoCollector
 
     // We handle connecting local.gets to local.sets below, in visitFunction.
   }
+  void visitLocalGet(LocalGet* curr) {
+    // We handle connecting local.gets to local.sets below, in visitFunction.
+  }
 
   // Globals read and write from their location.
   void visitGlobalGet(GlobalGet* curr) {
