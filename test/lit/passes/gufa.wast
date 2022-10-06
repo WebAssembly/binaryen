@@ -1001,7 +1001,7 @@
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param i32 funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
@@ -1015,10 +1015,10 @@
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (param $A (ref null $A))
   ;; CHECK-NEXT:  (call $call-without-effects
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-keep)
@@ -1027,14 +1027,14 @@
   ;; CHECK-NEXT:   (ref.func $target-keep-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     ;; Call the intrinsic without a RefFunc. All we infer here is the type,
     ;; which means we must assume anything with type $A (and a reference) can be
     ;; called, which will keep alive the bodies of both $target-keep and
     ;; $target-keep-2 - no unreachables will be placed in either one.
     (call $call-without-effects
       (i32.const 1)
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-keep)
@@ -1046,7 +1046,7 @@
 
   ;; CHECK:      (func $target-keep (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep (type $A) (param $x i32)
@@ -1057,7 +1057,7 @@
 
   ;; CHECK:      (func $target-keep-2 (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $target-keep-2 (type $A) (param $x i32)
