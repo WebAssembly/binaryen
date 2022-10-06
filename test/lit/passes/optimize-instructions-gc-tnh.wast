@@ -52,9 +52,6 @@
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (i32.const 1)
-  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_=>_none) (param $a eqref) (param $b eqref)
   ;; NO_TNH-NEXT:  (drop
@@ -73,19 +70,6 @@
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.eq
-  ;; NO_TNH-NEXT:    (block (result nullref)
-  ;; NO_TNH-NEXT:     (drop
-  ;; NO_TNH-NEXT:      (ref.null none)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:     (ref.null none)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.as_data
-  ;; NO_TNH-NEXT:     (ref.null none)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $ref.eq-no (param $a (ref null eq)) (param $b (ref null eq))
     ;; We must leave the inputs to ref.eq of type eqref or a subtype. Note that
@@ -101,23 +85,6 @@
           (ref.as_data
             (ref.as_non_null
               (ref.func $ref.eq-no) ;; *Not* an eqref!
-            )
-          )
-        )
-      )
-    )
-    ;; As above, but now with nulls of a non-eq type.
-    ;; Note that we could in theory change a null's type to get validation in
-    ;; such cases.
-    (drop
-      (ref.eq
-        (ref.cast_static $struct
-          (ref.null any) ;; *Not* an eqref!
-        )
-        (ref.as_non_null
-          (ref.as_data
-            (ref.as_non_null
-              (ref.null any) ;; *Not* an eqref!
             )
           )
         )
