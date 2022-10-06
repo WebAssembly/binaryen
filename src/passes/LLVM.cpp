@@ -26,7 +26,12 @@ struct LLVM : public Pass {
   void run(Module* module) override {
     std::cout << "LLVM pass\n";
 
-    llvm::InitLLVM X();
+    // Initialize LLVM without any commandline arguments; we just need the lib.
+    int argc = 1;
+    const char* argvData[1];
+    argvData[0] = "binaryen";
+    const char** argv = argvData;
+    llvm::InitLLVM X(argc, argv);
   }
 };
 
