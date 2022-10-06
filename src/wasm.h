@@ -2069,6 +2069,8 @@ public:
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
   static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
+  // in wasm64, the maximum number of pages
+  static const Address::address64_t kMaxSize64 = 1ull << (64 - 16);
 
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;

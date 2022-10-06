@@ -145,21 +145,40 @@ struct MultiMemoryLowering : public Pass {
   }
 
   void addCombinedMemory() {
-    // We are assuming that each memory is configured the same as the first
     pointerType = wasm->memories[0]->indexType;
-
+    bool isShared = wasm->memories[0]->shared;
     size_t totalInitialPages = 0;
+    size_t totalMaxPages = 0;
     for (auto& memory : wasm->memories) {
+      // We are assuming that each memory is configured the same as the first
+      // and assert if any of the memories does not match this configuration
+      assert(memory->shared == isShared);
+      assert(memory->indexType == pointerType);
+
+      // Calculating the total initial and max page size for the combined memory
       totalInitialPages += memory->initial;
+      if (memory->hasMax()) {
+        totalMaxPages += memory->max;
+      }
+    }
+
+    // Ensuring valid initial and max page sizes that do not exceed the number
+    // of pages addressable by the pointerType
+    Address maxSize = pointerType == Type::i32 ? Memory::kMaxSize32 : Memory::kMaxSize64;
+    if (totalMaxPages > maxSize) {
+      totalMaxPages = maxSize;
+    }
+    if (totalInitialPages > totalMaxPages) {
+      totalInitialPages = totalMaxPages;
     }
 
     // Create the new combined memory
     combinedMemory = Names::getValidMemoryName(*wasm, "combined_memory");
     auto memory = Builder::makeMemory(combinedMemory);
-    // We are assuming that each memory is configured the same as the first
-    memory->shared = wasm->memories[0]->shared;
+    memory->shared = isShared;
     memory->indexType = pointerType;
     memory->initial = totalInitialPages;
+    memory->max = totalMaxPages;
     wasm->addMemory(std::move(memory));
   }
 
