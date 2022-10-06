@@ -48,6 +48,11 @@ struct MultiMemoryLowering : public Pass {
   std::vector<Name> memoryGrowNames;
 
   void run(Module* module) override {
+    // Disabling multi-memories so that the target features esction in the
+    // emitted module does not report the use of MultiMemories. Also prevents
+    // later passes from adding additional memories.
+    module->features.disable(FeatureSet::MultiMemories);
+
     // If there are no memories or 1 memory, skip this pass
     if (module->memories.size() <= 1) {
       return;
