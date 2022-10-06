@@ -1,0 +1,21 @@
+import os
+
+from scripts.test import shared
+from . import utils
+
+"""Test that we warn on large numbers of parameters, which Web VMs disallow."""
+
+
+class WebLimitations(utils.BinaryenTestCase):
+    def test_many_params(self):
+        params = '(param i32) ' * 1001
+        module = '''
+        (module
+         (func $foo %s
+         )
+        )
+        ''' % params
+        p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
+                               input=module, check=False, capture_output=True)
+        self.assertEqual(p.returncode, 0)
+        self.assertIn('Some VMs may not accept this binary', p.stderr)

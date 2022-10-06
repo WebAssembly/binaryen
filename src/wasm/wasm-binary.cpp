@@ -453,6 +453,11 @@ void WasmBinaryWriter::writeFunctions() {
     tableOfContents.functionBodies.emplace_back(
       func->name, sizePos + sizeFieldSize, size);
     binaryLocationTrackedExpressionsForFunc.clear();
+
+    if (func->getParams().size() > WebLimitations::MaxFunctionParams) {
+      std::cerr << "Some VMs may not accept this binary because it has a large "
+                << "number of parameters in function " << func->name << ".\n";
+    }
   });
   finishSection(sectionStart);
 }
