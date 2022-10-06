@@ -943,12 +943,11 @@ struct InfoCollector
     LocalGraph localGraph(func);
 
     for (auto& [get, setsForGet] : localGraph.getSetses) {
-      auto type = func->getLocalType(get->index);
+      auto index = get->index;
+      auto type = func->getLocalType(index);
       if (!isRelevant(type)) {
         continue;
       }
-
-      auto index = get->index;
 
       // Each get reads from its relevant sets.
       for (auto* set : setsForGet) {
@@ -956,7 +955,7 @@ struct InfoCollector
           Location source;
           if (set) {
             // This is a normal local.set.
-            source = ExpressionLocation{set, i};
+            source = ExpressionLocation{set->value, i};
           } else if (getFunction()->isParam(index)) {
             // This is a parameter.
             source = ParamLocation{getFunction(), index};
