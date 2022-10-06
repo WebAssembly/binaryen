@@ -32,24 +32,26 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i64) data))
   (type $struct (struct i64))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param $struct (ref null $struct))
     ;; The only place this type is created is with a default value, and so we
     ;; can optimize the later get into a constant (plus a drop of the ref).
     ;;
@@ -62,33 +64,35 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field f32) data))
   (type $struct (struct f32))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param $struct (ref null $struct))
     ;; The only place this type is created is with a constant value, and so we
     ;; can optimize the later get into a constant (plus a drop of the ref).
     (drop
@@ -98,33 +102,30 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
 )
 
 (module
-  ;; CHECK:      (type $f32_=>_none (func_subtype (param f32) func))
-
   ;; CHECK:      (type $struct (struct_subtype (field f32) data))
   (type $struct (struct f32))
-  ;; CHECK:      (func $test (type $f32_=>_none) (param $f f32)
+  ;; CHECK:      (type $f32_ref?|$struct|_=>_none (func_subtype (param f32 (ref null $struct)) func))
+
+  ;; CHECK:      (func $test (type $f32_ref?|$struct|_=>_none) (param $f f32) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $f f32)
+  (func $test (param $f f32) (param $struct (ref null $struct))
     ;; The value given is not a constant, and so we cannot optimize.
     (drop
       (struct.new $struct
@@ -133,7 +134,7 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -142,10 +143,12 @@
 ;; Create in one function, get in another. The 10 should be forwarded to the
 ;; get.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
@@ -160,20 +163,22 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -182,25 +187,29 @@
 ;; As before, but with the order of functions reversed to check for any ordering
 ;; issues.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
 
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -226,9 +235,9 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field f32) data))
   (type $struct (struct f32))
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
@@ -240,15 +249,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param $struct (ref null $struct))
     (drop
       (struct.new $struct
         (f32.const 42)
@@ -261,7 +267,7 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -322,9 +328,9 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut f32)) data))
   (type $struct (struct (mut f32)))
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -352,20 +358,22 @@
       (f32.const 42) ;; The last testcase had 1337 here.
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -446,28 +454,30 @@
 
 ;; Test a function reference instead of a number.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (type $struct (struct_subtype (field funcref) data))
   (type $struct (struct funcref))
   ;; CHECK:      (elem declare func $test)
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (ref.func $test)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result (ref $ref?|$struct|_=>_none))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.func $test)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param $struct (ref null $struct))
     (drop
       (struct.new $struct
         (ref.func $test)
@@ -475,7 +485,7 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -539,6 +549,9 @@
 
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $ref?|$substruct|_=>_none (func_subtype (param (ref null $substruct)) func))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field i32) $struct))
   (type $substruct (struct_subtype i32 $struct))
 
   ;; CHECK:      (func $create (type $none_=>_none)
@@ -555,20 +568,20 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$substruct|_=>_none) (param $substruct (ref null $substruct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (local.get $substruct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $substruct (ref null $substruct))
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (local.get $substruct)
       )
     )
   )
@@ -581,11 +594,12 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
-  (type $substruct (struct_subtype (mut i32) $struct))
-
   ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$substruct|_=>_none (func_subtype (param (ref null $substruct)) func))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
+  (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (func $create (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
@@ -609,20 +623,22 @@
       (i32.const 10)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$substruct|_=>_none) (param $substruct (ref null $substruct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $substruct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $substruct (ref null $substruct))
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (local.get $substruct)
       )
     )
   )
@@ -641,6 +657,8 @@
 
   (type $struct (struct i32))
 
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $substruct
@@ -657,20 +675,22 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -679,12 +699,14 @@
 ;; Subtyping: Create both a subtype and a supertype, with identical constants
 ;;            for the shared field, and get the supertype.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -712,20 +734,22 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -735,12 +759,14 @@
 ;;            for the shared field, preventing optimization, as a get of the
 ;;            supertype may receive an instance of the subtype.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -768,20 +794,17 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -792,14 +815,16 @@
 ;;            shared between the types, but we only create the substruct with
 ;;            one value, so we can optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
 
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
   (type $struct (struct i32))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref?|$substruct|_=>_none (func_subtype (param (ref null $substruct)) func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -827,20 +852,22 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$substruct|_=>_none) (param $substruct (ref null $substruct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $substruct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $substruct (ref null $substruct))
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (local.get $substruct)
       )
     )
   )
@@ -851,12 +878,12 @@
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
-
   ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
+  ;; CHECK:      (type $ref?|$substruct|_=>_none (func_subtype (param (ref null $substruct)) func))
 
   ;; CHECK:      (func $create (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
@@ -892,20 +919,17 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$substruct|_=>_none) (param $substruct (ref null $substruct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $substruct 0
+  ;; CHECK-NEXT:    (local.get $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $substruct (ref null $substruct))
     (drop
       (struct.get $substruct 0
-        (ref.null $substruct)
+        (local.get $substruct)
       )
     )
   )
@@ -914,8 +938,6 @@
 ;; Multi-level subtyping, check that we propagate not just to the immediate
 ;; supertype but all the way as needed.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
 
   ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
@@ -926,6 +948,10 @@
   (type $struct2 (struct_subtype i32 f64 $struct1))
 
   (type $struct1 (struct i32))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none (func_subtype (param (ref null $struct1) (ref null $struct2) (ref null $struct3)) func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -941,93 +967,105 @@
       (struct.new $struct3
         (i32.const 20)
         (f64.const 3.14159)
-        (ref.null any)
+        (ref.null none)
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none) (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
     ;; Get field 0 from the $struct1. This can be optimized to a constant
     ;; since we only ever created an instance of struct3 with a constant there.
     (drop
       (struct.get $struct1 0
-        (ref.null $struct1)
+        (local.get $struct1)
       )
     )
     ;; Get both fields of $struct2.
     (drop
       (struct.get $struct2 0
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct2 1
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     ;; Get all 3 fields of $struct3
     (drop
       (struct.get $struct3 0
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 1
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 2
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
   )
@@ -1037,8 +1075,6 @@
 ;; different values in the sub-most type. Create the top and bottom types, but
 ;; not the middle one.
 (module
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
-
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field i32) data))
 
   ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
@@ -1050,7 +1086,9 @@
 
   (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none (func_subtype (param (ref null $struct1) (ref null $struct2) (ref null $struct3)) func))
 
   ;; CHECK:      (func $create (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (drop
@@ -1089,164 +1127,178 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none) (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct1 1
+  ;; CHECK-NEXT:    (local.get $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 999)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 2.71828)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 9.9999999)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 999)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 2.71828)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 9.9999999)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct3 5
+  ;; CHECK-NEXT:    (local.get $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
     ;; Get all the fields of all the structs.
     (drop
       (struct.get $struct1 0
-        (ref.null $struct1)
+        (local.get $struct1)
       )
     )
     (drop
       (struct.get $struct1 1
-        (ref.null $struct1)
+        (local.get $struct1)
       )
     )
     (drop
       (struct.get $struct2 0
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct2 1
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct2 2
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct2 3
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct3 0
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 1
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 2
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 3
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 4
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
     (drop
       (struct.get $struct3 5
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
   )
@@ -1255,14 +1307,16 @@
 ;; Multi-level subtyping with a different value in the middle of the chain. We
 ;; can only optimize $struct3.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct1 (struct_subtype (field (mut i32)) data))
   (type $struct1 (struct (mut i32)))
   ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none (func_subtype (param (ref null $struct1) (ref null $struct2) (ref null $struct3)) func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -1304,47 +1358,43 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none) (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (local.get $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (local.get $struct2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
     ;; Get field 0 in all the types.
     (drop
       (struct.get $struct1 0
-        (ref.null $struct1)
+        (local.get $struct1)
       )
     )
     (drop
       (struct.get $struct2 0
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct3 0
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
   )
@@ -1360,12 +1410,12 @@
 
   (type $struct1 (struct (mut i32)))
 
-  ;; CHECK:      (type $ref?|$struct2|_=>_none (func_subtype (param (ref null $struct2)) func))
-
   ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$struct2|_=>_none (func_subtype (param (ref null $struct2)) func))
+
+  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none (func_subtype (param (ref null $struct1) (ref null $struct2) (ref null $struct3)) func))
 
   ;; CHECK:      (func $create (type $ref?|$struct2|_=>_none) (param $struct2 (ref null $struct2))
   ;; CHECK-NEXT:  (drop
@@ -1416,47 +1466,38 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct1|_ref?|$struct2|_ref?|$struct3|_=>_none) (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (local.get $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (local.get $struct2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct3 0
+  ;; CHECK-NEXT:    (local.get $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
     ;; Get field 0 in all the types.
     (drop
       (struct.get $struct1 0
-        (ref.null $struct1)
+        (local.get $struct1)
       )
     )
     (drop
       (struct.get $struct2 0
-        (ref.null $struct2)
+        (local.get $struct2)
       )
     )
     (drop
       (struct.get $struct3 0
-        (ref.null $struct3)
+        (local.get $struct3)
       )
     )
   )
@@ -1465,10 +1506,12 @@
 ;; Test for a struct with multiple fields, some of which are constant and hence
 ;; optimizable, and some not. Also test that some have the same type.
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) (field f64) (field i32) (field f64) (field i32) data))
   (type $struct (struct i32 f64 i32 f64 i32))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (func $create (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -1496,86 +1539,88 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 3
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $get (param $struct (ref null $struct))
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
     (drop
       (struct.get $struct 1
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
     (drop
       (struct.get $struct 2
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
     (drop
       (struct.get $struct 3
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
     (drop
       (struct.get $struct 4
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
     ;; Also test for multiple gets of the same field.
     (drop
       (struct.get $struct 4
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
@@ -1650,9 +1695,9 @@
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_ref?|$struct|_=>_none (func_subtype (param (ref null $struct) (ref null $struct)) func))
 
-  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK:      (func $test (type $ref?|$struct|_ref?|$struct|_=>_none) (param $struct (ref null $struct)) (param $other (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -1668,15 +1713,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $other)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $struct (ref null $struct))
+  (func $test (param $struct (ref null $struct)) (param $other (ref null $struct))
     (drop
       (struct.new_default $struct)
     )
@@ -1690,7 +1737,7 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $other)
       )
     )
   )
@@ -1834,30 +1881,27 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct i32))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 42))
   (global $global (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (global.get $global)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param $struct (ref null $struct))
     ;; As above, but the global is *not* immutable, so we cannot optimize.
     (drop
       (struct.new $struct
@@ -1866,7 +1910,7 @@
     )
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $struct)
       )
     )
   )
