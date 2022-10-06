@@ -64,6 +64,9 @@ struct BinaryenDWARFInfo {
     uint8_t addrSize = AddressSize;
     bool isLittleEndian = true;
     context = llvm::DWARFContext::create(sections, addrSize, isLittleEndian);
+    if (context->getMaxVersion() > 4) {
+      std::cerr << "warning: unsupported DWARF version\n";
+    }
   }
 };
 
