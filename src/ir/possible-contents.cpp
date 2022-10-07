@@ -1659,7 +1659,9 @@ bool Flower::updateContents(LocationIndex locationIndex,
     if (contents.getType() == exprLoc->expr->type && contents.isConeType()) {
       // The type here is the worst possible it can be: all we know is the type,
       // and the type is just what is already declared in the wasm.
-      worthSendingMore = false;
+      worthSendingMore = false; // XXX seems to affect one test. and results on j2wasm might be too good..?
+      // TODO: assert on never having "Many" for refernce types. Only mVP.
+      // TODO: filter by the declared type?
     }
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
