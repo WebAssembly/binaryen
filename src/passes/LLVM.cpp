@@ -24,8 +24,10 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/MC/TargetRegistry.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/InitLLVM.h>
 #include <llvm/Support/TargetSelect.h>
 
@@ -44,7 +46,7 @@ struct LLVM : public wasm::Pass {
   //InitializeAllAsmPrinters();
   //InitializeAllAsmParsers();
 
-
+    // Setup
 
     LLVMContext context;
     i32 = Type::getInt32Ty(context);
@@ -55,6 +57,8 @@ struct LLVM : public wasm::Pass {
     Triple triple("wasm32-unknown-unknown");
     Module mod("byn_mod", context);
     mod.setTargetTriple(triple.getTriple());
+
+    // Build IR in a module
 
     auto* funcType = FunctionType::get(
       wasmToLLVM(wasm::Type::i32),
@@ -72,14 +76,37 @@ struct LLVM : public wasm::Pass {
     BasicBlock* body = BasicBlock::Create(context, "entry", func);
     builder.SetInsertPoint(body);
     auto* arg = func->getArg(0);
-    auto* num = Constant::getIntegerValue(i32, APInt(32, 42));
-    auto* add = builder.CreateAdd(arg, num, "addd");
-    builder.CreateRet(add);
+    auto* num = Constant::getIntegerValue(i32, APInt(32, 21));
+    auto* addA = builder.CreateAdd(arg, num, "add_a");
+    auto* addB = builder.CreateAdd(addA, num, "add_b");
+    builder.CreateRet(addB);
 
     if (verifyModule(mod, &errs())) {
       wasm::Fatal() << "broken LLVM module";
     }
     errs() << mod << '\n';
+
+    // Optimize LLVM IR
+    // TODO: see https://llvm.org/docs/NewPassManager.html#just-tell-me-how-to-run-the-default-optimization-pipeline-with-the-new-pass-manager
+
+    LoopAnalysisManager LAM;
+    FunctionAnalysisManager FAM;
+    CGSCCAnalysisManager CGAM;
+    ModuleAnalysisManager MAM;
+    PassBuilder PB;
+
+    PB.registerModuleAnalyses(MAM);
+    PB.registerCGSCCAnalyses(CGAM);
+    PB.registerFunctionAnalyses(FAM);
+    PB.registerLoopAnalyses(LAM);
+    PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+
+    FunctionPassManager MPM = PB.buildFunctionSimplificationPipeline(OptimizationLevel::Os, llvm::ThinOrFullLTOPhase::None); // TODO: opt levels
+    MPM.run(*func, FAM);
+
+    errs() << "Optimized:\n\n" << mod << '\n';
+
+    // Emit wasm
 
     std::string error;
     auto target = TargetRegistry::lookupTarget(triple.getTriple(), error);
@@ -87,6 +114,8 @@ struct LLVM : public wasm::Pass {
       wasm::Fatal() << "can't find wasm target";
     }
     // addPassesToEmitFile
+
+    // Generate Binaryen IR
   }
 
   llvm::Type* i32;
