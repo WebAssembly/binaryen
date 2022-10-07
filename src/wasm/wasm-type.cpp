@@ -578,6 +578,15 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (a == b) {
     return a;
   }
+  if (HeapType(a).getBottom() != HeapType(b).getBottom()) {
+    return {};
+  }
+  if (HeapType(a).isBottom()) {
+    return b;
+  }
+  if (HeapType(b).isBottom()) {
+    return a;
+  }
   // Canonicalize to have `a` be the lesser type.
   if (unsigned(a) > unsigned(b)) {
     std::swap(a, b);
@@ -585,7 +594,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   switch (a) {
     case HeapType::ext:
     case HeapType::func:
-      return {};
+      return std::nullopt;
     case HeapType::any:
       return {HeapType::any};
     case HeapType::eq:
@@ -604,6 +613,11 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::stringview_wtf16:
     case HeapType::stringview_iter:
       return {HeapType::any};
+    case HeapType::none:
+    case HeapType::noext:
+    case HeapType::nofunc:
+      // Bottom types already handled.
+      break;
   }
   WASM_UNREACHABLE("unexpected basic type");
 }
@@ -1085,6 +1099,12 @@ FeatureSet Type::getFeatures() const {
           case HeapType::stringview_wtf16:
           case HeapType::stringview_iter:
             return FeatureSet::ReferenceTypes | FeatureSet::Strings;
+          case HeapType::none:
+          case HeapType::noext:
+          case HeapType::nofunc:
+            // Technically introduced in GC, but used internally as part of
+            // ref.null with just reference types.
+            return FeatureSet::ReferenceTypes;
         }
       }
       // Note: Technically typed function references also require the typed
@@ -1360,6 +1380,29 @@ bool HeapType::isArray() const {
   }
 }
 
+bool HeapType::isBottom() const {
+  if (isBasic()) {
+    switch (getBasic()) {
+      case ext:
+      case func:
+      case any:
+      case eq:
+      case i31:
+      case data:
+      case string:
+      case stringview_wtf8:
+      case stringview_wtf16:
+      case stringview_iter:
+        return false;
+      case none:
+      case noext:
+      case nofunc:
+        return true;
+    }
+  }
+  return false;
+}
+
 Signature HeapType::getSignature() const {
   assert(isSignature());
   return getHeapTypeInfo(*this)->signature;
@@ -1420,9 +1463,50 @@ size_t HeapType::getDepth() const {
       case HeapType::stringview_iter:
         depth += 2;
         break;
+      case HeapType::none:
+      case HeapType::nofunc:
+      case HeapType::noext:
+        // Bottom types are infinitely deep.
+        depth = size_t(-1l);
     }
   }
   return depth;
+}
+
+HeapType::BasicHeapType HeapType::getBottom() const {
+  if (isBasic()) {
+    switch (getBasic()) {
+      case ext:
+        return noext;
+      case func:
+        return nofunc;
+      case any:
+      case eq:
+      case i31:
+      case data:
+      case string:
+      case stringview_wtf8:
+      case stringview_wtf16:
+      case stringview_iter:
+      case none:
+        return none;
+      case noext:
+        return noext;
+      case nofunc:
+        return nofunc;
+    }
+  }
+  auto* info = getHeapTypeInfo(*this);
+  switch (info->kind) {
+    case HeapTypeInfo::BasicKind:
+      return HeapType(info->basic).getBottom();
+    case HeapTypeInfo::SignatureKind:
+      return nofunc;
+    case HeapTypeInfo::StructKind:
+    case HeapTypeInfo::ArrayKind:
+      return none;
+  }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 bool HeapType::isSubType(HeapType left, HeapType right) {
@@ -1449,6 +1533,15 @@ std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
 
 std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
   if (a == b) {
+    return a;
+  }
+  if (a.getBottom() != b.getBottom()) {
+    return {};
+  }
+  if (a.isBottom()) {
+    return b;
+  }
+  if (b.isBottom()) {
     return a;
   }
   if (getTypeSystem() == TypeSystem::Equirecursive) {
@@ -1653,27 +1746,34 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (b.isBasic()) {
     switch (b.getBasic()) {
       case HeapType::ext:
-        return a == HeapType::ext;
+        return a == HeapType::noext;
       case HeapType::func:
-        return a.isSignature();
+        return a == HeapType::nofunc || a.isSignature();
       case HeapType::any:
-        return a != HeapType::ext && !a.isFunction();
+        return a == HeapType::eq || a == HeapType::i31 || a == HeapType::data ||
+               a == HeapType::none || a.isData();
       case HeapType::eq:
-        return a == HeapType::i31 || a.isData();
+        return a == HeapType::i31 || a == HeapType::data ||
+               a == HeapType::none || a.isData();
       case HeapType::i31:
-        return false;
+        return a == HeapType::none;
       case HeapType::data:
-        return a.isData();
+        return a == HeapType::none || a.isData();
       case HeapType::string:
       case HeapType::stringview_wtf8:
       case HeapType::stringview_wtf16:
       case HeapType::stringview_iter:
+        return a == HeapType::none;
+      case HeapType::none:
+      case HeapType::noext:
+      case HeapType::nofunc:
         return false;
     }
   }
   if (a.isBasic()) {
-    // Basic HeapTypes are never subtypes of compound HeapTypes.
-    return false;
+    // Basic HeapTypes are only subtypes of compound HeapTypes if they are
+    // bottom types.
+    return a == b.getBottom();
   }
   if (typeSystem == TypeSystem::Nominal ||
       typeSystem == TypeSystem::Isorecursive) {
@@ -1821,6 +1921,15 @@ std::optional<Type> TypeBounder::lub(Type a, Type b) {
 
 std::optional<HeapType> TypeBounder::lub(HeapType a, HeapType b) {
   if (a == b) {
+    return a;
+  }
+  if (a.getBottom() != b.getBottom()) {
+    return {};
+  }
+  if (a.isBottom()) {
+    return b;
+  }
+  if (b.isBottom()) {
     return a;
   }
 
@@ -2000,12 +2109,18 @@ std::ostream& TypePrinter::print(Type type) {
       // Print shorthands for certain basic heap types.
       if (type.isNullable()) {
         switch (heapType.getBasic()) {
+          case HeapType::ext:
+            return os << "externref";
           case HeapType::func:
             return os << "funcref";
           case HeapType::any:
             return os << "anyref";
           case HeapType::eq:
             return os << "eqref";
+          case HeapType::i31:
+            return os << "i31ref";
+          case HeapType::data:
+            return os << "dataref";
           case HeapType::string:
             return os << "stringref";
           case HeapType::stringview_wtf8:
@@ -2014,17 +2129,12 @@ std::ostream& TypePrinter::print(Type type) {
             return os << "stringview_wtf16";
           case HeapType::stringview_iter:
             return os << "stringview_iter";
-          default:
-            break;
-        }
-      } else {
-        switch (heapType.getBasic()) {
-          case HeapType::i31:
-            return os << "i31ref";
-          case HeapType::data:
-            return os << "dataref";
-          default:
-            break;
+          case HeapType::none:
+            return os << "nullref";
+          case HeapType::noext:
+            return os << "nullexternref";
+          case HeapType::nofunc:
+            return os << "nullfuncref";
         }
       }
     }
@@ -2063,6 +2173,12 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "stringview_wtf16";
       case HeapType::stringview_iter:
         return os << "stringview_iter";
+      case HeapType::none:
+        return os << "none";
+      case HeapType::noext:
+        return os << "noextern";
+      case HeapType::nofunc:
+        return os << "nofunc";
     }
   }
 

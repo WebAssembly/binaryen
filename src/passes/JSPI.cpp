@@ -45,8 +45,10 @@ struct JSPI : public Pass {
     // Create a global to store the suspender that is passed into exported
     // functions and will then need to be passed out to the imported functions.
     Name suspender = Names::getValidGlobalName(*module, "suspender");
-    module->addGlobal(builder.makeGlobal(
-      suspender, externref, builder.makeRefNull(externref), Builder::Mutable));
+    module->addGlobal(builder.makeGlobal(suspender,
+                                         externref,
+                                         builder.makeRefNull(HeapType::noext),
+                                         Builder::Mutable));
 
     // Keep track of already wrapped functions since they can be exported
     // multiple times, but only one wrapper is needed.

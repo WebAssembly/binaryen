@@ -6,9 +6,9 @@
 (module
   ;; Regression test in which we need to calculate a proper LUB.
   ;; CHECK:      (func $selectify-fresh-lub (param $x i32) (result anyref)
-  ;; CHECK-NEXT:  (select (result eqref)
-  ;; CHECK-NEXT:   (ref.null i31)
-  ;; CHECK-NEXT:   (ref.null data)
+  ;; CHECK-NEXT:  (select (result nullref)
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

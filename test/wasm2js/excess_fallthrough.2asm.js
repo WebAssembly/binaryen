@@ -1,8 +1,7 @@
 
 function wasm2js_trap() { throw new Error('abort'); }
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;

@@ -3418,8 +3418,8 @@
   ;; CHECK:      (func $subtype (result anyref)
   ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 eqref)
-  ;; CHECK-NEXT:  (local $3 eqref)
+  ;; CHECK-NEXT:  (local $2 nullref)
+  ;; CHECK-NEXT:  (local $3 nullref)
   ;; CHECK-NEXT:  (local $4 eqref)
   ;; CHECK-NEXT:  (local $5 eqref)
   ;; CHECK-NEXT:  (local $6 eqref)
@@ -3427,10 +3427,10 @@
   ;; CHECK-NEXT:  (block $label0
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null eq)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (ref.null eq)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br_if $label0
   ;; CHECK-NEXT:     (i32.const 0)
@@ -3513,15 +3513,14 @@
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
  ;; CHECK:      (func $0 (result funcref)
- ;; CHECK-NEXT:  (local $0 (ref $none_=>_none))
+ ;; CHECK-NEXT:  (local $0 (ref nofunc))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (ref.null $none_=>_none)
+ ;; CHECK-NEXT:    (ref.null nofunc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return

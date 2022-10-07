@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "wasm.h"
@@ -47,23 +48,6 @@ void PossibleContents::combine(const PossibleContents& other) {
   // First handle the trivial cases of them being equal, or one of them is
   // None or Many.
   if (*this == other) {
-    // Nulls are a special case, since they compare equal even if their type is
-    // different. We would like to make this function symmetric, that is, that
-    // combine(a, b) == combine(b, a) (otherwise, things can be odd and we could
-    // get nondeterminism in the flow analysis which does not have a
-    // determinstic order). To fix that, pick the LUB.
-    if (isNull()) {
-      assert(other.isNull());
-      auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
-                                              otherType.getHeapType());
-      if (!lub) {
-        // TODO: Remove this workaround once we have bottom types to assign to
-        // null literals.
-        value = Many();
-        return;
-      }
-      value = Literal::makeNull(*lub);
-    }
     return;
   }
   if (other.isNone()) {
@@ -97,10 +81,18 @@ void PossibleContents::combine(const PossibleContents& other) {
 
   // Special handling for references from here.
 
-  // Nulls are always equal to each other, even if their types differ.
+  if (isNull() && other.isNull()) {
+    // These must be nulls in different hierarchies, otherwise this would have
+    // been handled by the `*this == other` case above.
+    assert(type != otherType);
+    value = Many();
+    return;
+  }
+
+  // Nulls can be combined in by just adding nullability to a type.
   if (isNull() || other.isNull()) {
-    // Only one of them can be null here, since we already checked if *this ==
-    // other, which would have been true had both been null.
+    // Only one of them can be null here, since we already handled the case
+    // where they were both null.
     assert(!isNull() || !other.isNull());
     // If only one is a null then we can use the type info from the other, and
     // just add in nullability. For example, a literal of type T and a null
@@ -405,7 +397,8 @@ template<typename T> void disallowDuplicates(const T& targets) {
 
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a link from a LocalLocation to a ResultLocation.
+// we have a link from the ExpressionLocation of that local.get to a
+// ResultLocation.
 template<typename T> struct Link {
   T from;
   T to;
@@ -626,7 +619,7 @@ struct InfoCollector
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back(
-        {SignatureParamLocation{func->type, i}, LocalLocation{func, i, 0}});
+        {SignatureParamLocation{func->type, i}, ParamLocation{func, i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
@@ -682,28 +675,19 @@ struct InfoCollector
     receiveChildValue(curr->value, curr);
   }
 
-  // Locals read and write to their index.
-  // TODO: we could use a LocalGraph for SSA-like precision
-  void visitLocalGet(LocalGet* curr) {
-    if (isRelevant(curr->type)) {
-      for (Index i = 0; i < curr->type.size(); i++) {
-        info.links.push_back({LocalLocation{getFunction(), curr->index, i},
-                              ExpressionLocation{curr, i}});
-      }
-    }
-  }
   void visitLocalSet(LocalSet* curr) {
     if (!isRelevant(curr->value->type)) {
       return;
     }
-    for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.links.push_back({ExpressionLocation{curr->value, i},
-                            LocalLocation{getFunction(), curr->index, i}});
-    }
 
-    // Tees also flow out the value (receiveChildValue will see if this is a tee
+    // Tees flow out the value (receiveChildValue will see if this is a tee
     // based on the type, automatically).
     receiveChildValue(curr->value, curr);
+
+    // We handle connecting local.gets to local.sets below, in visitFunction.
+  }
+  void visitLocalGet(LocalGet* curr) {
+    // We handle connecting local.gets to local.sets below, in visitFunction.
   }
 
   // Globals read and write from their location.
@@ -769,9 +753,11 @@ struct InfoCollector
     handleCall(
       curr,
       [&](Index i) {
-        return LocalLocation{target, i, 0};
+        assert(i <= target->getParams().size());
+        return ParamLocation{target, i};
       },
       [&](Index i) {
+        assert(i <= target->getResults().size());
         return ResultLocation{target, i};
       });
   }
@@ -779,9 +765,11 @@ struct InfoCollector
     handleCall(
       curr,
       [&](Index i) {
+        assert(i <= targetType.getSignature().params.size());
         return SignatureParamLocation{targetType, i};
       },
       [&](Index i) {
+        assert(i <= targetType.getSignature().results.size());
         return SignatureResultLocation{targetType, i};
       });
   }
@@ -809,6 +797,11 @@ struct InfoCollector
     // makes us ignore the function ref that flows to an import, so we are not
     // aware that it is actually called.)
     auto* target = curr->operands.back();
+
+    // We must ignore the last element when handling the call - the target is
+    // used to perform the call, and not sent during the call.
+    curr->operands.pop_back();
+
     if (auto* refFunc = target->dynCast<RefFunc>()) {
       // We can see exactly where this goes.
       handleDirectCall(curr, refFunc->func);
@@ -821,6 +814,9 @@ struct InfoCollector
       // a workaround.)
       handleIndirectCall(curr, target->type);
     }
+
+    // Restore the target.
+    curr->operands.push_back(target);
   }
   void visitCallIndirect(CallIndirect* curr) {
     // TODO: the table identity could also be used here
@@ -964,7 +960,8 @@ struct InfoCollector
     // part of the main IR, which is potentially confusing during debugging,
     // however, which is a downside.
     Builder builder(*getModule());
-    auto* get = builder.makeArrayGet(curr->srcRef, curr->srcIndex);
+    auto* get =
+      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type);
     visitArrayGet(get);
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);
@@ -1106,26 +1103,41 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
-  void visitFunction(Function* curr) {
-    // Vars have an initial value.
-    for (Index i = 0; i < curr->getNumLocals(); i++) {
-      if (curr->isVar(i)) {
-        Index j = 0;
-        for (auto t : curr->getLocalType(i)) {
-          if (t.isDefaultable()) {
-            info.links.push_back(
-              {getNullLocation(t), LocalLocation{curr, i, j}});
-          }
-          j++;
-        }
-      }
-    }
-
+  void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.
-    addResult(curr->body);
+    addResult(func->body);
 
     // See visitPop().
     assert(handledPops == totalPops);
+
+    // Handle local.get/sets: each set must write to the proper gets.
+    LocalGraph localGraph(func);
+
+    for (auto& [get, setsForGet] : localGraph.getSetses) {
+      auto index = get->index;
+      auto type = func->getLocalType(index);
+      if (!isRelevant(type)) {
+        continue;
+      }
+
+      // Each get reads from its relevant sets.
+      for (auto* set : setsForGet) {
+        for (Index i = 0; i < type.size(); i++) {
+          Location source;
+          if (set) {
+            // This is a normal local.set.
+            source = ExpressionLocation{set->value, i};
+          } else if (getFunction()->isParam(index)) {
+            // This is a parameter.
+            source = ParamLocation{getFunction(), index};
+          } else {
+            // This is the default value from the function entry, a null.
+            source = getNullLocation(type[i]);
+          }
+          info.links.push_back({source, ExpressionLocation{get, i}});
+        }
+      }
+    }
   }
 
   // Helpers
@@ -1460,7 +1472,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[LocalLocation{func, i, 0}] = PossibleContents::many();
+      roots[ParamLocation{func, i}] = PossibleContents::many();
     }
   };
 
@@ -1954,8 +1966,8 @@ void Flower::dump(Location location) {
     std::cout << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
-  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+  } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
+    std::cout << "  paramloc " << loc->func->name << " : " << loc->index
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc " << loc->func->name << " : " << loc->index

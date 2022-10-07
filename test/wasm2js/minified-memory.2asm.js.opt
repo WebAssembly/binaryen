@@ -1,6 +1,6 @@
 
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
+ var env = imports.env;
  var memory = env.a;
  var buffer = memory.buffer;
  memory.grow = __wasm_memory_grow;
@@ -61,6 +61,8 @@ function asmFunc(importObject) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({
+  "env": {
     a: { buffer : memasmFunc }
+  },
 });
 export var foo = retasmFunc.foo;

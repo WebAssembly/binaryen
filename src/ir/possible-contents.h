@@ -339,26 +339,21 @@ struct ExpressionLocation {
   }
 };
 
+// The location of one of the parameters of a function.
+struct ParamLocation {
+  Function* func;
+  Index index;
+  bool operator==(const ParamLocation& other) const {
+    return func == other.func && index == other.index;
+  }
+};
+
 // The location of one of the results of a function.
 struct ResultLocation {
   Function* func;
   Index index;
   bool operator==(const ResultLocation& other) const {
     return func == other.func && index == other.index;
-  }
-};
-
-// The location of one of the locals in a function (either a param or a var).
-// TODO: would separating params from vars help? (SSA might be enough)
-struct LocalLocation {
-  Function* func;
-  // The index of the local.
-  Index index;
-  // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
-  Index tupleIndex;
-  bool operator==(const LocalLocation& other) const {
-    return func == other.func && index == other.index &&
-           tupleIndex == other.tupleIndex;
   }
 };
 
@@ -460,8 +455,8 @@ struct ConeReadLocation {
 // A location is a variant over all the possible flavors of locations that we
 // have.
 using Location = std::variant<ExpressionLocation,
+                              ParamLocation,
                               ResultLocation,
-                              LocalLocation,
                               BreakTargetLocation,
                               GlobalLocation,
                               SignatureParamLocation,
@@ -494,17 +489,17 @@ template<> struct hash<wasm::ExpressionLocation> {
   }
 };
 
-template<> struct hash<wasm::ResultLocation> {
-  size_t operator()(const wasm::ResultLocation& loc) const {
+template<> struct hash<wasm::ParamLocation> {
+  size_t operator()(const wasm::ParamLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
       {size_t(loc.func), loc.index});
   }
 };
 
-template<> struct hash<wasm::LocalLocation> {
-  size_t operator()(const wasm::LocalLocation& loc) const {
-    return std::hash<std::pair<size_t, std::pair<wasm::Index, wasm::Index>>>{}(
-      {size_t(loc.func), {loc.index, loc.tupleIndex}});
+template<> struct hash<wasm::ResultLocation> {
+  size_t operator()(const wasm::ResultLocation& loc) const {
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.func), loc.index});
   }
 };
 

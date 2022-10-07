@@ -107,9 +107,16 @@
 // contains a pointer to a data structure with the info needed to rewind
 // and unwind:
 //
-//   {                                            // offsets
+//   {                                           // offsets
 //     i32  - current asyncify stack location    //  0
 //     i32  - asyncify stack end                 //  4
+//   }
+//
+// Or for wasm64:
+//
+//   {                                           // offsets
+//     i64  - current asyncify stack location    //  0
+//     i64  - asyncify stack end                 //  8
 //   }
 //
 // The asyncify stack is a representation of the call frame, as a list of
@@ -130,7 +137,7 @@
 // The pass will also create five functions that let you control unwinding
 // and rewinding:
 //
-//  * asyncify_start_unwind(data : i32): call this to start unwinding the
+//  * asyncify_start_unwind(data : iPTR): call this to start unwinding the
 //    stack from the current location. "data" must point to a data
 //    structure as described above (with fields containing valid data).
 //
@@ -142,7 +149,7 @@
 //    the code will think it is still unwinding when it should not be,
 //    which means it will keep unwinding in a meaningless way.
 //
-//  * asyncify_start_rewind(data : i32): call this to start rewinding the
+//  * asyncify_start_rewind(data : iPTR): call this to start rewinding the
 //    stack vack up to the location stored in the provided data. This prepares
 //    for the rewind; to start it, you must call the first function in the
 //    call stack to be unwound.
@@ -335,7 +342,7 @@ static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
 //       size, but make debugging harder
 enum class State { Normal = 0, Unwinding = 1, Rewinding = 2 };
 
-enum class DataOffset { BStackPos = 0, BStackEnd = 4 };
+enum class DataOffset { BStackPos = 0, BStackEnd = 4, BStackEnd64 = 8 };
 
 const auto STACK_ALIGN = 4;
 
@@ -795,16 +802,18 @@ static bool doesCall(Expression* curr) {
 class AsyncifyBuilder : public Builder {
 public:
   Module& wasm;
+  Type pointerType;
 
-  AsyncifyBuilder(Module& wasm) : Builder(wasm), wasm(wasm) {}
+  AsyncifyBuilder(Module& wasm)
+    : Builder(wasm), wasm(wasm), pointerType(wasm.memories[0]->indexType) {}
 
   Expression* makeGetStackPos() {
-    return makeLoad(4,
+    return makeLoad(pointerType.getByteSize(),
                     false,
-                    int32_t(DataOffset::BStackPos),
-                    4,
-                    makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                    Type::i32,
+                    int(DataOffset::BStackPos),
+                    pointerType.getByteSize(),
+                    makeGlobalGet(ASYNCIFY_DATA, pointerType),
+                    pointerType,
                     wasm.memories[0]->name);
   }
 
@@ -812,14 +821,16 @@ public:
     if (by == 0) {
       return makeNop();
     }
-    return makeStore(
-      4,
-      int32_t(DataOffset::BStackPos),
-      4,
-      makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-      makeBinary(AddInt32, makeGetStackPos(), makeConst(Literal(by))),
-      Type::i32,
-      wasm.memories[0]->name);
+    auto literal = Literal::makeFromInt64(by, pointerType);
+    return makeStore(pointerType.getByteSize(),
+                     int(DataOffset::BStackPos),
+                     pointerType.getByteSize(),
+                     makeGlobalGet(ASYNCIFY_DATA, pointerType),
+                     makeBinary(Abstract::getBinary(pointerType, Abstract::Add),
+                                makeGetStackPos(),
+                                makeConst(literal)),
+                     pointerType,
+                     wasm.memories[0]->name);
   }
 
   Expression* makeStateCheck(State value) {
@@ -829,7 +840,8 @@ public:
   }
 
   Expression* makeNegatedStateCheck(State value) {
-    return makeUnary(EqZInt32, makeStateCheck(value));
+    return makeUnary(Abstract::getUnary(pointerType, Abstract::EqZ),
+                     makeStateCheck(value));
   }
 };
 
@@ -1384,7 +1396,7 @@ private:
     }
     auto* block = builder->makeBlock();
     block->list.push_back(builder->makeIncStackPos(-total));
-    auto tempIndex = builder->addVar(func, Type::i32);
+    auto tempIndex = builder->addVar(func, builder->pointerType);
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
@@ -1398,14 +1410,14 @@ private:
         auto size = getByteSize(type);
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
-        loads.push_back(
-          builder->makeLoad(size,
-                            true,
-                            offset,
-                            STACK_ALIGN,
-                            builder->makeLocalGet(tempIndex, Type::i32),
-                            type,
-                            getModule()->memories[0]->name));
+        loads.push_back(builder->makeLoad(
+          size,
+          true,
+          offset,
+          STACK_ALIGN,
+          builder->makeLocalGet(tempIndex, builder->pointerType),
+          type,
+          getModule()->memories[0]->name));
         offset += size;
       }
       Expression* load;
@@ -1429,7 +1441,7 @@ private:
     auto* func = getFunction();
     auto numLocals = func->getNumLocals();
     auto* block = builder->makeBlock();
-    auto tempIndex = builder->addVar(func, Type::i32);
+    auto tempIndex = builder->addVar(func, builder->pointerType);
     block->list.push_back(
       builder->makeLocalSet(tempIndex, builder->makeGetStackPos()));
     Index offset = 0;
@@ -1447,14 +1459,14 @@ private:
         }
         assert(size % STACK_ALIGN == 0);
         // TODO: higher alignment?
-        block->list.push_back(
-          builder->makeStore(size,
-                             offset,
-                             STACK_ALIGN,
-                             builder->makeLocalGet(tempIndex, Type::i32),
-                             localGet,
-                             type,
-                             getModule()->memories[0]->name));
+        block->list.push_back(builder->makeStore(
+          size,
+          offset,
+          STACK_ALIGN,
+          builder->makeLocalGet(tempIndex, builder->pointerType),
+          localGet,
+          type,
+          getModule()->memories[0]->name));
         offset += size;
         ++j;
       }
@@ -1497,6 +1509,8 @@ struct Asyncify : public Pass {
   void run(Module* module) override {
     auto& options = getPassOptions();
     bool optimize = options.optimizeLevel > 0;
+    is64 = module->memories.size() && module->memories[0]->is64();
+    pointerType = is64 ? Type::i64 : Type::i32;
 
     // Ensure there is a memory, as we need it.
     MemoryUtils::ensureExists(module);
@@ -1640,8 +1654,8 @@ private:
     module->addGlobal(std::move(asyncifyState));
 
     auto asyncifyData = builder.makeGlobal(ASYNCIFY_DATA,
-                                           Type::i32,
-                                           builder.makeConst(int32_t(0)),
+                                           pointerType,
+                                           builder.makeConst(pointerType),
                                            Builder::Mutable);
     if (imported) {
       asyncifyData->module = ENV;
@@ -1655,35 +1669,36 @@ private:
     auto makeFunction = [&](Name name, bool setData, State state) {
       std::vector<Type> params;
       if (setData) {
-        params.push_back(Type::i32);
+        params.push_back(pointerType);
       }
       auto* body = builder.makeBlock();
       body->list.push_back(builder.makeGlobalSet(
         ASYNCIFY_STATE, builder.makeConst(int32_t(state))));
       if (setData) {
         body->list.push_back(builder.makeGlobalSet(
-          ASYNCIFY_DATA, builder.makeLocalGet(0, Type::i32)));
+          ASYNCIFY_DATA, builder.makeLocalGet(0, pointerType)));
       }
       // Verify the data is valid.
       auto* stackPos =
-        builder.makeLoad(4,
+        builder.makeLoad(pointerType.getByteSize(),
                          false,
-                         int32_t(DataOffset::BStackPos),
-                         4,
-                         builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                         Type::i32,
+                         int(DataOffset::BStackPos),
+                         pointerType.getByteSize(),
+                         builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
+                         pointerType,
                          module->memories[0]->name);
-      auto* stackEnd =
-        builder.makeLoad(4,
-                         false,
-                         int32_t(DataOffset::BStackEnd),
-                         4,
-                         builder.makeGlobalGet(ASYNCIFY_DATA, Type::i32),
-                         Type::i32,
-                         module->memories[0]->name);
-      body->list.push_back(
-        builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
-                       builder.makeUnreachable()));
+      auto* stackEnd = builder.makeLoad(
+        pointerType.getByteSize(),
+        false,
+        int(is64 ? DataOffset::BStackEnd64 : DataOffset::BStackEnd),
+        pointerType.getByteSize(),
+        builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
+        pointerType,
+        module->memories[0]->name);
+      body->list.push_back(builder.makeIf(
+        builder.makeBinary(
+          Abstract::getBinary(pointerType, Abstract::GtU), stackPos, stackEnd),
+        builder.makeUnreachable()));
       body->finalize();
       auto func = builder.makeFunction(
         name, Signature(Type(params), Type::none), {}, body);
@@ -1704,6 +1719,9 @@ private:
     module->addExport(builder.makeExport(
       ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }
+
+  bool is64;
+  Type pointerType;
 };
 
 Pass* createAsyncifyPass() { return new Asyncify(); }

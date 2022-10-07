@@ -30,8 +30,7 @@
        return (actual_lo | 0) == (expected_lo | 0) && (actual_hi | 0) == (expected_hi | 0);
     }
   
-function asmFunc0(importObject) {
- var env = importObject.env || importObject;
+function asmFunc0(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;

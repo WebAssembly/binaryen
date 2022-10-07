@@ -397,12 +397,12 @@
     (tuple.make
      (i32.const 42)
      (i64.const 42)
-     (ref.null extern)
+     (ref.null noextern)
     )
     (tuple.make
      (i32.const 42)
      (i64.const 42)
-     (ref.null extern)
+     (ref.null noextern)
     )
    )
   )

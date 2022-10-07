@@ -8,6 +8,6 @@
 (module $parse
   ;; CHECK:      (type $t (struct ))
   (type $t (struct))
-  ;; CHECK:      (global $g (ref null $t) (ref.null $t))
+  ;; CHECK:      (global $g (ref null $t) (ref.null none))
   (global $g (ref null $t) (ref.null $t))
 )

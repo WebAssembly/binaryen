@@ -1350,12 +1350,11 @@ public:
       case RefIsNull:
         return Literal(value.isNull());
       case RefIsFunc:
-        return Literal(!value.isNull() && value.type.isFunction());
+        return Literal(value.type.isFunction());
       case RefIsData:
-        return Literal(!value.isNull() && value.isData());
+        return Literal(value.isData());
       case RefIsI31:
-        return Literal(!value.isNull() &&
-                       value.type.getHeapType() == HeapType::i31);
+        return Literal(value.type.getHeapType() == HeapType::i31);
       default:
         WASM_UNREACHABLE("unimplemented ref.is_*");
     }

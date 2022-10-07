@@ -10,11 +10,11 @@
  (type $eqref_=>_funcref (func (param eqref) (result funcref)))
  (import "env" "import_global" (global $import_global eqref))
  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
- (global $global_eqref (mut eqref) (ref.null eq))
- (global $global_funcref (mut funcref) (ref.null func))
+ (global $global_eqref (mut eqref) (ref.null none))
+ (global $global_funcref (mut funcref) (ref.null nofunc))
  (global $global_funcref_func (mut funcref) (ref.func $foo))
- (global $global_anyref (mut anyref) (ref.null any))
- (global $global_anyref2 (mut anyref) (ref.null eq))
+ (global $global_anyref (mut anyref) (ref.null none))
+ (global $global_anyref2 (mut anyref) (ref.null none))
  (table $0 3 3 funcref)
  (elem (i32.const 0) $take_eqref $take_funcref $take_anyref)
  (elem declare func $foo $ref-taken-but-not-in-table)
@@ -44,7 +44,7 @@
    (global.get $global_eqref)
   )
   (local.set $local_eqref
-   (ref.null eq)
+   (ref.null none)
   )
   (local.set $local_funcref
    (local.get $local_funcref)
@@ -53,7 +53,7 @@
    (global.get $global_funcref)
   )
   (local.set $local_funcref
-   (ref.null func)
+   (ref.null nofunc)
   )
   (local.set $local_funcref
    (ref.func $foo)
@@ -65,7 +65,7 @@
    (global.get $global_anyref)
   )
   (local.set $local_anyref
-   (ref.null any)
+   (ref.null none)
   )
   (local.set $local_anyref
    (local.get $local_eqref)
@@ -74,7 +74,7 @@
    (global.get $global_eqref)
   )
   (local.set $local_anyref
-   (ref.null eq)
+   (ref.null none)
   )
   (global.set $global_eqref
    (global.get $global_eqref)
@@ -83,7 +83,7 @@
    (local.get $local_eqref)
   )
   (global.set $global_eqref
-   (ref.null eq)
+   (ref.null none)
   )
   (global.set $global_funcref
    (global.get $global_funcref)
@@ -92,7 +92,7 @@
    (local.get $local_funcref)
   )
   (global.set $global_funcref
-   (ref.null func)
+   (ref.null nofunc)
   )
   (global.set $global_funcref
    (ref.func $foo)
@@ -104,7 +104,7 @@
    (local.get $local_anyref)
   )
   (global.set $global_anyref
-   (ref.null any)
+   (ref.null none)
   )
   (global.set $global_anyref
    (global.get $global_eqref)
@@ -113,7 +113,7 @@
    (local.get $local_eqref)
   )
   (global.set $global_anyref
-   (ref.null eq)
+   (ref.null none)
   )
   (call $take_eqref
    (local.get $local_eqref)
@@ -122,7 +122,7 @@
    (global.get $global_eqref)
   )
   (call $take_eqref
-   (ref.null eq)
+   (ref.null none)
   )
   (call $take_funcref
    (local.get $local_funcref)
@@ -131,7 +131,7 @@
    (global.get $global_funcref)
   )
   (call $take_funcref
-   (ref.null func)
+   (ref.null nofunc)
   )
   (call $take_funcref
    (ref.func $foo)
@@ -143,7 +143,7 @@
    (global.get $global_anyref)
   )
   (call $take_anyref
-   (ref.null any)
+   (ref.null none)
   )
   (call $take_anyref
    (local.get $local_eqref)
@@ -152,7 +152,7 @@
    (global.get $global_eqref)
   )
   (call $take_anyref
-   (ref.null eq)
+   (ref.null none)
   )
   (call_indirect $0 (type $sig_eqref)
    (local.get $local_eqref)
@@ -163,7 +163,7 @@
    (i32.const 0)
   )
   (call_indirect $0 (type $sig_eqref)
-   (ref.null eq)
+   (ref.null none)
    (i32.const 0)
   )
   (call_indirect $0 (type $sig_funcref)
@@ -175,7 +175,7 @@
    (i32.const 1)
   )
   (call_indirect $0 (type $sig_funcref)
-   (ref.null func)
+   (ref.null nofunc)
    (i32.const 1)
   )
   (call_indirect $0 (type $sig_funcref)
@@ -191,7 +191,7 @@
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
-   (ref.null any)
+   (ref.null none)
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
@@ -203,7 +203,7 @@
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
-   (ref.null eq)
+   (ref.null none)
    (i32.const 3)
   )
   (drop
@@ -225,7 +225,7 @@
   (drop
    (block $label$3 (result eqref)
     (br_if $label$3
-     (ref.null eq)
+     (ref.null none)
      (i32.const 1)
     )
    )
@@ -249,7 +249,7 @@
   (drop
    (block $label$6 (result funcref)
     (br_if $label$6
-     (ref.null func)
+     (ref.null nofunc)
      (i32.const 1)
     )
    )
@@ -281,7 +281,7 @@
   (drop
    (block $label$10 (result anyref)
     (br_if $label$10
-     (ref.null any)
+     (ref.null none)
      (i32.const 1)
     )
    )
@@ -297,7 +297,7 @@
   (drop
    (block $label$12 (result anyref)
     (br_if $label$12
-     (ref.null eq)
+     (ref.null none)
      (i32.const 1)
     )
    )
@@ -314,7 +314,7 @@
   )
   (drop
    (loop $label$15 (result eqref)
-    (ref.null eq)
+    (ref.null none)
    )
   )
   (drop
@@ -329,7 +329,7 @@
   )
   (drop
    (loop $label$18 (result funcref)
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
   (drop
@@ -349,7 +349,7 @@
   )
   (drop
    (loop $label$22 (result anyref)
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -364,28 +364,28 @@
   )
   (drop
    (loop $label$25 (result anyref)
-    (ref.null eq)
+    (ref.null none)
    )
   )
   (drop
    (if (result eqref)
     (i32.const 1)
     (local.get $local_eqref)
-    (ref.null eq)
+    (ref.null none)
    )
   )
   (drop
    (if (result funcref)
     (i32.const 1)
     (local.get $local_funcref)
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
   (drop
    (if (result anyref)
     (i32.const 1)
     (local.get $local_anyref)
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -398,8 +398,8 @@
   (drop
    (if (result anyref)
     (i32.const 1)
-    (ref.null eq)
-    (ref.null i31)
+    (ref.null none)
+    (ref.null none)
    )
   )
   (drop
@@ -408,7 +408,7 @@
     (i31.new
      (i32.const 0)
     )
-    (ref.null eq)
+    (ref.null none)
    )
   )
   (drop
@@ -420,7 +420,7 @@
      (drop
       (pop i32)
      )
-     (ref.null eq)
+     (ref.null none)
     )
    )
   )
@@ -433,7 +433,7 @@
      (drop
       (pop i32)
      )
-     (ref.null func)
+     (ref.null nofunc)
     )
    )
   )
@@ -446,14 +446,14 @@
      (drop
       (pop i32)
      )
-     (ref.null any)
+     (ref.null none)
     )
    )
   )
   (drop
    (try $label$49 (result anyref)
     (do
-     (ref.null eq)
+     (ref.null none)
     )
     (catch $e-i32
      (drop
@@ -466,14 +466,14 @@
   (drop
    (select (result eqref)
     (local.get $local_eqref)
-    (ref.null eq)
+    (ref.null none)
     (i32.const 1)
    )
   )
   (drop
    (select (result funcref)
     (local.get $local_funcref)
-    (ref.null func)
+    (ref.null nofunc)
     (i32.const 1)
    )
   )
@@ -505,7 +505,7 @@
   )
   (drop
    (ref.is_null
-    (ref.null eq)
+    (ref.null none)
    )
   )
   (drop
@@ -520,7 +520,7 @@
   )
   (drop
    (ref.is_null
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
   (drop
@@ -540,7 +540,7 @@
   )
   (drop
    (ref.is_null
-    (ref.null any)
+    (ref.null none)
    )
   )
  )
@@ -552,7 +552,7 @@
   (global.get $global_eqref)
  )
  (func $return_eqref_null (result eqref)
-  (ref.null eq)
+  (ref.null none)
  )
  (func $return_funcref_local (result funcref)
   (local $local_funcref funcref)
@@ -562,7 +562,7 @@
   (global.get $global_funcref)
  )
  (func $return_funcref_null (result funcref)
-  (ref.null func)
+  (ref.null nofunc)
  )
  (func $return_funcref_func (result funcref)
   (ref.func $foo)
@@ -575,7 +575,7 @@
   (global.get $global_anyref)
  )
  (func $return_anyref_null (result anyref)
-  (ref.null any)
+  (ref.null none)
  )
  (func $return_anyref2 (result anyref)
   (local $local_eqref eqref)
@@ -585,7 +585,7 @@
   (global.get $global_eqref)
  )
  (func $return_anyref4 (result anyref)
-  (ref.null eq)
+  (ref.null none)
  )
  (func $returns_eqref (result eqref)
   (local $local_eqref eqref)

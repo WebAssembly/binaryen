@@ -32,7 +32,7 @@
    (global.get $ctor-eval$global_0)
   )
   (call $import
-   (ref.null $struct)
+   (ref.null none)
   )
   (call $import
    (local.get $0)
