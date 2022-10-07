@@ -15,6 +15,7 @@
  */
 
 #include <llvm/ADT/APInt.h>
+#include <llvm/IR/Argument.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -39,19 +40,25 @@ struct LLVM : public wasm::Pass {
     Module mod("byn_mod", context);
     mod.setTargetTriple("wasm32-unknown-unknown");
 
-    mod.getOrInsertFunction("byn_func", wasmToLLVM(wasm::Type::i32));
+    auto* funcType = FunctionType::get(
+      wasmToLLVM(wasm::Type::i32),
+      {
+        wasmToLLVM(wasm::Type::i32),
+        wasmToLLVM(wasm::Type::i32)
+      },
+      false
+    );
+    mod.getOrInsertFunction("byn_func", funcType);
     auto* func = mod.getFunction("byn_func");
 
     IRBuilder builder(context);
 
     BasicBlock* body = BasicBlock::Create(context, "entry", func);
     builder.SetInsertPoint(body);
-    auto num1 = Constant::getIntegerValue(i32, APInt(32, 41));
-    auto num2 = Constant::getIntegerValue(i32, APInt(32, 1));
-    auto* add = builder.CreateAdd(num1, num2, "addd");
-    errs() << "add: " << *add << '\n';
-    auto* ret = builder.CreateRet(add);
-    errs() << "ret: " << *ret << '\n';
+    auto* arg = func->getArg(0);
+    auto* num = Constant::getIntegerValue(i32, APInt(32, 42));
+    auto* add = builder.CreateAdd(arg, num, "addd");
+    builder.CreateRet(add);
 
     if (verifyModule(mod, &errs())) {
       wasm::Fatal() << "broken LLVM module";
