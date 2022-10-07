@@ -1,4 +1,3 @@
-#define BINARYEN_TEST_DEBUG 1
 #include "ir/possible-contents.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
