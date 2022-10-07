@@ -296,22 +296,23 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   auto aHeapType = aType.getHeapType();
   auto bHeapType = bType.getHeapType();
 
+  if (aType.isNullable() && bType.isNullable() &&
+      aHeapType.getBottom() == bHeapType.getBottom()) {
+    // A compatible null is possible on both sides.
+    return true;
+  }
+
+  // We ruled out having a compatible null on both sides. If one is simply a
+  // null then no chance for an intersection remains.
+  if (a.isNull() || b.isNull()) {
+    return false;
+  }
+
   auto aSubB = HeapType::isSubType(aHeapType, bHeapType);
   auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
   if (!aSubB && !bSubA) {
     // No type can appear in both a and b, so the types differ, so the values
     // do not overlap.
-    return false;
-  }
-
-  if (aType.isNullable() && bType.isNullable()) {
-    // A compatible null is possible on both sides.
-    return true;
-  }
-
-  // We ruled out a null on both sides, so at least one is non-nullable. If the
-  // other is a null then no chance for an intersection remains.
-  if (a.isNull() || b.isNull()) {
     return false;
   }
 

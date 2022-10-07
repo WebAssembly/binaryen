@@ -668,6 +668,15 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertLackIntersection(PossibleContents::coneType(nnA, 1),
                          PossibleContents::coneType(nnD, 100));
 
+  // Neither is a subtype of the other, but nulls are possible, so a null can be
+  // the intersection.
+  assertHaveIntersection(PossibleContents::fullConeType(nullA),
+                         PossibleContents::fullConeType(nullE));
+
+  // Without null on one side, we cannot intersect.
+  assertLackIntersection(PossibleContents::fullConeType(nnA),
+                         PossibleContents::fullConeType(nullE));
+
   // Computing intersections is supported with a full cone type.
   assertIntersection(none, PossibleContents::fullConeType(nnA), none);
   assertIntersection(many,
