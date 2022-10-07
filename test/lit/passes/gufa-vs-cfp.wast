@@ -602,10 +602,9 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
-  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
   (type $substruct (struct_subtype (mut i32) $struct))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
