@@ -121,6 +121,66 @@
  (func $f4 (type 13) (local i32 i64) (local $l f32))
  (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
 
+ ;; CHECK:      (func $nop-skate (type $void)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $nop-skate
+  nop
+  nop
+  nop
+  nop
+  nop
+ )
+
+ ;; CHECK:      (func $nop-ski (type $void)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $nop-ski
+  (nop
+   (nop
+    (nop)
+    (nop)
+    (nop
+     (nop)
+    )
+   )
+   (nop)
+  )
+  (nop)
+ )
+
+ ;; CHECK:      (func $nop-sled (type $void)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $nop-sled
+  nop
+  (nop
+   (nop
+    (nop)
+   )
+  )
+  nop
+  (nop)
+  nop
+ )
+
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
