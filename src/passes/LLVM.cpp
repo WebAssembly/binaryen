@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <llvm/IR/LLVMContext.h>
 #include <llvm/Support/InitLLVM.h>
 
 #include "pass.h"
@@ -26,12 +27,20 @@ struct LLVM : public Pass {
   void run(Module* module) override {
     std::cout << "LLVM pass\n";
 
+#if 0
     // Initialize LLVM without any commandline arguments; we just need the lib.
+    // XXX do we even need this?
     int argc = 1;
     const char* argvData[1];
     argvData[0] = "binaryen";
     const char** argv = argvData;
     llvm::InitLLVM X(argc, argv);
+#endif
+
+    {
+      using namespace llvm;
+      LLVMContext context;
+    }
   }
 };
 
