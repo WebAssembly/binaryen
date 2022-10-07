@@ -1654,11 +1654,18 @@ bool Flower::updateContents(LocationIndex locationIndex,
 
   // Handle special cases: Some locations can only contain certain contents, so
   // filter accordingly.
-  if (auto* globalLoc =
-        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+  auto location = getLocation(locationIndex);
+  if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    if (contents.getType() == exprLoc->expr->type &&
+        contents.isConeType()) {
+      // The type here is the worst possible it can be: all we know is the type,
+      // and the type is just what is already declared in the wasm.
+      worthSendingMore = false;
+    }
+  } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     if (contents == oldContents &&
-        contents.getType() == oldContents.getType()) {
+        contents.getType() == oldContents.getType()) { // XXX FIXME
       // Nothing actually changed after filtering, so just return.
       return worthSendingMore;
     }
