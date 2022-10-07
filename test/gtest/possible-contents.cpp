@@ -287,7 +287,7 @@ void assertHaveIntersection(PossibleContents a, PossibleContents b) {
 #if BINARYEN_TEST_DEBUG
   if (!PossibleContents::haveIntersection(a, b) ||
       !PossibleContents::haveIntersection(b, a)) {
-    std::cout << "\nFailure: no intersection:\n" << a << '\n' << b << '\n';;
+    std::cout << "\nFailure: no intersection:\n" << a << '\n' << b << '\n';
     abort();
   }
 #endif
