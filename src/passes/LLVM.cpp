@@ -16,6 +16,7 @@
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/InitLLVM.h>
 
 #include "pass.h"
@@ -43,6 +44,9 @@ struct LLVM : public wasm::Pass {
       mod.setTargetTriple("wasm32-unknown-unknown");
       mod.getOrInsertFunction("byn_func", Type::getVoidTy(context));
       errs() << mod << '\n';
+      if (verifyModule(mod, &errs())) {
+        wasm::Fatal() << "broken LLVM module";
+      }
     }
   }
 };
