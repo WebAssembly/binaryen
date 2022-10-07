@@ -2552,11 +2552,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast_static $struct
-  ;; CHECK-NEXT:      (select (result eqref)
-  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:      (select (result i31ref)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:       (i31.new
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
@@ -2564,7 +2564,7 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
