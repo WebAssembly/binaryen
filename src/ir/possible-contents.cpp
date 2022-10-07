@@ -1656,8 +1656,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // filter accordingly.
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-    if (contents.getType() == exprLoc->expr->type &&
-        contents.isConeType()) {
+    if (contents.getType() == exprLoc->expr->type && contents.isConeType()) {
       // The type here is the worst possible it can be: all we know is the type,
       // and the type is just what is already declared in the wasm.
       worthSendingMore = false;
