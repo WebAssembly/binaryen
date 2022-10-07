@@ -6,7 +6,7 @@
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (block $__inlined_func$target-nullable
  ;; CHECK-NEXT:   (local.set $0
- ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:    (ref.null nofunc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )

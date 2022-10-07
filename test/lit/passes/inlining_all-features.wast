@@ -141,23 +141,13 @@
  )
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (block $__inlined_func$0
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (call_ref $none_=>_none
- ;; CHECK-NEXT:     (ref.null $none_=>_none)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $__inlined_func$0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (br $__inlined_func$0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $1 (type $none_=>_none)
  ;; NOMNL-NEXT:  (block $__inlined_func$0
- ;; NOMNL-NEXT:   (block
- ;; NOMNL-NEXT:    (call_ref $none_=>_none
- ;; NOMNL-NEXT:     (ref.null $none_=>_none)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:    (br $__inlined_func$0)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (unreachable)
  ;; NOMNL-NEXT:   (br $__inlined_func$0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )

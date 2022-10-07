@@ -2072,12 +2072,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null extern)
+        (ref.null noextern)
        )
       )
       (drop
        (ref.is_null
-        (ref.null func)
+        (ref.null nofunc)
        )
       )
       (drop
@@ -2087,15 +2087,15 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null func)
+        (ref.null nofunc)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
       )
       (drop
        (ref.eq
-        (ref.null eq)
-        (ref.null eq)
+        (ref.null none)
+        (ref.null none)
        )
       )
       (try
@@ -4176,12 +4176,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (ref.is_null
-        (ref.null extern)
+        (ref.null noextern)
        )
       )
       (drop
        (ref.is_null
-        (ref.null func)
+        (ref.null nofunc)
        )
       )
       (drop
@@ -4191,15 +4191,15 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (select (result funcref)
-        (ref.null func)
+        (ref.null nofunc)
         (ref.func "$kitchen()sinker")
         (i32.const 1)
        )
       )
       (drop
        (ref.eq
-        (ref.null eq)
-        (ref.null eq)
+        (ref.null none)
+        (ref.null none)
        )
       )
       (try

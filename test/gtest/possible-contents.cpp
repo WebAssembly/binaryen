@@ -139,8 +139,8 @@ TEST_F(PossibleContentsTest, TestComparisons) {
   // Nulls
 
   assertNotEqualSymmetric(i32Zero, anyNull);
+  assertNotEqualSymmetric(anyNull, funcNull);
   assertEqualSymmetric(anyNull, anyNull);
-  assertEqualSymmetric(anyNull, funcNull); // All nulls compare equal.
 
   assertEqualSymmetric(exactNonNullAnyref, exactNonNullAnyref);
   assertNotEqualSymmetric(exactNonNullAnyref, exactAnyref);

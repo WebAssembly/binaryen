@@ -173,7 +173,7 @@
    (struct.new_default $struct)
   )
   (drop
-   (block $any (result anyref)
+   (block $any (result (ref null $struct))
     (call $log
      (i32.const 1)
     )
@@ -185,7 +185,7 @@
     (call $log
      (i32.const 999)
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
  )

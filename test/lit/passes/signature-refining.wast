@@ -485,7 +485,7 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $func
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
@@ -527,7 +527,7 @@
   )
 
   ;; CHECK:      (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
-  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
     (ref.null any)
@@ -583,12 +583,13 @@
 )
 
 (module
+  ;; CHECK:      (type $sig (func_subtype (result (ref null $struct)) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
   ;; This signature has multiple functions using it, and some of them have nulls
   ;; which should be updated when we refine.
-  ;; CHECK:      (type $sig (func_subtype (result (ref null $struct)) func))
   (type $sig (func_subtype (result anyref) func))
 
   ;; CHECK:      (func $func-1 (type $sig) (result (ref null $struct))
@@ -599,14 +600,14 @@
   )
 
   ;; CHECK:      (func $func-2 (type $sig) (result (ref null $struct))
-  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $func-2 (type $sig) (result anyref)
     (ref.null any)
   )
 
   ;; CHECK:      (func $func-3 (type $sig) (result (ref null $struct))
-  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $func-3 (type $sig) (result anyref)
     (ref.null eq)
@@ -616,7 +617,7 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
@@ -700,7 +701,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

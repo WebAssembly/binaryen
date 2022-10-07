@@ -50,6 +50,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length for that type.
   StructValues<T>& operator[](HeapType type) {
+    assert(type.isStruct());
     auto inserted = this->insert({type, {}});
     auto& values = inserted.first->second;
     if (inserted.second) {
@@ -159,7 +160,7 @@ struct StructScanner
 
   void visitStructSet(StructSet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable) {
+    if (type == Type::unreachable || type.isNull()) {
       return;
     }
 
@@ -173,7 +174,7 @@ struct StructScanner
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
-    if (type == Type::unreachable) {
+    if (type == Type::unreachable || type.isNull()) {
       return;
     }
 

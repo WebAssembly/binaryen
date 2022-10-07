@@ -1196,6 +1196,15 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
     return Type(HeapType::stringview_iter, Nullable);
   }
+  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
+    return Type(HeapType::none, Nullable);
+  }
+  if (strncmp(str, "nullexternref", 13) == 0 && (prefix || str[13] == 0)) {
+    return Type(HeapType::noext, Nullable);
+  }
+  if (strncmp(str, "nullfuncref", 11) == 0 && (prefix || str[11] == 0)) {
+    return Type(HeapType::nofunc, Nullable);
+  }
   if (allowError) {
     return Type::none;
   }
@@ -1247,6 +1256,17 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     }
     if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
       return HeapType::stringview_iter;
+    }
+  }
+  if (str[0] == 'n') {
+    if (strncmp(str, "none", 4) == 0 && (prefix || str[4] == 0)) {
+      return HeapType::none;
+    }
+    if (strncmp(str, "noextern", 8) == 0 && (prefix || str[8] == 0)) {
+      return HeapType::noext;
+    }
+    if (strncmp(str, "nofunc", 6) == 0 && (prefix || str[6] == 0)) {
+      return HeapType::nofunc;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);
@@ -2615,9 +2635,9 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   // (ref.null func), or it may be the name of a defined type, such as
   // (ref.null $struct.FOO)
   if (s[1]->dollared()) {
-    ret->finalize(parseHeapType(*s[1]));
+    ret->finalize(parseHeapType(*s[1]).getBottom());
   } else {
-    ret->finalize(stringToHeapType(s[1]->str()));
+    ret->finalize(stringToHeapType(s[1]->str()).getBottom());
   }
   return ret;
 }
@@ -2990,10 +3010,14 @@ Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
   auto heapType = parseHeapType(*s[1]);
+  if (!heapType.isArray()) {
+    throw ParseException("bad array heap type", s.line, s.col);
+  }
   auto ref = parseExpression(*s[2]);
+  auto type = heapType.getArray().element.type;
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[3]);
-  return Builder(wasm).makeArrayGet(ref, index, signed_);
+  return Builder(wasm).makeArrayGet(ref, index, type, signed_);
 }
 
 Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {

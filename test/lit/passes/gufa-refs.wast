@@ -325,7 +325,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $z)
@@ -366,19 +366,19 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (global $null anyref (ref.null any))
+  ;; CHECK:      (global $null anyref (ref.null none))
   (global $null (ref null any) (ref.null any))
   ;; CHECK:      (global $something anyref (struct.new_default $struct))
   (global $something (ref null any) (struct.new $struct))
 
-  ;; CHECK:      (global $mut-null (mut anyref) (ref.null any))
+  ;; CHECK:      (global $mut-null (mut anyref) (ref.null none))
   (global $mut-null (mut (ref null any)) (ref.null any))
-  ;; CHECK:      (global $mut-something (mut anyref) (ref.null any))
+  ;; CHECK:      (global $mut-something (mut anyref) (ref.null none))
   (global $mut-something (mut (ref null any)) (ref.null any))
 
   ;; CHECK:      (func $read-globals (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
@@ -436,7 +436,7 @@
 
   ;; CHECK:      (func $write-globals (type $none_=>_none)
   ;; CHECK-NEXT:  (global.set $mut-null
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $mut-something
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -462,19 +462,19 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
 
-  ;; CHECK:      (global $A-null anyref (ref.null any))
+  ;; CHECK:      (global $A-null anyref (ref.null none))
   (global $A-null (ref null any) (ref.null any))
   ;; CHECK:      (global $A-something anyref (struct.new_default $struct))
   (global $A-something (ref null any) (struct.new $struct))
 
-  ;; CHECK:      (global $B-null (mut anyref) (ref.null any))
+  ;; CHECK:      (global $B-null (mut anyref) (ref.null none))
   (global $B-null (mut (ref null any)) (ref.null any))
-  ;; CHECK:      (global $B-something (mut anyref) (ref.null any))
+  ;; CHECK:      (global $B-something (mut anyref) (ref.null none))
   (global $B-something (mut (ref null any)) (ref.null any))
 
-  ;; CHECK:      (global $C-null (mut anyref) (ref.null any))
+  ;; CHECK:      (global $C-null (mut anyref) (ref.null none))
   (global $C-null (mut (ref null any)) (ref.null any))
-  ;; CHECK:      (global $C-something (mut anyref) (ref.null any))
+  ;; CHECK:      (global $C-something (mut anyref) (ref.null none))
   (global $C-something (mut (ref null any)) (ref.null any))
 
   ;; CHECK:      (func $read-globals (type $none_=>_none)
@@ -538,10 +538,10 @@
 
   ;; CHECK:      (func $write-globals (type $none_=>_none)
   ;; CHECK-NEXT:  (global.set $B-null
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $C-null
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $B-something
   ;; CHECK-NEXT:   (global.get $A-something)
@@ -943,7 +943,7 @@
   ;; CHECK-NEXT:  (local.set $child
   ;; CHECK-NEXT:   (struct.new $child
   ;; CHECK-NEXT:    (struct.new_default $struct)
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -952,28 +952,28 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $child 1
   ;; CHECK-NEXT:      (local.get $child)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $parent
   ;; CHECK-NEXT:   (struct.new $parent
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $parent 0
   ;; CHECK-NEXT:      (local.get $parent)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1068,55 +1068,55 @@
 
   ;; CHECK:      (func $nulls (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null $parent)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block (result anyref)
+  ;; CHECK-NEXT:     (block $block (result nullref)
   ;; CHECK-NEXT:      (br $block
-  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $child))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block0 (result (ref null $child))
+  ;; CHECK-NEXT:     (block $block0 (result nullref)
   ;; CHECK-NEXT:      (br $block0
-  ;; CHECK-NEXT:       (ref.null $child)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $child)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $child))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block1 (result (ref null $child))
+  ;; CHECK-NEXT:     (block $block1 (result nullref)
   ;; CHECK-NEXT:      (br $block1
-  ;; CHECK-NEXT:       (block (result (ref null $child))
+  ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (ref.cast_static $child
-  ;; CHECK-NEXT:          (ref.null $parent)
+  ;; CHECK-NEXT:          (ref.null none)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (ref.null $child)
+  ;; CHECK-NEXT:        (ref.null none)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $child)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1204,11 +1204,13 @@
 
 ;; Exact types: Writes to the parent class do not confuse us.
 (module
+  ;; CHECK:      (type $parent (struct_subtype (field (mut (ref null $struct))) data))
+
+  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
-  ;; CHECK:      (type $parent (struct_subtype (field (mut (ref null $struct))) data))
   (type $parent (struct_subtype (field (mut (ref null $struct))) data))
-  ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
   (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -1230,20 +1232,20 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $child
   ;; CHECK-NEXT:   (struct.new $child
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (struct.get $child 0
   ;; CHECK-NEXT:        (local.get $child)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
@@ -1563,12 +1565,12 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (array.get $null
   ;; CHECK-NEXT:        (array.new_default $null
@@ -1577,7 +1579,7 @@
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
@@ -1688,7 +1690,7 @@
 
   ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
 
-  ;; CHECK:      (global $x (mut anyref) (ref.null any))
+  ;; CHECK:      (global $x (mut anyref) (ref.null none))
   (global $x (mut (ref null any)) (ref.null any))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
@@ -1757,29 +1759,29 @@
 
   ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
 
-  ;; CHECK:      (global $x (mut anyref) (ref.null any))
+  ;; CHECK:      (global $x (mut anyref) (ref.null none))
   (global $x (mut (ref null any)) (ref.null any))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x anyref)
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $x
-  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.new $storage
-  ;; CHECK-NEXT:      (block (result anyref)
+  ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $pass-through
-  ;; CHECK-NEXT:         (ref.null any)
+  ;; CHECK-NEXT:         (ref.null none)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1811,7 +1813,7 @@
   )
 
   ;; CHECK:      (func $pass-through (type $anyref_=>_anyref) (param $x anyref) (result anyref)
-  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $pass-through (param $x (ref null any)) (result (ref null any))
     (local.get $x)
@@ -1832,7 +1834,7 @@
 
   ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
 
-  ;; CHECK:      (global $x (mut anyref) (ref.null any))
+  ;; CHECK:      (global $x (mut anyref) (ref.null none))
   (global $x (mut (ref null any)) (ref.null any))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
@@ -1890,10 +1892,10 @@
 (module
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
-
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
 
   ;; CHECK:      (tag $nothing (param anyref))
   (tag $nothing (param (ref null any)))
@@ -1907,7 +1909,7 @@
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (throw $nothing
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -1920,11 +1922,11 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (result (ref null $struct))
+  ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (ref.null $struct)
+  ;; CHECK-NEXT:        (ref.null none)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
@@ -2122,12 +2124,12 @@
 
 ;; Exceptions with a tuple
 (module
-  ;; CHECK:      (type $struct (struct_subtype  data))
-  (type $struct (struct))
-
   ;; CHECK:      (type $anyref_anyref_=>_none (func_subtype (param anyref anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $struct (struct_subtype  data))
+  (type $struct (struct))
 
   ;; CHECK:      (tag $tag (param anyref anyref))
   (tag $tag (param (ref null any)) (param (ref null any)))
@@ -2135,7 +2137,7 @@
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 (anyref anyref))
   ;; CHECK-NEXT:  (throw $tag
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try $try
@@ -2147,11 +2149,11 @@
   ;; CHECK-NEXT:     (pop anyref anyref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2201,16 +2203,16 @@
 )
 
 (module
+  ;; CHECK:      (type $none_=>_ref|${}| (func_subtype (result (ref ${})) func))
+
   ;; CHECK:      (type ${} (struct_subtype  data))
   (type ${} (struct_subtype data))
 
-  ;; CHECK:      (type $none_=>_ref|${}| (func_subtype (result (ref ${})) func))
-
   ;; CHECK:      (func $func (type $none_=>_ref|${}|) (result (ref ${}))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref ${}))
+  ;; CHECK-NEXT:   (block $block (result (ref none))
   ;; CHECK-NEXT:    (br_on_non_null $block
-  ;; CHECK-NEXT:     (ref.null ${})
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -2317,7 +2319,7 @@
 
   ;; CHECK:      (global $global-A (ref $vtable-A) (struct.new $vtable-A
   ;; CHECK-NEXT:  (ref.func $foo)
-  ;; CHECK-NEXT:  (ref.null func)
+  ;; CHECK-NEXT:  (ref.null nofunc)
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: ))
   (global $global-A (ref $vtable-A)
@@ -2335,7 +2337,7 @@
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $vtable-A 2
@@ -2371,7 +2373,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $vtable-A
   ;; CHECK-NEXT:    (ref.func $foo)
-  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:    (ref.func $test)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2531,24 +2533,24 @@
 
   ;; CHECK:      (func $test-nulls (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast_static $struct
-  ;; CHECK-NEXT:      (block (result (ref null $struct))
+  ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $import)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
-  ;; CHECK-NEXT:    (select (result eqref)
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    (select (result i31ref)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (i31.new
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -2559,7 +2561,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct
   ;; CHECK-NEXT:    (select (result (ref null $struct))
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 6)
   ;; CHECK-NEXT:     )
@@ -2651,11 +2653,11 @@
   ;; CHECK:      (func $ref.test-inexact (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test_static $struct
-  ;; CHECK-NEXT:    (select (result anyref)
+  ;; CHECK-NEXT:    (select (result (ref null $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2824,8 +2826,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.null $struct)
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2879,7 +2881,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3007,19 +3009,19 @@
   ;; CHECK-NEXT:  (local $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.null eq)
-  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (block (result nullref)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -3453,7 +3455,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
   ;; CHECK-NEXT:   (array.init_static $chars
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.copy $chars $bytes
@@ -3538,7 +3540,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
   ;; CHECK-NEXT:   (array.init_static $chars
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.copy $bytes $chars
@@ -3555,14 +3557,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (array.get $chars
   ;; CHECK-NEXT:      (local.get $chars)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -3610,10 +3612,12 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
-
   ;; CHECK:      (type $B (array_subtype (mut anyref) data))
   (type $B (array (mut anyref)))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
 
   ;; CHECK:      (memory $0 10)
 
@@ -3866,7 +3870,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (table.grow $t
-  ;; CHECK-NEXT:    (ref.null extern)
+  ;; CHECK-NEXT:    (ref.null noextern)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3907,17 +3911,23 @@
     )
   )
 
-  ;; CHECK:      (func $arrays (type $none_=>_none)
+  ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.len $B
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (array.init_static $B
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $arrays
+  (func $arrays (param $B (ref $B))
     (drop
       (array.len $B
-        (ref.null $B)
+        (array.init_static $B
+          (ref.null none)
+          (ref.null none)
+        )
       )
     )
   )

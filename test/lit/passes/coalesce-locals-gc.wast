@@ -10,7 +10,7 @@
 (module
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
- ;; CHECK:      (global $global (ref null $array) (ref.null $array))
+ ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
  ;; CHECK:      (func $test-dead-get-non-nullable (param $0 (ref data))
@@ -134,6 +134,35 @@
   )
   (drop
    (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $unreachable-get-null
+ ;; CHECK-NEXT:  (local $0 anyref)
+ ;; CHECK-NEXT:  (local $1 i31ref)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result anyref)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.new
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $unreachable-get-null
+  ;; Check that we don't replace the local.get $null with a ref.null, which
+  ;; would have a more precise type.
+  (local $null-any anyref)
+  (local $null-i31 i31ref)
+  (unreachable)
+  (drop
+   (local.get $null-any)
+  )
+  (drop
+   (local.get $null-i31)
   )
  )
 )

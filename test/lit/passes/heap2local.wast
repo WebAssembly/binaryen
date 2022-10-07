@@ -11,34 +11,30 @@
 
   ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
-  ;; CHECK:      (type $struct.nondefaultable (struct (field (ref $struct.A))))
-
   ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
   ;; NOMNL:      (type $struct.recursive (struct_subtype (field (mut (ref null $struct.recursive))) data))
 
   ;; NOMNL:      (type $struct.packed (struct_subtype (field (mut i8)) data))
   (type $struct.packed (struct (field (mut i8))))
 
-  ;; NOMNL:      (type $struct.nondefaultable (struct_subtype (field (ref $struct.A)) data))
   (type $struct.nondefaultable (struct (field (ref $struct.A))))
 
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
-  ;; NOMNL:      (type $struct.nonnullable (struct_subtype (field (ref $struct.A)) data))
   (type $struct.nonnullable (struct (field (ref $struct.A))))
 
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -46,14 +42,14 @@
   ;; NOMNL-NEXT:  (local $0 i32)
   ;; NOMNL-NEXT:  (local $1 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $0
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -70,14 +66,14 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -86,14 +82,14 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -114,14 +110,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -134,14 +130,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $0
   ;; NOMNL-NEXT:       (i32.const 0)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $1
   ;; NOMNL-NEXT:       (f64.const 0)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $0)
@@ -167,14 +163,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
@@ -187,14 +183,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result f64)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $0
   ;; NOMNL-NEXT:       (i32.const 0)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $1
   ;; NOMNL-NEXT:       (f64.const 0)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $1)
@@ -214,14 +210,14 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $0
@@ -232,14 +228,14 @@
   ;; NOMNL-NEXT:  (local $0 i32)
   ;; NOMNL-NEXT:  (local $1 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $0
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (local.set $0
@@ -285,7 +281,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (i32.const 2)
   ;; CHECK-NEXT:      )
@@ -298,7 +294,7 @@
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (local.get $3)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -313,7 +309,7 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $2
   ;; NOMNL-NEXT:       (i32.const 2)
   ;; NOMNL-NEXT:      )
@@ -326,7 +322,7 @@
   ;; NOMNL-NEXT:      (local.set $1
   ;; NOMNL-NEXT:       (local.get $3)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $0)
@@ -357,8 +353,10 @@
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -373,8 +371,10 @@
   ;; NOMNL-NEXT:      (drop
   ;; NOMNL-NEXT:       (unreachable)
   ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (unreachable)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -397,14 +397,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct.A))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.nondefaultable))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (struct.new_default $struct.A)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.nondefaultable)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -417,14 +417,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $struct.A))
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.nondefaultable))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $1
   ;; NOMNL-NEXT:       (struct.new_default $struct.A)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $0
   ;; NOMNL-NEXT:       (local.get $1)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.nondefaultable)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $0)
@@ -447,19 +447,19 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -471,19 +471,19 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.set $1
   ;; NOMNL-NEXT:    (i32.const 1)
@@ -509,19 +509,19 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -531,19 +531,19 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $2)
   ;; NOMNL-NEXT:  )
@@ -573,22 +573,22 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null $struct.A)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -598,22 +598,22 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.null $struct.A)
+  ;; NOMNL-NEXT:   (ref.null none)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $2)
   ;; NOMNL-NEXT:  )
@@ -675,26 +675,26 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (block (result (ref null $struct.A))
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -704,26 +704,26 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
   ;; NOMNL-NEXT:    (block (result (ref null $struct.A))
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $2)
   ;; NOMNL-NEXT:  )
@@ -847,22 +847,22 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null $struct.A)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -872,22 +872,22 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.null $struct.A)
+  ;; NOMNL-NEXT:   (ref.null none)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $2)
   ;; NOMNL-NEXT:  )
@@ -912,23 +912,23 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null $struct.A)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
@@ -936,7 +936,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
@@ -948,23 +948,23 @@
   ;; NOMNL-NEXT:  (local $2 i32)
   ;; NOMNL-NEXT:  (local $3 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $3
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.null $struct.A)
+  ;; NOMNL-NEXT:   (ref.null none)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $2)
   ;; NOMNL-NEXT:   )
@@ -972,7 +972,7 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result f64)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $3)
   ;; NOMNL-NEXT:   )
@@ -1006,25 +1006,25 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
@@ -1034,25 +1034,25 @@
   ;; NOMNL-NEXT:  (local $2 i32)
   ;; NOMNL-NEXT:  (local $3 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $3
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (if
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $3)
   ;; NOMNL-NEXT:  )
@@ -1080,23 +1080,23 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result (ref null $struct.A))
   ;; CHECK-NEXT:     (call $send-ref
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
@@ -1107,23 +1107,23 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
   ;; NOMNL-NEXT:   (drop
   ;; NOMNL-NEXT:    (block (result (ref null $struct.A))
   ;; NOMNL-NEXT:     (call $send-ref
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $2)
@@ -1154,7 +1154,7 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.set $ref
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.get $struct.A 1
@@ -1169,7 +1169,7 @@
   ;; NOMNL-NEXT:  (if
   ;; NOMNL-NEXT:   (local.get $x)
   ;; NOMNL-NEXT:   (local.set $ref
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (struct.get $struct.A 1
@@ -1198,14 +1198,14 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $1)
@@ -1215,14 +1215,14 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (local.get $1)
@@ -1241,30 +1241,30 @@
   ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null $struct.recursive)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.recursive)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (ref.null $struct.recursive)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $tee-set (type $none_=>_none)
   ;; NOMNL-NEXT:  (local $ref (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (local $1 (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.recursive))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
-  ;; NOMNL-NEXT:     (ref.null $struct.recursive)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.recursive)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (local.set $1
-  ;; NOMNL-NEXT:   (ref.null $struct.recursive)
+  ;; NOMNL-NEXT:   (ref.null none)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $tee-set
@@ -1278,28 +1278,28 @@
     )
   )
 
-  ;; CHECK:      (func $set-value
+  ;; CHECK:      (func $set-value (param $struct.recursive (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
   ;; CHECK-NEXT:  (struct.set $struct.recursive 0
-  ;; CHECK-NEXT:   (ref.null $struct.recursive)
+  ;; CHECK-NEXT:   (local.get $struct.recursive)
   ;; CHECK-NEXT:   (local.tee $ref
   ;; CHECK-NEXT:    (struct.new_default $struct.recursive)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $set-value (type $none_=>_none)
+  ;; NOMNL:      (func $set-value (type $ref?|$struct.recursive|_=>_none) (param $struct.recursive (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (local $ref (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (struct.set $struct.recursive 0
-  ;; NOMNL-NEXT:   (ref.null $struct.recursive)
+  ;; NOMNL-NEXT:   (local.get $struct.recursive)
   ;; NOMNL-NEXT:   (local.tee $ref
   ;; NOMNL-NEXT:    (struct.new_default $struct.recursive)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $set-value
+  (func $set-value (param $struct.recursive (ref null $struct.recursive))
     (local $ref (ref null $struct.recursive))
     (struct.set $struct.recursive 0
-      (ref.null $struct.recursive)
+      (local.get $struct.recursive)
       ;; As above, but operands reversed: the allocation is now the value, not
       ;; the reference, and so it escapes.
       (local.tee $ref
@@ -1313,20 +1313,20 @@
   ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $2 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (struct.new_default $struct.recursive)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.recursive)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.recursive)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
@@ -1337,20 +1337,20 @@
   ;; NOMNL-NEXT:  (local $1 (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (local $2 (ref null $struct.recursive))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.recursive))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (struct.new_default $struct.recursive)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (local.get $2)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.recursive)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref null $struct.recursive))
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.recursive)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $1)
   ;; NOMNL-NEXT:   )
@@ -1454,14 +1454,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct.A))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.nondefaultable))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (local.get $a)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (local.get $2)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.nondefaultable)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
@@ -1474,14 +1474,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $struct.A))
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.nonnullable))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $2
   ;; NOMNL-NEXT:       (local.get $a)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $1
   ;; NOMNL-NEXT:       (local.get $2)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.nonnullable)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $1)
@@ -1508,7 +1508,7 @@
   ;; CHECK-NEXT:  (local $5 f64)
   ;; CHECK-NEXT:  (loop $outer
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (block (result nullref)
   ;; CHECK-NEXT:     (local.set $4
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
@@ -1521,13 +1521,13 @@
   ;; CHECK-NEXT:     (local.set $3
   ;; CHECK-NEXT:      (local.get $5)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
@@ -1537,14 +1537,14 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result f64)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $3
   ;; CHECK-NEXT:      (f64.const 42)
@@ -1554,13 +1554,13 @@
   ;; CHECK-NEXT:   (loop $inner
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $2
   ;; CHECK-NEXT:      (i32.add
   ;; CHECK-NEXT:       (block (result i32)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.null $struct.A)
+  ;; CHECK-NEXT:         (ref.null none)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
@@ -1577,7 +1577,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
@@ -1585,7 +1585,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result f64)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $3)
   ;; CHECK-NEXT:     )
@@ -1602,7 +1602,7 @@
   ;; NOMNL-NEXT:  (local $5 f64)
   ;; NOMNL-NEXT:  (loop $outer
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:    (block (result nullref)
   ;; NOMNL-NEXT:     (local.set $4
   ;; NOMNL-NEXT:      (i32.const 2)
   ;; NOMNL-NEXT:     )
@@ -1615,13 +1615,13 @@
   ;; NOMNL-NEXT:     (local.set $3
   ;; NOMNL-NEXT:      (local.get $5)
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (drop
   ;; NOMNL-NEXT:    (block (result i32)
   ;; NOMNL-NEXT:     (drop
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:     (local.get $2)
   ;; NOMNL-NEXT:    )
@@ -1631,14 +1631,14 @@
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (block (result f64)
   ;; NOMNL-NEXT:      (drop
-  ;; NOMNL-NEXT:       (ref.null $struct.A)
+  ;; NOMNL-NEXT:       (ref.null none)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.get $3)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (block
   ;; NOMNL-NEXT:     (drop
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:     (local.set $3
   ;; NOMNL-NEXT:      (f64.const 42)
@@ -1648,13 +1648,13 @@
   ;; NOMNL-NEXT:   (loop $inner
   ;; NOMNL-NEXT:    (block
   ;; NOMNL-NEXT:     (drop
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:     (local.set $2
   ;; NOMNL-NEXT:      (i32.add
   ;; NOMNL-NEXT:       (block (result i32)
   ;; NOMNL-NEXT:        (drop
-  ;; NOMNL-NEXT:         (ref.null $struct.A)
+  ;; NOMNL-NEXT:         (ref.null none)
   ;; NOMNL-NEXT:        )
   ;; NOMNL-NEXT:        (local.get $2)
   ;; NOMNL-NEXT:       )
@@ -1671,7 +1671,7 @@
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (block (result i32)
   ;; NOMNL-NEXT:      (drop
-  ;; NOMNL-NEXT:       (ref.null $struct.A)
+  ;; NOMNL-NEXT:       (ref.null none)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.get $2)
   ;; NOMNL-NEXT:     )
@@ -1679,7 +1679,7 @@
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (block (result f64)
   ;; NOMNL-NEXT:      (drop
-  ;; NOMNL-NEXT:       (ref.null $struct.A)
+  ;; NOMNL-NEXT:       (ref.null none)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.get $3)
   ;; NOMNL-NEXT:     )
@@ -1755,14 +1755,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -1771,14 +1771,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $3
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $2)
@@ -1787,14 +1787,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (local.set $4
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $5
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $5)
@@ -1811,14 +1811,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $0
   ;; NOMNL-NEXT:       (i32.const 0)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $1
   ;; NOMNL-NEXT:       (f64.const 0)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $0)
@@ -1827,14 +1827,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $2
   ;; NOMNL-NEXT:       (i32.const 0)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $3
   ;; NOMNL-NEXT:       (f64.const 0)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $2)
@@ -1843,14 +1843,14 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result f64)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:     (block (result nullref)
   ;; NOMNL-NEXT:      (local.set $4
   ;; NOMNL-NEXT:       (i32.const 0)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (local.set $5
   ;; NOMNL-NEXT:       (f64.const 0)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $5)
@@ -1883,39 +1883,39 @@
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
@@ -1928,39 +1928,39 @@
   ;; NOMNL-NEXT:  (local $3 i32)
   ;; NOMNL-NEXT:  (local $4 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $1)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $3
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $4
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $3)
   ;; NOMNL-NEXT:   )
@@ -1996,31 +1996,31 @@
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $5
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
@@ -2028,7 +2028,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $4)
   ;; CHECK-NEXT:   )
@@ -2042,31 +2042,31 @@
   ;; NOMNL-NEXT:  (local $4 i32)
   ;; NOMNL-NEXT:  (local $5 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $3
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $4
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $5
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $2)
   ;; NOMNL-NEXT:   )
@@ -2074,7 +2074,7 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result i32)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.get $4)
   ;; NOMNL-NEXT:   )
@@ -2112,7 +2112,7 @@
   ;; CHECK-NEXT:   (block $block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (br_if $block
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2129,7 +2129,7 @@
   ;; NOMNL-NEXT:   (block $block (result (ref null $struct.A))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (br_if $block
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:      (i32.const 0)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
@@ -2172,7 +2172,7 @@
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2189,7 +2189,7 @@
   ;; NOMNL-NEXT:      (i32.const 0)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -2218,14 +2218,14 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
@@ -2233,7 +2233,7 @@
   ;; CHECK-NEXT:    (block $block (result (ref null $struct.A))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (br_if $block
-  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -2250,14 +2250,14 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result f64)
@@ -2265,7 +2265,7 @@
   ;; NOMNL-NEXT:    (block $block (result (ref null $struct.A))
   ;; NOMNL-NEXT:     (drop
   ;; NOMNL-NEXT:      (br_if $block
-  ;; NOMNL-NEXT:       (ref.null $struct.A)
+  ;; NOMNL-NEXT:       (ref.null none)
   ;; NOMNL-NEXT:       (i32.const 0)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
@@ -2313,7 +2313,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (br_if $block
-  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2338,7 +2338,7 @@
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (br_if $block
-  ;; NOMNL-NEXT:      (ref.null $struct.A)
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:      (i32.const 0)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
@@ -2515,19 +2515,19 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2535,7 +2535,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2544,19 +2544,19 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.set $1
   ;; NOMNL-NEXT:    (i32.const 1)
@@ -2564,7 +2564,7 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -2595,22 +2595,22 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null $struct.A)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
@@ -2620,22 +2620,22 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.null $struct.A)
+  ;; NOMNL-NEXT:   (ref.null none)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (block (result i32)
   ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.get $1)
   ;; NOMNL-NEXT:  )
@@ -2671,7 +2671,7 @@
   ;; CHECK-NEXT:   (block $block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (br_if $block
-  ;; CHECK-NEXT:      (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (local.set $3
   ;; CHECK-NEXT:        (i32.const 42)
   ;; CHECK-NEXT:       )
@@ -2684,7 +2684,7 @@
   ;; CHECK-NEXT:       (local.set $2
   ;; CHECK-NEXT:        (local.get $4)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -2706,7 +2706,7 @@
   ;; NOMNL-NEXT:   (block $block (result (ref null $struct.A))
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (br_if $block
-  ;; NOMNL-NEXT:      (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:      (block (result nullref)
   ;; NOMNL-NEXT:       (local.set $3
   ;; NOMNL-NEXT:        (i32.const 42)
   ;; NOMNL-NEXT:       )
@@ -2719,7 +2719,7 @@
   ;; NOMNL-NEXT:       (local.set $2
   ;; NOMNL-NEXT:        (local.get $4)
   ;; NOMNL-NEXT:       )
-  ;; NOMNL-NEXT:       (ref.null $struct.A)
+  ;; NOMNL-NEXT:       (ref.null none)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:      (i32.const 0)
   ;; NOMNL-NEXT:     )
@@ -2760,14 +2760,14 @@
   ;; CHECK-NEXT:    (br_if $loop
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (block (result nullref)
   ;; CHECK-NEXT:     (local.set $1
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $2
   ;; CHECK-NEXT:      (f64.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null $struct.A)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2781,14 +2781,14 @@
   ;; NOMNL-NEXT:    (br_if $loop
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:    (block (result nullref)
   ;; NOMNL-NEXT:     (local.set $1
   ;; NOMNL-NEXT:      (i32.const 0)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:     (local.set $2
   ;; NOMNL-NEXT:      (f64.const 0)
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.null $struct.A)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -2814,14 +2814,14 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
@@ -2834,14 +2834,14 @@
   ;; NOMNL-NEXT:  (local $1 i32)
   ;; NOMNL-NEXT:  (local $2 f64)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref null $struct.A))
+  ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (local.set $1
   ;; NOMNL-NEXT:     (i32.const 0)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (local.set $2
   ;; NOMNL-NEXT:     (f64.const 0)
   ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null $struct.A)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (unreachable)

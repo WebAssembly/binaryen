@@ -1142,7 +1142,7 @@ struct Reducer
     }
     // try to replace with a trivial value
     if (curr->type.isNullable()) {
-      RefNull* n = builder->makeRefNull(curr->type);
+      RefNull* n = builder->makeRefNull(curr->type.getHeapType());
       return tryToReplaceCurrent(n);
     }
     if (curr->type.isTuple() && curr->type.isDefaultable()) {
