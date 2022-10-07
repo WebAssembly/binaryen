@@ -332,7 +332,8 @@ public:
 
   bool isLittleEndian() const { return DObj->isLittleEndian(); }
   static bool isSupportedVersion(unsigned version) {
-    return version == 2 || version == 3 || version == 4 || version == 5;
+    // XXX BINARYEN: removed version 5, which we do not support
+    return version == 2 || version == 3 || version == 4;
   }
 
   std::shared_ptr<DWARFContext> getDWOContext(StringRef AbsolutePath);
