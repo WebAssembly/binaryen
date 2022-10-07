@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "wasm.h"
@@ -217,7 +218,8 @@ template<typename T> void disallowDuplicates(const T& targets) {
 
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a link from a LocalLocation to a ResultLocation.
+// we have a link from the ExpressionLocation of that local.get to a
+// ResultLocation.
 template<typename T> struct Link {
   T from;
   T to;
@@ -438,7 +440,7 @@ struct InfoCollector
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back(
-        {SignatureParamLocation{func->type, i}, LocalLocation{func, i, 0}});
+        {SignatureParamLocation{func->type, i}, ParamLocation{func, i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
@@ -494,28 +496,19 @@ struct InfoCollector
     receiveChildValue(curr->value, curr);
   }
 
-  // Locals read and write to their index.
-  // TODO: we could use a LocalGraph for SSA-like precision
-  void visitLocalGet(LocalGet* curr) {
-    if (isRelevant(curr->type)) {
-      for (Index i = 0; i < curr->type.size(); i++) {
-        info.links.push_back({LocalLocation{getFunction(), curr->index, i},
-                              ExpressionLocation{curr, i}});
-      }
-    }
-  }
   void visitLocalSet(LocalSet* curr) {
     if (!isRelevant(curr->value->type)) {
       return;
     }
-    for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.links.push_back({ExpressionLocation{curr->value, i},
-                            LocalLocation{getFunction(), curr->index, i}});
-    }
 
-    // Tees also flow out the value (receiveChildValue will see if this is a tee
+    // Tees flow out the value (receiveChildValue will see if this is a tee
     // based on the type, automatically).
     receiveChildValue(curr->value, curr);
+
+    // We handle connecting local.gets to local.sets below, in visitFunction.
+  }
+  void visitLocalGet(LocalGet* curr) {
+    // We handle connecting local.gets to local.sets below, in visitFunction.
   }
 
   // Globals read and write from their location.
@@ -582,7 +575,7 @@ struct InfoCollector
       curr,
       [&](Index i) {
         assert(i <= target->getParams().size());
-        return LocalLocation{target, i, 0};
+        return ParamLocation{target, i};
       },
       [&](Index i) {
         assert(i <= target->getResults().size());
@@ -931,26 +924,41 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
-  void visitFunction(Function* curr) {
-    // Vars have an initial value.
-    for (Index i = 0; i < curr->getNumLocals(); i++) {
-      if (curr->isVar(i)) {
-        Index j = 0;
-        for (auto t : curr->getLocalType(i)) {
-          if (t.isDefaultable()) {
-            info.links.push_back(
-              {getNullLocation(t), LocalLocation{curr, i, j}});
-          }
-          j++;
-        }
-      }
-    }
-
+  void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.
-    addResult(curr->body);
+    addResult(func->body);
 
     // See visitPop().
     assert(handledPops == totalPops);
+
+    // Handle local.get/sets: each set must write to the proper gets.
+    LocalGraph localGraph(func);
+
+    for (auto& [get, setsForGet] : localGraph.getSetses) {
+      auto index = get->index;
+      auto type = func->getLocalType(index);
+      if (!isRelevant(type)) {
+        continue;
+      }
+
+      // Each get reads from its relevant sets.
+      for (auto* set : setsForGet) {
+        for (Index i = 0; i < type.size(); i++) {
+          Location source;
+          if (set) {
+            // This is a normal local.set.
+            source = ExpressionLocation{set->value, i};
+          } else if (getFunction()->isParam(index)) {
+            // This is a parameter.
+            source = ParamLocation{getFunction(), index};
+          } else {
+            // This is the default value from the function entry, a null.
+            source = getNullLocation(type[i]);
+          }
+          info.links.push_back({source, ExpressionLocation{get, i}});
+        }
+      }
+    }
   }
 
   // Helpers
@@ -1284,7 +1292,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[LocalLocation{func, i, 0}] = PossibleContents::many();
+      roots[ParamLocation{func, i}] = PossibleContents::many();
     }
   };
 
@@ -1793,8 +1801,8 @@ void Flower::dump(Location location) {
     std::cout << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
-  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+  } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
+    std::cout << "  paramloc " << loc->func->name << " : " << loc->index
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc " << loc->func->name << " : " << loc->index
