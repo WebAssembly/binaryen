@@ -191,12 +191,12 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
-  // If the heap types are not compatible then the intersection is either
-  // nothing or a null.
+  // If the heap types are not compatible then they are in separate hierarchies
+  // and there is no intersection.
   auto isSubType = HeapType::isSubType(heapType, otherHeapType);
   auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
   if (!isSubType && !otherIsSubType) {
-    setNoneOrNull();
+    value = None();
     return;
   }
 
@@ -293,11 +293,19 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
 
   // From here on we focus on references.
 
+  auto aHeapType = aType.getHeapType();
+  auto bHeapType = bType.getHeapType();
+
+  auto aSubB = HeapType::isSubType(aHeapType, bHeapType);
+  auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
+  if (!aSubB && !bSubA) {
+    // No type can appear in both a and b, so the types differ, so the values
+    // do not overlap.
+    return false;
+  }
+
   if (aType.isNullable() && bType.isNullable()) {
-    // Null is possible on both sides. Assume that an intersection can exist,
-    // but we could be more precise here and check if the types belong to
-    // different hierarchies, in which case the nulls would differ TODO. For
-    // now we only use this API from the RefEq logic, so this is fully precise.
+    // A compatible null is possible on both sides.
     return true;
   }
 
@@ -310,16 +318,6 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
   // From here on we focus on references and can ignore the case of null - any
   // intersection must be of a non-null value, so we can focus on the heap
   // types.
-  auto aHeapType = aType.getHeapType();
-  auto bHeapType = bType.getHeapType();
-
-  auto aSubB = HeapType::isSubType(aHeapType, bHeapType);
-  auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
-  if (!aSubB && !bSubA) {
-    // No type can appear in both a and b, so the types differ, so the values
-    // do not overlap.
-    return false;
-  }
 
   auto aDepthFromRoot = aHeapType.getDepth();
   auto bDepthFromRoot = bHeapType.getDepth();

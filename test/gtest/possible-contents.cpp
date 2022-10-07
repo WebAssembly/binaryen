@@ -1,3 +1,4 @@
+#define BINARYEN_TEST_DEBUG 1
 #include "ir/possible-contents.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
@@ -284,6 +285,13 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
 void assertHaveIntersection(PossibleContents a, PossibleContents b) {
   EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
   EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
+#if BINARYEN_TEST_DEBUG
+  if (!PossibleContents::haveIntersection(a, b) ||
+      !PossibleContents::haveIntersection(b, a)) {
+    std::cout << "\nFailure: no intersection:\n" << a << '\n' << b << '\n';;
+    abort();
+  }
+#endif
 }
 void assertLackIntersection(PossibleContents a, PossibleContents b) {
   EXPECT_FALSE(PossibleContents::haveIntersection(a, b));
@@ -304,10 +312,12 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertLackIntersection(exactI32, exactAnyref);
   assertLackIntersection(i32Zero, exactAnyref);
 
-  // But nullable ones can - the null can be the intersection.
-  assertHaveIntersection(exactFuncSignatureType, exactAnyref);
+  // But nullable ones can - the null can be the intersection, if they are not
+  // in separate hierarchies.
   assertHaveIntersection(exactFuncSignatureType, funcNull);
-  assertHaveIntersection(anyNull, funcNull);
+
+  assertLackIntersection(exactFuncSignatureType, exactAnyref);
+  assertLackIntersection(anyNull, funcNull);
 
   // Identical types might.
   assertHaveIntersection(exactI32, exactI32);
@@ -326,12 +336,8 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertHaveIntersection(funcGlobal, exactNonNullFuncSignatureType);
   assertHaveIntersection(nonNullFuncGlobal, exactNonNullFuncSignatureType);
 
-  // Neither is a subtype of the other, but nulls are possible, so a null can be
-  // the intersection.
-  assertHaveIntersection(funcGlobal, anyGlobal);
-
-  // Without null on one side, we cannot intersect.
-  assertLackIntersection(nonNullFuncGlobal, anyGlobal);
+  // Separate hierarchies.
+  assertLackIntersection(funcGlobal, anyGlobal);
 }
 
 TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
@@ -728,6 +734,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertIntersection(funcGlobal,
                      PossibleContents::fullConeType(signature),
                      PossibleContents::fullConeType(signature));
+
+  // Incompatible hierarchies have no intersection.
+  assertIntersection(
+    literalNullA, PossibleContents::fullConeType(funcref), none);
 
   // Subcontents. This API only supports the case where one of the inputs is a
   // full cone type.
