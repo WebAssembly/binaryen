@@ -1645,6 +1645,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // we always end up with a deterministic result no matter in what order the
   // flow happens (the final result will be the LUB of all the types of nulls
   // that can arrive).
+  // FIXME: not needed anymore
+  // TODO: optimize. Cone of an expression's declared type is notWorthMore
   if (contents == oldContents && contents.getType() == oldContents.getType()) {
     // Nothing actually changed, so just return.
     return worthSendingMore;
