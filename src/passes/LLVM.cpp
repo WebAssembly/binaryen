@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
@@ -43,10 +44,20 @@ struct LLVM : public wasm::Pass {
       Module mod("byn_mod", context);
       mod.setTargetTriple("wasm32-unknown-unknown");
       mod.getOrInsertFunction("byn_func", Type::getVoidTy(context));
-      errs() << mod << '\n';
       if (verifyModule(mod, &errs())) {
         wasm::Fatal() << "broken LLVM module";
       }
+      errs() << mod << '\n';
+
+      auto* func = mod.getFunction("byn_func");
+
+      IRBuilder builder(context);
+
+      BasicBlock* body = BasicBlock::Create(context, "entry", func);
+      builder.SetInsertPoint(body);
+      builder.CreateRetVoid();
+        
+      errs() << "[func:]\n" << *func << '\n';
     }
   }
 };
