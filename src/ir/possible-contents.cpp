@@ -1494,6 +1494,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // that we can't see, so anything might arrive there.
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
+    auto params = func->getParams();
     for (Index i = 0; i < func->getParams().size(); i++) {
       roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
     }
