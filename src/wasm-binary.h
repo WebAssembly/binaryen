@@ -1451,7 +1451,7 @@ public:
 
   bool more() { return pos < input.size(); }
 
-  std::pair<const char*, const char*> getByteView(size_t size);
+  std::string_view getByteView(size_t size);
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();
