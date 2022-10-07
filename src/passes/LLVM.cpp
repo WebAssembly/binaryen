@@ -15,16 +15,15 @@
  */
 
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
 #include <llvm/Support/InitLLVM.h>
 
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
-namespace wasm {
-
-struct LLVM : public Pass {
-  void run(Module* module) override {
+struct LLVM : public wasm::Pass {
+  void run(wasm::Module* module) override {
     std::cout << "LLVM pass\n";
 
 #if 0
@@ -40,11 +39,15 @@ struct LLVM : public Pass {
     {
       using namespace llvm;
       LLVMContext context;
+      Module mod("byn_mod", context);
+      mod.setTargetTriple("wasm32-unknown-unknown");
+      mod.getOrInsertFunction("byn_func", Type::getVoidTy(context));
+      errs() << mod << '\n';
     }
   }
 };
 
-// declare passes
+namespace wasm {
 
 Pass* createLLVMPass() { return new LLVM(); }
 
