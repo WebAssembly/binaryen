@@ -28,46 +28,56 @@
 
 struct LLVM : public wasm::Pass {
   void run(wasm::Module* module) override {
-    std::cout << "LLVM pass\n";
+    using namespace llvm;
 
-#if 0
-    // Initialize LLVM without any commandline arguments; we just need the lib.
-    // XXX do we even need this?
-    int argc = 1;
-    const char* argvData[1];
-    argvData[0] = "binaryen";
-    const char** argv = argvData;
-    llvm::InitLLVM X(argc, argv);
-#endif
+    LLVMContext context;
+    i32 = Type::getInt32Ty(context);
+    i64 = Type::getInt64Ty(context);
+    f32 = Type::getFloatTy(context);
+    f64 = Type::getDoubleTy(context);
 
-    {
-      using namespace llvm;
+    Module mod("byn_mod", context);
+    mod.setTargetTriple("wasm32-unknown-unknown");
 
-      LLVMContext context;
-      auto i32 = Type::getInt32Ty(context);
+    mod.getOrInsertFunction("byn_func", wasmToLLVM(wasm::Type::i32));
+    auto* func = mod.getFunction("byn_func");
 
-      Module mod("byn_mod", context);
-      mod.setTargetTriple("wasm32-unknown-unknown");
+    IRBuilder builder(context);
 
-      mod.getOrInsertFunction("byn_func", i32);
-      auto* func = mod.getFunction("byn_func");
+    BasicBlock* body = BasicBlock::Create(context, "entry", func);
+    builder.SetInsertPoint(body);
+    auto num1 = Constant::getIntegerValue(i32, APInt(32, 41));
+    auto num2 = Constant::getIntegerValue(i32, APInt(32, 1));
+    auto* add = builder.CreateAdd(num1, num2, "addd");
+    errs() << "add: " << *add << '\n';
+    auto* ret = builder.CreateRet(add);
+    errs() << "ret: " << *ret << '\n';
 
-      IRBuilder builder(context);
-
-      BasicBlock* body = BasicBlock::Create(context, "entry", func);
-      builder.SetInsertPoint(body);
-      auto num1 = Constant::getIntegerValue(i32, APInt(32, 41));
-      auto num2 = Constant::getIntegerValue(i32, APInt(32, 1));
-      auto* add = builder.CreateAdd(num1, num2, "addd");
-      errs() << "add: " << *add << '\n';
-      auto* ret = builder.CreateRet(add);
-      errs() << "ret: " << *ret << '\n';
-
-      if (verifyModule(mod, &errs())) {
-        wasm::Fatal() << "broken LLVM module";
-      }
-      errs() << mod << '\n';
+    if (verifyModule(mod, &errs())) {
+      wasm::Fatal() << "broken LLVM module";
     }
+    errs() << mod << '\n';
+  }
+
+  llvm::Type* i32;
+  llvm::Type* i64;
+  llvm::Type* f32;
+  llvm::Type* f64;
+
+  llvm::Type* wasmToLLVM(wasm::Type type) {
+    if (type == wasm::Type::i32) {
+      return i32;
+    }
+    if (type == wasm::Type::i64) {
+      return i64;
+    }
+    if (type == wasm::Type::f32) {
+      return f32;
+    }
+    if (type == wasm::Type::f64) {
+      return f64;
+    }
+    WASM_UNREACHABLE("invalid type");
   }
 };
 
