@@ -89,6 +89,15 @@ void PossibleContents::combine(const PossibleContents& other) {
     return;
   }
 
+  auto lub = Type::getLeastUpperBound(type, otherType);
+  if (lub == Type::none) {
+    // The types are not in the same hierarchy.
+    value = Many();
+    return;
+  }
+
+  // From here we can assume there is a useful LUB.
+
   // Nulls can be combined in by just adding nullability to a type.
   if (isNull() || other.isNull()) {
     // Only one of them can be null here, since we already handled the case
@@ -110,43 +119,35 @@ void PossibleContents::combine(const PossibleContents& other) {
     }
   }
 
-  // Before we give up and return Many, try to find a ConeType that describes
-  // both inputs.
-  auto lub = Type::getLeastUpperBound(type, otherType);
-  if (lub != Type::none) {
-    // We found a shared ancestor. Next we need to find how big a cone we need:
-    // the cone must be big enough to contain both the inputs.
-    auto depth = getCone().depth;
-    auto otherDepth = other.getCone().depth;
-    Index newDepth;
-    if (depth == FullDepth || otherDepth == FullDepth) {
-      // At least one has full (infinite) depth, so we know the new depth must
-      // be the same.
-      newDepth = FullDepth;
-    } else {
-      // The depth we need under the lub is how far from the lub we are, plus
-      // the depth of our cone.
-      // TODO: we could make a single loop that also does the LUB, at the same
-      // time, and also avoids calling getDepth() which loops once more?
-      auto depthFromRoot = type.getHeapType().getDepth();
-      auto otherDepthFromRoot = otherType.getHeapType().getDepth();
-      auto lubDepthFromRoot = lub.getHeapType().getDepth();
-      assert(lubDepthFromRoot <= depthFromRoot);
-      assert(lubDepthFromRoot <= otherDepthFromRoot);
-      Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
-      Index otherDepthUnderLub =
-        otherDepthFromRoot - lubDepthFromRoot + otherDepth;
+  // Find a ConeType that describes both inputs, using the shared ancestor which
+  // is the LUB. We need to find how big a cone we need: the cone must be big
+  // enough to contain both the inputs.
+  auto depth = getCone().depth;
+  auto otherDepth = other.getCone().depth;
+  Index newDepth;
+  if (depth == FullDepth || otherDepth == FullDepth) {
+    // At least one has full (infinite) depth, so we know the new depth must
+    // be the same.
+    newDepth = FullDepth;
+  } else {
+    // The depth we need under the lub is how far from the lub we are, plus
+    // the depth of our cone.
+    // TODO: we could make a single loop that also does the LUB, at the same
+    // time, and also avoids calling getDepth() which loops once more?
+    auto depthFromRoot = type.getHeapType().getDepth();
+    auto otherDepthFromRoot = otherType.getHeapType().getDepth();
+    auto lubDepthFromRoot = lub.getHeapType().getDepth();
+    assert(lubDepthFromRoot <= depthFromRoot);
+    assert(lubDepthFromRoot <= otherDepthFromRoot);
+    Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
+    Index otherDepthUnderLub =
+      otherDepthFromRoot - lubDepthFromRoot + otherDepth;
 
-      // The total cone must be big enough to contain all the above.
-      newDepth = std::max(depthUnderLub, otherDepthUnderLub);
-    }
-
-    value = ConeType{lub, newDepth};
-    return;
+    // The total cone must be big enough to contain all the above.
+    newDepth = std::max(depthUnderLub, otherDepthUnderLub);
   }
 
-  // Nothing else possible combines in an interesting way; emit a Many.
-  value = Many();
+  value = ConeType{lub, newDepth};
 }
 
 void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
