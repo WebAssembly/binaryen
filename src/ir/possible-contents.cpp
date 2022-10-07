@@ -1417,7 +1417,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
         // Imports return unknown values.
         auto results = func->getResults();
         for (Index i = 0; i < results.size(); i++) {
-          finder.addRoot(ResultLocation{func, i}, PossibleContents::fromType(results[i]));
+          finder.addRoot(ResultLocation{func, i},
+                         PossibleContents::fromType(results[i]));
         }
         return;
       }
@@ -1440,7 +1441,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   for (auto& global : wasm.globals) {
     if (global->imported()) {
       // Imports are unknown values.
-      finder.addRoot(GlobalLocation{global->name}, PossibleContents::fromType(global->type));
+      finder.addRoot(GlobalLocation{global->name},
+                     PossibleContents::fromType(global->type));
       continue;
     }
     auto* init = global->init;
