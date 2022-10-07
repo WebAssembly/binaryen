@@ -21,6 +21,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/MC/TargetRegistry.h>
 #include <llvm/Support/InitLLVM.h>
 
 #include "pass.h"
@@ -37,8 +38,9 @@ struct LLVM : public wasm::Pass {
     f32 = Type::getFloatTy(context);
     f64 = Type::getDoubleTy(context);
 
+    Triple triple("wasm32-unknown-unknown");
     Module mod("byn_mod", context);
-    mod.setTargetTriple("wasm32-unknown-unknown");
+    mod.setTargetTriple(triple.getTriple());
 
     auto* funcType = FunctionType::get(
       wasmToLLVM(wasm::Type::i32),
@@ -64,6 +66,13 @@ struct LLVM : public wasm::Pass {
       wasm::Fatal() << "broken LLVM module";
     }
     errs() << mod << '\n';
+
+    std::string error;
+    auto target = TargetRegistry::lookupTarget(triple.getTriple(), error);
+    if (!target) {
+      wasm::Fatal() << "can't find wasm target";
+    }
+    // addPassesToEmitFile
   }
 
   llvm::Type* i32;
