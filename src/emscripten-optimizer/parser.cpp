@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <unordered_map>
+
 #include "parser.h"
 
 namespace cashew {
