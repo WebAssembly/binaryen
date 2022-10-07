@@ -167,6 +167,9 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
+  // There is an intersection here. Note that this implies |this| is a reference
+  // type, as it has an intersection with |other| which is a full cone type
+  // (which must be a reference type).
   auto type = getType();
   auto otherType = other.getType();
   auto heapType = type.getHeapType();
