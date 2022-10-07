@@ -214,10 +214,7 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     //       refactoring.
   }
 
-  // An interesting non-empty intersection that is a new cone which differs from
-  // both the original ones. (This must be an intersection of cones, since by
-  // assumption |other| is a cone, and another cone is the only shape that can
-  // have a non-empty intersection with it that differs from them both.)
+  // Intersect the cones, as there is no more specific information we can use.
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
 
