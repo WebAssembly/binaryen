@@ -22,6 +22,9 @@ Current Trunk
 - If `THROW_ON_FATAL` is defined at compile-time, then fatal errors will throw a
   `std::runtime_error` instead of terminating the process. This may be used by
   embedders of Binaryen to recover from errors.
+- Implemented bottom heap types: `none`, `nofunc`, and `noextern`. RefNull
+  expressions and null `Literal`s must now have type `nullref`, `nullfuncref`,
+  or `nullexternref`.
 
 v110
 ----

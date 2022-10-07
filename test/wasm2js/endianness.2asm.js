@@ -1,4 +1,4 @@
-import { setTempRet0 } from 'env';
+import * as env from 'env';
 
   var bufferView;
 
@@ -31,8 +31,7 @@ import { setTempRet0 } from 'env';
     return f32ScratchView[2];
   }
       
-function asmFunc(importObject) {
- var env = importObject.env || importObject;
+function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
@@ -54,6 +53,7 @@ function asmFunc(importObject) {
  var Math_sqrt = Math.sqrt;
  var nan = NaN;
  var infinity = Infinity;
+ var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function i16_store_little(address, value) {
@@ -701,7 +701,7 @@ function asmFunc(importObject) {
 }
 
 var retasmFunc = asmFunc({
-    setTempRet0,
+  "env": env,
 });
 export var i32_load16_s = retasmFunc.i32_load16_s;
 export var i32_load16_u = retasmFunc.i32_load16_u;

@@ -254,7 +254,7 @@
   (i32.const 1)
  )
  (func $reftype-test (result externref)
-  (ref.null extern)
+  (ref.null noextern)
  )
  (func $dummy
   (nop)
@@ -276,22 +276,22 @@
    )
   )
   (drop
-   (block $l2 (result externref)
+   (block $l2 (result nullexternref)
     (drop
      (block $l3
       (global.set $global-mut
        (i32.const 1)
       )
       (br $l2
-       (ref.null extern)
+       (ref.null noextern)
       )
      )
     )
-    (ref.null extern)
+    (ref.null noextern)
    )
   )
   (drop
-   (block $l4 (result funcref)
+   (block $l4 (result (ref null $none_=>_none))
     (drop
      (block $l5
       (global.set $global-mut
@@ -302,7 +302,7 @@
       )
      )
     )
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
  )

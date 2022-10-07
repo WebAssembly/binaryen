@@ -32,6 +32,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/debug.h"
+#include "ir/drop.h"
 #include "ir/eh-utils.h"
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
@@ -251,6 +252,10 @@ struct Updater : public PostWalker<Updater> {
   Name returnName;
   bool isReturn;
   Builder* builder;
+  PassOptions& options;
+
+  Updater(PassOptions& options) : options(options) {}
+
   void visitReturn(Return* curr) {
     replaceCurrent(builder->makeBreak(returnName, curr->value));
   }
@@ -259,7 +264,7 @@ struct Updater : public PostWalker<Updater> {
   // achieve this, make the call a non-return call and add a break. This does
   // not cause unbounded stack growth because inlining and return calling both
   // avoid creating a new stack frame.
-  template<typename T> void handleReturnCall(T* curr, HeapType targetType) {
+  template<typename T> void handleReturnCall(T* curr, Type results) {
     if (isReturn) {
       // If the inlined callsite was already a return_call, then we can keep
       // return_calls in the inlined function rather than downgrading them.
@@ -269,7 +274,7 @@ struct Updater : public PostWalker<Updater> {
       return;
     }
     curr->isReturn = false;
-    curr->type = targetType.getSignature().results;
+    curr->type = results;
     if (curr->type.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
@@ -278,17 +283,25 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->type);
+      handleReturnCall(curr, module->getFunction(curr->target)->getResults());
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, curr->heapType);
+      handleReturnCall(curr, curr->heapType.getSignature().results);
     }
   }
   void visitCallRef(CallRef* curr) {
+    Type targetType = curr->target->type;
+    if (targetType.isNull()) {
+      // We don't know what type the call should return, but we can't leave it
+      // as a potentially-invalid return_call_ref, either.
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, *module, options, Builder(*module).makeUnreachable()));
+      return;
+    }
     if (curr->isReturn) {
-      handleReturnCall(curr, curr->target->type.getHeapType());
+      handleReturnCall(curr, targetType.getHeapType().getSignature().results);
     }
   }
   void visitLocalGet(LocalGet* curr) {
@@ -301,8 +314,10 @@ struct Updater : public PostWalker<Updater> {
 
 // Core inlining logic. Modifies the outside function (adding locals as
 // needed), and returns the inlined code.
-static Expression*
-doInlining(Module* module, Function* into, const InliningAction& action) {
+static Expression* doInlining(Module* module,
+                              Function* into,
+                              const InliningAction& action,
+                              PassOptions& options) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   // Works for return_call, too
@@ -337,7 +352,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     *action.callSite = block;
   }
   // Prepare to update the inlined code's locals and other things.
-  Updater updater;
+  Updater updater(options);
   updater.module = module;
   updater.returnName = block->name;
   updater.isReturn = call->isReturn;
@@ -1002,7 +1017,7 @@ struct Inlining : public Pass {
         action.contents = getActuallyInlinedFunction(action.contents);
 
         // Perform the inlining and update counts.
-        doInlining(module, func, action);
+        doInlining(module, func, action, getPassOptions());
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func);
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
@@ -1116,7 +1131,8 @@ struct InlineMainPass : public Pass {
       // No call at all.
       return;
     }
-    doInlining(module, main, InliningAction(callSite, originalMain));
+    doInlining(
+      module, main, InliningAction(callSite, originalMain), getPassOptions());
   }
 };
 

@@ -13,7 +13,7 @@
   ;; CHECK-NEXT:    (ref.as_non_null
   ;; CHECK-NEXT:     (local.tee $nn
   ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (ref.null any)
+  ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

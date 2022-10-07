@@ -9,8 +9,8 @@ eq
 eqref
 (ref eq)
 i31
-(ref null i31)
 i31ref
+(ref i31)
 (func)
 (struct)
 (array i32)

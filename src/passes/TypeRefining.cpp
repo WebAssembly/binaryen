@@ -251,7 +251,7 @@ struct TypeRefining : public Pass {
       }
 
       void visitStructGet(StructGet* curr) {
-        if (curr->ref->type == Type::unreachable) {
+        if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
           return;
         }
 

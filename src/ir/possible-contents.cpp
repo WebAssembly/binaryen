@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
 #include "wasm.h"
@@ -47,23 +48,6 @@ void PossibleContents::combine(const PossibleContents& other) {
   // First handle the trivial cases of them being equal, or one of them is
   // None or Many.
   if (*this == other) {
-    // Nulls are a special case, since they compare equal even if their type is
-    // different. We would like to make this function symmetric, that is, that
-    // combine(a, b) == combine(b, a) (otherwise, things can be odd and we could
-    // get nondeterminism in the flow analysis which does not have a
-    // determinstic order). To fix that, pick the LUB.
-    if (isNull()) {
-      assert(other.isNull());
-      auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
-                                              otherType.getHeapType());
-      if (!lub) {
-        // TODO: Remove this workaround once we have bottom types to assign to
-        // null literals.
-        value = Many();
-        return;
-      }
-      value = Literal::makeNull(*lub);
-    }
     return;
   }
   if (other.isNone()) {
@@ -97,10 +81,27 @@ void PossibleContents::combine(const PossibleContents& other) {
 
   // Special handling for references from here.
 
-  // Nulls are always equal to each other, even if their types differ.
+  if (isNull() && other.isNull()) {
+    // These must be nulls in different hierarchies, otherwise this would have
+    // been handled by the `*this == other` case above.
+    assert(type != otherType);
+    value = Many();
+    return;
+  }
+
+  auto lub = Type::getLeastUpperBound(type, otherType);
+  if (lub == Type::none) {
+    // The types are not in the same hierarchy.
+    value = Many();
+    return;
+  }
+
+  // From here we can assume there is a useful LUB.
+
+  // Nulls can be combined in by just adding nullability to a type.
   if (isNull() || other.isNull()) {
-    // Only one of them can be null here, since we already checked if *this ==
-    // other, which would have been true had both been null.
+    // Only one of them can be null here, since we already handled the case
+    // where they were both null.
     assert(!isNull() || !other.isNull());
     // If only one is a null then we can use the type info from the other, and
     // just add in nullability. For example, a literal of type T and a null
@@ -118,43 +119,35 @@ void PossibleContents::combine(const PossibleContents& other) {
     }
   }
 
-  // Before we give up and return Many, try to find a ConeType that describes
-  // both inputs.
-  auto lub = Type::getLeastUpperBound(type, otherType);
-  if (lub != Type::none) {
-    // We found a shared ancestor. Next we need to find how big a cone we need:
-    // the cone must be big enough to contain both the inputs.
-    auto depth = getCone().depth;
-    auto otherDepth = other.getCone().depth;
-    Index newDepth;
-    if (depth == FullDepth || otherDepth == FullDepth) {
-      // At least one has full (infinite) depth, so we know the new depth must
-      // be the same.
-      newDepth = FullDepth;
-    } else {
-      // The depth we need under the lub is how far from the lub we are, plus
-      // the depth of our cone.
-      // TODO: we could make a single loop that also does the LUB, at the same
-      // time, and also avoids calling getDepth() which loops once more?
-      auto depthFromRoot = type.getHeapType().getDepth();
-      auto otherDepthFromRoot = otherType.getHeapType().getDepth();
-      auto lubDepthFromRoot = lub.getHeapType().getDepth();
-      assert(lubDepthFromRoot <= depthFromRoot);
-      assert(lubDepthFromRoot <= otherDepthFromRoot);
-      Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
-      Index otherDepthUnderLub =
-        otherDepthFromRoot - lubDepthFromRoot + otherDepth;
+  // Find a ConeType that describes both inputs, using the shared ancestor which
+  // is the LUB. We need to find how big a cone we need: the cone must be big
+  // enough to contain both the inputs.
+  auto depth = getCone().depth;
+  auto otherDepth = other.getCone().depth;
+  Index newDepth;
+  if (depth == FullDepth || otherDepth == FullDepth) {
+    // At least one has full (infinite) depth, so we know the new depth must
+    // be the same.
+    newDepth = FullDepth;
+  } else {
+    // The depth we need under the lub is how far from the lub we are, plus
+    // the depth of our cone.
+    // TODO: we could make a single loop that also does the LUB, at the same
+    // time, and also avoids calling getDepth() which loops once more?
+    auto depthFromRoot = type.getHeapType().getDepth();
+    auto otherDepthFromRoot = otherType.getHeapType().getDepth();
+    auto lubDepthFromRoot = lub.getHeapType().getDepth();
+    assert(lubDepthFromRoot <= depthFromRoot);
+    assert(lubDepthFromRoot <= otherDepthFromRoot);
+    Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
+    Index otherDepthUnderLub =
+      otherDepthFromRoot - lubDepthFromRoot + otherDepth;
 
-      // The total cone must be big enough to contain all the above.
-      newDepth = std::max(depthUnderLub, otherDepthUnderLub);
-    }
-
-    value = ConeType{lub, newDepth};
-    return;
+    // The total cone must be big enough to contain all the above.
+    newDepth = std::max(depthUnderLub, otherDepthUnderLub);
   }
 
-  // Nothing else possible combines in an interesting way; emit a Many.
-  value = Many();
+  value = ConeType{lub, newDepth};
 }
 
 void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
@@ -174,6 +167,9 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
+  // There is an intersection here. Note that this implies |this| is a reference
+  // type, as it has an intersection with |other| which is a full cone type
+  // (which must be a reference type).
   auto type = getType();
   auto otherType = other.getType();
   auto heapType = type.getHeapType();
@@ -198,12 +194,12 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
-  // If the heap types are not compatible then the intersection is either
-  // nothing or a null.
+  // If the heap types are not compatible then they are in separate hierarchies
+  // and there is no intersection.
   auto isSubType = HeapType::isSubType(heapType, otherHeapType);
   auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
   if (!isSubType && !otherIsSubType) {
-    setNoneOrNull();
+    value = None();
     return;
   }
 
@@ -221,10 +217,7 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     //       refactoring.
   }
 
-  // An interesting non-empty intersection that is a new cone which differs from
-  // both the original ones. (This must be an intersection of cones, since by
-  // assumption |other| is a cone, and another cone is the only shape that can
-  // have a non-empty intersection with it that differs from them both.)
+  // Intersect the cones, as there is no more specific information we can use.
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
 
@@ -257,8 +250,8 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     //   heapType                  ..
     //            \
     */
-    // E.g. if |this| is a cone of size 10, and |otherHeapType| is an immediate
-    // subtype of |this|, then the new cone must be of size 9.
+    // E.g. if |this| is a cone of depth 10, and |otherHeapType| is an immediate
+    // subtype of |this|, then the new cone must be of depth 9.
     auto newDepth = getCone().depth;
     if (newHeapType == otherHeapType) {
       assert(depthFromRoot <= otherDepthFromRoot);
@@ -300,25 +293,20 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
 
   // From here on we focus on references.
 
-  if (aType.isNullable() && bType.isNullable()) {
-    // Null is possible on both sides. Assume that an intersection can exist,
-    // but we could be more precise here and check if the types belong to
-    // different hierarchies, in which case the nulls would differ TODO. For
-    // now we only use this API from the RefEq logic, so this is fully precise.
+  auto aHeapType = aType.getHeapType();
+  auto bHeapType = bType.getHeapType();
+
+  if (aType.isNullable() && bType.isNullable() &&
+      aHeapType.getBottom() == bHeapType.getBottom()) {
+    // A compatible null is possible on both sides.
     return true;
   }
 
-  // We ruled out a null on both sides, so at least one is non-nullable. If the
-  // other is a null then no chance for an intersection remains.
+  // We ruled out having a compatible null on both sides. If one is simply a
+  // null then no chance for an intersection remains.
   if (a.isNull() || b.isNull()) {
     return false;
   }
-
-  // From here on we focus on references and can ignore the case of null - any
-  // intersection must be of a non-null value, so we can focus on the heap
-  // types.
-  auto aHeapType = aType.getHeapType();
-  auto bHeapType = bType.getHeapType();
 
   auto aSubB = HeapType::isSubType(aHeapType, bHeapType);
   auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
@@ -327,6 +315,10 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     // do not overlap.
     return false;
   }
+
+  // From here on we focus on references and can ignore the case of null - any
+  // intersection must be of a non-null value, so we can focus on the heap
+  // types.
 
   auto aDepthFromRoot = aHeapType.getDepth();
   auto bDepthFromRoot = bHeapType.getDepth();
@@ -425,7 +417,8 @@ template<typename T> void disallowDuplicates(const T& targets) {
 
 // A link indicates a flow of content from one location to another. For
 // example, if we do a local.get and return that value from a function, then
-// we have a link from a LocalLocation to a ResultLocation.
+// we have a link from the ExpressionLocation of that local.get to a
+// ResultLocation.
 template<typename T> struct Link {
   T from;
   T to;
@@ -646,7 +639,7 @@ struct InfoCollector
     auto* func = getModule()->getFunction(curr->func);
     for (Index i = 0; i < func->getParams().size(); i++) {
       info.links.push_back(
-        {SignatureParamLocation{func->type, i}, LocalLocation{func, i, 0}});
+        {SignatureParamLocation{func->type, i}, ParamLocation{func, i}});
     }
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
@@ -702,28 +695,19 @@ struct InfoCollector
     receiveChildValue(curr->value, curr);
   }
 
-  // Locals read and write to their index.
-  // TODO: we could use a LocalGraph for SSA-like precision
-  void visitLocalGet(LocalGet* curr) {
-    if (isRelevant(curr->type)) {
-      for (Index i = 0; i < curr->type.size(); i++) {
-        info.links.push_back({LocalLocation{getFunction(), curr->index, i},
-                              ExpressionLocation{curr, i}});
-      }
-    }
-  }
   void visitLocalSet(LocalSet* curr) {
     if (!isRelevant(curr->value->type)) {
       return;
     }
-    for (Index i = 0; i < curr->value->type.size(); i++) {
-      info.links.push_back({ExpressionLocation{curr->value, i},
-                            LocalLocation{getFunction(), curr->index, i}});
-    }
 
-    // Tees also flow out the value (receiveChildValue will see if this is a tee
+    // Tees flow out the value (receiveChildValue will see if this is a tee
     // based on the type, automatically).
     receiveChildValue(curr->value, curr);
+
+    // We handle connecting local.gets to local.sets below, in visitFunction.
+  }
+  void visitLocalGet(LocalGet* curr) {
+    // We handle connecting local.gets to local.sets below, in visitFunction.
   }
 
   // Globals read and write from their location.
@@ -790,7 +774,7 @@ struct InfoCollector
       curr,
       [&](Index i) {
         assert(i <= target->getParams().size());
-        return LocalLocation{target, i, 0};
+        return ParamLocation{target, i};
       },
       [&](Index i) {
         assert(i <= target->getResults().size());
@@ -996,7 +980,8 @@ struct InfoCollector
     // part of the main IR, which is potentially confusing during debugging,
     // however, which is a downside.
     Builder builder(*getModule());
-    auto* get = builder.makeArrayGet(curr->srcRef, curr->srcIndex);
+    auto* get =
+      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type);
     visitArrayGet(get);
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);
@@ -1138,26 +1123,41 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
-  void visitFunction(Function* curr) {
-    // Vars have an initial value.
-    for (Index i = 0; i < curr->getNumLocals(); i++) {
-      if (curr->isVar(i)) {
-        Index j = 0;
-        for (auto t : curr->getLocalType(i)) {
-          if (t.isDefaultable()) {
-            info.links.push_back(
-              {getNullLocation(t), LocalLocation{curr, i, j}});
-          }
-          j++;
-        }
-      }
-    }
-
+  void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.
-    addResult(curr->body);
+    addResult(func->body);
 
     // See visitPop().
     assert(handledPops == totalPops);
+
+    // Handle local.get/sets: each set must write to the proper gets.
+    LocalGraph localGraph(func);
+
+    for (auto& [get, setsForGet] : localGraph.getSetses) {
+      auto index = get->index;
+      auto type = func->getLocalType(index);
+      if (!isRelevant(type)) {
+        continue;
+      }
+
+      // Each get reads from its relevant sets.
+      for (auto* set : setsForGet) {
+        for (Index i = 0; i < type.size(); i++) {
+          Location source;
+          if (set) {
+            // This is a normal local.set.
+            source = ExpressionLocation{set->value, i};
+          } else if (getFunction()->isParam(index)) {
+            // This is a parameter.
+            source = ParamLocation{getFunction(), index};
+          } else {
+            // This is the default value from the function entry, a null.
+            source = getNullLocation(type[i]);
+          }
+          info.links.push_back({source, ExpressionLocation{get, i}});
+        }
+      }
+    }
   }
 
   // Helpers
@@ -1494,9 +1494,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // that we can't see, so anything might arrive there.
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
-    auto params = func->getParams();
-    for (Index i = 0; i < params.size(); i++) {
-      roots[LocalLocation{func, i, 0}] = PossibleContents::fromType(params[i]);
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
     }
   };
 
@@ -2004,8 +2003,8 @@ void Flower::dump(Location location) {
     std::cout << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
-  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+  } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
+    std::cout << "  paramloc " << loc->func->name << " : " << loc->index
               << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc $" << loc->func->name << " : " << loc->index

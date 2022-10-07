@@ -44,19 +44,25 @@ Literal::Literal(Type type) : type(type) {
         memset(&v128, 0, 16);
         return;
       case Type::none:
-        return;
       case Type::unreachable:
-        break;
+        WASM_UNREACHABLE("Invalid literal type");
+        return;
     }
   }
 
-  if (isData()) {
-    assert(!type.isNonNullable());
+  if (type.isNull()) {
+    assert(type.isNullable());
     new (&gcData) std::shared_ptr<GCData>();
-  } else {
-    // For anything else, zero out all the union data.
-    memset(&v128, 0, 16);
+    return;
   }
+
+  if (type.isRef() && type.getHeapType() == HeapType::i31) {
+    assert(type.isNonNullable());
+    i32 = 0;
+    return;
+  }
+
+  WASM_UNREACHABLE("Unexpected literal type");
 }
 
 Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
@@ -64,9 +70,9 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
-  : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
+  : gcData(gcData), type(type, NonNullable) {
   // The type must be a proper type for GC data.
-  assert(isData());
+  assert((isData() && gcData) || (type.isBottom() && !gcData));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -89,6 +95,10 @@ Literal::Literal(const Literal& other) : type(other.type) {
         break;
     }
   }
+  if (other.isNull()) {
+    new (&gcData) std::shared_ptr<GCData>();
+    return;
+  }
   if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
@@ -98,23 +108,30 @@ Literal::Literal(const Literal& other) : type(other.type) {
     return;
   }
   if (type.isRef()) {
+    assert(!type.isNullable());
     auto heapType = type.getHeapType();
     if (heapType.isBasic()) {
       switch (heapType.getBasic()) {
-        case HeapType::ext:
-        case HeapType::any:
-        case HeapType::eq:
-          return; // null
         case HeapType::i31:
           i32 = other.i32;
           return;
+        case HeapType::none:
+        case HeapType::noext:
+        case HeapType::nofunc:
+          // Null
+          return;
+        case HeapType::ext:
+        case HeapType::any:
+          WASM_UNREACHABLE("TODO: extern literals");
+        case HeapType::eq:
         case HeapType::func:
         case HeapType::data:
+          WASM_UNREACHABLE("invalid type");
         case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
-          WASM_UNREACHABLE("invalid type");
+          WASM_UNREACHABLE("TODO: string literals");
       }
     }
   }
@@ -125,7 +142,7 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isData()) {
+  if (isNull() || isData()) {
     gcData.~shared_ptr();
   }
 }
@@ -217,6 +234,20 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
+Literal Literal::standardizeNaN(const Literal& input) {
+  if (!std::isnan(input.getFloat())) {
+    return input;
+  }
+  // Pick a simple canonical payload, and positive.
+  if (input.type == Type::f32) {
+    return Literal(bit_cast<float>(uint32_t(0x7fc00000u)));
+  } else if (input.type == Type::f64) {
+    return Literal(bit_cast<double>(uint64_t(0x7ff8000000000000ull)));
+  } else {
+    WASM_UNREACHABLE("unexpected type");
+  }
+}
+
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
@@ -225,7 +256,7 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isData());
+  assert(isNull() || isData());
   return gcData;
 }
 
@@ -311,11 +342,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
-  // The types must be identical, unless both are references - in that case,
-  // nulls of different types *do* compare equal.
-  if (type.isRef() && other.type.isRef() && (isNull() || other.isNull())) {
-    return isNull() && other.isNull();
-  }
   if (type != other.type) {
     return false;
   }
@@ -336,7 +362,9 @@ bool Literal::operator==(const Literal& other) const {
     }
   } else if (type.isRef()) {
     assert(type.isRef());
-    // Note that we've already handled nulls earlier.
+    if (type.isNull()) {
+      return true;
+    }
     if (type.isFunction()) {
       assert(func.is() && other.func.is());
       return func == other.func;
@@ -347,8 +375,6 @@ bool Literal::operator==(const Literal& other) const {
     if (type.getHeapType() == HeapType::i31) {
       return i32 == other.i32;
     }
-    // other non-null reference type literals cannot represent concrete values,
-    // i.e. there is no concrete anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");
@@ -449,52 +475,8 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   prepareMinorColor(o);
-  if (literal.type.isFunction()) {
-    if (literal.isNull()) {
-      o << "funcref(null)";
-    } else {
-      o << "funcref(" << literal.getFunc() << ")";
-    }
-  } else if (literal.type.isRef()) {
-    if (literal.isData()) {
-      auto data = literal.getGCData();
-      if (data) {
-        o << "[ref " << data->type << ' ' << data->values << ']';
-      } else {
-        o << "[ref null " << literal.type << ']';
-      }
-    } else {
-      switch (literal.type.getHeapType().getBasic()) {
-        case HeapType::ext:
-          assert(literal.isNull() && "unexpected non-null externref literal");
-          o << "externref(null)";
-          break;
-        case HeapType::any:
-          assert(literal.isNull() && "unexpected non-null anyref literal");
-          o << "anyref(null)";
-          break;
-        case HeapType::eq:
-          assert(literal.isNull() && "unexpected non-null eqref literal");
-          o << "eqref(null)";
-          break;
-        case HeapType::i31:
-          if (literal.isNull()) {
-            o << "i31ref(null)";
-          } else {
-            o << "i31ref(" << literal.geti31() << ")";
-          }
-          break;
-        case HeapType::func:
-        case HeapType::data:
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("type should have been handled above");
-      }
-    }
-  } else {
-    TODO_SINGLE_COMPOUND(literal.type);
+  assert(literal.type.isSingle());
+  if (literal.type.isBasic()) {
     switch (literal.type.getBasic()) {
       case Type::none:
         o << "?";
@@ -517,6 +499,44 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         break;
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
+    }
+  } else {
+    assert(literal.type.isRef());
+    auto heapType = literal.type.getHeapType();
+    if (heapType.isBasic()) {
+      switch (heapType.getBasic()) {
+        case HeapType::i31:
+          o << "i31ref(" << literal.geti31() << ")";
+          break;
+        case HeapType::none:
+          o << "nullref";
+          break;
+        case HeapType::noext:
+          o << "nullexternref";
+          break;
+        case HeapType::nofunc:
+          o << "nullfuncref";
+          break;
+        case HeapType::ext:
+        case HeapType::any:
+          WASM_UNREACHABLE("TODO: extern literals");
+        case HeapType::eq:
+        case HeapType::func:
+        case HeapType::data:
+          WASM_UNREACHABLE("invalid type");
+        case HeapType::string:
+        case HeapType::stringview_wtf8:
+        case HeapType::stringview_wtf16:
+        case HeapType::stringview_iter:
+          WASM_UNREACHABLE("TODO: string literals");
+      }
+    } else if (heapType.isSignature()) {
+      o << "funcref(" << literal.getFunc() << ")";
+    } else {
+      assert(literal.isData());
+      auto data = literal.getGCData();
+      assert(data);
+      o << "[ref " << data->type << ' ' << data->values << ']';
     }
   }
   restoreNormalColor(o);
@@ -859,22 +879,6 @@ Literal Literal::demote() const {
   return Literal(float(getf64()));
 }
 
-Literal standardizeNaN(float result) {
-  if (!std::isnan(result)) {
-    return Literal(result);
-  }
-  // Pick a simple canonical payload, and positive.
-  return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
-}
-
-Literal standardizeNaN(double result) {
-  if (!std::isnan(result)) {
-    return Literal(result);
-  }
-  // Pick a simple canonical payload, and positive.
-  return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
-}
-
 Literal Literal::add(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
@@ -882,9 +886,9 @@ Literal Literal::add(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) + uint64_t(other.i64));
     case Type::f32:
-      return standardizeNaN(getf32() + other.getf32());
+      return standardizeNaN(Literal(getf32() + other.getf32()));
     case Type::f64:
-      return standardizeNaN(getf64() + other.getf64());
+      return standardizeNaN(Literal(getf64() + other.getf64()));
     case Type::v128:
     case Type::none:
     case Type::unreachable:
@@ -900,9 +904,9 @@ Literal Literal::sub(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) - uint64_t(other.i64));
     case Type::f32:
-      return standardizeNaN(getf32() - other.getf32());
+      return standardizeNaN(Literal(getf32() - other.getf32()));
     case Type::f64:
-      return standardizeNaN(getf64() - other.getf64());
+      return standardizeNaN(Literal(getf64() - other.getf64()));
     case Type::v128:
     case Type::none:
     case Type::unreachable:
@@ -997,9 +1001,9 @@ Literal Literal::mul(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
     case Type::f32:
-      return standardizeNaN(getf32() * other.getf32());
+      return standardizeNaN(Literal(getf32() * other.getf32()));
     case Type::f64:
-      return standardizeNaN(getf64() * other.getf64());
+      return standardizeNaN(Literal(getf64() * other.getf64()));
     case Type::v128:
     case Type::none:
     case Type::unreachable:
@@ -1018,7 +1022,7 @@ Literal Literal::div(const Literal& other) const {
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
             case FP_ZERO:
-              return standardizeNaN(lhs / rhs);
+              return standardizeNaN(Literal(lhs / rhs));
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -1031,7 +1035,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          return standardizeNaN(lhs / rhs);
+          return standardizeNaN(Literal(lhs / rhs));
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -1044,7 +1048,7 @@ Literal Literal::div(const Literal& other) const {
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
             case FP_ZERO:
-              return standardizeNaN(lhs / rhs);
+              return standardizeNaN(Literal(lhs / rhs));
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -1057,7 +1061,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          return standardizeNaN(lhs / rhs);
+          return standardizeNaN(Literal(lhs / rhs));
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -1393,10 +1397,10 @@ Literal Literal::min(const Literal& other) const {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
@@ -1406,10 +1410,10 @@ Literal Literal::min(const Literal& other) const {
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
@@ -1426,10 +1430,10 @@ Literal Literal::max(const Literal& other) const {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
@@ -1439,10 +1443,10 @@ Literal Literal::max(const Literal& other) const {
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
       if (std::isnan(l)) {
-        return standardizeNaN(l);
+        return standardizeNaN(Literal(l));
       }
       if (std::isnan(r)) {
-        return standardizeNaN(r);
+        return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);

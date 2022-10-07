@@ -210,6 +210,9 @@
  )
 
  ;; CHECK:      (func $ignore-unreachable
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $ignore-unreachable

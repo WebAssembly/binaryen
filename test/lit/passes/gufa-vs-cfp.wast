@@ -456,6 +456,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
@@ -464,11 +465,13 @@
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
@@ -599,7 +602,6 @@
 (module
   ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (mut i32)))
-  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
   (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -617,16 +619,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $substruct))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.cast_static $substruct
-  ;; CHECK-NEXT:        (local.get $ref)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.null $substruct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -646,9 +639,9 @@
       ;; This must trap, so we can add an unreachable.
       (struct.get $substruct 0
         ;; Only a null can pass through here, as the cast would not allow a ref
-        ;; to $struct. A null looks possible to the pass due to the default
-        ;; value of the local $ref - an SSA analysis would remove that. For now,
-        ;; we'll optimize the ref.cast to have a null after it.
+        ;; to $struct. But no null is possible since the local gets written a
+        ;; non-null value before we get here, so we can optimize this to an
+        ;; unreachable.
         (ref.cast_static $substruct
           (local.get $ref)
         )
@@ -1015,7 +1008,7 @@
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:   (f64.const 3.14159)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create (result (ref $struct3))
@@ -1081,13 +1074,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct3 2
   ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1178,7 +1171,7 @@
   ;; CHECK-NEXT:   (i32.const 999)
   ;; CHECK-NEXT:   (f64.const 2.71828)
   ;; CHECK-NEXT:   (f64.const 9.9999999)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (call $import)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1323,11 +1316,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (call $create3)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1421,7 +1414,7 @@
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (f64.const 0)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create3 (result (ref $struct3))
@@ -1726,7 +1719,7 @@
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (f64.const 0)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create3 (result (ref $struct3))
@@ -1842,7 +1835,7 @@
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (f64.const 0)
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create3 (result (ref $struct3))
@@ -2629,7 +2622,7 @@
 
   ;; CHECK:      (global $global (ref $itable) (array.init_static $itable
   ;; CHECK-NEXT:  (struct.new $vtable
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.new $vtable
   ;; CHECK-NEXT:   (ref.func $test)

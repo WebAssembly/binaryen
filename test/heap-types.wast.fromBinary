@@ -4,21 +4,23 @@
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $none_=>_none (func))
  (type $matrix (array (mut (ref null $vector))))
+ (type $bytes (array (mut i8)))
  (type $struct.C (struct (field $named-mut (mut f32))))
  (type $grandchild (struct (field i32) (field i64)))
- (type $bytes (array (mut i8)))
  (type $anyref_=>_none (func (param anyref)))
+ (type $ref?|$vector|_=>_none (func (param (ref null $vector))))
  (type $nested-child-struct (struct (field (mut (ref $child)))))
- (type $child (struct (field i32)))
- (type $ref|$struct.A|_=>_ref|$struct.B| (func (param (ref $struct.A)) (result (ref $struct.B))))
- (type $ref|$vector|_=>_ref|$matrix| (func (param (ref $vector)) (result (ref $matrix))))
  (type $words (array (mut i32)))
  (type $nested-child-array (array (mut (ref $child))))
+ (type $child (struct (field i32)))
+ (type $ref|$struct.A|_ref?|$struct.A|_ref?|$grandchild|_ref?|$struct.C|_ref?|$nested-child-struct|_=>_ref|$struct.B| (func (param (ref $struct.A) (ref null $struct.A) (ref null $grandchild) (ref null $struct.C) (ref null $nested-child-struct)) (result (ref $struct.B))))
+ (type $ref|$vector|_ref?|$nested-child-array|_ref?|$grandchild|_=>_ref|$matrix| (func (param (ref $vector) (ref null $nested-child-array) (ref null $grandchild)) (result (ref $matrix))))
+ (type $ref?|$struct.C|_=>_none (func (param (ref null $struct.C))))
  (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
  (type $none_=>_ref|$vector| (func (result (ref $vector))))
  (type $none_=>_ref|$bytes| (func (result (ref $bytes))))
  (global $struct.new-in-global (ref $struct.A) (struct.new_default $struct.A))
- (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
+ (func $structs (param $x (ref $struct.A)) (param $struct.A.prime (ref null $struct.A)) (param $grandchild (ref null $grandchild)) (param $struct.C (ref null $struct.C)) (param $nested-child-struct (ref null $nested-child-struct)) (result (ref $struct.B))
   (local $tA (ref null $struct.A))
   (local $tB (ref null $struct.B))
   (local $tc (ref null $struct.C))
@@ -49,7 +51,7 @@
   )
   (drop
    (struct.get $struct.A $named
-    (ref.null $struct.A)
+    (local.get $struct.A.prime)
    )
   )
   (drop
@@ -64,11 +66,8 @@
   )
   (drop
    (struct.get $grandchild 0
-    (ref.null $grandchild)
+    (local.get $grandchild)
    )
-  )
-  (drop
-   (ref.null $struct.A)
   )
   (drop
    (local.get $x)
@@ -93,13 +92,13 @@
    )
   )
   (struct.set $struct.C $named-mut
-   (ref.null $struct.C)
+   (local.get $struct.C)
    (f32.const 100)
   )
   (struct.set $nested-child-struct 0
-   (ref.null $nested-child-struct)
+   (local.get $nested-child-struct)
    (ref.as_non_null
-    (ref.null $grandchild)
+    (local.get $grandchild)
    )
   )
   (drop
@@ -114,7 +113,7 @@
   )
   (unreachable)
  )
- (func $arrays (param $x (ref $vector)) (result (ref $matrix))
+ (func $arrays (param $x (ref $vector)) (param $nested-child-array (ref null $nested-child-array)) (param $grandchild (ref null $grandchild)) (result (ref $matrix))
   (local $tv (ref null $vector))
   (local $tm (ref null $matrix))
   (local $tb (ref null $bytes))
@@ -142,10 +141,10 @@
    (f64.const 2.18281828)
   )
   (array.set $nested-child-array
-   (ref.null $nested-child-array)
+   (local.get $nested-child-array)
    (i32.const 3)
    (ref.as_non_null
-    (ref.null $grandchild)
+    (local.get $grandchild)
    )
   )
   (drop
@@ -235,7 +234,7 @@
       (local.get $x)
      )
     )
-    (ref.null func)
+    (ref.null nofunc)
    )
   )
   (drop
@@ -245,7 +244,7 @@
       (local.get $x)
      )
     )
-    (ref.null data)
+    (ref.null none)
    )
   )
   (drop
@@ -255,7 +254,7 @@
       (local.get $x)
      )
     )
-    (ref.null i31)
+    (ref.null none)
    )
   )
   (drop
@@ -273,7 +272,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -283,7 +282,7 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
   (drop
@@ -293,16 +292,16 @@
       (local.get $x)
      )
     )
-    (ref.null any)
+    (ref.null none)
    )
   )
  )
  (func $unreachables-1
   (unreachable)
  )
- (func $unreachables-2
+ (func $unreachables-2 (param $struct.C (ref null $struct.C))
   (drop
-   (ref.null $struct.C)
+   (local.get $struct.C)
   )
   (unreachable)
  )
@@ -315,24 +314,24 @@
  (func $unreachables-array-1
   (unreachable)
  )
- (func $unreachables-array-2
+ (func $unreachables-array-2 (param $vector (ref null $vector))
   (drop
-   (ref.null $vector)
+   (local.get $vector)
   )
   (unreachable)
  )
  (func $unreachables-array-3
   (unreachable)
  )
- (func $unreachables-array-4
+ (func $unreachables-array-4 (param $vector (ref null $vector))
   (drop
-   (ref.null $vector)
+   (local.get $vector)
   )
   (unreachable)
  )
- (func $unreachables-array-5
+ (func $unreachables-array-5 (param $vector (ref null $vector))
   (drop
-   (ref.null $vector)
+   (local.get $vector)
   )
   (drop
    (i32.const 2)
@@ -371,19 +370,19 @@
   (local $temp.B (ref null $struct.B))
   (drop
    (ref.test_static $struct.B
-    (ref.null $struct.A)
+    (ref.null none)
    )
   )
   (drop
    (ref.cast_static $struct.B
-    (ref.null $struct.A)
+    (ref.null none)
    )
   )
   (drop
    (block $label$1 (result (ref $struct.B))
     (local.set $temp.A
      (br_on_cast_static $label$1 $struct.B
-      (ref.null $struct.A)
+      (ref.null none)
      )
     )
     (unreachable)
@@ -393,7 +392,7 @@
    (block $label$2 (result (ref null $struct.A))
     (local.set $temp.B
      (br_on_cast_static_fail $label$2 $struct.B
-      (ref.null $struct.A)
+      (ref.null none)
      )
     )
     (unreachable)

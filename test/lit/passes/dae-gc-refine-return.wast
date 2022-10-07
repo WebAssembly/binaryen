@@ -641,6 +641,7 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $tail-caller-call_ref-unreachable (type $none_=>_anyref) (result anyref)
@@ -648,6 +649,7 @@
  ;; NOMNL-NEXT:   (drop
  ;; NOMNL-NEXT:    (unreachable)
  ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (unreachable)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $tail-caller-call_ref-unreachable (result anyref)
@@ -698,7 +700,7 @@
  ;; CHECK-NEXT:     (struct.new_default ${i32_f32})
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (ref.null ${i32})
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (return
@@ -715,7 +717,7 @@
  ;; NOMNL-NEXT:     (struct.new_default ${i32_f32})
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:    (return
- ;; NOMNL-NEXT:     (ref.null ${i32})
+ ;; NOMNL-NEXT:     (ref.null none)
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:   (return

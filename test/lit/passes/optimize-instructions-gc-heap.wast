@@ -308,7 +308,7 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (local.set $ref
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -343,7 +343,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (local.set $ref
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -374,7 +374,7 @@
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $other
-  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 20)
   ;; CHECK-NEXT:    )
@@ -717,6 +717,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
