@@ -247,8 +247,8 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     //   heapType                  ..
     //            \
     */
-    // E.g. if |this| is a cone of size 10, and |otherHeapType| is an immediate
-    // subtype of |this|, then the new cone must be of size 9.
+    // E.g. if |this| is a cone of depth 10, and |otherHeapType| is an immediate
+    // subtype of |this|, then the new cone must be of depth 9.
     auto newDepth = getCone().depth;
     if (newHeapType == otherHeapType) {
       assert(depthFromRoot <= otherDepthFromRoot);
