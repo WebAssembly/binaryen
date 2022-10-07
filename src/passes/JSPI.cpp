@@ -88,7 +88,7 @@ struct JSPI : public Pass {
 private:
   Name makeWrapperForExport(Function* func, Module* module, Name suspender) {
     Name wrapperName = Names::getValidFunctionName(
-      *module, std::string("export$") + func->name.str);
+      *module, std::string("export$") + func->name.toString());
 
     Builder builder(*module);
 
@@ -137,7 +137,7 @@ private:
     Builder builder(*module);
     auto wrapperIm = make_unique<Function>();
     wrapperIm->name = Names::getValidFunctionName(
-      *module, std::string("import$") + im->name.str);
+      *module, std::string("import$") + im->name.toString());
     wrapperIm->module = im->module;
     wrapperIm->base = im->base;
     auto stub = make_unique<Function>();

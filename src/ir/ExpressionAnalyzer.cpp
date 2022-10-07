@@ -364,7 +364,7 @@ struct Hasher {
     rehash(digest, 2);
     rehash(digest, internalNames[curr]);
   }
-  void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
+  void visitNonScopeName(Name curr) { rehash(digest, curr); }
   void visitType(Type curr) { rehash(digest, curr.getID()); }
   void visitHeapType(HeapType curr) { rehash(digest, curr.getID()); }
   void visitAddress(Address curr) { rehash(digest, curr.addr); }

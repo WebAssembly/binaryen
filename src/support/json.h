@@ -37,12 +37,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "emscripten-optimizer/istring.h"
+#include "support/istring.h"
 #include "support/safe_integer.h"
 
 namespace json {
 
-using IString = cashew::IString;
+using IString = wasm::IString;
 
 // Main value type
 struct Value {
@@ -51,7 +51,7 @@ struct Value {
     Ref(Value* value) : std::shared_ptr<Value>(value) {}
 
     Ref& operator[](size_t x) { return (*this->get())[x]; }
-    Ref& operator[](IString x) { return (*this->get())[x]; }
+    Ref& operator[](wasm::IString x) { return (*this->get())[x]; }
   };
 
   enum Type {
@@ -66,7 +66,7 @@ struct Value {
   Type type = Null;
 
   typedef std::vector<Ref> ArrayStorage;
-  typedef std::unordered_map<IString, Ref> ObjectStorage;
+  typedef std::unordered_map<wasm::IString, Ref> ObjectStorage;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
@@ -112,13 +112,13 @@ struct Value {
   Value& setString(const char* s) {
     free();
     type = String;
-    str.set(s);
+    str = s;
     return *this;
   }
   Value& setString(const IString& s) {
     free();
     type = String;
-    str.set(s);
+    str = s;
     return *this;
   }
   Value& setNumber(double n) {
@@ -173,7 +173,7 @@ struct Value {
 
   const char* getCString() {
     assert(isString());
-    return str.str;
+    return str.str.data();
   }
   IString& getIString() {
     assert(isString());

@@ -526,8 +526,9 @@ bool EquivalentClass::hasMergeBenefit(Module* module,
 
 Function* EquivalentClass::createShared(Module* module,
                                         const std::vector<ParamInfo>& params) {
-  Name fnName = Names::getValidFunctionName(
-    *module, std::string("byn$mgfn-shared$") + primaryFunction->name.str);
+  Name fnName = Names::getValidFunctionName(*module,
+                                            std::string("byn$mgfn-shared$") +
+                                              primaryFunction->name.toString());
   Builder builder(*module);
   std::vector<Type> sigParams;
   Index extraParamBase = primaryFunction->getNumParams();

@@ -50,8 +50,13 @@ bool isFullForced() {
 }
 
 std::ostream& printName(Name name, std::ostream& o) {
-  // we need to quote names if they have tricky chars
-  if (!name.str || !strpbrk(name.str, "()")) {
+  assert(name && "Cannot print an empty name");
+  // We need to quote names if they have tricky chars.
+  // TODO: This is not spec-compliant since the spec does not support quoted
+  // identifiers and has a limited set of valid idchars. We need a more robust
+  // escaping scheme here. Reusing `printEscapedString` is not sufficient,
+  // either.
+  if (name.str.find_first_of("()") == std::string_view::npos) {
     o << '$' << name.str;
   } else {
     o << "\"$" << name.str << '"';
@@ -383,11 +388,9 @@ void processFieldName(Module* wasm, HeapType type, Index index, T func) {
   func(Name());
 }
 
-std::ostream&
-printEscapedString(std::ostream& os, const char* data, size_t len) {
+std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
   os << '"';
-  for (size_t i = 0; i < len; i++) {
-    unsigned char c = data[i];
+  for (unsigned char c : str) {
     switch (c) {
       case '\t':
         os << "\\t";
@@ -2303,7 +2306,7 @@ struct PrintExpressionContents
   }
   void visitStringConst(StringConst* curr) {
     printMedium(o, "string.const ");
-    printEscapedString(o, curr->string.c_str(), curr->string.size());
+    printEscapedString(o, curr->string.str);
   }
   void visitStringMeasure(StringMeasure* curr) {
     switch (curr->op) {
@@ -2926,7 +2929,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitExport(Export* curr) {
     o << '(';
     printMedium(o, "export ");
-    printText(o, curr->name.str) << " (";
+    // TODO: Escape the string properly.
+    printText(o, curr->name.str.data()) << " (";
     switch (curr->kind) {
       case ExternalKind::Function:
         o << "func";
@@ -2951,8 +2955,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void emitImportHeader(Importable* curr) {
     printMedium(o, "import ");
-    printText(o, curr->module.str) << ' ';
-    printText(o, curr->base.str) << ' ';
+    // TODO: Escape the strings properly.
+    printText(o, curr->module.str.data()) << ' ';
+    printText(o, curr->base.str.data()) << ' ';
   }
   void visitGlobal(Global* curr) {
     if (curr->imported()) {
@@ -3233,7 +3238,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visit(curr->offset);
       o << ' ';
     }
-    printEscapedString(o, curr->data.data(), curr->data.size());
+    printEscapedString(o, {curr->data.data(), curr->data.size()});
     o << ')' << maybeNewLine;
   }
   void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {

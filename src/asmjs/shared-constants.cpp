@@ -18,8 +18,6 @@
 
 namespace wasm {
 
-using IString = cashew::IString;
-
 IString TOPMOST("topmost");
 IString INT8ARRAY("Int8Array");
 IString INT16ARRAY("Int16Array");

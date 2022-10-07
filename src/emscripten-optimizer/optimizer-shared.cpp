@@ -21,13 +21,13 @@
 
 using namespace cashew;
 
-IString JS_FLOAT_ZERO;
+wasm::IString JS_FLOAT_ZERO;
 
-IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check");
-IString SIMD_INT16X8_CHECK("SIMD_Int16x8_check");
-IString SIMD_INT32X4_CHECK("SIMD_Int32x4_check");
-IString SIMD_FLOAT32X4_CHECK("SIMD_Float32x4_check");
-IString SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check");
+wasm::IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check");
+wasm::IString SIMD_INT16X8_CHECK("SIMD_Int16x8_check");
+wasm::IString SIMD_INT32X4_CHECK("SIMD_Int32x4_check");
+wasm::IString SIMD_FLOAT32X4_CHECK("SIMD_Float32x4_check");
+wasm::IString SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check");
 
 Ref makeJsCoercedZero(JsType type) {
   switch (type) {

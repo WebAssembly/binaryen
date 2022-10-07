@@ -184,8 +184,6 @@ static void removeData(Module& wasm,
           << startAddress << ") and " << end_sym << " (" << endAddress << ")";
 }
 
-using IString = cashew::IString;
-
 IString EM_JS_PREFIX("__em_js__");
 IString EM_JS_DEPS_PREFIX("__em_lib_deps_");
 

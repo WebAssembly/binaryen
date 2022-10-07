@@ -30,102 +30,135 @@
 #include <limits>
 #include <vector>
 
-#include "istring.h"
+#include "support/istring.h"
 #include "support/safe_integer.h"
 
 namespace cashew {
 
+// IStringSet
+
+class IStringSet : public std::unordered_set<wasm::IString> {
+  std::vector<char> data;
+
+public:
+  IStringSet() = default;
+  IStringSet(const char* init) { // comma-delimited list
+    int size = strlen(init) + 1;
+    data.resize(size);
+    char* curr = &data[0];
+    strncpy(curr, init, size);
+    while (1) {
+      char* end = strchr(curr, ' ');
+      if (end) {
+        *end = 0;
+      }
+      insert(curr);
+      if (!end) {
+        break;
+      }
+      curr = end + 1;
+    }
+  }
+
+  bool has(const wasm::IString& str) { return count(str) > 0; }
+};
+
+class IOrderedStringSet : public std::set<wasm::IString> {
+public:
+  bool has(const wasm::IString& str) { return count(str) > 0; }
+};
+
 // common strings
 
-extern IString TOPLEVEL;
-extern IString DEFUN;
-extern IString BLOCK;
-extern IString VAR;
-extern IString CONST;
-extern IString CONDITIONAL;
-extern IString BINARY;
-extern IString RETURN;
-extern IString IF;
-extern IString ELSE;
-extern IString WHILE;
-extern IString DO;
-extern IString FOR;
-extern IString SEQ;
-extern IString SUB;
-extern IString CALL;
-extern IString LABEL;
-extern IString BREAK;
-extern IString CONTINUE;
-extern IString SWITCH;
-extern IString STRING;
-extern IString TRY;
-extern IString INF;
-extern IString NaN;
-extern IString LLVM_CTTZ_I32;
-extern IString UDIVMODDI4;
-extern IString UNARY_PREFIX;
-extern IString UNARY_POSTFIX;
-extern IString MATH_FROUND;
-extern IString MATH_CLZ32;
-extern IString INT64;
-extern IString INT64_CONST;
-extern IString SIMD_FLOAT32X4;
-extern IString SIMD_FLOAT64X2;
-extern IString SIMD_INT8X16;
-extern IString SIMD_INT16X8;
-extern IString SIMD_INT32X4;
-extern IString PLUS;
-extern IString MINUS;
-extern IString OR;
-extern IString AND;
-extern IString XOR;
-extern IString L_NOT;
-extern IString B_NOT;
-extern IString LT;
-extern IString GE;
-extern IString LE;
-extern IString GT;
-extern IString EQ;
-extern IString NE;
-extern IString DIV;
-extern IString MOD;
-extern IString MUL;
-extern IString RSHIFT;
-extern IString LSHIFT;
-extern IString TRSHIFT;
-extern IString HEAP8;
-extern IString HEAP16;
-extern IString HEAP32;
-extern IString HEAPF32;
-extern IString HEAPU8;
-extern IString HEAPU16;
-extern IString HEAPU32;
-extern IString HEAPF64;
-extern IString F0;
-extern IString EMPTY;
-extern IString FUNCTION;
-extern IString OPEN_PAREN;
-extern IString OPEN_BRACE;
-extern IString OPEN_CURLY;
-extern IString CLOSE_CURLY;
-extern IString COMMA;
-extern IString QUESTION;
-extern IString COLON;
-extern IString CASE;
-extern IString DEFAULT;
-extern IString DOT;
-extern IString PERIOD;
-extern IString NEW;
-extern IString ARRAY;
-extern IString OBJECT;
-extern IString THROW;
-extern IString SET;
-extern IString ATOMICS;
-extern IString COMPARE_EXCHANGE;
-extern IString LOAD;
-extern IString STORE;
-extern IString GETTER;
-extern IString SETTER;
+extern wasm::IString TOPLEVEL;
+extern wasm::IString DEFUN;
+extern wasm::IString BLOCK;
+extern wasm::IString VAR;
+extern wasm::IString CONST;
+extern wasm::IString CONDITIONAL;
+extern wasm::IString BINARY;
+extern wasm::IString RETURN;
+extern wasm::IString IF;
+extern wasm::IString ELSE;
+extern wasm::IString WHILE;
+extern wasm::IString DO;
+extern wasm::IString FOR;
+extern wasm::IString SEQ;
+extern wasm::IString SUB;
+extern wasm::IString CALL;
+extern wasm::IString LABEL;
+extern wasm::IString BREAK;
+extern wasm::IString CONTINUE;
+extern wasm::IString SWITCH;
+extern wasm::IString STRING;
+extern wasm::IString TRY;
+extern wasm::IString INF;
+extern wasm::IString NaN;
+extern wasm::IString LLVM_CTTZ_I32;
+extern wasm::IString UDIVMODDI4;
+extern wasm::IString UNARY_PREFIX;
+extern wasm::IString UNARY_POSTFIX;
+extern wasm::IString MATH_FROUND;
+extern wasm::IString MATH_CLZ32;
+extern wasm::IString INT64;
+extern wasm::IString INT64_CONST;
+extern wasm::IString SIMD_FLOAT32X4;
+extern wasm::IString SIMD_FLOAT64X2;
+extern wasm::IString SIMD_INT8X16;
+extern wasm::IString SIMD_INT16X8;
+extern wasm::IString SIMD_INT32X4;
+extern wasm::IString PLUS;
+extern wasm::IString MINUS;
+extern wasm::IString OR;
+extern wasm::IString AND;
+extern wasm::IString XOR;
+extern wasm::IString L_NOT;
+extern wasm::IString B_NOT;
+extern wasm::IString LT;
+extern wasm::IString GE;
+extern wasm::IString LE;
+extern wasm::IString GT;
+extern wasm::IString EQ;
+extern wasm::IString NE;
+extern wasm::IString DIV;
+extern wasm::IString MOD;
+extern wasm::IString MUL;
+extern wasm::IString RSHIFT;
+extern wasm::IString LSHIFT;
+extern wasm::IString TRSHIFT;
+extern wasm::IString HEAP8;
+extern wasm::IString HEAP16;
+extern wasm::IString HEAP32;
+extern wasm::IString HEAPF32;
+extern wasm::IString HEAPU8;
+extern wasm::IString HEAPU16;
+extern wasm::IString HEAPU32;
+extern wasm::IString HEAPF64;
+extern wasm::IString F0;
+extern wasm::IString EMPTY;
+extern wasm::IString FUNCTION;
+extern wasm::IString OPEN_PAREN;
+extern wasm::IString OPEN_BRACE;
+extern wasm::IString OPEN_CURLY;
+extern wasm::IString CLOSE_CURLY;
+extern wasm::IString COMMA;
+extern wasm::IString QUESTION;
+extern wasm::IString COLON;
+extern wasm::IString CASE;
+extern wasm::IString DEFAULT;
+extern wasm::IString DOT;
+extern wasm::IString PERIOD;
+extern wasm::IString NEW;
+extern wasm::IString ARRAY;
+extern wasm::IString OBJECT;
+extern wasm::IString THROW;
+extern wasm::IString SET;
+extern wasm::IString ATOMICS;
+extern wasm::IString COMPARE_EXCHANGE;
+extern wasm::IString LOAD;
+extern wasm::IString STORE;
+extern wasm::IString GETTER;
+extern wasm::IString SETTER;
 
 extern IStringSet keywords;
 
@@ -142,7 +175,7 @@ struct OperatorClass {
 
   OperatorClass(const char* o, bool r, Type t) : ops(o), rtl(r), type(t) {}
 
-  static int getPrecedence(Type type, IString op);
+  static int getPrecedence(Type type, wasm::IString op);
   static bool getRtl(int prec);
 };
 
@@ -214,7 +247,7 @@ template<class NodeRef, class Builder> class Parser {
 #ifndef _MSC_VER
     union {
 #endif
-      IString str;
+      wasm::IString str;
       double num;
 #ifndef _MSC_VER
     };
@@ -233,11 +266,11 @@ template<class NodeRef, class Builder> class Parser {
           src++;
         }
         if (*src == 0) {
-          str.set(start);
+          str = wasm::IString(start);
         } else {
           char temp = *src;
           *src = 0;
-          str.set(start, false);
+          str = wasm::IString(start, false);
           *src = temp;
         }
         type = keywords.has(str) ? KEYWORD : IDENT;
@@ -333,11 +366,11 @@ template<class NodeRef, class Builder> class Parser {
           default:
             abort();
         }
-        size = strlen(str.str);
+        size = str.size();
 #ifndef NDEBUG
         char temp = start[size];
         start[size] = 0;
-        assert(strcmp(str.str, start) == 0);
+        assert(str.str == start);
         start[size] = temp;
 #endif
         type = OPERATOR;
@@ -346,13 +379,13 @@ template<class NodeRef, class Builder> class Parser {
         type = SEPARATOR;
         char temp = src[1];
         src[1] = 0;
-        str.set(src, false);
+        str = wasm::IString(src, false);
         src[1] = temp;
         src++;
       } else if (*src == '"' || *src == '\'') {
         char* end = strchr(src + 1, *src);
         *end = 0;
-        str.set(src + 1);
+        str = wasm::IString(src + 1);
         src = end + 1;
         type = STRING;
       } else {
@@ -371,18 +404,18 @@ template<class NodeRef, class Builder> class Parser {
     union {
 #endif
       NodeRef node;
-      IString op;
+      wasm::IString op;
 #ifndef _MSC_VER
     };
 #endif
     ExpressionElement(NodeRef n) : isNode(true), node(n) {}
-    ExpressionElement(IString o) : isNode(false), op(o) {}
+    ExpressionElement(wasm::IString o) : isNode(false), op(o) {}
 
     NodeRef getNode() {
       assert(isNode);
       return node;
     }
-    IString getOp() {
+    wasm::IString getOp() {
       assert(!isNode);
       return op;
     }
@@ -490,7 +523,7 @@ template<class NodeRef, class Builder> class Parser {
       src += name.size;
     } else {
       assert(name.type == SEPARATOR && name.str[0] == '(');
-      name.str = IString();
+      name.str = wasm::IString();
     }
     NodeRef ret = Builder::makeFunction(name.str);
     skipSpace(src);
@@ -621,7 +654,7 @@ template<class NodeRef, class Builder> class Parser {
     if (next.type == IDENT) {
       src += next.size;
     }
-    return Builder::makeBreak(next.type == IDENT ? next.str : IString());
+    return Builder::makeBreak(next.type == IDENT ? next.str : wasm::IString());
   }
 
   NodeRef parseContinue(char*& src, const char* seps) {
@@ -630,7 +663,8 @@ template<class NodeRef, class Builder> class Parser {
     if (next.type == IDENT) {
       src += next.size;
     }
-    return Builder::makeContinue(next.type == IDENT ? next.str : IString());
+    return Builder::makeContinue(next.type == IDENT ? next.str
+                                                    : wasm::IString());
   }
 
   NodeRef parseSwitch(char*& src, const char* seps) {
@@ -860,7 +894,7 @@ template<class NodeRef, class Builder> class Parser {
     printf("|\n");
   }
 
-  NodeRef makeBinary(NodeRef left, IString op, NodeRef right) {
+  NodeRef makeBinary(NodeRef left, wasm::IString op, NodeRef right) {
     if (op == PERIOD) {
       return Builder::makeDot(left, right);
     } else {
@@ -917,7 +951,7 @@ template<class NodeRef, class Builder> class Parser {
             if (parts[i].isNode) {
               continue;
             }
-            IString op = parts[i].getOp();
+            wasm::IString op = parts[i].getOp();
             if (!ops.ops.has(op)) {
               continue;
             }
@@ -960,7 +994,7 @@ template<class NodeRef, class Builder> class Parser {
             if (parts[i].isNode) {
               continue;
             }
-            IString op = parts[i].getOp();
+            wasm::IString op = parts[i].getOp();
             if (!ops.ops.has(op)) {
               continue;
             }
@@ -996,8 +1030,8 @@ template<class NodeRef, class Builder> class Parser {
   // level of o file)
   NodeRef parseBlock(char*& src,
                      const char* seps = ";",
-                     IString keywordSep1 = IString(),
-                     IString keywordSep2 = IString()) {
+                     wasm::IString keywordSep1 = wasm::IString(),
+                     wasm::IString keywordSep2 = wasm::IString()) {
     NodeRef block = Builder::makeBlock();
     // dump("parseBlock", src);
     while (1) {

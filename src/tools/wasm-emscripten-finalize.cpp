@@ -34,7 +34,6 @@
 
 #define DEBUG_TYPE "emscripten"
 
-using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char* argv[]) {

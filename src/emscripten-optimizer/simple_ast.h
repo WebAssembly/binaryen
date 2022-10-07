@@ -60,13 +60,14 @@ struct Ref {
   Value& operator*() { return *inst; }
   Value* operator->() { return inst; }
   Ref& operator[](unsigned x);
-  Ref& operator[](IString x);
+  Ref& operator[](wasm::IString x);
 
   // special conveniences
-  bool operator==(const char* str); // comparison to string, which is by value
-  bool operator!=(const char* str);
-  bool operator==(const IString& str);
-  bool operator!=(const IString& str);
+  bool
+  operator==(std::string_view str); // comparison to string, which is by value
+  bool operator!=(std::string_view str);
+  bool operator==(const wasm::IString& str);
+  bool operator!=(const wasm::IString& str);
   // prevent Ref == number, which is potentially ambiguous; use ->getNumber() ==
   // number
   bool operator==(double d) {
@@ -119,16 +120,16 @@ struct Value {
 
   Type type = Null;
 
-  typedef std::unordered_map<IString, Ref> ObjectStorage;
+  typedef std::unordered_map<wasm::IString, Ref> ObjectStorage;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
 #ifdef _MSC_VER
-  IString str;
+  wasm::IString str;
 #endif
   union { // TODO: optimize
 #ifndef _MSC_VER
-    IString str;
+    wasm::IString str;
 #endif
     double num;
     ArrayStorage* arr;
@@ -163,13 +164,13 @@ struct Value {
   Value& setString(const char* s) {
     free();
     type = String;
-    str.set(s);
+    str = wasm::IString(s);
     return *this;
   }
-  Value& setString(const IString& s) {
+  Value& setString(const wasm::IString& s) {
     free();
     type = String;
-    str.set(s);
+    str = s;
     return *this;
   }
   Value& setNumber(double n) {
@@ -211,7 +212,7 @@ struct Value {
     return *this;
   }
   Value& setAssign(Ref target, Ref value);
-  Value& setAssignName(IString target, Ref value);
+  Value& setAssignName(wasm::IString target, Ref value);
 
   bool isString() { return type == String; }
   bool isNumber() { return type == Number; }
@@ -229,13 +230,13 @@ struct Value {
   // also has a certain string as the first element. This is a
   // very common operation as the first element defines the node
   // type for most ast nodes
-  bool isArray(IString name) { return isArray() && (*this)[0] == name; }
+  bool isArray(wasm::IString name) { return isArray() && (*this)[0] == name; }
 
   const char* getCString() {
     assert(isString());
-    return str.str;
+    return str.str.data();
   }
-  IString& getIString() {
+  wasm::IString& getIString() {
     assert(isString());
     return str;
   }
@@ -370,7 +371,7 @@ struct Value {
         char* close = strchr(curr, '"');
         assert(close);
         *close = 0; // end this string, and reuse it straight from the input
-        IString key(curr);
+        wasm::IString key(curr);
         curr = close + 1;
         skip();
         assert(*curr == ':');
@@ -502,12 +503,12 @@ struct Value {
 
   // Object operations
 
-  Ref& operator[](IString x) {
+  Ref& operator[](wasm::IString x) {
     assert(isObject());
     return (*obj)[x];
   }
 
-  bool has(IString x) {
+  bool has(wasm::IString x) {
     assert(isObject());
     return obj->count(x) > 0;
   }
@@ -529,17 +530,17 @@ struct Assign : public Value {
 };
 
 struct AssignName : public Value {
-  IString target_;
+  wasm::IString target_;
 
-  AssignName(IString targetInit, Ref valueInit) {
+  AssignName(wasm::IString targetInit, Ref valueInit) {
     type = AssignName_;
     target() = targetInit;
     value() = valueInit;
   }
 
-  AssignName() : AssignName(IString(), nullptr) {}
+  AssignName() : AssignName(wasm::IString(), nullptr) {}
 
-  IString& target() { return target_; }
+  wasm::IString& target() { return target_; }
   Ref& value() { return ref; }
 };
 
@@ -684,7 +685,7 @@ struct JSPrinter {
       printAssign(node);
       return;
     }
-    IString type = node[0]->getIString();
+    wasm::IString type = node[0]->getIString();
     switch (type.str[0]) {
       case 'a': {
         if (type == ARRAY) {
@@ -817,7 +818,7 @@ struct JSPrinter {
         break;
       }
       default: {
-        errv("cannot yet print %s\n", type.str);
+        errv("cannot yet print %s\n", type.str.data());
         abort();
       }
     }
@@ -908,7 +909,7 @@ struct JSPrinter {
 
   void printAssignName(Ref node) {
     auto* assign = node->asAssignName();
-    emit(assign->target().c_str());
+    emit(assign->target().str.data());
     space();
     emit('=');
     space();
@@ -1472,10 +1473,10 @@ struct JSPrinter {
           needQuote = true;
           str = args[i][0][1]->getCString();
         } else if (args[i][0][0] == GETTER) {
-          getterSetter = GETTER.c_str();
+          getterSetter = GETTER.str.data();
           str = args[i][0][1]->getCString();
         } else if (args[i][0][0] == SETTER) {
-          getterSetter = SETTER.c_str();
+          getterSetter = SETTER.str.data();
           str = args[i][0][1]->getCString();
           setterParam = args[i][0][2]->getCString();
         } else {
@@ -1525,7 +1526,7 @@ struct JSPrinter {
 // cashew builder
 
 class ValueBuilder {
-  static Ref makeRawString(const IString& s) {
+  static Ref makeRawString(const wasm::IString& s) {
     return &arena.alloc<Value>()->setString(s);
   }
 
@@ -1542,7 +1543,7 @@ public:
               .push_back(makeRawArray());
   }
 
-  static Ref makeString(IString str) {
+  static Ref makeString(wasm::IString str) {
     return &makeRawArray(2)
               ->push_back(makeRawString(STRING))
               .push_back(makeRawString(str));
@@ -1554,7 +1555,7 @@ public:
               .push_back(makeRawArray());
   }
 
-  static Ref makeName(IString name) { return makeRawString(name); }
+  static Ref makeName(wasm::IString name) { return makeRawString(name); }
 
   static void setBlockContent(Ref target, Ref block) {
     if (target[0] == TOPLEVEL) {
@@ -1585,7 +1586,7 @@ public:
     ret[2]->push_back(arg);
     return ret;
   }
-  static Ref makeCall(IString target) {
+  static Ref makeCall(wasm::IString target) {
     Ref ret = &makeRawArray(3)
                  ->push_back(makeRawString(CALL))
                  .push_back(makeName(target))
@@ -1593,7 +1594,8 @@ public:
     return ret;
   }
 
-  template<typename... Ts> static Ref makeCall(IString target, Ts... args) {
+  template<typename... Ts>
+  static Ref makeCall(wasm::IString target, Ts... args) {
     size_t nArgs = sizeof...(Ts);
     Ref callArgs = makeRawArray(nArgs);
     Ref argArray[] = {args...};
@@ -1620,14 +1622,14 @@ public:
   static Ref makeInt(int32_t num) { return makeDouble(double(num)); }
   static Ref makeNum(double num) { return makeDouble(num); }
 
-  static Ref makeUnary(IString op, Ref value) {
+  static Ref makeUnary(wasm::IString op, Ref value) {
     return &makeRawArray(3)
               ->push_back(makeRawString(UNARY_PREFIX))
               .push_back(makeRawString(op))
               .push_back(value);
   }
 
-  static Ref makeBinary(Ref left, IString op, Ref right) {
+  static Ref makeBinary(Ref left, wasm::IString op, Ref right) {
     if (op == SET) {
       if (left->isString()) {
         return &arena.alloc<AssignName>()->setAssignName(left->getIString(),
@@ -1649,14 +1651,14 @@ public:
     }
   }
 
-  static Ref makePrefix(IString op, Ref right) {
+  static Ref makePrefix(wasm::IString op, Ref right) {
     return &makeRawArray(3)
               ->push_back(makeRawString(UNARY_PREFIX))
               .push_back(makeRawString(op))
               .push_back(right);
   }
 
-  static Ref makeFunction(IString name) {
+  static Ref makeFunction(wasm::IString name) {
     return &makeRawArray(4)
               ->push_back(makeRawString(DEFUN))
               .push_back(makeRawString(name))
@@ -1664,7 +1666,7 @@ public:
               .push_back(makeRawArray());
   }
 
-  static void appendArgumentToFunction(Ref func, IString arg) {
+  static void appendArgumentToFunction(Ref func, wasm::IString arg) {
     assert(func[0] == DEFUN);
     func[2]->push_back(makeRawString(arg));
   }
@@ -1675,7 +1677,7 @@ public:
               .push_back(makeRawArray());
   }
 
-  static void appendToVar(Ref var, IString name, Ref value) {
+  static void appendToVar(Ref var, wasm::IString name, Ref value) {
     assert(var[0] == VAR);
     Ref array = &makeRawArray(1)->push_back(makeRawString(name));
     if (!!value) {
@@ -1743,19 +1745,19 @@ public:
               .push_back(body);
   }
 
-  static Ref makeBreak(IString label) {
+  static Ref makeBreak(wasm::IString label) {
     return &makeRawArray(2)
               ->push_back(makeRawString(BREAK))
               .push_back(!!label ? makeRawString(label) : makeNull());
   }
 
-  static Ref makeContinue(IString label) {
+  static Ref makeContinue(wasm::IString label) {
     return &makeRawArray(2)
               ->push_back(makeRawString(CONTINUE))
               .push_back(!!label ? makeRawString(label) : makeNull());
   }
 
-  static Ref makeLabel(IString name, Ref body) {
+  static Ref makeLabel(wasm::IString name, Ref body) {
     return &makeRawArray(3)
               ->push_back(makeRawString(LABEL))
               .push_back(makeRawString(name))
@@ -1803,7 +1805,7 @@ public:
               .push_back(catch_);
   }
 
-  static Ref makeDot(Ref obj, IString key) {
+  static Ref makeDot(Ref obj, wasm::IString key) {
     return &makeRawArray(3)
               ->push_back(makeRawString(DOT))
               .push_back(obj)
@@ -1840,19 +1842,20 @@ public:
               .push_back(makeRawArray());
   }
 
-  static void appendToObject(Ref array, IString key, Ref value) {
+  static void appendToObject(Ref array, wasm::IString key, Ref value) {
     assert(array[0] == OBJECT);
     array[1]->push_back(
       &makeRawArray(2)->push_back(makeRawString(key)).push_back(value));
   }
 
-  static void appendToObjectWithQuotes(Ref array, IString key, Ref value) {
+  static void
+  appendToObjectWithQuotes(Ref array, wasm::IString key, Ref value) {
     assert(array[0] == OBJECT);
     array[1]->push_back(
       &makeRawArray(2)->push_back(makeString(key)).push_back(value));
   }
 
-  static void appendToObjectAsGetter(Ref array, IString key, Ref value) {
+  static void appendToObjectAsGetter(Ref array, wasm::IString key, Ref value) {
     assert(array[0] == OBJECT);
     array[1]->push_back(&makeRawArray(2)
                            ->push_back(&makeRawArray(2)
@@ -1861,8 +1864,10 @@ public:
                            .push_back(value));
   }
 
-  static void
-  appendToObjectAsSetter(Ref array, IString key, IString param, Ref value) {
+  static void appendToObjectAsSetter(Ref array,
+                                     wasm::IString key,
+                                     wasm::IString param,
+                                     Ref value) {
     assert(array[0] == OBJECT);
     array[1]->push_back(&makeRawArray(2)
                            ->push_back(&makeRawArray(3)

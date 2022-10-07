@@ -488,7 +488,7 @@ struct Reducer
 
   std::string getLocation() {
     if (getFunction()) {
-      return getFunction()->name.str;
+      return getFunction()->name.toString();
     }
     return "(non-function context)";
   }

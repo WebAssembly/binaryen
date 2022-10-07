@@ -31,7 +31,6 @@
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
-using namespace cashew;
 using namespace wasm;
 
 Name ASSERT_RETURN("assert_return");
@@ -162,7 +161,7 @@ protected:
     instances[name] = instances[lastModule];
 
     Colors::green(std::cerr);
-    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.c_str()
+    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.str
               << "\"  [line: " << s.line << "]\n";
     Colors::normal(std::cerr);
   }
@@ -190,7 +189,7 @@ protected:
       return instance->getExport(base);
     }
 
-    Fatal() << "Invalid operation " << s[0]->c_str();
+    Fatal() << "Invalid operation " << s[0]->toString();
   }
 
   void parseAssertTrap(Element& s) {
@@ -268,7 +267,7 @@ protected:
       ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
       ModuleUtils::iterImportedTables(wasm, reportUnknownImport);
       ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
-        if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
+        if (import->module == SPECTEST && import->base.startsWith(PRINT.str)) {
           // We can handle it.
         } else {
           reportUnknownImport(import);
@@ -278,7 +277,7 @@ protected:
         // spec tests consider it illegal to use spectest.print in a table
         if (auto* import = wasm.getFunction(name)) {
           if (import->imported() && import->module == SPECTEST &&
-              import->base.startsWith(PRINT)) {
+              import->base.startsWith(PRINT.str)) {
             std::cerr << "cannot put spectest.print in table\n";
             invalid = true;
           }

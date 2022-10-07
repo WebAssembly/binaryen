@@ -54,7 +54,9 @@ static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
   I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
-static Address getAddress(const Element* s) { return atoll(s->c_str()); }
+static Address getAddress(const Element* s) {
+  return std::stoll(s->toString());
+}
 
 static void
 checkAddress(Address a, const char* errorText, const Element* errorElem) {
@@ -95,11 +97,11 @@ IString Element::str() const {
   return str_;
 }
 
-const char* Element::c_str() const {
+std::string Element::toString() const {
   if (!isStr()) {
     throw ParseException("expected string", line, col);
   }
-  return str_.str;
+  return str_.toString();
 }
 
 Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
@@ -356,11 +358,8 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   if (i < module.size() && module[i]->isStr()) {
     // these s-expressions contain a binary module, actually
     std::vector<char> data;
-    while (i < module.size()) {
-      auto str = module[i++]->c_str();
-      if (auto size = strlen(str)) {
-        stringToBinary(str, size, data);
-      }
+    for (; i < module.size(); ++i) {
+      stringToBinary(*module[i], module[i]->str().str, data);
     }
     // TODO: support applying features here
     WasmBinaryBuilder binaryBuilder(wasm, FeatureSet::MVP, data);
@@ -474,12 +473,20 @@ void SExpressionWasmBuilder::parseModuleElement(Element& curr) {
   throw ParseException("unknown module element", curr.line, curr.col);
 }
 
+int SExpressionWasmBuilder::parseIndex(Element& s) {
+  try {
+    return std::stoi(s.toString());
+  } catch (...) {
+    throw ParseException("expected integer", s.line, s.col);
+  }
+}
+
 Name SExpressionWasmBuilder::getFunctionName(Element& s) {
   if (s.dollared()) {
     return s.str();
   } else {
     // index
-    size_t offset = atoi(s.str().c_str());
+    size_t offset = parseIndex(s);
     if (offset >= functionNames.size()) {
       throw ParseException(
         "unknown function in getFunctionName", s.line, s.col);
@@ -493,7 +500,7 @@ Name SExpressionWasmBuilder::getTableName(Element& s) {
     return s.str();
   } else {
     // index
-    size_t offset = atoi(s.str().c_str());
+    size_t offset = parseIndex(s);
     if (offset >= tableNames.size()) {
       throw ParseException("unknown table in getTableName", s.line, s.col);
     }
@@ -521,7 +528,7 @@ Name SExpressionWasmBuilder::getMemoryName(Element& s) {
     return s.str();
   } else {
     // index
-    size_t offset = atoi(s.str().c_str());
+    size_t offset = parseIndex(s);
     return getMemoryNameAtIdx(offset);
   }
 }
@@ -531,7 +538,7 @@ Name SExpressionWasmBuilder::getGlobalName(Element& s) {
     return s.str();
   } else {
     // index
-    size_t offset = atoi(s.str().c_str());
+    size_t offset = parseIndex(s);
     if (offset >= globalNames.size()) {
       throw ParseException("unknown global in getGlobalName", s.line, s.col);
     }
@@ -544,7 +551,7 @@ Name SExpressionWasmBuilder::getTagName(Element& s) {
     return s.str();
   } else {
     // index
-    size_t offset = atoi(s.str().c_str());
+    size_t offset = parseIndex(s);
     if (offset >= tagNames.size()) {
       throw ParseException("unknown tag in getTagName", s.line, s.col);
     }
@@ -738,7 +745,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   size_t numTypes = 0;
   forEachType([&](Element& elem, size_t) {
     if (elem[1]->dollared()) {
-      std::string name = elem[1]->c_str();
+      std::string name = elem[1]->toString();
       if (!typeIndices.insert({name, numTypes}).second) {
         throw ParseException("duplicate function type", elem.line, elem.col);
       }
@@ -769,23 +776,23 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     auto nullable =
       elem[1]->isStr() && *elem[1] == NULL_ ? Nullable : NonNullable;
     auto& referent = nullable ? *elem[2] : *elem[1];
-    const char* name = referent.c_str();
+    auto name = referent.toString();
     if (referent.dollared()) {
       return builder.getTempRefType(builder[typeIndices[name]], nullable);
     } else if (String::isNumber(name)) {
-      size_t index = atoi(name);
+      size_t index = parseIndex(referent);
       if (index >= numTypes) {
         throw ParseException("invalid type index", elem.line, elem.col);
       }
       return builder.getTempRefType(builder[index], nullable);
     } else {
-      return Type(stringToHeapType(name), nullable);
+      return Type(stringToHeapType(referent.str()), nullable);
     }
   };
 
   auto parseValType = [&](Element& elem) {
     if (elem.isStr()) {
-      return stringToType(elem.c_str());
+      return stringToType(elem.str());
     } else if (*elem[0] == REF) {
       return parseRefType(elem);
     } else {
@@ -921,7 +928,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       super = extends[1];
     }
     if (super) {
-      auto it = typeIndices.find(super->c_str());
+      auto it = typeIndices.find(super->toString());
       if (it == typeIndices.end()) {
         throw ParseException("unknown supertype", super->line, super->col);
       }
@@ -1139,135 +1146,124 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   nameMapper.clear();
 }
 
-Type SExpressionWasmBuilder::stringToType(const char* str,
+Type SExpressionWasmBuilder::stringToType(std::string_view str,
                                           bool allowError,
                                           bool prefix) {
-  if (str[0] == 'i') {
-    if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
-      return Type::i32;
+  if (str.size() >= 3) {
+    if (str[0] == 'i') {
+      if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
+        return Type::i32;
+      }
+      if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
+        return Type::i64;
+      }
     }
-    if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
-      return Type::i64;
-    }
-  }
-  if (str[0] == 'f') {
-    if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
-      return Type::f32;
-    }
-    if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
-      return Type::f64;
-    }
-  }
-  if (str[0] == 'v') {
-    if (str[1] == '1' && str[2] == '2' && str[3] == '8' &&
-        (prefix || str[4] == 0)) {
-      return Type::v128;
+    if (str[0] == 'f') {
+      if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
+        return Type::f32;
+      }
+      if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
+        return Type::f64;
+      }
     }
   }
-  if (strncmp(str, "funcref", 7) == 0 && (prefix || str[7] == 0)) {
+  if (str.size() >= 4) {
+    if (str[0] == 'v') {
+      if (str[1] == '1' && str[2] == '2' && str[3] == '8' &&
+          (prefix || str[4] == 0)) {
+        return Type::v128;
+      }
+    }
+  }
+  if (str.substr(0, 7) == "funcref" && (prefix || str.size() == 7)) {
     return Type(HeapType::func, Nullable);
   }
-  if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
+  if (str.substr(0, 9) == "externref" && (prefix || str.size() == 9)) {
     return Type(HeapType::ext, Nullable);
   }
-  if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
+  if (str.substr(0, 6) == "anyref" && (prefix || str.size() == 6)) {
     return Type(HeapType::any, Nullable);
   }
-  if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
+  if (str.substr(0, 5) == "eqref" && (prefix || str.size() == 5)) {
     return Type(HeapType::eq, Nullable);
   }
-  if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
+  if (str.substr(0, 6) == "i31ref" && (prefix || str.size() == 6)) {
     return Type(HeapType::i31, Nullable);
   }
-  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
+  if (str.substr(0, 7) == "dataref" && (prefix || str.size() == 7)) {
     return Type(HeapType::data, Nullable);
   }
-  if (strncmp(str, "stringref", 9) == 0 && (prefix || str[9] == 0)) {
+  if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
     return Type(HeapType::string, Nullable);
   }
-  if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
+  if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
     return Type(HeapType::stringview_wtf8, Nullable);
   }
-  if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
+  if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
     return Type(HeapType::stringview_wtf16, Nullable);
   }
-  if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
+  if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
     return Type(HeapType::stringview_iter, Nullable);
   }
-  if (strncmp(str, "nullref", 7) == 0 && (prefix || str[7] == 0)) {
+  if (str.substr(0, 7) == "nullref" && (prefix || str.size() == 7)) {
     return Type(HeapType::none, Nullable);
   }
-  if (strncmp(str, "nullexternref", 13) == 0 && (prefix || str[13] == 0)) {
+  if (str.substr(0, 13) == "nullexternref" && (prefix || str.size() == 13)) {
     return Type(HeapType::noext, Nullable);
   }
-  if (strncmp(str, "nullfuncref", 11) == 0 && (prefix || str[11] == 0)) {
+  if (str.substr(0, 11) == "nullfuncref" && (prefix || str.size() == 11)) {
     return Type(HeapType::nofunc, Nullable);
   }
   if (allowError) {
     return Type::none;
   }
-  throw ParseException(std::string("invalid wasm type: ") + str);
+  throw ParseException(std::string("invalid wasm type: ") +
+                       std::string(str.data(), str.size()));
 }
 
-HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
+HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
                                                   bool prefix) {
-  if (str[0] == 'f') {
-    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
-        (prefix || str[4] == 0)) {
-      return HeapType::func;
-    }
+  if (str.substr(0, 4) == "func" && (prefix || str.size() == 4)) {
+    return HeapType::func;
   }
-  if (str[0] == 'e') {
-    if (str[1] == 'q' && (prefix || str[2] == 0)) {
-      return HeapType::eq;
-    }
-    if (str[1] == 'x' && str[2] == 't' && str[3] == 'e' && str[4] == 'r' &&
-        str[5] == 'n' && (prefix || str[6] == 0)) {
-      return HeapType::ext;
-    }
+  if (str.substr(0, 2) == "eq" && (prefix || str.size() == 2)) {
+    return HeapType::eq;
   }
-  if (str[0] == 'a') {
-    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
-      return HeapType::any;
-    }
+  if (str.substr(0, 6) == "extern" && (prefix || str.size() == 6)) {
+    return HeapType::ext;
   }
-  if (str[0] == 'i') {
-    if (str[1] == '3' && str[2] == '1' && (prefix || str[3] == 0)) {
-      return HeapType::i31;
-    }
+  if (str.substr(0, 3) == "any" && (prefix || str.size() == 3)) {
+    return HeapType::any;
   }
-  if (str[0] == 'd') {
-    if (str[1] == 'a' && str[2] == 't' && str[3] == 'a' &&
-        (prefix || str[4] == 0)) {
-      return HeapType::data;
-    }
+  if (str.substr(0, 3) == "i31" && (prefix || str.size() == 3)) {
+    return HeapType::i31;
   }
-  if (str[0] == 's') {
-    if (strncmp(str, "string", 6) == 0 && (prefix || str[6] == 0)) {
-      return HeapType::string;
-    }
-    if (strncmp(str, "stringview_wtf8", 15) == 0 && (prefix || str[15] == 0)) {
-      return HeapType::stringview_wtf8;
-    }
-    if (strncmp(str, "stringview_wtf16", 16) == 0 && (prefix || str[16] == 0)) {
-      return HeapType::stringview_wtf16;
-    }
-    if (strncmp(str, "stringview_iter", 15) == 0 && (prefix || str[15] == 0)) {
-      return HeapType::stringview_iter;
-    }
+  if (str.substr(0, 4) == "data" && (prefix || str.size() == 4)) {
+    return HeapType::data;
   }
-  if (str[0] == 'n') {
-    if (strncmp(str, "none", 4) == 0 && (prefix || str[4] == 0)) {
-      return HeapType::none;
-    }
-    if (strncmp(str, "noextern", 8) == 0 && (prefix || str[8] == 0)) {
-      return HeapType::noext;
-    }
-    if (strncmp(str, "nofunc", 6) == 0 && (prefix || str[6] == 0)) {
-      return HeapType::nofunc;
-    }
+  if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
+    return HeapType::string;
   }
-  throw ParseException(std::string("invalid wasm heap type: ") + str);
+  if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
+    return HeapType::stringview_wtf8;
+  }
+  if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
+    return HeapType::stringview_wtf16;
+  }
+  if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
+    return HeapType::stringview_iter;
+  }
+  if (str.substr(0, 4) == "none" && (prefix || str.size() == 4)) {
+    return HeapType::none;
+  }
+  if (str.substr(0, 8) == "noextern" && (prefix || str.size() == 8)) {
+    return HeapType::noext;
+  }
+  if (str.substr(0, 6) == "nofunc" && (prefix || str.size() == 6)) {
+    return HeapType::nofunc;
+  }
+  throw ParseException(std::string("invalid wasm heap type: ") +
+                       std::string(str.data(), str.size()));
 }
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
@@ -1345,7 +1341,7 @@ SExpressionWasmBuilder::getDebugLocation(const SourceLocation& loc) {
   auto iter = debugInfoFileIndices.find(file);
   if (iter == debugInfoFileIndices.end()) {
     Index index = debugInfoFileNames.size();
-    debugInfoFileNames.push_back(file.c_str());
+    debugInfoFileNames.push_back(file.toString());
     debugInfoFileIndices[file] = index;
   }
   uint32_t fileIndex = debugInfoFileIndices[file];
@@ -1457,7 +1453,7 @@ Index SExpressionWasmBuilder::getLocalIndex(Element& s) {
     return currFunction->getLocalIndex(ret);
   }
   // this is a numeric index
-  Index ret = atoi(s.c_str());
+  Index ret = parseIndex(s);
   if (ret >= currFunction->getNumLocals()) {
     throw ParseException("bad local index", s.line, s.col);
   }
@@ -1620,7 +1616,7 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
 }
 
 static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
-  const char* str = s.str;
+  const char* str = s.str.data();
   auto ret = allocator.alloc<Const>();
   ret->type = type;
   if (type.isFloat()) {
@@ -1635,7 +1631,6 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         default:
           return nullptr;
       }
-      // std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
       return ret;
     }
     if (s == NEG_INFINITY) {
@@ -1649,7 +1644,6 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         default:
           return nullptr;
       }
-      // std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
       return ret;
     }
     if (s == _NAN) {
@@ -1663,7 +1657,6 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         default:
           return nullptr;
       }
-      // std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
       return ret;
     }
     bool negative = str[0] == '-';
@@ -1813,7 +1806,6 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
   if (ret->value.type != type) {
     throw ParseException("parsed type does not match expected type");
   }
-  // std::cerr << "make constant " << str << " ==> " << ret->value << '\n';
   return ret;
 }
 
@@ -1842,7 +1834,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   }
 
   auto ret = allocator.alloc<Const>();
-  Type lane_t = stringToLaneType(s[1]->str().str);
+  Type lane_t = stringToLaneType(s[1]->str().str.data());
   size_t lanes = s.size() - 2;
   switch (lanes) {
     case 2: {
@@ -1918,7 +1910,7 @@ static size_t parseMemAttributes(size_t i,
   align = fallbackAlign;
   // Parse "align=X" and "offset=X" arguments, bailing out on anything else.
   while (!s[i]->isList()) {
-    const char* str = s[i]->c_str();
+    const char* str = s[i]->str().str.data();
     if (strncmp(str, "align", 5) != 0 && strncmp(str, "offset", 6) != 0) {
       return i;
     }
@@ -1957,7 +1949,7 @@ static size_t parseMemAttributes(size_t i,
 }
 
 static const char* findMemExtra(const Element& s, size_t skip, bool isAtomic) {
-  auto* str = s.c_str();
+  auto* str = s.str().str.data();
   auto size = strlen(str);
   auto* ret = strchr(str, '.');
   if (!ret) {
@@ -1977,8 +1969,8 @@ bool SExpressionWasmBuilder::hasMemoryIdx(Element& s,
                                           Index defaultSize,
                                           Index i) {
   if (s.size() > defaultSize && !s[i]->isList() &&
-      strncmp(s[i]->c_str(), "align", 5) != 0 &&
-      strncmp(s[i]->c_str(), "offset", 6) != 0) {
+      strncmp(s[i]->str().str.data(), "align", 5) != 0 &&
+      strncmp(s[i]->str().str.data(), "offset", 6) != 0) {
     return true;
   }
   return false;
@@ -2190,7 +2182,7 @@ Expression* SExpressionWasmBuilder::makeAtomicFence(Element& s) {
 }
 
 static uint8_t parseLaneIndex(const Element* s, size_t lanes) {
-  const char* str = s->c_str();
+  const char* str = s->str().str.data();
   char* end;
   auto n = static_cast<unsigned long long>(strtoll(str, &end, 10));
   if (end == str || *end != '\0') {
@@ -2360,7 +2352,7 @@ Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  ret->segment = atoi(s[i++]->str().c_str());
+  ret->segment = parseIndex(*s[i++]);
   ret->dest = parseExpression(s[i++]);
   ret->offset = parseExpression(s[i++]);
   ret->size = parseExpression(s[i]);
@@ -2370,7 +2362,7 @@ Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
   auto ret = allocator.alloc<DataDrop>();
-  ret->segment = atoi(s[1]->str().c_str());
+  ret->segment = parseIndex(*s[1]);
   ret->finalize();
   return ret;
 }
@@ -2552,7 +2544,7 @@ Name SExpressionWasmBuilder::getLabel(Element& s, LabelType labelType) {
     // offset, break to nth outside label
     uint64_t offset;
     try {
-      offset = std::stoll(s.c_str(), nullptr, 0);
+      offset = std::stoll(s.toString(), nullptr, 0);
     } catch (std::invalid_argument&) {
       throw ParseException("invalid break offset", s.line, s.col);
     } catch (std::out_of_range&) {
@@ -2836,7 +2828,7 @@ Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
-  ret->index = atoi(s[1]->str().c_str());
+  ret->index = parseIndex(*s[1]);
   ret->tuple = parseExpression(s[2]);
   if (ret->tuple->type != Type::unreachable &&
       ret->index >= ret->tuple->type.size()) {
@@ -2943,7 +2935,7 @@ Expression* SExpressionWasmBuilder::makeStructNewStatic(Element& s,
 Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
   if (field.dollared()) {
     auto name = field.str();
-    auto index = typeIndices[type.str().str];
+    auto index = typeIndices[type.toString()];
     auto struct_ = types[index].getStruct();
     auto& fields = struct_.fields;
     const auto& names = fieldNames[index];
@@ -2956,7 +2948,7 @@ Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
     throw ParseException("bad struct field name", field.line, field.col);
   }
   // this is a numeric index
-  return atoi(field.c_str());
+  return parseIndex(field);
 }
 
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
@@ -3055,12 +3047,12 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
   size_t i = 1;
   Expression* length = nullptr;
   if (op == StringNewWTF8) {
-    const char* str = s[i++]->c_str();
-    if (strncmp(str, "utf8", 4) == 0) {
+    std::string_view str = s[i++]->str().str;
+    if (str == "utf8") {
       op = StringNewUTF8;
-    } else if (strncmp(str, "wtf8", 4) == 0) {
+    } else if (str == "wtf8") {
       op = StringNewWTF8;
-    } else if (strncmp(str, "replace", 7) == 0) {
+    } else if (str == "replace") {
       op = StringNewReplace;
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
@@ -3071,12 +3063,12 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
     length = parseExpression(s[i + 1]);
     return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
   } else if (op == StringNewWTF8Array) {
-    const char* str = s[i++]->c_str();
-    if (strncmp(str, "utf8", 4) == 0) {
+    std::string_view str = s[i++]->str().str;
+    if (str == "utf8") {
       op = StringNewUTF8Array;
-    } else if (strncmp(str, "wtf8", 4) == 0) {
+    } else if (str == "wtf8") {
       op = StringNewWTF8Array;
-    } else if (strncmp(str, "replace", 7) == 0) {
+    } else if (str == "replace") {
       op = StringNewReplaceArray;
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
@@ -3094,16 +3086,9 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
 }
 
 Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
-  Name rawStr = s[1]->str();
-  size_t len = rawStr.size();
   std::vector<char> data;
-  stringToBinary(rawStr.c_str(), len, data);
-  data.push_back('\0');
-  Name str = data.empty() ? "" : &data[0];
-  if (str.size() != data.size() - 1) {
-    throw ParseException(
-      "zero bytes not yet supported in string constants", s.line, s.col);
-  }
+  stringToBinary(*s[1], s[1]->str().str, data);
+  Name str = std::string_view(data.data(), data.size());
   return Builder(wasm).makeStringConst(str);
 }
 
@@ -3111,10 +3096,10 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
                                                       StringMeasureOp op) {
   size_t i = 1;
   if (op == StringMeasureWTF8) {
-    const char* str = s[i++]->c_str();
-    if (strncmp(str, "utf8", 4) == 0) {
+    std::string_view str = s[i++]->str().str;
+    if (str == "utf8") {
       op = StringMeasureUTF8;
-    } else if (strncmp(str, "wtf8", 4) == 0) {
+    } else if (str == "wtf8") {
       op = StringMeasureWTF8;
     } else {
       throw ParseException("bad string.measure op", s.line, s.col);
@@ -3128,19 +3113,19 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
   size_t i = 1;
   Expression* start = nullptr;
   if (op == StringEncodeWTF8) {
-    const char* str = s[i++]->c_str();
-    if (strncmp(str, "utf8", 4) == 0) {
+    std::string_view str = s[i++]->str().str;
+    if (str == "utf8") {
       op = StringEncodeUTF8;
-    } else if (strncmp(str, "wtf8", 4) == 0) {
+    } else if (str == "wtf8") {
       op = StringEncodeWTF8;
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
     }
   } else if (op == StringEncodeWTF8Array) {
-    const char* str = s[i++]->c_str();
-    if (strncmp(str, "utf8", 4) == 0) {
+    std::string_view str = s[i++]->str().str;
+    if (str == "utf8") {
       op = StringEncodeUTF8Array;
-    } else if (strncmp(str, "wtf8", 4) == 0) {
+    } else if (str == "wtf8") {
       op = StringEncodeWTF8Array;
     } else {
       throw ParseException("bad string.new op", s.line, s.col);
@@ -3201,49 +3186,52 @@ Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.
-void SExpressionWasmBuilder::stringToBinary(const char* input,
-                                            size_t size,
+void SExpressionWasmBuilder::stringToBinary(Element& s,
+                                            std::string_view str,
                                             std::vector<char>& data) {
   auto originalSize = data.size();
-  data.resize(originalSize + size);
+  data.resize(originalSize + str.size());
   char* write = data.data() + originalSize;
-  while (1) {
-    if (input[0] == 0) {
-      break;
-    }
+  const char* end = str.data() + str.size();
+  for (const char* input = str.data(); input < end; ++input) {
     if (input[0] == '\\') {
+      if (input + 1 >= end) {
+        throw ParseException("Unterminated escape sequence", s.line, s.col);
+      }
       if (input[1] == 't') {
         *write++ = '\t';
-        input += 2;
+        input += 1;
         continue;
       } else if (input[1] == 'n') {
         *write++ = '\n';
-        input += 2;
+        input += 1;
         continue;
       } else if (input[1] == 'r') {
         *write++ = '\r';
-        input += 2;
+        input += 1;
         continue;
       } else if (input[1] == '"') {
         *write++ = '"';
-        input += 2;
+        input += 1;
         continue;
       } else if (input[1] == '\'') {
         *write++ = '\'';
-        input += 2;
+        input += 1;
         continue;
       } else if (input[1] == '\\') {
         *write++ = '\\';
-        input += 2;
+        input += 1;
         continue;
       } else {
+        if (input + 2 >= end) {
+          throw ParseException("Unterminated escape sequence", s.line, s.col);
+        }
         *write++ = (char)(unhex(input[1]) * 16 + unhex(input[2]));
-        input += 3;
+        input += 2;
         continue;
       }
     }
     *write++ = input[0];
-    input++;
   }
   assert(write >= data.data());
   size_t actual = write - data.data();
@@ -3361,7 +3349,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
         checkAddress(offsetValue, "excessive memory offset", offsetElem);
       }
     }
-    const char* input = curr[j]->c_str();
+    std::string_view input = curr[j]->str().str;
     auto* offset = allocator.alloc<Const>();
     if (memory->is64()) {
       offset->type = Type::i64;
@@ -3370,9 +3358,9 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       offset->type = Type::i32;
       offset->value = Literal(int32_t(offsetValue));
     }
-    if (auto size = strlen(input)) {
+    if (input.size()) {
       std::vector<char> data;
-      stringToBinary(input, size, data);
+      stringToBinary(*curr[j], input, data);
       auto segment = Builder::makeDataSegment(Name::fromInt(dataCounter++),
                                               memory->name,
                                               false,
@@ -3437,10 +3425,8 @@ void SExpressionWasmBuilder::parseInnerData(Element& s,
                                             std::unique_ptr<DataSegment>& seg) {
   std::vector<char> data;
   while (i < s.size()) {
-    const char* input = s[i++]->c_str();
-    if (auto size = strlen(input)) {
-      stringToBinary(input, size, data);
-    }
+    std::string_view input = s[i++]->str().str;
+    stringToBinary(s, input, data);
   }
   seg->data.resize(data.size());
   std::copy_n(data.data(), data.size(), seg->data.begin());
@@ -3736,12 +3722,12 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
 
   bool hasExplicitLimit = false;
 
-  if (s[i]->isStr() && String::isNumber(s[i]->c_str())) {
-    table->initial = atoi(s[i++]->c_str());
+  if (s[i]->isStr() && String::isNumber(s[i]->toString())) {
+    table->initial = parseIndex(*s[i++]);
     hasExplicitLimit = true;
   }
-  if (s[i]->isStr() && String::isNumber(s[i]->c_str())) {
-    table->max = atoi(s[i++]->c_str());
+  if (s[i]->isStr() && String::isNumber(s[i]->toString())) {
+    table->max = parseIndex(*s[i++]);
   }
 
   table->type = elementToType(*s[i++]);
@@ -3905,7 +3891,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   if (s.isStr()) {
     // It's a string.
     if (s.dollared()) {
-      auto it = typeIndices.find(s.str().str);
+      auto it = typeIndices.find(s.toString());
       if (it == typeIndices.end()) {
         throw ParseException("unknown dollared function type", s.line, s.col);
       }
@@ -3913,15 +3899,15 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
     } else {
       // It may be a numerical index, or it may be a built-in type name like
       // "i31".
-      auto* str = s.str().c_str();
+      auto str = s.toString();
       if (String::isNumber(str)) {
-        size_t offset = atoi(str);
+        size_t offset = parseIndex(s);
         if (offset >= types.size()) {
           throw ParseException("unknown indexed function type", s.line, s.col);
         }
         return types[offset];
       }
-      return stringToHeapType(str, /* prefix = */ false);
+      return stringToHeapType(s.str(), /* prefix = */ false);
     }
   }
   throw ParseException("invalid heap type", s.line, s.col);

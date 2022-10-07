@@ -22,13 +22,13 @@
 //
 
 #include "abi/js.h"
-#include "emscripten-optimizer/istring.h"
 #include "ir/flat.h"
 #include "ir/iteration.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -36,7 +36,7 @@
 
 namespace wasm {
 
-static Name makeHighName(Name n) { return std::string(n.c_str()) + "$hi"; }
+static Name makeHighName(Name n) { return n.toString() + "$hi"; }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   struct TempVar {
@@ -263,7 +263,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // If this was to an import, we need to call the legal version. This assumes
     // that legalize-js-interface has been run before.
     if (fixedCall && getModule()->getFunction(fixedCall->target)->imported()) {
-      fixedCall->target = std::string("legalfunc$") + fixedCall->target.str;
+      fixedCall->target =
+        std::string("legalfunc$") + fixedCall->target.toString();
       return;
     }
   }

@@ -104,7 +104,7 @@ struct Metrics
         counts["[vars]"] = func->getNumVars();
         counts["[binary-bytes]"] =
           writer.tableOfContents.functionBodies[binaryIndex++].size;
-        printCounts(std::string("func: ") + func->name.str);
+        printCounts(std::string("func: ") + func->name.toString());
       });
       // print for each export how much code size is due to it, i.e.,
       // how much the module could shrink without it.
@@ -134,8 +134,8 @@ struct Metrics
         counts.clear();
         counts["[removable-bytes-without-it]"] =
           baseline - sizeAfterGlobalCleanup(&test);
-        printCounts(std::string("export: ") + exp->name.str + " (" +
-                    exp->value.str + ')');
+        printCounts(std::string("export: ") + exp->name.toString() + " (" +
+                    exp->value.toString() + ')');
       }
       // check how much size depends on the start method
       if (!module->start.isNull()) {
@@ -145,7 +145,7 @@ struct Metrics
         counts.clear();
         counts["[removable-bytes-without-it]"] =
           baseline - sizeAfterGlobalCleanup(&test);
-        printCounts(std::string("start: ") + module->start.str);
+        printCounts(std::string("start: ") + module->start.toString());
       }
       // can't compare detailed info between passes yet
       lastCounts.clear();

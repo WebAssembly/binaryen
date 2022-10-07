@@ -22,21 +22,19 @@ namespace cashew {
 
 Ref& Ref::operator[](unsigned x) { return (*get())[x]; }
 
-Ref& Ref::operator[](IString x) { return (*get())[x]; }
+Ref& Ref::operator[](wasm::IString x) { return (*get())[x]; }
 
-bool Ref::operator==(const char* str) {
-  return get()->isString() && !strcmp(get()->str.str, str);
-}
-
-bool Ref::operator!=(const char* str) {
-  return get()->isString() ? !!strcmp(get()->str.str, str) : true;
-}
-
-bool Ref::operator==(const IString& str) {
+bool Ref::operator==(std::string_view str) {
   return get()->isString() && get()->str == str;
 }
 
-bool Ref::operator!=(const IString& str) {
+bool Ref::operator!=(std::string_view str) { return !(*this == str); }
+
+bool Ref::operator==(const wasm::IString& str) {
+  return get()->isString() && get()->str == str;
+}
+
+bool Ref::operator!=(const wasm::IString& str) {
   return get()->isString() && get()->str != str;
 }
 
@@ -56,7 +54,7 @@ Value& Value::setAssign(Ref target, Ref value) {
   return *this;
 }
 
-Value& Value::setAssignName(IString target, Ref value) {
+Value& Value::setAssignName(wasm::IString target, Ref value) {
   asAssignName()->target() = target;
   asAssignName()->value() = value;
   return *this;
@@ -81,8 +79,8 @@ void Value::stringify(std::ostream& os, bool pretty) {
   }
   switch (type) {
     case String: {
-      if (str.str) {
-        os << '"' << str.str << '"';
+      if (str) {
+        os << '"' << str << '"';
       } else {
         os << "\"(null)\"";
       }
@@ -147,7 +145,7 @@ void Value::stringify(std::ostream& os, bool pretty) {
           }
         }
         indentify();
-        os << '"' << i.first.c_str() << "\": ";
+        os << '"' << i.first << "\": ";
         i.second->stringify(os, pretty);
       }
       if (pretty) {
