@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <llvm/ADT/APInt.h>
+#include <llvm/IR/Constant.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -40,24 +42,31 @@ struct LLVM : public wasm::Pass {
 
     {
       using namespace llvm;
+
       LLVMContext context;
+      auto i32 = Type::getInt32Ty(context);
+
       Module mod("byn_mod", context);
       mod.setTargetTriple("wasm32-unknown-unknown");
-      mod.getOrInsertFunction("byn_func", Type::getVoidTy(context));
-      if (verifyModule(mod, &errs())) {
-        wasm::Fatal() << "broken LLVM module";
-      }
-      errs() << mod << '\n';
 
+      mod.getOrInsertFunction("byn_func", i32);
       auto* func = mod.getFunction("byn_func");
 
       IRBuilder builder(context);
 
       BasicBlock* body = BasicBlock::Create(context, "entry", func);
       builder.SetInsertPoint(body);
-      builder.CreateRetVoid();
-        
-      errs() << "[func:]\n" << *func << '\n';
+      auto num1 = Constant::getIntegerValue(i32, APInt(32, 41));
+      auto num2 = Constant::getIntegerValue(i32, APInt(32, 1));
+      auto* add = builder.CreateAdd(num1, num2, "addd");
+      errs() << "add: " << *add << '\n';
+      auto* ret = builder.CreateRet(add);
+      errs() << "ret: " << *ret << '\n';
+
+      if (verifyModule(mod, &errs())) {
+        wasm::Fatal() << "broken LLVM module";
+      }
+      errs() << mod << '\n';
     }
   }
 };
