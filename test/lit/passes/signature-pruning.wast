@@ -750,7 +750,7 @@
   ;; CHECK:      (func $foo (type $sig-foo)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
@@ -776,7 +776,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $bar
-  ;; CHECK-NEXT:   (ref.null data)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $bar (type $sig-bar) (param $anyref anyref)

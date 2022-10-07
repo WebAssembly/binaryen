@@ -605,7 +605,30 @@ void test_effects() {
 
   // ArrayCopy can trap, reads arrays, and writes arrays (but not structs).
   {
+    Type arrayref = Type(HeapType(Array(Field(Type::i32, Mutable))), Nullable);
+    LocalGet dest;
+    dest.index = 0;
+    dest.type = arrayref;
+    LocalGet destIndex;
+    destIndex.index = 1;
+    destIndex.type = Type::i32;
+    LocalGet src;
+    src.index = 0;
+    src.type = arrayref;
+    LocalGet srcIndex;
+    srcIndex.index = 1;
+    srcIndex.type = Type::i32;
+    LocalGet length;
+    srcIndex.index = 2;
+    srcIndex.type = Type::i32;
     ArrayCopy arrayCopy(module.allocator);
+    arrayCopy.destRef = &dest;
+    arrayCopy.destIndex = &destIndex;
+    arrayCopy.srcRef = &src;
+    arrayCopy.srcIndex = &srcIndex;
+    arrayCopy.length = &length;
+    arrayCopy.finalize();
+
     EffectAnalyzer effects(options, module);
     effects.visit(&arrayCopy);
     assert_equal(effects.trap, true);
@@ -613,19 +636,6 @@ void test_effects() {
     assert_equal(effects.writesArray, true);
     assert_equal(effects.readsMutableStruct, false);
     assert_equal(effects.writesStruct, false);
-  }
-}
-
-void test_literals() {
-  // The i31 heap type may or may not be basic, depending on if it is nullable.
-  // Verify we handle both code paths.
-  {
-    Literal x(Type(HeapType::i31, Nullable));
-    std::cout << x << '\n';
-  }
-  {
-    Literal x(Type(HeapType::i31, NonNullable));
-    std::cout << x << '\n';
   }
 }
 
@@ -681,7 +691,6 @@ int main() {
   test_bits();
   test_cost();
   test_effects();
-  test_literals();
   test_field();
   test_queue();
 

@@ -701,6 +701,10 @@ private:
       }
     }
     void visitCallRef(CallRef* curr) {
+      if (curr->target->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.calls = true;
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
@@ -724,6 +728,10 @@ private:
       if (curr->ref->type == Type::unreachable) {
         return;
       }
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       if (curr->ref->type.getHeapType()
             .getStruct()
             .fields[curr->index]
@@ -736,6 +744,10 @@ private:
       }
     }
     void visitStructSet(StructSet* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.writesStruct = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
@@ -745,22 +757,38 @@ private:
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayInit(ArrayInit* curr) {}
     void visitArrayGet(ArrayGet* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
+      if (curr->destRef->type.isNull() || curr->srcRef->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
       parent.readsArray = true;
       parent.writesArray = true;
       // traps when a ref is null, or when out of bounds.

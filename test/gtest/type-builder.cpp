@@ -656,4 +656,8 @@ TEST_F(NominalTest, TestDepth) {
   EXPECT_EQ(HeapType(HeapType::stringview_wtf8).getDepth(), 2U);
   EXPECT_EQ(HeapType(HeapType::stringview_wtf16).getDepth(), 2U);
   EXPECT_EQ(HeapType(HeapType::stringview_iter).getDepth(), 2U);
+
+  EXPECT_EQ(HeapType(HeapType::none).getDepth(), size_t(-1));
+  EXPECT_EQ(HeapType(HeapType::nofunc).getDepth(), size_t(-1));
+  EXPECT_EQ(HeapType(HeapType::noext).getDepth(), size_t(-1));
 }

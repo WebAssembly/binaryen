@@ -4,6 +4,8 @@
 (module
   ;; CHECK:      (type $A (func_subtype func))
   (type $A (func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+
   ;; CHECK:      (type $B (func_subtype func))
   (type $B (func))
 
@@ -11,7 +13,7 @@
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
   ;; CHECK-NEXT:  )
@@ -19,13 +21,16 @@
   ;; CHECK-NEXT:   (ref.func $target-B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     ;; This export has two RefFuncs, and one CallRef.
     (drop
       (ref.func $target-A)
@@ -34,7 +39,7 @@
       (ref.func $target-B)
     )
     (call_ref
-      (ref.null $A)
+      (local.get $A)
     )
     ;; Verify that we do not crash on an unreachable call_ref, which has no
     ;; heap type for us to analyze.
@@ -80,8 +85,11 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
@@ -97,7 +105,7 @@
   )
 
   ;; CHECK:      (func $target-A (type $A)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $target-A (type $A)
     ;; This function is reachable.
@@ -114,33 +122,35 @@
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     (call_ref
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-A-1)
     )
     (call_ref
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-A-2)
@@ -173,36 +183,38 @@
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     (drop
       (ref.func $target-A-1)
     )
     (call_ref
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-A-2)
     )
     (call_ref
-      (ref.null $A)
+      (local.get $A)
     )
   )
 
@@ -286,6 +298,8 @@
 
   ;; CHECK:      (type $funcref_=>_none (func_subtype (param funcref) func))
 
+  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
@@ -298,9 +312,9 @@
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (call $call-without-effects
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-keep)
@@ -309,12 +323,12 @@
   ;; CHECK-NEXT:   (ref.func $target-keep-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     ;; Call the intrinsic without a RefFunc. All we infer here is the type,
     ;; which means we must assume anything with type $A (and a reference) can be
     ;; called, which will keep alive both $target-keep and $target-keep-2
     (call $call-without-effects
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-keep)

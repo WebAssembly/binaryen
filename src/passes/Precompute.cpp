@@ -130,7 +130,7 @@ public:
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) {
-    if (curr->ref->type != Type::unreachable) {
+    if (curr->ref->type != Type::unreachable && !curr->ref->type.isNull()) {
       // If this field is immutable then we may be able to precompute this, as
       // if we also created the data in this function (or it was created in an
       // immutable global) then we know the value in the field. If it is
@@ -164,7 +164,7 @@ public:
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type != Type::unreachable) {
+    if (curr->ref->type != Type::unreachable && !curr->ref->type.isNull()) {
       // See above with struct.get
       auto element = curr->ref->type.getHeapType().getArray().element;
       if (element.mutable_ == Immutable) {

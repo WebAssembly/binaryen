@@ -134,13 +134,13 @@
 
   ;; CHECK-BINARY:      (func $table-grow (param $sz i32) (result i32)
   ;; CHECK-BINARY-NEXT:  (table.grow $table-1
-  ;; CHECK-BINARY-NEXT:   (ref.null func)
+  ;; CHECK-BINARY-NEXT:   (ref.null nofunc)
   ;; CHECK-BINARY-NEXT:   (local.get $sz)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $table-grow (param $sz i32) (result i32)
   ;; CHECK-TEXT-NEXT:  (table.grow $table-1
-  ;; CHECK-TEXT-NEXT:   (ref.null func)
+  ;; CHECK-TEXT-NEXT:   (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:   (local.get $sz)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
@@ -197,7 +197,7 @@
 
 ;; CHECK-NODEBUG:      (func $4 (param $0 i32) (result i32)
 ;; CHECK-NODEBUG-NEXT:  (table.grow $0
-;; CHECK-NODEBUG-NEXT:   (ref.null func)
+;; CHECK-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )

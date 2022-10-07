@@ -1429,6 +1429,25 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::stringview_iter:
           o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
           return;
+        case HeapType::none:
+          o << S32LEB(BinaryConsts::EncodedType::nullref);
+          return;
+        case HeapType::noext:
+          // See comment on writeHeapType.
+          if (!wasm->features.hasGC()) {
+            o << S32LEB(BinaryConsts::EncodedType::externref);
+          } else {
+            o << S32LEB(BinaryConsts::EncodedType::nullexternref);
+          }
+          return;
+        case HeapType::nofunc:
+          // See comment on writeHeapType.
+          if (!wasm->features.hasGC()) {
+            o << S32LEB(BinaryConsts::EncodedType::funcref);
+          } else {
+            o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
+          }
+          return;
       }
     }
     if (type.isNullable()) {
@@ -1468,46 +1487,63 @@ void WasmBinaryWriter::writeType(Type type) {
 }
 
 void WasmBinaryWriter::writeHeapType(HeapType type) {
+  // ref.null always has a bottom heap type in Binaryen IR, but those types are
+  // only actually valid with GC enabled. When GC is not enabled, emit the
+  // corresponding valid top types instead.
+  if (!wasm->features.hasGC()) {
+    if (type == HeapType::nofunc || type.isSignature()) {
+      type = HeapType::func;
+    } else if (type == HeapType::noext) {
+      type = HeapType::ext;
+    }
+  }
+
   if (type.isSignature() || type.isStruct() || type.isArray()) {
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
   int ret = 0;
-  if (type.isBasic()) {
-    switch (type.getBasic()) {
-      case HeapType::ext:
-        ret = BinaryConsts::EncodedHeapType::ext;
-        break;
-      case HeapType::func:
-        ret = BinaryConsts::EncodedHeapType::func;
-        break;
-      case HeapType::any:
-        ret = BinaryConsts::EncodedHeapType::any;
-        break;
-      case HeapType::eq:
-        ret = BinaryConsts::EncodedHeapType::eq;
-        break;
-      case HeapType::i31:
-        ret = BinaryConsts::EncodedHeapType::i31;
-        break;
-      case HeapType::data:
-        ret = BinaryConsts::EncodedHeapType::data;
-        break;
-      case HeapType::string:
-        ret = BinaryConsts::EncodedHeapType::string;
-        break;
-      case HeapType::stringview_wtf8:
-        ret = BinaryConsts::EncodedHeapType::stringview_wtf8_heap;
-        break;
-      case HeapType::stringview_wtf16:
-        ret = BinaryConsts::EncodedHeapType::stringview_wtf16_heap;
-        break;
-      case HeapType::stringview_iter:
-        ret = BinaryConsts::EncodedHeapType::stringview_iter_heap;
-        break;
-    }
-  } else {
-    WASM_UNREACHABLE("TODO: compound GC types");
+  assert(type.isBasic());
+  switch (type.getBasic()) {
+    case HeapType::ext:
+      ret = BinaryConsts::EncodedHeapType::ext;
+      break;
+    case HeapType::func:
+      ret = BinaryConsts::EncodedHeapType::func;
+      break;
+    case HeapType::any:
+      ret = BinaryConsts::EncodedHeapType::any;
+      break;
+    case HeapType::eq:
+      ret = BinaryConsts::EncodedHeapType::eq;
+      break;
+    case HeapType::i31:
+      ret = BinaryConsts::EncodedHeapType::i31;
+      break;
+    case HeapType::data:
+      ret = BinaryConsts::EncodedHeapType::data;
+      break;
+    case HeapType::string:
+      ret = BinaryConsts::EncodedHeapType::string;
+      break;
+    case HeapType::stringview_wtf8:
+      ret = BinaryConsts::EncodedHeapType::stringview_wtf8_heap;
+      break;
+    case HeapType::stringview_wtf16:
+      ret = BinaryConsts::EncodedHeapType::stringview_wtf16_heap;
+      break;
+    case HeapType::stringview_iter:
+      ret = BinaryConsts::EncodedHeapType::stringview_iter_heap;
+      break;
+    case HeapType::none:
+      ret = BinaryConsts::EncodedHeapType::none;
+      break;
+    case HeapType::noext:
+      ret = BinaryConsts::EncodedHeapType::noext;
+      break;
+    case HeapType::nofunc:
+      ret = BinaryConsts::EncodedHeapType::nofunc;
+      break;
   }
   o << S64LEB(ret); // TODO: Actually s33
 }
@@ -1867,6 +1903,15 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::stringview_iter:
       out = Type(HeapType::stringview_iter, Nullable);
       return true;
+    case BinaryConsts::EncodedType::nullref:
+      out = Type(HeapType::none, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::nullexternref:
+      out = Type(HeapType::noext, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::nullfuncref:
+      out = Type(HeapType::nofunc, Nullable);
+      return true;
     default:
       return false;
   }
@@ -1903,6 +1948,15 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::stringview_iter_heap:
       out = HeapType::stringview_iter;
+      return true;
+    case BinaryConsts::EncodedHeapType::none:
+      out = HeapType::none;
+      return true;
+    case BinaryConsts::EncodedHeapType::noext:
+      out = HeapType::noext;
+      return true;
+    case BinaryConsts::EncodedHeapType::nofunc:
+      out = HeapType::nofunc;
       return true;
     default:
       return false;
@@ -2849,7 +2903,14 @@ void WasmBinaryBuilder::skipUnreachableCode() {
       expressionStack = savedStack;
       return;
     }
-    pushExpression(curr);
+    if (curr->type == Type::unreachable) {
+      // Nothing before this unreachable should be available to future
+      // expressions. They will get `(unreachable)`s if they try to pop past
+      // this point.
+      expressionStack.clear();
+    } else {
+      pushExpression(curr);
+    }
   }
 }
 
@@ -6530,7 +6591,7 @@ void WasmBinaryBuilder::visitDrop(Drop* curr) {
 
 void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   BYN_TRACE("zz node: RefNull\n");
-  curr->finalize(getHeapType());
+  curr->finalize(getHeapType().getBottom());
 }
 
 void WasmBinaryBuilder::visitRefIs(RefIs* curr, uint8_t code) {
@@ -6941,28 +7002,29 @@ bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
-  StructGet* curr;
+  bool signed_ = false;
   switch (code) {
     case BinaryConsts::StructGet:
-      curr = allocator.alloc<StructGet>();
+    case BinaryConsts::StructGetU:
       break;
     case BinaryConsts::StructGetS:
-      curr = allocator.alloc<StructGet>();
-      curr->signed_ = true;
-      break;
-    case BinaryConsts::StructGetU:
-      curr = allocator.alloc<StructGet>();
-      curr->signed_ = false;
+      signed_ = true;
       break;
     default:
       return false;
   }
   auto heapType = getIndexedHeapType();
-  curr->index = getU32LEB();
-  curr->ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(curr->ref, heapType);
-  curr->finalize();
-  out = curr;
+  if (!heapType.isStruct()) {
+    throwError("Expected struct heaptype");
+  }
+  auto index = getU32LEB();
+  if (index >= heapType.getStruct().fields.size()) {
+    throwError("Struct field index out of bounds");
+  }
+  auto type = heapType.getStruct().fields[index].type;
+  auto ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType);
+  out = Builder(wasm).makeStructGet(index, ref, type, signed_);
   return true;
 }
 
@@ -7022,10 +7084,14 @@ bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
       return false;
   }
   auto heapType = getIndexedHeapType();
+  if (!heapType.isArray()) {
+    throwError("Expected array heaptype");
+  }
+  auto type = heapType.getArray().element.type;
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  out = Builder(wasm).makeArrayGet(ref, index, signed_);
+  out = Builder(wasm).makeArrayGet(ref, index, type, signed_);
   return true;
 }
 

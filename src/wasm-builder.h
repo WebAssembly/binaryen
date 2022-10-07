@@ -699,10 +699,11 @@ public:
   }
   RefNull* makeRefNull(HeapType type) {
     auto* ret = wasm.allocator.alloc<RefNull>();
-    ret->finalize(Type(type, Nullable));
+    ret->finalize(Type(type.getBottom(), Nullable));
     return ret;
   }
   RefNull* makeRefNull(Type type) {
+    assert(type.isNullable() && type.isNull());
     auto* ret = wasm.allocator.alloc<RefNull>();
     ret->finalize(type);
     return ret;
@@ -942,11 +943,14 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayGet*
-  makeArrayGet(Expression* ref, Expression* index, bool signed_ = false) {
+  ArrayGet* makeArrayGet(Expression* ref,
+                         Expression* index,
+                         Type type,
+                         bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();
     ret->ref = ref;
     ret->index = index;
+    ret->type = type;
     ret->signed_ = signed_;
     ret->finalize();
     return ret;
@@ -1262,7 +1266,7 @@ public:
     if (curr->type.isTuple() && curr->type.isDefaultable()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
-    if (curr->type.isNullable()) {
+    if (curr->type.isNullable() && curr->type.isNull()) {
       return ExpressionManipulator::refNull(curr, curr->type);
     }
     if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {
@@ -1329,17 +1333,23 @@ public:
   Expression* validateAndMakeCallRef(Expression* target,
                                      const T& args,
                                      bool isReturn = false) {
-    if (!target->type.isRef()) {
-      if (target->type == Type::unreachable) {
-        // An unreachable target is not supported. Similiar to br_on_cast, just
-        // emit an unreachable sequence, since we don't have enough information
-        // to create a full call_ref.
-        auto* block = makeBlock(args);
-        block->list.push_back(target);
-        block->finalize(Type::unreachable);
-        return block;
-      }
+    if (target->type != Type::unreachable && !target->type.isRef()) {
       throw ParseException("Non-reference type for a call_ref", line, col);
+    }
+    // TODO: This won't be necessary once type annotations are mandatory on
+    // call_ref.
+    if (target->type == Type::unreachable ||
+        target->type.getHeapType() == HeapType::nofunc) {
+      // An unreachable target is not supported. Similiar to br_on_cast, just
+      // emit an unreachable sequence, since we don't have enough information
+      // to create a full call_ref.
+      std::vector<Expression*> children;
+      for (auto* arg : args) {
+        children.push_back(makeDrop(arg));
+      }
+      children.push_back(makeDrop(target));
+      children.push_back(makeUnreachable());
+      return makeBlock(children, Type::unreachable);
     }
     auto heapType = target->type.getHeapType();
     if (!heapType.isSignature()) {

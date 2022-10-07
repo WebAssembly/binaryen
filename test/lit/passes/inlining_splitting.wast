@@ -432,7 +432,7 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$condition-ref.is
   ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.eqz
@@ -449,7 +449,7 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$condition-ref.is0
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.eqz
@@ -833,7 +833,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$error-if-null (result anyref)
   ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -855,7 +855,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$error-if-null0 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -909,12 +909,12 @@
   ;; CHECK:      (func $call-too-many
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -951,12 +951,12 @@
   ;; CHECK:      (func $call-tail-not-simple
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $tail-not-simple
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $tail-not-simple
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -987,7 +987,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$reachable-if-body (result anyref)
   ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -1010,7 +1010,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$reachable-if-body0 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -1087,12 +1087,12 @@
   ;; CHECK:      (func $call-reachable-if-body-return
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $reachable-if-body-return
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $reachable-if-body-return
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1121,7 +1121,7 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result
   ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (ref.is_null
@@ -1136,7 +1136,7 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result0
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (ref.is_null
@@ -1185,7 +1185,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if (result anyref)
   ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -1216,7 +1216,7 @@
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if0 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (ref.null data)
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result anyref)
   ;; CHECK-NEXT:      (if
@@ -1320,12 +1320,12 @@
   ;; CHECK:      (func $call-too-many-ifs
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many-ifs
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many-ifs
-  ;; CHECK-NEXT:    (ref.null data)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

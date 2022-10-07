@@ -796,7 +796,10 @@ void MemoryGrow::finalize() {
   }
 }
 
-void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
+void RefNull::finalize(HeapType heapType) {
+  assert(heapType.isBottom());
+  type = Type(heapType, Nullable);
+}
 
 void RefNull::finalize(Type type_) { type = type_; }
 
@@ -1033,7 +1036,7 @@ void StructNew::finalize() {
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
+  } else if (!ref->type.isNull()) {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
@@ -1066,7 +1069,7 @@ void ArrayInit::finalize() {
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
+  } else if (!ref->type.isNull()) {
     type = ref->type.getHeapType().getArray().element.type;
   }
 }

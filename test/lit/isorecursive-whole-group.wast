@@ -17,6 +17,6 @@
   (type $unused (struct_subtype data))
  )
 
- ;; CHECK:      (global $g (ref null $used) (ref.null $used))
+ ;; CHECK:      (global $g (ref null $used) (ref.null none))
  (global $g (ref null $used) (ref.null $used))
 )

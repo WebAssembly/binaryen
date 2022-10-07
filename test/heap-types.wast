@@ -40,7 +40,7 @@
     (struct.new_default $struct.A)
   )
 
-  (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
+  (func $structs (param $x (ref $struct.A)) (param $struct.A.prime (ref null $struct.A.prime)) (param $grandchild (ref null $grandchild)) (param $struct.C (ref null $struct.C)) (param $nested-child-struct (ref null $nested-child-struct)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
     (local $tB (ref null $struct.B))
     (local $tc (ref null $struct.C))
@@ -62,7 +62,7 @@
       (struct.get $struct.A $named (local.get $x))
     )
     (drop
-      (struct.get $struct.A.prime $othername (ref.null $struct.A.prime))
+      (struct.get $struct.A.prime $othername (local.get $struct.A.prime))
     )
     (drop
       (struct.get_u $struct.B 0 (local.get $tB))
@@ -72,10 +72,7 @@
     )
     ;; immutable fields allow subtyping.
     (drop
-      (struct.get $child 0 (ref.null $grandchild))
-    )
-    (drop
-      (ref.null $struct.A)
+      (struct.get $child 0 (local.get $grandchild))
     )
     (drop
       (block (result (ref null $struct.A))
@@ -102,14 +99,14 @@
       )
     )
     (struct.set $struct.C 0
-      (ref.null $struct.C)
+      (local.get $struct.C)
       (f32.const 100)
     )
     ;; values may be subtypes
     (struct.set $nested-child-struct 0
-      (ref.null $nested-child-struct)
+      (local.get $nested-child-struct)
       (ref.as_non_null
-       (ref.null $grandchild)
+       (local.get $grandchild)
       )
     )
     (drop
@@ -124,7 +121,7 @@
     )
     (unreachable)
   )
-  (func $arrays (param $x (ref $vector)) (result (ref $matrix))
+  (func $arrays (param $x (ref $vector)) (param $nested-child-array (ref null $nested-child-array)) (param $grandchild (ref null $grandchild)) (result (ref $matrix))
     (local $tv (ref null $vector))
     (local $tm (ref null $matrix))
     (local $tb (ref null $bytes))
@@ -153,10 +150,10 @@
     )
     ;; values may be subtypes
     (array.set $nested-child-array
-      (ref.null $nested-child-array)
+      (local.get $nested-child-array)
       (i32.const 3)
       (ref.as_non_null
-       (ref.null $grandchild)
+       (local.get $grandchild)
       )
     )
     (drop
@@ -266,8 +263,8 @@
       (struct.get $struct.C 0 (unreachable))
     )
   )
-  (func $unreachables-2
-    (struct.set $struct.C 0 (ref.null $struct.C) (unreachable))
+  (func $unreachables-2 (param $struct.C (ref null $struct.C))
+    (struct.set $struct.C 0 (local.get $struct.C) (unreachable))
   )
   (func $unreachables-3
     (struct.set $struct.C 0 (unreachable) (unreachable))
@@ -281,9 +278,9 @@
       (i32.const 2)
     )
   )
-  (func $unreachables-array-2
+  (func $unreachables-array-2 (param $vector (ref null $vector))
     (array.get $vector
-      (ref.null $vector)
+      (local.get $vector)
       (unreachable)
     )
   )
@@ -294,16 +291,16 @@
       (f64.const 2.18281828)
     )
   )
-  (func $unreachables-array-4
+  (func $unreachables-array-4 (param $vector (ref null $vector))
     (array.set $vector
-      (ref.null $vector)
+      (local.get $vector)
       (unreachable)
       (f64.const 2.18281828)
     )
   )
-  (func $unreachables-array-5
+  (func $unreachables-array-5 (param $vector (ref null $vector))
     (array.set $vector
-      (ref.null $vector)
+      (local.get $vector)
       (i32.const 2)
       (unreachable)
     )

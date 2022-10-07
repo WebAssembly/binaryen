@@ -47,23 +47,6 @@ void PossibleContents::combine(const PossibleContents& other) {
   // First handle the trivial cases of them being equal, or one of them is
   // None or Many.
   if (*this == other) {
-    // Nulls are a special case, since they compare equal even if their type is
-    // different. We would like to make this function symmetric, that is, that
-    // combine(a, b) == combine(b, a) (otherwise, things can be odd and we could
-    // get nondeterminism in the flow analysis which does not have a
-    // determinstic order). To fix that, pick the LUB.
-    if (isNull()) {
-      assert(other.isNull());
-      auto lub = HeapType::getLeastUpperBound(type.getHeapType(),
-                                              otherType.getHeapType());
-      if (!lub) {
-        // TODO: Remove this workaround once we have bottom types to assign to
-        // null literals.
-        value = Many();
-        return;
-      }
-      value = Literal::makeNull(*lub);
-    }
     return;
   }
   if (other.isNone()) {
@@ -97,10 +80,18 @@ void PossibleContents::combine(const PossibleContents& other) {
 
   // Special handling for references from here.
 
-  // Nulls are always equal to each other, even if their types differ.
+  if (isNull() && other.isNull()) {
+    // These must be nulls in different hierarchies, otherwise this would have
+    // been handled by the `*this == other` case above.
+    assert(type != otherType);
+    value = Many();
+    return;
+  }
+
+  // Nulls can be combined in by just adding nullability to a type.
   if (isNull() || other.isNull()) {
-    // Only one of them can be null here, since we already checked if *this ==
-    // other, which would have been true had both been null.
+    // Only one of them can be null here, since we already handled the case
+    // where they were both null.
     assert(!isNull() || !other.isNull());
     // If only one is a null, but the other's type is known exactly, then the
     // combination is to add nullability (if the type is *not* known exactly,
@@ -797,7 +788,8 @@ struct InfoCollector
     // part of the main IR, which is potentially confusing during debugging,
     // however, which is a downside.
     Builder builder(*getModule());
-    auto* get = builder.makeArrayGet(curr->srcRef, curr->srcIndex);
+    auto* get =
+      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type);
     visitArrayGet(get);
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);

@@ -2014,7 +2014,10 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
 
 void BinaryInstWriter::visitCallRef(CallRef* curr) {
   assert(curr->target->type != Type::unreachable);
-  // TODO: `emitUnreachable` if target has bottom type.
+  if (curr->target->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef
                              : BinaryConsts::CallRef);
   parent.writeIndexedHeapType(curr->target->type.getHeapType());
@@ -2090,6 +2093,10 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   const auto& heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getStruct().fields[curr->index];
   int8_t op;
@@ -2106,6 +2113,10 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
@@ -2129,6 +2140,10 @@ void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   auto heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getArray().element;
   int8_t op;
@@ -2144,16 +2159,28 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
+  if (curr->srcRef->type.isNull() || curr->destRef->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayCopy);
   parent.writeIndexedHeapType(curr->destRef->type.getHeapType());
   parent.writeIndexedHeapType(curr->srcRef->type.getHeapType());

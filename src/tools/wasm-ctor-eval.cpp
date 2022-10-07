@@ -553,10 +553,7 @@ public:
 
     // This is GC data, which we must handle in a more careful way.
     auto* data = value.getGCData().get();
-    if (!data) {
-      // This is a null, so simply emit one.
-      return builder.makeRefNull(value.type);
-    }
+    assert(data);
 
     // There was actual GC data allocated here.
     auto type = value.type;

@@ -9,7 +9,7 @@
   ;; CHECK:      (type $foo_t (func_subtype func))
   (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null $foo_t))
+  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
   ;; CHECK:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
@@ -26,17 +26,17 @@
   ;; CHECK:      (type $foo_t (func_subtype func))
   (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null $foo_t))
+  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
   ;; CHECK:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
 
   ;; CHECK:      (func $foo (type $foo_t)
   ;; CHECK-NEXT:  (global.set $func-null-init
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $func-func-init
-  ;; CHECK-NEXT:   (ref.null $foo_t)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $foo_t)
@@ -51,7 +51,7 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null $none_=>_none))
+  ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null func))
   ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
@@ -80,10 +80,9 @@
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct))
-  ;; CHECK:      (type $array (array_subtype i8 data))
   (type $array (array i8))
 
-  ;; CHECK:      (global $global (mut eqref) (ref.null eq))
+  ;; CHECK:      (global $global (mut eqref) (ref.null none))
   (global $global (mut anyref) (ref.null any))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
@@ -96,13 +95,13 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.null eq)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.null i31)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (ref.null $array)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo

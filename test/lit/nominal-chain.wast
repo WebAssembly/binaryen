@@ -26,10 +26,10 @@
 
   (type $root (struct))
 
-  ;; CHECK:      (func $make-root (type $none_=>_ref?|$root|) (result (ref null $root))
-  ;; CHECK-NEXT:  (ref.null $leaf)
+  ;; CHECK:      (func $make-root (type $ref|$leaf|_=>_ref?|$root|) (param $leaf (ref $leaf)) (result (ref null $root))
+  ;; CHECK-NEXT:  (local.get $leaf)
   ;; CHECK-NEXT: )
-  (func $make-root (result (ref null $root))
-    (ref.null $leaf)
+  (func $make-root (param $leaf (ref $leaf)) (result (ref null $root))
+    (local.get $leaf)
   )
 )
