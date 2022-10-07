@@ -1446,7 +1446,7 @@
         )
       )
     )
-    ;; This get cannot be optimized because later down the local is written a
+    ;; This get cannot be optimized because before us the local might be set a
     ;; child as well. So the local $parent can refer to either type, and they
     ;; disagree on the aliased value.
     (drop
