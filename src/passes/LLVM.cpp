@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+//
+// Tested with LLVM 14.
+//
+
 #include <llvm/ADT/APInt.h>
 #include <llvm/IR/Argument.h>
 #include <llvm/IR/Constant.h>
@@ -23,6 +27,7 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Support/InitLLVM.h>
+#include <llvm/Support/TargetSelect.h>
 
 #include "pass.h"
 #include "wasm-builder.h"
@@ -31,6 +36,15 @@
 struct LLVM : public wasm::Pass {
   void run(wasm::Module* module) override {
     using namespace llvm;
+
+
+  LLVMInitializeWebAssemblyTargetInfo();
+  //InitializeAllTargets();
+  //InitializeAllTargetMCs();
+  //InitializeAllAsmPrinters();
+  //InitializeAllAsmParsers();
+
+
 
     LLVMContext context;
     i32 = Type::getInt32Ty(context);
