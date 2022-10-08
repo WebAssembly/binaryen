@@ -3145,8 +3145,10 @@ static void validateMemories(Module& module, ValidationInfo& info) {
       "multiple memories present, but multi-memories is disabled");
   }
   for (auto& memory : module.memories) {
-    info.shouldBeFalse(
-      memory->initial > memory->max, "memory", "memory max >= initial");
+    if (memory->hasMax()) {
+      info.shouldBeFalse(
+        memory->initial > memory->max, "memory", "memory max >= initial");
+    }
     if (memory->is64()) {
       info.shouldBeTrue(module.features.hasMemory64(),
                         "memory",
