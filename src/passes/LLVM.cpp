@@ -128,31 +128,11 @@ struct LLVM : public wasm::Pass {
     MPM.run(*func, FAM);
   }
 
-  void run(wasm::Module* module) override {
-    initLLVM();
-    initPassInstance();
-
-    auto* func = makeLLVMFunction();
-
-#if BINARYEN_LLVM_DEBUG
-    if (verifyModule(*mod, &errs())) {
-      wasm::Fatal() << "broken LLVM module";
-    }
-    errs() << *mod << '\n';
-#endif
-
-    optimize(func);
-
-#if BINARYEN_LLVM_DEBUG
-    errs() << "Optimized:\n\n" << *mod << '\n';
-#endif
-
-    // Emit wasm
-
+  std::unique_ptr<wasm::Module> llvmToBinaryen(FeatureSet features) {
     std::string error;
     auto target = TargetRegistry::lookupTarget(triple.getTriple(), error);
     if (!target) {
-      wasm::Fatal() << "can't find wasm target";
+      wasm::Fatal() << "can't find wasm target: " << error;
     }
 
     TargetOptions options;
@@ -175,8 +155,8 @@ struct LLVM : public wasm::Pass {
     std::vector<char> data(buffer.begin(), buffer.end());
 
     // Generate Binaryen IR
-    wasm::Module newModule;
-    wasm::WasmBinaryBuilder reader(newModule, module->features, data);
+    auto newModule = std::make_unique<wasm::Module>();
+    wasm::WasmBinaryBuilder reader(*newModule, features, data);
     try {
       reader.read();
     } catch (wasm::ParseException& p) {
@@ -185,7 +165,31 @@ struct LLVM : public wasm::Pass {
       wasm::Fatal() << "error in parsing wasm binary";
     }
 
-    std::cout << newModule << '\n'; 
+    return newModule;
+  }
+
+  void run(wasm::Module* module) override {
+    initLLVM();
+    initPassInstance();
+
+    auto* func = makeLLVMFunction();
+
+#if BINARYEN_LLVM_DEBUG
+    if (verifyModule(*mod, &errs())) {
+      wasm::Fatal() << "broken LLVM module";
+    }
+    errs() << *mod << '\n';
+#endif
+
+    optimize(func);
+
+#if BINARYEN_LLVM_DEBUG
+    errs() << "Optimized:\n\n" << *mod << '\n';
+#endif
+
+    auto newModule = llvmToBinaryen(module->features);
+
+    std::cout << *newModule << '\n'; 
   }
 
   llvm::Type* i32;
