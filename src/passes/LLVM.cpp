@@ -19,17 +19,22 @@
 //
 
 #include <llvm/ADT/APInt.h>
+//#include <llvm/CodeGen/CommandFlags.h>
 #include <llvm/IR/Argument.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Passes/PassBuilder.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Support/InitLLVM.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Target/TargetOptions.h>
+#include <llvm/Target/TargetMachine.h>
 
 #include "pass.h"
 #include "wasm-builder.h"
@@ -39,12 +44,13 @@ struct LLVM : public wasm::Pass {
   void run(wasm::Module* module) override {
     using namespace llvm;
 
-
-  LLVMInitializeWebAssemblyTargetInfo();
-  //InitializeAllTargets();
-  //InitializeAllTargetMCs();
-  //InitializeAllAsmPrinters();
-  //InitializeAllAsmParsers();
+    LLVMInitializeWebAssemblyTargetInfo();
+   
+    // Do we need these?
+    InitializeAllTargets();
+    InitializeAllTargetMCs();
+    InitializeAllAsmPrinters();
+    InitializeAllAsmParsers();
 
     // Setup
 
@@ -113,8 +119,22 @@ struct LLVM : public wasm::Pass {
     if (!target) {
       wasm::Fatal() << "can't find wasm target";
     }
-    // addPassesToEmitFile
 
+    std::cout << "before\n";
+
+///    std::string CPUStr = codegen::getCPUStr(),
+  //              FeaturesStr = codegen::getFeaturesStr();
+   // std::cout << "cpustr " << CPUStr << " : " << FeaturesStr << '\n';
+
+    TargetOptions options;
+    auto targetMachine = std::unique_ptr<TargetMachine>(target->createTargetMachine(
+        triple.getTriple(), "default", "", options, {}));
+
+    legacy::PassManager writerPM;
+    SmallVector<char, 128> buffer;
+    raw_svector_ostream stream(buffer);
+    targetMachine->addPassesToEmitFile(writerPM, stream, nullptr, CodeGenFileType::CGFT_ObjectFile);
+  
     // Generate Binaryen IR
   }
 

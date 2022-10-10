@@ -176,8 +176,9 @@ if(BUILD_LLVM)
   separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
   add_definitions(${LLVM_DEFINITIONS_LIST})
 
-  #llvm_map_components_to_libnames(llvm_libs support core irreader mc codegen target WebAssemblyInfo passes) # XXX which?
-  set(llvm_libs LLVM)
+  #llvm_map_components_to_libnames(llvm_libs support core irreader mc codegen target WebAssemblyInfo passes) # static linking
+  set(llvm_libs LLVM) # dynamic linking XXX this may not be coordinated with the cmake stuff about that gets the headers!
+  message(STATUS "LLVM libs: ${llvm_libs}")
 endif()
 
 # Compiler setup.
