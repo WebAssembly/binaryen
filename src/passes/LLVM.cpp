@@ -17,6 +17,9 @@
 //
 // Tested with LLVM 14.
 //
+// Use
+#define BINARYEN_LLVM_DEBUG 1
+// to add debugging and logging.
 
 #include <llvm/ADT/APInt.h>
 //#include <llvm/CodeGen/CommandFlags.h>
@@ -104,17 +107,8 @@ struct LLVM : public wasm::Pass {
     return func;
   }
 
-  void run(wasm::Module* module) override {
-    initLLVM();
-    initPassInstance();
-
-    auto* func = makeLLVMFunction();
-
-    if (verifyModule(*mod, &errs())) {
-      wasm::Fatal() << "broken LLVM module";
-    }
-    errs() << *mod << '\n';
-
+  // Optimize an LLVM function using the LLVM optimizer.
+  void optimize(Function* func) {
     // Optimize LLVM IR
     // TODO: see https://llvm.org/docs/NewPassManager.html#just-tell-me-how-to-run-the-default-optimization-pipeline-with-the-new-pass-manager
 
@@ -130,10 +124,28 @@ struct LLVM : public wasm::Pass {
     PB.registerLoopAnalyses(LAM);
     PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
-    FunctionPassManager MPM = PB.buildFunctionSimplificationPipeline(OptimizationLevel::Os, llvm::ThinOrFullLTOPhase::None); // TODO: opt levels
+    auto MPM = PB.buildFunctionSimplificationPipeline(OptimizationLevel::Os, llvm::ThinOrFullLTOPhase::None); // TODO: opt levels
     MPM.run(*func, FAM);
+  }
 
+  void run(wasm::Module* module) override {
+    initLLVM();
+    initPassInstance();
+
+    auto* func = makeLLVMFunction();
+
+#if BINARYEN_LLVM_DEBUG
+    if (verifyModule(*mod, &errs())) {
+      wasm::Fatal() << "broken LLVM module";
+    }
+    errs() << *mod << '\n';
+#endif
+
+    optimize(func);
+
+#if BINARYEN_LLVM_DEBUG
     errs() << "Optimized:\n\n" << *mod << '\n';
+#endif
 
     // Emit wasm
 
