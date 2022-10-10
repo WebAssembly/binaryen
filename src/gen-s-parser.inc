@@ -5,7 +5,10 @@
 #ifdef INSTRUCTION_PARSER
 #undef INSTRUCTION_PARSER
 using namespace std::string_view_literals;
-std::string_view op = s[0]->str().str;
+auto str = s[0]->str().str;
+char buf[33] = {};
+memcpy(buf, str.data(), str.size());
+std::string_view op = {buf, str.size()};
 switch (op[0]) {
   case 'a': {
     switch (op[1]) {

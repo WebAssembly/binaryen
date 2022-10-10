@@ -713,8 +713,10 @@ def instruction_parser(new_parser=False):
 
     if not new_parser:
         printer.print_line("using namespace std::string_view_literals;")
-        printer.print_line("std::string_view op = s[0]->str().str;"
-                           .format(inst_length + 1))
+        printer.print_line("auto str = s[0]->str().str;")
+        printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
+        printer.print_line("memcpy(buf, str.data(), str.size());")
+        printer.print_line("std::string_view op = {buf, str.size()};")
 
     def print_leaf(expr, inst):
         if new_parser:
