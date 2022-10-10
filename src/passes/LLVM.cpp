@@ -167,16 +167,17 @@ struct LLVM : public wasm::Pass {
     legacy::PassManager writerPM;
     targetMachine->addPassesToEmitFile(writerPM, stream, nullptr, CodeGenFileType::CGFT_ObjectFile);
 
-    std::cout << "buffer.size() " << buffer.size() << '\n';
     writerPM.run(*mod);
-    std::cout << "buffer.size() " << buffer.size() << '\n';
+#if BINARYEN_LLVM_DEBUG
+    std::cerr << "wasm binary size after LLVM: " << buffer.size() << '\n';
+#endif
 
     // XXX avoid copy?
     std::vector<char> data(buffer.begin(), buffer.end());
 
     // Generate Binaryen IR
     // TODO: this warns on reading an object file. For our uses here this is ok
-    //       for now, but perhaps we should emit a wasm executable?
+    //       for now, but perhaps we should emit a proper wasm executable?
     auto newModule = std::make_unique<wasm::Module>();
     wasm::WasmBinaryBuilder reader(*newModule, features, data);
     try {
@@ -198,6 +199,8 @@ struct LLVM : public wasm::Pass {
     list.clear();
   }
 
+  // Pass entry point.
+
   void run(wasm::Module* module) override {
     initLLVM();
     initPassInstance();
@@ -212,6 +215,8 @@ struct LLVM : public wasm::Pass {
 
     std::cout << *newModule << '\n'; 
   }
+
+  // Internal helpers.
 
   llvm::Type* wasmToLLVM(wasm::Type type) {
     if (type == wasm::Type::i32) {
