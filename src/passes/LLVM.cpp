@@ -128,7 +128,7 @@ struct LLVM : public wasm::Pass {
 
     TargetOptions options;
     auto targetMachine = std::unique_ptr<TargetMachine>(target->createTargetMachine(
-        triple.getTriple(), "default", "", options, {}));
+        triple.getTriple(), "mvp", "", options, {}));
 
     legacy::PassManager writerPM;
     SmallVector<char, 128> buffer;
