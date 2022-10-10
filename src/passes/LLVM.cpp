@@ -76,16 +76,10 @@ struct LLVM : public wasm::Pass {
     f64 = Type::getDoubleTy(*context);
 
     mod = std::make_unique<Module>("byn_mod", *context);
+    mod->setTargetTriple(triple.getTriple());
   }
 
-  void run(wasm::Module* module) override {
-    initLLVM();
-    initPassInstance();
-
-    mod->setTargetTriple(triple.getTriple());
-
-    // Build IR in a module
-
+  llvm::Function* makeLLVMFunction() {
     auto* funcType = FunctionType::get(
       wasmToLLVM(wasm::Type::i32),
       {
@@ -106,6 +100,15 @@ struct LLVM : public wasm::Pass {
     auto* addA = builder.CreateAdd(arg, num, "add_a");
     auto* addB = builder.CreateAdd(addA, num, "add_b");
     builder.CreateRet(addB);
+
+    return func;
+  }
+
+  void run(wasm::Module* module) override {
+    initLLVM();
+    initPassInstance();
+
+    auto* func = makeLLVMFunction();
 
     if (verifyModule(*mod, &errs())) {
       wasm::Fatal() << "broken LLVM module";
