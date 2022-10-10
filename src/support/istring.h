@@ -40,13 +40,10 @@ public:
 
   IString() = default;
 
-  // TODO: This is a wildly unsafe default. Change it?
+  // TODO: This is a wildly unsafe default inherited from the previous
+  // implementation. Change it?
   IString(std::string_view str, bool reuse = true)
     : str(interned(str, reuse)) {}
-
-  // String literals do not need to be copied. Note: Not safe to construct from
-  // temporary char arrays! Take their address first.
-  template<size_t N> IString(const char (&str)[N]) : str(interned(str, true)) {}
 
   // But other C strings generally do need to be copied.
   IString(const char* str) : str(interned(str, false)) {}
