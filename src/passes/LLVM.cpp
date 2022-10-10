@@ -46,6 +46,10 @@
 using namespace llvm;
 
 struct LLVM : public wasm::Pass {
+  // Global state. Each LLVM pass instance creates a context and the other data
+  // structures we will need. We also create a single module for the lifetime of
+  // the pass. As we compile code, we modify the contents inside that module by
+  // adding and removing functions.
   Triple triple;
   std::unique_ptr<llvm::LLVMContext> context;
   std::unique_ptr<llvm::Module> mod;
@@ -171,6 +175,8 @@ struct LLVM : public wasm::Pass {
     std::vector<char> data(buffer.begin(), buffer.end());
 
     // Generate Binaryen IR
+    // TODO: this warns on reading an object file. For our uses here this is ok
+    //       for now, but perhaps we should emit a wasm executable?
     auto newModule = std::make_unique<wasm::Module>();
     wasm::WasmBinaryBuilder reader(*newModule, features, data);
     try {
@@ -184,6 +190,14 @@ struct LLVM : public wasm::Pass {
     return newModule;
   }
 
+  // Reset the state of our global LLVM module, removing current changes so that
+  // it is ready for further work later. This removes any functions we added,
+  // after which the module is empty.
+  void resetLLVMModule() {
+    auto& list = mod->getFunctionList();
+    list.clear();
+  }
+
   void run(wasm::Module* module) override {
     initLLVM();
     initPassInstance();
@@ -193,6 +207,8 @@ struct LLVM : public wasm::Pass {
     optimize(func);
 
     auto newModule = llvmToBinaryen(module->features);
+
+    resetLLVMModule();
 
     std::cout << *newModule << '\n'; 
   }
