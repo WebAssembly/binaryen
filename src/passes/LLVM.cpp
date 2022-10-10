@@ -46,6 +46,7 @@ using namespace llvm;
 struct LLVM : public wasm::Pass {
   Triple triple;
   std::unique_ptr<llvm::LLVMContext> context;
+  std::unique_ptr<llvm::Module> mod;
 
   // Initialization of LLVM.
   void initLLVM() {
@@ -73,14 +74,15 @@ struct LLVM : public wasm::Pass {
     i64 = Type::getInt64Ty(*context);
     f32 = Type::getFloatTy(*context);
     f64 = Type::getDoubleTy(*context);
+
+    mod = std::make_unique<Module>("byn_mod", *context);
   }
 
   void run(wasm::Module* module) override {
     initLLVM();
     initPassInstance();
 
-    Module mod("byn_mod", *context);
-    mod.setTargetTriple(triple.getTriple());
+    mod->setTargetTriple(triple.getTriple());
 
     // Build IR in a module
 
@@ -92,8 +94,8 @@ struct LLVM : public wasm::Pass {
       },
       false
     );
-    mod.getOrInsertFunction("byn_func", funcType);
-    auto* func = mod.getFunction("byn_func");
+    mod->getOrInsertFunction("byn_func", funcType);
+    auto* func = mod->getFunction("byn_func");
 
     IRBuilder builder(*context);
 
@@ -105,10 +107,10 @@ struct LLVM : public wasm::Pass {
     auto* addB = builder.CreateAdd(addA, num, "add_b");
     builder.CreateRet(addB);
 
-    if (verifyModule(mod, &errs())) {
+    if (verifyModule(*mod, &errs())) {
       wasm::Fatal() << "broken LLVM module";
     }
-    errs() << mod << '\n';
+    errs() << *mod << '\n';
 
     // Optimize LLVM IR
     // TODO: see https://llvm.org/docs/NewPassManager.html#just-tell-me-how-to-run-the-default-optimization-pipeline-with-the-new-pass-manager
@@ -128,7 +130,7 @@ struct LLVM : public wasm::Pass {
     FunctionPassManager MPM = PB.buildFunctionSimplificationPipeline(OptimizationLevel::Os, llvm::ThinOrFullLTOPhase::None); // TODO: opt levels
     MPM.run(*func, FAM);
 
-    errs() << "Optimized:\n\n" << mod << '\n';
+    errs() << "Optimized:\n\n" << *mod << '\n';
 
     // Emit wasm
 
@@ -151,7 +153,7 @@ struct LLVM : public wasm::Pass {
     targetMachine->addPassesToEmitFile(writerPM, stream, nullptr, CodeGenFileType::CGFT_ObjectFile);
 
     std::cout << "buffer.size() " << buffer.size() << '\n';
-    writerPM.run(mod);
+    writerPM.run(*mod);
     std::cout << "buffer.size() " << buffer.size() << '\n';
 
     // XXX avoid copy?
