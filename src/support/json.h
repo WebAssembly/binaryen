@@ -42,7 +42,7 @@
 
 namespace json {
 
-typedef cashew::IString IString;
+using IString = cashew::IString;
 
 // Main value type
 struct Value {

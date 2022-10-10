@@ -29,14 +29,14 @@
 
 namespace wasm {
 
+using IString = cashew::IString;
+
 class SourceLocation {
 public:
-  cashew::IString filename;
+  IString filename;
   uint32_t line;
   uint32_t column;
-  SourceLocation(cashew::IString filename_,
-                 uint32_t line_,
-                 uint32_t column_ = 0)
+  SourceLocation(IString filename_, uint32_t line_, uint32_t column_ = 0)
     : filename(filename_), line(line_), column(column_) {}
 };
 
@@ -48,7 +48,7 @@ class Element {
 
   bool isList_ = true;
   List list_;
-  cashew::IString str_;
+  IString str_;
   bool dollared_;
   bool quoted_;
 
@@ -74,9 +74,9 @@ public:
   List::Iterator end() { return list().end(); }
 
   // string methods
-  cashew::IString str() const;
+  IString str() const;
   const char* c_str() const;
-  Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
+  Element* setString(IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
   // comparisons
@@ -138,7 +138,7 @@ class SExpressionWasmBuilder {
   int dataCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, HeapType> functionTypes;
-  std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
+  std::unordered_map<IString, Index> debugInfoFileIndices;
 
   // Maps type indexes to a mapping of field index => name. This is not the same
   // as the field names stored on the wasm object, as that maps types after
@@ -183,22 +183,18 @@ private:
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
   void parseFunction(Element& s, bool preParseImport = false);
 
-  Type stringToType(cashew::IString str,
-                    bool allowError = false,
-                    bool prefix = false) {
+  Type stringToType(IString str, bool allowError = false, bool prefix = false) {
     return stringToType(str.str, allowError, prefix);
   }
   Type
   stringToType(const char* str, bool allowError = false, bool prefix = false);
-  HeapType stringToHeapType(cashew::IString str, bool prefix = false) {
+  HeapType stringToHeapType(IString str, bool prefix = false) {
     return stringToHeapType(str.str, prefix);
   }
   HeapType stringToHeapType(const char* str, bool prefix = false);
   Type elementToType(Element& s);
   Type stringToLaneType(const char* str);
-  bool isType(cashew::IString str) {
-    return stringToType(str, true) != Type::none;
-  }
+  bool isType(IString str) { return stringToType(str, true) != Type::none; }
   HeapType getFunctionType(Name name, Element& s);
 
 public:
