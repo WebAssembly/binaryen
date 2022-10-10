@@ -36,7 +36,6 @@
 #include <llvm/Support/CodeGen.h>
 #include <llvm/Support/InitLLVM.h>
 #include <llvm/Support/TargetSelect.h>
-#include <llvm/Target/TargetOptions.h>
 #include <llvm/Target/TargetMachine.h>
 
 #include "pass.h"
@@ -50,6 +49,12 @@ struct LLVM : public wasm::Pass {
   Triple triple;
   std::unique_ptr<llvm::LLVMContext> context;
   std::unique_ptr<llvm::Module> mod;
+  std::unique_ptr<TargetMachine> targetMachine;
+
+  llvm::Type* i32;
+  llvm::Type* i64;
+  llvm::Type* f32;
+  llvm::Type* f64;
 
   // Initialization of LLVM.
   void initLLVM() {
@@ -80,6 +85,15 @@ struct LLVM : public wasm::Pass {
 
     mod = std::make_unique<Module>("byn_mod", *context);
     mod->setTargetTriple(triple.getTriple());
+
+    std::string error;
+    auto target = TargetRegistry::lookupTarget(triple.getTriple(), error);
+    if (!target) {
+      wasm::Fatal() << "can't find wasm target: " << error;
+    }
+
+    targetMachine = std::unique_ptr<TargetMachine>(target->createTargetMachine(
+        triple.getTriple(), "mvp", "", {}, {}));
   }
 
   llvm::Function* makeLLVMFunction() {
@@ -104,6 +118,13 @@ struct LLVM : public wasm::Pass {
     auto* addB = builder.CreateAdd(addA, num, "add_b");
     builder.CreateRet(addB);
 
+#if BINARYEN_LLVM_DEBUG
+    if (verifyModule(*mod, &errs())) {
+      wasm::Fatal() << "broken LLVM module";
+    }
+    errs() << *mod << '\n';
+#endif
+
     return func;
   }
 
@@ -126,19 +147,14 @@ struct LLVM : public wasm::Pass {
 
     auto MPM = PB.buildFunctionSimplificationPipeline(OptimizationLevel::Os, llvm::ThinOrFullLTOPhase::None); // TODO: opt levels
     MPM.run(*func, FAM);
+
+#if BINARYEN_LLVM_DEBUG
+    errs() << "Optimized:\n\n" << *mod << '\n';
+#endif
   }
 
+  // Translate the current LLVM module to Binaryen IR.
   std::unique_ptr<wasm::Module> llvmToBinaryen(FeatureSet features) {
-    std::string error;
-    auto target = TargetRegistry::lookupTarget(triple.getTriple(), error);
-    if (!target) {
-      wasm::Fatal() << "can't find wasm target: " << error;
-    }
-
-    TargetOptions options;
-    auto targetMachine = std::unique_ptr<TargetMachine>(target->createTargetMachine(
-        triple.getTriple(), "mvp", "", options, {}));
-
     // Try to use a buffer big enough for a typical wasm output from LLVM (which
     // seems to be around 141 bytes atm).
     SmallVector<char, 256> buffer;
@@ -174,28 +190,12 @@ struct LLVM : public wasm::Pass {
 
     auto* func = makeLLVMFunction();
 
-#if BINARYEN_LLVM_DEBUG
-    if (verifyModule(*mod, &errs())) {
-      wasm::Fatal() << "broken LLVM module";
-    }
-    errs() << *mod << '\n';
-#endif
-
     optimize(func);
-
-#if BINARYEN_LLVM_DEBUG
-    errs() << "Optimized:\n\n" << *mod << '\n';
-#endif
 
     auto newModule = llvmToBinaryen(module->features);
 
     std::cout << *newModule << '\n'; 
   }
-
-  llvm::Type* i32;
-  llvm::Type* i64;
-  llvm::Type* f32;
-  llvm::Type* f64;
 
   llvm::Type* wasmToLLVM(wasm::Type type) {
     if (type == wasm::Type::i32) {
