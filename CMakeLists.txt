@@ -176,7 +176,8 @@ if(BUILD_LLVM)
   separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
   add_definitions(${LLVM_DEFINITIONS_LIST})
 
-  llvm_map_components_to_libnames(llvm_libs support core irreader mc codegen target WebAssemblyInfo passes) # XXX which?
+  #llvm_map_components_to_libnames(llvm_libs support core irreader mc codegen target WebAssemblyInfo passes) # XXX which?
+  set(llvm_libs LLVM)
 endif()
 
 # Compiler setup.
