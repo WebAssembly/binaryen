@@ -122,8 +122,9 @@ struct SubTypes {
     std::unordered_set<HeapType> work(types.begin(), types.end());
 
     while (!work.empty()) {
-      auto type = work.back();
-      work.pop_back();
+      auto iter = work.begin();
+      auto type = *iter;
+      work.erase(iter);
       if (auto super = type.getSuperType()) {
         auto depth = depths[type];
         auto& superDepth = depths[*super];
