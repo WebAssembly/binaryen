@@ -55,7 +55,7 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
 
   auto [localIt, localInserted] = localStrings.insert(s);
   if (!localInserted) {
-    // We already had a locally copy of this string.
+    // We already had a local copy of this string.
     return localIt->str;
   }
 
