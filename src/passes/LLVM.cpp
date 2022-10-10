@@ -44,7 +44,7 @@
 
 using namespace llvm;
 
-struct LLVM : public wasm::Pass {
+struct LLVMPass : public wasm::Pass {
   // Global state. Each LLVM pass instance creates a context and the other data
   // structures we will need. We also create a single module for the lifetime of
   // the pass. As we compile code, we modify the contents inside that module by
@@ -209,6 +209,9 @@ struct LLVM : public wasm::Pass {
     initLLVM();
     initPassInstance();
 
+//    struct Walker : public wasm::PostWalker<Walker> {
+  //    LLVM
+   // };
     auto* func = makeLLVMFunction();
 
     optimize(func);
@@ -239,6 +242,6 @@ struct LLVM : public wasm::Pass {
 
 namespace wasm {
 
-Pass* createLLVMPass() { return new LLVM(); }
+Pass* createLLVMPass() { return new LLVMPass(); }
 
 } // namespace wasm
