@@ -22,7 +22,7 @@ namespace cashew {
 
 Ref& Ref::operator[](unsigned x) { return (*get())[x]; }
 
-Ref& Ref::operator[](wasm::IString x) { return (*get())[x]; }
+Ref& Ref::operator[](IString x) { return (*get())[x]; }
 
 bool Ref::operator==(std::string_view str) {
   return get()->isString() && get()->str == str;
@@ -30,11 +30,11 @@ bool Ref::operator==(std::string_view str) {
 
 bool Ref::operator!=(std::string_view str) { return !(*this == str); }
 
-bool Ref::operator==(const wasm::IString& str) {
+bool Ref::operator==(const IString& str) {
   return get()->isString() && get()->str == str;
 }
 
-bool Ref::operator!=(const wasm::IString& str) {
+bool Ref::operator!=(const IString& str) {
   return get()->isString() && get()->str != str;
 }
 
@@ -54,7 +54,7 @@ Value& Value::setAssign(Ref target, Ref value) {
   return *this;
 }
 
-Value& Value::setAssignName(wasm::IString target, Ref value) {
+Value& Value::setAssignName(IString target, Ref value) {
   asAssignName()->target() = target;
   asAssignName()->value() = value;
   return *this;

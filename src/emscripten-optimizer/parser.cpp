@@ -22,95 +22,95 @@ namespace cashew {
 
 // common strings
 
-wasm::IString TOPLEVEL("toplevel");
-wasm::IString DEFUN("defun");
-wasm::IString BLOCK("block");
-wasm::IString VAR("var");
-wasm::IString CONST("const");
-wasm::IString CONDITIONAL("conditional");
-wasm::IString BINARY("binary");
-wasm::IString RETURN("return");
-wasm::IString IF("if");
-wasm::IString ELSE("else");
-wasm::IString WHILE("while");
-wasm::IString DO("do");
-wasm::IString FOR("for");
-wasm::IString SEQ("seq");
-wasm::IString SUB("sub");
-wasm::IString CALL("call");
-wasm::IString LABEL("label");
-wasm::IString BREAK("break");
-wasm::IString CONTINUE("continue");
-wasm::IString SWITCH("switch");
-wasm::IString STRING("string");
-wasm::IString TRY("try");
-wasm::IString INF("inf");
-wasm::IString NaN("nan");
-wasm::IString LLVM_CTTZ_I32("_llvm_cttz_i32");
-wasm::IString UDIVMODDI4("___udivmoddi4");
-wasm::IString UNARY_PREFIX("unary-prefix");
-wasm::IString UNARY_POSTFIX("unary-postfix");
-wasm::IString MATH_FROUND("Math_fround");
-wasm::IString MATH_CLZ32("Math_clz32");
-wasm::IString INT64("i64");
-wasm::IString INT64_CONST("i64_const");
-wasm::IString SIMD_FLOAT32X4("SIMD_Float32x4");
-wasm::IString SIMD_FLOAT64X2("SIMD_Float64x2");
-wasm::IString SIMD_INT8X16("SIMD_Int8x16");
-wasm::IString SIMD_INT16X8("SIMD_Int16x8");
-wasm::IString SIMD_INT32X4("SIMD_Int32x4");
-wasm::IString PLUS("+");
-wasm::IString MINUS("-");
-wasm::IString OR("|");
-wasm::IString AND("&");
-wasm::IString XOR("^");
-wasm::IString L_NOT("!");
-wasm::IString B_NOT("~");
-wasm::IString LT("<");
-wasm::IString GE(">=");
-wasm::IString LE("<=");
-wasm::IString GT(">");
-wasm::IString EQ("==");
-wasm::IString NE("!=");
-wasm::IString DIV("/");
-wasm::IString MOD("%");
-wasm::IString MUL("*");
-wasm::IString RSHIFT(">>");
-wasm::IString LSHIFT("<<");
-wasm::IString TRSHIFT(">>>");
-wasm::IString HEAP8("HEAP8");
-wasm::IString HEAP16("HEAP16");
-wasm::IString HEAP32("HEAP32");
-wasm::IString HEAPF32("HEAPF32");
-wasm::IString HEAPU8("HEAPU8");
-wasm::IString HEAPU16("HEAPU16");
-wasm::IString HEAPU32("HEAPU32");
-wasm::IString HEAPF64("HEAPF64");
-wasm::IString F0("f0");
-wasm::IString EMPTY("");
-wasm::IString FUNCTION("function");
-wasm::IString OPEN_PAREN("(");
-wasm::IString OPEN_BRACE("[");
-wasm::IString OPEN_CURLY("{");
-wasm::IString CLOSE_CURLY("}");
-wasm::IString COMMA(",");
-wasm::IString QUESTION("?");
-wasm::IString COLON(":");
-wasm::IString CASE("case");
-wasm::IString DEFAULT("default");
-wasm::IString DOT("dot");
-wasm::IString PERIOD(".");
-wasm::IString NEW("new");
-wasm::IString ARRAY("array");
-wasm::IString OBJECT("object");
-wasm::IString THROW("throw");
-wasm::IString SET("=");
-wasm::IString ATOMICS("Atomics");
-wasm::IString COMPARE_EXCHANGE("compareExchange");
-wasm::IString LOAD("load");
-wasm::IString STORE("store");
-wasm::IString GETTER("get");
-wasm::IString SETTER("set");
+IString TOPLEVEL("toplevel");
+IString DEFUN("defun");
+IString BLOCK("block");
+IString VAR("var");
+IString CONST("const");
+IString CONDITIONAL("conditional");
+IString BINARY("binary");
+IString RETURN("return");
+IString IF("if");
+IString ELSE("else");
+IString WHILE("while");
+IString DO("do");
+IString FOR("for");
+IString SEQ("seq");
+IString SUB("sub");
+IString CALL("call");
+IString LABEL("label");
+IString BREAK("break");
+IString CONTINUE("continue");
+IString SWITCH("switch");
+IString STRING("string");
+IString TRY("try");
+IString INF("inf");
+IString NaN("nan");
+IString LLVM_CTTZ_I32("_llvm_cttz_i32");
+IString UDIVMODDI4("___udivmoddi4");
+IString UNARY_PREFIX("unary-prefix");
+IString UNARY_POSTFIX("unary-postfix");
+IString MATH_FROUND("Math_fround");
+IString MATH_CLZ32("Math_clz32");
+IString INT64("i64");
+IString INT64_CONST("i64_const");
+IString SIMD_FLOAT32X4("SIMD_Float32x4");
+IString SIMD_FLOAT64X2("SIMD_Float64x2");
+IString SIMD_INT8X16("SIMD_Int8x16");
+IString SIMD_INT16X8("SIMD_Int16x8");
+IString SIMD_INT32X4("SIMD_Int32x4");
+IString PLUS("+");
+IString MINUS("-");
+IString OR("|");
+IString AND("&");
+IString XOR("^");
+IString L_NOT("!");
+IString B_NOT("~");
+IString LT("<");
+IString GE(">=");
+IString LE("<=");
+IString GT(">");
+IString EQ("==");
+IString NE("!=");
+IString DIV("/");
+IString MOD("%");
+IString MUL("*");
+IString RSHIFT(">>");
+IString LSHIFT("<<");
+IString TRSHIFT(">>>");
+IString HEAP8("HEAP8");
+IString HEAP16("HEAP16");
+IString HEAP32("HEAP32");
+IString HEAPF32("HEAPF32");
+IString HEAPU8("HEAPU8");
+IString HEAPU16("HEAPU16");
+IString HEAPU32("HEAPU32");
+IString HEAPF64("HEAPF64");
+IString F0("f0");
+IString EMPTY("");
+IString FUNCTION("function");
+IString OPEN_PAREN("(");
+IString OPEN_BRACE("[");
+IString OPEN_CURLY("{");
+IString CLOSE_CURLY("}");
+IString COMMA(",");
+IString QUESTION("?");
+IString COLON(":");
+IString CASE("case");
+IString DEFAULT("default");
+IString DOT("dot");
+IString PERIOD(".");
+IString NEW("new");
+IString ARRAY("array");
+IString OBJECT("object");
+IString THROW("throw");
+IString SET("=");
+IString ATOMICS("Atomics");
+IString COMPARE_EXCHANGE("compareExchange");
+IString LOAD("load");
+IString STORE("store");
+IString GETTER("get");
+IString SETTER("set");
 
 IStringSet
   keywords("var const function if else do while for break continue return "
@@ -122,7 +122,7 @@ int MAX_OPERATOR_SIZE = 3;
 
 std::vector<OperatorClass> operatorClasses;
 
-static std::vector<std::unordered_map<wasm::IString, int>>
+static std::vector<std::unordered_map<IString, int>>
   precedences; // op, type => prec
 
 struct Init {
@@ -154,7 +154,7 @@ struct Init {
 
 Init init;
 
-int OperatorClass::getPrecedence(Type type, wasm::IString op) {
+int OperatorClass::getPrecedence(Type type, IString op) {
   return precedences[type][op];
 }
 

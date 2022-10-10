@@ -3193,45 +3193,46 @@ void SExpressionWasmBuilder::stringToBinary(Element& s,
   data.resize(originalSize + str.size());
   char* write = data.data() + originalSize;
   const char* end = str.data() + str.size();
-  for (const char* input = str.data(); input < end; ++input) {
+  for (const char* input = str.data(); input < end;) {
     if (input[0] == '\\') {
       if (input + 1 >= end) {
         throw ParseException("Unterminated escape sequence", s.line, s.col);
       }
       if (input[1] == 't') {
         *write++ = '\t';
-        input += 1;
+        input += 2;
         continue;
       } else if (input[1] == 'n') {
         *write++ = '\n';
-        input += 1;
+        input += 2;
         continue;
       } else if (input[1] == 'r') {
         *write++ = '\r';
-        input += 1;
+        input += 2;
         continue;
       } else if (input[1] == '"') {
         *write++ = '"';
-        input += 1;
+        input += 2;
         continue;
       } else if (input[1] == '\'') {
         *write++ = '\'';
-        input += 1;
+        input += 2;
         continue;
       } else if (input[1] == '\\') {
         *write++ = '\\';
-        input += 1;
+        input += 2;
         continue;
       } else {
         if (input + 2 >= end) {
           throw ParseException("Unterminated escape sequence", s.line, s.col);
         }
         *write++ = (char)(unhex(input[1]) * 16 + unhex(input[2]));
-        input += 2;
+        input += 3;
         continue;
       }
     }
     *write++ = input[0];
+    input++;
   }
   assert(write >= data.data());
   size_t actual = write - data.data();

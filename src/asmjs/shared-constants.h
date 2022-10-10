@@ -21,8 +21,6 @@
 
 namespace wasm {
 
-using IString = cashew::IString;
-
 extern IString TOPMOST;
 extern IString INT8ARRAY;
 extern IString INT16ARRAY;

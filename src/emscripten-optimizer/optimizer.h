@@ -20,14 +20,15 @@
 #include "simple_ast.h"
 
 using namespace cashew;
+using IString = wasm::IString;
 
-extern wasm::IString JS_FLOAT_ZERO;
+extern IString JS_FLOAT_ZERO;
 
-extern wasm::IString SIMD_INT8X16_CHECK;
-extern wasm::IString SIMD_INT16X8_CHECK;
-extern wasm::IString SIMD_INT32X4_CHECK;
-extern wasm::IString SIMD_FLOAT32X4_CHECK;
-extern wasm::IString SIMD_FLOAT64X2_CHECK;
+extern IString SIMD_INT8X16_CHECK;
+extern IString SIMD_INT16X8_CHECK;
+extern IString SIMD_INT32X4_CHECK;
+extern IString SIMD_FLOAT32X4_CHECK;
+extern IString SIMD_FLOAT64X2_CHECK;
 
 enum JsType {
   JS_INT = 0,
