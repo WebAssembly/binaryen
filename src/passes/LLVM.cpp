@@ -38,6 +38,7 @@
 
 #include "pass.h"
 #include "wasm-builder.h"
+#include "wasm-binary.h"
 #include "wasm.h"
 
 struct LLVM : public wasm::Pass {
@@ -120,22 +121,37 @@ struct LLVM : public wasm::Pass {
       wasm::Fatal() << "can't find wasm target";
     }
 
-    std::cout << "before\n";
-
-///    std::string CPUStr = codegen::getCPUStr(),
-  //              FeaturesStr = codegen::getFeaturesStr();
-   // std::cout << "cpustr " << CPUStr << " : " << FeaturesStr << '\n';
-
     TargetOptions options;
     auto targetMachine = std::unique_ptr<TargetMachine>(target->createTargetMachine(
         triple.getTriple(), "mvp", "", options, {}));
 
-    legacy::PassManager writerPM;
-    SmallVector<char, 128> buffer;
+    // Try to use a buffer big enough for a typical wasm output from LLVM (which
+    // seems to be around 141 bytes atm).
+    SmallVector<char, 256> buffer;
     raw_svector_ostream stream(buffer);
+
+    legacy::PassManager writerPM;
     targetMachine->addPassesToEmitFile(writerPM, stream, nullptr, CodeGenFileType::CGFT_ObjectFile);
-  
+
+    std::cout << "buffer.size() " << buffer.size() << '\n';
+    writerPM.run(mod);
+    std::cout << "buffer.size() " << buffer.size() << '\n';
+
+    // XXX avoid copy?
+    std::vector<char> data(buffer.begin(), buffer.end());
+
     // Generate Binaryen IR
+    wasm::Module newModule;
+    wasm::WasmBinaryBuilder reader(newModule, module->features, data);
+    try {
+      reader.read();
+    } catch (wasm::ParseException& p) {
+      p.dump(std::cerr);
+      std::cerr << '\n';
+      wasm::Fatal() << "error in parsing wasm binary";
+    }
+
+    std::cout << newModule << '\n'; 
   }
 
   llvm::Type* i32;
