@@ -366,26 +366,6 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   WASM_UNREACHABLE("a or b must be a full cone");
 }
 
-PossibleContents::ConeType
-PossibleContents::getNormalizedCone(std::unique_ptr<SubTypes>& subTypes) const {
-  auto cone = getCone();
-
-  if (cone.type.isRef()) {
-    Index maxDepth = 0;
-
-    subTypes->traverseSubTypes(
-      cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
-        maxDepth = std::max(depth, maxDepth);
-      });
-
-    assert(maxDepth <= cone.depth);
-
-    cone.depth = maxDepth;
-  }
-
-  return cone;
-}
-
 namespace {
 
 // We are going to do a very large flow operation, potentially, as we create
@@ -1397,6 +1377,30 @@ private:
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
 
+  // The depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  std::unordered_map<HeapType, Index> childDepths;
+
+  // Given a ConeType, normalize it, that is, make its depth the canonical
+  // depth given the actual children it has. If this is a full cone, then we can
+  // always pick the actual maximal depth and use that instead of FullDepth==-1.
+  // For a non-full cone, we also reduce the depth as much as possible, so it is
+  // equal to the maximum depth of an existing subtype.
+  //
+  // Returns whether the cone is of maximal depth.
+  void normalizeConeType(PossibleContents& cone) {
+    assert(cone.isConeType());
+    auto type = cone.getType();
+    auto before = cone.getCone().depth;
+    auto normalized = childDepths[type];
+    if (normalized < before) {
+      cone = PossibleContents::coneType(type, normalized);
+      return true;
+    }
+    return before == normalized;
+  }
+
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
   void dump(Location location);
@@ -1657,9 +1661,13 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     if (contents.getType() == exprLoc->expr->type && contents.isConeType()) {
-      // The type here is the worst possible it can be: all we know is the type,
-      // and the type is just what is already declared in the wasm.
-      worthSendingMore = false; // XXX seems to affect one test. and results on j2wasm might be too good..?
+      // Normalize the cone to make it easy to see when we've reached the worst
+      // case of all possible contents for this location, which is when the
+      // PossibleContents is identical to what the wasm type tells us: a cone of
+      // all possible subtypes from the declared type.
+      if (normalizeConeType(contents)) {
+        worthSendingMore = false;
+      }
       // TODO: assert on never having "Many" for refernce types. Only mVP.
       // TODO: filter by the declared type?
     }

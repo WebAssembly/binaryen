@@ -106,6 +106,35 @@ struct SubTypes {
     }
   }
 
+  // Computes the depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  std::unordered_map<HeapType, Index> getChildDepths() {
+    std::unordered_map<HeapType, Index> depths;
+
+    // Begin with depth 0.
+    for (auto type : types) {
+      depths[type] = 0;
+    }
+
+    // Begin with a plan to work on all the types. When we visit an item, we'll
+    // update our super type based on our current depth.
+    std::unordered_set<HeapType> work(types.begin(), types.end());
+
+    while (!work.empty()) {
+      auto type = work.back();
+      work.pop_back();
+      if (auto super = type.getSuperType()) {
+        auto depth = depths[type];
+        auto& superDepth = depths[*super];
+        if (depth + 1 >= superDepth) {
+          superDepth = depth + 1;
+          work.insert(*super);
+        }
+      }
+    }
+  }
+
   // All the types in the program. This is computed here anyhow, and can be
   // useful for callers to iterate on, so it is public.
   std::vector<HeapType> types;

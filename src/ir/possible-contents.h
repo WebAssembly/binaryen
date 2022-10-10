@@ -228,13 +228,6 @@ public:
     }
   }
 
-  // Like getCone(), but use subtype info to normalize the depth so that it is
-  // as small as possible. In particular, if this is a full cone, then we can
-  // always pick the actual maximal depth and use that instead of FullDepth==-1.
-  // For a non-full cone, we also reduce the depth as much as possible, so it is
-  // equal to the maximum depth of an existing subtype.
-  ConeType getNormalizedCone(std::unique_ptr<SubTypes>& subTypes) const;
-
   // Returns whether the relevant cone for this, as computed by getCone(), is of
   // full size, that is, includes all subtypes.
   bool hasFullCone() const { return getCone().depth == FullDepth; }
