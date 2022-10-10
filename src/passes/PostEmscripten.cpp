@@ -191,10 +191,10 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   std::vector<Export> toRemove;
 
   void visitExport(Export* curr) {
-    if (curr->name.startsWith(EM_JS_PREFIX.str)) {
+    if (curr->name.startsWith(EM_JS_PREFIX)) {
       toRemove.push_back(*curr);
     }
-    if (curr->name.startsWith(EM_JS_DEPS_PREFIX.str)) {
+    if (curr->name.startsWith(EM_JS_DEPS_PREFIX)) {
       toRemove.push_back(*curr);
     }
   }

@@ -56,7 +56,7 @@ public:
   }
 
   bool operator==(const IString& other) const {
-    // Fast!
+    // Fast! No need to compare contents due to interning
     return str.data() == other.str.data();
   }
   bool operator!=(const IString& other) const { return !(*this == other); }
@@ -77,19 +77,15 @@ public:
 
   bool equals(std::string_view other) const { return str == other; }
 
-  const std::string_view stripPrefix(std::string_view prefix) const {
-    // TODO: Use C++20 `starts_with`.
-    if (str.size() < prefix.size()) {
-      return {};
-    }
-    if (std::string_view(str.data(), prefix.size()) == prefix) {
-      return str.substr(prefix.size());
-    }
-    return {};
-  }
-
   bool startsWith(std::string_view prefix) const {
-    return stripPrefix(prefix).data() != nullptr;
+    // TODO: Use C++20 `starts_with`.
+    return str.substr(0, prefix.size()) == prefix;
+  }
+  bool startsWith(IString str) const { return startsWith(str.str); }
+
+  // Disambiguate for string literals.
+  template<int N> bool startsWith(const char (&str)[N]) {
+    return startsWith(std::string_view(str));
   }
 
   size_t size() const { return str.size(); }

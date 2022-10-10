@@ -267,7 +267,7 @@ protected:
       ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
       ModuleUtils::iterImportedTables(wasm, reportUnknownImport);
       ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
-        if (import->module == SPECTEST && import->base.startsWith(PRINT.str)) {
+        if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
           // We can handle it.
         } else {
           reportUnknownImport(import);
@@ -277,7 +277,7 @@ protected:
         // spec tests consider it illegal to use spectest.print in a table
         if (auto* import = wasm.getFunction(name)) {
           if (import->imported() && import->module == SPECTEST &&
-              import->base.startsWith(PRINT.str)) {
+              import->base.startsWith(PRINT)) {
             std::cerr << "cannot put spectest.print in table\n";
             invalid = true;
           }

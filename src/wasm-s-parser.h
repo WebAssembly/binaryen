@@ -194,6 +194,7 @@ private:
   }
   HeapType stringToHeapType(std::string_view str, bool prefix = false);
   Type elementToType(Element& s);
+  // TODO: Use std::string_view for this and similar functions.
   Type stringToLaneType(const char* str);
   bool isType(IString str) { return stringToType(str, true) != Type::none; }
   HeapType getFunctionType(Name name, Element& s);

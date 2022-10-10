@@ -51,7 +51,7 @@ struct Value {
     Ref(Value* value) : std::shared_ptr<Value>(value) {}
 
     Ref& operator[](size_t x) { return (*this->get())[x]; }
-    Ref& operator[](wasm::IString x) { return (*this->get())[x]; }
+    Ref& operator[](IString x) { return (*this->get())[x]; }
   };
 
   enum Type {
@@ -66,7 +66,7 @@ struct Value {
   Type type = Null;
 
   typedef std::vector<Ref> ArrayStorage;
-  typedef std::unordered_map<wasm::IString, Ref> ObjectStorage;
+  typedef std::unordered_map<IString, Ref> ObjectStorage;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf

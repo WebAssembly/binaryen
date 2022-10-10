@@ -2955,7 +2955,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void emitImportHeader(Importable* curr) {
     printMedium(o, "import ");
-    // TODO: Escape the strings properly.
+    // TODO: Escape the strings properly and use std::string_view.
     printText(o, curr->module.str.data()) << ' ';
     printText(o, curr->base.str.data()) << ' ';
   }
