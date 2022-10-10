@@ -41,28 +41,45 @@
 #include "wasm-binary.h"
 #include "wasm.h"
 
-struct LLVM : public wasm::Pass {
-  void run(wasm::Module* module) override {
-    using namespace llvm;
+using namespace llvm;
 
-    LLVMInitializeWebAssemblyTargetInfo();
-   
-    // Do we need these?
+struct LLVM : public wasm::Pass {
+  Triple triple;
+  std::unique_ptr<llvm::LLVMContext> context;
+
+  // Initialization of LLVM.
+  void initLLVM() {
+    static bool done = false;
+    if (done) {
+      return;
+    }
+
+    // Perhaps we could call only LLVMInitializeWebAssemblyTargetInfo() etc?
     InitializeAllTargets();
     InitializeAllTargetMCs();
     InitializeAllAsmPrinters();
     InitializeAllAsmParsers();
 
-    // Setup
+    done = true;
+  }
 
-    LLVMContext context;
-    i32 = Type::getInt32Ty(context);
-    i64 = Type::getInt64Ty(context);
-    f32 = Type::getFloatTy(context);
-    f64 = Type::getDoubleTy(context);
+  // Initialize this Pass instance's global state.
+  void initPassInstance() {
+    triple = Triple("wasm32-unknown-unknown");
 
-    Triple triple("wasm32-unknown-unknown");
-    Module mod("byn_mod", context);
+    context = std::make_unique<LLVMContext>();
+
+    i32 = Type::getInt32Ty(*context);
+    i64 = Type::getInt64Ty(*context);
+    f32 = Type::getFloatTy(*context);
+    f64 = Type::getDoubleTy(*context);
+  }
+
+  void run(wasm::Module* module) override {
+    initLLVM();
+    initPassInstance();
+
+    Module mod("byn_mod", *context);
     mod.setTargetTriple(triple.getTriple());
 
     // Build IR in a module
@@ -78,9 +95,9 @@ struct LLVM : public wasm::Pass {
     mod.getOrInsertFunction("byn_func", funcType);
     auto* func = mod.getFunction("byn_func");
 
-    IRBuilder builder(context);
+    IRBuilder builder(*context);
 
-    BasicBlock* body = BasicBlock::Create(context, "entry", func);
+    BasicBlock* body = BasicBlock::Create(*context, "entry", func);
     builder.SetInsertPoint(body);
     auto* arg = func->getArg(0);
     auto* num = Constant::getIntegerValue(i32, APInt(32, 21));
