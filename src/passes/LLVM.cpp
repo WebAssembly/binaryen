@@ -37,6 +37,7 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Target/TargetMachine.h>
 
+#include "ir/iteration.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm-binary.h"
@@ -101,10 +102,10 @@ struct LLVMPass : public wasm::Pass {
 
   llvm::Function* makeLLVMFunction() {
     auto* funcType = FunctionType::get(
-      wasmToLLVM(wasm::Type::i32),
+      *wasmToLLVM(wasm::Type::i32),
       {
-        wasmToLLVM(wasm::Type::i32),
-        wasmToLLVM(wasm::Type::i32)
+        *wasmToLLVM(wasm::Type::i32),
+        *wasmToLLVM(wasm::Type::i32)
       },
       false
     );
@@ -209,9 +210,6 @@ struct LLVMPass : public wasm::Pass {
     initLLVM();
     initPassInstance();
 
-//    struct Walker : public wasm::PostWalker<Walker> {
-  //    LLVM
-   // };
     auto* func = makeLLVMFunction();
 
     optimize(func);
@@ -223,7 +221,51 @@ struct LLVMPass : public wasm::Pass {
 
   // Internal helpers.
 
-  llvm::Type* wasmToLLVM(wasm::Type type) {
+  // Walk the IR, looking for this to run through LLVM.
+  struct Optimizer : public wasm::PostWalker<Optimizer, wasm::UnifiedExpressionVisitor<Optimizer>> {
+    LLVMPass& parent;
+
+    Optimizer(LLVMPass& parent) : parent(parent) {}
+
+    void visitExpression(wasm::Expression* curr) {
+      // Recursively traverse the children to build LLVM IR, and find the
+      // variables (unknown things) which will become parameters. That is, if
+      // we have something like this:
+      //
+      //  (x + 20) / foo()
+      //
+      // We can convert + and / to LLVM instructions, and the constant 20 as
+      // well. The local x and the call foo() will become parameters:
+      //
+      //  func llvmfunc(a, b) { return (a + 20) / b }
+      //
+      // We then run the LLVM optimizer on that, and apply the results if they
+      // are beneficial.
+      SmallVector<Type*, 4> params;
+      bool fail = false;
+
+      std::function<void (wasm::Expression*)> recurse = [&](wasm::Expression* curr) {
+        if (!parent.wasmToLLVM(curr->type)) {
+          // We cannot handle this type at all.
+          fail = true;
+          return;
+        }
+
+        if (auto* c = curr->dynCast<Const>()) {
+        } else if (auto* binary = curr->dynCast<Binary>()) {
+        }
+
+        // Otherwise, this is not something we can convert to LLVM IR. But it
+        // has a type we can handle, so turn it into a parameter.
+        ...
+      };
+
+
+    }
+  };
+
+  // Returns the LLVM type for a wasm type, if there is one.
+  std::optional<Type*> wasmToLLVM(wasm::Type type) {
     if (type == wasm::Type::i32) {
       return i32;
     }
@@ -236,7 +278,7 @@ struct LLVMPass : public wasm::Pass {
     if (type == wasm::Type::f64) {
       return f64;
     }
-    WASM_UNREACHABLE("invalid type");
+    return {};
   }
 };
 
