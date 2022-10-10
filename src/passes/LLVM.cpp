@@ -22,7 +22,6 @@
 // to add debugging and logging.
 
 #include <llvm/ADT/APInt.h>
-//#include <llvm/CodeGen/CommandFlags.h>
 #include <llvm/IR/Argument.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/IRBuilder.h>
@@ -168,6 +167,7 @@ struct LLVM : public wasm::Pass {
     targetMachine->addPassesToEmitFile(writerPM, stream, nullptr, CodeGenFileType::CGFT_ObjectFile);
 
     writerPM.run(*mod);
+
 #if BINARYEN_LLVM_DEBUG
     std::cerr << "wasm binary size after LLVM: " << buffer.size() << '\n';
 #endif
@@ -188,6 +188,10 @@ struct LLVM : public wasm::Pass {
       wasm::Fatal() << "error in parsing wasm binary";
     }
 
+#if BINARYEN_LLVM_DEBUG
+    std::cout << *newModule << '\n';
+#endif
+
     return newModule;
   }
 
@@ -199,7 +203,7 @@ struct LLVM : public wasm::Pass {
     list.clear();
   }
 
-  // Pass entry point.
+  // Pass entry point. TODO: parallelize?
 
   void run(wasm::Module* module) override {
     initLLVM();
@@ -212,8 +216,6 @@ struct LLVM : public wasm::Pass {
     auto newModule = llvmToBinaryen(module->features);
 
     resetLLVMModule();
-
-    std::cout << *newModule << '\n'; 
   }
 
   // Internal helpers.
