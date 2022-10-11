@@ -37,8 +37,6 @@ inline std::string getLegalizationPass(LegalizationLevel level) {
 
 namespace wasm2js {
 
-using IString = cashew::IString;
-
 extern IString SCRATCH_LOAD_I32;
 extern IString SCRATCH_STORE_I32;
 extern IString SCRATCH_LOAD_F32;

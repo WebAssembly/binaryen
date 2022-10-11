@@ -115,19 +115,19 @@ struct MetaDCEGraph {
     // does not alter parent state, just adds to things pointed by it,
     // independently (each thread will add for one function, etc.)
     ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-      auto dceName = getName("func", func->name.str);
+      auto dceName = getName("func", func->name.toString());
       DCENodeToFunction[dceName] = func->name;
       functionToDCENode[func->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      auto dceName = getName("global", global->name.str);
+      auto dceName = getName("global", global->name.toString());
       DCENodeToGlobal[dceName] = global->name;
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
     ModuleUtils::iterDefinedTags(wasm, [&](Tag* tag) {
-      auto dceName = getName("tag", tag->name.str);
+      auto dceName = getName("tag", tag->name.toString());
       DCENodeToTag[dceName] = tag->name;
       tagToDCENode[tag->name] = dceName;
       nodes[dceName] = DCENode(dceName);
@@ -137,27 +137,27 @@ struct MetaDCEGraph {
     ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
-        auto dceName = getName("importId", import->name.str);
+        auto dceName = getName("importId", import->name.toString());
         importIdToDCENode[id] = dceName;
       }
     });
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
-        auto dceName = getName("importId", import->name.str);
+        auto dceName = getName("importId", import->name.toString());
         importIdToDCENode[id] = dceName;
       }
     });
     ModuleUtils::iterImportedTags(wasm, [&](Tag* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
-        auto dceName = getName("importId", import->name.str);
+        auto dceName = getName("importId", import->name.toString());
         importIdToDCENode[id] = dceName;
       }
     });
     for (auto& exp : wasm.exports) {
       if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
-        auto dceName = getName("export", exp->name.str);
+        auto dceName = getName("export", exp->name.toString());
         DCENodeToExport[dceName] = exp->name;
         exportToDCENode[exp->name] = dceName;
         nodes[dceName] = DCENode(dceName);
@@ -368,7 +368,7 @@ public:
     std::set<std::string> unused;
     for (auto& [name, _] : nodes) {
       if (reached.find(name) == reached.end()) {
-        unused.insert(name.str);
+        unused.insert(name.toString());
       }
     }
     for (auto& name : unused) {

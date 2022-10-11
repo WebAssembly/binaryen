@@ -569,8 +569,7 @@ void MemoryPacking::createSplitSegments(
         name = segment->name;
         hasExplicitName = segment->hasExplicitName;
       } else {
-        name = std::string(segment->name.c_str()) + "." +
-               std::to_string(segmentCount);
+        name = segment->name.toString() + "." + std::to_string(segmentCount);
       }
       segmentCount++;
     }

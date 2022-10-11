@@ -184,8 +184,6 @@ static void removeData(Module& wasm,
           << startAddress << ") and " << end_sym << " (" << endAddress << ")";
 }
 
-using IString = cashew::IString;
-
 IString EM_JS_PREFIX("__em_js__");
 IString EM_JS_DEPS_PREFIX("__em_lib_deps_");
 
@@ -193,10 +191,10 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   std::vector<Export> toRemove;
 
   void visitExport(Export* curr) {
-    if (curr->name.startsWith(EM_JS_PREFIX.str)) {
+    if (curr->name.startsWith(EM_JS_PREFIX)) {
       toRemove.push_back(*curr);
     }
-    if (curr->name.startsWith(EM_JS_DEPS_PREFIX.str)) {
+    if (curr->name.startsWith(EM_JS_DEPS_PREFIX)) {
       toRemove.push_back(*curr);
     }
   }

@@ -30,6 +30,7 @@
 #include <map>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "literal.h"

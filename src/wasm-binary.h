@@ -1341,8 +1341,8 @@ public:
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
   // helpers
-  void writeInlineString(const char* name);
-  void writeEscapedName(const char* name);
+  void writeInlineString(std::string_view name);
+  void writeEscapedName(std::string_view name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
 

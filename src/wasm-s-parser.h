@@ -29,8 +29,6 @@
 
 namespace wasm {
 
-using IString = cashew::IString;
-
 class SourceLocation {
 public:
   IString filename;
@@ -75,7 +73,7 @@ public:
 
   // string methods
   IString str() const;
-  const char* c_str() const;
+  std::string toString() const;
   Element* setString(IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
@@ -168,6 +166,8 @@ private:
 
   UniqueNameMapper nameMapper;
 
+  int parseIndex(Element& s);
+
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
   Name getMemoryName(Element& s);
@@ -186,13 +186,15 @@ private:
   Type stringToType(IString str, bool allowError = false, bool prefix = false) {
     return stringToType(str.str, allowError, prefix);
   }
-  Type
-  stringToType(const char* str, bool allowError = false, bool prefix = false);
+  Type stringToType(std::string_view str,
+                    bool allowError = false,
+                    bool prefix = false);
   HeapType stringToHeapType(IString str, bool prefix = false) {
     return stringToHeapType(str.str, prefix);
   }
-  HeapType stringToHeapType(const char* str, bool prefix = false);
+  HeapType stringToHeapType(std::string_view str, bool prefix = false);
   Type elementToType(Element& s);
+  // TODO: Use std::string_view for this and similar functions.
   Type stringToLaneType(const char* str);
   bool isType(IString str) { return stringToType(str, true) != Type::none; }
   HeapType getFunctionType(Name name, Element& s);
@@ -330,7 +332,8 @@ private:
                       std::vector<NameType>& namedParams);
   size_t parseTypeUse(Element& s, size_t startPos, HeapType& functionType);
 
-  void stringToBinary(const char* input, size_t size, std::vector<char>& data);
+  void
+  stringToBinary(Element& s, std::string_view str, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
   void parseInnerData(Element& s, Index i, std::unique_ptr<DataSegment>& seg);

@@ -17,11 +17,9 @@
 #ifndef wasm_asmjs_shared_constants_h
 #define wasm_asmjs_shared_constants_h
 
-#include "emscripten-optimizer/istring.h"
+#include "support/istring.h"
 
 namespace wasm {
-
-using IString = cashew::IString;
 
 extern IString TOPMOST;
 extern IString INT8ARRAY;
