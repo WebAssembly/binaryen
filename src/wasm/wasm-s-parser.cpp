@@ -32,8 +32,6 @@
 #define element_assert(condition)                                              \
   assert((condition) ? true : (std::cerr << "on: " << *this << '\n' && 0));
 
-using cashew::IString;
-
 namespace {
 int unhex(char c) {
   if (c >= '0' && c <= '9') {
@@ -1621,8 +1619,7 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
   return ret;
 }
 
-static Expression*
-parseConst(cashew::IString s, Type type, MixedArena& allocator) {
+static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
   const char* str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
