@@ -109,6 +109,9 @@ struct SubTypes {
   // Computes the depth of children for each type. This is 0 if the type has no
   // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
   // and so forth.
+  //
+  // This depth ignores bottom types.
+  // TODO test
   std::unordered_map<HeapType, Index> getMaxDepths() {
     std::unordered_map<HeapType, Index> depths;
 
@@ -134,6 +137,16 @@ struct SubTypes {
         }
       }
     }
+
+    // Add the max depths of basic types.
+    // TODO: update when we get structtype and arraytype
+    for (auto type : types) {
+      HeapType basic = type.isData() ? HeapType::data : HeapType::func;
+      depths[basic] = std::max(depths[basic], depths[type] + 1);
+    }
+
+    depths[HeapType::eq] = std::max(Index(1), depths[HeapType::data]);
+    depths[HeapType::any] = depths[HeapType::eq] + 1;
 
     return depths;
   }
