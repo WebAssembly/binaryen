@@ -124,14 +124,14 @@
  ;; CHECK:      (func $nop-skate (type $void)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $nop-skate
   nop
   nop
-  nop
+  unreachable
   nop
   nop
  )
@@ -143,11 +143,11 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $nop-ski
-  (nop
+  (unreachable
    (nop
     (nop)
     (nop)
@@ -162,22 +162,22 @@
 
  ;; CHECK:      (func $nop-sled (type $void)
  ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $nop-sled
   nop
   (nop
    (nop
-    (nop)
+    (unreachable)
    )
   )
   nop
-  (nop)
+  (unreachable)
   nop
  )
 
