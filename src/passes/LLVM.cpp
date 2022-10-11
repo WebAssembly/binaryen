@@ -275,17 +275,39 @@ struct LLVMPass : public wasm::Pass {
 
         if (auto* c = curr->dynCast<wasm::Const>()) {
           if (mode == Generate) {
-            // XXX
+            Value* value;
+            if (c->type == wasm::Type::i32) {
+              value = Constant::getIntegerValue(i32, APInt(32, c->value.geti32()));
+            } else if (c->type == wasm::Type::i64) {
+              value = Constant::getIntegerValue(i64, APInt(64, c->value.geti64()));
+            } else if (c->type == wasm::Type::f32) {
+              value = Constant::getFloatValue(f32, APFloat(32, c->value.getf32()));
+            } else if (c->type == wasm::Type::f64) {
+              value = Constant::getFloatValue(f64, APFloat(64, c->value.getf64()));
+            } else {
+              WASM_UNREACHABLE("bad type");
+            }
+            wasmLLVMMap[curr] = value;
+            // No need to add to the LLVM function; it will be linked to when it
+            // is used.
           }
         } else if (auto* binary = curr->dynCast<wasm::Binary>()) {
           switch (binary->op) {
             case wasm::AddInt32: {
               process(binary->left);
+              if (fail) {
+                return;
+              }
+
               process(binary->right);
+              if (fail) {
+                return;
+              }
 
               if (mode == Generate) {
                 // XXX
               }
+
               break;
             }
             default: {
@@ -302,6 +324,20 @@ struct LLVMPass : public wasm::Pass {
           params.push_back(curr);
         }
       }
+
+      // Given a return type, and using the parameter types we have found, make
+      // an LLVM function type.
+      FunctionType* getFunctionType(Type* returnType) {
+        SmallVector<Type*, 4> paramTypes;
+        for (auto* param : params) {
+          paramTypes.push_back(*wasmToLLVM(param->type));
+        }
+        return FunctionType::get(
+          returnType,
+          paramTypes,
+          false /* varargs */
+        );
+      }
     };
 
     void visitExpression(wasm::Expression* curr) {
@@ -309,6 +345,29 @@ struct LLVMPass : public wasm::Pass {
       if (scan.fail) {
         return;
       }
+
+      // TODO: skip if trivial, like say 0 parameters, or just too small
+
+      // This looks promising, optimize it using LLVM.
+      auto* funcType = scan.getFunctionType(curr->type);
+      parent.mod->getOrInsertFunction("byn_func", funcType);
+      auto* func = mod->getFunction("byn_func");
+
+#if 0 TODO
+      IRBuilder builder(*context);
+
+      BasicBlock* body = BasicBlock::Create(*context, "entry", func);
+      builder.SetInsertPoint(body);
+      auto* arg = func->getArg(0);
+      auto* num = Constant::getIntegerValue(i32, APInt(32, 21));
+      auto* addA = builder.CreateAdd(arg, num, "add_a");
+      auto* addB = builder.CreateAdd(addA, num, "add_b");
+      builder.CreateRet(addB);
+#endif
+
+
+
+
 
       RecursiveProcessor generate(RecursiveProcessor::Generate, parent);
 
