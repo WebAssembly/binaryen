@@ -195,11 +195,17 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
   }
 
   // If the heap types are not compatible then they are in separate hierarchies
-  // and there is no intersection.
+  // and there is no intersection, aside from possibly a null of the bottom
+  // type.
   auto isSubType = HeapType::isSubType(heapType, otherHeapType);
   auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
   if (!isSubType && !otherIsSubType) {
-    value = None();
+    if (nullability == Nullable &&
+        heapType.getBottom() == otherHeapType.getBottom()) {
+      value = Literal::makeNull(heapType.getBottom());
+    } else {
+      value = None();
+    }
     return;
   }
 
@@ -1682,7 +1688,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
       //
       // Also, a null may arrive later.
       if (normalizeConeType(contents) && type.isNullable()) {
-        worthSendingMore = false;
+//        worthSendingMore = false;
       }
       // TODO: assert on never having "Many" for refernce types. Only mVP.
       // TODO: filter by the declared type?

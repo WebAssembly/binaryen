@@ -481,6 +481,8 @@ void assertIntersection(PossibleContents a,
   auto intersection = a;
   intersection.intersectWithFullCone(b);
   EXPECT_EQ(intersection, result);
+
+  EXPECT_EQ(PossibleContents::haveIntersection(a, b), !result.isNone());
 }
 
 TEST_F(PossibleContentsTest, TestStructCones) {
@@ -712,6 +714,12 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::literal(Literal::makeNull(B)));
   assertIntersection(nnExactA, PossibleContents::fullConeType(nullB), none);
   assertIntersection(exactA, PossibleContents::fullConeType(nnB), none);
+
+  // A and E have no intersection, so the only possibility is a null, and that
+  // null must be the bottom type.
+  assertIntersection(exactA,
+                     PossibleContents::fullConeType(nullE),
+                     PossibleContents::literal(Literal::makeNull(HeapType::none)));
 
   assertIntersection(PossibleContents::coneType(nnA, 1),
                      PossibleContents::fullConeType(nnB),
