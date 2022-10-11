@@ -1736,17 +1736,16 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
     auto data = getByteView(payloadLen);
-    section.data = {data.first, data.second};
+    section.data = {data.begin(), data.end()};
   }
 }
 
-std::pair<const char*, const char*>
-WasmBinaryBuilder::getByteView(size_t size) {
+std::string_view WasmBinaryBuilder::getByteView(size_t size) {
   if (size > input.size() || pos > input.size() - size) {
     throwError("unexpected end of input");
   }
   pos += size;
-  return {input.data() + (pos - size), input.data() + pos};
+  return {input.data() + (pos - size), size};
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {
@@ -2023,17 +2022,10 @@ Type WasmBinaryBuilder::getConcreteType() {
 Name WasmBinaryBuilder::getInlineString() {
   BYN_TRACE("<==\n");
   auto len = getU32LEB();
-
   auto data = getByteView(len);
 
-  std::string str(data.first, data.second);
-  if (str.find('\0') != std::string::npos) {
-    throwError(
-      "inline string contains NULL (0). that is technically valid in wasm, "
-      "but you shouldn't do it, and it's not supported in binaryen");
-  }
-  BYN_TRACE("getInlineString: " << str << " ==>\n");
-  return Name(str);
+  BYN_TRACE("getInlineString: " << data << " ==>\n");
+  return Name(data);
 }
 
 void WasmBinaryBuilder::verifyInt8(int8_t x) {
@@ -3129,7 +3121,7 @@ void WasmBinaryBuilder::readDataSegments() {
     }
     auto size = getU32LEB();
     auto data = getByteView(size);
-    curr->data = {data.first, data.second};
+    curr->data = {data.begin(), data.end()};
     wasm.addDataSegment(std::move(curr));
   }
 }
@@ -3662,7 +3654,7 @@ void WasmBinaryBuilder::readDylink0(size_t payloadLen) {
       pos = oldPos;
       size_t remaining = (sectionPos + payloadLen) - pos;
       auto tail = getByteView(remaining);
-      wasm.dylinkSection->tail = {tail.first, tail.second};
+      wasm.dylinkSection->tail = {tail.begin(), tail.end()};
       break;
     }
     if (pos != subsectionPos + subsectionSize) {
