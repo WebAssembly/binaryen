@@ -5,7 +5,11 @@
 ;; runs --precompute in order to verify no problems occur in the optimizer's
 ;; invocation of the interpreter.
 
-;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
+;; RUN: wasm-opt %s --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
+
+;; Check that we can roundtrip through the text format as well.
+
+;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all --precompute -S -o - | filecheck %s
 
 (module
   (memory 10 10)
@@ -31,8 +35,8 @@
 
   ;; CHECK:      (type $stringref_ref|$array|_ref|$array16|_=>_none (func (param stringref (ref $array) (ref $array16))))
 
-  ;; CHECK:      (global $string-const stringref (string.const "string in a global \01\ff\t\t\n\n\r\r\"\"\'\'\\\\"))
-  (global $string-const stringref (string.const "string in a global \01\ff\t\09\n\0a\r\0d\"\22\'\27\\\5c"))
+  ;; CHECK:      (global $string-const stringref (string.const "string in a global \01\ff\00\t\t\n\n\r\r\"\"\'\'\\\\"))
+  (global $string-const stringref (string.const "string in a global \01\ff\00\t\09\n\0a\r\0d\"\22\'\27\\\5c"))
 
   ;; CHECK:      (memory $0 10 10)
 

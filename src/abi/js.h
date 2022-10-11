@@ -37,28 +37,27 @@ inline std::string getLegalizationPass(LegalizationLevel level) {
 
 namespace wasm2js {
 
-extern cashew::IString SCRATCH_LOAD_I32;
-extern cashew::IString SCRATCH_STORE_I32;
-extern cashew::IString SCRATCH_LOAD_F32;
-extern cashew::IString SCRATCH_STORE_F32;
-extern cashew::IString SCRATCH_LOAD_F64;
-extern cashew::IString SCRATCH_STORE_F64;
-extern cashew::IString MEMORY_INIT;
-extern cashew::IString MEMORY_FILL;
-extern cashew::IString MEMORY_COPY;
-extern cashew::IString DATA_DROP;
-extern cashew::IString ATOMIC_WAIT_I32;
-extern cashew::IString ATOMIC_RMW_I64;
-extern cashew::IString GET_STASHED_BITS;
-extern cashew::IString TRAP;
+extern IString SCRATCH_LOAD_I32;
+extern IString SCRATCH_STORE_I32;
+extern IString SCRATCH_LOAD_F32;
+extern IString SCRATCH_STORE_F32;
+extern IString SCRATCH_LOAD_F64;
+extern IString SCRATCH_STORE_F64;
+extern IString MEMORY_INIT;
+extern IString MEMORY_FILL;
+extern IString MEMORY_COPY;
+extern IString DATA_DROP;
+extern IString ATOMIC_WAIT_I32;
+extern IString ATOMIC_RMW_I64;
+extern IString GET_STASHED_BITS;
+extern IString TRAP;
 
 // The wasm2js helpers let us do things that can't be done without special help,
 // like read and write to scratch memory for purposes of implementing things
 // like reinterpret, etc.
 // The optional "specific" parameter is a specific function we want. If not
 // provided, we create them all.
-inline void ensureHelpers(Module* wasm,
-                          cashew::IString specific = cashew::IString()) {
+inline void ensureHelpers(Module* wasm, IString specific = IString()) {
   auto ensureImport = [&](Name name, Type params, Type results) {
     if (wasm->getFunctionOrNull(name)) {
       return;
@@ -93,7 +92,7 @@ inline void ensureHelpers(Module* wasm,
   ensureImport(TRAP, {}, Type::none);
 }
 
-inline bool isHelper(cashew::IString name) {
+inline bool isHelper(IString name) {
   return name == SCRATCH_LOAD_I32 || name == SCRATCH_STORE_I32 ||
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||
          name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64 ||

@@ -444,9 +444,9 @@ public:
     // internal escaped names for later comparisons
     for (auto& name : list) {
       auto escaped = WasmBinaryBuilder::escape(name);
-      unescaped[escaped.str] = name;
+      unescaped[escaped.toString()] = name;
       if (name.find('*') != std::string::npos) {
-        patterns.insert(escaped.str);
+        patterns.insert(escaped.toString());
       } else {
         auto* func = module.getFunctionOrNull(escaped);
         if (!func) {
@@ -469,7 +469,7 @@ public:
       return true;
     } else {
       for (auto& pattern : patterns) {
-        if (String::wildcardMatch(pattern, funcName.str)) {
+        if (String::wildcardMatch(pattern, funcName.toString())) {
           patternsMatched.insert(pattern);
           return true;
         }
@@ -1502,7 +1502,7 @@ private:
 } // anonymous namespace
 
 static std::string getFullImportName(Name module, Name base) {
-  return std::string(module.str) + '.' + base.str;
+  return std::string(module.str) + '.' + base.toString();
 }
 
 struct Asyncify : public Pass {

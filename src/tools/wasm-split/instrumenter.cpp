@@ -47,8 +47,8 @@ void Instrumenter::addGlobals(size_t numFuncs) {
   counterGlobal = Names::getValidGlobalName(*wasm, "monotonic_counter");
   functionGlobals.reserve(numFuncs);
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    functionGlobals.push_back(Names::getValidGlobalName(
-      *wasm, std::string(func->name.c_str()) + "_timestamp"));
+    functionGlobals.push_back(
+      Names::getValidGlobalName(*wasm, func->name.toString() + "_timestamp"));
   });
 
   // Create and add new globals

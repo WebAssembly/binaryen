@@ -63,8 +63,9 @@ struct Ref {
   Ref& operator[](IString x);
 
   // special conveniences
-  bool operator==(const char* str); // comparison to string, which is by value
-  bool operator!=(const char* str);
+  bool
+  operator==(std::string_view str); // comparison to string, which is by value
+  bool operator!=(std::string_view str);
   bool operator==(const IString& str);
   bool operator!=(const IString& str);
   // prevent Ref == number, which is potentially ambiguous; use ->getNumber() ==
@@ -163,13 +164,13 @@ struct Value {
   Value& setString(const char* s) {
     free();
     type = String;
-    str.set(s);
+    str = IString(s);
     return *this;
   }
   Value& setString(const IString& s) {
     free();
     type = String;
-    str.set(s);
+    str = s;
     return *this;
   }
   Value& setNumber(double n) {
@@ -233,7 +234,7 @@ struct Value {
 
   const char* getCString() {
     assert(isString());
-    return str.str;
+    return str.str.data();
   }
   IString& getIString() {
     assert(isString());
@@ -817,7 +818,7 @@ struct JSPrinter {
         break;
       }
       default: {
-        errv("cannot yet print %s\n", type.str);
+        errv("cannot yet print %s\n", type.str.data());
         abort();
       }
     }
@@ -908,7 +909,7 @@ struct JSPrinter {
 
   void printAssignName(Ref node) {
     auto* assign = node->asAssignName();
-    emit(assign->target().c_str());
+    emit(assign->target().str.data());
     space();
     emit('=');
     space();
@@ -1472,10 +1473,10 @@ struct JSPrinter {
           needQuote = true;
           str = args[i][0][1]->getCString();
         } else if (args[i][0][0] == GETTER) {
-          getterSetter = GETTER.c_str();
+          getterSetter = GETTER.str.data();
           str = args[i][0][1]->getCString();
         } else if (args[i][0][0] == SETTER) {
-          getterSetter = SETTER.c_str();
+          getterSetter = SETTER.str.data();
           str = args[i][0][1]->getCString();
           setterParam = args[i][0][2]->getCString();
         } else {

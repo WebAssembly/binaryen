@@ -100,7 +100,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     }
   }
   if (heapType.isSignature()) {
-    ret.func = x.getFunc().c_str();
+    ret.func = x.getFunc().str.data();
     return ret;
   }
   assert(x.isData());
@@ -1892,7 +1892,7 @@ BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,
 const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Block>());
-  return static_cast<Block*>(expression)->name.c_str();
+  return static_cast<Block*>(expression)->name.str.data();
 }
 void BinaryenBlockSetName(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
@@ -1987,7 +1987,7 @@ void BinaryenIfSetIfFalse(BinaryenExpressionRef expr,
 const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Loop>());
-  return static_cast<Loop*>(expression)->name.c_str();
+  return static_cast<Loop*>(expression)->name.str.data();
 }
 void BinaryenLoopSetName(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
@@ -2011,7 +2011,7 @@ void BinaryenLoopSetBody(BinaryenExpressionRef expr,
 const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Break>());
-  return static_cast<Break*>(expression)->name.c_str();
+  return static_cast<Break*>(expression)->name.str.data();
 }
 void BinaryenBreakSetName(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
@@ -2054,7 +2054,7 @@ const char* BinaryenSwitchGetNameAt(BinaryenExpressionRef expr,
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
   assert(index < static_cast<Switch*>(expression)->targets.size());
-  return static_cast<Switch*>(expression)->targets[index].c_str();
+  return static_cast<Switch*>(expression)->targets[index].str.data();
 }
 void BinaryenSwitchSetNameAt(BinaryenExpressionRef expr,
                              BinaryenIndex index,
@@ -2087,12 +2087,12 @@ const char* BinaryenSwitchRemoveNameAt(BinaryenExpressionRef expr,
                                        BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
-  return static_cast<Switch*>(expression)->targets.removeAt(index).c_str();
+  return static_cast<Switch*>(expression)->targets.removeAt(index).str.data();
 }
 const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Switch>());
-  return static_cast<Switch*>(expression)->default_.c_str();
+  return static_cast<Switch*>(expression)->default_.str.data();
 }
 void BinaryenSwitchSetDefaultName(BinaryenExpressionRef expr,
                                   const char* name) {
@@ -2129,7 +2129,7 @@ void BinaryenSwitchSetValue(BinaryenExpressionRef expr,
 const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Call>());
-  return static_cast<Call*>(expression)->target.c_str();
+  return static_cast<Call*>(expression)->target.str.data();
 }
 void BinaryenCallSetTarget(BinaryenExpressionRef expr, const char* target) {
   auto* expression = (Expression*)expr;
@@ -2210,7 +2210,7 @@ void BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
 const char* BinaryenCallIndirectGetTable(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  return static_cast<CallIndirect*>(expression)->table.c_str();
+  return static_cast<CallIndirect*>(expression)->table.str.data();
 }
 void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
                                   const char* table) {
@@ -2350,7 +2350,7 @@ void BinaryenLocalSetSetValue(BinaryenExpressionRef expr,
 const char* BinaryenGlobalGetGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<GlobalGet>());
-  return static_cast<GlobalGet*>(expression)->name.c_str();
+  return static_cast<GlobalGet*>(expression)->name.str.data();
 }
 void BinaryenGlobalGetSetName(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
@@ -2362,7 +2362,7 @@ void BinaryenGlobalGetSetName(BinaryenExpressionRef expr, const char* name) {
 const char* BinaryenGlobalSetGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<GlobalSet>());
-  return static_cast<GlobalSet*>(expression)->name.c_str();
+  return static_cast<GlobalSet*>(expression)->name.str.data();
 }
 void BinaryenGlobalSetSetName(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
@@ -2386,7 +2386,7 @@ void BinaryenGlobalSetSetValue(BinaryenExpressionRef expr,
 const char* BinaryenTableGetGetTable(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TableGet>());
-  return static_cast<TableGet*>(expression)->table.c_str();
+  return static_cast<TableGet*>(expression)->table.str.data();
 }
 void BinaryenTableGetSetTable(BinaryenExpressionRef expr, const char* table) {
   auto* expression = (Expression*)expr;
@@ -2410,7 +2410,7 @@ void BinaryenTableGetSetIndex(BinaryenExpressionRef expr,
 const char* BinaryenTableSetGetTable(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TableSet>());
-  return static_cast<TableSet*>(expression)->table.c_str();
+  return static_cast<TableSet*>(expression)->table.str.data();
 }
 void BinaryenTableSetSetTable(BinaryenExpressionRef expr, const char* table) {
   auto* expression = (Expression*)expr;
@@ -2446,7 +2446,7 @@ void BinaryenTableSetSetValue(BinaryenExpressionRef expr,
 const char* BinaryenTableSizeGetTable(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TableSize>());
-  return static_cast<TableSize*>(expression)->table.c_str();
+  return static_cast<TableSize*>(expression)->table.str.data();
 }
 void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
   auto* expression = (Expression*)expr;
@@ -2458,7 +2458,7 @@ void BinaryenTableSizeSetTable(BinaryenExpressionRef expr, const char* table) {
 const char* BinaryenTableGrowGetTable(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<TableGrow>());
-  return static_cast<TableGrow*>(expression)->table.c_str();
+  return static_cast<TableGrow*>(expression)->table.str.data();
 }
 void BinaryenTableGrowSetTable(BinaryenExpressionRef expr, const char* table) {
   auto* expression = (Expression*)expr;
@@ -3547,7 +3547,7 @@ void BinaryenRefAsSetValue(BinaryenExpressionRef expr,
 const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<RefFunc>());
-  return static_cast<RefFunc*>(expression)->func.c_str();
+  return static_cast<RefFunc*>(expression)->func.str.data();
 }
 void BinaryenRefFuncSetFunc(BinaryenExpressionRef expr, const char* funcName) {
   auto* expression = (Expression*)expr;
@@ -3581,7 +3581,7 @@ void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
 const char* BinaryenTryGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->name.c_str();
+  return static_cast<Try*>(expression)->name.str.data();
 }
 void BinaryenTrySetName(BinaryenExpressionRef expr, const char* name) {
   auto* expression = (Expression*)expr;
@@ -3615,7 +3615,7 @@ const char* BinaryenTryGetCatchTagAt(BinaryenExpressionRef expr,
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
   assert(index < static_cast<Try*>(expression)->catchTags.size());
-  return static_cast<Try*>(expression)->catchTags[index].c_str();
+  return static_cast<Try*>(expression)->catchTags[index].str.data();
 }
 void BinaryenTrySetCatchTagAt(BinaryenExpressionRef expr,
                               BinaryenIndex index,
@@ -3648,7 +3648,7 @@ const char* BinaryenTryRemoveCatchTagAt(BinaryenExpressionRef expr,
                                         BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchTags.removeAt(index).c_str();
+  return static_cast<Try*>(expression)->catchTags.removeAt(index).str.data();
 }
 BinaryenExpressionRef BinaryenTryGetCatchBodyAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index) {
@@ -3699,7 +3699,7 @@ bool BinaryenTryHasCatchAll(BinaryenExpressionRef expr) {
 const char* BinaryenTryGetDelegateTarget(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->delegateTarget.c_str();
+  return static_cast<Try*>(expression)->delegateTarget.str.data();
 }
 void BinaryenTrySetDelegateTarget(BinaryenExpressionRef expr,
                                   const char* delegateTarget) {
@@ -3716,7 +3716,7 @@ bool BinaryenTryIsDelegate(BinaryenExpressionRef expr) {
 const char* BinaryenThrowGetTag(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  return static_cast<Throw*>(expression)->tag.c_str();
+  return static_cast<Throw*>(expression)->tag.str.data();
 }
 void BinaryenThrowSetTag(BinaryenExpressionRef expr, const char* tagName) {
   auto* expression = (Expression*)expr;
@@ -3773,7 +3773,7 @@ BinaryenExpressionRef BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr,
 const char* BinaryenRethrowGetTarget(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  return static_cast<Rethrow*>(expression)->target.c_str();
+  return static_cast<Rethrow*>(expression)->target.str.data();
 }
 void BinaryenRethrowSetTarget(BinaryenExpressionRef expr, const char* target) {
   auto* expression = (Expression*)expr;
@@ -4020,7 +4020,7 @@ void BinaryenBrOnSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
 const char* BinaryenBrOnGetName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOn>());
-  return static_cast<BrOn*>(expression)->name.c_str();
+  return static_cast<BrOn*>(expression)->name.str.data();
 }
 void BinaryenBrOnSetName(BinaryenExpressionRef expr, const char* nameStr) {
   auto* expression = (Expression*)expr;
@@ -4453,7 +4453,7 @@ void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
 const char* BinaryenStringConstGetString(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringConst>());
-  return static_cast<StringConst*>(expression)->string.c_str();
+  return static_cast<StringConst*>(expression)->string.str.data();
 }
 void BinaryenStringConstSetString(BinaryenExpressionRef expr,
                                   const char* stringStr) {
@@ -5171,7 +5171,7 @@ const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
   if (data[dataId]->is<RefNull>()) {
     return NULL;
   } else if (auto* get = data[dataId]->dynCast<RefFunc>()) {
-    return get->func.c_str();
+    return get->func.str.data();
   } else {
     Fatal() << "invalid expression in segment data.";
   }
@@ -5265,7 +5265,7 @@ BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module,
                                        const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
@@ -5276,7 +5276,7 @@ BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module,
 bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
@@ -5287,7 +5287,7 @@ bool BinaryenMemoryHasMax(BinaryenModuleRef module, const char* name) {
 BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module, const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
@@ -5299,14 +5299,14 @@ const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module,
                                           const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
   }
   if (memory->imported()) {
-    return memory->module.c_str();
+    return memory->module.str.data();
   } else {
     return "";
   }
@@ -5315,14 +5315,14 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
                                         const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
     Fatal() << "invalid memory '" << name << "'.";
   }
   if (memory->imported()) {
-    return memory->base.c_str();
+    return memory->base.str.data();
   } else {
     return "";
   }
@@ -5330,7 +5330,7 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module,
 bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
@@ -5341,7 +5341,7 @@ bool BinaryenMemoryIsShared(BinaryenModuleRef module, const char* name) {
 bool BinaryenMemoryIs64(BinaryenModuleRef module, const char* name) {
   // Maintaining compatibility for instructions with a single memory
   if (name == nullptr && module->memories.size() == 1) {
-    name = module->memories[0]->name.c_str();
+    name = module->memories[0]->name.str.data();
   }
   auto* memory = ((Module*)module)->getMemoryOrNull(name);
   if (memory == nullptr) {
@@ -5491,7 +5491,7 @@ const char* BinaryenGetPassArgument(const char* key) {
     return nullptr;
   }
   // internalize the string so it remains valid while the module is
-  return Name(it->second).c_str();
+  return Name(it->second).str.data();
 }
 
 void BinaryenSetPassArgument(const char* key, const char* value) {
@@ -5726,7 +5726,7 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 // TODO: add BinaryenFunctionGetType
 
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
-  return ((Function*)func)->name.c_str();
+  return ((Function*)func)->name.str.data();
 }
 BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func) {
   return ((Function*)func)->getParams().getID();
@@ -5752,7 +5752,7 @@ bool BinaryenFunctionHasLocalName(BinaryenFunctionRef func,
 }
 const char* BinaryenFunctionGetLocalName(BinaryenFunctionRef func,
                                          BinaryenIndex index) {
-  return ((Function*)func)->getLocalName(index).str;
+  return ((Function*)func)->getLocalName(index).str.data();
 }
 void BinaryenFunctionSetLocalName(BinaryenFunctionRef func,
                                   BinaryenIndex index,
@@ -5802,7 +5802,7 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 //
 
 const char* BinaryenTableGetName(BinaryenTableRef table) {
-  return ((Table*)table)->name.c_str();
+  return ((Table*)table)->name.str.data();
 }
 void BinaryenTableSetName(BinaryenTableRef table, const char* name) {
   ((Table*)table)->name = name;
@@ -5827,14 +5827,14 @@ void BinaryenTableSetMax(BinaryenTableRef table, BinaryenIndex max) {
 // =========== ElementSegment operations ===========
 //
 const char* BinaryenElementSegmentGetName(BinaryenElementSegmentRef elem) {
-  return ((ElementSegment*)elem)->name.c_str();
+  return ((ElementSegment*)elem)->name.str.data();
 }
 void BinaryenElementSegmentSetName(BinaryenElementSegmentRef elem,
                                    const char* name) {
   ((ElementSegment*)elem)->name = name;
 }
 const char* BinaryenElementSegmentGetTable(BinaryenElementSegmentRef elem) {
-  return ((ElementSegment*)elem)->table.c_str();
+  return ((ElementSegment*)elem)->table.str.data();
 }
 void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
                                     const char* table) {
@@ -5849,7 +5849,7 @@ bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
 //
 
 const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
-  return ((Global*)global)->name.c_str();
+  return ((Global*)global)->name.str.data();
 }
 BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
   return ((Global*)global)->type.getID();
@@ -5866,7 +5866,7 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 //
 
 const char* BinaryenTagGetName(BinaryenTagRef tag) {
-  return ((Tag*)tag)->name.c_str();
+  return ((Tag*)tag)->name.str.data();
 }
 BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
   return ((Tag*)tag)->sig.params.getID();
@@ -5883,7 +5883,7 @@ BinaryenType BinaryenTagGetResults(BinaryenTagRef tag) {
 const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
   auto* func = (Function*)import;
   if (func->imported()) {
-    return func->module.c_str();
+    return func->module.str.data();
   } else {
     return "";
   }
@@ -5891,7 +5891,7 @@ const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
 const char* BinaryenTableImportGetModule(BinaryenTableRef import) {
   auto* table = (Table*)import;
   if (table->imported()) {
-    return table->module.c_str();
+    return table->module.str.data();
   } else {
     return "";
   }
@@ -5899,7 +5899,7 @@ const char* BinaryenTableImportGetModule(BinaryenTableRef import) {
 const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
-    return global->module.c_str();
+    return global->module.str.data();
   } else {
     return "";
   }
@@ -5907,7 +5907,7 @@ const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
 const char* BinaryenTagImportGetModule(BinaryenTagRef import) {
   auto* tag = (Tag*)import;
   if (tag->imported()) {
-    return tag->module.c_str();
+    return tag->module.str.data();
   } else {
     return "";
   }
@@ -5915,7 +5915,7 @@ const char* BinaryenTagImportGetModule(BinaryenTagRef import) {
 const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
   auto* func = (Function*)import;
   if (func->imported()) {
-    return func->base.c_str();
+    return func->base.str.data();
   } else {
     return "";
   }
@@ -5923,7 +5923,7 @@ const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
 const char* BinaryenTableImportGetBase(BinaryenTableRef import) {
   auto* table = (Table*)import;
   if (table->imported()) {
-    return table->base.c_str();
+    return table->base.str.data();
   } else {
     return "";
   }
@@ -5931,7 +5931,7 @@ const char* BinaryenTableImportGetBase(BinaryenTableRef import) {
 const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
-    return global->base.c_str();
+    return global->base.str.data();
   } else {
     return "";
   }
@@ -5939,7 +5939,7 @@ const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
 const char* BinaryenTagImportGetBase(BinaryenTagRef import) {
   auto* tag = (Tag*)import;
   if (tag->imported()) {
-    return tag->base.c_str();
+    return tag->base.str.data();
   } else {
     return "";
   }
@@ -5953,10 +5953,10 @@ BinaryenExternalKind BinaryenExportGetKind(BinaryenExportRef export_) {
   return BinaryenExternalKind(((Export*)export_)->kind);
 }
 const char* BinaryenExportGetName(BinaryenExportRef export_) {
-  return ((Export*)export_)->name.c_str();
+  return ((Export*)export_)->name.str.data();
 }
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
-  return ((Export*)export_)->value.c_str();
+  return ((Export*)export_)->value.str.data();
 }
 
 //

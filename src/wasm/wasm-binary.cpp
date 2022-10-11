@@ -1263,7 +1263,7 @@ void WasmBinaryWriter::writeLegacyDylinkSection() {
   o << U32LEB(wasm->dylinkSection->tableAlignment);
   o << U32LEB(wasm->dylinkSection->neededDynlibs.size());
   for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
-    writeInlineString(neededDynlib.c_str());
+    writeInlineString(neededDynlib.str);
   }
   finishSection(start);
 }
@@ -1294,7 +1294,7 @@ void WasmBinaryWriter::writeDylinkSection() {
       startSubsection(BinaryConsts::UserSections::Subsection::DylinkNeeded);
     o << U32LEB(wasm->dylinkSection->neededDynlibs.size());
     for (auto& neededDynlib : wasm->dylinkSection->neededDynlibs) {
-      writeInlineString(neededDynlib.c_str());
+      writeInlineString(neededDynlib.str);
     }
     finishSubsection(substart);
   }
@@ -1350,10 +1350,9 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
   }
 }
 
-void WasmBinaryWriter::writeInlineString(const char* name) {
-  int32_t size = strlen(name);
-  o << U32LEB(size);
-  writeData(name, size);
+void WasmBinaryWriter::writeInlineString(std::string_view name) {
+  o << U32LEB(name.size());
+  writeData(name.data(), name.size());
 }
 
 static bool isHexDigit(char ch) {
@@ -1365,19 +1364,17 @@ static int decodeHexNibble(char ch) {
   return ch <= '9' ? ch & 15 : (ch & 15) + 9;
 }
 
-void WasmBinaryWriter::writeEscapedName(const char* name) {
-  assert(name);
-  if (!strpbrk(name, "\\")) {
+void WasmBinaryWriter::writeEscapedName(std::string_view name) {
+  if (name.find('\\') == std::string_view::npos) {
     writeInlineString(name);
     return;
   }
   // decode escaped by escapeName (see below) function names
   std::string unescaped;
-  int32_t size = strlen(name);
-  for (int32_t i = 0; i < size;) {
+  for (size_t i = 0; i < name.size();) {
     char ch = name[i++];
     // support only `\xx` escapes; ignore invalid or unsupported escapes
-    if (ch != '\\' || i + 1 >= size || !isHexDigit(name[i]) ||
+    if (ch != '\\' || i + 1 >= name.size() || !isHexDigit(name[i]) ||
         !isHexDigit(name[i + 1])) {
       unescaped.push_back(ch);
       continue;
@@ -1386,7 +1383,7 @@ void WasmBinaryWriter::writeEscapedName(const char* name) {
       char((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
     i += 2;
   }
-  writeInlineString(unescaped.c_str());
+  writeInlineString({unescaped.data(), unescaped.size()});
 }
 
 void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
@@ -1739,17 +1736,16 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
     auto data = getByteView(payloadLen);
-    section.data = {data.first, data.second};
+    section.data = {data.begin(), data.end()};
   }
 }
 
-std::pair<const char*, const char*>
-WasmBinaryBuilder::getByteView(size_t size) {
+std::string_view WasmBinaryBuilder::getByteView(size_t size) {
   if (size > input.size() || pos > input.size() - size) {
     throwError("unexpected end of input");
   }
   pos += size;
-  return {input.data() + (pos - size), input.data() + pos};
+  return {input.data() + (pos - size), size};
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {
@@ -2026,17 +2022,10 @@ Type WasmBinaryBuilder::getConcreteType() {
 Name WasmBinaryBuilder::getInlineString() {
   BYN_TRACE("<==\n");
   auto len = getU32LEB();
-
   auto data = getByteView(len);
 
-  std::string str(data.first, data.second);
-  if (str.find('\0') != std::string::npos) {
-    throwError(
-      "inline string contains NULL (0). that is technically valid in wasm, "
-      "but you shouldn't do it, and it's not supported in binaryen");
-  }
-  BYN_TRACE("getInlineString: " << str << " ==>\n");
-  return Name(str);
+  BYN_TRACE("getInlineString: " << data << " ==>\n");
+  return Name(data);
 }
 
 void WasmBinaryBuilder::verifyInt8(int8_t x) {
@@ -2357,8 +2346,8 @@ void WasmBinaryBuilder::readImports() {
         functionTypes.push_back(getTypeByIndex(index));
         auto type = getTypeByIndex(index);
         if (!type.isSignature()) {
-          throwError(std::string("Imported function ") + module.str + '.' +
-                     base.str +
+          throwError(std::string("Imported function ") + module.toString() +
+                     '.' + base.toString() +
                      "'s type must be a signature. Given: " + type.toString());
         }
         auto curr = builder.makeFunction(name, type, {});
@@ -3132,7 +3121,7 @@ void WasmBinaryBuilder::readDataSegments() {
     }
     auto size = getU32LEB();
     auto data = getByteView(size);
-    curr->data = {data.first, data.second};
+    curr->data = {data.begin(), data.end()};
     wasm.addDataSegment(std::move(curr));
   }
 }
@@ -3268,24 +3257,25 @@ static char formatNibble(int nibble) {
 
 Name WasmBinaryBuilder::escape(Name name) {
   bool allIdChars = true;
-  for (const char* p = name.str; allIdChars && *p; p++) {
-    allIdChars = isIdChar(*p);
+  for (char c : name.str) {
+    if (!(allIdChars = isIdChar(c))) {
+      break;
+    }
   }
   if (allIdChars) {
     return name;
   }
   // encode name, if at least one non-idchar (per WebAssembly spec) was found
   std::string escaped;
-  for (const char* p = name.str; *p; p++) {
-    char ch = *p;
-    if (isIdChar(ch)) {
-      escaped.push_back(ch);
+  for (char c : name.str) {
+    if (isIdChar(c)) {
+      escaped.push_back(c);
       continue;
     }
     // replace non-idchar with `\xx` escape
     escaped.push_back('\\');
-    escaped.push_back(formatNibble(ch >> 4));
-    escaped.push_back(formatNibble(ch & 15));
+    escaped.push_back(formatNibble(c >> 4));
+    escaped.push_back(formatNibble(c & 15));
   }
   return escaped;
 }
@@ -3664,7 +3654,7 @@ void WasmBinaryBuilder::readDylink0(size_t payloadLen) {
       pos = oldPos;
       size_t remaining = (sectionPos + payloadLen) - pos;
       auto tail = getByteView(remaining);
-      wasm.dylinkSection->tail = {tail.first, tail.second};
+      wasm.dylinkSection->tail = {tail.begin(), tail.end()};
       break;
     }
     if (pos != subsectionPos + subsectionSize) {
@@ -6839,7 +6829,7 @@ void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   // This special target is valid only for delegates
   if (curr->target == DELEGATE_CALLER_TARGET) {
     throwError(std::string("rethrow target cannot use internal name ") +
-               DELEGATE_CALLER_TARGET.str);
+               DELEGATE_CALLER_TARGET.toString());
   }
   curr->finalize();
 }

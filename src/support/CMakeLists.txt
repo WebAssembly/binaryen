@@ -6,6 +6,7 @@ set(support_SOURCES
   command-line.cpp
   debug.cpp
   file.cpp
+  istring.cpp
   path.cpp
   safe_integer.cpp
   threads.cpp

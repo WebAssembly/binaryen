@@ -37,12 +37,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "emscripten-optimizer/istring.h"
+#include "support/istring.h"
 #include "support/safe_integer.h"
 
 namespace json {
 
-typedef cashew::IString IString;
+using IString = wasm::IString;
 
 // Main value type
 struct Value {
@@ -112,13 +112,13 @@ struct Value {
   Value& setString(const char* s) {
     free();
     type = String;
-    str.set(s);
+    str = s;
     return *this;
   }
   Value& setString(const IString& s) {
     free();
     type = String;
-    str.set(s);
+    str = s;
     return *this;
   }
   Value& setNumber(double n) {
@@ -173,7 +173,7 @@ struct Value {
 
   const char* getCString() {
     assert(isString());
-    return str.str;
+    return str.str.data();
   }
   IString& getIString() {
     assert(isString());

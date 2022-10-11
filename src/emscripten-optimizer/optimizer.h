@@ -20,6 +20,7 @@
 #include "simple_ast.h"
 
 using namespace cashew;
+using IString = wasm::IString;
 
 extern IString JS_FLOAT_ZERO;
 
