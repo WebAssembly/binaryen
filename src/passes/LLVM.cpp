@@ -221,45 +221,96 @@ struct LLVMPass : public wasm::Pass {
 
   // Internal helpers.
 
-  // Walk the IR, looking for this to run through LLVM.
+  // Walk the IR, looking for things to run through LLVM. We do not just try to
+  // convert entire functions to LLVM IR since they may not fit (e.g. if they
+  // have usage of GC types). Instead, find isolated code portions that can be
+  // optimized. TODO: also investigate the reverse, converting entire functions
+  // while keeping unconvertible portions on the side somehow.
   struct Optimizer : public wasm::PostWalker<Optimizer, wasm::UnifiedExpressionVisitor<Optimizer>> {
     LLVMPass& parent;
 
     Optimizer(LLVMPass& parent) : parent(parent) {}
 
-    void visitExpression(wasm::Expression* curr) {
-      // Recursively traverse the children to build LLVM IR, and find the
-      // variables (unknown things) which will become parameters. That is, if
-      // we have something like this:
-      //
-      //  (x + 20) / foo()
-      //
-      // We can convert + and / to LLVM instructions, and the constant 20 as
-      // well. The local x and the call foo() will become parameters:
-      //
-      //  func llvmfunc(a, b) { return (a + 20) / b }
-      //
-      // We then run the LLVM optimizer on that, and apply the results if they
-      // are beneficial.
-      SmallVector<Type*, 4> params;
+    // Recursively traverse the children to build LLVM IR, and find the
+    // variables (unknown things) which will become parameters. That is, if
+    // we have something like this:
+    //
+    //  (x + 20) / foo()
+    //
+    // We can convert + and / to LLVM instructions, and the constant 20 as
+    // well. The local x and the call foo() will become parameters:
+    //
+    //  func llvmfunc(a, b) { return (a + 20) / b }
+    //
+    // We then run the LLVM optimizer on that, and apply the results if they
+    // are beneficial.
+    struct RecursiveProcessor {
+      enum Mode {
+        // The first pass scans the code and sees if it is worth working on.
+        Scan,
+        // The second pass generates LLVM IR.
+        Generate,
+      } mode;
+
+      LLVMPass& parent;
+
+      RecursiveProcessor(Mode mode, LLVMPass& parent) : mode(mode), parent(parent) {}
+
       bool fail = false;
 
-      std::function<void (wasm::Expression*)> recurse = [&](wasm::Expression* curr) {
+      // Each parameter is indexed by its location in |params|.
+      SmallVector<wasm::Expression*, 4> params;
+      std::unordered_map<wasm::Expression*, wasm::Index> paramMap;
+
+      // When generating, a map of each wasm expression in the original IR to
+      // the LLVM IR we are mapping it to.
+      std::unordered_map<wasm::Expression*, Value*> wasmLLVMMap;
+
+      void process(wasm::Expression* curr) {
         if (!parent.wasmToLLVM(curr->type)) {
-          // We cannot handle this type at all.
+          // We cannot handle this type at all. Give up.
           fail = true;
           return;
         }
 
-        if (auto* c = curr->dynCast<Const>()) {
-        } else if (auto* binary = curr->dynCast<Binary>()) {
+        if (auto* c = curr->dynCast<wasm::Const>()) {
+          if (mode == Generate) {
+            // XXX
+          }
+        } else if (auto* binary = curr->dynCast<wasm::Binary>()) {
+          switch (binary->op) {
+            case wasm::AddInt32: {
+              process(binary->left);
+              process(binary->right);
+
+              if (mode == Generate) {
+                // XXX
+              }
+              break;
+            }
+            default: {
+              // Fall through to the parameter code path below.
+            }
+          }
         }
 
         // Otherwise, this is not something we can convert to LLVM IR. But it
-        // has a type we can handle, so turn it into a parameter.
-        ...
-      };
+        // has a type we can handle (we ruled that problem out earlier), so turn
+        // it into a parameter.
+        if (mode == Generate) {
+          paramMap[curr] = params.size();
+          params.push_back(curr);
+        }
+      }
+    };
 
+    void visitExpression(wasm::Expression* curr) {
+      RecursiveProcessor scan(RecursiveProcessor::Scan, parent);
+      if (scan.fail) {
+        return;
+      }
+
+      RecursiveProcessor generate(RecursiveProcessor::Generate, parent);
 
     }
   };
