@@ -324,7 +324,7 @@ static Expression* doInlining(Module* module,
   Type retType = module->getFunction(call->target)->getResults();
   Builder builder(*module);
   auto* block = builder.makeBlock();
-  block->name = Name(std::string("__inlined_func$") + from->name.str);
+  block->name = Name(std::string("__inlined_func$") + from->name.toString());
   // In the unlikely event that the function already has a branch target with
   // this name, fix that up, as otherwise we can get unexpected capture of our
   // branches, that is, we could end up with this:
@@ -767,7 +767,8 @@ private:
     return ModuleUtils::copyFunction(
       func,
       *module,
-      Names::getValidFunctionName(*module, prefix + '$' + func->name.str));
+      Names::getValidFunctionName(*module,
+                                  prefix + '$' + func->name.toString()));
   }
 
   // Get the i-th item in a sequence of initial items in an expression. That is,

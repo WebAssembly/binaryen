@@ -27,7 +27,6 @@
 #include "tool-options.h"
 #include "tool-utils.h"
 
-using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char* argv[]) {

@@ -353,7 +353,7 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
       } while (primary.getExportOrNull(exportName) != nullptr);
     } else {
       exportName = Names::getValidExportName(
-        primary, config.newExportPrefix + funcName.c_str());
+        primary, config.newExportPrefix + funcName.toString());
     }
     primary.addExport(
       Builder::makeExport(exportName, funcName, ExternalKind::Function));
@@ -492,8 +492,7 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->module = config.placeholderNamespace;
       placeholder->base = std::to_string(index);
       placeholder->name = Names::getValidFunctionName(
-        primary,
-        std::string("placeholder_") + std::string(placeholder->base.c_str()));
+        primary, std::string("placeholder_") + placeholder->base.toString());
       placeholder->hasExplicitName = false;
       placeholder->type = secondaryFunc->type;
       elem = placeholder->name;

@@ -31,7 +31,6 @@
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
-using namespace cashew;
 using namespace wasm;
 
 Name ASSERT_RETURN("assert_return");
@@ -162,7 +161,7 @@ protected:
     instances[name] = instances[lastModule];
 
     Colors::green(std::cerr);
-    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.c_str()
+    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.str
               << "\"  [line: " << s.line << "]\n";
     Colors::normal(std::cerr);
   }
@@ -190,7 +189,7 @@ protected:
       return instance->getExport(base);
     }
 
-    Fatal() << "Invalid operation " << s[0]->c_str();
+    Fatal() << "Invalid operation " << s[0]->toString();
   }
 
   void parseAssertTrap(Element& s) {

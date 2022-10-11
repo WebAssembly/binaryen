@@ -34,7 +34,7 @@ struct SetGlobals : public Pass {
       "SetGlobals usage:  wasm-opt --pass-arg=set-globals@x=y,z=w");
 
     // The input is a set of X=Y pairs separated by commas.
-    String::Split pairs(input.str, ",");
+    String::Split pairs(input.toString(), ",");
     for (auto& pair : pairs) {
       String::Split nameAndValue(pair, "=");
       auto name = nameAndValue[0];

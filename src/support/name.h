@@ -17,9 +17,7 @@
 #ifndef wasm_support_name_h
 #define wasm_support_name_h
 
-#include <string>
-
-#include "emscripten-optimizer/istring.h"
+#include "support/istring.h"
 
 namespace wasm {
 
@@ -33,14 +31,19 @@ namespace wasm {
 // TODO: as an optimization, IString values < some threshold could be considered
 //       numerical indices directly.
 
-struct Name : public cashew::IString {
-  Name() : cashew::IString() {}
-  Name(const char* str) : cashew::IString(str, false) {}
-  Name(cashew::IString str) : cashew::IString(str) {}
-  Name(const std::string& str) : cashew::IString(str.c_str(), false) {}
+struct Name : public IString {
+  Name() : IString() {}
+  Name(std::string_view str) : IString(str, false) {}
+  Name(const char* str) : IString(str, false) {}
+  Name(IString str) : IString(str) {}
+  Name(const std::string& str) : IString(str) {}
+
+  // String literals do not need to be copied. Note: Not safe to construct from
+  // temporary char arrays! Take their address first.
+  template<size_t N> Name(const char (&str)[N]) : IString(str) {}
 
   friend std::ostream& operator<<(std::ostream& o, Name name) {
-    if (name.str) {
+    if (name) {
       return o << name.str;
     } else {
       return o << "(null Name)";
@@ -48,11 +51,12 @@ struct Name : public cashew::IString {
   }
 
   static Name fromInt(size_t i) {
-    return cashew::IString(std::to_string(i).c_str(), false);
+    return IString(std::to_string(i).c_str(), false);
   }
 
-  bool hasSubstring(cashew::IString substring) {
-    return strstr(c_str(), substring.c_str()) != nullptr;
+  bool hasSubstring(IString substring) {
+    // TODO: Use C++23 `contains`.
+    return str.find(substring.str) != std::string_view::npos;
   }
 };
 
@@ -60,7 +64,7 @@ struct Name : public cashew::IString {
 
 namespace std {
 
-template<> struct hash<wasm::Name> : hash<cashew::IString> {};
+template<> struct hash<wasm::Name> : hash<wasm::IString> {};
 
 } // namespace std
 

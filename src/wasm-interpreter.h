@@ -44,8 +44,6 @@ struct WasmException {
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
-using namespace cashew;
-
 // Utilities
 
 extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW;
@@ -82,7 +80,7 @@ public:
 
   void clearIf(Name target) {
     if (breakTo == target) {
-      breakTo.clear();
+      breakTo = Name{};
     }
   }
 
@@ -2513,7 +2511,7 @@ public:
   std::string printFunctionStack() {
     std::string ret = "/== (binaryen interpreter stack trace)\n";
     for (int i = int(functionStack.size()) - 1; i >= 0; i--) {
-      ret += std::string("|: ") + functionStack[i].str + "\n";
+      ret += std::string("|: ") + functionStack[i].toString() + "\n";
     }
     ret += std::string("\\==\n");
     return ret;
@@ -3505,7 +3503,7 @@ public:
       // the delegation, don't handle it and just rethrow.
       if (scope->currDelegateTarget.is()) {
         if (scope->currDelegateTarget == curr->name) {
-          scope->currDelegateTarget.clear();
+          scope->currDelegateTarget = Name{};
         } else {
           throw;
         }

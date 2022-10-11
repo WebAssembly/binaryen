@@ -638,7 +638,7 @@ static void dumpWast(Name name, Module* wasm) {
   // TODO: use _getpid() on windows, elsewhere?
   fullName += std::to_string(getpid()) + '-';
 #endif
-  fullName += numstr + "-" + name.str;
+  fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
   ModuleWriter writer;
   writer.writeText(*wasm, fullName + ".wast");

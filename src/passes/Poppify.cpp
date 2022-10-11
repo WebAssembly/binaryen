@@ -87,8 +87,8 @@ namespace {
 
 // Generate names for the elements of tuple globals
 Name getGlobalElem(Module* module, Name global, Index i) {
-  return Names::getValidGlobalName(
-    *module, std::string(global.c_str()) + '$' + std::to_string(i));
+  return Names::getValidGlobalName(*module,
+                                   global.toString() + '$' + std::to_string(i));
 }
 
 struct Poppifier : BinaryenIRWriter<Poppifier> {

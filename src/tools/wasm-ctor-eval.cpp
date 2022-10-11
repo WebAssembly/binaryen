@@ -67,7 +67,8 @@ public:
     auto* global = wasm.getGlobal(curr->name);
     if (global->imported()) {
       throw FailToEvalException(std::string("read from imported global ") +
-                                global->module.str + "." + global->base.str);
+                                global->module.toString() + "." +
+                                global->base.toString());
     }
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
@@ -184,13 +185,14 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
         auto* globalExport = inst->wasm.getExportOrNull(global->base);
         if (!globalExport) {
           throw FailToEvalException(std::string("importGlobals: ") +
-                                    global->module.str + "." +
-                                    global->base.str);
+                                    global->module.toString() + "." +
+                                    global->base.toString());
         }
         globals[global->name] = inst->globals[globalExport->value];
       } else {
         throw FailToEvalException(std::string("importGlobals: ") +
-                                  global->module.str + "." + global->base.str);
+                                  global->module.toString() + "." +
+                                  global->base.toString());
       }
     });
   }
@@ -255,8 +257,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       extra = RECOMMENDATION "consider --ignore-external-input";
     }
     throw FailToEvalException(std::string("call import: ") +
-                              import->module.str + "." + import->base.str +
-                              extra);
+                              import->module.toString() + "." +
+                              import->base.toString() + extra);
   }
 
   // We assume the table is not modified FIXME
@@ -318,13 +320,14 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     auto* func = wasm->getFunction(targetFunc);
     if (func->type != sig) {
       throw FailToEvalException(std::string("callTable signature mismatch: ") +
-                                targetFunc.str);
+                                targetFunc.toString());
     }
     if (!func->imported()) {
       return instance.callFunctionInternal(targetFunc, arguments);
     } else {
       throw FailToEvalException(
-        std::string("callTable on imported function: ") + targetFunc.str);
+        std::string("callTable on imported function: ") +
+        targetFunc.toString());
     }
   }
 

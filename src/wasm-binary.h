@@ -1341,8 +1341,8 @@ public:
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
   // helpers
-  void writeInlineString(const char* name);
-  void writeEscapedName(const char* name);
+  void writeInlineString(std::string_view name);
+  void writeEscapedName(std::string_view name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
 
@@ -1451,7 +1451,7 @@ public:
 
   bool more() { return pos < input.size(); }
 
-  std::pair<const char*, const char*> getByteView(size_t size);
+  std::string_view getByteView(size_t size);
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();

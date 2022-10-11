@@ -177,7 +177,7 @@ struct FuncCastEmulation : public Pass {
 private:
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name, Module* module, Index numParams) {
-    Name thunk = std::string("byn$fpcast-emu$") + name.str;
+    Name thunk = std::string("byn$fpcast-emu$") + name.toString();
     if (module->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in "
                  "use. Was the pass already run on this code?";

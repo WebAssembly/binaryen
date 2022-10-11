@@ -55,7 +55,7 @@ Name UniqueNameMapper::getPrefixedName(Name prefix) {
   }
   // make sure to return a unique name not already on the stack
   while (1) {
-    Name ret = Name(prefix.str + std::to_string(otherIndex++));
+    Name ret = prefix.toString() + std::to_string(otherIndex++);
     if (reverseLabelMapping.find(ret) == reverseLabelMapping.end()) {
       return ret;
     }

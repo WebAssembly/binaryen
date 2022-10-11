@@ -712,8 +712,11 @@ def instruction_parser(new_parser=False):
     printer = CodePrinter()
 
     if not new_parser:
-        printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
-        printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
+        printer.print_line("using namespace std::string_view_literals;")
+        printer.print_line("auto str = s[0]->str().str;")
+        printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
+        printer.print_line("memcpy(buf, str.data(), str.size());")
+        printer.print_line("std::string_view op = {buf, str.size()};")
 
     def print_leaf(expr, inst):
         if new_parser:
@@ -726,7 +729,7 @@ def instruction_parser(new_parser=False):
                 printer.print_line("return *ret;")
             printer.print_line("}")
         else:
-            printer.print_line("if (strcmp(op, \"{inst}\") == 0) {{ return {expr}; }}"
+            printer.print_line("if (op == \"{inst}\"sv) {{ return {expr}; }}"
                                .format(inst=inst, expr=expr))
         printer.print_line("goto parse_error;")
 

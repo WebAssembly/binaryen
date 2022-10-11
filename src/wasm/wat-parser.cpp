@@ -81,6 +81,10 @@ struct ParseInput {
     lexer.setIndex(index);
   }
 
+  ParseInput(const ParseInput& other, size_t index) : lexer(other.lexer) {
+    lexer.setIndex(index);
+  }
+
   bool empty() { return lexer.empty(); }
 
   std::optional<Token> peek() {
@@ -106,6 +110,19 @@ struct ParseInput {
     }
     ++lexer;
     return true;
+  }
+
+  bool takeUntilParen() {
+    while (true) {
+      auto t = peek();
+      if (!t) {
+        return false;
+      }
+      if (t->isLParen() || t->isRParen()) {
+        return true;
+      }
+      ++lexer;
+    }
   }
 
   std::optional<Name> takeID() {
@@ -1610,10 +1627,65 @@ MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx, ParseInput& in) {
 template<typename Ctx>
 Result<typename Ctx::InstrsT> instrs(Ctx& ctx, ParseInput& in) {
   auto insts = ctx.makeInstrs();
-  while (auto inst = instr(ctx, in)) {
-    CHECK_ERR(inst);
-    ctx.appendInstr(insts, *inst);
+
+  while (true) {
+    if (in.takeLParen()) {
+      // A stack of (start, end) position pairs defining the positions of
+      // instructions that need to be parsed after their folded children.
+      std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
+
+      // Begin a folded instruction. Push its start position and a placeholder
+      // end position.
+      foldedInstrs.push_back({in.getPos(), {}});
+      while (!foldedInstrs.empty()) {
+        // Consume everything up to the next paren. This span will be parsed as
+        // an instruction later after its folded children have been parsed.
+        if (!in.takeUntilParen()) {
+          return ParseInput(in, foldedInstrs.back().first)
+            .err("unterminated folded instruction");
+        }
+
+        if (!foldedInstrs.back().second) {
+          // The folded instruction we just started should end here.
+          foldedInstrs.back().second = in.getPos();
+        }
+
+        // We have either the start of a new folded child or the end of the last
+        // one.
+        if (in.takeLParen()) {
+          foldedInstrs.push_back({in.getPos(), {}});
+        } else if (in.takeRParen()) {
+          auto [start, end] = foldedInstrs.back();
+          assert(end && "Should have found end of instruction");
+          foldedInstrs.pop_back();
+
+          ParseInput foldedIn(in, start);
+          if (auto inst = instr(ctx, foldedIn)) {
+            CHECK_ERR(inst);
+            ctx.appendInstr(insts, *inst);
+          } else {
+            return foldedIn.err("expected folded instruction");
+          }
+
+          if (foldedIn.getPos() != *end) {
+            return foldedIn.err("expected end of instruction");
+          }
+        } else {
+          WASM_UNREACHABLE("expected paren");
+        }
+      }
+      continue;
+    }
+
+    // A non-folded instruction.
+    if (auto inst = instr(ctx, in)) {
+      CHECK_ERR(inst);
+      ctx.appendInstr(insts, *inst);
+    } else {
+      break;
+    }
   }
+
   return insts;
 }
 
