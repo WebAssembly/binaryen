@@ -50,6 +50,7 @@ namespace wasm {
 //                     then only the exact type is possible; if the depth is 1
 //                     then either that type or its immediate subtypes, and so
 //                     forth.
+//                     A depth of -1 means unlimited: all subtypes are allowed.
 //                     If the type here is nullable then null is also allowed.
 //                     TODO: Add ConeTypePlusContents or such, which would be
 //                           used on e.g. a struct.new with an immutable field
@@ -96,6 +97,12 @@ class PossibleContents {
   // type.
   static ConeType ExactType(Type type) { return ConeType{type, 0}; }
 
+  static constexpr Index FullDepth = -1;
+
+  // Internal convenience for creating a cone type of unbounded depth, i.e., the
+  // full cone of all subtypes for that type.
+  static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
+
 public:
   PossibleContents() : value(None()) {}
   PossibleContents(const PossibleContents& other) = default;
@@ -114,8 +121,13 @@ public:
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
   }
+  // Helper for a cone with unbounded depth, i.e., the full cone of all subtypes
+  // for that type.
+  static PossibleContents fullConeType(Type type) {
+    return PossibleContents{FullConeType(type)};
+  }
   static PossibleContents coneType(Type type, Index depth) {
-    WASM_UNREACHABLE("actual cones are not supported yet");
+    return PossibleContents{ConeType{type, depth}};
   }
   static PossibleContents many() { return PossibleContents{Many()}; }
 
@@ -132,6 +144,11 @@ public:
   // Combine the information in a given PossibleContents to this one. The
   // contents here will then include whatever content was possible in |other|.
   void combine(const PossibleContents& other);
+
+  // Removes anything not in |other| from this object, so that it ends up with
+  // only their intersection. Currently this only handles an intersection with a
+  // full cone.
+  void intersectWithFullCone(const PossibleContents& other);
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }
@@ -174,6 +191,37 @@ public:
     }
   }
 
+  // Returns cone type info. This can be called on non-cone types as well, and
+  // it returns a cone that best describes them. That is, this is like getType()
+  // but it also provides an indication about the depth, if relevant. (If cone
+  // info is not relevant, like when getType() returns none or unreachable, the
+  // depth is set to 0.)
+  ConeType getCone() const {
+    if (auto* literal = std::get_if<Literal>(&value)) {
+      return ExactType(literal->type);
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
+      return FullConeType(global->type);
+    } else if (auto* coneType = std::get_if<ConeType>(&value)) {
+      return *coneType;
+    } else if (std::get_if<None>(&value)) {
+      return ExactType(Type::unreachable);
+    } else if (std::get_if<Many>(&value)) {
+      return ExactType(Type::none);
+    } else {
+      WASM_UNREACHABLE("bad value");
+    }
+  }
+
+  // Returns whether the relevant cone for this, as computed by getCone(), is of
+  // full size, that is, includes all subtypes.
+  bool hasFullCone() const { return getCone().depth == FullDepth; }
+
+  // Returns whether this is a cone type and also is of full size. This differs
+  // from hasFullCone() in that the former can return true for a global, for
+  // example, while this cannot (a global is not a cone type, but the
+  // information we have about its cone is that it is full).
+  bool isFullConeType() const { return isConeType() && hasFullCone(); }
+
   // Returns whether the type we can report here is exact, that is, nothing of a
   // strict subtype might show up - the contents here have an exact type.
   //
@@ -196,6 +244,11 @@ public:
   // intersection.
   static bool haveIntersection(const PossibleContents& a,
                                const PossibleContents& b);
+
+  // Returns whether |a| is a subset of |b|, that is, all possible contents of
+  // |a| are also possible in |b|.
+  static bool isSubContents(const PossibleContents& a,
+                            const PossibleContents& b);
 
   // Whether we can make an Expression* for this containing the proper contents.
   // We can do that for a Literal (emitting a Const or RefFunc etc.) or a

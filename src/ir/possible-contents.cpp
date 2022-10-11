@@ -89,39 +89,184 @@ void PossibleContents::combine(const PossibleContents& other) {
     return;
   }
 
+  auto lub = Type::getLeastUpperBound(type, otherType);
+  if (lub == Type::none) {
+    // The types are not in the same hierarchy.
+    value = Many();
+    return;
+  }
+
+  // From here we can assume there is a useful LUB.
+
   // Nulls can be combined in by just adding nullability to a type.
   if (isNull() || other.isNull()) {
     // Only one of them can be null here, since we already handled the case
     // where they were both null.
     assert(!isNull() || !other.isNull());
-    // If only one is a null, but the other's type is known exactly, then the
-    // combination is to add nullability (if the type is *not* known exactly,
-    // like for a global, then we cannot do anything useful here).
-    if (!isNull() && hasExactType()) {
-      value = ExactType(Type(type.getHeapType(), Nullable));
+    // If only one is a null then we can use the type info from the other, and
+    // just add in nullability. For example, a literal of type T and a null
+    // becomes an exact type of T that allows nulls, and so forth.
+    auto mixInNull = [](ConeType cone) {
+      cone.type = Type(cone.type.getHeapType(), Nullable);
+      return cone;
+    };
+    if (!isNull()) {
+      value = mixInNull(getCone());
       return;
-    } else if (!other.isNull() && other.hasExactType()) {
-      value = ExactType(Type(otherType.getHeapType(), Nullable));
+    } else if (!other.isNull()) {
+      value = mixInNull(other.getCone());
       return;
     }
   }
 
-  if (hasExactType() && other.hasExactType() &&
-      type.getHeapType() == otherType.getHeapType()) {
-    // We know the types here exactly, and even the heap types match, but
-    // there is some other difference that prevents them from being 100%
-    // identical (for example, one might be an ExactType and the other a
-    // Literal; or both might be ExactTypes and only one might be nullable).
-    // In these cases we can emit a proper ExactType here, adding nullability
-    // if we need to.
-    value = ExactType(Type(
-      type.getHeapType(),
-      type.isNullable() || otherType.isNullable() ? Nullable : NonNullable));
+  // Find a ConeType that describes both inputs, using the shared ancestor which
+  // is the LUB. We need to find how big a cone we need: the cone must be big
+  // enough to contain both the inputs.
+  auto depth = getCone().depth;
+  auto otherDepth = other.getCone().depth;
+  Index newDepth;
+  if (depth == FullDepth || otherDepth == FullDepth) {
+    // At least one has full (infinite) depth, so we know the new depth must
+    // be the same.
+    newDepth = FullDepth;
+  } else {
+    // The depth we need under the lub is how far from the lub we are, plus
+    // the depth of our cone.
+    // TODO: we could make a single loop that also does the LUB, at the same
+    // time, and also avoids calling getDepth() which loops once more?
+    auto depthFromRoot = type.getHeapType().getDepth();
+    auto otherDepthFromRoot = otherType.getHeapType().getDepth();
+    auto lubDepthFromRoot = lub.getHeapType().getDepth();
+    assert(lubDepthFromRoot <= depthFromRoot);
+    assert(lubDepthFromRoot <= otherDepthFromRoot);
+    Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
+    Index otherDepthUnderLub =
+      otherDepthFromRoot - lubDepthFromRoot + otherDepth;
+
+    // The total cone must be big enough to contain all the above.
+    newDepth = std::max(depthUnderLub, otherDepthUnderLub);
+  }
+
+  value = ConeType{lub, newDepth};
+}
+
+void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
+  assert(other.isFullConeType());
+
+  if (isSubContents(other, *this)) {
+    // The intersection is just |other|.
+    // Note that this code path handles |this| being Many.
+    value = other.value;
     return;
   }
 
-  // Nothing else possible combines in an interesting way; emit a Many.
-  value = Many();
+  if (!haveIntersection(*this, other)) {
+    // There is no intersection at all.
+    // Note that this code path handles |this| being None.
+    value = None();
+    return;
+  }
+
+  // There is an intersection here. Note that this implies |this| is a reference
+  // type, as it has an intersection with |other| which is a full cone type
+  // (which must be a reference type).
+  auto type = getType();
+  auto otherType = other.getType();
+  auto heapType = type.getHeapType();
+  auto otherHeapType = otherType.getHeapType();
+
+  // If both inputs are nullable then the intersection is nullable as well.
+  auto nullability =
+    type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
+
+  auto setNoneOrNull = [&]() {
+    if (nullability == Nullable) {
+      value = Literal::makeNull(otherHeapType);
+    } else {
+      value = None();
+    }
+  };
+
+  if (isNull()) {
+    // The intersection is either this null itself, or nothing if a null is not
+    // allowed.
+    setNoneOrNull();
+    return;
+  }
+
+  // If the heap types are not compatible then they are in separate hierarchies
+  // and there is no intersection.
+  auto isSubType = HeapType::isSubType(heapType, otherHeapType);
+  auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
+  if (!isSubType && !otherIsSubType) {
+    value = None();
+    return;
+  }
+
+  if (isLiteral() || isGlobal()) {
+    // The information about the value being identical to a particular literal
+    // or immutable global is not removed by intersection, if the type is in the
+    // cone we are intersecting with.
+    if (isSubType) {
+      return;
+    }
+
+    // The type must change, so continue down to the generic code path.
+    // TODO: for globals we could perhaps refine the type here, but then the
+    //       type on GlobalInfo would not match the module, so that needs some
+    //       refactoring.
+  }
+
+  // Intersect the cones, as there is no more specific information we can use.
+  auto depthFromRoot = heapType.getDepth();
+  auto otherDepthFromRoot = otherHeapType.getDepth();
+
+  // To compute the new cone, find the new heap type for it, and to compute its
+  // depth, consider the adjustments to the existing depths that stem from the
+  // choice of new heap type.
+  HeapType newHeapType;
+
+  if (depthFromRoot < otherDepthFromRoot) {
+    newHeapType = otherHeapType;
+  } else {
+    newHeapType = heapType;
+  }
+
+  auto newType = Type(newHeapType, nullability);
+
+  // By assumption |other| has full depth. Consider the other cone in |this|.
+  if (hasFullCone()) {
+    // Both are full cones, so the result is as well.
+    value = FullConeType(newType);
+  } else {
+    // The result is a partial cone. If the cone starts in |otherHeapType| then
+    // we need to adjust the depth down, since it will be smaller than the
+    // original cone:
+    /*
+    //                             ..
+    //                            /
+    //              otherHeapType
+    //            /               \
+    //   heapType                  ..
+    //            \
+    */
+    // E.g. if |this| is a cone of depth 10, and |otherHeapType| is an immediate
+    // subtype of |this|, then the new cone must be of depth 9.
+    auto newDepth = getCone().depth;
+    if (newHeapType == otherHeapType) {
+      assert(depthFromRoot <= otherDepthFromRoot);
+      auto reduction = otherDepthFromRoot - depthFromRoot;
+      if (reduction > newDepth) {
+        // The cone on heapType does not even reach the cone on otherHeapType,
+        // so the result is not a cone.
+        setNoneOrNull();
+        return;
+      }
+      newDepth -= reduction;
+    }
+
+    value = ConeType{newType, newDepth};
+  }
 }
 
 bool PossibleContents::haveIntersection(const PossibleContents& a,
@@ -148,43 +293,77 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
 
   // From here on we focus on references.
 
-  if (aType.isNullable() && bType.isNullable()) {
-    // Null is possible on both sides. Assume that an intersection can exist,
-    // but we could be more precise here and check if the types belong to
-    // different hierarchies, in which case the nulls would differ TODO. For
-    // now we only use this API from the RefEq logic, so this is fully precise.
+  auto aHeapType = aType.getHeapType();
+  auto bHeapType = bType.getHeapType();
+
+  if (aType.isNullable() && bType.isNullable() &&
+      aHeapType.getBottom() == bHeapType.getBottom()) {
+    // A compatible null is possible on both sides.
     return true;
   }
 
-  // We ruled out a null on both sides, so at least one is non-nullable. If the
-  // other is a null then no chance for an intersection remains.
+  // We ruled out having a compatible null on both sides. If one is simply a
+  // null then no chance for an intersection remains.
   if (a.isNull() || b.isNull()) {
+    return false;
+  }
+
+  auto aSubB = HeapType::isSubType(aHeapType, bHeapType);
+  auto bSubA = HeapType::isSubType(bHeapType, aHeapType);
+  if (!aSubB && !bSubA) {
+    // No type can appear in both a and b, so the types differ, so the values
+    // do not overlap.
     return false;
   }
 
   // From here on we focus on references and can ignore the case of null - any
   // intersection must be of a non-null value, so we can focus on the heap
   // types.
-  auto aHeapType = aType.getHeapType();
-  auto bHeapType = bType.getHeapType();
 
-  if (a.hasExactType() && b.hasExactType() && aHeapType != bHeapType) {
-    // The values must be different since their types are different.
-    return false;
-  }
+  auto aDepthFromRoot = aHeapType.getDepth();
+  auto bDepthFromRoot = bHeapType.getDepth();
 
-  if (!HeapType::isSubType(aHeapType, bHeapType) &&
-      !HeapType::isSubType(bHeapType, aHeapType)) {
-    // No type can appear in both a and b, so the types differ, so the values
-    // differ.
-    return false;
+  if (aSubB) {
+    // A is a subtype of B. For there to be an intersection we need their cones
+    // to intersect, that is, to rule out the case where the cone from B is not
+    // deep enough to reach A.
+    assert(aDepthFromRoot >= bDepthFromRoot);
+    return aDepthFromRoot - bDepthFromRoot <= b.getCone().depth;
+  } else if (bSubA) {
+    assert(bDepthFromRoot >= aDepthFromRoot);
+    return bDepthFromRoot - aDepthFromRoot <= a.getCone().depth;
+  } else {
+    WASM_UNREACHABLE("we ruled out no subtyping before");
   }
 
   // TODO: we can also optimize things like different Literals, but existing
   //       passes do such things already so it is low priority.
+}
 
-  // It appears they can intersect.
-  return true;
+bool PossibleContents::isSubContents(const PossibleContents& a,
+                                     const PossibleContents& b) {
+  // TODO: Everything else. For now we only call this when |a| or |b| is a full
+  //       cone type.
+  if (b.isFullConeType()) {
+    if (a.isNone()) {
+      return true;
+    }
+    if (a.isMany()) {
+      return false;
+    }
+    if (a.isNull()) {
+      return b.getType().isNullable();
+    }
+    return Type::isSubType(a.getType(), b.getType());
+  }
+
+  if (a.isFullConeType()) {
+    // We've already ruled out b being a full cone type before, so the only way
+    // |a| can be contained in |b| is if |b| is everything.
+    return b.isMany();
+  }
+
+  WASM_UNREACHABLE("a or b must be a full cone");
 }
 
 namespace {
@@ -1018,6 +1197,7 @@ struct InfoCollector
   // verbose code).
   void addRoot(Expression* curr,
                PossibleContents contents = PossibleContents::many()) {
+    // TODO Use a cone type here when relevant
     if (isRelevant(curr)) {
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
@@ -1675,7 +1855,11 @@ void Flower::readFromData(HeapType declaredHeapType,
     //       represent them as an exact type).
     //       See the test TODO with text "We optimize some of this, but stop at
     //       reading from the immutable global"
-    assert(refContents.isMany() || refContents.isGlobal());
+    assert(refContents.isMany() || refContents.isGlobal() ||
+           refContents.isConeType());
+
+    // TODO: Use the cone depth here for ConeType. Right now we do the
+    //       pessimistic thing and assume a full cone of all subtypes.
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
@@ -1737,9 +1921,12 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       DataLocation{refContents.getType().getHeapType(), fieldIndex};
     updateContents(heapLoc, valueContents);
   } else {
-    assert(refContents.isMany() || refContents.isGlobal());
+    assert(refContents.isMany() || refContents.isGlobal() ||
+           refContents.isConeType());
 
     // Update all possible subtypes here.
+    // TODO: Use the cone depth here for ConeType. Right now we do the
+    //       pessimistic thing and assume a full cone of all subtypes.
     auto type = ref->type.getHeapType();
     for (auto subType : subTypes->getAllSubTypes(type)) {
       auto heapLoc = DataLocation{subType, fieldIndex};
@@ -1751,32 +1938,10 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
-  PossibleContents filtered;
-  if (contents.isMany()) {
-    // Just pass the Many through.
-    // TODO: we could emit a cone type here when we get one, instead of
-    //       emitting a Many in any of these code paths
-    filtered = contents;
-  } else {
-    bool isSubType =
-      HeapType::isSubType(contents.getType().getHeapType(), cast->intendedType);
-    if (isSubType) {
-      // The contents are not Many, but their heap type is a subtype of the
-      // intended type, so we'll pass that through. Note that we pass the entire
-      // contents here, which includes nullability, but that is fine, it would
-      // just overlap with the code below that handles nulls (that is, the code
-      // below only makes a difference when the heap type is *not* a subtype but
-      // the type is nullable).
-      // TODO: When we get cone types, we could filter the cone here.
-      filtered.combine(contents);
-    }
-    bool mayBeNull = contents.getType().isNullable();
-    if (mayBeNull) {
-      // A null is possible, so pass that along.
-      filtered.combine(
-        PossibleContents::literal(Literal::makeNull(cast->intendedType)));
-    }
-  }
+  auto intendedCone =
+    PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
+  PossibleContents filtered = contents;
+  filtered.intersectWithFullCone(intendedCone);
   if (!filtered.isNone()) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "    ref.cast passing through\n";

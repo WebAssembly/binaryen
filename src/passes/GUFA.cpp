@@ -243,10 +243,11 @@ struct GUFAOptimizer
     auto refType = refContents.getType();
     if (refType.isRef()) {
       // We have some knowledge of the type here. Use that to optimize: RefTest
-      // returns 1 iff the input is not null and is also a subtype.
-      bool isSubType =
-        HeapType::isSubType(refType.getHeapType(), curr->intendedType);
-      bool mayBeNull = refType.isNullable();
+      // returns 1 if the input is of a subtype of the intended type, that is,
+      // we are looking for a type in that cone of types. (Note that we use a
+      // non-nullable cone since only a non-null can pass the test.)
+      auto intendedContents =
+        PossibleContents::fullConeType(Type(curr->intendedType, NonNullable));
 
       auto optimize = [&](int32_t result) {
         auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
@@ -254,9 +255,10 @@ struct GUFAOptimizer
           curr, *getModule(), getPassOptions(), last));
       };
 
-      if (!isSubType) {
+      if (!PossibleContents::haveIntersection(refContents, intendedContents)) {
         optimize(0);
-      } else if (!mayBeNull) {
+      } else if (PossibleContents::isSubContents(refContents,
+                                                 intendedContents)) {
         optimize(1);
       }
     }
