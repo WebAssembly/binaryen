@@ -134,6 +134,8 @@ struct SubTypes {
         }
       }
     }
+
+    return depths;
   }
 
   // All the types in the program. This is computed here anyhow, and can be

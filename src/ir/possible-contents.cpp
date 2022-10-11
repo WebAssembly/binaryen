@@ -1389,16 +1389,27 @@ private:
   // equal to the maximum depth of an existing subtype.
   //
   // Returns whether the cone is of maximal depth.
-  void normalizeConeType(PossibleContents& cone) {
+  bool normalizeConeType(HeapType type, Index& depth) { // TODO test
+    auto normalized = childDepths[type];
+    if (normalized < depth) {
+      depth = normalized;
+      return true;
+    }
+    return depth == normalized;
+  }
+
+  bool normalizeConeType(PossibleContents& cone) { // TODO test
     assert(cone.isConeType());
     auto type = cone.getType();
     auto before = cone.getCone().depth;
-    auto normalized = childDepths[type];
-    if (normalized < before) {
-      cone = PossibleContents::coneType(type, normalized);
+    auto normalized = before;
+    if (normalizeConeType(type.getHeapType(), normalized)) {
+      if (normalized != before) {
+        cone = PossibleContents::coneType(type, normalized);
+      }
       return true;
     }
-    return before == normalized;
+    return false;
   }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -1911,7 +1922,8 @@ void Flower::readFromData(HeapType declaredHeapType,
     // global, if it was one. All that matters from now is the cone. We also
     // normalize the cone which can avoid wasted work later (we don't want two
     // cone depths which refer to the same types in practice).
-    auto cone = refContents.getNormalizedCone(subTypes);
+    auto cone = refContents.getCone();
+    normalizeConeType(cone.type.getHeapType(), cone.depth);
 
     // We create a ConeReadLocation for the canonical cone of this type, to
     // avoid bloating the graph, see comment on ConeReadLocation().
@@ -1983,7 +1995,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     assert(refContents.isGlobal() || refContents.isConeType());
 
     // As in readFromData, normalize to the proper cone.
-    auto cone = refContents.getNormalizedCone(subTypes);
+    auto cone = refContents.getCone();
+    normalizeConeType(cone.type.getHeapType(), cone.depth);
 
     subTypes->traverseSubTypes(
       cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
