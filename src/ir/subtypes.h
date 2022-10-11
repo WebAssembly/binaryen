@@ -109,7 +109,7 @@ struct SubTypes {
   // Computes the depth of children for each type. This is 0 if the type has no
   // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
   // and so forth.
-  std::unordered_map<HeapType, Index> getChildDepths() {
+  std::unordered_map<HeapType, Index> getMaxDepths() {
     std::unordered_map<HeapType, Index> depths;
 
     // Begin with depth 0.

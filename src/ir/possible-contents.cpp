@@ -1380,7 +1380,7 @@ private:
   // The depth of children for each type. This is 0 if the type has no
   // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
   // and so forth.
-  std::unordered_map<HeapType, Index> childDepths;
+  std::unordered_map<HeapType, Index> maxDepths;
 
   // Given a ConeType, normalize it, that is, make its depth the canonical
   // depth given the actual children it has. If this is a full cone, then we can
@@ -1388,14 +1388,15 @@ private:
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
   //
-  // Returns whether the cone is of maximal depth.
+  // Returns whether the cone is of maximal depth (with or without
+  // normalization).
   bool normalizeConeType(HeapType type, Index& depth) { // TODO test
-    auto normalized = childDepths[type];
-    if (normalized < depth) {
-      depth = normalized;
+    auto max = maxDepths[type];
+    if (depth > max) {
+      depth = max;
       return true;
     }
-    return depth == normalized;
+    return depth == max;
   }
 
   bool normalizeConeType(PossibleContents& cone) { // TODO test
@@ -1558,6 +1559,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   if (getTypeSystem() == TypeSystem::Nominal ||
       getTypeSystem() == TypeSystem::Isorecursive) {
     subTypes = std::make_unique<SubTypes>(wasm);
+    maxDepths = std::move(subTypes->getMaxDepths());
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -1672,7 +1674,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto type = exprLoc->expr->type;
-    if (type.isRef() &&contents.getType() == type && contents.isConeType()) {
+    if (worthSendingMore && type.isRef() && contents.getType() == type && contents.isConeType()) {
       // Normalize the cone to make it easy to see when we've reached the worst
       // case of all possible contents for this location, which is when the
       // PossibleContents is identical to what the wasm type tells us: a cone of
