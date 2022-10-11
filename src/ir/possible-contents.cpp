@@ -1671,7 +1671,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // filter accordingly.
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-    if (contents.getType() == exprLoc->expr->type && contents.isConeType()) {
+    auto type = exprLoc->expr->type;
+    if (type.isRef() &&contents.getType() == type && contents.isConeType()) {
       // Normalize the cone to make it easy to see when we've reached the worst
       // case of all possible contents for this location, which is when the
       // PossibleContents is identical to what the wasm type tells us: a cone of
