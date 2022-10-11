@@ -1679,7 +1679,9 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // case of all possible contents for this location, which is when the
       // PossibleContents is identical to what the wasm type tells us: a cone of
       // all possible subtypes from the declared type.
-      if (normalizeConeType(contents)) {
+      //
+      // Also, a null may arrive later.
+      if (normalizeConeType(contents) && type.isNullable()) {
         worthSendingMore = false;
       }
       // TODO: assert on never having "Many" for refernce types. Only mVP.
