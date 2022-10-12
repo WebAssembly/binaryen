@@ -1681,7 +1681,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto type = exprLoc->expr->type;
-    if (worthSendingMore && type.isRef() && contents.getType() == type && contents.isConeType()) {
+    if (worthSendingMore && type.isRef() && contents.getType() == type &&
+        contents.isConeType()) {
       // Normalize the cone to make it easy to see when we've reached the worst
       // case of all possible contents for this location, which is when the
       // PossibleContents is identical to what the wasm type tells us: a cone of
@@ -1689,7 +1690,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
       //
       // Also, a null may arrive later.
       if (normalizeConeType(contents) && type.isNullable()) {
-//        worthSendingMore = false;
+        worthSendingMore = false;
       }
       // TODO: assert on never having "Many" for refernce types. Only mVP.
       // TODO: filter by the declared type?
@@ -2050,7 +2051,8 @@ void Flower::dump(Location location) {
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
     std::cout << "  tagloc " << loc->tag << '\n';
   } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
-    std::cout << "  paramloc " << loc->func->name << " : " << loc->index << '\n';
+    std::cout << "  paramloc " << loc->func->name << " : " << loc->index
+              << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc $" << loc->func->name << " : " << loc->index
               << '\n';
