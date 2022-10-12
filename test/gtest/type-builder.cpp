@@ -691,9 +691,8 @@ TEST_F(NominalTest, TestTraverse) {
 
   auto getSubTypes = [&](HeapType type, Index depth) {
     TypeSet ret;
-    subTypes.traverseSubTypes(type, depth, [&](HeapType subType, Index depth) {
-      ret.insert(subType);
-    });
+    subTypes.traverseSubTypes(
+      type, depth, [&](HeapType subType, Index depth) { ret.insert(subType); });
     return ret;
   };
 
