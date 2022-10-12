@@ -661,3 +661,42 @@ TEST_F(NominalTest, TestDepth) {
   EXPECT_EQ(HeapType(HeapType::nofunc).getDepth(), size_t(-1));
   EXPECT_EQ(HeapType(HeapType::noext).getDepth(), size_t(-1));
 }
+
+// Test .traverseSubTypes() helper.
+TEST_F(NominalTest, TestTraverse) {
+  /*
+        A
+       / \
+      B   C
+  */
+  HeapType A, B, C;
+  {
+    TypeBuilder builder(3);
+    builder[0] = Struct();
+    builder[1] = Struct();
+    builder[2] = Struct();
+    builder.setSubType(1, builder.getTempHeapType(0));
+    builder.setSubType(2, builder.getTempHeapType(0));
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = built[0];
+    B = built[1];
+    C = built[2];
+  }
+
+  // Add the types to wasm so we scan them.
+  SubTypes subTypes({A, B, C});
+
+  using TypeSet = std::unordered_set<HeapType>;
+
+  auto getSubTypes = [&](HeapType type, Index depth) {
+    TypeSet ret;
+    subTypes.traverseSubTypes(type, depth, [&](HeapType subType, Index depth) {
+      ret.insert(subType);
+    });
+    return ret;
+  };
+
+  EXPECT_EQ(getSubTypes(A, 0), TypeSet{A});
+}
