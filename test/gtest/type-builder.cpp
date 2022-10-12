@@ -627,7 +627,7 @@ TEST_F(NominalTest, TestMaxDepths) {
       |
       B
   */
-  HeapType A, B, C, D;
+  HeapType A, B;
   {
     TypeBuilder builder(2);
     builder[0] = Struct();
