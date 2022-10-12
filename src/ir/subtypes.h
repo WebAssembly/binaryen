@@ -24,19 +24,23 @@ namespace wasm {
 
 // Analyze subtyping relationships and provide useful interfaces to discover
 // them.
+//
+// This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
-  SubTypes(Module& wasm) {
+  SubTypes(const std::vector<HeapType>& types) : types(types) {
     if (getTypeSystem() != TypeSystem::Nominal &&
         getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SubTypes requires explicit supers";
     }
-    types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {
       note(type);
     }
   }
 
+  SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
+
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
+    assert(!type.isBasic());
     if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
       return iter->second;
     }
@@ -67,6 +71,49 @@ struct SubTypes {
     auto ret = getAllStrictSubTypes(type);
     ret.push_back(type);
     return ret;
+  }
+
+  // Efficiently iterate on subtypes of a type, up to a particular depth (depth
+  // 0 means not to traverse subtypes, etc.). The callback function receives
+  // (type, depth).
+  template<typename F> void iterSubTypes(HeapType type, Index depth, F func) {
+    // Start by traversing the type itself.
+    func(type, 0);
+
+    if (depth == 0) {
+      // Nothing else to scan.
+      return;
+    }
+
+    // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
+    // pointers to those in our work queue to avoid allocations. See the note
+    // below on typeSubTypes for why this is safe.
+    struct Item {
+      const std::vector<HeapType>* vec;
+      Index depth;
+    };
+
+    // Real-world type hierarchies tend to have a limited depth, so try to avoid
+    // allocations in our work queue with a SmallVector.
+    SmallVector<Item, 10> work;
+
+    // Start with the subtypes of the base type. Those have depth 1.
+    work.push_back({&getStrictSubTypes(type), 1});
+
+    while (!work.empty()) {
+      auto& item = work.back();
+      work.pop_back();
+      auto currDepth = item.depth;
+      auto& currVec = *item.vec;
+      assert(currDepth <= depth);
+      for (auto type : currVec) {
+        func(type, currDepth);
+        auto* subVec = &getStrictSubTypes(type);
+        if (currDepth + 1 <= depth && !subVec->empty()) {
+          work.push_back({subVec, currDepth + 1});
+        }
+      }
+    }
   }
 
   // All the types in the program. This is computed here anyhow, and can be

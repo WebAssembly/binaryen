@@ -661,3 +661,54 @@ TEST_F(NominalTest, TestDepth) {
   EXPECT_EQ(HeapType(HeapType::nofunc).getDepth(), size_t(-1));
   EXPECT_EQ(HeapType(HeapType::noext).getDepth(), size_t(-1));
 }
+
+// Test .iterSubTypes() helper.
+TEST_F(NominalTest, TestIterSubTypes) {
+  /*
+        A
+       / \
+      B   C
+           \
+            D
+  */
+  HeapType A, B, C, D;
+  {
+    TypeBuilder builder(4);
+    builder[0] = Struct();
+    builder[1] = Struct();
+    builder[2] = Struct();
+    builder[3] = Struct();
+    builder.setSubType(1, builder.getTempHeapType(0));
+    builder.setSubType(2, builder.getTempHeapType(0));
+    builder.setSubType(3, builder.getTempHeapType(2));
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = built[0];
+    B = built[1];
+    C = built[2];
+    D = built[3];
+  }
+
+  SubTypes subTypes({A, B, C, D});
+
+  // Helper for comparing sets of types + their corresponding depth.
+  using TypeDepths = std::unordered_set<std::pair<HeapType, Index>>;
+
+  auto getSubTypes = [&](HeapType type, Index depth) {
+    TypeDepths ret;
+    subTypes.iterSubTypes(type, depth, [&](HeapType subType, Index depth) {
+      ret.insert({subType, depth});
+    });
+    return ret;
+  };
+
+  EXPECT_EQ(getSubTypes(A, 0), TypeDepths({{A, 0}}));
+  EXPECT_EQ(getSubTypes(A, 1), TypeDepths({{A, 0}, {B, 1}, {C, 1}}));
+  EXPECT_EQ(getSubTypes(A, 2), TypeDepths({{A, 0}, {B, 1}, {C, 1}, {D, 2}}));
+  EXPECT_EQ(getSubTypes(A, 3), TypeDepths({{A, 0}, {B, 1}, {C, 1}, {D, 2}}));
+
+  EXPECT_EQ(getSubTypes(C, 0), TypeDepths({{C, 0}}));
+  EXPECT_EQ(getSubTypes(C, 1), TypeDepths({{C, 0}, {D, 1}}));
+  EXPECT_EQ(getSubTypes(C, 2), TypeDepths({{C, 0}, {D, 1}}));
+}
