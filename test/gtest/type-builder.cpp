@@ -624,7 +624,7 @@ TEST_F(IsorecursiveTest, TestExistingSuperType) {
 TEST_F(NominalTest, TestMaxDepths) {
   /*
       A
-      | 
+      |
       B
   */
   HeapType A, B, C, D;
