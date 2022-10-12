@@ -668,24 +668,29 @@ TEST_F(NominalTest, TestTraverse) {
         A
        / \
       B   C
+           \
+            D
   */
-  HeapType A, B, C;
+  HeapType A, B, C, D;
   {
-    TypeBuilder builder(3);
+    TypeBuilder builder(4);
     builder[0] = Struct();
     builder[1] = Struct();
     builder[2] = Struct();
+    builder[3] = Struct();
     builder.setSubType(1, builder.getTempHeapType(0));
     builder.setSubType(2, builder.getTempHeapType(0));
+    builder.setSubType(3, builder.getTempHeapType(2));
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
     A = built[0];
     B = built[1];
     C = built[2];
+    D = built[3];
   }
 
-  SubTypes subTypes({A, B, C});
+  SubTypes subTypes({A, B, C, D});
 
   using TypeSet = std::unordered_set<HeapType>;
 
@@ -698,7 +703,12 @@ TEST_F(NominalTest, TestTraverse) {
 
   EXPECT_EQ(getSubTypes(A, 0), TypeSet({A}));
   EXPECT_EQ(getSubTypes(A, 1), TypeSet({A, B, C}));
-  EXPECT_EQ(getSubTypes(A, 2), TypeSet({A, B, C}));
+  EXPECT_EQ(getSubTypes(A, 2), TypeSet({A, B, C, D}));
+  EXPECT_EQ(getSubTypes(A, 3), TypeSet({A, B, C, D}));
+
+  EXPECT_EQ(getSubTypes(C, 0), TypeSet({C}));
+  EXPECT_EQ(getSubTypes(C, 1), TypeSet({C, D}));
+  EXPECT_EQ(getSubTypes(C, 2), TypeSet({C, D}));
 
   // Manually test the depth parameter
   subTypes.traverseSubTypes(A, 1, [&](HeapType subType, Index depth) {
