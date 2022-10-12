@@ -720,8 +720,8 @@ def instruction_parser(new_parser=False):
 
     def print_leaf(expr, inst):
         if new_parser:
-            expr = expr.replace("()", "(ctx)")
-            expr = expr.replace("(s", "(ctx")
+            expr = expr.replace("()", "(ctx, pos)")
+            expr = expr.replace("(s", "(ctx, pos")
             printer.print_line("if (op == \"{inst}\"sv) {{".format(inst=inst))
             with printer.indent():
                 printer.print_line("auto ret = {expr};".format(expr=expr))
