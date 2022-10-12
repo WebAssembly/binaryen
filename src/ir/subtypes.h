@@ -41,8 +41,9 @@ struct SubTypes {
       return iter->second;
     }
 
-    // No entry exists. Return the canonical empty vec.
-    return emptyVec;
+    // No entry exists. Return a canonical empty vec.
+    static std::vector<HeapType> empty;
+    return empty;
   }
 
   // Get all subtypes of a type, and their subtypes and so forth, recursively.
