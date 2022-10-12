@@ -685,7 +685,6 @@ TEST_F(NominalTest, TestTraverse) {
     C = built[2];
   }
 
-  // Add the types to wasm so we scan them.
   SubTypes subTypes({A, B, C});
 
   using TypeSet = std::unordered_set<HeapType>;
@@ -698,5 +697,18 @@ TEST_F(NominalTest, TestTraverse) {
     return ret;
   };
 
-  EXPECT_EQ(getSubTypes(A, 0), TypeSet{A});
+  EXPECT_EQ(getSubTypes(A, 0), TypeSet({A}));
+  EXPECT_EQ(getSubTypes(A, 1), TypeSet({A, B, C}));
+  EXPECT_EQ(getSubTypes(A, 2), TypeSet({A, B, C}));
+
+  // Manually test the depth parameter
+  subTypes.traverseSubTypes(A, 1, [&](HeapType subType, Index depth) {
+    if (subType == A) {
+      EXPECT_EQ(depth, Index(0));
+    } else if (subType == B || subType == C) {
+      EXPECT_EQ(depth, Index(1));
+    } else {
+      FAIL() << "unexpected type";
+    }
+  });
 }
