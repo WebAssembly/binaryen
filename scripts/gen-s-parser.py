@@ -721,7 +721,7 @@ def instruction_parser(new_parser=False):
     def print_leaf(expr, inst):
         if new_parser:
             expr = expr.replace("()", "(ctx)")
-            expr = expr.replace("(s", "(ctx, in")
+            expr = expr.replace("(s", "(ctx")
             printer.print_line("if (op == \"{inst}\"sv) {{".format(inst=inst))
             with printer.indent():
                 printer.print_line("auto ret = {expr};".format(expr=expr))
@@ -760,7 +760,7 @@ def instruction_parser(new_parser=False):
     printer.print_line("parse_error:")
     with printer.indent():
         if new_parser:
-            printer.print_line("return in.err(\"unrecognized instruction\");")
+            printer.print_line("return ctx.in.err(\"unrecognized instruction\");")
         else:
             printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 

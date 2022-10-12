@@ -75,7 +75,7 @@ namespace {
 struct ParseInput {
   Lexer lexer;
 
-  ParseInput(std::string_view in) : lexer(in) {}
+  explicit ParseInput(std::string_view in) : lexer(in) {}
 
   ParseInput(std::string_view in, size_t index) : lexer(in) {
     lexer.setIndex(index);
@@ -281,6 +281,10 @@ struct ParseInput {
     msg << lexer.position(lexer.getIndex()) << ": error: " << reason;
     return Err{msg.str()};
   }
+
+  [[nodiscard]] Err err(Index pos, std::string reason) {
+    return ParseInput(*this, pos).err(reason);
+  }
 };
 
 // =========
@@ -310,6 +314,19 @@ struct ImportNames {
   Name nm;
 };
 
+// RAII utility for temporarily changing the parsing position of a parsing
+// context.
+template<typename Ctx> struct WithPosition {
+  Ctx& ctx;
+  Index original;
+
+  WithPosition(Ctx& ctx, Index pos) : ctx(ctx), original(ctx.in.getPos()) {
+    ctx.in.lexer.setIndex(pos);
+  }
+
+  ~WithPosition() { ctx.in.lexer.setIndex(original); }
+};
+
 using IndexMap = std::unordered_map<Name, Index>;
 
 void applyImportNames(Importable& item,
@@ -335,13 +352,13 @@ Result<> addExports(ParseInput& in,
   return Ok{};
 }
 
-Result<IndexMap> createIndexMap(std::string_view input,
+Result<IndexMap> createIndexMap(ParseInput& in,
                                 const std::vector<DefPos>& defs) {
   IndexMap indices;
   for (Index i = 0; i < defs.size(); ++i) {
     if (defs[i].name.is()) {
       if (!indices.insert({defs[i].name, i}).second) {
-        return ParseInput(input, defs[i].pos).err("duplicate element name");
+        return in.err(defs[i].pos, "duplicate element name");
       }
     }
   }
@@ -359,13 +376,12 @@ std::vector<Type> getUnnamedTypes(const std::vector<NameType>& named) {
 
 template<typename Ctx>
 Result<> parseDefs(Ctx& ctx,
-                   std::string_view input,
                    const std::vector<DefPos>& defs,
-                   MaybeResult<> (*parser)(Ctx&, ParseInput&)) {
+                   MaybeResult<> (*parser)(Ctx&)) {
   for (Index i = 0; i < defs.size(); ++i) {
     ctx.index = i;
-    ParseInput in(input, defs[i].pos);
-    auto parsed = parser(ctx, in);
+    WithPosition with(ctx, defs[i].pos);
+    auto parsed = parser(ctx);
     CHECK_ERR(parsed);
     assert(parsed);
   }
@@ -433,8 +449,8 @@ struct NullTypeParserCtx {
   LocalsT makeLocals() { return Ok{}; }
   void appendLocal(LocalsT&, Name, TypeT) {}
 
-  Result<Index> getTypeIndex(Name, ParseInput&) { return 1; }
-  Result<HeapTypeT> getHeapTypeFromIdx(Index, ParseInput&) { return Ok{}; }
+  Result<Index> getTypeIndex(Name) { return 1; }
+  Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -526,10 +542,10 @@ template<typename Ctx> struct TypeParserCtx {
     locals.push_back({id, type});
   }
 
-  Result<Index> getTypeIndex(Name id, ParseInput& in) {
+  Result<Index> getTypeIndex(Name id) {
     auto it = typeIndices.find(id);
     if (it == typeIndices.end()) {
-      return in.err("unknown type identifier");
+      return self().in.err("unknown type identifier");
     }
     return it->second;
   }
@@ -596,10 +612,12 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
 // Phase 1: Parse definition spans for top-level module elements and determine
 // their indices and names.
 struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
+  ParseInput in;
+
   // At this stage we only look at types to find implicit type definitions,
   // which are inserted directly in to the context. We cannot materialize or
   // validate any types because we don't know what types exist yet.
-
+  //
   // Declared module elements are inserted into the module, but their bodies are
   // not filled out until later parsing phases.
   Module& wasm;
@@ -620,12 +638,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
 
-  ParseDeclsCtx(Module& wasm) : wasm(wasm) {}
+  ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
 
   void addFuncType(SignatureT) {}
   void addStructType(StructT) {}
   void addArrayType(ArrayT) {}
-  Result<> addSubtype(Index, ParseInput&) { return Ok{}; }
+  Result<> addSubtype(Index) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
     subtypeDefs.push_back({name, pos});
   }
@@ -633,11 +651,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addRecGroup(Index, size_t) {}
   void finishDeftype(Index pos) { typeDefs.push_back({{}, pos}); }
 
-  Result<TypeUseT> makeTypeUse(Index pos,
-                               std::optional<HeapTypeT> type,
-                               ParamsT*,
-                               ResultsT*,
-                               ParseInput&) {
+  Result<TypeUseT>
+  makeTypeUse(Index pos, std::optional<HeapTypeT> type, ParamsT*, ResultsT*) {
     if (!type) {
       implicitTypeDefs.push_back(pos);
     }
@@ -671,8 +686,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    TypeUseT type,
                    std::optional<LocalsT>,
                    std::optional<InstrsT>,
-                   Index pos,
-                   ParseInput& in) {
+                   Index pos) {
     if (import && hasNonImport) {
       return in.err("import after non-import");
     }
@@ -710,10 +724,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                      ImportNames* import,
                      GlobalTypeT,
                      std::optional<ExprT>,
-                     Index pos,
-                     ParseInput& in) {
+                     Index pos) {
     if (import && hasNonImport) {
-      return in.err("import after non-import");
+      return in.err(pos, "import after non-import");
     }
     auto imp = import ? std::make_optional(*import) : std::nullopt;
     auto g = addGlobalDecl(in, name, imp);
@@ -726,6 +739,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
 // Phase 2: Parse type definitions into a TypeBuilder.
 struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
+  ParseInput in;
+
   // We update slots in this builder as we parse type definitions.
   TypeBuilder& builder;
 
@@ -735,8 +750,10 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   // The index of the subtype definition we are parsing.
   Index index = 0;
 
-  ParseTypeDefsCtx(TypeBuilder& builder, const IndexMap& typeIndices)
-    : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), builder(builder),
+  ParseTypeDefsCtx(std::string_view in,
+                   TypeBuilder& builder,
+                   const IndexMap& typeIndices)
+    : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()) {}
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
@@ -747,7 +764,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     return builder.getTempTupleType(types);
   }
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx, ParseInput& in) {
+  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= builder.size()) {
       return in.err("type index out of bounds");
     }
@@ -768,7 +785,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void addArrayType(ArrayT& type) { builder[index] = type; }
 
-  Result<> addSubtype(Index super, ParseInput& in) {
+  Result<> addSubtype(Index super) {
     if (super >= builder.size()) {
       return in.err("supertype index out of bounds");
     }
@@ -791,6 +808,8 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   using TypeUseT = Ok;
 
+  ParseInput in;
+
   // Types parsed so far.
   std::vector<HeapType>& types;
 
@@ -800,11 +819,12 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   // Map signatures to the first defined heap type they match.
   std::unordered_map<Signature, HeapType> sigTypes;
 
-  ParseImplicitTypeDefsCtx(std::vector<HeapType>& types,
+  ParseImplicitTypeDefsCtx(std::string_view in,
+                           std::vector<HeapType>& types,
                            std::unordered_map<Index, HeapType>& implicitTypes,
                            const IndexMap& typeIndices)
-    : TypeParserCtx<ParseImplicitTypeDefsCtx>(typeIndices), types(types),
-      implicitTypes(implicitTypes) {
+    : TypeParserCtx<ParseImplicitTypeDefsCtx>(typeIndices), in(in),
+      types(types), implicitTypes(implicitTypes) {
     for (auto type : types) {
       if (type.isSignature() && type.getRecGroup().size() == 1) {
         sigTypes.insert({type.getSignature(), type});
@@ -812,7 +832,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     }
   }
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx, ParseInput& in) {
+  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
     }
@@ -822,8 +842,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   Result<TypeUseT> makeTypeUse(Index pos,
                                std::optional<HeapTypeT>,
                                ParamsT* params,
-                               ResultsT* results,
-                               ParseInput& in) {
+                               ResultsT* results) {
     std::vector<Type> paramTypes;
     if (params) {
       paramTypes = getUnnamedTypes(*params);
@@ -856,6 +875,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   using GlobalTypeT = GlobalType;
   using TypeUseT = TypeUse;
 
+  ParseInput in;
+
   Module& wasm;
 
   const std::vector<HeapType>& types;
@@ -864,14 +885,15 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   // The index of the current type.
   Index index = 0;
 
-  ParseModuleTypesCtx(Module& wasm,
+  ParseModuleTypesCtx(std::string_view in,
+                      Module& wasm,
                       const std::vector<HeapType>& types,
                       const std::unordered_map<Index, HeapType>& implicitTypes,
                       const IndexMap& typeIndices)
-    : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), wasm(wasm), types(types),
-      implicitTypes(implicitTypes) {}
+    : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), in(in), wasm(wasm),
+      types(types), implicitTypes(implicitTypes) {}
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx, ParseInput& in) {
+  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
     }
@@ -881,8 +903,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   Result<TypeUseT> makeTypeUse(Index pos,
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
-                               ResultsT* results,
-                               ParseInput& in) {
+                               ResultsT* results) {
     std::vector<Name> ids;
     if (params) {
       ids.reserve(params->size());
@@ -911,8 +932,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    TypeUseT type,
                    std::optional<LocalsT> locals,
                    std::optional<InstrsT>,
-                   Index,
-                   ParseInput&) {
+                   Index) {
     auto& f = wasm.functions[index];
     f->type = type.type;
     for (Index i = 0; i < type.names.size(); ++i) {
@@ -934,8 +954,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                      ImportNames*,
                      GlobalTypeT type,
                      std::optional<ExprT>,
-                     Index,
-                     ParseInput&) {
+                     Index) {
     auto& g = wasm.globals[index];
     g->mutable_ = type.mutability;
     g->type = type.type;
@@ -952,6 +971,8 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   using InstrsT = std::vector<Expression*>;
   using ExprT = Expression*;
 
+  ParseInput in;
+
   Module& wasm;
 
   // A stack of stacks of fully-parsed instructions.
@@ -963,16 +984,17 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   // The index of the current module element.
   Index index = 0;
 
-  ParseDefsCtx(Module& wasm,
+  ParseDefsCtx(std::string_view in,
+               Module& wasm,
                const std::vector<HeapType>& types,
                const std::unordered_map<Index, HeapType>& implicitTypes,
                const IndexMap& typeIndices)
-    : InstrParserCtx<ParseDefsCtx>(wasm, typeIndices), wasm(wasm), types(types),
-      implicitTypes(implicitTypes) {}
+    : InstrParserCtx<ParseDefsCtx>(wasm, typeIndices), in(in), wasm(wasm),
+      types(types), implicitTypes(implicitTypes) {}
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx, ParseInput& in) {
+  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
     }
@@ -982,8 +1004,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   Result<TypeUseT> makeTypeUse(Index pos,
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
-                               ResultsT* results,
-                               ParseInput& in) {
+                               ResultsT* results) {
     if (type && (params || results)) {
       std::vector<Type> paramTypes;
       if (params) {
@@ -998,7 +1019,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       auto sig = Signature(Type(paramTypes), Type(resultTypes));
 
       if (!type->isSignature() || type->getSignature() != sig) {
-        return in.err("type does not match provided signature");
+        return in.err(pos, "type does not match provided signature");
       }
     }
 
@@ -1017,8 +1038,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
                    TypeUseT,
                    std::optional<LocalsT>,
                    std::optional<InstrsT> insts,
-                   Index,
-                   ParseInput&) {
+                   Index) {
     Expression* body;
     if (insts) {
       switch (insts->size()) {
@@ -1044,8 +1064,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
                      ImportNames*,
                      GlobalTypeT,
                      std::optional<ExprT> exp,
-                     Index,
-                     ParseInput&) {
+                     Index) {
     if (exp) {
       wasm.globals[index]->init = *exp;
     }
@@ -1058,249 +1077,165 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
 // ================
 
 // Types
-template<typename Ctx>
-Result<typename Ctx::HeapTypeT> heaptype(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::ParamsT> params(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::ResultsT> results(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::SignatureT> functype(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::FieldT> storagetype(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::FieldT> fieldtype(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::StructT> structtype(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::GlobalTypeT> globaltype(Ctx&, ParseInput&);
+template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
+template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::ResultsT> results(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::SignatureT> functype(Ctx&);
+template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx&);
+template<typename Ctx> Result<typename Ctx::FieldT> fieldtype(Ctx&);
+template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::StructT> structtype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&);
+template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 
 // Instructions
-template<typename Ctx>
-MaybeResult<typename Ctx::InstrT> instr(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&, ParseInput&);
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&);
+template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&);
 template<typename Ctx> Result<typename Ctx::InstrT> makeUnreachable(Ctx&);
 template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBinary(Ctx&, ParseInput&, BinaryOp op);
+Result<typename Ctx::InstrT> makeBinary(Ctx&, BinaryOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeUnary(Ctx&, UnaryOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeSelect(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemorySize(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryGrow(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalGet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalTee(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalSet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalGet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalSet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBlock(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeThenOrElse(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeConst(Ctx&, Type type);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeUnary(Ctx&, ParseInput&, UnaryOp op);
+Result<typename Ctx::InstrT> makeLoad(Ctx&, Type type, bool isAtomic);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSelect(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx&, ParseInput&);
+Result<typename Ctx::InstrT> makeStore(Ctx&, Type type, bool isAtomic);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemorySize(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryGrow(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalGet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalTee(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalGet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBlock(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThenOrElse(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeConst(Ctx&, ParseInput&, Type type);
+Result<typename Ctx::InstrT> makeAtomicRMWOrCmpxchg(Ctx&, Type type);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeLoad(Ctx&, ParseInput&, Type type, bool isAtomic);
+makeAtomicRMW(Ctx&, Type type, uint8_t bytes, const char* extra);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeStore(Ctx&, ParseInput&, Type type, bool isAtomic);
+makeAtomicCmpxchg(Ctx&, Type type, uint8_t bytes, const char* extra);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeAtomicWait(Ctx&, Type type);
+template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicNotify(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicFence(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicRMWOrCmpxchg(Ctx&, ParseInput&, Type type);
+makeSIMDExtract(Ctx&, SIMDExtractOp op, size_t lanes);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicRMW(Ctx&, ParseInput&, Type type, uint8_t bytes, const char* extra);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicCmpxchg(
-  Ctx&, ParseInput&, Type type, uint8_t bytes, const char* extra);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicWait(Ctx&, ParseInput&, Type type);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicNotify(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicFence(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx&, ParseInput&, SIMDExtractOp op, size_t lanes);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDReplace(Ctx&, ParseInput&, SIMDReplaceOp op, size_t lanes);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDTernary(Ctx&, ParseInput&, SIMDTernaryOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShift(Ctx&, ParseInput&, SIMDShiftOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoad(Ctx&, ParseInput&, SIMDLoadOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDLoadStoreLane(Ctx&, ParseInput&, SIMDLoadStoreLaneOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryInit(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeDataDrop(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryFill(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeMaybeBlock(Ctx&, ParseInput&, size_t i, Type type);
-template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCall(Ctx&, ParseInput&, bool isReturn);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallIndirect(Ctx&, ParseInput&, bool isReturn);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreak(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreakTable(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeReturn(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefNull(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx&, ParseInput&, RefIsOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefFunc(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefEq(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSize(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGrow(Ctx&, ParseInput&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeTryOrCatchBody(Ctx&, ParseInput&, Type type, bool isTry);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThrow(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRethrow(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleMake(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleExtract(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallRef(Ctx&, ParseInput&, bool isReturn);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31New(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31Get(Ctx&, ParseInput&, bool signed_);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTest(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCast(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx&, ParseInput&, BrOnOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, ParseInput&, BrOnOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNewStatic(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructGet(Ctx&, ParseInput&, bool signed_ = false);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructSet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewStatic(Ctx&, ParseInput&, bool default_);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayGet(Ctx&, ParseInput&, bool signed_ = false);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArraySet(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayLen(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefAs(Ctx&, ParseInput&, RefAsOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringNew(Ctx&, ParseInput&, StringNewOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConst(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringMeasure(Ctx&, ParseInput&, StringMeasureOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringEncode(Ctx&, ParseInput&, StringEncodeOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConcat(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEq(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringAs(Ctx&, ParseInput&, StringAsOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringIterNext(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringIterMove(Ctx&, ParseInput&, StringIterMoveOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringSliceWTF(Ctx&, ParseInput&, StringSliceWTFOp op);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, ParseInput&);
+makeSIMDReplace(Ctx&, SIMDReplaceOp op, size_t lanes);
+template<typename Ctx> Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeSIMDTernary(Ctx&, SIMDTernaryOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeSIMDShift(Ctx&, SIMDShiftOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeSIMDLoad(Ctx&, SIMDLoadOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeSIMDLoadStoreLane(Ctx&,
+                                                   SIMDLoadStoreLaneOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryFill(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeMaybeBlock(Ctx&, size_t i, Type type);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeCall(Ctx&, bool isReturn);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeCallIndirect(Ctx&, bool isReturn);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBreak(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBreakTable(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeReturn(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefNull(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefIs(Ctx&, RefIsOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefFunc(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefEq(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableSet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableSize(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableGrow(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeTryOrCatchBody(Ctx&, Type type, bool isTry);
+template<typename Ctx> Result<typename Ctx::InstrT> makeThrow(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRethrow(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTupleMake(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTupleExtract(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeCallRef(Ctx&, bool isReturn);
+template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeI31Get(Ctx&, bool signed_);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefTestStatic(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastStatic(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBrOn(Ctx&, BrOnOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, BrOnOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStructNewStatic(Ctx&, bool default_);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStructGet(Ctx&, bool signed_ = false);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx&, bool default_);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayGet(Ctx&, bool signed_ = false);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefAs(Ctx&, RefAsOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringNew(Ctx&, StringNewOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringConst(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringMeasure(Ctx&, StringMeasureOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringEncode(Ctx&, StringEncodeOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringConcat(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringAs(Ctx&, StringAsOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx&);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringIterNext(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringIterMove(Ctx&, StringIterMoveOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringSliceWTF(Ctx&, StringSliceWTFOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&);
 
 // Modules
-template<typename Ctx>
-MaybeResult<Index> maybeTypeidx(Ctx& ctx, ParseInput& in);
-template<typename Ctx>
-Result<typename Ctx::HeapTypeT> typeidx(Ctx&, ParseInput&);
-template<typename Ctx>
-Result<typename Ctx::TypeUseT> typeuse(Ctx&, ParseInput&);
+template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
+template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
-template<typename Ctx> Result<> strtype(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&, ParseInput&);
-template<typename Ctx> MaybeResult<> deftype(Ctx&, ParseInput&);
-template<typename Ctx>
-MaybeResult<typename Ctx::LocalsT> locals(Ctx&, ParseInput&);
-template<typename Ctx> MaybeResult<> func(Ctx&, ParseInput&);
-template<typename Ctx> MaybeResult<> global(Ctx&, ParseInput&);
-MaybeResult<> modulefield(ParseDeclsCtx&, ParseInput&);
-Result<> module(ParseDeclsCtx&, ParseInput&);
+template<typename Ctx> Result<> strtype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
+template<typename Ctx> MaybeResult<> deftype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
+template<typename Ctx> MaybeResult<> func(Ctx&);
+template<typename Ctx> MaybeResult<> global(Ctx&);
+MaybeResult<> modulefield(ParseDeclsCtx&);
+Result<> module(ParseDeclsCtx&);
 
 // =====
 // Types
@@ -1309,30 +1244,29 @@ Result<> module(ParseDeclsCtx&, ParseInput&);
 // heaptype ::= x:typeidx => types[x]
 //            | 'func'    => func
 //            | 'extern'  => extern
-template<typename Ctx>
-Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx, ParseInput& in) {
-  if (in.takeKeyword("func"sv)) {
+template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+  if (ctx.in.takeKeyword("func"sv)) {
     return ctx.makeFunc();
   }
-  if (in.takeKeyword("any"sv)) {
+  if (ctx.in.takeKeyword("any"sv)) {
     return ctx.makeAny();
   }
-  if (in.takeKeyword("extern"sv)) {
+  if (ctx.in.takeKeyword("extern"sv)) {
     return ctx.makeExtern();
   }
-  if (in.takeKeyword("eq"sv)) {
+  if (ctx.in.takeKeyword("eq"sv)) {
     return ctx.makeEq();
   }
-  if (in.takeKeyword("i31"sv)) {
+  if (ctx.in.takeKeyword("i31"sv)) {
     return ctx.makeI31();
   }
-  if (in.takeKeyword("data"sv)) {
+  if (ctx.in.takeKeyword("data"sv)) {
     return ctx.makeData();
   }
-  if (in.takeKeyword("array"sv)) {
-    return in.err("array heap type not yet supported");
+  if (ctx.in.takeKeyword("array"sv)) {
+    return ctx.in.err("array heap type not yet supported");
   }
-  auto type = typeidx(ctx, in);
+  auto type = typeidx(ctx);
   CHECK_ERR(type);
   return *type;
 }
@@ -1345,41 +1279,40 @@ Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx, ParseInput& in) {
 //           | 'dataref'   => dataref
 //           | 'arrayref'  => arrayref
 //           | '(' ref null? t:heaptype ')' => ref null? t
-template<typename Ctx>
-MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx, ParseInput& in) {
-  if (in.takeKeyword("funcref"sv)) {
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
+  if (ctx.in.takeKeyword("funcref"sv)) {
     return ctx.makeRefType(ctx.makeFunc(), Nullable);
   }
-  if (in.takeKeyword("externref"sv)) {
+  if (ctx.in.takeKeyword("externref"sv)) {
     return ctx.makeRefType(ctx.makeExtern(), Nullable);
   }
-  if (in.takeKeyword("anyref"sv)) {
+  if (ctx.in.takeKeyword("anyref"sv)) {
     return ctx.makeRefType(ctx.makeAny(), Nullable);
   }
-  if (in.takeKeyword("eqref"sv)) {
+  if (ctx.in.takeKeyword("eqref"sv)) {
     return ctx.makeRefType(ctx.makeEq(), Nullable);
   }
-  if (in.takeKeyword("i31ref"sv)) {
+  if (ctx.in.takeKeyword("i31ref"sv)) {
     return ctx.makeRefType(ctx.makeI31(), Nullable);
   }
-  if (in.takeKeyword("dataref"sv)) {
+  if (ctx.in.takeKeyword("dataref"sv)) {
     return ctx.makeRefType(ctx.makeData(), Nullable);
   }
-  if (in.takeKeyword("arrayref"sv)) {
-    return in.err("arrayref not yet supported");
+  if (ctx.in.takeKeyword("arrayref"sv)) {
+    return ctx.in.err("arrayref not yet supported");
   }
 
-  if (!in.takeSExprStart("ref"sv)) {
+  if (!ctx.in.takeSExprStart("ref"sv)) {
     return {};
   }
 
-  auto nullability = in.takeKeyword("null"sv) ? Nullable : NonNullable;
+  auto nullability = ctx.in.takeKeyword("null"sv) ? Nullable : NonNullable;
 
-  auto type = heaptype(ctx, in);
+  auto type = heaptype(ctx);
   CHECK_ERR(type);
 
-  if (!in.takeRParen()) {
-    return in.err("expected end of reftype");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of reftype");
   }
 
   return ctx.makeRefType(*type, nullability);
@@ -1393,47 +1326,45 @@ MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx, ParseInput& in) {
 // valtype ::= t:numtype => t
 //           | t:vectype => t
 //           | t:reftype => t
-template<typename Ctx>
-Result<typename Ctx::TypeT> valtype(Ctx& ctx, ParseInput& in) {
-  if (in.takeKeyword("i32"sv)) {
+template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+  if (ctx.in.takeKeyword("i32"sv)) {
     return ctx.makeI32();
-  } else if (in.takeKeyword("i64"sv)) {
+  } else if (ctx.in.takeKeyword("i64"sv)) {
     return ctx.makeI64();
-  } else if (in.takeKeyword("f32"sv)) {
+  } else if (ctx.in.takeKeyword("f32"sv)) {
     return ctx.makeF32();
-  } else if (in.takeKeyword("f64"sv)) {
+  } else if (ctx.in.takeKeyword("f64"sv)) {
     return ctx.makeF64();
-  } else if (in.takeKeyword("v128"sv)) {
+  } else if (ctx.in.takeKeyword("v128"sv)) {
     return ctx.makeV128();
-  } else if (auto type = reftype(ctx, in)) {
+  } else if (auto type = reftype(ctx)) {
     CHECK_ERR(type);
     return *type;
   } else {
-    return in.err("expected valtype");
+    return ctx.in.err("expected valtype");
   }
 }
 
 // param  ::= '(' 'param id? t:valtype ')' => [t]
 //          | '(' 'param t*:valtype* ')' => [t*]
 // params ::= param*
-template<typename Ctx>
-MaybeResult<typename Ctx::ParamsT> params(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx& ctx) {
   bool hasAny = false;
   auto res = ctx.makeParams();
-  while (in.takeSExprStart("param"sv)) {
+  while (ctx.in.takeSExprStart("param"sv)) {
     hasAny = true;
-    if (auto id = in.takeID()) {
+    if (auto id = ctx.in.takeID()) {
       // Single named param
-      auto type = valtype(ctx, in);
+      auto type = valtype(ctx);
       CHECK_ERR(type);
-      if (!in.takeRParen()) {
-        return in.err("expected end of param");
+      if (!ctx.in.takeRParen()) {
+        return ctx.in.err("expected end of param");
       }
       ctx.appendParam(res, *id, *type);
     } else {
       // Repeated unnamed params
-      while (!in.takeRParen()) {
-        auto type = valtype(ctx, in);
+      while (!ctx.in.takeRParen()) {
+        auto type = valtype(ctx);
         CHECK_ERR(type);
         ctx.appendParam(res, {}, *type);
       }
@@ -1447,14 +1378,13 @@ MaybeResult<typename Ctx::ParamsT> params(Ctx& ctx, ParseInput& in) {
 
 // result  ::= '(' 'result' t*:valtype ')' => [t*]
 // results ::= result*
-template<typename Ctx>
-MaybeResult<typename Ctx::ResultsT> results(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> MaybeResult<typename Ctx::ResultsT> results(Ctx& ctx) {
   bool hasAny = false;
   auto res = ctx.makeResults();
-  while (in.takeSExprStart("result"sv)) {
+  while (ctx.in.takeSExprStart("result"sv)) {
     hasAny = true;
-    while (!in.takeRParen()) {
-      auto type = valtype(ctx, in);
+    while (!ctx.in.takeRParen()) {
+      auto type = valtype(ctx);
       CHECK_ERR(type);
       ctx.appendResult(res, *type);
     }
@@ -1467,19 +1397,19 @@ MaybeResult<typename Ctx::ResultsT> results(Ctx& ctx, ParseInput& in) {
 
 // functype ::= '(' 'func' t1*:vec(param) t2*:vec(result) ')' => [t1*] -> [t2*]
 template<typename Ctx>
-MaybeResult<typename Ctx::SignatureT> functype(Ctx& ctx, ParseInput& in) {
-  if (!in.takeSExprStart("func"sv)) {
+MaybeResult<typename Ctx::SignatureT> functype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("func"sv)) {
     return {};
   }
 
-  auto parsedParams = params(ctx, in);
+  auto parsedParams = params(ctx);
   CHECK_ERR(parsedParams);
 
-  auto parsedResults = results(ctx, in);
+  auto parsedResults = results(ctx);
   CHECK_ERR(parsedResults);
 
-  if (!in.takeRParen()) {
-    return in.err("expected end of functype");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of functype");
   }
 
   return ctx.makeFuncType(parsedParams.getPtr(), parsedResults.getPtr());
@@ -1487,34 +1417,32 @@ MaybeResult<typename Ctx::SignatureT> functype(Ctx& ctx, ParseInput& in) {
 
 // storagetype ::= valtype | packedtype
 // packedtype  ::= i8 | i16
-template<typename Ctx>
-Result<typename Ctx::FieldT> storagetype(Ctx& ctx, ParseInput& in) {
-  if (in.takeKeyword("i8"sv)) {
+template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx& ctx) {
+  if (ctx.in.takeKeyword("i8"sv)) {
     return ctx.makeI8();
   }
-  if (in.takeKeyword("i16"sv)) {
+  if (ctx.in.takeKeyword("i16"sv)) {
     return ctx.makeI16();
   }
-  auto type = valtype(ctx, in);
+  auto type = valtype(ctx);
   CHECK_ERR(type);
   return ctx.makeStorageType(*type);
 }
 
 // fieldtype   ::= t:storagetype               => const t
 //               | '(' 'mut' t:storagetype ')' => var t
-template<typename Ctx>
-Result<typename Ctx::FieldT> fieldtype(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> Result<typename Ctx::FieldT> fieldtype(Ctx& ctx) {
   auto mutability = Immutable;
-  if (in.takeSExprStart("mut"sv)) {
+  if (ctx.in.takeSExprStart("mut"sv)) {
     mutability = Mutable;
   }
 
-  auto field = storagetype(ctx, in);
+  auto field = storagetype(ctx);
   CHECK_ERR(field);
 
   if (mutability == Mutable) {
-    if (!in.takeRParen()) {
-      return in.err("expected end of field type");
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of field type");
     }
   }
 
@@ -1524,30 +1452,29 @@ Result<typename Ctx::FieldT> fieldtype(Ctx& ctx, ParseInput& in) {
 // field ::= '(' 'field' id t:fieldtype ')' => [(id, t)]
 //         | '(' 'field' t*:fieldtype* ')'  => [(_, t*)*]
 //         | fieldtype
-template<typename Ctx>
-Result<typename Ctx::FieldsT> fields(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx& ctx) {
   auto res = ctx.makeFields();
   while (true) {
-    if (auto t = in.peek(); !t || t->isRParen()) {
+    if (auto t = ctx.in.peek(); !t || t->isRParen()) {
       return res;
     }
-    if (in.takeSExprStart("field")) {
-      if (auto id = in.takeID()) {
-        auto field = fieldtype(ctx, in);
+    if (ctx.in.takeSExprStart("field")) {
+      if (auto id = ctx.in.takeID()) {
+        auto field = fieldtype(ctx);
         CHECK_ERR(field);
-        if (!in.takeRParen()) {
-          return in.err("expected end of field");
+        if (!ctx.in.takeRParen()) {
+          return ctx.in.err("expected end of field");
         }
         ctx.appendField(res, *id, *field);
       } else {
-        while (!in.takeRParen()) {
-          auto field = fieldtype(ctx, in);
+        while (!ctx.in.takeRParen()) {
+          auto field = fieldtype(ctx);
           CHECK_ERR(field);
           ctx.appendField(res, {}, *field);
         }
       }
     } else {
-      auto field = fieldtype(ctx, in);
+      auto field = fieldtype(ctx);
       CHECK_ERR(field);
       ctx.appendField(res, {}, *field);
     }
@@ -1555,52 +1482,49 @@ Result<typename Ctx::FieldsT> fields(Ctx& ctx, ParseInput& in) {
 }
 
 // structtype ::= '(' 'struct' field* ')'
-template<typename Ctx>
-MaybeResult<typename Ctx::StructT> structtype(Ctx& ctx, ParseInput& in) {
-  if (!in.takeSExprStart("struct"sv)) {
+template<typename Ctx> MaybeResult<typename Ctx::StructT> structtype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("struct"sv)) {
     return {};
   }
-  auto namedFields = fields(ctx, in);
+  auto namedFields = fields(ctx);
   CHECK_ERR(namedFields);
-  if (!in.takeRParen()) {
-    return in.err("expected end of struct definition");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of struct definition");
   }
 
   return ctx.makeStruct(*namedFields);
 }
 
 // arraytype ::= '(' 'array' field ')'
-template<typename Ctx>
-MaybeResult<typename Ctx::ArrayT> arraytype(Ctx& ctx, ParseInput& in) {
-  if (!in.takeSExprStart("array"sv)) {
+template<typename Ctx> MaybeResult<typename Ctx::ArrayT> arraytype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("array"sv)) {
     return {};
   }
-  auto namedFields = fields(ctx, in);
+  auto namedFields = fields(ctx);
   CHECK_ERR(namedFields);
-  if (!in.takeRParen()) {
-    return in.err("expected end of array definition");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of array definition");
   }
 
   if (auto array = ctx.makeArray(*namedFields)) {
     return *array;
   }
-  return in.err("expected exactly one field in array definition");
+  return ctx.in.err("expected exactly one field in array definition");
 }
 
 // globaltype ::= t:valtype               => const t
 //              | '(' 'mut' t:valtype ')' => var t
-template<typename Ctx>
-Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
   auto mutability = Immutable;
-  if (in.takeSExprStart("mut"sv)) {
+  if (ctx.in.takeSExprStart("mut"sv)) {
     mutability = Mutable;
   }
 
-  auto type = valtype(ctx, in);
+  auto type = valtype(ctx);
   CHECK_ERR(type);
 
-  if (mutability == Mutable && !in.takeRParen()) {
-    return in.err("expected end of globaltype");
+  if (mutability == Mutable && !ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of globaltype");
   }
 
   return ctx.makeGlobalType(mutability, *type);
@@ -1610,9 +1534,8 @@ Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx, ParseInput& in) {
 // Instructions
 // ============
 
-template<typename Ctx>
-MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx, ParseInput& in) {
-  auto keyword = in.takeKeyword();
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
+  auto keyword = ctx.in.takeKeyword();
   if (!keyword) {
     return {};
   }
@@ -1624,51 +1547,50 @@ MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx, ParseInput& in) {
 #include <gen-s-parser.inc>
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrsT> instrs(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
   auto insts = ctx.makeInstrs();
 
   while (true) {
-    if (in.takeLParen()) {
+    if (ctx.in.takeLParen()) {
       // A stack of (start, end) position pairs defining the positions of
       // instructions that need to be parsed after their folded children.
       std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
 
       // Begin a folded instruction. Push its start position and a placeholder
       // end position.
-      foldedInstrs.push_back({in.getPos(), {}});
+      foldedInstrs.push_back({ctx.in.getPos(), {}});
       while (!foldedInstrs.empty()) {
         // Consume everything up to the next paren. This span will be parsed as
         // an instruction later after its folded children have been parsed.
-        if (!in.takeUntilParen()) {
-          return ParseInput(in, foldedInstrs.back().first)
-            .err("unterminated folded instruction");
+        if (!ctx.in.takeUntilParen()) {
+          return ctx.in.err(foldedInstrs.back().first,
+                            "unterminated folded instruction");
         }
 
         if (!foldedInstrs.back().second) {
           // The folded instruction we just started should end here.
-          foldedInstrs.back().second = in.getPos();
+          foldedInstrs.back().second = ctx.in.getPos();
         }
 
         // We have either the start of a new folded child or the end of the last
         // one.
-        if (in.takeLParen()) {
-          foldedInstrs.push_back({in.getPos(), {}});
-        } else if (in.takeRParen()) {
+        if (ctx.in.takeLParen()) {
+          foldedInstrs.push_back({ctx.in.getPos(), {}});
+        } else if (ctx.in.takeRParen()) {
           auto [start, end] = foldedInstrs.back();
           assert(end && "Should have found end of instruction");
           foldedInstrs.pop_back();
 
-          ParseInput foldedIn(in, start);
-          if (auto inst = instr(ctx, foldedIn)) {
+          WithPosition with(ctx, start);
+          if (auto inst = instr(ctx)) {
             CHECK_ERR(inst);
             ctx.appendInstr(insts, *inst);
           } else {
-            return foldedIn.err("expected folded instruction");
+            return ctx.in.err(start, "expected folded instruction");
           }
 
-          if (foldedIn.getPos() != *end) {
-            return foldedIn.err("expected end of instruction");
+          if (ctx.in.getPos() != *end) {
+            return ctx.in.err(start, "expected end of instruction");
           }
         } else {
           WASM_UNREACHABLE("expected paren");
@@ -1678,7 +1600,7 @@ Result<typename Ctx::InstrsT> instrs(Ctx& ctx, ParseInput& in) {
     }
 
     // A non-folded instruction.
-    if (auto inst = instr(ctx, in)) {
+    if (auto inst = instr(ctx)) {
       CHECK_ERR(inst);
       ctx.appendInstr(insts, *inst);
     } else {
@@ -1689,9 +1611,8 @@ Result<typename Ctx::InstrsT> instrs(Ctx& ctx, ParseInput& in) {
   return insts;
 }
 
-template<typename Ctx>
-Result<typename Ctx::ExprT> expr(Ctx& ctx, ParseInput& in) {
-  auto insts = instrs(ctx, in);
+template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
+  auto insts = instrs(ctx);
   CHECK_ERR(insts);
   return ctx.makeExpr(*insts);
 }
@@ -1705,96 +1626,85 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx& ctx) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBinary(Ctx& ctx, ParseInput& in, BinaryOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeBinary(Ctx& ctx, BinaryOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeUnary(Ctx& ctx, ParseInput& in, UnaryOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeUnary(Ctx& ctx, UnaryOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeSelect(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemorySize(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalTee(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeBlock(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeThenOrElse(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSelect(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeDrop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemorySize(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalTee(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBlock(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThenOrElse(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeConst(Ctx& ctx, ParseInput& in, Type type) {
+Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Type type) {
   assert(type.isBasic());
   switch (type.getBasic()) {
     case Type::i32:
-      if (auto c = in.takeI32()) {
+      if (auto c = ctx.in.takeI32()) {
         return ctx.makeI32Const(*c);
       }
-      return in.err("expected i32");
+      return ctx.in.err("expected i32");
     case Type::i64:
-      if (auto c = in.takeI64()) {
+      if (auto c = ctx.in.takeI64()) {
         return ctx.makeI64Const(*c);
       }
-      return in.err("expected i64");
+      return ctx.in.err("expected i64");
     case Type::f32:
-      if (auto c = in.takeF32()) {
+      if (auto c = ctx.in.takeF32()) {
         return ctx.makeF32Const(*c);
       }
-      return in.err("expected f32");
+      return ctx.in.err("expected f32");
     case Type::f64:
-      if (auto c = in.takeF64()) {
+      if (auto c = ctx.in.takeF64()) {
         return ctx.makeF64Const(*c);
       }
-      return in.err("expected f64");
+      return ctx.in.err("expected f64");
     case Type::v128:
-      return in.err("unimplemented instruction");
+      return ctx.in.err("unimplemented instruction");
     case Type::none:
     case Type::unreachable:
       break;
@@ -1803,413 +1713,355 @@ Result<typename Ctx::InstrT> makeConst(Ctx& ctx, ParseInput& in, Type type) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeLoad(Ctx& ctx, ParseInput& in, Type type, bool isAtomic) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeLoad(Ctx& ctx, Type type, bool isAtomic) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStore(Ctx& ctx, Type type, bool isAtomic) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeAtomicRMWOrCmpxchg(Ctx& ctx, Type type) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeStore(Ctx& ctx, ParseInput& in, Type type, bool isAtomic) {
-  return in.err("unimplemented instruction");
+makeAtomicRMW(Ctx& ctx, Type type, uint8_t bytes, const char* extra) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicRMWOrCmpxchg(Ctx& ctx, ParseInput& in, Type type) {
-  return in.err("unimplemented instruction");
+makeAtomicCmpxchg(Ctx& ctx, Type type, uint8_t bytes, const char* extra) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicRMW(
-  Ctx& ctx, ParseInput& in, Type type, uint8_t bytes, const char* extra) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeAtomicWait(Ctx& ctx, Type type) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicCmpxchg(
-  Ctx& ctx, ParseInput& in, Type type, uint8_t bytes, const char* extra) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicNotify(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicWait(Ctx& ctx, ParseInput& in, Type type) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicNotify(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx& ctx, ParseInput& in, SIMDExtractOp op, size_t lanes) {
-  return in.err("unimplemented instruction");
+makeSIMDExtract(Ctx& ctx, SIMDExtractOp op, size_t lanes) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDReplace(Ctx& ctx, ParseInput& in, SIMDReplaceOp op, size_t lanes) {
-  return in.err("unimplemented instruction");
+makeSIMDReplace(Ctx& ctx, SIMDReplaceOp op, size_t lanes) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeSIMDTernary(Ctx& ctx, SIMDTernaryOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDTernary(Ctx& ctx, ParseInput& in, SIMDTernaryOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeSIMDShift(Ctx& ctx, SIMDShiftOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDShift(Ctx& ctx, ParseInput& in, SIMDShiftOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeSIMDLoad(Ctx& ctx, SIMDLoadOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDLoad(Ctx& ctx, ParseInput& in, SIMDLoadOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeSIMDLoadStoreLane(Ctx& ctx,
+                                                   SIMDLoadStoreLaneOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeSIMDLoadStoreLane(Ctx& ctx, ParseInput& in, SIMDLoadStoreLaneOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeMaybeBlock(Ctx& ctx, size_t i, Type type) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryInit(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeCall(Ctx& ctx, bool isReturn) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeCallIndirect(Ctx& ctx, bool isReturn) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeBreak(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeBreakTable(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makePush(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeReturn(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makePop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeIf(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeMaybeBlock(Ctx& ctx, ParseInput& in, size_t i, Type type) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeLoop(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCall(Ctx& ctx, ParseInput& in, bool isReturn) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeCallIndirect(Ctx& ctx, ParseInput& in, bool isReturn) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreak(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeBreakTable(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeReturn(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, ParseInput& in) {
-  auto t = heaptype(ctx, in);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx) {
+  auto t = heaptype(ctx);
   CHECK_ERR(t);
   return ctx.makeRefNull(*t);
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, ParseInput& in, RefIsOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, RefIsOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableSet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableSize(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableSize(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTableGrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableGrow(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeTry(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeTryOrCatchBody(Ctx& ctx, ParseInput& in, Type type, bool isTry) {
-  return in.err("unimplemented instruction");
+makeTryOrCatchBody(Ctx& ctx, Type type, bool isTry) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeThrow(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeRethrow(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeTupleMake(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeTupleExtract(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeThrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeCallRef(Ctx& ctx, bool isReturn) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRethrow(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, bool signed_) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleMake(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeRefTestStatic(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeTupleExtract(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeRefCastStatic(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeCallRef(Ctx& ctx, ParseInput& in, bool isReturn) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31New(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, BrOnOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeI31Get(Ctx& ctx, ParseInput& in, bool signed_) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeBrOnStatic(Ctx& ctx, BrOnOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStructNewStatic(Ctx& ctx, bool default_) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStructGet(Ctx& ctx, bool signed_) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx& ctx, bool default_) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeArrayGet(Ctx& ctx, bool signed_) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, ParseInput& in, BrOnOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, RefAsOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeBrOnStatic(Ctx& ctx, ParseInput& in, BrOnOp op) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringNew(Ctx& ctx, StringNewOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringConst(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNewStatic(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringMeasure(Ctx& ctx, StringMeasureOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructGet(Ctx& ctx, ParseInput& in, bool signed_) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringEncode(Ctx& ctx, StringEncodeOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringAs(Ctx& ctx, StringAsOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewStatic(Ctx& ctx, ParseInput& in, bool default_) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayGet(Ctx& ctx, ParseInput& in, bool signed_) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringIterNext(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArraySet(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringIterMove(Ctx& ctx, StringIterMoveOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayLen(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringSliceWTF(Ctx& ctx, StringSliceWTFOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, ParseInput& in, RefAsOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringNew(Ctx& ctx, ParseInput& in, StringNewOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConst(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringMeasure(Ctx& ctx, ParseInput& in, StringMeasureOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringEncode(Ctx& ctx, ParseInput& in, StringEncodeOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringAs(Ctx& ctx, ParseInput& in, StringAsOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringIterNext(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringIterMove(Ctx& ctx, ParseInput& in, StringIterMoveOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStringSliceWTF(Ctx& ctx, ParseInput& in, StringSliceWTFOp op) {
-  return in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringSliceIter(Ctx& ctx, ParseInput& in) {
-  return in.err("unimplemented instruction");
+Result<typename Ctx::InstrT> makeStringSliceIter(Ctx& ctx) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 // =======
@@ -2218,27 +2070,25 @@ Result<typename Ctx::InstrT> makeStringSliceIter(Ctx& ctx, ParseInput& in) {
 
 // typeidx ::= x:u32 => x
 //           | v:id  => x (if types[x] = v)
-template<typename Ctx>
-MaybeResult<Index> maybeTypeidx(Ctx& ctx, ParseInput& in) {
-  if (auto x = in.takeU32()) {
+template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
     return *x;
   }
-  if (auto id = in.takeID()) {
+  if (auto id = ctx.in.takeID()) {
     // TODO: Fix position to point to start of id, not next element.
-    auto idx = ctx.getTypeIndex(*id, in);
+    auto idx = ctx.getTypeIndex(*id);
     CHECK_ERR(idx);
     return *idx;
   }
   return {};
 }
 
-template<typename Ctx>
-Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx, ParseInput& in) {
-  if (auto idx = maybeTypeidx(ctx, in)) {
+template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
+  if (auto idx = maybeTypeidx(ctx)) {
     CHECK_ERR(idx);
-    return ctx.getHeapTypeFromIdx(*idx, in);
+    return ctx.getHeapTypeFromIdx(*idx);
   }
-  return in.err("expected type index or identifier");
+  return ctx.in.err("expected type index or identifier");
 }
 
 // typeuse ::= '(' 'type' x:typeidx ')'                                => x, []
@@ -2247,30 +2097,28 @@ Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx, ParseInput& in) {
 //                 (if typedefs[x] = [t1*] -> [t2*])
 //           | ((t1,IDs):param)* (t2:result)*                          => x, IDs
 //                 (if x is minimum s.t. typedefs[x] = [t1*] -> [t2*])
-template<typename Ctx>
-Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, ParseInput& in) {
-  auto pos = in.getPos();
+template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
   std::optional<typename Ctx::HeapTypeT> type;
-  if (in.takeSExprStart("type"sv)) {
-    auto x = typeidx(ctx, in);
+  if (ctx.in.takeSExprStart("type"sv)) {
+    auto x = typeidx(ctx);
     CHECK_ERR(x);
 
-    if (!in.takeRParen()) {
-      return in.err("expected end of type use");
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of type use");
     }
 
     type = *x;
   }
 
-  auto namedParams = params(ctx, in);
+  auto namedParams = params(ctx);
   CHECK_ERR(namedParams);
 
-  auto resultTypes = results(ctx, in);
+  auto resultTypes = results(ctx);
   CHECK_ERR(resultTypes);
 
   // TODO: Use `pos` for error reporting rather than `in`.
-  return ctx.makeTypeUse(
-    pos, type, namedParams.getPtr(), resultTypes.getPtr(), in);
+  return ctx.makeTypeUse(pos, type, namedParams.getPtr(), resultTypes.getPtr());
 }
 
 // ('(' 'import' mod:name nm:name ')')?
@@ -2312,56 +2160,56 @@ Result<std::vector<Name>> inlineExports(ParseInput& in) {
 // strtype ::= ft:functype   => ft
 //           | st:structtype => st
 //           | at:arraytype  => at
-template<typename Ctx> Result<> strtype(Ctx& ctx, ParseInput& in) {
-  if (auto type = functype(ctx, in)) {
+template<typename Ctx> Result<> strtype(Ctx& ctx) {
+  if (auto type = functype(ctx)) {
     CHECK_ERR(type);
     ctx.addFuncType(*type);
     return Ok{};
   }
-  if (auto type = structtype(ctx, in)) {
+  if (auto type = structtype(ctx)) {
     CHECK_ERR(type);
     ctx.addStructType(*type);
     return Ok{};
   }
-  if (auto type = arraytype(ctx, in)) {
+  if (auto type = arraytype(ctx)) {
     CHECK_ERR(type);
     ctx.addArrayType(*type);
     return Ok{};
   }
-  return in.err("expected type description");
+  return ctx.in.err("expected type description");
 }
 
 // subtype ::= '(' 'type' id? '(' 'sub' typeidx? strtype ')' ')'
 //           | '(' 'type' id? strtype ')'
-template<typename Ctx> MaybeResult<> subtype(Ctx& ctx, ParseInput& in) {
-  auto pos = in.getPos();
+template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
 
-  if (!in.takeSExprStart("type"sv)) {
+  if (!ctx.in.takeSExprStart("type"sv)) {
     return {};
   }
 
   Name name;
-  if (auto id = in.takeID()) {
+  if (auto id = ctx.in.takeID()) {
     name = *id;
   }
 
-  if (in.takeSExprStart("sub"sv)) {
-    if (auto super = maybeTypeidx(ctx, in)) {
+  if (ctx.in.takeSExprStart("sub"sv)) {
+    if (auto super = maybeTypeidx(ctx)) {
       CHECK_ERR(super);
-      CHECK_ERR(ctx.addSubtype(*super, in));
+      CHECK_ERR(ctx.addSubtype(*super));
     }
 
-    CHECK_ERR(strtype(ctx, in));
+    CHECK_ERR(strtype(ctx));
 
-    if (!in.takeRParen()) {
-      return in.err("expected end of subtype definition");
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of subtype definition");
     }
   } else {
-    CHECK_ERR(strtype(ctx, in));
+    CHECK_ERR(strtype(ctx));
   }
 
-  if (!in.takeRParen()) {
-    return in.err("expected end of type definition");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of type definition");
   }
 
   ctx.finishSubtype(name, pos);
@@ -2370,21 +2218,21 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx, ParseInput& in) {
 
 // deftype ::= '(' 'rec' subtype* ')'
 //           | subtype
-template<typename Ctx> MaybeResult<> deftype(Ctx& ctx, ParseInput& in) {
-  auto pos = in.getPos();
+template<typename Ctx> MaybeResult<> deftype(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
 
-  if (in.takeSExprStart("rec"sv)) {
+  if (ctx.in.takeSExprStart("rec"sv)) {
     size_t startIndex = ctx.getRecGroupStartIndex();
     size_t groupLen = 0;
-    while (auto type = subtype(ctx, in)) {
+    while (auto type = subtype(ctx)) {
       CHECK_ERR(type);
       ++groupLen;
     }
-    if (!in.takeRParen()) {
-      return in.err("expected type definition or end of recursion group");
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected type definition or end of recursion group");
     }
     ctx.addRecGroup(startIndex, groupLen);
-  } else if (auto type = subtype(ctx, in)) {
+  } else if (auto type = subtype(ctx)) {
     CHECK_ERR(type);
   } else {
     return {};
@@ -2397,24 +2245,23 @@ template<typename Ctx> MaybeResult<> deftype(Ctx& ctx, ParseInput& in) {
 // local  ::= '(' 'local id? t:valtype ')' => [t]
 //          | '(' 'local t*:valtype* ')' => [t*]
 // locals ::= local*
-template<typename Ctx>
-MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx, ParseInput& in) {
+template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
   bool hasAny = false;
   auto res = ctx.makeLocals();
-  while (in.takeSExprStart("local"sv)) {
+  while (ctx.in.takeSExprStart("local"sv)) {
     hasAny = true;
-    if (auto id = in.takeID()) {
+    if (auto id = ctx.in.takeID()) {
       // Single named local
-      auto type = valtype(ctx, in);
+      auto type = valtype(ctx);
       CHECK_ERR(type);
-      if (!in.takeRParen()) {
-        return in.err("expected end of local");
+      if (!ctx.in.takeRParen()) {
+        return ctx.in.err("expected end of local");
       }
       ctx.appendLocal(res, *id, *type);
     } else {
       // Repeated unnamed locals
-      while (!in.takeRParen()) {
-        auto type = valtype(ctx, in);
+      while (!ctx.in.takeRParen()) {
+        auto type = valtype(ctx);
         CHECK_ERR(type);
         ctx.appendLocal(res, {}, *type);
       }
@@ -2430,29 +2277,29 @@ MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx, ParseInput& in) {
 //              x,I:typeuse t*:vec(local) (in:instr)* ')'
 //        | '(' 'func' id? ('(' 'export' name ')')*
 //              '(' 'import' mode:name nm:name ')' typeuse ')'
-template<typename Ctx> MaybeResult<> func(Ctx& ctx, ParseInput& in) {
-  auto pos = in.getPos();
-  if (!in.takeSExprStart("func"sv)) {
+template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("func"sv)) {
     return {};
   }
 
   Name name;
-  if (auto id = in.takeID()) {
+  if (auto id = ctx.in.takeID()) {
     name = *id;
   }
 
-  auto exports = inlineExports(in);
+  auto exports = inlineExports(ctx.in);
   CHECK_ERR(exports);
 
-  auto import = inlineImport(in);
+  auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  auto type = typeuse(ctx, in);
+  auto type = typeuse(ctx);
   CHECK_ERR(type);
 
   std::optional<typename Ctx::LocalsT> localVars;
   if (!import) {
-    if (auto l = locals(ctx, in)) {
+    if (auto l = locals(ctx)) {
       CHECK_ERR(l);
       localVars = *l;
     }
@@ -2460,58 +2307,56 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx, ParseInput& in) {
 
   std::optional<typename Ctx::InstrsT> insts;
   if (!import) {
-    auto i = instrs(ctx, in);
+    auto i = instrs(ctx);
     CHECK_ERR(i);
     insts = *i;
   }
 
-  if (!in.takeRParen()) {
-    return in.err("expected end of function");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of function");
   }
 
   // TODO: Use `pos` instead of `in` for error position.
-  CHECK_ERR(ctx.addFunc(
-    name, *exports, import.getPtr(), *type, localVars, insts, pos, in));
+  CHECK_ERR(
+    ctx.addFunc(name, *exports, import.getPtr(), *type, localVars, insts, pos));
   return Ok{};
 }
 
 // global ::= '(' 'global' id? ('(' 'export' name ')')* gt:globaltype e:expr ')'
 //          | '(' 'global' id? ('(' 'export' name ')')*
 //                '(' 'import' mod:name nm:name ')' gt:globaltype ')'
-template<typename Ctx> MaybeResult<> global(Ctx& ctx, ParseInput& in) {
-  auto pos = in.getPos();
-  if (!in.takeSExprStart("global"sv)) {
+template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("global"sv)) {
     return {};
   }
 
   Name name;
-  if (auto id = in.takeID()) {
+  if (auto id = ctx.in.takeID()) {
     name = *id;
   }
 
-  auto exports = inlineExports(in);
+  auto exports = inlineExports(ctx.in);
   CHECK_ERR(exports);
 
-  auto import = inlineImport(in);
+  auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  auto type = globaltype(ctx, in);
+  auto type = globaltype(ctx);
   CHECK_ERR(type);
 
   std::optional<typename Ctx::ExprT> exp;
   if (!import) {
-    auto e = expr(ctx, in);
+    auto e = expr(ctx);
     CHECK_ERR(e);
     exp = *e;
   }
 
-  if (!in.takeRParen()) {
-    return in.err("expected end of global");
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of global");
   }
 
-  // TODO: Use `pos` instead of `in` for error position.
-  CHECK_ERR(
-    ctx.addGlobal(name, *exports, import.getPtr(), *type, exp, pos, in));
+  CHECK_ERR(ctx.addGlobal(name, *exports, import.getPtr(), *type, exp, pos));
   return Ok{};
 }
 
@@ -2525,42 +2370,42 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx, ParseInput& in) {
 //               | start
 //               | elem
 //               | data
-MaybeResult<> modulefield(ParseDeclsCtx& ctx, ParseInput& in) {
-  if (auto t = in.peek(); !t || t->isRParen()) {
+MaybeResult<> modulefield(ParseDeclsCtx& ctx) {
+  if (auto t = ctx.in.peek(); !t || t->isRParen()) {
     return {};
   }
-  if (auto res = deftype(ctx, in)) {
+  if (auto res = deftype(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
-  if (auto res = func(ctx, in)) {
+  if (auto res = func(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
-  if (auto res = global(ctx, in)) {
+  if (auto res = global(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
-  return in.err("unrecognized module field");
+  return ctx.in.err("unrecognized module field");
 }
 
 // module ::= '(' 'module' id? (m:modulefield)* ')'
 //          | (m:modulefield)* eof
-Result<> module(ParseDeclsCtx& ctx, ParseInput& in) {
-  bool outer = in.takeSExprStart("module"sv);
+Result<> module(ParseDeclsCtx& ctx) {
+  bool outer = ctx.in.takeSExprStart("module"sv);
 
   if (outer) {
-    if (auto id = in.takeID()) {
+    if (auto id = ctx.in.takeID()) {
       ctx.wasm.name = *id;
     }
   }
 
-  while (auto field = modulefield(ctx, in)) {
+  while (auto field = modulefield(ctx)) {
     CHECK_ERR(field);
   }
 
-  if (outer && !in.takeRParen()) {
-    return in.err("expected end of module");
+  if (outer && !ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of module");
   }
 
   return Ok{};
@@ -2570,32 +2415,29 @@ Result<> module(ParseDeclsCtx& ctx, ParseInput& in) {
 
 Result<> parseModule(Module& wasm, std::string_view input) {
   // Parse module-level declarations.
-  ParseDeclsCtx decls(wasm);
-  {
-    ParseInput in(input);
-    CHECK_ERR(module(decls, in));
-    if (!in.empty()) {
-      return in.err("Unexpected tokens after module");
-    }
+  ParseDeclsCtx decls(input, wasm);
+  CHECK_ERR(module(decls));
+  if (!decls.in.empty()) {
+    return decls.in.err("Unexpected tokens after module");
   }
 
-  auto typeIndices = createIndexMap(input, decls.subtypeDefs);
+  auto typeIndices = createIndexMap(decls.in, decls.subtypeDefs);
   CHECK_ERR(typeIndices);
 
   // Parse type definitions.
   std::vector<HeapType> types;
   {
     TypeBuilder builder(decls.subtypeDefs.size());
-    ParseTypeDefsCtx ctx(builder, *typeIndices);
+    ParseTypeDefsCtx ctx(input, builder, *typeIndices);
     for (auto& typeDef : decls.typeDefs) {
-      ParseInput in(input, typeDef.pos);
-      CHECK_ERR(deftype(ctx, in));
+      WithPosition with(ctx, typeDef.pos);
+      CHECK_ERR(deftype(ctx));
     }
     auto built = builder.build();
     if (auto* err = built.getError()) {
       std::stringstream msg;
       msg << "invalid type: " << err->reason;
-      return ParseInput(input, decls.typeDefs[err->index].pos).err(msg.str());
+      return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
     }
     types = *built;
     // Record type names on the module.
@@ -2611,26 +2453,26 @@ Result<> parseModule(Module& wasm, std::string_view input) {
   // the correct types.
   std::unordered_map<Index, HeapType> implicitTypes;
   {
-    ParseImplicitTypeDefsCtx ctx(types, implicitTypes, *typeIndices);
+    ParseImplicitTypeDefsCtx ctx(input, types, implicitTypes, *typeIndices);
     for (Index pos : decls.implicitTypeDefs) {
-      ParseInput in(input, pos);
-      CHECK_ERR(typeuse(ctx, in));
+      WithPosition with(ctx, pos);
+      CHECK_ERR(typeuse(ctx));
     }
   }
 
   {
     // Parse module-level types.
-    ParseModuleTypesCtx ctx(wasm, types, implicitTypes, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, input, decls.funcDefs, func));
+    ParseModuleTypesCtx ctx(input, wasm, types, implicitTypes, *typeIndices);
+    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
     // TODO: Parse types of other module elements.
   }
   {
     // Parse definitions.
     // TODO: Parallelize this.
-    ParseDefsCtx ctx(wasm, types, implicitTypes, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, input, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, input, decls.funcDefs, func));
+    ParseDefsCtx ctx(input, wasm, types, implicitTypes, *typeIndices);
+    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
   }
 
   return Ok{};
