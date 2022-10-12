@@ -692,32 +692,23 @@ TEST_F(NominalTest, TestTraverse) {
 
   SubTypes subTypes({A, B, C, D});
 
-  using TypeSet = std::unordered_set<HeapType>;
+  // Helper for comparing sets of types + their corresponding depth.
+  using TypeDepths = std::unordered_set<std::pair<HeapType, Index>>;
 
   auto getSubTypes = [&](HeapType type, Index depth) {
-    TypeSet ret;
-    subTypes.traverseSubTypes(
-      type, depth, [&](HeapType subType, Index depth) { ret.insert(subType); });
+    TypeDepths ret;
+    subTypes.traverseSubTypes(type, depth, [&](HeapType subType, Index depth) {
+      ret.insert({subType, depth});
+    });
     return ret;
   };
 
-  EXPECT_EQ(getSubTypes(A, 0), TypeSet({A}));
-  EXPECT_EQ(getSubTypes(A, 1), TypeSet({A, B, C}));
-  EXPECT_EQ(getSubTypes(A, 2), TypeSet({A, B, C, D}));
-  EXPECT_EQ(getSubTypes(A, 3), TypeSet({A, B, C, D}));
+  EXPECT_EQ(getSubTypes(A, 0), TypeDepths({{A, 0}}));
+  EXPECT_EQ(getSubTypes(A, 1), TypeDepths({{A, 0}, {B, 1}, {C, 1}}));
+  EXPECT_EQ(getSubTypes(A, 2), TypeDepths({{A, 0}, {B, 1}, {C, 1}, {D, 2}}));
+  EXPECT_EQ(getSubTypes(A, 3), TypeDepths({{A, 0}, {B, 1}, {C, 1}, {D, 2}}));
 
-  EXPECT_EQ(getSubTypes(C, 0), TypeSet({C}));
-  EXPECT_EQ(getSubTypes(C, 1), TypeSet({C, D}));
-  EXPECT_EQ(getSubTypes(C, 2), TypeSet({C, D}));
-
-  // Manually test the depth parameter
-  subTypes.traverseSubTypes(A, 1, [&](HeapType subType, Index depth) {
-    if (subType == A) {
-      EXPECT_EQ(depth, Index(0));
-    } else if (subType == B || subType == C) {
-      EXPECT_EQ(depth, Index(1));
-    } else {
-      FAIL() << "unexpected type";
-    }
-  });
+  EXPECT_EQ(getSubTypes(C, 0), TypeDepths({{C, 0}}));
+  EXPECT_EQ(getSubTypes(C, 1), TypeDepths({{C, 0}, {D, 1}}));
+  EXPECT_EQ(getSubTypes(C, 2), TypeDepths({{C, 0}, {D, 1}}));
 }
