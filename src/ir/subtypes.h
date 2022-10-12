@@ -98,9 +98,9 @@ struct SubTypes {
       auto& item = work.back();
       work.pop_back();
       auto currDepth = item.depth;
-      auto& vec = *item.vec;
+      auto& currVec = *item.vec;
       assert(currDepth <= depth);
-      for (auto type : vec) {
+      for (auto type : currVec) {
         func(type, currDepth);
         auto* subVec = &getStrictSubTypes(type);
         if (currDepth + 1 <= depth && !subVec->empty()) {
