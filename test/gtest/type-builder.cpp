@@ -662,8 +662,8 @@ TEST_F(NominalTest, TestDepth) {
   EXPECT_EQ(HeapType(HeapType::noext).getDepth(), size_t(-1));
 }
 
-// Test .traverseSubTypes() helper.
-TEST_F(NominalTest, TestTraverse) {
+// Test .iterSubTypes() helper.
+TEST_F(NominalTest, TestIterSubTypes) {
   /*
         A
        / \
@@ -697,7 +697,7 @@ TEST_F(NominalTest, TestTraverse) {
 
   auto getSubTypes = [&](HeapType type, Index depth) {
     TypeDepths ret;
-    subTypes.traverseSubTypes(type, depth, [&](HeapType subType, Index depth) {
+    subTypes.iterSubTypes(type, depth, [&](HeapType subType, Index depth) {
       ret.insert({subType, depth});
     });
     return ret;
