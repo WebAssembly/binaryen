@@ -717,9 +717,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   // A and E have no intersection, so the only possibility is a null, and that
   // null must be the bottom type.
-  assertIntersection(exactA,
-                     PossibleContents::fullConeType(nullE),
-                     PossibleContents::literal(Literal::makeNull(HeapType::none)));
+  assertIntersection(
+    exactA,
+    PossibleContents::fullConeType(nullE),
+    PossibleContents::literal(Literal::makeNull(HeapType::none)));
 
   assertIntersection(PossibleContents::coneType(nnA, 1),
                      PossibleContents::fullConeType(nnB),

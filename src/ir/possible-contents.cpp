@@ -1203,6 +1203,7 @@ struct InfoCollector
   // verbose code).
   void addRoot(Expression* curr,
                PossibleContents contents = PossibleContents::many()) {
+    // TODO Use a cone type here when relevant
     if (isRelevant(curr)) {
       if (contents.isMany()) {
         contents = PossibleContents::fromType(curr->type);
