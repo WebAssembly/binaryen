@@ -24,19 +24,23 @@ namespace wasm {
 
 // Analyze subtyping relationships and provide useful interfaces to discover
 // them.
+//
+// This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
-  SubTypes(Module& wasm) {
+  SubTypes(const std::vector<HeapType>& types) {
     if (getTypeSystem() != TypeSystem::Nominal &&
         getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SubTypes requires explicit supers";
     }
-    types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {
       note(type);
     }
   }
 
+  SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
+
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
+    assert(!type.isBasic());
     return typeSubTypes[type];
   }
 
