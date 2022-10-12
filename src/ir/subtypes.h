@@ -74,6 +74,11 @@ struct SubTypes {
     // Start by traversing the type itself.
     func(type, 0);
 
+    if (depth == 0) {
+      // Nothing else to scan.
+      return;
+    }
+
     // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
     // pointers to those in our work queue to avoid allocations. See the note
     // below on typeSubTypes for why this is safe.
@@ -94,13 +99,13 @@ struct SubTypes {
       work.pop_back();
       auto currDepth = item.depth;
       auto& vec = *item.vec;
-      if (currDepth > depth || vec.empty()) {
-        // Nothing we need to traverse here.
-        continue;
-      }
-      for (auto type : (*item.vec)) {
+      assert(currDepth <= depth && !vec.empty());
+      for (auto type : vec) {
         func(type, currDepth);
-        work.push_back({&getStrictSubTypes(type), currDepth + 1});
+        auto* subVec = &getStrictSubTypes(type);
+        if (currDepth + 1 <= depth && !subVec->empty()) {
+          work.push_back({subVec, currDepth + 1});
+        }
       }
     }
   }
