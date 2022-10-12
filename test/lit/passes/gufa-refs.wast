@@ -4564,3 +4564,230 @@
     )
   )
 )
+
+;;      A(42)
+;;     /     \
+;; A1(100) A2(100)
+;;
+;; A disagrees on the value of the field with its subtypes.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $A1 (struct_subtype (field i32) $A))
+  (type $A1 (struct_subtype (field i32) $A))
+  ;; CHECK:      (type $A2 (struct_subtype (field i32) $A))
+  (type $A2 (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $a (ref $A))
+  ;; CHECK-NEXT:  (local $a1 (ref $A1))
+  ;; CHECK-NEXT:  (local $a2 (ref $A2))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a1
+  ;; CHECK-NEXT:   (struct.new $A1
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a2
+  ;; CHECK-NEXT:   (struct.new $A2
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $a1)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $a2)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $a1)
+  ;; CHECK-NEXT:     (local.get $a2)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param $x i32)
+    (local $a (ref $A))
+    (local $a1 (ref $A1))
+    (local $a2 (ref $A2))
+    (local.set $a
+      (struct.new $A
+        (i32.const 42)
+      )
+    )
+    (local.set $a1
+      (struct.new $A1
+        (i32.const 100)
+      )
+    )
+    (local.set $a2
+      (struct.new $A2
+        (i32.const 100)
+      )
+    )
+    ;; Any cone here will contain both $A and one of its children, who disagree
+    ;; on the value, so nothing can be optimized.
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $a)
+          (local.get $a1)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $a)
+          (local.get $a2)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $a1)
+          (local.get $a2)
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
+
+;;      A(42)
+;;        |
+;;      B(100)
+;;        |
+;;      C(100)
+;;
+;; A disagrees on the value of the field with its subtype B, but B agrees with
+;; C.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $B (struct_subtype (field i32) $A))
+  (type $B (struct_subtype (field i32) $A))
+  ;; CHECK:      (type $C (struct_subtype (field i32) $B))
+  (type $C (struct_subtype (field i32) $B))
+
+  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (local $a (ref $A))
+  ;; CHECK-NEXT:  (local $b (ref $B))
+  ;; CHECK-NEXT:  (local $c (ref $C))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $b
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $c
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (select (result (ref $A))
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $c)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param $x i32)
+    (local $a (ref $A))
+    (local $b (ref $B))
+    (local $c (ref $C))
+    (local.set $a
+      (struct.new $A
+        (i32.const 42)
+      )
+    )
+    (local.set $b
+      (struct.new $B
+        (i32.const 100)
+      )
+    )
+    (local.set $c
+      (struct.new $C
+        (i32.const 100)
+      )
+    )
+    ;; We can optimize the case of mixing b and c, since they agree on the
+    ;; value. But only that last one can be optimized.
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $a)
+          (local.get $b)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $a)
+          (local.get $c)
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (select
+          (local.get $b)
+          (local.get $c)
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
