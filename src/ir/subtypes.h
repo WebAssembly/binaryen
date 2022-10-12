@@ -69,8 +69,7 @@ struct SubTypes {
   // Efficiently iterate on subtypes of a type, up to a particular depth (depth
   // 0 means not to traverse subtypes, etc.). The callback function receives
   // (type, depth).
-  template<typename F>
-  void iterSubTypes(HeapType type, Index depth, F func) {
+  template<typename F> void iterSubTypes(HeapType type, Index depth, F func) {
     // Start by traversing the type itself.
     func(type, 0);
 
