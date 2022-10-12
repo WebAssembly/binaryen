@@ -1952,7 +1952,7 @@ void Flower::readFromData(HeapType declaredHeapType,
 
       // Next, connect strict subtypes.
 
-      subTypes->traverseSubTypes(
+      subTypes->iterSubTypes(
         cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
           connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
         });
@@ -2011,7 +2011,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     auto cone = refContents.getCone();
     normalizeConeType(cone.type.getHeapType(), cone.depth);
 
-    subTypes->traverseSubTypes(
+    subTypes->iterSubTypes(
       cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
         auto heapLoc = DataLocation{type, fieldIndex};
         updateContents(heapLoc, valueContents);
