@@ -1094,133 +1094,156 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx&);
 template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&);
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeUnreachable(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBinary(Ctx&, BinaryOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeUnary(Ctx&, UnaryOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeSelect(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemorySize(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryGrow(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeLocalGet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeLocalTee(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeLocalSet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalGet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalSet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeBlock(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeThenOrElse(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeConst(Ctx&, Type type);
+Result<typename Ctx::InstrT> makeUnreachable(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeLoad(Ctx&, Type type, bool isAtomic);
+Result<typename Ctx::InstrT> makeBinary(Ctx&, Index, BinaryOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStore(Ctx&, Type type, bool isAtomic);
+Result<typename Ctx::InstrT> makeUnary(Ctx&, Index, UnaryOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeSelect(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemorySize(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryGrow(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalGet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalTee(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLocalSet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalGet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalSet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBlock(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeThenOrElse(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicRMWOrCmpxchg(Ctx&, Type type);
+Result<typename Ctx::InstrT> makeConst(Ctx&, Index, Type type);
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicRMW(Ctx&, Type type, uint8_t bytes, const char* extra);
+Result<typename Ctx::InstrT> makeLoad(Ctx&, Index, Type type, bool isAtomic);
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeAtomicCmpxchg(Ctx&, Type type, uint8_t bytes, const char* extra);
+Result<typename Ctx::InstrT> makeStore(Ctx&, Index, Type type, bool isAtomic);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicWait(Ctx&, Type type);
-template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicNotify(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicFence(Ctx&);
+Result<typename Ctx::InstrT> makeAtomicRMWOrCmpxchg(Ctx&, Index, Type type);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx&, SIMDExtractOp op, size_t lanes);
+makeAtomicRMW(Ctx&, Index, Type type, uint8_t bytes, const char* extra);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDReplace(Ctx&, SIMDReplaceOp op, size_t lanes);
-template<typename Ctx> Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx&);
+makeAtomicCmpxchg(Ctx&, Index, Type type, uint8_t bytes, const char* extra);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDTernary(Ctx&, SIMDTernaryOp op);
+Result<typename Ctx::InstrT> makeAtomicWait(Ctx&, Index, Type type);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShift(Ctx&, SIMDShiftOp op);
+Result<typename Ctx::InstrT> makeAtomicNotify(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoad(Ctx&, SIMDLoadOp op);
+Result<typename Ctx::InstrT> makeAtomicFence(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoadStoreLane(Ctx&,
-                                                   SIMDLoadStoreLaneOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryFill(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx&);
+Result<typename Ctx::InstrT>
+makeSIMDExtract(Ctx&, Index, SIMDExtractOp op, size_t lanes);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeMaybeBlock(Ctx&, size_t i, Type type);
-template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx&);
+Result<typename Ctx::InstrT>
+makeSIMDReplace(Ctx&, Index, SIMDReplaceOp op, size_t lanes);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeCall(Ctx&, bool isReturn);
+Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallIndirect(Ctx&, bool isReturn);
-template<typename Ctx> Result<typename Ctx::InstrT> makeBreak(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeBreakTable(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeReturn(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefNull(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefIs(Ctx&, RefIsOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefFunc(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefEq(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableSet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableSize(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableGrow(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx&);
+Result<typename Ctx::InstrT> makeSIMDTernary(Ctx&, Index, SIMDTernaryOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeTryOrCatchBody(Ctx&, Type type, bool isTry);
-template<typename Ctx> Result<typename Ctx::InstrT> makeThrow(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRethrow(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTupleMake(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeTupleExtract(Ctx&);
+Result<typename Ctx::InstrT> makeSIMDShift(Ctx&, Index, SIMDShiftOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallRef(Ctx&, bool isReturn);
-template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&);
+Result<typename Ctx::InstrT> makeSIMDLoad(Ctx&, Index, SIMDLoadOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31Get(Ctx&, bool signed_);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefTestStatic(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastStatic(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeBrOn(Ctx&, BrOnOp op);
+Result<typename Ctx::InstrT>
+makeSIMDLoadStoreLane(Ctx&, Index, SIMDLoadStoreLaneOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryFill(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, BrOnOp op);
+Result<typename Ctx::InstrT> makeMaybeBlock(Ctx&, Index, size_t i, Type type);
+template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructNewStatic(Ctx&, bool default_);
+Result<typename Ctx::InstrT> makeCall(Ctx&, Index, bool isReturn);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructGet(Ctx&, bool signed_ = false);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&);
+Result<typename Ctx::InstrT> makeCallIndirect(Ctx&, Index, bool isReturn);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBreak(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeBreakTable(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeReturn(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefNull(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx&, bool default_);
-template<typename Ctx> Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&);
+Result<typename Ctx::InstrT> makeRefIs(Ctx&, Index, RefIsOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefFunc(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefEq(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableSet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableSize(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableGrow(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayGet(Ctx&, bool signed_ = false);
-template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefAs(Ctx&, RefAsOp op);
+Result<typename Ctx::InstrT>
+makeTryOrCatchBody(Ctx&, Index, Type type, bool isTry);
+template<typename Ctx> Result<typename Ctx::InstrT> makeThrow(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRethrow(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTupleMake(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringNew(Ctx&, StringNewOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringConst(Ctx&);
+Result<typename Ctx::InstrT> makeTupleExtract(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringMeasure(Ctx&, StringMeasureOp op);
+Result<typename Ctx::InstrT> makeCallRef(Ctx&, Index, bool isReturn);
+template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEncode(Ctx&, StringEncodeOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringConcat(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&);
+Result<typename Ctx::InstrT> makeI31Get(Ctx&, Index, bool signed_);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringAs(Ctx&, StringAsOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringIterNext(Ctx&);
+Result<typename Ctx::InstrT> makeRefTestStatic(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringIterMove(Ctx&, StringIterMoveOp op);
+Result<typename Ctx::InstrT> makeRefCastStatic(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringSliceWTF(Ctx&, StringSliceWTFOp op);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&);
+Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeBrOn(Ctx&, Index, BrOnOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, Index, BrOnOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStructNewStatic(Ctx&, Index, bool default_);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStructGet(Ctx&, Index, bool signed_ = false);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx&, Index, bool default_);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayGet(Ctx&, Index, bool signed_ = false);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeRefAs(Ctx&, Index, RefAsOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringNew(Ctx&, Index, StringNewOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringConst(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringMeasure(Ctx&, Index, StringMeasureOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringEncode(Ctx&, Index, StringEncodeOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringConcat(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringAs(Ctx&, Index, StringAsOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringIterNext(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringIterMove(Ctx&, Index, StringIterMoveOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringSliceWTF(Ctx&, Index, StringSliceWTFOp op);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, Index);
 
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
@@ -1535,6 +1558,7 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
 // ============
 
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
   auto keyword = ctx.in.takeKeyword();
   if (!keyword) {
     return {};
@@ -1617,70 +1641,83 @@ template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
   return ctx.makeExpr(*insts);
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeUnreachable(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeUnreachable(Ctx& ctx, Index pos) {
   return ctx.makeUnreachable();
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeNop(Ctx& ctx, Index pos) {
   return ctx.makeNop();
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBinary(Ctx& ctx, BinaryOp op) {
+Result<typename Ctx::InstrT> makeBinary(Ctx& ctx, Index pos, BinaryOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeUnary(Ctx& ctx, UnaryOp op) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeSelect(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeDrop(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemorySize(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeLocalTee(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeBlock(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeThenOrElse(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeUnary(Ctx& ctx, Index pos, UnaryOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Type type) {
+Result<typename Ctx::InstrT> makeSelect(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeDrop(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeMemorySize(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeLocalTee(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeBlock(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeThenOrElse(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Index pos, Type type) {
   assert(type.isBasic());
   switch (type.getBasic()) {
     case Type::i32:
@@ -1713,354 +1750,404 @@ Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Type type) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeLoad(Ctx& ctx, Type type, bool isAtomic) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStore(Ctx& ctx, Type type, bool isAtomic) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicRMWOrCmpxchg(Ctx& ctx, Type type) {
+Result<typename Ctx::InstrT>
+makeLoad(Ctx& ctx, Index pos, Type type, bool isAtomic) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicRMW(Ctx& ctx, Type type, uint8_t bytes, const char* extra) {
+makeStore(Ctx& ctx, Index pos, Type type, bool isAtomic) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicCmpxchg(Ctx& ctx, Type type, uint8_t bytes, const char* extra) {
+makeAtomicRMWOrCmpxchg(Ctx& ctx, Index pos, Type type) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicWait(Ctx& ctx, Type type) {
+Result<typename Ctx::InstrT> makeAtomicRMW(
+  Ctx& ctx, Index pos, Type type, uint8_t bytes, const char* extra) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicNotify(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeAtomicCmpxchg(
+  Ctx& ctx, Index pos, Type type, uint8_t bytes, const char* extra) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeAtomicWait(Ctx& ctx, Index pos, Type type) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeAtomicNotify(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx& ctx, SIMDExtractOp op, size_t lanes) {
+makeSIMDExtract(Ctx& ctx, Index pos, SIMDExtractOp op, size_t lanes) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDReplace(Ctx& ctx, SIMDReplaceOp op, size_t lanes) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx) {
+makeSIMDReplace(Ctx& ctx, Index pos, SIMDReplaceOp op, size_t lanes) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDTernary(Ctx& ctx, SIMDTernaryOp op) {
+Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDShift(Ctx& ctx, SIMDShiftOp op) {
+Result<typename Ctx::InstrT>
+makeSIMDTernary(Ctx& ctx, Index pos, SIMDTernaryOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoad(Ctx& ctx, SIMDLoadOp op) {
+Result<typename Ctx::InstrT>
+makeSIMDShift(Ctx& ctx, Index pos, SIMDShiftOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoadStoreLane(Ctx& ctx,
-                                                   SIMDLoadStoreLaneOp op) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeSIMDLoad(Ctx& ctx, Index pos, SIMDLoadOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeMaybeBlock(Ctx& ctx, size_t i, Type type) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeLoop(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeCall(Ctx& ctx, bool isReturn) {
+Result<typename Ctx::InstrT>
+makeSIMDLoadStoreLane(Ctx& ctx, Index pos, SIMDLoadStoreLaneOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallIndirect(Ctx& ctx, bool isReturn) {
+Result<typename Ctx::InstrT> makeMemoryInit(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeBreak(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeBreakTable(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeReturn(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makePush(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makePop(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeIf(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeMaybeBlock(Ctx& ctx, Index pos, size_t i, Type type) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeLoop(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeCall(Ctx& ctx, Index pos, bool isReturn) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeCallIndirect(Ctx& ctx, Index pos, bool isReturn) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeBreak(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeBreakTable(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeReturn(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, Index pos) {
   auto t = heaptype(ctx);
   CHECK_ERR(t);
   return ctx.makeRefNull(*t);
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, RefIsOp op) {
+Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, Index pos, RefIsOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeTableGet(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableSet(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeTableSet(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableSize(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeTableSize(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeTableGrow(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeTableGrow(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeTry(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeTryOrCatchBody(Ctx& ctx, Type type, bool isTry) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeThrow(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeRethrow(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeTupleMake(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeTupleExtract(Ctx& ctx) {
+makeTryOrCatchBody(Ctx& ctx, Index pos, Type type, bool isTry) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeCallRef(Ctx& ctx, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeThrow(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeRethrow(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeTupleMake(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeTupleExtract(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, BrOnOp op) {
+Result<typename Ctx::InstrT> makeI31New(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOnStatic(Ctx& ctx, BrOnOp op) {
+Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructNewStatic(Ctx& ctx, bool default_) {
+Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructGet(Ctx& ctx, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeRefTestStatic(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx& ctx, bool default_) {
+Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeRefCastStatic(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayGet(Ctx& ctx, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, RefAsOp op) {
+Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, Index pos, BrOnOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringNew(Ctx& ctx, StringNewOp op) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringConst(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeBrOnStatic(Ctx& ctx, Index pos, BrOnOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringMeasure(Ctx& ctx, StringMeasureOp op) {
+Result<typename Ctx::InstrT>
+makeStructNewStatic(Ctx& ctx, Index pos, bool default_) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEncode(Ctx& ctx, StringEncodeOp op) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeStructGet(Ctx& ctx, Index pos, bool signed_) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringAs(Ctx& ctx, StringAsOp op) {
+Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx& ctx) {
+Result<typename Ctx::InstrT>
+makeArrayNewStatic(Ctx& ctx, Index pos, bool default_) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringIterNext(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeArrayGet(Ctx& ctx, Index pos, bool signed_) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringIterMove(Ctx& ctx, StringIterMoveOp op) {
+Result<typename Ctx::InstrT> makeArraySet(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringSliceWTF(Ctx& ctx, StringSliceWTFOp op) {
+Result<typename Ctx::InstrT> makeArrayLen(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringSliceIter(Ctx& ctx) {
+Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringNew(Ctx& ctx, Index pos, StringNewOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringConst(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringMeasure(Ctx& ctx, Index pos, StringMeasureOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringEncode(Ctx& ctx, Index pos, StringEncodeOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringAs(Ctx& ctx, Index pos, StringAsOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF8Advance(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringWTF16Get(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringIterNext(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringIterMove(Ctx& ctx, Index pos, StringIterMoveOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeStringSliceWTF(Ctx& ctx, Index pos, StringSliceWTFOp op) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringSliceIter(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
