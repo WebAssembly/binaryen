@@ -37,7 +37,12 @@ struct SubTypes {
   }
 
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
-    return typeSubTypes[type];
+    if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
+      return iter->second;
+    }
+
+    // No entry exists. Return the canonical empty vec.
+    return emptyVec;
   }
 
   // Get all subtypes of a type, and their subtypes and so forth, recursively.
@@ -75,7 +80,14 @@ private:
   }
 
   // Maps a type to its subtypes.
+  //
+  // After our constructor we never modify this data structure, so we can take
+  // references to the vectors here safely.
   std::unordered_map<HeapType, std::vector<HeapType>> typeSubTypes;
+
+  // Keep a canonical empty vector, so we have something to return without doing
+  // an allocation in getStrictSubTypes.
+  std::vector<HeapType> emptyVec;
 };
 
 } // namespace wasm
