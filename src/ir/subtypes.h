@@ -67,7 +67,6 @@ struct SubTypes {
   // and so forth.
   //
   // This depth ignores bottom types.
-  // TODO test
   std::unordered_map<HeapType, Index> getMaxDepths() {
     std::unordered_map<HeapType, Index> depths;
 
