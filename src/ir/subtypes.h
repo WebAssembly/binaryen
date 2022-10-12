@@ -43,7 +43,7 @@ struct SubTypes {
 
     // No entry exists. Return a canonical constant empty vec, to avoid
     // allocation.
-    static std::vector<HeapType> empty;
+    static const std::vector<HeapType> empty;
     return empty;
   }
 
