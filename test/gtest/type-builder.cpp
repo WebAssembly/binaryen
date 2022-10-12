@@ -620,6 +620,35 @@ TEST_F(IsorecursiveTest, TestExistingSuperType) {
   EXPECT_EQ(B1.getHeapType(), B2.getHeapType());
 }
 
+// Test .getMaxDepths() helper.
+TEST_F(NominalTest, TestMaxDepths) {
+  /*
+      A
+      |
+      B
+  */
+  HeapType A, B, C, D;
+  {
+    TypeBuilder builder(2);
+    builder[0] = Struct();
+    builder[1] = Struct();
+    builder.setSubType(1, builder.getTempHeapType(0));
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = built[0];
+    B = built[1];
+  }
+
+  SubTypes subTypes({A, B});
+  auto maxDepths = subTypes.getMaxDepths();
+
+  EXPECT_EQ(maxDepths[B], Index(0));
+  EXPECT_EQ(maxDepths[A], Index(1));
+  EXPECT_EQ(maxDepths[HeapType::data], Index(2));
+  EXPECT_EQ(maxDepths[HeapType::eq], Index(3));
+}
+
 // Test .depth() helper.
 TEST_F(NominalTest, TestDepth) {
   HeapType A, B, C;
