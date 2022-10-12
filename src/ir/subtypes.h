@@ -27,7 +27,7 @@ namespace wasm {
 //
 // This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
-  SubTypes(const std::vector<HeapType>& types) {
+  SubTypes(const std::vector<HeapType>& types) : types(types) {
     if (getTypeSystem() != TypeSystem::Nominal &&
         getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SubTypes requires explicit supers";
