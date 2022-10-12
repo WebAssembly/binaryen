@@ -661,3 +661,63 @@ TEST_F(NominalTest, TestDepth) {
   EXPECT_EQ(HeapType(HeapType::nofunc).getDepth(), size_t(-1));
   EXPECT_EQ(HeapType(HeapType::noext).getDepth(), size_t(-1));
 }
+
+// Test .traverseSubTypes() helper.
+TEST_F(NominalTest, TestTraverse) {
+  /*
+        A
+       / \
+      B   C
+           \
+            D
+  */
+  HeapType A, B, C, D;
+  {
+    TypeBuilder builder(4);
+    builder[0] = Struct();
+    builder[1] = Struct();
+    builder[2] = Struct();
+    builder[3] = Struct();
+    builder.setSubType(1, builder.getTempHeapType(0));
+    builder.setSubType(2, builder.getTempHeapType(0));
+    builder.setSubType(3, builder.getTempHeapType(2));
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    A = built[0];
+    B = built[1];
+    C = built[2];
+    D = built[3];
+  }
+
+  SubTypes subTypes({A, B, C, D});
+
+  using TypeSet = std::unordered_set<HeapType>;
+
+  auto getSubTypes = [&](HeapType type, Index depth) {
+    TypeSet ret;
+    subTypes.traverseSubTypes(
+      type, depth, [&](HeapType subType, Index depth) { ret.insert(subType); });
+    return ret;
+  };
+
+  EXPECT_EQ(getSubTypes(A, 0), TypeSet({A}));
+  EXPECT_EQ(getSubTypes(A, 1), TypeSet({A, B, C}));
+  EXPECT_EQ(getSubTypes(A, 2), TypeSet({A, B, C, D}));
+  EXPECT_EQ(getSubTypes(A, 3), TypeSet({A, B, C, D}));
+
+  EXPECT_EQ(getSubTypes(C, 0), TypeSet({C}));
+  EXPECT_EQ(getSubTypes(C, 1), TypeSet({C, D}));
+  EXPECT_EQ(getSubTypes(C, 2), TypeSet({C, D}));
+
+  // Manually test the depth parameter
+  subTypes.traverseSubTypes(A, 1, [&](HeapType subType, Index depth) {
+    if (subType == A) {
+      EXPECT_EQ(depth, Index(0));
+    } else if (subType == B || subType == C) {
+      EXPECT_EQ(depth, Index(1));
+    } else {
+      FAIL() << "unexpected type";
+    }
+  });
+}

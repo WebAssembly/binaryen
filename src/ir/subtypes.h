@@ -24,19 +24,23 @@ namespace wasm {
 
 // Analyze subtyping relationships and provide useful interfaces to discover
 // them.
+//
+// This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
-  SubTypes(Module& wasm) {
+  SubTypes(const std::vector<HeapType>& types) {
     if (getTypeSystem() != TypeSystem::Nominal &&
         getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SubTypes requires explicit supers";
     }
-    types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {
       note(type);
     }
   }
 
+  SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
+
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
+    assert(!type.isBasic());
     if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
       return iter->second;
     }
@@ -77,6 +81,11 @@ struct SubTypes {
     // Start by traversing the type itself.
     func(type, 0);
 
+    if (depth == 0) {
+      // Nothing else to scan.
+      return;
+    }
+
     // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
     // pointers to those in our work queue to avoid allocations. See the note
     // below on typeSubTypes for why this is safe.
@@ -96,14 +105,14 @@ struct SubTypes {
       auto& item = work.back();
       work.pop_back();
       auto currDepth = item.depth;
-      auto& vec = *item.vec;
-      if (currDepth > depth || vec.empty()) {
-        // Nothing we need to traverse here.
-        continue;
-      }
-      for (auto type : (*item.vec)) {
+      auto& currVec = *item.vec;
+      assert(currDepth <= depth);
+      for (auto type : currVec) {
         func(type, currDepth);
-        work.push_back({&getStrictSubTypes(type), currDepth + 1});
+        auto* subVec = &getStrictSubTypes(type);
+        if (currDepth + 1 <= depth && !subVec->empty()) {
+          work.push_back({subVec, currDepth + 1});
+        }
       }
     }
   }

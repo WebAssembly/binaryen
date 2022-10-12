@@ -3539,7 +3539,7 @@ switch (op[0]) {
         switch (op[6]) {
           case 'c':
             if (op == "array.copy"sv) {
-              auto ret = makeArrayCopy(ctx, in);
+              auto ret = makeArrayCopy(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3548,7 +3548,7 @@ switch (op[0]) {
             switch (op[9]) {
               case '\0':
                 if (op == "array.get"sv) {
-                  auto ret = makeArrayGet(ctx, in);
+                  auto ret = makeArrayGet(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -3557,14 +3557,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case 's':
                     if (op == "array.get_s"sv) {
-                      auto ret = makeArrayGet(ctx, in, true);
+                      auto ret = makeArrayGet(ctx, true);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "array.get_u"sv) {
-                      auto ret = makeArrayGet(ctx, in, false);
+                      auto ret = makeArrayGet(ctx, false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -3577,14 +3577,14 @@ switch (op[0]) {
           }
           case 'i':
             if (op == "array.init_static"sv) {
-              auto ret = makeArrayInitStatic(ctx, in);
+              auto ret = makeArrayInitStatic(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'l':
             if (op == "array.len"sv) {
-              auto ret = makeArrayLen(ctx, in);
+              auto ret = makeArrayLen(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3593,14 +3593,14 @@ switch (op[0]) {
             switch (op[9]) {
               case '\0':
                 if (op == "array.new"sv) {
-                  auto ret = makeArrayNewStatic(ctx, in, false);
+                  auto ret = makeArrayNewStatic(ctx, false);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case '_':
                 if (op == "array.new_default"sv) {
-                  auto ret = makeArrayNewStatic(ctx, in, true);
+                  auto ret = makeArrayNewStatic(ctx, true);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -3610,7 +3610,7 @@ switch (op[0]) {
           }
           case 's':
             if (op == "array.set"sv) {
-              auto ret = makeArraySet(ctx, in);
+              auto ret = makeArraySet(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3620,7 +3620,7 @@ switch (op[0]) {
       }
       case 't':
         if (op == "atomic.fence"sv) {
-          auto ret = makeAtomicFence(ctx, in);
+          auto ret = makeAtomicFence(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -3632,7 +3632,7 @@ switch (op[0]) {
     switch (op[1]) {
       case 'l':
         if (op == "block"sv) {
-          auto ret = makeBlock(ctx, in);
+          auto ret = makeBlock(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -3641,7 +3641,7 @@ switch (op[0]) {
         switch (op[2]) {
           case '\0':
             if (op == "br"sv) {
-              auto ret = makeBreak(ctx, in);
+              auto ret = makeBreak(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3650,7 +3650,7 @@ switch (op[0]) {
             switch (op[3]) {
               case 'i':
                 if (op == "br_if"sv) {
-                  auto ret = makeBreak(ctx, in);
+                  auto ret = makeBreak(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -3661,7 +3661,7 @@ switch (op[0]) {
                     switch (op[10]) {
                       case '\0':
                         if (op == "br_on_cast"sv) {
-                          auto ret = makeBrOn(ctx, in, BrOnCast);
+                          auto ret = makeBrOn(ctx, BrOnCast);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -3670,7 +3670,7 @@ switch (op[0]) {
                         switch (op[11]) {
                           case 'f':
                             if (op == "br_on_cast_fail"sv) {
-                              auto ret = makeBrOn(ctx, in, BrOnCastFail);
+                              auto ret = makeBrOn(ctx, BrOnCastFail);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -3679,14 +3679,14 @@ switch (op[0]) {
                             switch (op[17]) {
                               case '\0':
                                 if (op == "br_on_cast_static"sv) {
-                                  auto ret = makeBrOnStatic(ctx, in, BrOnCast);
+                                  auto ret = makeBrOnStatic(ctx, BrOnCast);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
                                 if (op == "br_on_cast_static_fail"sv) {
-                                  auto ret = makeBrOnStatic(ctx, in, BrOnCastFail);
+                                  auto ret = makeBrOnStatic(ctx, BrOnCastFail);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -3702,21 +3702,21 @@ switch (op[0]) {
                   }
                   case 'd':
                     if (op == "br_on_data"sv) {
-                      auto ret = makeBrOn(ctx, in, BrOnData);
+                      auto ret = makeBrOn(ctx, BrOnData);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'f':
                     if (op == "br_on_func"sv) {
-                      auto ret = makeBrOn(ctx, in, BrOnFunc);
+                      auto ret = makeBrOn(ctx, BrOnFunc);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "br_on_i31"sv) {
-                      auto ret = makeBrOn(ctx, in, BrOnI31);
+                      auto ret = makeBrOn(ctx, BrOnI31);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -3727,28 +3727,28 @@ switch (op[0]) {
                         switch (op[10]) {
                           case 'd':
                             if (op == "br_on_non_data"sv) {
-                              auto ret = makeBrOn(ctx, in, BrOnNonData);
+                              auto ret = makeBrOn(ctx, BrOnNonData);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'f':
                             if (op == "br_on_non_func"sv) {
-                              auto ret = makeBrOn(ctx, in, BrOnNonFunc);
+                              auto ret = makeBrOn(ctx, BrOnNonFunc);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'i':
                             if (op == "br_on_non_i31"sv) {
-                              auto ret = makeBrOn(ctx, in, BrOnNonI31);
+                              auto ret = makeBrOn(ctx, BrOnNonI31);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'n':
                             if (op == "br_on_non_null"sv) {
-                              auto ret = makeBrOn(ctx, in, BrOnNonNull);
+                              auto ret = makeBrOn(ctx, BrOnNonNull);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -3758,7 +3758,7 @@ switch (op[0]) {
                       }
                       case 'u':
                         if (op == "br_on_null"sv) {
-                          auto ret = makeBrOn(ctx, in, BrOnNull);
+                          auto ret = makeBrOn(ctx, BrOnNull);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -3771,7 +3771,7 @@ switch (op[0]) {
               }
               case 't':
                 if (op == "br_table"sv) {
-                  auto ret = makeBreakTable(ctx, in);
+                  auto ret = makeBreakTable(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -3789,7 +3789,7 @@ switch (op[0]) {
     switch (op[4]) {
       case '\0':
         if (op == "call"sv) {
-          auto ret = makeCall(ctx, in, /*isReturn=*/false);
+          auto ret = makeCall(ctx, /*isReturn=*/false);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -3798,14 +3798,14 @@ switch (op[0]) {
         switch (op[5]) {
           case 'i':
             if (op == "call_indirect"sv) {
-              auto ret = makeCallIndirect(ctx, in, /*isReturn=*/false);
+              auto ret = makeCallIndirect(ctx, /*isReturn=*/false);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'r':
             if (op == "call_ref"sv) {
-              auto ret = makeCallRef(ctx, in, /*isReturn=*/false);
+              auto ret = makeCallRef(ctx, /*isReturn=*/false);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3820,14 +3820,14 @@ switch (op[0]) {
     switch (op[1]) {
       case 'a':
         if (op == "data.drop"sv) {
-          auto ret = makeDataDrop(ctx, in);
+          auto ret = makeDataDrop(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 'r':
         if (op == "drop"sv) {
-          auto ret = makeDrop(ctx, in);
+          auto ret = makeDrop(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -3839,7 +3839,7 @@ switch (op[0]) {
     switch (op[1]) {
       case 'l':
         if (op == "else"sv) {
-          auto ret = makeThenOrElse(ctx, in);
+          auto ret = makeThenOrElse(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -3848,14 +3848,14 @@ switch (op[0]) {
         switch (op[7]) {
           case 'e':
             if (op == "extern.externalize"sv) {
-              auto ret = makeRefAs(ctx, in, ExternExternalize);
+              auto ret = makeRefAs(ctx, ExternExternalize);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'i':
             if (op == "extern.internalize"sv) {
-              auto ret = makeRefAs(ctx, in, ExternInternalize);
+              auto ret = makeRefAs(ctx, ExternInternalize);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3876,14 +3876,14 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'b':
                     if (op == "f32.abs"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::AbsFloat32);
+                      auto ret = makeUnary(ctx, UnaryOp::AbsFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'd':
                     if (op == "f32.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::AddFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -3895,7 +3895,7 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f32.ceil"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::CeilFloat32);
+                      auto ret = makeUnary(ctx, UnaryOp::CeilFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -3906,7 +3906,7 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 's':
                             if (op == "f32.const"sv) {
-                              auto ret = makeConst(ctx, in, Type::f32);
+                              auto ret = makeConst(ctx, Type::f32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -3917,14 +3917,14 @@ switch (op[0]) {
                                 switch (op[16]) {
                                   case 's':
                                     if (op == "f32.convert_i32_s"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertSInt32ToFloat32);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertSInt32ToFloat32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "f32.convert_i32_u"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertUInt32ToFloat32);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertUInt32ToFloat32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -3936,14 +3936,14 @@ switch (op[0]) {
                                 switch (op[16]) {
                                   case 's':
                                     if (op == "f32.convert_i64_s"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertSInt64ToFloat32);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertSInt64ToFloat32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "f32.convert_i64_u"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertUInt64ToFloat32);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertUInt64ToFloat32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -3959,7 +3959,7 @@ switch (op[0]) {
                       }
                       case 'p':
                         if (op == "f32.copysign"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::CopySignFloat32);
+                          auto ret = makeBinary(ctx, BinaryOp::CopySignFloat32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -3974,14 +3974,14 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f32.demote_f64"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::DemoteFloat64);
+                      auto ret = makeUnary(ctx, UnaryOp::DemoteFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f32.div"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::DivFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::DivFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -3991,14 +3991,14 @@ switch (op[0]) {
               }
               case 'e':
                 if (op == "f32.eq"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::EqFloat32);
+                  auto ret = makeBinary(ctx, BinaryOp::EqFloat32);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
                 if (op == "f32.floor"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::FloorFloat32);
+                  auto ret = makeUnary(ctx, UnaryOp::FloorFloat32);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4007,14 +4007,14 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f32.ge"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::GeFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f32.gt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::GtFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4026,21 +4026,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f32.le"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::LeFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'o':
                     if (op == "f32.load"sv) {
-                      auto ret = makeLoad(ctx, in, Type::f32, /*isAtomic=*/false);
+                      auto ret = makeLoad(ctx, Type::f32, /*isAtomic=*/false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f32.lt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::LtFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4052,21 +4052,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'a':
                     if (op == "f32.max"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f32.min"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::MinFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f32.mul"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MulFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::MulFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4078,21 +4078,21 @@ switch (op[0]) {
                 switch (op[6]) {
                   case '\0':
                     if (op == "f32.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::NeFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'a':
                     if (op == "f32.nearest"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NearestFloat32);
+                      auto ret = makeUnary(ctx, UnaryOp::NearestFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "f32.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegFloat32);
+                      auto ret = makeUnary(ctx, UnaryOp::NegFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4102,7 +4102,7 @@ switch (op[0]) {
               }
               case 'r':
                 if (op == "f32.reinterpret_i32"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::ReinterpretInt32);
+                  auto ret = makeUnary(ctx, UnaryOp::ReinterpretInt32);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4111,21 +4111,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'q':
                     if (op == "f32.sqrt"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SqrtFloat32);
+                      auto ret = makeUnary(ctx, UnaryOp::SqrtFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f32.store"sv) {
-                      auto ret = makeStore(ctx, in, Type::f32, /*isAtomic=*/false);
+                      auto ret = makeStore(ctx, Type::f32, /*isAtomic=*/false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f32.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubFloat32);
+                      auto ret = makeBinary(ctx, BinaryOp::SubFloat32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4135,7 +4135,7 @@ switch (op[0]) {
               }
               case 't':
                 if (op == "f32.trunc"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::TruncFloat32);
+                  auto ret = makeUnary(ctx, UnaryOp::TruncFloat32);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4149,14 +4149,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'b':
                     if (op == "f32x4.abs"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::AbsVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::AbsVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'd':
                     if (op == "f32x4.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::AddVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4168,7 +4168,7 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f32x4.ceil"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::CeilVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::CeilVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4177,14 +4177,14 @@ switch (op[0]) {
                     switch (op[20]) {
                       case 's':
                         if (op == "f32x4.convert_i32x4_s"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ConvertSVecI32x4ToVecF32x4);
+                          auto ret = makeUnary(ctx, UnaryOp::ConvertSVecI32x4ToVecF32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "f32x4.convert_i32x4_u"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ConvertUVecI32x4ToVecF32x4);
+                          auto ret = makeUnary(ctx, UnaryOp::ConvertUVecI32x4ToVecF32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -4199,14 +4199,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f32x4.demote_f64x2_zero"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::DemoteZeroVecF64x2ToVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::DemoteZeroVecF64x2ToVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f32x4.div"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::DivVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::DivVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4218,14 +4218,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'q':
                     if (op == "f32x4.eq"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::EqVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::EqVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'x':
                     if (op == "f32x4.extract_lane"sv) {
-                      auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneVecF32x4, 4);
+                      auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneVecF32x4, 4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4235,7 +4235,7 @@ switch (op[0]) {
               }
               case 'f':
                 if (op == "f32x4.floor"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::FloorVecF32x4);
+                  auto ret = makeUnary(ctx, UnaryOp::FloorVecF32x4);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4244,14 +4244,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f32x4.ge"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::GeVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f32x4.gt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::GtVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4263,14 +4263,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f32x4.le"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::LeVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f32x4.lt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::LtVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4282,21 +4282,21 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'a':
                     if (op == "f32x4.max"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f32x4.min"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::MinVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f32x4.mul"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MulVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::MulVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4308,21 +4308,21 @@ switch (op[0]) {
                 switch (op[8]) {
                   case '\0':
                     if (op == "f32x4.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::NeVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'a':
                     if (op == "f32x4.nearest"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NearestVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::NearestVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "f32x4.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::NegVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4334,14 +4334,14 @@ switch (op[0]) {
                 switch (op[8]) {
                   case 'a':
                     if (op == "f32x4.pmax"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::PMaxVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::PMaxVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f32x4.pmin"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::PMinVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::PMinVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4357,14 +4357,14 @@ switch (op[0]) {
                         switch (op[16]) {
                           case 'a':
                             if (op == "f32x4.relaxed_fma"sv) {
-                              auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::RelaxedFmaVecF32x4);
+                              auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::RelaxedFmaVecF32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 's':
                             if (op == "f32x4.relaxed_fms"sv) {
-                              auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::RelaxedFmsVecF32x4);
+                              auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::RelaxedFmsVecF32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -4376,14 +4376,14 @@ switch (op[0]) {
                         switch (op[15]) {
                           case 'a':
                             if (op == "f32x4.relaxed_max"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RelaxedMaxVecF32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::RelaxedMaxVecF32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'i':
                             if (op == "f32x4.relaxed_min"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RelaxedMinVecF32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::RelaxedMinVecF32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -4396,7 +4396,7 @@ switch (op[0]) {
                   }
                   case 'p':
                     if (op == "f32x4.replace_lane"sv) {
-                      auto ret = makeSIMDReplace(ctx, in, SIMDReplaceOp::ReplaceLaneVecF32x4, 4);
+                      auto ret = makeSIMDReplace(ctx, SIMDReplaceOp::ReplaceLaneVecF32x4, 4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4408,21 +4408,21 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'p':
                     if (op == "f32x4.splat"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SplatVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::SplatVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'q':
                     if (op == "f32x4.sqrt"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SqrtVecF32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::SqrtVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f32x4.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubVecF32x4);
+                      auto ret = makeBinary(ctx, BinaryOp::SubVecF32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4432,7 +4432,7 @@ switch (op[0]) {
               }
               case 't':
                 if (op == "f32x4.trunc"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::TruncVecF32x4);
+                  auto ret = makeUnary(ctx, UnaryOp::TruncVecF32x4);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4451,14 +4451,14 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'b':
                     if (op == "f64.abs"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::AbsFloat64);
+                      auto ret = makeUnary(ctx, UnaryOp::AbsFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'd':
                     if (op == "f64.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::AddFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4470,7 +4470,7 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f64.ceil"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::CeilFloat64);
+                      auto ret = makeUnary(ctx, UnaryOp::CeilFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4481,7 +4481,7 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 's':
                             if (op == "f64.const"sv) {
-                              auto ret = makeConst(ctx, in, Type::f64);
+                              auto ret = makeConst(ctx, Type::f64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -4492,14 +4492,14 @@ switch (op[0]) {
                                 switch (op[16]) {
                                   case 's':
                                     if (op == "f64.convert_i32_s"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertSInt32ToFloat64);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertSInt32ToFloat64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "f64.convert_i32_u"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertUInt32ToFloat64);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertUInt32ToFloat64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -4511,14 +4511,14 @@ switch (op[0]) {
                                 switch (op[16]) {
                                   case 's':
                                     if (op == "f64.convert_i64_s"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertSInt64ToFloat64);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertSInt64ToFloat64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "f64.convert_i64_u"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ConvertUInt64ToFloat64);
+                                      auto ret = makeUnary(ctx, UnaryOp::ConvertUInt64ToFloat64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -4534,7 +4534,7 @@ switch (op[0]) {
                       }
                       case 'p':
                         if (op == "f64.copysign"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::CopySignFloat64);
+                          auto ret = makeBinary(ctx, BinaryOp::CopySignFloat64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -4547,21 +4547,21 @@ switch (op[0]) {
               }
               case 'd':
                 if (op == "f64.div"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::DivFloat64);
+                  auto ret = makeBinary(ctx, BinaryOp::DivFloat64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'e':
                 if (op == "f64.eq"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::EqFloat64);
+                  auto ret = makeBinary(ctx, BinaryOp::EqFloat64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
                 if (op == "f64.floor"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::FloorFloat64);
+                  auto ret = makeUnary(ctx, UnaryOp::FloorFloat64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4570,14 +4570,14 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f64.ge"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::GeFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f64.gt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::GtFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4589,21 +4589,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'e':
                     if (op == "f64.le"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::LeFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'o':
                     if (op == "f64.load"sv) {
-                      auto ret = makeLoad(ctx, in, Type::f64, /*isAtomic=*/false);
+                      auto ret = makeLoad(ctx, Type::f64, /*isAtomic=*/false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f64.lt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::LtFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4615,21 +4615,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'a':
                     if (op == "f64.max"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f64.min"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::MinFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f64.mul"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MulFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::MulFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4641,21 +4641,21 @@ switch (op[0]) {
                 switch (op[6]) {
                   case '\0':
                     if (op == "f64.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::NeFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'a':
                     if (op == "f64.nearest"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NearestFloat64);
+                      auto ret = makeUnary(ctx, UnaryOp::NearestFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "f64.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegFloat64);
+                      auto ret = makeUnary(ctx, UnaryOp::NegFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4665,14 +4665,14 @@ switch (op[0]) {
               }
               case 'p':
                 if (op == "f64.promote_f32"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::PromoteFloat32);
+                  auto ret = makeUnary(ctx, UnaryOp::PromoteFloat32);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'r':
                 if (op == "f64.reinterpret_i64"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::ReinterpretInt64);
+                  auto ret = makeUnary(ctx, UnaryOp::ReinterpretInt64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4681,21 +4681,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'q':
                     if (op == "f64.sqrt"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SqrtFloat64);
+                      auto ret = makeUnary(ctx, UnaryOp::SqrtFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f64.store"sv) {
-                      auto ret = makeStore(ctx, in, Type::f64, /*isAtomic=*/false);
+                      auto ret = makeStore(ctx, Type::f64, /*isAtomic=*/false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f64.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubFloat64);
+                      auto ret = makeBinary(ctx, BinaryOp::SubFloat64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4705,7 +4705,7 @@ switch (op[0]) {
               }
               case 't':
                 if (op == "f64.trunc"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::TruncFloat64);
+                  auto ret = makeUnary(ctx, UnaryOp::TruncFloat64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4719,14 +4719,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'b':
                     if (op == "f64x2.abs"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::AbsVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::AbsVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'd':
                     if (op == "f64x2.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::AddVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4738,7 +4738,7 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f64x2.ceil"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::CeilVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::CeilVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4747,14 +4747,14 @@ switch (op[0]) {
                     switch (op[24]) {
                       case 's':
                         if (op == "f64x2.convert_low_i32x4_s"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ConvertLowSVecI32x4ToVecF64x2);
+                          auto ret = makeUnary(ctx, UnaryOp::ConvertLowSVecI32x4ToVecF64x2);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "f64x2.convert_low_i32x4_u"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ConvertLowUVecI32x4ToVecF64x2);
+                          auto ret = makeUnary(ctx, UnaryOp::ConvertLowUVecI32x4ToVecF64x2);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -4767,7 +4767,7 @@ switch (op[0]) {
               }
               case 'd':
                 if (op == "f64x2.div"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::DivVecF64x2);
+                  auto ret = makeBinary(ctx, BinaryOp::DivVecF64x2);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4776,14 +4776,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'q':
                     if (op == "f64x2.eq"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::EqVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::EqVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'x':
                     if (op == "f64x2.extract_lane"sv) {
-                      auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneVecF64x2, 2);
+                      auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneVecF64x2, 2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4793,7 +4793,7 @@ switch (op[0]) {
               }
               case 'f':
                 if (op == "f64x2.floor"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::FloorVecF64x2);
+                  auto ret = makeUnary(ctx, UnaryOp::FloorVecF64x2);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -4802,14 +4802,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f64x2.ge"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::GeVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f64x2.gt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::GtVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4821,14 +4821,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "f64x2.le"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::LeVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "f64x2.lt"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::LtVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4840,21 +4840,21 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'a':
                     if (op == "f64x2.max"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'i':
                     if (op == "f64x2.min"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::MinVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f64x2.mul"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MulVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::MulVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4866,21 +4866,21 @@ switch (op[0]) {
                 switch (op[8]) {
                   case '\0':
                     if (op == "f64x2.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::NeVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'a':
                     if (op == "f64x2.nearest"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NearestVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::NearestVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "f64x2.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::NegVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4894,14 +4894,14 @@ switch (op[0]) {
                     switch (op[8]) {
                       case 'a':
                         if (op == "f64x2.pmax"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::PMaxVecF64x2);
+                          auto ret = makeBinary(ctx, BinaryOp::PMaxVecF64x2);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'i':
                         if (op == "f64x2.pmin"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::PMinVecF64x2);
+                          auto ret = makeBinary(ctx, BinaryOp::PMinVecF64x2);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -4911,7 +4911,7 @@ switch (op[0]) {
                   }
                   case 'r':
                     if (op == "f64x2.promote_low_f32x4"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::PromoteLowVecF32x4ToVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::PromoteLowVecF32x4ToVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4927,14 +4927,14 @@ switch (op[0]) {
                         switch (op[16]) {
                           case 'a':
                             if (op == "f64x2.relaxed_fma"sv) {
-                              auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::RelaxedFmaVecF64x2);
+                              auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::RelaxedFmaVecF64x2);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 's':
                             if (op == "f64x2.relaxed_fms"sv) {
-                              auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::RelaxedFmsVecF64x2);
+                              auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::RelaxedFmsVecF64x2);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -4946,14 +4946,14 @@ switch (op[0]) {
                         switch (op[15]) {
                           case 'a':
                             if (op == "f64x2.relaxed_max"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RelaxedMaxVecF64x2);
+                              auto ret = makeBinary(ctx, BinaryOp::RelaxedMaxVecF64x2);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'i':
                             if (op == "f64x2.relaxed_min"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RelaxedMinVecF64x2);
+                              auto ret = makeBinary(ctx, BinaryOp::RelaxedMinVecF64x2);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -4966,7 +4966,7 @@ switch (op[0]) {
                   }
                   case 'p':
                     if (op == "f64x2.replace_lane"sv) {
-                      auto ret = makeSIMDReplace(ctx, in, SIMDReplaceOp::ReplaceLaneVecF64x2, 2);
+                      auto ret = makeSIMDReplace(ctx, SIMDReplaceOp::ReplaceLaneVecF64x2, 2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -4978,21 +4978,21 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'p':
                     if (op == "f64x2.splat"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SplatVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::SplatVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'q':
                     if (op == "f64x2.sqrt"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SqrtVecF64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::SqrtVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "f64x2.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubVecF64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::SubVecF64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5002,7 +5002,7 @@ switch (op[0]) {
               }
               case 't':
                 if (op == "f64x2.trunc"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::TruncVecF64x2);
+                  auto ret = makeUnary(ctx, UnaryOp::TruncVecF64x2);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5020,14 +5020,14 @@ switch (op[0]) {
     switch (op[7]) {
       case 'g':
         if (op == "global.get"sv) {
-          auto ret = makeGlobalGet(ctx, in);
+          auto ret = makeGlobalGet(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 's':
         if (op == "global.set"sv) {
-          auto ret = makeGlobalSet(ctx, in);
+          auto ret = makeGlobalSet(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -5043,7 +5043,7 @@ switch (op[0]) {
             switch (op[7]) {
               case 'b':
                 if (op == "i16x8.abs"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::AbsVecI16x8);
+                  auto ret = makeUnary(ctx, UnaryOp::AbsVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5052,7 +5052,7 @@ switch (op[0]) {
                 switch (op[9]) {
                   case '\0':
                     if (op == "i16x8.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::AddVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5061,14 +5061,14 @@ switch (op[0]) {
                     switch (op[14]) {
                       case 's':
                         if (op == "i16x8.add_sat_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AddSatSVecI16x8);
+                          auto ret = makeBinary(ctx, BinaryOp::AddSatSVecI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i16x8.add_sat_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AddSatUVecI16x8);
+                          auto ret = makeBinary(ctx, BinaryOp::AddSatUVecI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5081,14 +5081,14 @@ switch (op[0]) {
               }
               case 'l':
                 if (op == "i16x8.all_true"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::AllTrueVecI16x8);
+                  auto ret = makeUnary(ctx, UnaryOp::AllTrueVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'v':
                 if (op == "i16x8.avgr_u"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::AvgrUVecI16x8);
+                  auto ret = makeBinary(ctx, BinaryOp::AvgrUVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5098,14 +5098,14 @@ switch (op[0]) {
           }
           case 'b':
             if (op == "i16x8.bitmask"sv) {
-              auto ret = makeUnary(ctx, in, UnaryOp::BitmaskVecI16x8);
+              auto ret = makeUnary(ctx, UnaryOp::BitmaskVecI16x8);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'd':
             if (op == "i16x8.dot_i8x16_i7x16_s"sv) {
-              auto ret = makeBinary(ctx, in, BinaryOp::DotI8x16I7x16SToVecI16x8);
+              auto ret = makeBinary(ctx, BinaryOp::DotI8x16I7x16SToVecI16x8);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -5114,7 +5114,7 @@ switch (op[0]) {
             switch (op[7]) {
               case 'q':
                 if (op == "i16x8.eq"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::EqVecI16x8);
+                  auto ret = makeBinary(ctx, BinaryOp::EqVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5125,14 +5125,14 @@ switch (op[0]) {
                     switch (op[28]) {
                       case 's':
                         if (op == "i16x8.extadd_pairwise_i8x16_s"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ExtAddPairwiseSVecI8x16ToI16x8);
+                          auto ret = makeUnary(ctx, UnaryOp::ExtAddPairwiseSVecI8x16ToI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i16x8.extadd_pairwise_i8x16_u"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8);
+                          auto ret = makeUnary(ctx, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5146,14 +5146,14 @@ switch (op[0]) {
                         switch (op[24]) {
                           case 's':
                             if (op == "i16x8.extend_high_i8x16_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendHighSVecI8x16ToVecI16x8);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendHighSVecI8x16ToVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i16x8.extend_high_i8x16_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendHighUVecI8x16ToVecI16x8);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendHighUVecI8x16ToVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5165,14 +5165,14 @@ switch (op[0]) {
                         switch (op[23]) {
                           case 's':
                             if (op == "i16x8.extend_low_i8x16_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendLowSVecI8x16ToVecI16x8);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendLowSVecI8x16ToVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i16x8.extend_low_i8x16_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendLowUVecI8x16ToVecI16x8);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendLowUVecI8x16ToVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5189,14 +5189,14 @@ switch (op[0]) {
                         switch (op[24]) {
                           case 's':
                             if (op == "i16x8.extmul_high_i8x16_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ExtMulHighSVecI16x8);
+                              auto ret = makeBinary(ctx, BinaryOp::ExtMulHighSVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i16x8.extmul_high_i8x16_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ExtMulHighUVecI16x8);
+                              auto ret = makeBinary(ctx, BinaryOp::ExtMulHighUVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5208,14 +5208,14 @@ switch (op[0]) {
                         switch (op[23]) {
                           case 's':
                             if (op == "i16x8.extmul_low_i8x16_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ExtMulLowSVecI16x8);
+                              auto ret = makeBinary(ctx, BinaryOp::ExtMulLowSVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i16x8.extmul_low_i8x16_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ExtMulLowUVecI16x8);
+                              auto ret = makeBinary(ctx, BinaryOp::ExtMulLowUVecI16x8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5230,14 +5230,14 @@ switch (op[0]) {
                     switch (op[19]) {
                       case 's':
                         if (op == "i16x8.extract_lane_s"sv) {
-                          auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneSVecI16x8, 8);
+                          auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneSVecI16x8, 8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i16x8.extract_lane_u"sv) {
-                          auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneUVecI16x8, 8);
+                          auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneUVecI16x8, 8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5257,14 +5257,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i16x8.ge_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeSVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::GeSVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.ge_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeUVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::GeUVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5276,14 +5276,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i16x8.gt_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtSVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::GtSVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.gt_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtUVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::GtUVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5298,7 +5298,7 @@ switch (op[0]) {
             switch (op[7]) {
               case 'a':
                 if (op == "i16x8.laneselect"sv) {
-                  auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::LaneselectI16x8);
+                  auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::LaneselectI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5307,14 +5307,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i16x8.le_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeSVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::LeSVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.le_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeUVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::LeUVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5326,14 +5326,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i16x8.lt_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtSVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::LtSVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.lt_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtUVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::LtUVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5350,14 +5350,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case 's':
                     if (op == "i16x8.max_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxSVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxSVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.max_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxUVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxUVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5369,14 +5369,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case 's':
                     if (op == "i16x8.min_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinSVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::MinSVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.min_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinUVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::MinUVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5386,7 +5386,7 @@ switch (op[0]) {
               }
               case 'u':
                 if (op == "i16x8.mul"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::MulVecI16x8);
+                  auto ret = makeBinary(ctx, BinaryOp::MulVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5400,14 +5400,14 @@ switch (op[0]) {
                 switch (op[19]) {
                   case 's':
                     if (op == "i16x8.narrow_i32x4_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NarrowSVecI32x4ToVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::NarrowSVecI32x4ToVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i16x8.narrow_i32x4_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NarrowUVecI32x4ToVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::NarrowUVecI32x4ToVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5419,14 +5419,14 @@ switch (op[0]) {
                 switch (op[8]) {
                   case '\0':
                     if (op == "i16x8.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::NeVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "i16x8.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegVecI16x8);
+                      auto ret = makeUnary(ctx, UnaryOp::NegVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5439,7 +5439,7 @@ switch (op[0]) {
           }
           case 'q':
             if (op == "i16x8.q15mulr_sat_s"sv) {
-              auto ret = makeBinary(ctx, in, BinaryOp::Q15MulrSatSVecI16x8);
+              auto ret = makeBinary(ctx, BinaryOp::Q15MulrSatSVecI16x8);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -5448,14 +5448,14 @@ switch (op[0]) {
             switch (op[8]) {
               case 'l':
                 if (op == "i16x8.relaxed_q15mulr_s"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::RelaxedQ15MulrSVecI16x8);
+                  auto ret = makeBinary(ctx, BinaryOp::RelaxedQ15MulrSVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'p':
                 if (op == "i16x8.replace_lane"sv) {
-                  auto ret = makeSIMDReplace(ctx, in, SIMDReplaceOp::ReplaceLaneVecI16x8, 8);
+                  auto ret = makeSIMDReplace(ctx, SIMDReplaceOp::ReplaceLaneVecI16x8, 8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5469,7 +5469,7 @@ switch (op[0]) {
                 switch (op[8]) {
                   case 'l':
                     if (op == "i16x8.shl"sv) {
-                      auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShlVecI16x8);
+                      auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShlVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5478,14 +5478,14 @@ switch (op[0]) {
                     switch (op[10]) {
                       case 's':
                         if (op == "i16x8.shr_s"sv) {
-                          auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrSVecI16x8);
+                          auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrSVecI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i16x8.shr_u"sv) {
-                          auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrUVecI16x8);
+                          auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrUVecI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5498,7 +5498,7 @@ switch (op[0]) {
               }
               case 'p':
                 if (op == "i16x8.splat"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::SplatVecI16x8);
+                  auto ret = makeUnary(ctx, UnaryOp::SplatVecI16x8);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5507,7 +5507,7 @@ switch (op[0]) {
                 switch (op[9]) {
                   case '\0':
                     if (op == "i16x8.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubVecI16x8);
+                      auto ret = makeBinary(ctx, BinaryOp::SubVecI16x8);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5516,14 +5516,14 @@ switch (op[0]) {
                     switch (op[14]) {
                       case 's':
                         if (op == "i16x8.sub_sat_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::SubSatSVecI16x8);
+                          auto ret = makeBinary(ctx, BinaryOp::SubSatSVecI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i16x8.sub_sat_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::SubSatUVecI16x8);
+                          auto ret = makeBinary(ctx, BinaryOp::SubSatUVecI16x8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5548,14 +5548,14 @@ switch (op[0]) {
                 switch (op[8]) {
                   case 's':
                     if (op == "i31.get_s"sv) {
-                      auto ret = makeI31Get(ctx, in, true);
+                      auto ret = makeI31Get(ctx, true);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i31.get_u"sv) {
-                      auto ret = makeI31Get(ctx, in, false);
+                      auto ret = makeI31Get(ctx, false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -5565,7 +5565,7 @@ switch (op[0]) {
               }
               case 'n':
                 if (op == "i31.new"sv) {
-                  auto ret = makeI31New(ctx, in);
+                  auto ret = makeI31New(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5581,14 +5581,14 @@ switch (op[0]) {
                     switch (op[5]) {
                       case 'd':
                         if (op == "i32.add"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AddInt32);
+                          auto ret = makeBinary(ctx, BinaryOp::AddInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'n':
                         if (op == "i32.and"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AndInt32);
+                          auto ret = makeBinary(ctx, BinaryOp::AndInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5599,21 +5599,21 @@ switch (op[0]) {
                             switch (op[15]) {
                               case '\0':
                                 if (op == "i32.atomic.load"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/true);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/true);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '1':
                                 if (op == "i32.atomic.load16_u"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/true);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/true);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '8':
                                 if (op == "i32.atomic.load8_u"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/true);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/true);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -5629,14 +5629,14 @@ switch (op[0]) {
                                     switch (op[16]) {
                                       case 'd':
                                         if (op == "i32.atomic.rmw.add"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
                                         goto parse_error;
                                       case 'n':
                                         if (op == "i32.atomic.rmw.and"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
@@ -5646,21 +5646,21 @@ switch (op[0]) {
                                   }
                                   case 'c':
                                     if (op == "i32.atomic.rmw.cmpxchg"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i32.atomic.rmw.or"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 's':
                                     if (op == "i32.atomic.rmw.sub"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -5669,14 +5669,14 @@ switch (op[0]) {
                                     switch (op[16]) {
                                       case 'c':
                                         if (op == "i32.atomic.rmw.xchg"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
                                         goto parse_error;
                                       case 'o':
                                         if (op == "i32.atomic.rmw.xor"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
@@ -5693,14 +5693,14 @@ switch (op[0]) {
                                     switch (op[18]) {
                                       case 'd':
                                         if (op == "i32.atomic.rmw16.add_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
                                         goto parse_error;
                                       case 'n':
                                         if (op == "i32.atomic.rmw16.and_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
@@ -5710,21 +5710,21 @@ switch (op[0]) {
                                   }
                                   case 'c':
                                     if (op == "i32.atomic.rmw16.cmpxchg_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i32.atomic.rmw16.or_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 's':
                                     if (op == "i32.atomic.rmw16.sub_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -5733,14 +5733,14 @@ switch (op[0]) {
                                     switch (op[18]) {
                                       case 'c':
                                         if (op == "i32.atomic.rmw16.xchg_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
                                         goto parse_error;
                                       case 'o':
                                         if (op == "i32.atomic.rmw16.xor_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
@@ -5757,14 +5757,14 @@ switch (op[0]) {
                                     switch (op[17]) {
                                       case 'd':
                                         if (op == "i32.atomic.rmw8.add_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
                                         goto parse_error;
                                       case 'n':
                                         if (op == "i32.atomic.rmw8.and_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
@@ -5774,21 +5774,21 @@ switch (op[0]) {
                                   }
                                   case 'c':
                                     if (op == "i32.atomic.rmw8.cmpxchg_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i32.atomic.rmw8.or_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 's':
                                     if (op == "i32.atomic.rmw8.sub_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -5797,14 +5797,14 @@ switch (op[0]) {
                                     switch (op[17]) {
                                       case 'c':
                                         if (op == "i32.atomic.rmw8.xchg_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
                                         goto parse_error;
                                       case 'o':
                                         if (op == "i32.atomic.rmw8.xor_u"sv) {
-                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i32);
+                                          auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i32);
                                           CHECK_ERR(ret);
                                           return *ret;
                                         }
@@ -5822,21 +5822,21 @@ switch (op[0]) {
                             switch (op[16]) {
                               case '\0':
                                 if (op == "i32.atomic.store"sv) {
-                                  auto ret = makeStore(ctx, in, Type::i32, /*isAtomic=*/true);
+                                  auto ret = makeStore(ctx, Type::i32, /*isAtomic=*/true);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '1':
                                 if (op == "i32.atomic.store16"sv) {
-                                  auto ret = makeStore(ctx, in, Type::i32, /*isAtomic=*/true);
+                                  auto ret = makeStore(ctx, Type::i32, /*isAtomic=*/true);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '8':
                                 if (op == "i32.atomic.store8"sv) {
-                                  auto ret = makeStore(ctx, in, Type::i32, /*isAtomic=*/true);
+                                  auto ret = makeStore(ctx, Type::i32, /*isAtomic=*/true);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -5854,21 +5854,21 @@ switch (op[0]) {
                     switch (op[5]) {
                       case 'l':
                         if (op == "i32.clz"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ClzInt32);
+                          auto ret = makeUnary(ctx, UnaryOp::ClzInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'o':
                         if (op == "i32.const"sv) {
-                          auto ret = makeConst(ctx, in, Type::i32);
+                          auto ret = makeConst(ctx, Type::i32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 't':
                         if (op == "i32.ctz"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::CtzInt32);
+                          auto ret = makeUnary(ctx, UnaryOp::CtzInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5880,14 +5880,14 @@ switch (op[0]) {
                     switch (op[8]) {
                       case 's':
                         if (op == "i32.div_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::DivSInt32);
+                          auto ret = makeBinary(ctx, BinaryOp::DivSInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i32.div_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::DivUInt32);
+                          auto ret = makeBinary(ctx, BinaryOp::DivUInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -5901,14 +5901,14 @@ switch (op[0]) {
                         switch (op[6]) {
                           case '\0':
                             if (op == "i32.eq"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::EqInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::EqInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'z':
                             if (op == "i32.eqz"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::EqZInt32);
+                              auto ret = makeUnary(ctx, UnaryOp::EqZInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5920,14 +5920,14 @@ switch (op[0]) {
                         switch (op[10]) {
                           case '1':
                             if (op == "i32.extend16_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendS16Int32);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendS16Int32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '8':
                             if (op == "i32.extend8_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendS8Int32);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendS8Int32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5944,14 +5944,14 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 's':
                             if (op == "i32.ge_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GeSInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::GeSInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32.ge_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GeUInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::GeUInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5963,14 +5963,14 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 's':
                             if (op == "i32.gt_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GtSInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::GtSInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32.gt_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GtUInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::GtUInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -5987,14 +5987,14 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 's':
                             if (op == "i32.le_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LeSInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::LeSInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32.le_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LeUInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::LeUInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6006,7 +6006,7 @@ switch (op[0]) {
                         switch (op[8]) {
                           case '\0':
                             if (op == "i32.load"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6015,14 +6015,14 @@ switch (op[0]) {
                             switch (op[11]) {
                               case 's':
                                 if (op == "i32.load16_s"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/false);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.load16_u"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/false);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6034,14 +6034,14 @@ switch (op[0]) {
                             switch (op[10]) {
                               case 's':
                                 if (op == "i32.load8_s"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/false);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.load8_u"sv) {
-                                  auto ret = makeLoad(ctx, in, Type::i32, /*isAtomic=*/false);
+                                  auto ret = makeLoad(ctx, Type::i32, /*isAtomic=*/false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6056,14 +6056,14 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 's':
                             if (op == "i32.lt_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LtSInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::LtSInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32.lt_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LtUInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::LtUInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6076,28 +6076,28 @@ switch (op[0]) {
                   }
                   case 'm':
                     if (op == "i32.mul"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MulInt32);
+                      auto ret = makeBinary(ctx, BinaryOp::MulInt32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'n':
                     if (op == "i32.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeInt32);
+                      auto ret = makeBinary(ctx, BinaryOp::NeInt32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'o':
                     if (op == "i32.or"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::OrInt32);
+                      auto ret = makeBinary(ctx, BinaryOp::OrInt32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'p':
                     if (op == "i32.popcnt"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::PopcntInt32);
+                      auto ret = makeUnary(ctx, UnaryOp::PopcntInt32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -6108,7 +6108,7 @@ switch (op[0]) {
                         switch (op[6]) {
                           case 'i':
                             if (op == "i32.reinterpret_f32"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ReinterpretFloat32);
+                              auto ret = makeUnary(ctx, UnaryOp::ReinterpretFloat32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6117,14 +6117,14 @@ switch (op[0]) {
                             switch (op[8]) {
                               case 's':
                                 if (op == "i32.rem_s"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::RemSInt32);
+                                  auto ret = makeBinary(ctx, BinaryOp::RemSInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.rem_u"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::RemUInt32);
+                                  auto ret = makeBinary(ctx, BinaryOp::RemUInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6139,14 +6139,14 @@ switch (op[0]) {
                         switch (op[7]) {
                           case 'l':
                             if (op == "i32.rotl"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RotLInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::RotLInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'r':
                             if (op == "i32.rotr"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RotRInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::RotRInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6163,7 +6163,7 @@ switch (op[0]) {
                         switch (op[6]) {
                           case 'l':
                             if (op == "i32.shl"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ShlInt32);
+                              auto ret = makeBinary(ctx, BinaryOp::ShlInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6172,14 +6172,14 @@ switch (op[0]) {
                             switch (op[8]) {
                               case 's':
                                 if (op == "i32.shr_s"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::ShrSInt32);
+                                  auto ret = makeBinary(ctx, BinaryOp::ShrSInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.shr_u"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::ShrUInt32);
+                                  auto ret = makeBinary(ctx, BinaryOp::ShrUInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6194,21 +6194,21 @@ switch (op[0]) {
                         switch (op[9]) {
                           case '\0':
                             if (op == "i32.store"sv) {
-                              auto ret = makeStore(ctx, in, Type::i32, /*isAtomic=*/false);
+                              auto ret = makeStore(ctx, Type::i32, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '1':
                             if (op == "i32.store16"sv) {
-                              auto ret = makeStore(ctx, in, Type::i32, /*isAtomic=*/false);
+                              auto ret = makeStore(ctx, Type::i32, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '8':
                             if (op == "i32.store8"sv) {
-                              auto ret = makeStore(ctx, in, Type::i32, /*isAtomic=*/false);
+                              auto ret = makeStore(ctx, Type::i32, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6218,7 +6218,7 @@ switch (op[0]) {
                       }
                       case 'u':
                         if (op == "i32.sub"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::SubInt32);
+                          auto ret = makeBinary(ctx, BinaryOp::SubInt32);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6234,14 +6234,14 @@ switch (op[0]) {
                             switch (op[14]) {
                               case 's':
                                 if (op == "i32.trunc_f32_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncSFloat32ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncSFloat32ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.trunc_f32_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncUFloat32ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncUFloat32ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6253,14 +6253,14 @@ switch (op[0]) {
                             switch (op[14]) {
                               case 's':
                                 if (op == "i32.trunc_f64_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncSFloat64ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncSFloat64ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.trunc_f64_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncUFloat64ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncUFloat64ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6277,14 +6277,14 @@ switch (op[0]) {
                             switch (op[18]) {
                               case 's':
                                 if (op == "i32.trunc_sat_f32_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncSatSFloat32ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncSatSFloat32ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.trunc_sat_f32_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncSatUFloat32ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncSatUFloat32ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6296,14 +6296,14 @@ switch (op[0]) {
                             switch (op[18]) {
                               case 's':
                                 if (op == "i32.trunc_sat_f64_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncSatSFloat64ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncSatSFloat64ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32.trunc_sat_f64_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::TruncSatUFloat64ToInt32);
+                                  auto ret = makeUnary(ctx, UnaryOp::TruncSatUFloat64ToInt32);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6319,14 +6319,14 @@ switch (op[0]) {
                   }
                   case 'w':
                     if (op == "i32.wrap_i64"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::WrapInt64);
+                      auto ret = makeUnary(ctx, UnaryOp::WrapInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'x':
                     if (op == "i32.xor"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::XorInt32);
+                      auto ret = makeBinary(ctx, BinaryOp::XorInt32);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -6340,21 +6340,21 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 'b':
                         if (op == "i32x4.abs"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::AbsVecI32x4);
+                          auto ret = makeUnary(ctx, UnaryOp::AbsVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'd':
                         if (op == "i32x4.add"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AddVecI32x4);
+                          auto ret = makeBinary(ctx, BinaryOp::AddVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'l':
                         if (op == "i32x4.all_true"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::AllTrueVecI32x4);
+                          auto ret = makeUnary(ctx, UnaryOp::AllTrueVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6364,7 +6364,7 @@ switch (op[0]) {
                   }
                   case 'b':
                     if (op == "i32x4.bitmask"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::BitmaskVecI32x4);
+                      auto ret = makeUnary(ctx, UnaryOp::BitmaskVecI32x4);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -6373,14 +6373,14 @@ switch (op[0]) {
                     switch (op[11]) {
                       case '1':
                         if (op == "i32x4.dot_i16x8_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::DotSVecI16x8ToVecI32x4);
+                          auto ret = makeBinary(ctx, BinaryOp::DotSVecI16x8ToVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
                         if (op == "i32x4.dot_i8x16_i7x16_add_s"sv) {
-                          auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4);
+                          auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::DotI8x16I7x16AddSToVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6392,7 +6392,7 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 'q':
                         if (op == "i32x4.eq"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::EqVecI32x4);
+                          auto ret = makeBinary(ctx, BinaryOp::EqVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6403,14 +6403,14 @@ switch (op[0]) {
                             switch (op[28]) {
                               case 's':
                                 if (op == "i32x4.extadd_pairwise_i16x8_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4);
+                                  auto ret = makeUnary(ctx, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32x4.extadd_pairwise_i16x8_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::ExtAddPairwiseUVecI16x8ToI32x4);
+                                  auto ret = makeUnary(ctx, UnaryOp::ExtAddPairwiseUVecI16x8ToI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6424,14 +6424,14 @@ switch (op[0]) {
                                 switch (op[24]) {
                                   case 's':
                                     if (op == "i32x4.extend_high_i16x8_s"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ExtendHighSVecI16x8ToVecI32x4);
+                                      auto ret = makeUnary(ctx, UnaryOp::ExtendHighSVecI16x8ToVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "i32x4.extend_high_i16x8_u"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ExtendHighUVecI16x8ToVecI32x4);
+                                      auto ret = makeUnary(ctx, UnaryOp::ExtendHighUVecI16x8ToVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6443,14 +6443,14 @@ switch (op[0]) {
                                 switch (op[23]) {
                                   case 's':
                                     if (op == "i32x4.extend_low_i16x8_s"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ExtendLowSVecI16x8ToVecI32x4);
+                                      auto ret = makeUnary(ctx, UnaryOp::ExtendLowSVecI16x8ToVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "i32x4.extend_low_i16x8_u"sv) {
-                                      auto ret = makeUnary(ctx, in, UnaryOp::ExtendLowUVecI16x8ToVecI32x4);
+                                      auto ret = makeUnary(ctx, UnaryOp::ExtendLowUVecI16x8ToVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6467,14 +6467,14 @@ switch (op[0]) {
                                 switch (op[24]) {
                                   case 's':
                                     if (op == "i32x4.extmul_high_i16x8_s"sv) {
-                                      auto ret = makeBinary(ctx, in, BinaryOp::ExtMulHighSVecI32x4);
+                                      auto ret = makeBinary(ctx, BinaryOp::ExtMulHighSVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "i32x4.extmul_high_i16x8_u"sv) {
-                                      auto ret = makeBinary(ctx, in, BinaryOp::ExtMulHighUVecI32x4);
+                                      auto ret = makeBinary(ctx, BinaryOp::ExtMulHighUVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6486,14 +6486,14 @@ switch (op[0]) {
                                 switch (op[23]) {
                                   case 's':
                                     if (op == "i32x4.extmul_low_i16x8_s"sv) {
-                                      auto ret = makeBinary(ctx, in, BinaryOp::ExtMulLowSVecI32x4);
+                                      auto ret = makeBinary(ctx, BinaryOp::ExtMulLowSVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'u':
                                     if (op == "i32x4.extmul_low_i16x8_u"sv) {
-                                      auto ret = makeBinary(ctx, in, BinaryOp::ExtMulLowUVecI32x4);
+                                      auto ret = makeBinary(ctx, BinaryOp::ExtMulLowUVecI32x4);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6506,7 +6506,7 @@ switch (op[0]) {
                           }
                           case 'r':
                             if (op == "i32x4.extract_lane"sv) {
-                              auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneVecI32x4, 4);
+                              auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneVecI32x4, 4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6523,14 +6523,14 @@ switch (op[0]) {
                         switch (op[9]) {
                           case 's':
                             if (op == "i32x4.ge_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GeSVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::GeSVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.ge_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GeUVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::GeUVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6542,14 +6542,14 @@ switch (op[0]) {
                         switch (op[9]) {
                           case 's':
                             if (op == "i32x4.gt_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GtSVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::GtSVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.gt_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::GtUVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::GtUVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6564,7 +6564,7 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 'a':
                         if (op == "i32x4.laneselect"sv) {
-                          auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::LaneselectI32x4);
+                          auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::LaneselectI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6573,14 +6573,14 @@ switch (op[0]) {
                         switch (op[9]) {
                           case 's':
                             if (op == "i32x4.le_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LeSVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::LeSVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.le_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LeUVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::LeUVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6592,14 +6592,14 @@ switch (op[0]) {
                         switch (op[9]) {
                           case 's':
                             if (op == "i32x4.lt_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LtSVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::LtSVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.lt_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::LtUVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::LtUVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6616,14 +6616,14 @@ switch (op[0]) {
                         switch (op[10]) {
                           case 's':
                             if (op == "i32x4.max_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::MaxSVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::MaxSVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.max_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::MaxUVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::MaxUVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6635,14 +6635,14 @@ switch (op[0]) {
                         switch (op[10]) {
                           case 's':
                             if (op == "i32x4.min_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::MinSVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::MinSVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.min_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::MinUVecI32x4);
+                              auto ret = makeBinary(ctx, BinaryOp::MinUVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6652,7 +6652,7 @@ switch (op[0]) {
                       }
                       case 'u':
                         if (op == "i32x4.mul"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::MulVecI32x4);
+                          auto ret = makeBinary(ctx, BinaryOp::MulVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6664,14 +6664,14 @@ switch (op[0]) {
                     switch (op[8]) {
                       case '\0':
                         if (op == "i32x4.ne"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::NeVecI32x4);
+                          auto ret = makeBinary(ctx, BinaryOp::NeVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'g':
                         if (op == "i32x4.neg"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::NegVecI32x4);
+                          auto ret = makeUnary(ctx, UnaryOp::NegVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6687,14 +6687,14 @@ switch (op[0]) {
                             switch (op[26]) {
                               case 's':
                                 if (op == "i32x4.relaxed_trunc_f32x4_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::RelaxedTruncSVecF32x4ToVecI32x4);
+                                  auto ret = makeUnary(ctx, UnaryOp::RelaxedTruncSVecF32x4ToVecI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32x4.relaxed_trunc_f32x4_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4);
+                                  auto ret = makeUnary(ctx, UnaryOp::RelaxedTruncUVecF32x4ToVecI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6706,14 +6706,14 @@ switch (op[0]) {
                             switch (op[26]) {
                               case 's':
                                 if (op == "i32x4.relaxed_trunc_f64x2_s_zero"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4);
+                                  auto ret = makeUnary(ctx, UnaryOp::RelaxedTruncZeroSVecF64x2ToVecI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32x4.relaxed_trunc_f64x2_u_zero"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::RelaxedTruncZeroUVecF64x2ToVecI32x4);
+                                  auto ret = makeUnary(ctx, UnaryOp::RelaxedTruncZeroUVecF64x2ToVecI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6726,7 +6726,7 @@ switch (op[0]) {
                       }
                       case 'p':
                         if (op == "i32x4.replace_lane"sv) {
-                          auto ret = makeSIMDReplace(ctx, in, SIMDReplaceOp::ReplaceLaneVecI32x4, 4);
+                          auto ret = makeSIMDReplace(ctx, SIMDReplaceOp::ReplaceLaneVecI32x4, 4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6740,7 +6740,7 @@ switch (op[0]) {
                         switch (op[8]) {
                           case 'l':
                             if (op == "i32x4.shl"sv) {
-                              auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShlVecI32x4);
+                              auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShlVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6749,14 +6749,14 @@ switch (op[0]) {
                             switch (op[10]) {
                               case 's':
                                 if (op == "i32x4.shr_s"sv) {
-                                  auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrSVecI32x4);
+                                  auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrSVecI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i32x4.shr_u"sv) {
-                                  auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrUVecI32x4);
+                                  auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrUVecI32x4);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6769,14 +6769,14 @@ switch (op[0]) {
                       }
                       case 'p':
                         if (op == "i32x4.splat"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::SplatVecI32x4);
+                          auto ret = makeUnary(ctx, UnaryOp::SplatVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i32x4.sub"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::SubVecI32x4);
+                          auto ret = makeBinary(ctx, BinaryOp::SubVecI32x4);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -6790,14 +6790,14 @@ switch (op[0]) {
                         switch (op[22]) {
                           case 's':
                             if (op == "i32x4.trunc_sat_f32x4_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatSVecF32x4ToVecI32x4);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatSVecF32x4ToVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.trunc_sat_f32x4_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatUVecF32x4ToVecI32x4);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatUVecF32x4ToVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6809,14 +6809,14 @@ switch (op[0]) {
                         switch (op[22]) {
                           case 's':
                             if (op == "i32x4.trunc_sat_f64x2_s_zero"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatZeroSVecF64x2ToVecI32x4);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatZeroSVecF64x2ToVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i32x4.trunc_sat_f64x2_u_zero"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatZeroUVecF64x2ToVecI32x4);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatZeroUVecF64x2ToVecI32x4);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6844,14 +6844,14 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'd':
                     if (op == "i64.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddInt64);
+                      auto ret = makeBinary(ctx, BinaryOp::AddInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'n':
                     if (op == "i64.and"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AndInt64);
+                      auto ret = makeBinary(ctx, BinaryOp::AndInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -6862,28 +6862,28 @@ switch (op[0]) {
                         switch (op[15]) {
                           case '\0':
                             if (op == "i64.atomic.load"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '1':
                             if (op == "i64.atomic.load16_u"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '3':
                             if (op == "i64.atomic.load32_u"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '8':
                             if (op == "i64.atomic.load8_u"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -6899,14 +6899,14 @@ switch (op[0]) {
                                 switch (op[16]) {
                                   case 'd':
                                     if (op == "i64.atomic.rmw.add"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'n':
                                     if (op == "i64.atomic.rmw.and"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6916,21 +6916,21 @@ switch (op[0]) {
                               }
                               case 'c':
                                 if (op == "i64.atomic.rmw.cmpxchg"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'o':
                                 if (op == "i64.atomic.rmw.or"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 's':
                                 if (op == "i64.atomic.rmw.sub"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -6939,14 +6939,14 @@ switch (op[0]) {
                                 switch (op[16]) {
                                   case 'c':
                                     if (op == "i64.atomic.rmw.xchg"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i64.atomic.rmw.xor"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6963,14 +6963,14 @@ switch (op[0]) {
                                 switch (op[18]) {
                                   case 'd':
                                     if (op == "i64.atomic.rmw16.add_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'n':
                                     if (op == "i64.atomic.rmw16.and_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -6980,21 +6980,21 @@ switch (op[0]) {
                               }
                               case 'c':
                                 if (op == "i64.atomic.rmw16.cmpxchg_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'o':
                                 if (op == "i64.atomic.rmw16.or_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 's':
                                 if (op == "i64.atomic.rmw16.sub_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7003,14 +7003,14 @@ switch (op[0]) {
                                 switch (op[18]) {
                                   case 'c':
                                     if (op == "i64.atomic.rmw16.xchg_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i64.atomic.rmw16.xor_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -7027,14 +7027,14 @@ switch (op[0]) {
                                 switch (op[18]) {
                                   case 'd':
                                     if (op == "i64.atomic.rmw32.add_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'n':
                                     if (op == "i64.atomic.rmw32.and_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -7044,21 +7044,21 @@ switch (op[0]) {
                               }
                               case 'c':
                                 if (op == "i64.atomic.rmw32.cmpxchg_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'o':
                                 if (op == "i64.atomic.rmw32.or_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 's':
                                 if (op == "i64.atomic.rmw32.sub_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7067,14 +7067,14 @@ switch (op[0]) {
                                 switch (op[18]) {
                                   case 'c':
                                     if (op == "i64.atomic.rmw32.xchg_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i64.atomic.rmw32.xor_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -7091,14 +7091,14 @@ switch (op[0]) {
                                 switch (op[17]) {
                                   case 'd':
                                     if (op == "i64.atomic.rmw8.add_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'n':
                                     if (op == "i64.atomic.rmw8.and_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -7108,21 +7108,21 @@ switch (op[0]) {
                               }
                               case 'c':
                                 if (op == "i64.atomic.rmw8.cmpxchg_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'o':
                                 if (op == "i64.atomic.rmw8.or_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 's':
                                 if (op == "i64.atomic.rmw8.sub_u"sv) {
-                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                  auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7131,14 +7131,14 @@ switch (op[0]) {
                                 switch (op[17]) {
                                   case 'c':
                                     if (op == "i64.atomic.rmw8.xchg_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
                                     goto parse_error;
                                   case 'o':
                                     if (op == "i64.atomic.rmw8.xor_u"sv) {
-                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, in, Type::i64);
+                                      auto ret = makeAtomicRMWOrCmpxchg(ctx, Type::i64);
                                       CHECK_ERR(ret);
                                       return *ret;
                                     }
@@ -7156,28 +7156,28 @@ switch (op[0]) {
                         switch (op[16]) {
                           case '\0':
                             if (op == "i64.atomic.store"sv) {
-                              auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '1':
                             if (op == "i64.atomic.store16"sv) {
-                              auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '3':
                             if (op == "i64.atomic.store32"sv) {
-                              auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '8':
                             if (op == "i64.atomic.store8"sv) {
-                              auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/true);
+                              auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7195,21 +7195,21 @@ switch (op[0]) {
                 switch (op[5]) {
                   case 'l':
                     if (op == "i64.clz"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::ClzInt64);
+                      auto ret = makeUnary(ctx, UnaryOp::ClzInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'o':
                     if (op == "i64.const"sv) {
-                      auto ret = makeConst(ctx, in, Type::i64);
+                      auto ret = makeConst(ctx, Type::i64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "i64.ctz"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::CtzInt64);
+                      auto ret = makeUnary(ctx, UnaryOp::CtzInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7221,14 +7221,14 @@ switch (op[0]) {
                 switch (op[8]) {
                   case 's':
                     if (op == "i64.div_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::DivSInt64);
+                      auto ret = makeBinary(ctx, BinaryOp::DivSInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i64.div_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::DivUInt64);
+                      auto ret = makeBinary(ctx, BinaryOp::DivUInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7242,14 +7242,14 @@ switch (op[0]) {
                     switch (op[6]) {
                       case '\0':
                         if (op == "i64.eq"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::EqInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::EqInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'z':
                         if (op == "i64.eqz"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::EqZInt64);
+                          auto ret = makeUnary(ctx, UnaryOp::EqZInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7261,21 +7261,21 @@ switch (op[0]) {
                     switch (op[10]) {
                       case '1':
                         if (op == "i64.extend16_s"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ExtendS16Int64);
+                          auto ret = makeUnary(ctx, UnaryOp::ExtendS16Int64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '3':
                         if (op == "i64.extend32_s"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ExtendS32Int64);
+                          auto ret = makeUnary(ctx, UnaryOp::ExtendS32Int64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
                         if (op == "i64.extend8_s"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ExtendS8Int64);
+                          auto ret = makeUnary(ctx, UnaryOp::ExtendS8Int64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7284,14 +7284,14 @@ switch (op[0]) {
                         switch (op[15]) {
                           case 's':
                             if (op == "i64.extend_i32_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendSInt32);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendSInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.extend_i32_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::ExtendUInt32);
+                              auto ret = makeUnary(ctx, UnaryOp::ExtendUInt32);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7311,14 +7311,14 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 's':
                         if (op == "i64.ge_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::GeSInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::GeSInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i64.ge_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::GeUInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::GeUInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7330,14 +7330,14 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 's':
                         if (op == "i64.gt_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::GtSInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::GtSInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i64.gt_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::GtUInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::GtUInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7354,14 +7354,14 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 's':
                         if (op == "i64.le_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::LeSInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::LeSInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i64.le_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::LeUInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::LeUInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7373,7 +7373,7 @@ switch (op[0]) {
                     switch (op[8]) {
                       case '\0':
                         if (op == "i64.load"sv) {
-                          auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                          auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7382,14 +7382,14 @@ switch (op[0]) {
                         switch (op[11]) {
                           case 's':
                             if (op == "i64.load16_s"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.load16_u"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7401,14 +7401,14 @@ switch (op[0]) {
                         switch (op[11]) {
                           case 's':
                             if (op == "i64.load32_s"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.load32_u"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7420,14 +7420,14 @@ switch (op[0]) {
                         switch (op[10]) {
                           case 's':
                             if (op == "i64.load8_s"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.load8_u"sv) {
-                              auto ret = makeLoad(ctx, in, Type::i64, /*isAtomic=*/false);
+                              auto ret = makeLoad(ctx, Type::i64, /*isAtomic=*/false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7442,14 +7442,14 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 's':
                         if (op == "i64.lt_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::LtSInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::LtSInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i64.lt_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::LtUInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::LtUInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7462,28 +7462,28 @@ switch (op[0]) {
               }
               case 'm':
                 if (op == "i64.mul"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::MulInt64);
+                  auto ret = makeBinary(ctx, BinaryOp::MulInt64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'n':
                 if (op == "i64.ne"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::NeInt64);
+                  auto ret = makeBinary(ctx, BinaryOp::NeInt64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'o':
                 if (op == "i64.or"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::OrInt64);
+                  auto ret = makeBinary(ctx, BinaryOp::OrInt64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'p':
                 if (op == "i64.popcnt"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::PopcntInt64);
+                  auto ret = makeUnary(ctx, UnaryOp::PopcntInt64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -7494,7 +7494,7 @@ switch (op[0]) {
                     switch (op[6]) {
                       case 'i':
                         if (op == "i64.reinterpret_f64"sv) {
-                          auto ret = makeUnary(ctx, in, UnaryOp::ReinterpretFloat64);
+                          auto ret = makeUnary(ctx, UnaryOp::ReinterpretFloat64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7503,14 +7503,14 @@ switch (op[0]) {
                         switch (op[8]) {
                           case 's':
                             if (op == "i64.rem_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RemSInt64);
+                              auto ret = makeBinary(ctx, BinaryOp::RemSInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.rem_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::RemUInt64);
+                              auto ret = makeBinary(ctx, BinaryOp::RemUInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7525,14 +7525,14 @@ switch (op[0]) {
                     switch (op[7]) {
                       case 'l':
                         if (op == "i64.rotl"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::RotLInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::RotLInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'r':
                         if (op == "i64.rotr"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::RotRInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::RotRInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7549,7 +7549,7 @@ switch (op[0]) {
                     switch (op[6]) {
                       case 'l':
                         if (op == "i64.shl"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::ShlInt64);
+                          auto ret = makeBinary(ctx, BinaryOp::ShlInt64);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7558,14 +7558,14 @@ switch (op[0]) {
                         switch (op[8]) {
                           case 's':
                             if (op == "i64.shr_s"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ShrSInt64);
+                              auto ret = makeBinary(ctx, BinaryOp::ShrSInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.shr_u"sv) {
-                              auto ret = makeBinary(ctx, in, BinaryOp::ShrUInt64);
+                              auto ret = makeBinary(ctx, BinaryOp::ShrUInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7580,28 +7580,28 @@ switch (op[0]) {
                     switch (op[9]) {
                       case '\0':
                         if (op == "i64.store"sv) {
-                          auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/false);
+                          auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/false);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '1':
                         if (op == "i64.store16"sv) {
-                          auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/false);
+                          auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/false);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '3':
                         if (op == "i64.store32"sv) {
-                          auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/false);
+                          auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/false);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
                         if (op == "i64.store8"sv) {
-                          auto ret = makeStore(ctx, in, Type::i64, /*isAtomic=*/false);
+                          auto ret = makeStore(ctx, Type::i64, /*isAtomic=*/false);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7611,7 +7611,7 @@ switch (op[0]) {
                   }
                   case 'u':
                     if (op == "i64.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubInt64);
+                      auto ret = makeBinary(ctx, BinaryOp::SubInt64);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7627,14 +7627,14 @@ switch (op[0]) {
                         switch (op[14]) {
                           case 's':
                             if (op == "i64.trunc_f32_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSFloat32ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSFloat32ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.trunc_f32_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncUFloat32ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncUFloat32ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7646,14 +7646,14 @@ switch (op[0]) {
                         switch (op[14]) {
                           case 's':
                             if (op == "i64.trunc_f64_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSFloat64ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSFloat64ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.trunc_f64_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncUFloat64ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncUFloat64ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7670,14 +7670,14 @@ switch (op[0]) {
                         switch (op[18]) {
                           case 's':
                             if (op == "i64.trunc_sat_f32_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatSFloat32ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatSFloat32ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.trunc_sat_f32_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatUFloat32ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatUFloat32ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7689,14 +7689,14 @@ switch (op[0]) {
                         switch (op[18]) {
                           case 's':
                             if (op == "i64.trunc_sat_f64_s"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatSFloat64ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatSFloat64ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64.trunc_sat_f64_u"sv) {
-                              auto ret = makeUnary(ctx, in, UnaryOp::TruncSatUFloat64ToInt64);
+                              auto ret = makeUnary(ctx, UnaryOp::TruncSatUFloat64ToInt64);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7712,7 +7712,7 @@ switch (op[0]) {
               }
               case 'x':
                 if (op == "i64.xor"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::XorInt64);
+                  auto ret = makeBinary(ctx, BinaryOp::XorInt64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -7726,21 +7726,21 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'b':
                     if (op == "i64x2.abs"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::AbsVecI64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::AbsVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'd':
                     if (op == "i64x2.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::AddVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'l':
                     if (op == "i64x2.all_true"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::AllTrueVecI64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::AllTrueVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7750,7 +7750,7 @@ switch (op[0]) {
               }
               case 'b':
                 if (op == "i64x2.bitmask"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::BitmaskVecI64x2);
+                  auto ret = makeUnary(ctx, UnaryOp::BitmaskVecI64x2);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -7759,7 +7759,7 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'q':
                     if (op == "i64x2.eq"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::EqVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::EqVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7772,14 +7772,14 @@ switch (op[0]) {
                             switch (op[24]) {
                               case 's':
                                 if (op == "i64x2.extend_high_i32x4_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::ExtendHighSVecI32x4ToVecI64x2);
+                                  auto ret = makeUnary(ctx, UnaryOp::ExtendHighSVecI32x4ToVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i64x2.extend_high_i32x4_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::ExtendHighUVecI32x4ToVecI64x2);
+                                  auto ret = makeUnary(ctx, UnaryOp::ExtendHighUVecI32x4ToVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7791,14 +7791,14 @@ switch (op[0]) {
                             switch (op[23]) {
                               case 's':
                                 if (op == "i64x2.extend_low_i32x4_s"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::ExtendLowSVecI32x4ToVecI64x2);
+                                  auto ret = makeUnary(ctx, UnaryOp::ExtendLowSVecI32x4ToVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i64x2.extend_low_i32x4_u"sv) {
-                                  auto ret = makeUnary(ctx, in, UnaryOp::ExtendLowUVecI32x4ToVecI64x2);
+                                  auto ret = makeUnary(ctx, UnaryOp::ExtendLowUVecI32x4ToVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7815,14 +7815,14 @@ switch (op[0]) {
                             switch (op[24]) {
                               case 's':
                                 if (op == "i64x2.extmul_high_i32x4_s"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::ExtMulHighSVecI64x2);
+                                  auto ret = makeBinary(ctx, BinaryOp::ExtMulHighSVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i64x2.extmul_high_i32x4_u"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::ExtMulHighUVecI64x2);
+                                  auto ret = makeBinary(ctx, BinaryOp::ExtMulHighUVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7834,14 +7834,14 @@ switch (op[0]) {
                             switch (op[23]) {
                               case 's':
                                 if (op == "i64x2.extmul_low_i32x4_s"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::ExtMulLowSVecI64x2);
+                                  auto ret = makeBinary(ctx, BinaryOp::ExtMulLowSVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case 'u':
                                 if (op == "i64x2.extmul_low_i32x4_u"sv) {
-                                  auto ret = makeBinary(ctx, in, BinaryOp::ExtMulLowUVecI64x2);
+                                  auto ret = makeBinary(ctx, BinaryOp::ExtMulLowUVecI64x2);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -7854,7 +7854,7 @@ switch (op[0]) {
                       }
                       case 'r':
                         if (op == "i64x2.extract_lane"sv) {
-                          auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneVecI64x2, 2);
+                          auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneVecI64x2, 2);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7869,14 +7869,14 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'e':
                     if (op == "i64x2.ge_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeSVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::GeSVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "i64x2.gt_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtSVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::GtSVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7888,21 +7888,21 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 'a':
                     if (op == "i64x2.laneselect"sv) {
-                      auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::LaneselectI64x2);
+                      auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::LaneselectI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'e':
                     if (op == "i64x2.le_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeSVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::LeSVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 't':
                     if (op == "i64x2.lt_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtSVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::LtSVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7912,7 +7912,7 @@ switch (op[0]) {
               }
               case 'm':
                 if (op == "i64x2.mul"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::MulVecI64x2);
+                  auto ret = makeBinary(ctx, BinaryOp::MulVecI64x2);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -7921,14 +7921,14 @@ switch (op[0]) {
                 switch (op[8]) {
                   case '\0':
                     if (op == "i64x2.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::NeVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "i64x2.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegVecI64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::NegVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -7938,7 +7938,7 @@ switch (op[0]) {
               }
               case 'r':
                 if (op == "i64x2.replace_lane"sv) {
-                  auto ret = makeSIMDReplace(ctx, in, SIMDReplaceOp::ReplaceLaneVecI64x2, 2);
+                  auto ret = makeSIMDReplace(ctx, SIMDReplaceOp::ReplaceLaneVecI64x2, 2);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -7949,7 +7949,7 @@ switch (op[0]) {
                     switch (op[8]) {
                       case 'l':
                         if (op == "i64x2.shl"sv) {
-                          auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShlVecI64x2);
+                          auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShlVecI64x2);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -7958,14 +7958,14 @@ switch (op[0]) {
                         switch (op[10]) {
                           case 's':
                             if (op == "i64x2.shr_s"sv) {
-                              auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrSVecI64x2);
+                              auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrSVecI64x2);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'u':
                             if (op == "i64x2.shr_u"sv) {
-                              auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrUVecI64x2);
+                              auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrUVecI64x2);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -7978,14 +7978,14 @@ switch (op[0]) {
                   }
                   case 'p':
                     if (op == "i64x2.splat"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::SplatVecI64x2);
+                      auto ret = makeUnary(ctx, UnaryOp::SplatVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i64x2.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubVecI64x2);
+                      auto ret = makeBinary(ctx, BinaryOp::SubVecI64x2);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8005,7 +8005,7 @@ switch (op[0]) {
             switch (op[7]) {
               case 'b':
                 if (op == "i8x16.abs"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::AbsVecI8x16);
+                  auto ret = makeUnary(ctx, UnaryOp::AbsVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8014,7 +8014,7 @@ switch (op[0]) {
                 switch (op[9]) {
                   case '\0':
                     if (op == "i8x16.add"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::AddVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::AddVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8023,14 +8023,14 @@ switch (op[0]) {
                     switch (op[14]) {
                       case 's':
                         if (op == "i8x16.add_sat_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AddSatSVecI8x16);
+                          auto ret = makeBinary(ctx, BinaryOp::AddSatSVecI8x16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i8x16.add_sat_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::AddSatUVecI8x16);
+                          auto ret = makeBinary(ctx, BinaryOp::AddSatUVecI8x16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8043,14 +8043,14 @@ switch (op[0]) {
               }
               case 'l':
                 if (op == "i8x16.all_true"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::AllTrueVecI8x16);
+                  auto ret = makeUnary(ctx, UnaryOp::AllTrueVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'v':
                 if (op == "i8x16.avgr_u"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::AvgrUVecI8x16);
+                  auto ret = makeBinary(ctx, BinaryOp::AvgrUVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8060,7 +8060,7 @@ switch (op[0]) {
           }
           case 'b':
             if (op == "i8x16.bitmask"sv) {
-              auto ret = makeUnary(ctx, in, UnaryOp::BitmaskVecI8x16);
+              auto ret = makeUnary(ctx, UnaryOp::BitmaskVecI8x16);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8069,7 +8069,7 @@ switch (op[0]) {
             switch (op[7]) {
               case 'q':
                 if (op == "i8x16.eq"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::EqVecI8x16);
+                  auto ret = makeBinary(ctx, BinaryOp::EqVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8078,14 +8078,14 @@ switch (op[0]) {
                 switch (op[19]) {
                   case 's':
                     if (op == "i8x16.extract_lane_s"sv) {
-                      auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneSVecI8x16, 16);
+                      auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneSVecI8x16, 16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.extract_lane_u"sv) {
-                      auto ret = makeSIMDExtract(ctx, in, SIMDExtractOp::ExtractLaneUVecI8x16, 16);
+                      auto ret = makeSIMDExtract(ctx, SIMDExtractOp::ExtractLaneUVecI8x16, 16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8102,14 +8102,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i8x16.ge_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeSVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::GeSVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.ge_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GeUVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::GeUVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8121,14 +8121,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i8x16.gt_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtSVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::GtSVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.gt_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::GtUVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::GtUVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8143,7 +8143,7 @@ switch (op[0]) {
             switch (op[7]) {
               case 'a':
                 if (op == "i8x16.laneselect"sv) {
-                  auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::LaneselectI8x16);
+                  auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::LaneselectI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8152,14 +8152,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i8x16.le_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeSVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::LeSVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.le_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LeUVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::LeUVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8171,14 +8171,14 @@ switch (op[0]) {
                 switch (op[9]) {
                   case 's':
                     if (op == "i8x16.lt_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtSVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::LtSVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.lt_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::LtUVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::LtUVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8195,14 +8195,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case 's':
                     if (op == "i8x16.max_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxSVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxSVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.max_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MaxUVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::MaxUVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8214,14 +8214,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case 's':
                     if (op == "i8x16.min_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinSVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::MinSVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.min_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::MinUVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::MinUVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8238,14 +8238,14 @@ switch (op[0]) {
                 switch (op[19]) {
                   case 's':
                     if (op == "i8x16.narrow_i16x8_s"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NarrowSVecI16x8ToVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::NarrowSVecI16x8ToVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "i8x16.narrow_i16x8_u"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NarrowUVecI16x8ToVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::NarrowUVecI16x8ToVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8257,14 +8257,14 @@ switch (op[0]) {
                 switch (op[8]) {
                   case '\0':
                     if (op == "i8x16.ne"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::NeVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::NeVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'g':
                     if (op == "i8x16.neg"sv) {
-                      auto ret = makeUnary(ctx, in, UnaryOp::NegVecI8x16);
+                      auto ret = makeUnary(ctx, UnaryOp::NegVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8277,7 +8277,7 @@ switch (op[0]) {
           }
           case 'p':
             if (op == "i8x16.popcnt"sv) {
-              auto ret = makeUnary(ctx, in, UnaryOp::PopcntVecI8x16);
+              auto ret = makeUnary(ctx, UnaryOp::PopcntVecI8x16);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8286,14 +8286,14 @@ switch (op[0]) {
             switch (op[8]) {
               case 'l':
                 if (op == "i8x16.relaxed_swizzle"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::RelaxedSwizzleVecI8x16);
+                  auto ret = makeBinary(ctx, BinaryOp::RelaxedSwizzleVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'p':
                 if (op == "i8x16.replace_lane"sv) {
-                  auto ret = makeSIMDReplace(ctx, in, SIMDReplaceOp::ReplaceLaneVecI8x16, 16);
+                  auto ret = makeSIMDReplace(ctx, SIMDReplaceOp::ReplaceLaneVecI8x16, 16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8307,7 +8307,7 @@ switch (op[0]) {
                 switch (op[8]) {
                   case 'l':
                     if (op == "i8x16.shl"sv) {
-                      auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShlVecI8x16);
+                      auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShlVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8316,14 +8316,14 @@ switch (op[0]) {
                     switch (op[10]) {
                       case 's':
                         if (op == "i8x16.shr_s"sv) {
-                          auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrSVecI8x16);
+                          auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrSVecI8x16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i8x16.shr_u"sv) {
-                          auto ret = makeSIMDShift(ctx, in, SIMDShiftOp::ShrUVecI8x16);
+                          auto ret = makeSIMDShift(ctx, SIMDShiftOp::ShrUVecI8x16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8333,7 +8333,7 @@ switch (op[0]) {
                   }
                   case 'u':
                     if (op == "i8x16.shuffle"sv) {
-                      auto ret = makeSIMDShuffle(ctx, in);
+                      auto ret = makeSIMDShuffle(ctx);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8343,7 +8343,7 @@ switch (op[0]) {
               }
               case 'p':
                 if (op == "i8x16.splat"sv) {
-                  auto ret = makeUnary(ctx, in, UnaryOp::SplatVecI8x16);
+                  auto ret = makeUnary(ctx, UnaryOp::SplatVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8352,7 +8352,7 @@ switch (op[0]) {
                 switch (op[9]) {
                   case '\0':
                     if (op == "i8x16.sub"sv) {
-                      auto ret = makeBinary(ctx, in, BinaryOp::SubVecI8x16);
+                      auto ret = makeBinary(ctx, BinaryOp::SubVecI8x16);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8361,14 +8361,14 @@ switch (op[0]) {
                     switch (op[14]) {
                       case 's':
                         if (op == "i8x16.sub_sat_s"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::SubSatSVecI8x16);
+                          auto ret = makeBinary(ctx, BinaryOp::SubSatSVecI8x16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "i8x16.sub_sat_u"sv) {
-                          auto ret = makeBinary(ctx, in, BinaryOp::SubSatUVecI8x16);
+                          auto ret = makeBinary(ctx, BinaryOp::SubSatUVecI8x16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8381,7 +8381,7 @@ switch (op[0]) {
               }
               case 'w':
                 if (op == "i8x16.swizzle"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::SwizzleVecI8x16);
+                  auto ret = makeBinary(ctx, BinaryOp::SwizzleVecI8x16);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8394,7 +8394,7 @@ switch (op[0]) {
       }
       case 'f':
         if (op == "if"sv) {
-          auto ret = makeIf(ctx, in);
+          auto ret = makeIf(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -8408,21 +8408,21 @@ switch (op[0]) {
         switch (op[6]) {
           case 'g':
             if (op == "local.get"sv) {
-              auto ret = makeLocalGet(ctx, in);
+              auto ret = makeLocalGet(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 's':
             if (op == "local.set"sv) {
-              auto ret = makeLocalSet(ctx, in);
+              auto ret = makeLocalSet(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 't':
             if (op == "local.tee"sv) {
-              auto ret = makeLocalTee(ctx, in);
+              auto ret = makeLocalTee(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8432,7 +8432,7 @@ switch (op[0]) {
       }
       case 'o':
         if (op == "loop"sv) {
-          auto ret = makeLoop(ctx, in);
+          auto ret = makeLoop(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -8446,7 +8446,7 @@ switch (op[0]) {
         switch (op[14]) {
           case 'n':
             if (op == "memory.atomic.notify"sv) {
-              auto ret = makeAtomicNotify(ctx, in);
+              auto ret = makeAtomicNotify(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8455,14 +8455,14 @@ switch (op[0]) {
             switch (op[18]) {
               case '3':
                 if (op == "memory.atomic.wait32"sv) {
-                  auto ret = makeAtomicWait(ctx, in, Type::i32);
+                  auto ret = makeAtomicWait(ctx, Type::i32);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case '6':
                 if (op == "memory.atomic.wait64"sv) {
-                  auto ret = makeAtomicWait(ctx, in, Type::i64);
+                  auto ret = makeAtomicWait(ctx, Type::i64);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8475,35 +8475,35 @@ switch (op[0]) {
       }
       case 'c':
         if (op == "memory.copy"sv) {
-          auto ret = makeMemoryCopy(ctx, in);
+          auto ret = makeMemoryCopy(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 'f':
         if (op == "memory.fill"sv) {
-          auto ret = makeMemoryFill(ctx, in);
+          auto ret = makeMemoryFill(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 'g':
         if (op == "memory.grow"sv) {
-          auto ret = makeMemoryGrow(ctx, in);
+          auto ret = makeMemoryGrow(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 'i':
         if (op == "memory.init"sv) {
-          auto ret = makeMemoryInit(ctx, in);
+          auto ret = makeMemoryInit(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 's':
         if (op == "memory.size"sv) {
-          auto ret = makeMemorySize(ctx, in);
+          auto ret = makeMemorySize(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -8520,7 +8520,7 @@ switch (op[0]) {
     goto parse_error;
   case 'p':
     if (op == "pop"sv) {
-      auto ret = makePop(ctx, in);
+      auto ret = makePop(ctx);
       CHECK_ERR(ret);
       return *ret;
     }
@@ -8533,28 +8533,28 @@ switch (op[0]) {
             switch (op[7]) {
               case 'd':
                 if (op == "ref.as_data"sv) {
-                  auto ret = makeRefAs(ctx, in, RefAsData);
+                  auto ret = makeRefAs(ctx, RefAsData);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
                 if (op == "ref.as_func"sv) {
-                  auto ret = makeRefAs(ctx, in, RefAsFunc);
+                  auto ret = makeRefAs(ctx, RefAsFunc);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'i':
                 if (op == "ref.as_i31"sv) {
-                  auto ret = makeRefAs(ctx, in, RefAsI31);
+                  auto ret = makeRefAs(ctx, RefAsI31);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'n':
                 if (op == "ref.as_non_null"sv) {
-                  auto ret = makeRefAs(ctx, in, RefAsNonNull);
+                  auto ret = makeRefAs(ctx, RefAsNonNull);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8566,14 +8566,14 @@ switch (op[0]) {
             switch (op[9]) {
               case 'n':
                 if (op == "ref.cast_nop_static"sv) {
-                  auto ret = makeRefCastNopStatic(ctx, in);
+                  auto ret = makeRefCastNopStatic(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 's':
                 if (op == "ref.cast_static"sv) {
-                  auto ret = makeRefCastStatic(ctx, in);
+                  auto ret = makeRefCastStatic(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8583,14 +8583,14 @@ switch (op[0]) {
           }
           case 'e':
             if (op == "ref.eq"sv) {
-              auto ret = makeRefEq(ctx, in);
+              auto ret = makeRefEq(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'f':
             if (op == "ref.func"sv) {
-              auto ret = makeRefFunc(ctx, in);
+              auto ret = makeRefFunc(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8599,28 +8599,28 @@ switch (op[0]) {
             switch (op[7]) {
               case 'd':
                 if (op == "ref.is_data"sv) {
-                  auto ret = makeRefIs(ctx, in, RefIsData);
+                  auto ret = makeRefIs(ctx, RefIsData);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
                 if (op == "ref.is_func"sv) {
-                  auto ret = makeRefIs(ctx, in, RefIsFunc);
+                  auto ret = makeRefIs(ctx, RefIsFunc);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'i':
                 if (op == "ref.is_i31"sv) {
-                  auto ret = makeRefIs(ctx, in, RefIsI31);
+                  auto ret = makeRefIs(ctx, RefIsI31);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'n':
                 if (op == "ref.is_null"sv) {
-                  auto ret = makeRefIs(ctx, in, RefIsNull);
+                  auto ret = makeRefIs(ctx, RefIsNull);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8630,14 +8630,14 @@ switch (op[0]) {
           }
           case 'n':
             if (op == "ref.null"sv) {
-              auto ret = makeRefNull(ctx, in);
+              auto ret = makeRefNull(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 't':
             if (op == "ref.test_static"sv) {
-              auto ret = makeRefTestStatic(ctx, in);
+              auto ret = makeRefTestStatic(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8649,7 +8649,7 @@ switch (op[0]) {
         switch (op[3]) {
           case 'h':
             if (op == "rethrow"sv) {
-              auto ret = makeRethrow(ctx, in);
+              auto ret = makeRethrow(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -8658,7 +8658,7 @@ switch (op[0]) {
             switch (op[6]) {
               case '\0':
                 if (op == "return"sv) {
-                  auto ret = makeReturn(ctx, in);
+                  auto ret = makeReturn(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8667,7 +8667,7 @@ switch (op[0]) {
                 switch (op[11]) {
                   case '\0':
                     if (op == "return_call"sv) {
-                      auto ret = makeCall(ctx, in, /*isReturn=*/true);
+                      auto ret = makeCall(ctx, /*isReturn=*/true);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8676,14 +8676,14 @@ switch (op[0]) {
                     switch (op[12]) {
                       case 'i':
                         if (op == "return_call_indirect"sv) {
-                          auto ret = makeCallIndirect(ctx, in, /*isReturn=*/true);
+                          auto ret = makeCallIndirect(ctx, /*isReturn=*/true);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'r':
                         if (op == "return_call_ref"sv) {
-                          auto ret = makeCallRef(ctx, in, /*isReturn=*/true);
+                          auto ret = makeCallRef(ctx, /*isReturn=*/true);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8707,7 +8707,7 @@ switch (op[0]) {
     switch (op[1]) {
       case 'e':
         if (op == "select"sv) {
-          auto ret = makeSelect(ctx, in);
+          auto ret = makeSelect(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -8722,7 +8722,7 @@ switch (op[0]) {
                     switch (op[10]) {
                       case 'i':
                         if (op == "string.as_iter"sv) {
-                          auto ret = makeStringAs(ctx, in, StringAsIter);
+                          auto ret = makeStringAs(ctx, StringAsIter);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8731,14 +8731,14 @@ switch (op[0]) {
                         switch (op[13]) {
                           case '1':
                             if (op == "string.as_wtf16"sv) {
-                              auto ret = makeStringAs(ctx, in, StringAsWTF16);
+                              auto ret = makeStringAs(ctx, StringAsWTF16);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '8':
                             if (op == "string.as_wtf8"sv) {
-                              auto ret = makeStringAs(ctx, in, StringAsWTF8);
+                              auto ret = makeStringAs(ctx, StringAsWTF8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -8753,14 +8753,14 @@ switch (op[0]) {
                     switch (op[10]) {
                       case 'c':
                         if (op == "string.concat"sv) {
-                          auto ret = makeStringConcat(ctx, in);
+                          auto ret = makeStringConcat(ctx);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 's':
                         if (op == "string.const"sv) {
-                          auto ret = makeStringConst(ctx, in);
+                          auto ret = makeStringConst(ctx);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8776,14 +8776,14 @@ switch (op[0]) {
                             switch (op[19]) {
                               case '\0':
                                 if (op == "string.encode_wtf16"sv) {
-                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF16);
+                                  auto ret = makeStringEncode(ctx, StringEncodeWTF16);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
                                 if (op == "string.encode_wtf16_array"sv) {
-                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF16Array);
+                                  auto ret = makeStringEncode(ctx, StringEncodeWTF16Array);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -8795,14 +8795,14 @@ switch (op[0]) {
                             switch (op[18]) {
                               case '\0':
                                 if (op == "string.encode_wtf8"sv) {
-                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF8);
+                                  auto ret = makeStringEncode(ctx, StringEncodeWTF8);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
                                 if (op == "string.encode_wtf8_array"sv) {
-                                  auto ret = makeStringEncode(ctx, in, StringEncodeWTF8Array);
+                                  auto ret = makeStringEncode(ctx, StringEncodeWTF8Array);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -8815,7 +8815,7 @@ switch (op[0]) {
                       }
                       case 'q':
                         if (op == "string.eq"sv) {
-                          auto ret = makeStringEq(ctx, in);
+                          auto ret = makeStringEq(ctx);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8825,7 +8825,7 @@ switch (op[0]) {
                   }
                   case 'i':
                     if (op == "string.is_usv_sequence"sv) {
-                      auto ret = makeStringMeasure(ctx, in, StringMeasureIsUSV);
+                      auto ret = makeStringMeasure(ctx, StringMeasureIsUSV);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -8834,14 +8834,14 @@ switch (op[0]) {
                     switch (op[18]) {
                       case '1':
                         if (op == "string.measure_wtf16"sv) {
-                          auto ret = makeStringMeasure(ctx, in, StringMeasureWTF16);
+                          auto ret = makeStringMeasure(ctx, StringMeasureWTF16);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case '8':
                         if (op == "string.measure_wtf8"sv) {
-                          auto ret = makeStringMeasure(ctx, in, StringMeasureWTF8);
+                          auto ret = makeStringMeasure(ctx, StringMeasureWTF8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8855,14 +8855,14 @@ switch (op[0]) {
                         switch (op[16]) {
                           case '\0':
                             if (op == "string.new_wtf16"sv) {
-                              auto ret = makeStringNew(ctx, in, StringNewWTF16);
+                              auto ret = makeStringNew(ctx, StringNewWTF16);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '_':
                             if (op == "string.new_wtf16_array"sv) {
-                              auto ret = makeStringNew(ctx, in, StringNewWTF16Array);
+                              auto ret = makeStringNew(ctx, StringNewWTF16Array);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -8874,14 +8874,14 @@ switch (op[0]) {
                         switch (op[15]) {
                           case '\0':
                             if (op == "string.new_wtf8"sv) {
-                              auto ret = makeStringNew(ctx, in, StringNewWTF8);
+                              auto ret = makeStringNew(ctx, StringNewWTF8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case '_':
                             if (op == "string.new_wtf8_array"sv) {
-                              auto ret = makeStringNew(ctx, in, StringNewWTF8Array);
+                              auto ret = makeStringNew(ctx, StringNewWTF8Array);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -8901,28 +8901,28 @@ switch (op[0]) {
                     switch (op[16]) {
                       case 'a':
                         if (op == "stringview_iter.advance"sv) {
-                          auto ret = makeStringIterMove(ctx, in, StringIterMoveAdvance);
+                          auto ret = makeStringIterMove(ctx, StringIterMoveAdvance);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'n':
                         if (op == "stringview_iter.next"sv) {
-                          auto ret = makeStringIterNext(ctx, in);
+                          auto ret = makeStringIterNext(ctx);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'r':
                         if (op == "stringview_iter.rewind"sv) {
-                          auto ret = makeStringIterMove(ctx, in, StringIterMoveRewind);
+                          auto ret = makeStringIterMove(ctx, StringIterMoveRewind);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 's':
                         if (op == "stringview_iter.slice"sv) {
-                          auto ret = makeStringSliceIter(ctx, in);
+                          auto ret = makeStringSliceIter(ctx);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -8936,21 +8936,21 @@ switch (op[0]) {
                         switch (op[17]) {
                           case 'g':
                             if (op == "stringview_wtf16.get_codeunit"sv) {
-                              auto ret = makeStringWTF16Get(ctx, in);
+                              auto ret = makeStringWTF16Get(ctx);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 'l':
                             if (op == "stringview_wtf16.length"sv) {
-                              auto ret = makeStringMeasure(ctx, in, StringMeasureWTF16View);
+                              auto ret = makeStringMeasure(ctx, StringMeasureWTF16View);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 's':
                             if (op == "stringview_wtf16.slice"sv) {
-                              auto ret = makeStringSliceWTF(ctx, in, StringSliceWTF16);
+                              auto ret = makeStringSliceWTF(ctx, StringSliceWTF16);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -8962,14 +8962,14 @@ switch (op[0]) {
                         switch (op[16]) {
                           case 'a':
                             if (op == "stringview_wtf8.advance"sv) {
-                              auto ret = makeStringWTF8Advance(ctx, in);
+                              auto ret = makeStringWTF8Advance(ctx);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 's':
                             if (op == "stringview_wtf8.slice"sv) {
-                              auto ret = makeStringSliceWTF(ctx, in, StringSliceWTF8);
+                              auto ret = makeStringSliceWTF(ctx, StringSliceWTF8);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -8992,7 +8992,7 @@ switch (op[0]) {
                 switch (op[10]) {
                   case '\0':
                     if (op == "struct.get"sv) {
-                      auto ret = makeStructGet(ctx, in);
+                      auto ret = makeStructGet(ctx);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9001,14 +9001,14 @@ switch (op[0]) {
                     switch (op[11]) {
                       case 's':
                         if (op == "struct.get_s"sv) {
-                          auto ret = makeStructGet(ctx, in, true);
+                          auto ret = makeStructGet(ctx, true);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
                       case 'u':
                         if (op == "struct.get_u"sv) {
-                          auto ret = makeStructGet(ctx, in, false);
+                          auto ret = makeStructGet(ctx, false);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -9023,14 +9023,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case '\0':
                     if (op == "struct.new"sv) {
-                      auto ret = makeStructNewStatic(ctx, in, false);
+                      auto ret = makeStructNewStatic(ctx, false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case '_':
                     if (op == "struct.new_default"sv) {
-                      auto ret = makeStructNewStatic(ctx, in, true);
+                      auto ret = makeStructNewStatic(ctx, true);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9040,7 +9040,7 @@ switch (op[0]) {
               }
               case 's':
                 if (op == "struct.set"sv) {
-                  auto ret = makeStructSet(ctx, in);
+                  auto ret = makeStructSet(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -9062,14 +9062,14 @@ switch (op[0]) {
             switch (op[7]) {
               case 'e':
                 if (op == "table.get"sv) {
-                  auto ret = makeTableGet(ctx, in);
+                  auto ret = makeTableGet(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'r':
                 if (op == "table.grow"sv) {
-                  auto ret = makeTableGrow(ctx, in);
+                  auto ret = makeTableGrow(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -9081,14 +9081,14 @@ switch (op[0]) {
             switch (op[7]) {
               case 'e':
                 if (op == "table.set"sv) {
-                  auto ret = makeTableSet(ctx, in);
+                  auto ret = makeTableSet(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'i':
                 if (op == "table.size"sv) {
-                  auto ret = makeTableSize(ctx, in);
+                  auto ret = makeTableSize(ctx);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -9103,14 +9103,14 @@ switch (op[0]) {
         switch (op[2]) {
           case 'e':
             if (op == "then"sv) {
-              auto ret = makeThenOrElse(ctx, in);
+              auto ret = makeThenOrElse(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'r':
             if (op == "throw"sv) {
-              auto ret = makeThrow(ctx, in);
+              auto ret = makeThrow(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -9120,7 +9120,7 @@ switch (op[0]) {
       }
       case 'r':
         if (op == "try"sv) {
-          auto ret = makeTry(ctx, in);
+          auto ret = makeTry(ctx);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -9129,14 +9129,14 @@ switch (op[0]) {
         switch (op[6]) {
           case 'e':
             if (op == "tuple.extract"sv) {
-              auto ret = makeTupleExtract(ctx, in);
+              auto ret = makeTupleExtract(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case 'm':
             if (op == "tuple.make"sv) {
-              auto ret = makeTupleMake(ctx, in);
+              auto ret = makeTupleMake(ctx);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -9162,14 +9162,14 @@ switch (op[0]) {
             switch (op[8]) {
               case '\0':
                 if (op == "v128.and"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::AndVec128);
+                  auto ret = makeBinary(ctx, BinaryOp::AndVec128);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'n':
                 if (op == "v128.andnot"sv) {
-                  auto ret = makeBinary(ctx, in, BinaryOp::AndNotVec128);
+                  auto ret = makeBinary(ctx, BinaryOp::AndNotVec128);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -9179,7 +9179,7 @@ switch (op[0]) {
           }
           case 'y':
             if (op == "v128.any_true"sv) {
-              auto ret = makeUnary(ctx, in, UnaryOp::AnyTrueVec128);
+              auto ret = makeUnary(ctx, UnaryOp::AnyTrueVec128);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -9189,14 +9189,14 @@ switch (op[0]) {
       }
       case 'b':
         if (op == "v128.bitselect"sv) {
-          auto ret = makeSIMDTernary(ctx, in, SIMDTernaryOp::Bitselect);
+          auto ret = makeSIMDTernary(ctx, SIMDTernaryOp::Bitselect);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 'c':
         if (op == "v128.const"sv) {
-          auto ret = makeConst(ctx, in, Type::v128);
+          auto ret = makeConst(ctx, Type::v128);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -9205,7 +9205,7 @@ switch (op[0]) {
         switch (op[9]) {
           case '\0':
             if (op == "v128.load"sv) {
-              auto ret = makeLoad(ctx, in, Type::v128, /*isAtomic=*/false);
+              auto ret = makeLoad(ctx, Type::v128, /*isAtomic=*/false);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -9216,14 +9216,14 @@ switch (op[0]) {
                 switch (op[12]) {
                   case 'l':
                     if (op == "v128.load16_lane"sv) {
-                      auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Load16LaneVec128);
+                      auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Load16LaneVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 's':
                     if (op == "v128.load16_splat"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load16SplatVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load16SplatVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9235,14 +9235,14 @@ switch (op[0]) {
                 switch (op[14]) {
                   case 's':
                     if (op == "v128.load16x4_s"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load16x4SVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load16x4SVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "v128.load16x4_u"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load16x4UVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load16x4UVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9259,21 +9259,21 @@ switch (op[0]) {
                 switch (op[12]) {
                   case 'l':
                     if (op == "v128.load32_lane"sv) {
-                      auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Load32LaneVec128);
+                      auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Load32LaneVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 's':
                     if (op == "v128.load32_splat"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load32SplatVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load32SplatVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'z':
                     if (op == "v128.load32_zero"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load32ZeroVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load32ZeroVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9285,14 +9285,14 @@ switch (op[0]) {
                 switch (op[14]) {
                   case 's':
                     if (op == "v128.load32x2_s"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load32x2SVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load32x2SVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "v128.load32x2_u"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load32x2UVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load32x2UVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9307,21 +9307,21 @@ switch (op[0]) {
             switch (op[12]) {
               case 'l':
                 if (op == "v128.load64_lane"sv) {
-                  auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Load64LaneVec128);
+                  auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Load64LaneVec128);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 's':
                 if (op == "v128.load64_splat"sv) {
-                  auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load64SplatVec128);
+                  auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load64SplatVec128);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'z':
                 if (op == "v128.load64_zero"sv) {
-                  auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load64ZeroVec128);
+                  auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load64ZeroVec128);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -9335,14 +9335,14 @@ switch (op[0]) {
                 switch (op[11]) {
                   case 'l':
                     if (op == "v128.load8_lane"sv) {
-                      auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Load8LaneVec128);
+                      auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Load8LaneVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 's':
                     if (op == "v128.load8_splat"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load8SplatVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load8SplatVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9354,14 +9354,14 @@ switch (op[0]) {
                 switch (op[13]) {
                   case 's':
                     if (op == "v128.load8x8_s"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load8x8SVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load8x8SVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case 'u':
                     if (op == "v128.load8x8_u"sv) {
-                      auto ret = makeSIMDLoad(ctx, in, SIMDLoadOp::Load8x8UVec128);
+                      auto ret = makeSIMDLoad(ctx, SIMDLoadOp::Load8x8UVec128);
                       CHECK_ERR(ret);
                       return *ret;
                     }
@@ -9377,14 +9377,14 @@ switch (op[0]) {
       }
       case 'n':
         if (op == "v128.not"sv) {
-          auto ret = makeUnary(ctx, in, UnaryOp::NotVec128);
+          auto ret = makeUnary(ctx, UnaryOp::NotVec128);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
       case 'o':
         if (op == "v128.or"sv) {
-          auto ret = makeBinary(ctx, in, BinaryOp::OrVec128);
+          auto ret = makeBinary(ctx, BinaryOp::OrVec128);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -9393,35 +9393,35 @@ switch (op[0]) {
         switch (op[10]) {
           case '\0':
             if (op == "v128.store"sv) {
-              auto ret = makeStore(ctx, in, Type::v128, /*isAtomic=*/false);
+              auto ret = makeStore(ctx, Type::v128, /*isAtomic=*/false);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case '1':
             if (op == "v128.store16_lane"sv) {
-              auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Store16LaneVec128);
+              auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Store16LaneVec128);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case '3':
             if (op == "v128.store32_lane"sv) {
-              auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Store32LaneVec128);
+              auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Store32LaneVec128);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case '6':
             if (op == "v128.store64_lane"sv) {
-              auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Store64LaneVec128);
+              auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Store64LaneVec128);
               CHECK_ERR(ret);
               return *ret;
             }
             goto parse_error;
           case '8':
             if (op == "v128.store8_lane"sv) {
-              auto ret = makeSIMDLoadStoreLane(ctx, in, SIMDLoadStoreLaneOp::Store8LaneVec128);
+              auto ret = makeSIMDLoadStoreLane(ctx, SIMDLoadStoreLaneOp::Store8LaneVec128);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -9431,7 +9431,7 @@ switch (op[0]) {
       }
       case 'x':
         if (op == "v128.xor"sv) {
-          auto ret = makeBinary(ctx, in, BinaryOp::XorVec128);
+          auto ret = makeBinary(ctx, BinaryOp::XorVec128);
           CHECK_ERR(ret);
           return *ret;
         }
@@ -9442,7 +9442,7 @@ switch (op[0]) {
   default: goto parse_error;
 }
 parse_error:
-  return in.err("unrecognized instruction");
+  return ctx.in.err("unrecognized instruction");
 #endif // NEW_INSTRUCTION_PARSER
 
 // clang-format on
