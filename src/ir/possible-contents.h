@@ -144,7 +144,9 @@ public:
       return none();
     }
 
-    return many(); // XXX could be exactType(type) perhaps, but no benefit
+    // Otherwise, this is a concrete MVP type.
+    assert(type.isConcrete());
+    return exactType(type);
   }
 
   PossibleContents& operator=(const PossibleContents& other) = default;
