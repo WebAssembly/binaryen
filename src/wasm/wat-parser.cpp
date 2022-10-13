@@ -554,11 +554,16 @@ struct NullInstrParserCtx {
   using InstrsT = Ok;
   using ExprT = Ok;
 
+  using LocalT = Ok;
+
   InstrsT makeInstrs() { return Ok{}; }
   void appendInstr(InstrsT&, InstrT) {}
   InstrsT finishInstrs(InstrsT&) { return Ok{}; }
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
+
+  LocalT getLocalFromIdx(uint32_t idx) { return Ok{}; }
+  LocalT getLocalFromName(Name name) { return Ok{}; }
 
   InstrT makeUnreachable(Index pos) { return Ok{}; }
   InstrT makeNop(Index pos) { return Ok{}; }
@@ -574,6 +579,8 @@ struct NullInstrParserCtx {
   InstrT makeF32Const(Index, float) { return Ok{}; }
   InstrT makeF64Const(Index, double) { return Ok{}; }
 
+  InstrT makeLocalGet(Index pos, LocalT local) { return Ok{}; }
+
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
   }
@@ -585,6 +592,8 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
   using InstrT = Ok;
   using InstrsT = std::vector<Expression*>;
   using ExprT = Expression*;
+
+  using LocalT = Index;
 
   Builder builder;
 
@@ -756,7 +765,7 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
   Result<> makeF64Const(Index pos, double c) {
     return push(pos, builder.makeConst(Literal(c)));
   }
-  Result<> makeRefNull(Index pos, typename TypeParserCtx<Ctx>::HeapTypeT type) {
+  Result<> makeRefNull(Index pos, HeapType type) {
     return push(pos, builder.makeRefNull(type));
   }
 };
@@ -1097,7 +1106,6 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
         Builder::addVar(f.get(), l.name, l.type);
       }
     }
-    // TODO: local types and names.
     return Ok{};
   }
 
@@ -1148,6 +1156,17 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       return in.err("type index out of bounds");
     }
     return types[idx];
+  }
+
+  Index getLocalFromIdx(uint32_t idx) { return idx; }
+  Result<Index> getLocalFromName(Name name) {
+    if (!func) {
+      return in.err("cannot access locals outside of a function");
+    }
+    if (!func->hasLocalIndex(name)) {
+      return in.err("local $" + name.toString() + " does not exist");
+    }
+    return func->getLocalIndex(name);
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
@@ -1227,6 +1246,14 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     }
     Name name = Names::getValidLocalName(*func, "scratch");
     return Builder::addVar(func, name, type);
+  }
+
+  Result<> makeLocalGet(Index pos, Index local) {
+    if (!func) {
+      return in.err(pos, "local.get must be inside a function");
+    }
+    assert(local < func->getNumLocals());
+    return push(pos, builder.makeLocalGet(local, func->getLocalType(local)));
   }
 };
 
@@ -1406,6 +1433,7 @@ Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, Index);
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
@@ -1843,7 +1871,9 @@ Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto local = localidx(ctx);
+  CHECK_ERR(local);
+  return ctx.makeLocalGet(pos, *local);
 }
 
 template<typename Ctx>
@@ -2338,6 +2368,18 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
   return ctx.in.err("expected type index or identifier");
 }
 
+// localidx ::= x:u32 => x
+//            | v:id  => x (if types[x] = v)
+template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getLocalFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getLocalFromName(*id);
+  }
+  return ctx.in.err("expected local index or identifier");
+}
+
 // typeuse ::= '(' 'type' x:typeidx ')'                                => x, []
 //                 (if typedefs[x] = [t1*] -> [t2*]
 //           | '(' 'type' x:typeidx ')' ((t1,IDs):param)* (t2:result)* => x, IDs
@@ -2364,7 +2406,6 @@ template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx) {
   auto resultTypes = results(ctx);
   CHECK_ERR(resultTypes);
 
-  // TODO: Use `pos` for error reporting rather than `in`.
   return ctx.makeTypeUse(pos, type, namedParams.getPtr(), resultTypes.getPtr());
 }
 
