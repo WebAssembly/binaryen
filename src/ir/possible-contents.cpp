@@ -1709,7 +1709,6 @@ bool Flower::updateContents(LocationIndex locationIndex,
         // We already contain everything possible, so this is the worst case.
         worthSendingMore = false;
       }
-      // TODO: assert on never having "Many" for refernce types. Only mVP.
     }
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
