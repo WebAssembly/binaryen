@@ -1190,7 +1190,8 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 6) == "i31ref" && (prefix || str.size() == 6)) {
     return Type(HeapType::i31, Nullable);
   }
-  if (str.substr(0, 7) == "dataref" && (prefix || str.size() == 7)) {
+  if ((str.substr(0, 7) == "dataref" && (prefix || str.size() == 7)) ||
+      (str.substr(0, 9) == "structref" && (prefix || str.size() == 9))) {
     return Type(HeapType::data, Nullable);
   }
   if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
@@ -1238,7 +1239,8 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   if (str.substr(0, 3) == "i31" && (prefix || str.size() == 3)) {
     return HeapType::i31;
   }
-  if (str.substr(0, 4) == "data" && (prefix || str.size() == 4)) {
+  if ((str.substr(0, 4) == "data" && (prefix || str.size() == 4)) ||
+      (str.substr(0, 6) == "struct" && (prefix || str.size() == 6))) {
     return HeapType::data;
   }
   if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
