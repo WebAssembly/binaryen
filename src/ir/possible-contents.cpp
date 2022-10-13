@@ -1397,7 +1397,7 @@ private:
   //
   // Returns whether the cone is of maximal depth (with or without
   // normalization).
-  bool normalizeConeType(HeapType type, Index& depth) { // TODO test
+  bool normalizeConeType(HeapType type, Index& depth) {
     auto max = maxDepths[type];
     if (depth > max) {
       depth = max;
@@ -1406,7 +1406,7 @@ private:
     return depth == max;
   }
 
-  bool normalizeConeType(PossibleContents& cone) { // TODO test
+  bool normalizeConeType(PossibleContents& cone) {
     assert(cone.isConeType());
     auto type = cone.getType();
     auto before = cone.getCone().depth;
@@ -1669,8 +1669,6 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // we always end up with a deterministic result no matter in what order the
   // flow happens (the final result will be the LUB of all the types of nulls
   // that can arrive).
-  // FIXME: not needed anymore
-  // TODO: optimize. Cone of an expression's declared type is notWorthMore
   if (contents == oldContents && contents.getType() == oldContents.getType()) {
     // Nothing actually changed, so just return.
     return worthSendingMore;
@@ -1686,10 +1684,10 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // Normalize the cone to make it easy to see when we've reached the worst
       // case of all possible contents for this location, which is when the
       // PossibleContents is identical to what the wasm type tells us: a cone of
-      // all possible subtypes from the declared type.
-      //
-      // Also, a null may arrive later.
-      if (normalizeConeType(contents) && type.isNullable()) {
+      // all possible subtypes from the declared type (and a null, if it is
+      // possible for a new null to arrive later).
+      bool missingNullMayArrive = type.isNullable() && contents.getType().isNonNullable();
+      if (normalizeConeType(contents) && missingNullMayArrive) {
         worthSendingMore = false;
       }
       // TODO: assert on never having "Many" for refernce types. Only mVP.
@@ -1698,7 +1696,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     if (contents == oldContents &&
-        contents.getType() == oldContents.getType()) { // XXX FIXME
+        contents.getType() == oldContents.getType()) {
       // Nothing actually changed after filtering, so just return.
       return worthSendingMore;
     }
