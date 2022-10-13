@@ -39,9 +39,9 @@ struct MultiMemoryLowering : public Pass {
   // If the combined memory is shared
   bool isShared;
   // The initial page size of the combined memory
-  size_t totalInitialPages;
+  Address totalInitialPages;
   // The max page size of the combined memory
-  size_t totalMaxPages;
+  Address totalMaxPages;
   // There is no offset for the first memory, so offsetGlobalNames will always
   // have a size that is one less than the count of memories at the time this
   // pass is run. Use helper getOffsetGlobal(Index) to index the vector
@@ -181,9 +181,9 @@ struct MultiMemoryLowering : public Pass {
       // Calculating the total initial and max page size for the combined memory
       // by totaling the initial and max page sizes for the memories in the
       // module
-      totalInitialPages += memory->initial;
+      totalInitialPages = totalInitialPages + memory->initial;
       if (memory->hasMax()) {
-        totalMaxPages += memory->max;
+        totalMaxPages = totalMaxPages + memory->max;
       }
     }
     // Ensuring valid initial and max page sizes that do not exceed the number
