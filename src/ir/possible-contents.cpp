@@ -1652,11 +1652,13 @@ bool Flower::updateContents(LocationIndex locationIndex,
     return true;
   }
 
+  // We should always have more precise information than "many" - in the worst
+  // case, we can have the type declared in the wasm.
+  assert(!contents.isMany());
+
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
-  //
-  // Many is always the worst possible case.
-  bool worthSendingMore = !contents.isMany();
+  bool worthSendingMore = true;
   if (contents.isConeType()) {
     if (!contents.getType().isRef()) {
       // A cone type of a non-reference is the worst case, since subtyping is
