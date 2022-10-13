@@ -1922,64 +1922,54 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.hasExactType()) { // FIXME remove this as a no-op
-    // Add a single link to the exact location the reference points to.
-    connectDuringFlow(
-      DataLocation{refContents.getType().getHeapType(), fieldIndex},
-      ExpressionLocation{read, 0});
-  } else {
-    // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
-    // type of the reference or some of its subtypes.
-    //
-    // Note that this cannot be Many - we should be emitting a cone for the
-    // relevant reference type in that case. That is, at worst we should have
-    // a cone here of the same type as the declared type of the read.
-    //
-    // TODO: The Global case may have a different cone type than the heapType,
-    //       which we could use here.
-    // TODO: A Global may refer to an immutable global, which we can read the
-    //       field from potentially (reading it from the struct.new/array.new
-    //       in the definition of it, if it is not imported; or, we could track
-    //       the contents of immutable fields of allocated objects, and not just
-    //       represent them as an exact type).
-    //       See the test TODO with text "We optimize some of this, but stop at
-    //       reading from the immutable global"
-    assert(refContents.isGlobal() || refContents.isConeType());
+  // Note that this cannot be Many - we should be emitting a cone for the
+  // relevant reference type in that case. That is, at worst we should have
+  // a cone here of the same type as the declared type of the read.
+  //
+  // TODO: The Global case may have a different cone type than the heapType,
+  //       which we could use here.
+  // TODO: A Global may refer to an immutable global, which we can read the
+  //       field from potentially (reading it from the struct.new/array.new
+  //       in the definition of it, if it is not imported; or, we could track
+  //       the contents of immutable fields of allocated objects, and not just
+  //       represent them as an exact type).
+  //       See the test TODO with text "We optimize some of this, but stop at
+  //       reading from the immutable global"
+  assert(refContents.isGlobal() || refContents.isConeType());
 
-    // Just look at the cone here, discarding information about this being a
-    // global, if it was one. All that matters from now is the cone. We also
-    // normalize the cone which can avoid wasted work later (we don't want two
-    // cone depths which refer to the same types in practice).
-    auto cone = refContents.getCone();
-    normalizeConeType(cone.type.getHeapType(), cone.depth);
+  // Just look at the cone here, discarding information about this being a
+  // global, if it was one. All that matters from now is the cone. We also
+  // normalize the cone which can avoid wasted work later (we don't want two
+  // cone depths which refer to the same types in practice).
+  auto cone = refContents.getCone();
+  normalizeConeType(cone.type.getHeapType(), cone.depth);
 
-    // We create a ConeReadLocation for the canonical cone of this type, to
-    // avoid bloating the graph, see comment on ConeReadLocation().
-    auto coneReadLocation =
-      ConeReadLocation{cone.type.getHeapType(), cone.depth, fieldIndex};
-    if (!hasIndex(coneReadLocation)) {
-      // This is the first time we use this location, so create the links for it
-      // in the graph.
+  // We create a ConeReadLocation for the canonical cone of this type, to
+  // avoid bloating the graph, see comment on ConeReadLocation().
+  auto coneReadLocation =
+    ConeReadLocation{cone.type.getHeapType(), cone.depth, fieldIndex};
+  if (!hasIndex(coneReadLocation)) {
+    // This is the first time we use this location, so create the links for it
+    // in the graph.
 
-      // First, connect the base type itself.
-      auto coneType = cone.type.getHeapType();
-      connectDuringFlow(DataLocation{coneType, fieldIndex}, coneReadLocation);
+    // First, connect the base type itself.
+    auto coneType = cone.type.getHeapType();
+    connectDuringFlow(DataLocation{coneType, fieldIndex}, coneReadLocation);
 
-      // Next, connect strict subtypes.
+    // Next, connect strict subtypes.
 
-      subTypes->iterSubTypes(
-        cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
-          connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
-        });
+    subTypes->iterSubTypes(
+      cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
+        connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
+      });
 
-      // TODO: we can end up with redundant links here if we see one cone first
-      //       and then a larger one later. But removing links is not efficient,
-      //       so for now just leave that.
-    }
-
-    // Link to the canonical location.
-    connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
+    // TODO: we can end up with redundant links here if we see one cone first
+    //       and then a larger one later. But removing links is not efficient,
+    //       so for now just leave that.
   }
+
+  // Link to the canonical location.
+  connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
 void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
@@ -2013,25 +2003,18 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.hasExactType()) {
-    // Update the one possible type here.
-    auto heapLoc =
-      DataLocation{refContents.getType().getHeapType(), fieldIndex};
-    updateContents(heapLoc, valueContents);
-  } else {
-    // This cannot be Many for the same reasons as in readFromData().
-    assert(refContents.isGlobal() || refContents.isConeType());
+  // This cannot be Many for the same reasons as in readFromData().
+  assert(refContents.isGlobal() || refContents.isConeType());
 
-    // As in readFromData, normalize to the proper cone.
-    auto cone = refContents.getCone();
-    normalizeConeType(cone.type.getHeapType(), cone.depth);
+  // As in readFromData, normalize to the proper cone.
+  auto cone = refContents.getCone();
+  normalizeConeType(cone.type.getHeapType(), cone.depth);
 
-    subTypes->iterSubTypes(
-      cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
-        auto heapLoc = DataLocation{type, fieldIndex};
-        updateContents(heapLoc, valueContents);
-      });
-  }
+  subTypes->iterSubTypes(
+    cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
+      auto heapLoc = DataLocation{type, fieldIndex};
+      updateContents(heapLoc, valueContents);
+    });
 }
 
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
