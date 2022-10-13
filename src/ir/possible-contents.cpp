@@ -1702,7 +1702,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
         return worthSendingMore;
       }
       normalizeConeType(maximalContents);
-      normalizeConeType(contents);
+      normalizeConeType(contents); // FIXME redundant?
       if (contents == maximalContents) {
         // We already contain everything possible, so this is the worst case.
         worthSendingMore = false;
