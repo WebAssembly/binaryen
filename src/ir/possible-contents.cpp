@@ -1695,8 +1695,9 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // The maximal contents here are the declared type and all subtypes.
       // Nothing else can pass through, so filter such things out.
       auto maximalContents = PossibleContents::fullConeType(type);
-      normalizeCone(maximalContents);
       contents.intersectWithFullCone(maximalContents);
+      normalizeConeType(maximalContents);
+      normalizeConeType(contents);
       if (contents == maximalContents) {
         // We already contain everything possible, so this is the worst case.
         worthSendingMore = false;
