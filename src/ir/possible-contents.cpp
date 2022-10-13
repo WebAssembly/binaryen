@@ -1397,6 +1397,7 @@ private:
   //
   // Returns whether the cone is of maximal depth (with or without
   // normalization).
+  // TODO: remove return values?
   bool normalizeConeType(HeapType type, Index& depth) {
     auto max = maxDepths[type];
     if (depth > max) {
@@ -1654,13 +1655,19 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
   //
-  // Many is always the worst possible case. A cone type of a non-reference is
-  // also the worst case, since subtyping is not relevant there, and so if we
-  // only know something about the type then we already know nothing beyond what
-  // the type in the wasm tells us (and from there we can only go to Many).
+  // Many is always the worst possible case.
   bool worthSendingMore = !contents.isMany();
-  if (!contents.getType().isRef() && contents.isConeType()) {
-    worthSendingMore = false;
+  if (contents.isConeType()) {
+    if (!contents.getType().isRef()) {
+      // A cone type of a non-reference is the worst case, since subtyping is
+      // not relevant there, and so if we only know something about the type
+      // then we already know nothing beyond what the type in the wasm tells us
+      // (and from there we can only go to Many).
+      worthSendingMore = false;
+    } else {
+      // Normalize all reference cones. This makes the code below simpler.
+      normalizeConeType(contents);
+    }
   }
 
   // Check if anything changed. Note that we check not just the content but
@@ -1679,19 +1686,16 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto type = exprLoc->expr->type;
-    if (worthSendingMore && type.isRef() && contents.getType() == type &&
-        contents.isConeType()) {
-      // Normalize the cone to make it easy to see when we've reached the worst
-      // case of all possible contents for this location, which is when the
-      // PossibleContents is identical to what the wasm type tells us: a cone of
-      // all possible subtypes from the declared type (and a null, if it is
-      // possible for a new null to arrive later).
-      bool missingNullMayArrive = type.isNullable() && contents.getType().isNonNullable();
-      if (normalizeConeType(contents) && missingNullMayArrive) {
+    if (type.isRef() && contents.isConeType()) {
+      // The maximal contents here are the declared type and all subtypes.
+      // Nothing else can pass through, so filter such things out.
+      auto maximalContents = PossibleContents::fullConeType(type);
+      contents.intersectWithFullCone(maximalContents);
+      if (contents == maximalContents) {
+        // We already contain everything possible, so this is the worst case.
         worthSendingMore = false;
       }
       // TODO: assert on never having "Many" for refernce types. Only mVP.
-      // TODO: filter by the declared type?
     }
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
