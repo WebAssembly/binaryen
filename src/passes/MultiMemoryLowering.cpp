@@ -260,8 +260,9 @@ struct MultiMemoryLowering : public Pass {
   // instruction to grow.
   std::unique_ptr<Function> memoryGrow(Index memIdx) {
     Builder builder(*wasm);
+    Name name = "custom_memory_grow_" + std::to_string(memIdx);
     Name functionName =
-      Names::getValidFunctionName(*wasm, "adjust_memory_offsets");
+      Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
       functionName, Signature(pointerType, pointerType), {});
     function->setLocalName(0, "page_delta");
@@ -272,6 +273,8 @@ struct MultiMemoryLowering : public Pass {
     functionBody = builder.blockify(builder.makeLocalSet(
       returnLocal, builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
 
+    // TODO: Check the result of makeMemoryGrow for errors and return the error
+    // instead
     functionBody = builder.blockify(
       functionBody,
       builder.makeDrop(builder.makeMemoryGrow(getPageDelta(), combinedMemory)));
@@ -324,7 +327,8 @@ struct MultiMemoryLowering : public Pass {
   // return the size of each memory as if each was discrete and separate.
   std::unique_ptr<Function> memorySize(Index memIdx) {
     Builder builder(*wasm);
-    Name functionName = Names::getValidFunctionName(*wasm, "multi_memory_size");
+    Name name = "custom_memory_size_" + std::to_string(memIdx);
+    Name functionName = Names::getValidFunctionName(*wasm, "custom_memory_size");
     auto function = Builder::makeFunction(
       functionName, Signature(Type::none, pointerType), {});
     Expression* functionBody;
