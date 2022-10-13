@@ -325,6 +325,9 @@ template<typename Ctx> struct WithPosition {
   ~WithPosition() { ctx.in.lexer.setIndex(original); }
 };
 
+// Deduction guide to satisfy -Wctad-maybe-unsupported.
+template<typename Ctx> WithPosition(Ctx& ctx, Index) -> WithPosition<Ctx>;
+
 using IndexMap = std::unordered_map<Name, Index>;
 
 void applyImportNames(Importable& item,
