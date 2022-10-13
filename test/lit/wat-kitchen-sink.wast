@@ -17,6 +17,14 @@
 
   ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
 
+  ;; CHECK:      (type $i32_i32_=>_none (func_subtype (param i32 i32) func))
+
+  ;; CHECK:      (type $i32_i32_f64_f64_=>_none (func_subtype (param i32 i32 f64 f64) func))
+
+  ;; CHECK:      (type $i64_=>_none (func_subtype (param i64) func))
+
+  ;; CHECK:      (type $i32_i32_i32_=>_none (func_subtype (param i32 i32 i32) func))
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
   (type $s0 (sub (struct)))
@@ -551,85 +559,133 @@
   drop
  )
 
- ;; CHECK:      (func $use-insts (type $void)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK:      (func $locals (type $i32_i32_=>_none) (param $0 i32) (param $x i32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $y i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $locals (param i32) (param $x i32)
+  (local i32)
+  (local $y i32)
+  local.get 0
+  drop
+  local.get 1
+  drop
+  local.get 2
+  drop
+  local.get 3
+  drop
+  local.get $x
+  drop
+  local.get $y
+  drop
+ )
+
+
+ ;; CHECK:      (func $binary (type $i32_i32_f64_f64_=>_none) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.add
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (f64.mul
- ;; CHECK-NEXT:    (f64.const 0)
- ;; CHECK-NEXT:    (f64.const 1)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.eqz
- ;; CHECK-NEXT:    (i64.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:    (local.get $3)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $use-insts
-  nop
-  i32.const 0
-  i32.const 1
+ (func $binary (param i32 i32 f64 f64)
+  local.get 0
+  local.get 1
   i32.add
   drop
-  f64.const 0
-  f64.const 1
+  local.get 2
+  local.get 3
   f64.mul
   drop
-  i64.const 0
+ )
+
+ ;; CHECK:      (func $unary (type $i64_=>_none) (param $0 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.eqz
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $unary (param i64)
+  local.get 0
   i64.eqz
   drop
-  i32.const 0
-  i32.const 1
-  i32.const 2
+ )
+
+ ;; CHECK:      (func $select (type $i32_i32_i32_=>_none) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select (param i32 i32 i32)
+  local.get 0
+  local.get 1
+  local.get 2
   select
   drop
-  i32.const 0
-  i32.const 1
-  i32.const 2
+  local.get 0
+  local.get 1
+  local.get 2
   select (result)
   drop
-  i32.const 0
-  i32.const 1
-  i32.const 2
+  local.get 0
+  local.get 1
+  local.get 2
   select (result i32)
   drop
-  i32.const 0
-  i32.const 1
-  i32.const 2
+  local.get 0
+  local.get 1
+  local.get 2
   select (result) (result i64) (result)
   drop
  )
