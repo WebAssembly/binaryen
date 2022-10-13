@@ -139,7 +139,9 @@ public:
     if (type.isRef()) {
       // For a reference, subtyping matters.
       return fullConeType(type);
-    } else if (type == Type::unreachable) {
+    }
+
+    if (type == Type::unreachable) {
       // Nothing is possible here.
       return none();
     }
