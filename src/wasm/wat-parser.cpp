@@ -276,15 +276,13 @@ struct ParseInput {
     return lexer.getIndex();
   }
 
-  [[nodiscard]] Err err(std::string reason) {
+  [[nodiscard]] Err err(Index pos, std::string reason) {
     std::stringstream msg;
-    msg << lexer.position(lexer.getIndex()) << ": error: " << reason;
+    msg << lexer.position(pos) << ": error: " << reason;
     return Err{msg.str()};
   }
 
-  [[nodiscard]] Err err(Index pos, std::string reason) {
-    return ParseInput(*this, pos).err(reason);
-  }
+  [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
 };
 
 // =========
@@ -558,32 +556,147 @@ struct NullInstrParserCtx {
 
   InstrsT makeInstrs() { return Ok{}; }
   void appendInstr(InstrsT&, InstrT) {}
+  InstrsT finishInstrs(InstrsT&) { return Ok{}; }
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
 
-  InstrT makeUnreachable() { return Ok{}; }
-  InstrT makeNop() { return Ok{}; }
+  InstrT makeUnreachable(Index pos) { return Ok{}; }
+  InstrT makeNop(Index pos) { return Ok{}; }
+  InstrT makeBinary(Index pos, BinaryOp op) { return Ok{}; }
+  InstrT makeUnary(Index pos, UnaryOp op) { return Ok{}; }
+  template<typename ResultsT> InstrT makeSelect(Index pos, ResultsT* res) {
+    return Ok{};
+  }
+  InstrT makeDrop(Index pos) { return Ok{}; }
 
-  InstrT makeI32Const(uint32_t) { return Ok{}; }
-  InstrT makeI64Const(uint64_t) { return Ok{}; }
-  InstrT makeF32Const(float) { return Ok{}; }
-  InstrT makeF64Const(double) { return Ok{}; }
+  InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
+  InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
+  InstrT makeF32Const(Index, float) { return Ok{}; }
+  InstrT makeF64Const(Index, double) { return Ok{}; }
 
-  template<typename HeapTypeT> InstrT makeRefNull(HeapTypeT) { return {}; }
+  template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
+    return {};
+  }
 };
 
 template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
-  using InstrT = Expression*;
+  // Keep track of instructions internally rather than letting the general
+  // parser collect them.
+  using InstrT = Ok;
   using InstrsT = std::vector<Expression*>;
   using ExprT = Expression*;
 
   Builder builder;
 
+  // The stack of parsed expressions, used as the children of newly parsed
+  // expressions.
+  std::vector<Expression*> exprStack;
+
+  // Whether we have seen an unreachable instruction and are in
+  // stack-polymorphic unreachable mode.
+  bool unreachable = false;
+
+  // The expected result type of the instruction sequence we are parsing.
+  Type type;
+
   InstrParserCtx(Module& wasm, const IndexMap& typeIndices)
     : TypeParserCtx<Ctx>(typeIndices), builder(wasm) {}
 
-  InstrsT makeInstrs() { return {}; }
-  void appendInstr(InstrsT& instrs, InstrT instr) { instrs.push_back(instr); }
+  Ctx& self() { return *static_cast<Ctx*>(this); }
+
+  Result<> push(Index pos, Expression* expr) {
+    if (expr->type == Type::unreachable) {
+      // We want to avoid popping back past this most recent unreachable
+      // instruction. Drop all prior instructions so they won't be consumed by
+      // later instructions but will still be emitted for their side effects, if
+      // any.
+      for (auto& expr : exprStack) {
+        expr = builder.dropIfConcretelyTyped(expr);
+      }
+      unreachable = true;
+      exprStack.push_back(expr);
+    } else if (expr->type.isTuple()) {
+      auto scratchIdx = self().addScratchLocal(pos, expr->type);
+      CHECK_ERR(scratchIdx);
+      CHECK_ERR(push(pos, builder.makeLocalSet(*scratchIdx, expr)));
+      for (Index i = 0; i < expr->type.size(); ++i) {
+        CHECK_ERR(push(pos,
+                       builder.makeTupleExtract(
+                         builder.makeLocalGet(*scratchIdx, expr->type[i]), i)));
+      }
+    } else {
+      exprStack.push_back(expr);
+    }
+    return Ok{};
+  }
+
+  Result<Expression*> pop(Index pos) {
+    // Find the suffix of expressions that do not produce values.
+    auto firstNone = exprStack.size();
+    for (; firstNone > 0; --firstNone) {
+      auto* expr = exprStack[firstNone - 1];
+      if (expr->type != Type::none) {
+        break;
+      }
+    }
+
+    if (firstNone == 0) {
+      // There are no expressions that produce values.
+      if (unreachable) {
+        return builder.makeUnreachable();
+      }
+      return self().in.err(pos, "popping from empty stack");
+    }
+
+    if (firstNone == exprStack.size()) {
+      // The last expression produced a value.
+      auto expr = exprStack.back();
+      exprStack.pop_back();
+      return expr;
+    }
+
+    // We need to assemble a block of expressions that returns the value of the
+    // first one using a scratch local (unless it's unreachable, in which case
+    // we can throw the following expressions away).
+    auto* expr = exprStack[firstNone - 1];
+    if (expr->type == Type::unreachable) {
+      exprStack.resize(firstNone - 1);
+      return expr;
+    }
+    auto scratchIdx = self().addScratchLocal(pos, expr->type);
+    CHECK_ERR(scratchIdx);
+    std::vector<Expression*> exprs;
+    exprs.reserve(exprStack.size() - firstNone + 2);
+    exprs.push_back(builder.makeLocalSet(*scratchIdx, expr));
+    exprs.insert(exprs.end(), exprStack.begin() + firstNone, exprStack.end());
+    exprs.push_back(builder.makeLocalGet(*scratchIdx, expr->type));
+
+    exprStack.resize(firstNone - 1);
+    return builder.makeBlock(exprs, expr->type);
+  }
+
+  Ok makeInstrs() { return Ok{}; }
+  void appendInstr(Ok&, InstrT instr) {}
+  Result<InstrsT> finishInstrs(Ok&) {
+    // We have finished parsing a sequence of instructions. Fix up the parsed
+    // instructions and reset the context for the next sequence.
+    if (type.isTuple()) {
+      std::vector<Expression*> elems(type.size());
+      for (size_t i = 0; i < elems.size(); ++i) {
+        auto elem = pop(self().in.getPos());
+        CHECK_ERR(elem);
+        elems[elems.size() - 1 - i] = *elem;
+      }
+      exprStack.push_back(builder.makeTupleMake(std::move(elems)));
+    } else if (type != Type::none) {
+      // Ensure the last expression produces the value.
+      auto expr = pop(self().in.getPos());
+      CHECK_ERR(expr);
+      exprStack.push_back(*expr);
+    }
+    unreachable = false;
+    return std::move(exprStack);
+  }
 
   ExprT makeExpr(InstrsT& instrs) {
     switch (instrs.size()) {
@@ -596,16 +709,55 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
     }
   }
 
-  InstrT makeUnreachable() { return builder.makeUnreachable(); }
-  InstrT makeNop() { return builder.makeNop(); }
+  Result<> makeUnreachable(Index pos) {
+    return push(pos, builder.makeUnreachable());
+  }
+  Result<> makeNop(Index pos) { return push(pos, builder.makeNop()); }
+  Result<> makeBinary(Index pos, BinaryOp op) {
+    auto rhs = pop(pos);
+    CHECK_ERR(rhs);
+    auto lhs = pop(pos);
+    CHECK_ERR(lhs);
+    return push(pos, builder.makeBinary(op, *lhs, *rhs));
+  }
+  Result<> makeUnary(Index pos, UnaryOp op) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeUnary(op, *val));
+  }
+  Result<> makeSelect(Index pos, typename TypeParserCtx<Ctx>::ResultsT* res) {
+    if (res && res->size() > 1) {
+      return self().in.err(pos,
+                           "select may not have more than one result type");
+    }
+    auto cond = pop(pos);
+    CHECK_ERR(cond);
+    auto ifFalse = pop(pos);
+    CHECK_ERR(ifFalse);
+    auto ifTrue = pop(pos);
+    CHECK_ERR(ifTrue);
+    return push(pos, builder.makeSelect(*cond, *ifTrue, *ifFalse));
+  }
+  Result<> makeDrop(Index pos) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeDrop(*val));
+  }
 
-  InstrT makeI32Const(uint32_t c) { return builder.makeConst(Literal(c)); }
-  InstrT makeI64Const(uint64_t c) { return builder.makeConst(Literal(c)); }
-  InstrT makeF32Const(float c) { return builder.makeConst(Literal(c)); }
-  InstrT makeF64Const(double c) { return builder.makeConst(Literal(c)); }
-
-  InstrT makeRefNull(typename TypeParserCtx<Ctx>::HeapTypeT type) {
-    return builder.makeRefNull(type);
+  Result<> makeI32Const(Index pos, uint32_t c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+  Result<> makeI64Const(Index pos, uint64_t c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+  Result<> makeF32Const(Index pos, float c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+  Result<> makeF64Const(Index pos, double c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+  Result<> makeRefNull(Index pos, typename TypeParserCtx<Ctx>::HeapTypeT type) {
+    return push(pos, builder.makeRefNull(type));
   }
 };
 
@@ -967,22 +1119,19 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   using GlobalTypeT = Ok;
   using TypeUseT = HeapType;
 
-  using InstrT = Expression*;
-  using InstrsT = std::vector<Expression*>;
-  using ExprT = Expression*;
-
   ParseInput in;
 
   Module& wasm;
-
-  // A stack of stacks of fully-parsed instructions.
-  std::vector<std::vector<Expression*>> instrStack;
 
   const std::vector<HeapType>& types;
   const std::unordered_map<Index, HeapType>& implicitTypes;
 
   // The index of the current module element.
   Index index = 0;
+
+  // The current function being parsed, used to create scratch locals, type
+  // local.get, etc.
+  Function* func = nullptr;
 
   ParseDefsCtx(std::string_view in,
                Module& wasm,
@@ -1069,6 +1218,15 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       wasm.globals[index]->init = *exp;
     }
     return Ok{};
+  }
+
+  Result<Index> addScratchLocal(Index pos, Type type) {
+    if (!func) {
+      return in.err(pos,
+                    "scratch local required, but there is no function context");
+    }
+    Name name = Names::getValidLocalName(*func, "scratch");
+    return Builder::addVar(func, name, type);
   }
 };
 
@@ -1632,7 +1790,7 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
     }
   }
 
-  return insts;
+  return ctx.finishInstrs(insts);
 }
 
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
@@ -1643,32 +1801,34 @@ template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeUnreachable(Ctx& ctx, Index pos) {
-  return ctx.makeUnreachable();
+  return ctx.makeUnreachable(pos);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeNop(Ctx& ctx, Index pos) {
-  return ctx.makeNop();
+  return ctx.makeNop(pos);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeBinary(Ctx& ctx, Index pos, BinaryOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeBinary(pos, op);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeUnary(Ctx& ctx, Index pos, UnaryOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeUnary(pos, op);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeSelect(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto res = results(ctx);
+  CHECK_ERR(res);
+  return ctx.makeSelect(pos, res.getPtr());
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeDrop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeDrop(pos);
 }
 
 template<typename Ctx>
@@ -1722,22 +1882,22 @@ Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Index pos, Type type) {
   switch (type.getBasic()) {
     case Type::i32:
       if (auto c = ctx.in.takeI32()) {
-        return ctx.makeI32Const(*c);
+        return ctx.makeI32Const(pos, *c);
       }
       return ctx.in.err("expected i32");
     case Type::i64:
       if (auto c = ctx.in.takeI64()) {
-        return ctx.makeI64Const(*c);
+        return ctx.makeI64Const(pos, *c);
       }
       return ctx.in.err("expected i64");
     case Type::f32:
       if (auto c = ctx.in.takeF32()) {
-        return ctx.makeF32Const(*c);
+        return ctx.makeF32Const(pos, *c);
       }
       return ctx.in.err("expected f32");
     case Type::f64:
       if (auto c = ctx.in.takeF64()) {
-        return ctx.makeF64Const(*c);
+        return ctx.makeF64Const(pos, *c);
       }
       return ctx.in.err("expected f64");
     case Type::v128:
@@ -1910,7 +2070,7 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, Index pos) {
   auto t = heaptype(ctx);
   CHECK_ERR(t);
-  return ctx.makeRefNull(*t);
+  return ctx.makeRefNull(pos, *t);
 }
 
 template<typename Ctx>
@@ -2559,7 +2719,16 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     // TODO: Parallelize this.
     ParseDefsCtx ctx(input, wasm, types, implicitTypes, *typeIndices);
     CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
+
+    for (Index i = 0; i < decls.funcDefs.size(); ++i) {
+      ctx.index = i;
+      ctx.func = wasm.functions[i].get();
+      ctx.type = ctx.func->getResults();
+      WithPosition with(ctx, decls.funcDefs[i].pos);
+      auto parsed = func(ctx);
+      CHECK_ERR(parsed);
+      assert(parsed);
+    }
   }
 
   return Ok{};
