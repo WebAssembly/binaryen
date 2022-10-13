@@ -165,8 +165,8 @@ struct MultiMemoryLowering : public Pass {
     // Ensuring valid initial and max page sizes that do not exceed the number
     // of pages addressable by the pointerType
     Address maxSize = pointerType == Type::i32 ? Memory::kMaxSize32 : Memory::kMaxSize64;
-    if (totalMaxPages > maxSize) {
-      totalMaxPages = maxSize;
+    if (totalMaxPages > maxSize || totalMaxPages == 0) {
+      totalMaxPages = Memory::kUnlimitedSize;
     }
     if (totalInitialPages > totalMaxPages) {
       totalInitialPages = totalMaxPages;
