@@ -574,11 +574,13 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (local.tee $y
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $locals (param i32) (param $x i32)
@@ -593,8 +595,9 @@
   local.get 3
   drop
   local.get $x
-  drop
+  local.set 1
   local.get $y
+  local.tee 3
   drop
  )
 

@@ -583,6 +583,8 @@ struct NullInstrParserCtx {
   InstrT makeF64Const(Index, double) { return Ok{}; }
 
   InstrT makeLocalGet(Index pos, LocalT local) { return Ok{}; }
+  InstrT makeLocalTee(Index pos, LocalT local) { return Ok{}; }
+  InstrT makeLocalSet(Index pos, LocalT local) { return Ok{}; }
 
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
@@ -1258,6 +1260,27 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     assert(local < func->getNumLocals());
     return push(pos, builder.makeLocalGet(local, func->getLocalType(local)));
   }
+
+  Result<> makeLocalTee(Index pos, Index local) {
+    if (!func) {
+      return in.err(pos, "local.tee must be inside a function");
+    }
+    assert(local < func->getNumLocals());
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos,
+                builder.makeLocalTee(local, *val, func->getLocalType(local)));
+  }
+
+  Result<> makeLocalSet(Index pos, Index local) {
+    if (!func) {
+      return in.err(pos, "local.set must be inside a function");
+    }
+    assert(local < func->getNumLocals());
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeLocalSet(local, *val));
+  }
 };
 
 // ================
@@ -1881,12 +1904,16 @@ Result<typename Ctx::InstrT> makeLocalGet(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeLocalTee(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto local = localidx(ctx);
+  CHECK_ERR(local);
+  return ctx.makeLocalTee(pos, *local);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto local = localidx(ctx);
+  CHECK_ERR(local);
+  return ctx.makeLocalSet(pos, *local);
 }
 
 template<typename Ctx>
