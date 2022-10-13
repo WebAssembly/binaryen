@@ -18,6 +18,7 @@
 #define wasm_ir_subtypes_h
 
 #include "ir/module-utils.h"
+#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -39,7 +40,7 @@ struct SubTypes {
 
   SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
 
-  const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
+  const std::vector<HeapType>& getStrictSubTypes(HeapType type) const {
     assert(!type.isBasic());
     if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
       return iter->second;
@@ -122,29 +123,36 @@ struct SubTypes {
   //
   // This depth ignores bottom types.
   std::unordered_map<HeapType, Index> getMaxDepths() {
-    std::unordered_map<HeapType, Index> depths;
+    struct DepthSort : TopologicalSort<HeapType, DepthSort> {
+      const SubTypes& parent;
 
-    // Begin with depth 0.
-    for (auto type : types) {
-      depths[type] = 0;
-    }
-
-    // Begin with a plan to work on all the types. When we visit an item, we'll
-    // update our super type based on our current depth.
-    std::unordered_set<HeapType> work(types.begin(), types.end());
-
-    while (!work.empty()) {
-      auto iter = work.begin();
-      auto type = *iter;
-      work.erase(iter);
-      if (auto super = type.getSuperType()) {
-        auto depth = depths[type];
-        auto& superDepth = depths[*super];
-        if (depth + 1 >= superDepth) {
-          superDepth = depth + 1;
-          work.insert(*super);
+      DepthSort(const SubTypes& parent) : parent(parent) {
+        for (auto type : parent.types) {
+          // The roots are types with no supertype.
+          if (!type.getSuperType()) {
+            push(type);
+          }
         }
       }
+
+      void pushPredecessors(HeapType type) {
+        // Things we need to process before each type are its subtypes. Once we
+        // know their depth, we can easily compute our own.
+        for (auto pred : parent.getStrictSubTypes(type)) {
+          push(pred);
+        }
+      }
+    };
+
+    std::unordered_map<HeapType, Index> depths;
+
+    for (auto type : DepthSort(*this)) {
+      // Begin with depth 0.
+      Index depth = 0;
+      for (auto subType : getStrictSubTypes(type)) {
+        depth = std::max(depth, depths[subType] + 1);
+      }
+      depths[type] = depth;
     }
 
     // Add the max depths of basic types.
