@@ -1665,7 +1665,12 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // (and from there we can only go to Many).
       worthSendingMore = false;
     } else {
-      // Normalize all reference cones. This makes the code below simpler.
+      // Normalize all reference cones. There is never a point to flow around
+      // anything non-normalized, which might lead to extra work. For example,
+      // if A has no subtypes, then a full cone for A would be normalized to an
+      // exact one (depth 0). So if we saw a non-normalized cone reach a
+      // normalized one, we'd think more was added.
+      // TODO: Alternatively we could normalize every possible input to the flow
       normalizeConeType(contents);
     }
   }
@@ -1690,6 +1695,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // The maximal contents here are the declared type and all subtypes.
       // Nothing else can pass through, so filter such things out.
       auto maximalContents = PossibleContents::fullConeType(type);
+      normalizeCone(maximalContents);
       contents.intersectWithFullCone(maximalContents);
       if (contents == maximalContents) {
         // We already contain everything possible, so this is the worst case.
