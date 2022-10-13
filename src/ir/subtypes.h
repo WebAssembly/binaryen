@@ -104,7 +104,7 @@ struct SubTypes {
     std::unordered_map<HeapType, Index> depths;
 
     for (auto type : DepthSort(*this)) {
-      // Begin with depth 0.
+      // Begin with depth 0, then take into account the subtype depths.
       Index depth = 0;
       for (auto subType : getStrictSubTypes(type)) {
         depth = std::max(depth, depths[subType] + 1);
