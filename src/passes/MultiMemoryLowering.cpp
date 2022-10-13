@@ -124,7 +124,9 @@ struct MultiMemoryLowering : public Pass {
           return;
         }
         curr->ptr = builder.makeBinary(
-          Abstract::getBinary(parent.pointerType, Abstract::Add), builder.makeGlobalGet(global,                                          parent.pointerType), curr->ptr);
+          Abstract::getBinary(parent.pointerType, Abstract::Add),
+          builder.makeGlobalGet(global, parent.pointerType),
+          curr->ptr);
       }
 
       // We diverge from the spec here and are not trapping if the offset + type
@@ -139,7 +141,9 @@ struct MultiMemoryLowering : public Pass {
           return;
         }
         curr->ptr = builder.makeBinary(
-          Abstract::getBinary(parent.pointerType, Abstract::Add), builder.makeGlobalGet(global,                                          parent.pointerType), curr->ptr);
+          Abstract::getBinary(parent.pointerType, Abstract::Add),
+          builder.makeGlobalGet(global, parent.pointerType),
+          curr->ptr);
       }
     };
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
@@ -161,13 +165,12 @@ struct MultiMemoryLowering : public Pass {
   // Whether the idx represents the last memory. Since there is no offset global
   // for the first memory, the last memory is represented by the size of
   // offsetGlobalNames
-  bool isLastMemory(Index idx) {
-    return idx == offsetGlobalNames.size();
-  }
+  bool isLastMemory(Index idx) { return idx == offsetGlobalNames.size(); }
 
   void prepCombinedMemory() {
     pointerType = wasm->memories[0]->indexType;
-    memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32 : Builder::MemoryInfo::Memory64;
+    memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32
+                                          : Builder::MemoryInfo::Memory64;
     isShared = wasm->memories[0]->shared;
     for (auto& memory : wasm->memories) {
       // We are assuming that each memory is configured the same as the first
@@ -176,7 +179,8 @@ struct MultiMemoryLowering : public Pass {
       assert(memory->indexType == pointerType);
 
       // Calculating the total initial and max page size for the combined memory
-      // by totaling the initial and max page sizes for the memories in the module
+      // by totaling the initial and max page sizes for the memories in the
+      // module
       totalInitialPages += memory->initial;
       if (memory->hasMax()) {
         totalMaxPages += memory->max;
@@ -184,7 +188,8 @@ struct MultiMemoryLowering : public Pass {
     }
     // Ensuring valid initial and max page sizes that do not exceed the number
     // of pages addressable by the pointerType
-    Address maxSize = pointerType == Type::i32 ? Memory::kMaxSize32 : Memory::kMaxSize64;
+    Address maxSize =
+      pointerType == Type::i32 ? Memory::kMaxSize32 : Memory::kMaxSize64;
     if (totalMaxPages > maxSize || totalMaxPages == 0) {
       totalMaxPages = Memory::kUnlimitedSize;
     }
@@ -215,7 +220,8 @@ struct MultiMemoryLowering : public Pass {
     for (Index i = 0; i < wasm->memories.size(); i++) {
       auto& memory = wasm->memories[i];
       memoryIdxMap[memory->name] = i;
-      // We don't need a page offset global for the first memory as it's always 0
+      // We don't need a page offset global for the first memory as it's always
+      // 0
       if (i != 0) {
         Name name = Names::getValidGlobalName(
           *wasm, std::string(memory->name.c_str()) + "_page_offset");
@@ -269,8 +275,7 @@ struct MultiMemoryLowering : public Pass {
   std::unique_ptr<Function> memoryGrow(Index memIdx) {
     Builder builder(*wasm);
     Name name = "custom_memory_grow_" + std::to_string(memIdx);
-    Name functionName =
-      Names::getValidFunctionName(*wasm, name);
+    Name functionName = Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
       functionName, Signature(pointerType, pointerType), {});
     function->setLocalName(0, "page_delta");
@@ -283,9 +288,10 @@ struct MultiMemoryLowering : public Pass {
 
     // TODO: Check the result of makeMemoryGrow for errors and return the error
     // instead
-    functionBody = builder.blockify(
-      functionBody,
-      builder.makeDrop(builder.makeMemoryGrow(getPageDelta(), combinedMemory, memoryInfo)));
+    functionBody =
+      builder.blockify(functionBody,
+                       builder.makeDrop(builder.makeMemoryGrow(
+                         getPageDelta(), combinedMemory, memoryInfo)));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
