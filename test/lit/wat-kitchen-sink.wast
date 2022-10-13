@@ -689,7 +689,7 @@
   local.get 0
   local.get 1
   local.get 2
-  select (result) (result i64) (result)
+  select (result) (result i32) (result)
   drop
  )
 

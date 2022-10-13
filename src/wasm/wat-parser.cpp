@@ -739,7 +739,7 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
     CHECK_ERR(val);
     return push(pos, builder.makeUnary(op, *val));
   }
-  Result<> makeSelect(Index pos, typename TypeParserCtx<Ctx>::ResultsT* res) {
+  Result<> makeSelect(Index pos, std::vector<Type>* res) {
     if (res && res->size() > 1) {
       return self().in.err(pos,
                            "select may not have more than one result type");
@@ -750,6 +750,10 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
     CHECK_ERR(ifFalse);
     auto ifTrue = pop(pos);
     CHECK_ERR(ifTrue);
+    auto select = builder.makeSelect(*cond, *ifTrue, *ifFalse);
+    if (res && !res->empty() && !Type::isSubType(select->type, res->front())) {
+      return self().in.err(pos, "select type annotation is incorrect");
+    }
     return push(pos, builder.makeSelect(*cond, *ifTrue, *ifFalse));
   }
   Result<> makeDrop(Index pos) {
