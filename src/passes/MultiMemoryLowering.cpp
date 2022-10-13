@@ -224,7 +224,7 @@ struct MultiMemoryLowering : public Pass {
       // 0
       if (i != 0) {
         Name name = Names::getValidGlobalName(
-          *wasm, std::string(memory->name.c_str()) + "_page_offset");
+          *wasm, memory->name.toString() + "_page_offset");
         offsetGlobalNames.push_back(std::move(name));
         addGlobal(name, offsetRunningTotal);
       }
