@@ -14,7 +14,7 @@
 
 ;; CHECK:      (global $memory2_page_offset (mut i32) (i32.const 1))
 
-;; CHECK:      (memory $combined_memory 3 65536)
+;; CHECK:      (memory $combined_memory 3)
 
 ;; CHECK:      (data (i32.const 0) "a")
 
@@ -23,13 +23,13 @@
 ;; CHECK-NEXT:  (i32.const 1)
 ;; CHECK-NEXT: ) "123")
 
-;; CHECK:      (func $multi_memory_size (result i32)
+;; CHECK:      (func $custom_memory_size_0 (result i32)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (global.get $memory2_page_offset)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $multi_memory_size_0 (result i32)
+;; CHECK:      (func $custom_memory_size_1 (result i32)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (i32.sub
 ;; CHECK-NEXT:    (memory.size)
@@ -38,10 +38,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $adjust_memory_offsets (param $page_delta i32) (result i32)
+;; CHECK:      (func $custom_memory_grow_0 (param $page_delta i32) (result i32)
 ;; CHECK-NEXT:  (local $1 i32)
 ;; CHECK-NEXT:  (local.set $1
-;; CHECK-NEXT:   (call $multi_memory_size)
+;; CHECK-NEXT:   (call $custom_memory_size_0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (memory.grow
@@ -68,10 +68,10 @@
 ;; CHECK-NEXT:  (local.get $1)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $adjust_memory_offsets_0 (param $page_delta i32) (result i32)
+;; CHECK:      (func $custom_memory_grow_1 (param $page_delta i32) (result i32)
 ;; CHECK-NEXT:  (local $1 i32)
 ;; CHECK-NEXT:  (local.set $1
-;; CHECK-NEXT:   (call $multi_memory_size_0)
+;; CHECK-NEXT:   (call $custom_memory_size_1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (memory.grow
