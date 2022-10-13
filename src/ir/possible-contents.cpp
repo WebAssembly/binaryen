@@ -1205,6 +1205,9 @@ struct InfoCollector
                PossibleContents contents = PossibleContents::many()) {
     // TODO Use a cone type here when relevant
     if (isRelevant(curr)) {
+      if (contents.isMany()) {
+        contents = PossibleContents::fromType(curr->type);
+      }
       addRoot(ExpressionLocation{curr, 0}, contents);
     }
   }
@@ -1399,8 +1402,10 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 
       if (func->imported()) {
         // Imports return unknown values.
-        for (Index i = 0; i < func->getResults().size(); i++) {
-          finder.addRoot(ResultLocation{func, i}, PossibleContents::many());
+        auto results = func->getResults();
+        for (Index i = 0; i < results.size(); i++) {
+          finder.addRoot(ResultLocation{func, i},
+                         PossibleContents::fromType(results[i]));
         }
         return;
       }
@@ -1423,7 +1428,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   for (auto& global : wasm.globals) {
     if (global->imported()) {
       // Imports are unknown values.
-      finder.addRoot(GlobalLocation{global->name}, PossibleContents::many());
+      finder.addRoot(GlobalLocation{global->name},
+                     PossibleContents::fromType(global->type));
       continue;
     }
     auto* init = global->init;
@@ -1477,8 +1483,9 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   // that we can't see, so anything might arrive there.
   auto calledFromOutside = [&](Name funcName) {
     auto* func = wasm.getFunction(funcName);
+    auto params = func->getParams();
     for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[ParamLocation{func, i}] = PossibleContents::many();
+      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
     }
   };
 
@@ -1509,8 +1516,9 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
       // Exported mutable globals are roots, since the outside may write any
       // value to them.
       auto name = ex->value;
-      if (wasm.getGlobal(name)->mutable_) {
-        roots[GlobalLocation{name}] = PossibleContents::many();
+      auto* global = wasm.getGlobal(name);
+      if (global->mutable_) {
+        roots[GlobalLocation{name}] = PossibleContents::fromType(global->type);
       }
     }
   }
@@ -1974,9 +1982,9 @@ void Flower::dump(Location location) {
     std::cout << "  tagloc " << loc->tag << '\n';
   } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
     std::cout << "  paramloc " << loc->func->name << " : " << loc->index
-              << " tupleIndex " << loc->tupleIndex << '\n';
+              << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
-    std::cout << "  resultloc " << loc->func->name << " : " << loc->index
+    std::cout << "  resultloc $" << loc->func->name << " : " << loc->index
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';

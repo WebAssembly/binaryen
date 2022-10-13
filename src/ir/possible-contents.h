@@ -131,6 +131,26 @@ public:
   }
   static PossibleContents many() { return PossibleContents{Many()}; }
 
+  // Helper for creating a PossibleContents based on a wasm type, that is, where
+  // all we know is the wasm type.
+  static PossibleContents fromType(Type type) {
+    assert(type != Type::none);
+
+    if (type.isRef()) {
+      // For a reference, subtyping matters.
+      return fullConeType(type);
+    }
+
+    if (type == Type::unreachable) {
+      // Nothing is possible here.
+      return none();
+    }
+
+    // Otherwise, this is a concrete MVP type.
+    assert(type.isConcrete());
+    return exactType(type);
+  }
+
   PossibleContents& operator=(const PossibleContents& other) = default;
 
   bool operator==(const PossibleContents& other) const {
