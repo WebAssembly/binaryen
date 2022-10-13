@@ -32,10 +32,20 @@ struct MultiMemoryLowering : public Pass {
   // The name of the single memory that exists after this pass is run
   Name combinedMemory;
   // The type of the single memory
-  Type pointerType = Type::i32;
+  Type pointerType;
+  // Used to indicate the type of the single memory when creating instructions
+  // (memory.grow, memory.size) for that memory
+  Builder::MemoryInfo memoryInfo;
+  // If the combined memory is shared
+  bool isShared;
+  // The initial page size of the combined memory
+  size_t totalInitialPages;
+  // The max page size of the combined memory
+  size_t totalMaxPages;
   // There is no offset for the first memory, so offsetGlobalNames will always
   // have a size that is one less than the count of memories at the time this
-  // pass is run
+  // pass is run. Use helper getOffsetGlobal(Index) to index the vector
+  // conveniently without having to manipulate the index directly
   std::vector<Name> offsetGlobalNames;
   // Maps from the name of the memory to its index as seen in the
   // module->memories vector
@@ -60,12 +70,13 @@ struct MultiMemoryLowering : public Pass {
 
     this->wasm = module;
 
-    addCombinedMemory();
+    prepCombinedMemory();
     addOffsetGlobals();
     adjustActiveDataSegmentOffsets();
     createMemorySizeFunctions();
     createMemoryGrowFunctions();
     removeExistingMemories();
+    addCombinedMemory();
 
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
       MultiMemoryLowering& parent;
@@ -112,8 +123,8 @@ struct MultiMemoryLowering : public Pass {
         if (global == "") {
           return;
         }
-        curr->ptr = builder.makeGlobalGet(global,
-                                          parent.pointerType);
+        curr->ptr = builder.makeBinary(
+          Abstract::getBinary(parent.pointerType, Abstract::Add), builder.makeGlobalGet(global,                                          parent.pointerType), curr->ptr);
       }
 
       // We diverge from the spec here and are not trapping if the offset + type
@@ -127,8 +138,8 @@ struct MultiMemoryLowering : public Pass {
         if (global == "") {
           return;
         }
-        curr->ptr = builder.makeGlobalGet(global,
-                                          parent.pointerType);
+        curr->ptr = builder.makeBinary(
+          Abstract::getBinary(parent.pointerType, Abstract::Add), builder.makeGlobalGet(global,                                          parent.pointerType), curr->ptr);
       }
     };
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
@@ -154,11 +165,10 @@ struct MultiMemoryLowering : public Pass {
     return idx == offsetGlobalNames.size();
   }
 
-  void addCombinedMemory() {
+  void prepCombinedMemory() {
     pointerType = wasm->memories[0]->indexType;
-    bool isShared = wasm->memories[0]->shared;
-    size_t totalInitialPages = 0;
-    size_t totalMaxPages = 0;
+    memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32 : Builder::MemoryInfo::Memory64;
+    isShared = wasm->memories[0]->shared;
     for (auto& memory : wasm->memories) {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration
@@ -166,12 +176,12 @@ struct MultiMemoryLowering : public Pass {
       assert(memory->indexType == pointerType);
 
       // Calculating the total initial and max page size for the combined memory
+      // by totaling the initial and max page sizes for the memories in the module
       totalInitialPages += memory->initial;
       if (memory->hasMax()) {
         totalMaxPages += memory->max;
       }
     }
-
     // Ensuring valid initial and max page sizes that do not exceed the number
     // of pages addressable by the pointerType
     Address maxSize = pointerType == Type::i32 ? Memory::kMaxSize32 : Memory::kMaxSize64;
@@ -182,14 +192,9 @@ struct MultiMemoryLowering : public Pass {
       totalInitialPages = totalMaxPages;
     }
 
-    // Create the new combined memory
+    // Creating the combined memory name so we can reference the combined memory
+    // in subsequent instructions before it is added to the module
     combinedMemory = Names::getValidMemoryName(*wasm, "combined_memory");
-    auto memory = Builder::makeMemory(combinedMemory);
-    memory->shared = isShared;
-    memory->indexType = pointerType;
-    memory->initial = totalInitialPages;
-    memory->max = totalMaxPages;
-    wasm->addMemory(std::move(memory));
   }
 
   void addOffsetGlobals() {
@@ -207,12 +212,10 @@ struct MultiMemoryLowering : public Pass {
     };
 
     size_t offsetRunningTotal = 0;
-    // We don't need a page offset global for the first memory as it's always 0
-    // We also don't need a page offset global for the last memory as it's the
-    // combinedMemory we just created
-    for (Index i = 0; i < wasm->memories.size() - 1; i++) {
+    for (Index i = 0; i < wasm->memories.size(); i++) {
       auto& memory = wasm->memories[i];
       memoryIdxMap[memory->name] = i;
+      // We don't need a page offset global for the first memory as it's always 0
       if (i != 0) {
         Name name = Names::getValidGlobalName(
           *wasm, std::string(memory->name.c_str()) + "_page_offset");
@@ -244,9 +247,7 @@ struct MultiMemoryLowering : public Pass {
   }
 
   void createMemorySizeFunctions() {
-    // Don't create a memory size function for the last memory in the vector as
-    // its the combinedMemory we just added
-    for (Index i = 0; i < wasm->memories.size() - 1; i++) {
+    for (Index i = 0; i < wasm->memories.size(); i++) {
       auto function = memorySize(i);
       memorySizeNames.push_back(function->name);
       wasm->addFunction(std::move(function));
@@ -254,9 +255,7 @@ struct MultiMemoryLowering : public Pass {
   }
 
   void createMemoryGrowFunctions() {
-    // Don't create a memory size function for the last memory in the vector as
-    // its the combinedMemory we just added
-    for (Index i = 0; i < wasm->memories.size() - 1; i++) {
+    for (Index i = 0; i < wasm->memories.size(); i++) {
       auto function = memoryGrow(i);
       memoryGrowNames.push_back(function->name);
       wasm->addFunction(std::move(function));
@@ -286,7 +285,7 @@ struct MultiMemoryLowering : public Pass {
     // instead
     functionBody = builder.blockify(
       functionBody,
-      builder.makeDrop(builder.makeMemoryGrow(getPageDelta(), combinedMemory)));
+      builder.makeDrop(builder.makeMemoryGrow(getPageDelta(), combinedMemory, memoryInfo)));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
@@ -306,7 +305,7 @@ struct MultiMemoryLowering : public Pass {
           // size
           builder.makeBinary(
             Abstract::getBinary(pointerType, Abstract::Sub),
-            builder.makeMemorySize(combinedMemory),
+            builder.makeMemorySize(combinedMemory, memoryInfo),
             builder.makeGlobalGet(offsetGlobalName, pointerType)),
           combinedMemory,
           combinedMemory));
@@ -355,7 +354,7 @@ struct MultiMemoryLowering : public Pass {
       auto offsetGlobalName = getOffsetGlobal(memIdx);
       functionBody = builder.makeReturn(builder.makeBinary(
         Abstract::getBinary(pointerType, Abstract::Sub),
-        builder.makeMemorySize(combinedMemory),
+        builder.makeMemorySize(combinedMemory, memoryInfo),
         builder.makeGlobalGet(offsetGlobalName, pointerType)));
     } else {
       auto offsetGlobalName = getOffsetGlobal(memIdx);
@@ -371,12 +370,16 @@ struct MultiMemoryLowering : public Pass {
   }
 
   void removeExistingMemories() {
-    wasm->removeMemories([&](Memory* curr) {
-      if (curr->name != combinedMemory) {
-        return true;
-      }
-      return false;
-    });
+    wasm->removeMemories([&](Memory* curr) { return true; });
+  }
+
+  void addCombinedMemory() {
+    auto memory = Builder::makeMemory(combinedMemory);
+    memory->shared = isShared;
+    memory->indexType = pointerType;
+    memory->initial = totalInitialPages;
+    memory->max = totalMaxPages;
+    wasm->addMemory(std::move(memory));
   }
 };
 
