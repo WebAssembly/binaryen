@@ -1696,6 +1696,11 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // Nothing else can pass through, so filter such things out.
       auto maximalContents = PossibleContents::fullConeType(type);
       contents.intersectWithFullCone(maximalContents);
+      if (contents.isNone()) {
+        // Nothing was left here at all. Return that it is worth sending more.
+        assert(worthSendingMore);
+        return worthSendingMore;
+      }
       normalizeConeType(maximalContents);
       normalizeConeType(contents);
       if (contents == maximalContents) {
