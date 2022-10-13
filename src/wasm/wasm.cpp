@@ -1273,6 +1273,7 @@ Name Function::getLocalName(Index index) { return localNames.at(index); }
 void Function::setLocalName(Index index, Name name) {
   assert(index < getNumLocals());
   localNames[index] = name;
+  localIndices[name] = index;
 }
 
 Name Function::getLocalNameOrDefault(Index index) {
