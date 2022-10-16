@@ -24,6 +24,18 @@ namespace wasm {
 
 namespace EHUtils {
 
+// This returns three values, some of them as output parameters:
+// - Return value: 'pop' expression (Expression*), when there is one in
+//   first-descendant line. If there's no such pop, it returns null.
+// - isPopNested: Whether the discovered 'pop' is nested within a block
+// - popPtr: 'pop' expression's pointer (Expression**), when there is one found
+//
+// When 'catchBody' itself is a 'pop', 'pop''s pointer is null, because there is
+// no way to get the given expression's address. But that's fine because pop's
+// pointer is only necessary (in handleBlockNestedPops) to fix it up when it is
+// nested, and if 'catchBody' itself is a pop, we don't need to fix it up.
+Expression* getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr);
+
 // Returns true if a 'pop' instruction exists in a valid location, which means
 // right after a 'catch' instruction in binary writing order.
 // - This assumes there should be at least a single pop. So given a catch body

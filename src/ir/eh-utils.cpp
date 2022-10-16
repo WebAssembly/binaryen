@@ -32,7 +32,7 @@ namespace EHUtils {
 // no way to get the given expression's address. But that's fine because pop's
 // pointer is only necessary (in handleBlockNestedPops) to fix it up when it is
 // nested, and if 'catchBody' itself is a pop, we don't need to fix it up.
-static Expression*
+Expression*
 getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
   Expression* firstChild = catchBody;
   isPopNested = false;

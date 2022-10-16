@@ -312,6 +312,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "ir/eh-utils.h"
 #include "pass.h"
 #include "support/file.h"
 #include "support/string.h"
@@ -1077,6 +1078,67 @@ private:
         loop->body = results.back();
         results.pop_back();
         results.push_back(loop);
+        continue;
+      } else if (auto* tryy = curr->dynCast<Try>()) {
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          auto& catchBodies = tryy->catchBodies;
+          auto& catchTags = tryy->catchTags;
+          for (size_t i = catchBodies.size(); i > 0; i--) {
+            // TODO: Can optimize if !analyzer->canChangeState(child, func)
+            auto* child = catchBodies[i - 1];
+            if (i - 1 < catchTags.size()) {
+              auto type = module->getTag(catchTags[i - 1])->sig.params;
+              if (type != Type::none) {
+                bool isPopNested = false;
+                Expression** popPtr = nullptr;
+                auto* pop = EHUtils::getFirstPop(child, isPopNested, popPtr);
+                assert(pop != nullptr && popPtr != nullptr);
+                auto argsTemp = builder->addVar(func, type);
+                *popPtr = builder->makeLocalGet(argsTemp, type);
+                catchBodies[i - 1] = builder->makeLocalSet(argsTemp, pop);
+              } else {
+                catchBodies[i - 1] = builder->makeNop();
+              }
+            } else {
+              catchBodies[i - 1] = builder->makeNop();
+            }
+            work.push_back(Work{child, Work::Scan});
+          }
+          work.push_back(Work{tryy->body, Work::Scan});
+          continue;
+        }
+        tryy->body = results.back();
+        results.pop_back();
+        if (tryy->isDelegate()) {
+          results.push_back(tryy);
+          continue;
+        }
+        auto tagTemp = builder->addVar(func, Type::i32);
+        auto* successTag = builder->makeConstantExpression(Literal((int32_t)0));
+        auto* pre = makeMaybeSkip(builder->makeLocalSet(tagTemp, successTag));
+        std::vector<Expression*> parts = {pre, tryy};
+        auto& catchBodies = tryy->catchBodies;
+        for (size_t i = 0; i < catchBodies.size(); i++) {
+          auto* currentTag = builder->makeConstantExpression(Literal((int32_t)(i + 1)));
+          auto* newCatchBody = results.back();
+          results.pop_back();
+          catchBodies[i] = builder->makeBlock({
+              catchBodies[i],
+              builder->makeLocalSet(tagTemp, currentTag),
+            });
+          // Create catch equilvalent as an if
+          auto* newCatch = builder->makeIf(
+              builder->makeBinary(
+                OrInt32,
+                builder->makeBinary(EqInt32,
+                  builder->makeLocalGet(tagTemp, Type::i32),
+                  currentTag),
+                builder->makeStateCheck(State::Rewinding)),
+              newCatchBody);
+          parts.push_back(newCatch);
+        }
+        results.push_back(builder->makeBlock(parts));
         continue;
       } else if (doesCall(curr)) {
         results.push_back(makeCallSupport(curr));
