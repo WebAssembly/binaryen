@@ -1359,8 +1359,13 @@ private:
   // exists it is not added.
   void connectDuringFlow(Location from, Location to);
 
-  // Contents sent to a global location can be filtered in a special way during
-  // the flow, which is handled in this helper.
+  // Contents sent to certain locations can be filtered in a special way during
+  // the flow, which is handled in these helpers. These may update
+  // |worthSendingMore| which is whether it is worth sending any more content to
+  // this location in the future.
+  void filterExpressionContents(PossibleContents& contents,
+                                const ExpressionLocation& exprLoc,
+                                bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
 
@@ -1383,6 +1388,34 @@ private:
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
+
+  // The depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  std::unordered_map<HeapType, Index> maxDepths;
+
+  // Given a ConeType, normalize it, that is, make its depth the canonical
+  // depth given the actual children it has. If this is a full cone, then we can
+  // always pick the actual maximal depth and use that instead of FullDepth==-1.
+  // For a non-full cone, we also reduce the depth as much as possible, so it is
+  // equal to the maximum depth of an existing subtype.
+  void normalizeConeType(Type type, Index& depth) {
+    auto max = maxDepths[type.getHeapType()];
+    if (depth > max) {
+      depth = max;
+    }
+  }
+
+  void normalizeConeType(PossibleContents& cone) {
+    assert(cone.isConeType());
+    auto type = cone.getType();
+    auto before = cone.getCone().depth;
+    auto normalized = before;
+    normalizeConeType(type, normalized);
+    if (normalized != before) {
+      cone = PossibleContents::coneType(type, normalized);
+    }
+  }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
@@ -1530,6 +1563,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   if (getTypeSystem() == TypeSystem::Nominal ||
       getTypeSystem() == TypeSystem::Isorecursive) {
     subTypes = std::make_unique<SubTypes>(wasm);
+    maxDepths = std::move(subTypes->getMaxDepths());
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -1616,14 +1650,23 @@ bool Flower::updateContents(LocationIndex locationIndex,
 
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
-  //
-  // Many is always the worst possible case. A cone type of a non-reference is
-  // also the worst case, since subtyping is not relevant there, and so if we
-  // only know something about the type then we already know nothing beyond what
-  // the type in the wasm tells us (and from there we can only go to Many).
-  bool worthSendingMore = !contents.isMany();
-  if (!contents.getType().isRef() && contents.isConeType()) {
-    worthSendingMore = false;
+  bool worthSendingMore = true;
+  if (contents.isConeType()) {
+    if (!contents.getType().isRef()) {
+      // A cone type of a non-reference is the worst case, since subtyping is
+      // not relevant there, and so if we only know something about the type
+      // then we already know nothing beyond what the type in the wasm tells us
+      // (and from there we can only go to Many).
+      worthSendingMore = false;
+    } else {
+      // Normalize all reference cones. There is never a point to flow around
+      // anything non-normalized, which might lead to extra work. For example,
+      // if A has no subtypes, then a full cone for A is really the same as one
+      // with depth 0 (an exact type). And we don't want to see the full cone
+      // arrive and think it was an improvement over the one with depth 0 and do
+      // more flowing based on that.
+      normalizeConeType(contents);
+    }
   }
 
   // Check if anything changed. Note that we check not just the content but
@@ -1639,15 +1682,31 @@ bool Flower::updateContents(LocationIndex locationIndex,
 
   // Handle special cases: Some locations can only contain certain contents, so
   // filter accordingly.
-  if (auto* globalLoc =
-        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+  auto location = getLocation(locationIndex);
+  bool filtered = false;
+  if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    // TODO: Replace this with specific filterFoo or flowBar methods like we
+    //       have for flowRefCast and filterGlobalContents. That could save a
+    //       little wasted work here. Might be best to do that after the spec is
+    //       fully stable.
+    filterExpressionContents(contents, *exprLoc, worthSendingMore);
+    filtered = true;
+  } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
-    if (contents == oldContents &&
-        contents.getType() == oldContents.getType()) {
-      // Nothing actually changed after filtering, so just return.
-      return worthSendingMore;
-    }
+    filtered = true;
   }
+
+  // If we think more might arrive, and we filtered, the filtering might have
+  // changed that, so check.
+  if (worthSendingMore && filtered && contents == oldContents &&
+      contents.getType() == oldContents.getType()) {
+    // Nothing actually changed after filtering, so just return.
+    return worthSendingMore;
+  }
+
+  // After filtering we should always have more precise information than "many"
+  // - in the worst case, we can have the type declared in the wasm.
+  assert(!contents.isMany());
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "  updateContents has something new\n";
@@ -1773,6 +1832,59 @@ void Flower::connectDuringFlow(Location from, Location to) {
     // In addition to adding the link, which will ensure new contents appearing
     // later will be sent along, we also update with the current contents.
     updateContents(to, getContents(getIndex(from)));
+  }
+}
+
+void Flower::filterExpressionContents(PossibleContents& contents,
+                                      const ExpressionLocation& exprLoc,
+                                      bool& worthSendingMore) {
+  auto type = exprLoc.expr->type;
+  if (type.isRef()) {
+    // The maximal contents here are the declared type and all subtypes.
+    // Nothing else can pass through, so filter such things out.
+    auto maximalContents = PossibleContents::fullConeType(type);
+    contents.intersectWithFullCone(maximalContents);
+    if (contents.isNone()) {
+      // Nothing was left here at all. It is definitely worth sending more.
+      worthSendingMore = true;
+      return;
+    }
+
+    // Normalize the intersection. We want to check later if any more content
+    // can arrive here, and also we want to avoid flowing around anything non-
+    // normalized, as explained earlier.
+    //
+    // Note that this normalization is necessary even though |contents| was
+    // normalized before the intersection, e.g.:
+    /*
+    //      A
+    //     / \
+    //    B   C
+    //        |
+    //        D
+    */
+    // Consider the case where |maximalContents| is Cone(B, Infinity) and
+    // the original |contents| was Cone(A, 2) (which is normalized). The naive
+    // intersection is Cone(B, 1), since the core intersection logic makes no
+    // assumptions about the rest of the types. That is then normalized to
+    // Cone(B, 0) since there happens to be no subtypes for B.
+    //
+    // Note that the intersection may also not be a cone type, if it is a
+    // global or literal. In that case we don't have anything more to do here.
+    if (contents.isConeType()) {
+      normalizeConeType(contents);
+
+      // There is a chance that the intersection is equal to the maximal
+      // contents, which would mean nothing more can arrive here. (Note that
+      // we can't normalize |maximalContents| before the intersection as
+      // intersectWithFullCone assumes a full/infinite cone.)
+      normalizeConeType(maximalContents);
+
+      if (contents == maximalContents) {
+        // We already contain everything possible, so this is the worst case.
+        worthSendingMore = false;
+      }
+    }
   }
 }
 
