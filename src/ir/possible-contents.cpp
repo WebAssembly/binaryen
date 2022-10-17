@@ -1714,8 +1714,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
     }
   }
 
-  // After filtering we should always have more precise information than "many" - in the worst
-  // case, we can have the type declared in the wasm.
+  // After filtering we should always have more precise information than "many"
+  // - in the worst case, we can have the type declared in the wasm.
   assert(!contents.isMany());
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
