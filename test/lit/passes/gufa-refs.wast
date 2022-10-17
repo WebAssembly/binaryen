@@ -5202,9 +5202,12 @@
   ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct_subtype (field (mut i32)) data))
 
-  ;; CHECK:      (type $none_=>_ref|$A| (func_subtype (result (ref $A)) func))
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+  (type $B (struct_subtype (field (mut i32)) $A))
 
   ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (type $none_=>_ref|$A| (func_subtype (result (ref $A)) func))
 
   ;; CHECK:      (import "a" "b" (global $A (ref $A)))
   (import "a" "b" (global $A (ref $A)))
@@ -5222,9 +5225,11 @@
   ;; CHECK:      (export "mut_A" (global $mut_A))
   (export "mut_A" (global $mut_A))
 
-  ;; CHECK:      (export "test" (func $test))
+  ;; CHECK:      (export "yes" (func $yes))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; CHECK:      (export "no" (func $no))
+
+  ;; CHECK:      (func $yes (type $ref|$A|_=>_none) (param $A (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -5243,7 +5248,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (export "test") (param $A (ref $A))
+  (func $yes (export "yes") (param $A (ref $A))
     ;; An imported global has a known type, at least, which in this case is
     ;; enough for us to infer a result of 1.
     (drop
@@ -5268,6 +5273,53 @@
     ;; the type remains known, and we can optimize to 1.
     (drop
       (ref.test_static $A
+        (global.get $A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $no (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (global.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (call $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (global.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no (export "no") (param $A (ref $A))
+    ;; Identical to the above function, but now all tests are vs type $B. We
+    ;; cannot optimize any of these, as all we know is the type is $A.
+    (drop
+      (ref.test_static $B
+        (global.get $A)
+      )
+    )
+    (drop
+      (ref.test_static $B
+        (call $A)
+      )
+    )
+    (drop
+      (ref.test_static $B
+        (local.get $A)
+      )
+    )
+    (drop
+      (ref.test_static $B
         (global.get $A)
       )
     )
