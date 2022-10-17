@@ -1872,19 +1872,21 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   //
   // Note that the intersection may also not be a cone type, if it is a global
   // or literal. In that case we don't have anything more to do here.
-  if (contents.isConeType()) {
-    normalizeConeType(contents);
+  if (!contents.isConeType()) {
+    return;
+  }
 
-    // There is a chance that the intersection is equal to the maximal contents,
-    // which would mean nothing more can arrive here. (Note that we can't
-    // normalize |maximalContents| before the intersection as
-    // intersectWithFullCone assumes a full/infinite cone.)
-    normalizeConeType(maximalContents);
+  normalizeConeType(contents);
 
-    if (contents == maximalContents) {
-      // We already contain everything possible, so this is the worst case.
-      worthSendingMore = false;
-    }
+  // There is a chance that the intersection is equal to the maximal contents,
+  // which would mean nothing more can arrive here. (Note that we can't
+  // normalize |maximalContents| before the intersection as
+  // intersectWithFullCone assumes a full/infinite cone.)
+  normalizeConeType(maximalContents);
+
+  if (contents == maximalContents) {
+    // We already contain everything possible, so this is the worst case.
+    worthSendingMore = false;
   }
 }
 
