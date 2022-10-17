@@ -1394,10 +1394,6 @@ private:
   // always pick the actual maximal depth and use that instead of FullDepth==-1.
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
-  //
-  // Returns whether the cone is of maximal depth (with or without
-  // normalization).
-  // TODO: remove return values?
   void normalizeConeType(Type type, Index& depth) {
     auto max = maxDepths[type.getHeapType()];
     if (depth > max) {
