@@ -1689,7 +1689,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     auto type = exprLoc->expr->type;
-    if (type.isRef() && contents.isConeType()) {
+    if (type.isRef()) {
       // The maximal contents here are the declared type and all subtypes.
       // Nothing else can pass through, so filter such things out.
       auto maximalContents = PossibleContents::fullConeType(type);
@@ -1700,7 +1700,6 @@ bool Flower::updateContents(LocationIndex locationIndex,
         return worthSendingMore;
       }
       normalizeConeType(maximalContents);
-      normalizeConeType(contents); // FIXME redundant?
       if (contents == maximalContents) {
         // We already contain everything possible, so this is the worst case.
         worthSendingMore = false;
