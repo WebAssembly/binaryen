@@ -854,6 +854,33 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   auto bodyContents =
     oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
   ASSERT_TRUE(bodyContents.isConeType());
-  EXPECT_TRUE(bodyContents.getType().getHeapType() == HeapType::data);
-  EXPECT_TRUE(bodyContents.getCone().depth == 1);
+  EXPECT_EQ(bodyContents.getType().getHeapType(), HeapType::data);
+  EXPECT_EQ(bodyContents.getCone().depth, Index(1));
+}
+
+TEST_F(PossibleContentsTest, TestOracleNoFullCones) {
+  // PossibleContents should be normalized, so we never have full cones (depth
+  // infinity).
+  auto wasm = parse(R"(
+    (module
+      (type $A (struct_subtype (field i32) data))
+      (type $B (struct_subtype (field i32) $A))
+      (type $C (struct_subtype (field i32) $B))
+      (func $foo (export "foo")
+        ;; Note we must declare $C so that $B and $C have uses and are not
+        ;; removed automatically from consideration.
+        (param $a (ref $A)) (param $c (ref $C))
+        (result (ref any))
+        (local.get $a)
+      )
+    )
+  )");
+  ContentOracle oracle(*wasm);
+  // The function is exported, and all we know about the parameter $a is that it
+  // is some subtype of $A. This is normalized to depth 2 because that is the
+  // actual depth of subtypes.
+  auto bodyContents =
+    oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
+  ASSERT_TRUE(bodyContents.isConeType());
+  EXPECT_EQ(bodyContents.getCone().depth, Index(2));
 }
