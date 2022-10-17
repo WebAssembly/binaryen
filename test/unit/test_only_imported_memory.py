@@ -2,8 +2,8 @@ from scripts.test import shared
 from . import utils
 
 
-class DataCountTest(utils.BinaryenTestCase):
-    def test_datacount(self):
+class OnlyImportedMemoryTest(utils.BinaryenTestCase):
+    def test_only_imported_memory(self):
         # We should not create a memories section for a file with only an
         # imported memory: such a module has no declared memories.
-        self.roundtrip('only-imported-memory.wasm')
+        self.roundtrip('only-imported-memory.wasm', debug=False)
