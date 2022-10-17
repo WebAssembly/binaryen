@@ -1398,8 +1398,8 @@ private:
   // Returns whether the cone is of maximal depth (with or without
   // normalization).
   // TODO: remove return values?
-  void normalizeConeType(HeapType type, Index& depth) {
-    auto max = maxDepths[type];
+  void normalizeConeType(Type type, Index& depth) {
+    auto max = maxDepths[type.getHeapType];
     if (depth > max) {
       depth = max;
     }
@@ -1410,7 +1410,7 @@ private:
     auto type = cone.getType();
     auto before = cone.getCone().depth;
     auto normalized = before;
-    normalizeConeType(type.getHeapType(), normalized);
+    normalizeConeType(type, normalized);
     if (normalized != before) {
       cone = PossibleContents::coneType(type, normalized);
     }
@@ -1936,7 +1936,7 @@ void Flower::readFromData(HeapType declaredHeapType,
   // normalize the cone which can avoid wasted work later (we don't want two
   // cone depths which refer to the same types in practice).
   auto cone = refContents.getCone();
-  normalizeConeType(cone.type.getHeapType(), cone.depth);
+  normalizeConeType(cone.type, cone.depth);
 
   // We create a ConeReadLocation for the canonical cone of this type, to
   // avoid bloating the graph, see comment on ConeReadLocation().
@@ -2002,7 +2002,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
   // As in readFromData, normalize to the proper cone.
   auto cone = refContents.getCone();
-  normalizeConeType(cone.type.getHeapType(), cone.depth);
+  normalizeConeType(cone.type, cone.depth);
 
   subTypes->iterSubTypes(
     cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
