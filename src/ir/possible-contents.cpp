@@ -1696,9 +1696,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
     filtered = true;
   }
 
-  // If we think more might arrive, and we filtered, the filtering might have
-  // changed that, so check.
-  if (worthSendingMore && filtered && contents == oldContents &&
+  if (filtered && contents == oldContents &&
       contents.getType() == oldContents.getType()) {
     // Nothing actually changed after filtering, so just return.
     return worthSendingMore;
