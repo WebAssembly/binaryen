@@ -1659,7 +1659,6 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // if A has no subtypes, then a full cone for A would be normalized to an
       // exact one (depth 0). So if we saw a non-normalized cone reach a
       // normalized one, we'd think more was added.
-      // TODO: Alternatively we could normalize every possible input to the flow
       normalizeConeType(contents);
     }
   }
