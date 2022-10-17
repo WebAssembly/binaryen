@@ -1398,27 +1398,22 @@ private:
   // Returns whether the cone is of maximal depth (with or without
   // normalization).
   // TODO: remove return values?
-  bool normalizeConeType(HeapType type, Index& depth) {
+  void normalizeConeType(HeapType type, Index& depth) {
     auto max = maxDepths[type];
     if (depth > max) {
       depth = max;
-      return true;
     }
-    return depth == max;
   }
 
-  bool normalizeConeType(PossibleContents& cone) {
+  void normalizeConeType(PossibleContents& cone) {
     assert(cone.isConeType());
     auto type = cone.getType();
     auto before = cone.getCone().depth;
     auto normalized = before;
-    if (normalizeConeType(type.getHeapType(), normalized)) {
-      if (normalized != before) {
-        cone = PossibleContents::coneType(type, normalized);
-      }
-      return true;
+    normalizeConeType(type.getHeapType(), normalized);
+    if (normalized != before) {
+      cone = PossibleContents::coneType(type, normalized);
     }
-    return false;
   }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
