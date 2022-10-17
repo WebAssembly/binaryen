@@ -1656,9 +1656,10 @@ bool Flower::updateContents(LocationIndex locationIndex,
     } else {
       // Normalize all reference cones. There is never a point to flow around
       // anything non-normalized, which might lead to extra work. For example,
-      // if A has no subtypes, then a full cone for A would be normalized to an
-      // exact one (depth 0). So if we saw a non-normalized cone reach a
-      // normalized one, we'd think more was added.
+      // if A has no subtypes, then a full cone for A is really the same as one
+      // with depth 0 (an exact type). And we don't want to see the full cone
+      // arrive and think it was an improvement over the one with depth 0 and do
+      // more flowing based on that.
       normalizeConeType(contents);
     }
   }
@@ -1689,7 +1690,30 @@ bool Flower::updateContents(LocationIndex locationIndex,
         assert(worthSendingMore);
         return worthSendingMore;
       }
+
+      // Note that we can't normalize |maximalContents| first, as
+      // intersectWithFullCone assumes a full/infinite cone. Normalize it after
+      // the intersection in order to see if the result is maximal.
       normalizeConeType(maximalContents);
+
+      // Also normalize the intersection, both for a proper comparison, and also
+      // to avoid flowing around anything non-normalized, as explained earlier.
+      // Note that this normalization is necessary even though |contents| was
+      // normalized before the intersection, e.g.:
+      /*
+      //      A
+      //     / \
+      //    B   C
+      //        |
+      //        D
+      */
+      // Consider the case where |maximalContents| is Cone(B, Infinity) and
+      // the original |contents| was Cone(A, 2) (which is normalized). The naive
+      // intersection is Cone(B, 1), since the core intersection logic makes no
+      // assumptions about the rest of the types. That is then normalized to
+      // Cone(B, 0) since there happens to be no subtypes for B.
+      normalizeConeType(contents);
+
       if (contents == maximalContents) {
         // We already contain everything possible, so this is the worst case.
         worthSendingMore = false;
