@@ -1399,7 +1399,7 @@ private:
   // normalization).
   // TODO: remove return values?
   void normalizeConeType(Type type, Index& depth) {
-    auto max = maxDepths[type.getHeapType];
+    auto max = maxDepths[type.getHeapType()];
     if (depth > max) {
       depth = max;
     }
