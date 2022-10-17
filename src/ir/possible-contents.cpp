@@ -1359,8 +1359,13 @@ private:
   // exists it is not added.
   void connectDuringFlow(Location from, Location to);
 
-  // Contents sent to a global location can be filtered in a special way during
-  // the flow, which is handled in this helper.
+  // Contents sent to certain locations can be filtered in a special way during
+  // the flow, which is handled in these helpers. These may update
+  // |worthSendingMore| which is whether it is worth sending any more content to
+  // this location in the future.
+  void filterExpressionContents(PossibleContents& contents,
+                                const ExpressionLocation& exprLoc,
+                                bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
 
@@ -1678,62 +1683,21 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // Handle special cases: Some locations can only contain certain contents, so
   // filter accordingly.
   auto location = getLocation(locationIndex);
+  bool filtered = false;
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-    auto type = exprLoc->expr->type;
-    if (type.isRef()) {
-      // The maximal contents here are the declared type and all subtypes.
-      // Nothing else can pass through, so filter such things out.
-      auto maximalContents = PossibleContents::fullConeType(type);
-      contents.intersectWithFullCone(maximalContents);
-      if (contents.isNone()) {
-        // Nothing was left here at all. Return that it is worth sending more.
-        assert(worthSendingMore);
-        return worthSendingMore;
-      }
-
-      // Normalize the intersection. We want to check later if any more content
-      // can arrive here, and also we want to avoid flowing around anything non-
-      // normalized, as explained earlier.
-      //
-      // Note that this normalization is necessary even though |contents| was
-      // normalized before the intersection, e.g.:
-      /*
-      //      A
-      //     / \
-      //    B   C
-      //        |
-      //        D
-      */
-      // Consider the case where |maximalContents| is Cone(B, Infinity) and
-      // the original |contents| was Cone(A, 2) (which is normalized). The naive
-      // intersection is Cone(B, 1), since the core intersection logic makes no
-      // assumptions about the rest of the types. That is then normalized to
-      // Cone(B, 0) since there happens to be no subtypes for B.
-      //
-      // Note that the intersection may also not be a cone type, if it is a
-      // global or literal. In that case we don't have anything more to do here.
-      if (contents.isConeType()) {
-        normalizeConeType(contents);
-
-        // There is a chance that the intersection is equal to the maximal
-        // contents, which would mean nothing more can arrive here. (Note that
-        // we can't normalize |maximalContents| before the intersection as
-        // intersectWithFullCone assumes a full/infinite cone.)
-        normalizeConeType(maximalContents);
-
-        if (contents == maximalContents) {
-          // We already contain everything possible, so this is the worst case.
-          worthSendingMore = false;
-        }
-      }
-    }
+    filterExpressionContents(contents, *exprLoc, worthSendingMore);
+    filtered = true;
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
-    if (contents == oldContents &&
-        contents.getType() == oldContents.getType()) {
-      // Nothing actually changed after filtering, so just return.
-      return worthSendingMore;
-    }
+    filtered = true;
+  }
+
+  // If we think more might arrive, and we filtered, the filtering might have
+  // changed that, so check.
+  if (worthSendingMore && filtered && contents == oldContents &&
+      contents.getType() == oldContents.getType()) {
+    // Nothing actually changed after filtering, so just return.
+    return worthSendingMore;
   }
 
   // After filtering we should always have more precise information than "many"
@@ -1864,6 +1828,59 @@ void Flower::connectDuringFlow(Location from, Location to) {
     // In addition to adding the link, which will ensure new contents appearing
     // later will be sent along, we also update with the current contents.
     updateContents(to, getContents(getIndex(from)));
+  }
+}
+
+void Flower::filterExpressionContents(PossibleContents& contents,
+                                      const ExpressionLocation& exprLoc,
+                                      bool& worthSendingMore) {
+  auto type = exprLoc.expr->type;
+  if (type.isRef()) {
+    // The maximal contents here are the declared type and all subtypes.
+    // Nothing else can pass through, so filter such things out.
+    auto maximalContents = PossibleContents::fullConeType(type);
+    contents.intersectWithFullCone(maximalContents);
+    if (contents.isNone()) {
+      // Nothing was left here at all. It is definitely worth sending more.
+      worthSendingMore = true;
+      return;
+    }
+
+    // Normalize the intersection. We want to check later if any more content
+    // can arrive here, and also we want to avoid flowing around anything non-
+    // normalized, as explained earlier.
+    //
+    // Note that this normalization is necessary even though |contents| was
+    // normalized before the intersection, e.g.:
+    /*
+    //      A
+    //     / \
+    //    B   C
+    //        |
+    //        D
+    */
+    // Consider the case where |maximalContents| is Cone(B, Infinity) and
+    // the original |contents| was Cone(A, 2) (which is normalized). The naive
+    // intersection is Cone(B, 1), since the core intersection logic makes no
+    // assumptions about the rest of the types. That is then normalized to
+    // Cone(B, 0) since there happens to be no subtypes for B.
+    //
+    // Note that the intersection may also not be a cone type, if it is a
+    // global or literal. In that case we don't have anything more to do here.
+    if (contents.isConeType()) {
+      normalizeConeType(contents);
+
+      // There is a chance that the intersection is equal to the maximal
+      // contents, which would mean nothing more can arrive here. (Note that
+      // we can't normalize |maximalContents| before the intersection as
+      // intersectWithFullCone assumes a full/infinite cone.)
+      normalizeConeType(maximalContents);
+
+      if (contents == maximalContents) {
+        // We already contain everything possible, so this is the worst case.
+        worthSendingMore = false;
+      }
+    }
   }
 }
 
