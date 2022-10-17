@@ -1685,6 +1685,10 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
   bool filtered = false;
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    // TODO: Replace this with specific filterFoo or flowBar methods like we
+    //       have for flowRefCast and filterGlobalContents. That could save a
+    //       little wasted work here. Might be best to do that after the spec is
+    //       fully stable.
     filterExpressionContents(contents, *exprLoc, worthSendingMore);
     filtered = true;
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
