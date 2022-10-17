@@ -1,4 +1,3 @@
-from scripts.test import shared
 from . import utils
 
 
