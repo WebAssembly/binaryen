@@ -5202,20 +5202,43 @@
   ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
   (type $A (struct_subtype (field (mut i32)) data))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_ref|$A| (func_subtype (result (ref $A)) func))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
 
   ;; CHECK:      (import "a" "b" (global $A (ref $A)))
   (import "a" "b" (global $A (ref $A)))
 
+  ;; CHECK:      (import "a" "c" (func $A (result (ref $A))))
   (import "a" "c" (func $A (result (ref $A))))
 
+  ;; CHECK:      (global $mut_A (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
   (global $mut_A (ref $A) (struct.new $A
     (i32.const 42)
   ))
 
+  ;; CHECK:      (export "mut_A" (global $mut_A))
   (export "mut_A" (global $mut_A))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
