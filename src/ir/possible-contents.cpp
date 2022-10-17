@@ -1696,9 +1696,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
     filtered = true;
   }
 
-  // If we think more might arrive, and we filtered, the filtering might have
-  // changed that, so check.
-  if (worthSendingMore && filtered && contents == oldContents &&
+  if (filtered && contents == oldContents &&
       contents.getType() == oldContents.getType()) {
     // Nothing actually changed after filtering, so just return.
     return worthSendingMore;
@@ -1842,8 +1840,9 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   if (!type.isRef()) {
     return;
   }
-  // The maximal contents here are the declared type and all subtypes.
-  // Nothing else can pass through, so filter such things out.
+
+  // The maximal contents here are the declared type and all subtypes. Nothing
+  // else can pass through, so filter such things out.
   auto maximalContents = PossibleContents::fullConeType(type);
   contents.intersectWithFullCone(maximalContents);
   if (contents.isNone()) {
@@ -1852,8 +1851,8 @@ void Flower::filterExpressionContents(PossibleContents& contents,
     return;
   }
 
-  // Normalize the intersection. We want to check later if any more content
-  // can arrive here, and also we want to avoid flowing around anything non-
+  // Normalize the intersection. We want to check later if any more content can
+  // arrive here, and also we want to avoid flowing around anything non-
   // normalized, as explained earlier.
   //
   // Note that this normalization is necessary even though |contents| was
@@ -1865,20 +1864,20 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   //        |
   //        D
   */
-  // Consider the case where |maximalContents| is Cone(B, Infinity) and
-  // the original |contents| was Cone(A, 2) (which is normalized). The naive
+  // Consider the case where |maximalContents| is Cone(B, Infinity) and the
+  // original |contents| was Cone(A, 2) (which is normalized). The naive
   // intersection is Cone(B, 1), since the core intersection logic makes no
   // assumptions about the rest of the types. That is then normalized to
   // Cone(B, 0) since there happens to be no subtypes for B.
   //
-  // Note that the intersection may also not be a cone type, if it is a
-  // global or literal. In that case we don't have anything more to do here.
+  // Note that the intersection may also not be a cone type, if it is a global
+  // or literal. In that case we don't have anything more to do here.
   if (contents.isConeType()) {
     normalizeConeType(contents);
 
-    // There is a chance that the intersection is equal to the maximal
-    // contents, which would mean nothing more can arrive here. (Note that
-    // we can't normalize |maximalContents| before the intersection as
+    // There is a chance that the intersection is equal to the maximal contents,
+    // which would mean nothing more can arrive here. (Note that we can't
+    // normalize |maximalContents| before the intersection as
     // intersectWithFullCone assumes a full/infinite cone.)
     normalizeConeType(maximalContents);
 
