@@ -1837,51 +1837,52 @@ void Flower::filterExpressionContents(PossibleContents& contents,
                                       const ExpressionLocation& exprLoc,
                                       bool& worthSendingMore) {
   auto type = exprLoc.expr->type;
-  if (type.isRef()) {
-    // The maximal contents here are the declared type and all subtypes.
-    // Nothing else can pass through, so filter such things out.
-    auto maximalContents = PossibleContents::fullConeType(type);
-    contents.intersectWithFullCone(maximalContents);
-    if (contents.isNone()) {
-      // Nothing was left here at all. It is definitely worth sending more.
-      worthSendingMore = true;
-      return;
-    }
+  if (!type.isRef()) {
+    return;
+  }
+  // The maximal contents here are the declared type and all subtypes.
+  // Nothing else can pass through, so filter such things out.
+  auto maximalContents = PossibleContents::fullConeType(type);
+  contents.intersectWithFullCone(maximalContents);
+  if (contents.isNone()) {
+    // Nothing was left here at all. It is definitely worth sending more.
+    worthSendingMore = true;
+    return;
+  }
 
-    // Normalize the intersection. We want to check later if any more content
-    // can arrive here, and also we want to avoid flowing around anything non-
-    // normalized, as explained earlier.
-    //
-    // Note that this normalization is necessary even though |contents| was
-    // normalized before the intersection, e.g.:
-    /*
-    //      A
-    //     / \
-    //    B   C
-    //        |
-    //        D
-    */
-    // Consider the case where |maximalContents| is Cone(B, Infinity) and
-    // the original |contents| was Cone(A, 2) (which is normalized). The naive
-    // intersection is Cone(B, 1), since the core intersection logic makes no
-    // assumptions about the rest of the types. That is then normalized to
-    // Cone(B, 0) since there happens to be no subtypes for B.
-    //
-    // Note that the intersection may also not be a cone type, if it is a
-    // global or literal. In that case we don't have anything more to do here.
-    if (contents.isConeType()) {
-      normalizeConeType(contents);
+  // Normalize the intersection. We want to check later if any more content
+  // can arrive here, and also we want to avoid flowing around anything non-
+  // normalized, as explained earlier.
+  //
+  // Note that this normalization is necessary even though |contents| was
+  // normalized before the intersection, e.g.:
+  /*
+  //      A
+  //     / \
+  //    B   C
+  //        |
+  //        D
+  */
+  // Consider the case where |maximalContents| is Cone(B, Infinity) and
+  // the original |contents| was Cone(A, 2) (which is normalized). The naive
+  // intersection is Cone(B, 1), since the core intersection logic makes no
+  // assumptions about the rest of the types. That is then normalized to
+  // Cone(B, 0) since there happens to be no subtypes for B.
+  //
+  // Note that the intersection may also not be a cone type, if it is a
+  // global or literal. In that case we don't have anything more to do here.
+  if (contents.isConeType()) {
+    normalizeConeType(contents);
 
-      // There is a chance that the intersection is equal to the maximal
-      // contents, which would mean nothing more can arrive here. (Note that
-      // we can't normalize |maximalContents| before the intersection as
-      // intersectWithFullCone assumes a full/infinite cone.)
-      normalizeConeType(maximalContents);
+    // There is a chance that the intersection is equal to the maximal
+    // contents, which would mean nothing more can arrive here. (Note that
+    // we can't normalize |maximalContents| before the intersection as
+    // intersectWithFullCone assumes a full/infinite cone.)
+    normalizeConeType(maximalContents);
 
-      if (contents == maximalContents) {
-        // We already contain everything possible, so this is the worst case.
-        worthSendingMore = false;
-      }
+    if (contents == maximalContents) {
+      // We already contain everything possible, so this is the worst case.
+      worthSendingMore = false;
     }
   }
 }
