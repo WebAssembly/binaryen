@@ -204,7 +204,7 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemories() {
-  if (wasm->memories.empty()) {
+  if (importInfo->getNumDefinedMemories() == 0) {
     return;
   }
   BYN_TRACE("== writeMemories\n");
