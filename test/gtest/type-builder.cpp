@@ -506,6 +506,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   HeapType eq = HeapType::eq;
   HeapType i31 = HeapType::i31;
   HeapType data = HeapType::data;
+  HeapType array = HeapType::array;
   HeapType string = HeapType::string;
   HeapType stringview_wtf8 = HeapType::stringview_wtf8;
   HeapType stringview_wtf16 = HeapType::stringview_wtf16;
@@ -551,6 +552,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(ext, eq, {});
   assertLUB(ext, i31, {});
   assertLUB(ext, data, {});
+  assertLUB(ext, array, {});
   assertLUB(ext, string, {});
   assertLUB(ext, stringview_wtf8, {});
   assertLUB(ext, stringview_wtf16, {});
@@ -567,6 +569,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(func, eq, {});
   assertLUB(func, i31, {});
   assertLUB(func, data, {});
+  assertLUB(func, array, {});
   assertLUB(func, string, {});
   assertLUB(func, stringview_wtf8, {});
   assertLUB(func, stringview_wtf16, {});
@@ -582,6 +585,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(any, eq, any);
   assertLUB(any, i31, any);
   assertLUB(any, data, any);
+  assertLUB(any, array, any);
   assertLUB(any, string, any);
   assertLUB(any, stringview_wtf8, any);
   assertLUB(any, stringview_wtf16, any);
@@ -596,6 +600,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(eq, eq, eq);
   assertLUB(eq, i31, eq);
   assertLUB(eq, data, eq);
+  assertLUB(eq, array, eq);
   assertLUB(eq, string, any);
   assertLUB(eq, stringview_wtf8, any);
   assertLUB(eq, stringview_wtf16, any);
@@ -609,6 +614,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
 
   assertLUB(i31, i31, i31);
   assertLUB(i31, data, eq);
+  assertLUB(i31, array, eq);
   assertLUB(i31, string, any);
   assertLUB(i31, stringview_wtf8, any);
   assertLUB(i31, stringview_wtf16, any);
@@ -621,6 +627,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(i31, defArray, eq);
 
   assertLUB(data, data, data);
+  assertLUB(data, array, data);
   assertLUB(data, string, any);
   assertLUB(data, stringview_wtf8, any);
   assertLUB(data, stringview_wtf16, any);
@@ -631,6 +638,18 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(data, defFunc, {});
   assertLUB(data, defStruct, data);
   assertLUB(data, defArray, data);
+
+  assertLUB(array, array, array);
+  assertLUB(array, string, any);
+  assertLUB(array, stringview_wtf8, any);
+  assertLUB(array, stringview_wtf16, any);
+  assertLUB(array, stringview_iter, any);
+  assertLUB(array, none, array);
+  assertLUB(array, noext, {});
+  assertLUB(array, nofunc, {});
+  assertLUB(array, defFunc, {});
+  assertLUB(array, defStruct, data);
+  assertLUB(array, defArray, array);
 
   assertLUB(string, string, string);
   assertLUB(string, stringview_wtf8, any);
@@ -865,13 +884,14 @@ TEST_F(NominalTest, TestDepth) {
     C = built[2];
   }
 
-  // any < eq < data < specific struct and array types
+  // any :> eq :> data :> array :> specific array types
   EXPECT_EQ(HeapType(HeapType::any).getDepth(), 0U);
   EXPECT_EQ(HeapType(HeapType::eq).getDepth(), 1U);
   EXPECT_EQ(HeapType(HeapType::data).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::array).getDepth(), 3U);
   EXPECT_EQ(A.getDepth(), 3U);
   EXPECT_EQ(B.getDepth(), 4U);
-  EXPECT_EQ(C.getDepth(), 3U);
+  EXPECT_EQ(C.getDepth(), 4U);
 
   // Signature types are subtypes of func.
   EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);

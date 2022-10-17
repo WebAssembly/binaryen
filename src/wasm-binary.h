@@ -378,6 +378,7 @@ enum EncodedType {
   i31ref = -0x16, // 0x6a
   // gc and string reference types
   dataref = -0x19,          // 0x67
+  arrayref = -0x1a,         // 0x66
   stringref = -0x1c,        // 0x64
   stringview_wtf8 = -0x1d,  // 0x63
   stringview_wtf16 = -0x1e, // 0x62
@@ -408,6 +409,7 @@ enum EncodedHeapType {
   eq = -0x13,     // 0x6d
   i31 = -0x16,    // 0x6a
   data = -0x19,   // 0x67
+  array = -0x1a,  // 0x66
   string = -0x1c, // 0x64
   // stringview/iter constants are identical to type, and cannot be duplicated
   // here as that would be a compiler error, so add _heap suffixes. See

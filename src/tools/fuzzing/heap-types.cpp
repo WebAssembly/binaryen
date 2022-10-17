@@ -152,7 +152,7 @@ struct HeapTypeGeneratorImpl {
     if (rand.oneIn(16)) {
       return rand.pick(HeapType::noext, HeapType::nofunc, HeapType::none);
     }
-    // TODO: strings
+    // TODO: strings and array
     return rand.pick(HeapType::func,
                      HeapType::ext,
                      HeapType::any,
@@ -326,6 +326,8 @@ struct HeapTypeGeneratorImpl {
           return HeapType::i31;
         case HeapType::data:
           return pickSubData();
+        case HeapType::array:
+          WASM_UNREACHABLE("TODO: fuzz array");
         case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
@@ -463,6 +465,8 @@ struct HeapTypeGeneratorImpl {
           return DataKind{};
         case HeapType::data:
           return DataKind{};
+        case HeapType::array:
+          WASM_UNREACHABLE("TODO: fuzz array");
         case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
