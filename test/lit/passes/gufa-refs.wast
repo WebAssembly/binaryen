@@ -5185,3 +5185,133 @@
     )
   )
 )
+
+;; Tests for proper inference of imported etc. values - we do know their type,
+;; at least.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+  (type $A (struct_subtype (field (mut i32)) data))
+
+  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+  (type $B (struct_subtype (field (mut i32)) $A))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (type $none_=>_ref|$A| (func_subtype (result (ref $A)) func))
+
+  ;; CHECK:      (import "a" "b" (global $A (ref $A)))
+  (import "a" "b" (global $A (ref $A)))
+
+  ;; CHECK:      (import "a" "c" (func $A (result (ref $A))))
+  (import "a" "c" (func $A (result (ref $A))))
+
+  ;; CHECK:      (global $mut_A (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $mut_A (ref $A) (struct.new $A
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (export "mut_A" (global $mut_A))
+  (export "mut_A" (global $mut_A))
+
+  ;; CHECK:      (export "yes" (func $yes))
+
+  ;; CHECK:      (export "no" (func $no))
+
+  ;; CHECK:      (func $yes (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $yes (export "yes") (param $A (ref $A))
+    ;; An imported global has a known type, at least, which in this case is
+    ;; enough for us to infer a result of 1.
+    (drop
+      (ref.test_static $A
+        (global.get $A)
+      )
+    )
+    ;; Likewise, a function result.
+    (drop
+      (ref.test_static $A
+        (call $A)
+      )
+    )
+    ;; Likewise, a parameter to this function, which is exported, but we do
+    ;; still know the type it will be called with, and can optimize to 1.
+    (drop
+      (ref.test_static $A
+        (local.get $A)
+      )
+    )
+    ;; Likewise, an exported mutable global can be modified by the outside, but
+    ;; the type remains known, and we can optimize to 1.
+    (drop
+      (ref.test_static $A
+        (global.get $A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $no (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (global.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (call $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test_static $B
+  ;; CHECK-NEXT:    (global.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no (export "no") (param $A (ref $A))
+    ;; Identical to the above function, but now all tests are vs type $B. We
+    ;; cannot optimize any of these, as all we know is the type is $A.
+    (drop
+      (ref.test_static $B
+        (global.get $A)
+      )
+    )
+    (drop
+      (ref.test_static $B
+        (call $A)
+      )
+    )
+    (drop
+      (ref.test_static $B
+        (local.get $A)
+      )
+    )
+    (drop
+      (ref.test_static $B
+        (global.get $A)
+      )
+    )
+  )
+)
