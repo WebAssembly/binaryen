@@ -5195,3 +5195,58 @@
     )
   )
 )
+
+;; Tests for proper inference of imported etc. values - we do know their type,
+;; at least.
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) data))
+  (type $A (struct_subtype (field (mut i32)) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (import "a" "b" (global $A (ref $A)))
+  (import "a" "b" (global $A (ref $A)))
+
+  (import "a" "c" (func $A (result (ref $A))))
+
+  (global $mut_A (ref $A) (struct.new $A
+    (i32.const 42)
+  ))
+
+  (export "mut_A" (global $mut_A))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param $A (ref $A))
+    ;; An imported global has a known type, at least, which in this case is
+    ;; enough for us to infer a result of 1.
+    (drop
+      (ref.test_static $A
+        (global.get $A)
+      )
+    )
+    ;; Likewise, a function result.
+    (drop
+      (ref.test_static $A
+        (call $A)
+      )
+    )
+    ;; Likewise, a parameter to this function, which is exported, but we do
+    ;; still know the type it will be called with, and can optimize to 1.
+    (drop
+      (ref.test_static $A
+        (local.get $A)
+      )
+    )
+    ;; Likewise, an exported mutable global can be modified by the outside, but
+    ;; the type remains known, and we can optimize to 1.
+    (drop
+      (ref.test_static $A
+        (global.get $A)
+      )
+    )
+  )
+)
