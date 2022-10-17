@@ -1691,13 +1691,10 @@ bool Flower::updateContents(LocationIndex locationIndex,
         return worthSendingMore;
       }
 
-      // Note that we can't normalize |maximalContents| first, as
-      // intersectWithFullCone assumes a full/infinite cone. Normalize it after
-      // the intersection in order to see if the result is maximal.
-      normalizeConeType(maximalContents);
-
-      // Also normalize the intersection, both for a proper comparison, and also
-      // to avoid flowing around anything non-normalized, as explained earlier.
+      // Normalize the intersection. We want to check later if any more content
+      // can arrive here, and also we want to avoid flowing around anything non-
+      // normalized, as explained earlier.
+      //
       // Note that this normalization is necessary even though |contents| was
       // normalized before the intersection, e.g.:
       /*
@@ -1712,11 +1709,22 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // intersection is Cone(B, 1), since the core intersection logic makes no
       // assumptions about the rest of the types. That is then normalized to
       // Cone(B, 0) since there happens to be no subtypes for B.
-      normalizeConeType(contents);
+      //
+      // Note that the intersection may also not be a cone type, if it is a
+      // global or literal. In that case we don't have anything more to do here.
+      if (contents.isConeType()) {
+        normalizeConeType(contents);
 
-      if (contents == maximalContents) {
-        // We already contain everything possible, so this is the worst case.
-        worthSendingMore = false;
+        // There is a chance that the intersection is equal to the maximal
+        // contents, which would mean nothing more can arrive here. (Note that
+        // we can't normalize |maximalContents| before the intersection as
+        // intersectWithFullCone assumes a full/infinite cone.)
+        normalizeConeType(maximalContents);
+
+        if (contents == maximalContents) {
+          // We already contain everything possible, so this is the worst case.
+          worthSendingMore = false;
+        }
       }
     }
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
