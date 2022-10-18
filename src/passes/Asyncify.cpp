@@ -1087,8 +1087,9 @@ private:
           for (size_t i = catchBodies.size(); i > 0; i--) {
             // TODO: Can optimize if !analyzer->canChangeState(child, func)
             auto* child = catchBodies[i - 1];
+            Type type = Type::none;
             if (i - 1 < catchTags.size()) {
-              auto type = module->getTag(catchTags[i - 1])->sig.params;
+              type = module->getTag(catchTags[i - 1])->sig.params;
               if (type != Type::none) {
                 bool isPopNested = false;
                 Expression** popPtr = nullptr;
@@ -1097,11 +1098,14 @@ private:
                 auto argsTemp = builder->addVar(func, type);
                 *popPtr = builder->makeLocalGet(argsTemp, type);
                 catchBodies[i - 1] = builder->makeLocalSet(argsTemp, pop);
+                replaceRethrow(child, tryy->name, catchTags[i - 1], type, argsTemp);
               } else {
                 catchBodies[i - 1] = builder->makeNop();
+                replaceRethrowNoArgs(child, tryy->name, catchTags[i - 1]);
               }
             } else {
               catchBodies[i - 1] = builder->makeNop();
+              assertNoRethrow(child);
             }
             work.push_back(Work{child, Work::Scan});
           }
@@ -1120,22 +1124,22 @@ private:
         std::vector<Expression*> parts = {pre, tryy};
         auto& catchBodies = tryy->catchBodies;
         for (size_t i = 0; i < catchBodies.size(); i++) {
-          auto* currentTag = builder->makeConstantExpression(Literal((int32_t)(i + 1)));
+          auto* currentTag =
+            builder->makeConstantExpression(Literal((int32_t)(i + 1)));
           auto* newCatchBody = results.back();
           results.pop_back();
           catchBodies[i] = builder->makeBlock({
-              catchBodies[i],
-              builder->makeLocalSet(tagTemp, currentTag),
-            });
+            catchBodies[i],
+            builder->makeLocalSet(tagTemp, currentTag),
+          });
           // Create catch equilvalent as an if
           auto* newCatch = builder->makeIf(
+            builder->makeBinary(
+              OrInt32,
               builder->makeBinary(
-                OrInt32,
-                builder->makeBinary(EqInt32,
-                  builder->makeLocalGet(tagTemp, Type::i32),
-                  currentTag),
-                builder->makeStateCheck(State::Rewinding)),
-              newCatchBody);
+                EqInt32, builder->makeLocalGet(tagTemp, Type::i32), currentTag),
+              builder->makeStateCheck(State::Rewinding)),
+            newCatchBody);
           parts.push_back(newCatch);
         }
         results.push_back(builder->makeBlock(parts));
@@ -1220,6 +1224,85 @@ private:
     // Emit an intrinsic for this, as we store the index into a local, and
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, Type::none);
+  }
+
+  void replaceRethrow(Expression*& expr, Name name, Name tag, Type type, Index args) {
+    struct Walker : ControlFlowWalker<Walker> {
+      void visitRethrow(Rethrow* rethrow) {
+        if (rethrow->target != name) {
+          return;
+        }
+        for (Expression* parent : controlFlowStack) {
+          if (auto* parent_try = parent->dynCast<Try>()) {
+            if (parent_try->name == name) {
+              return;
+            }
+          }
+        }
+        // TODO: This is probably not correct. Need to splay the tuple value gotten from args into a vector of args?
+        // Seems unfortunate, to splay and then repack. Opportunity for a throw instruction taking a tuple in binaryen?
+        replaceCurrent(builder->makeThrow(tag, {builder->makeLocalGet(args, type)}));
+      }
+      AsyncifyBuilder* builder;
+      Name name;
+      Name tag;
+      Type type;
+      Index args;
+    };
+    Walker walker;
+    walker.builder = builder.get();
+    walker.name = name;
+    walker.tag = tag;
+    walker.type = type;
+    walker.args = args;
+    walker.walk(expr);
+  }
+
+  void replaceRethrowNoArgs(Expression*& expr, Name name, Name tag) {
+    struct Walker : ControlFlowWalker<Walker> {
+      void visitRethrow(Rethrow* rethrow) {
+        if (rethrow->target != name) {
+          return;
+        }
+        for (Expression* parent : controlFlowStack) {
+          if (auto* parent_try = parent->dynCast<Try>()) {
+            if (parent_try->name == name) {
+              return;
+            }
+          }
+        }
+        replaceCurrent(builder->makeThrow(tag, {}));
+      }
+      AsyncifyBuilder* builder;
+      Name name;
+      Name tag;
+    };
+    Walker walker;
+    walker.builder = builder.get();
+    walker.name = name;
+    walker.tag = tag;
+    walker.walk(expr);
+  }
+
+  void assertNoRethrow(Expression* expr) {
+    struct Walker : PostWalker<Walker> {
+      void visitRethrow(Rethrow* rethrow) {
+        if (rethrow->target != name) {
+          return;
+        }
+        for (Expression* parent : controlFlowStack) {
+          if (auto* parent_try = parent->dynCast<Try>()) {
+            if (parent_try->name == name) {
+              return;
+            }
+          }
+        }
+        WASM_UNREACHABLE("Cannot Asyncify rethrow in catch_all block");
+      }
+    };
+    Walker walker;
+    walker.name = name;
+    walker.walk(expr);
   }
 
   // Given a function that is not instrumented - because we proved it doesn't

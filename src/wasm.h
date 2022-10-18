@@ -1427,7 +1427,7 @@ class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
 
-  Name name; // label that can only be targeted by 'delegate's
+  Name name; // label that can only be targeted by 'delegate's or 'rethrow's
   Expression* body;
   ArenaVector<Name> catchTags;
   ExpressionList catchBodies;
