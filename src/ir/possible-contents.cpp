@@ -1563,7 +1563,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   if (getTypeSystem() == TypeSystem::Nominal ||
       getTypeSystem() == TypeSystem::Isorecursive) {
     subTypes = std::make_unique<SubTypes>(wasm);
-    maxDepths = std::move(subTypes->getMaxDepths());
+    maxDepths = subTypes->getMaxDepths();
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
