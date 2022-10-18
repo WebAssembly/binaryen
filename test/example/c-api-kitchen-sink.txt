@@ -25,10 +25,10 @@ BinaryenHeapTypeAny: 2
 BinaryenHeapTypeEq: 3
 BinaryenHeapTypeI31: 4
 BinaryenHeapTypeData: 5
-BinaryenHeapTypeString: 6
-BinaryenHeapTypeStringviewWTF8: 7
-BinaryenHeapTypeStringviewWTF16: 8
-BinaryenHeapTypeStringviewIter: 9
+BinaryenHeapTypeString: 7
+BinaryenHeapTypeStringviewWTF8: 8
+BinaryenHeapTypeStringviewWTF16: 9
+BinaryenHeapTypeStringviewIter: 10
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16

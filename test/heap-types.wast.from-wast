@@ -383,10 +383,7 @@
  )
  (func $unreachables-array-6
   (drop
-   (block ;; (replaces something unreachable we can't emit)
-    (drop
-     (unreachable)
-    )
+   (array.len array
     (unreachable)
    )
   )
