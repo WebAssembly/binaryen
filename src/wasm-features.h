@@ -23,6 +23,8 @@
 #include "compiler-support.h"
 #include "support/utilities.h"
 
+namespace wasm {
+
 struct FeatureSet {
   enum Feature : uint32_t {
     MVP = 0,
@@ -200,5 +202,7 @@ struct FeatureSet {
 
   uint32_t features;
 };
+
+} // namespace wasm
 
 #endif // wasm_features_h
