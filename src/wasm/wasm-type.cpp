@@ -1746,12 +1746,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (b.isBasic()) {
     switch (b.getBasic()) {
       case HeapType::ext:
-        return a == HeapType::noext;
+        return a.getBottom() == HeapType::noext;
       case HeapType::func:
-        return a == HeapType::nofunc || a.isSignature();
+        return a.getBottom() == HeapType::nofunc;
       case HeapType::any:
-        return a == HeapType::eq || a == HeapType::i31 || a == HeapType::data ||
-               a == HeapType::none || a.isData();
+        return a.getBottom() == HeapType::none;
       case HeapType::eq:
         return a == HeapType::i31 || a == HeapType::data ||
                a == HeapType::none || a.isData();
