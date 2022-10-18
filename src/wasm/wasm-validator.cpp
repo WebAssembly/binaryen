@@ -2696,15 +2696,19 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  // TODO: array rather than data once we've implemented that.
   if (!shouldBeSubType(curr->ref->type,
-                       Type(HeapType::data, Nullable),
+                       Type(HeapType::array, Nullable),
                        curr,
                        "array.get target should be an array reference")) {
     return;
   }
   auto heapType = curr->ref->type.getHeapType();
   if (heapType == HeapType::none) {
+    return;
+  }
+  if (!shouldBeTrue(heapType != HeapType::array,
+                    curr,
+                    "array.get target should be a specific array reference")) {
     return;
   }
   const auto& element = heapType.getArray().element;
@@ -2725,15 +2729,19 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  // TODO: array rather than data once we've implemented that.
   if (!shouldBeSubType(curr->ref->type,
-                       Type(HeapType::data, Nullable),
+                       Type(HeapType::array, Nullable),
                        curr,
                        "array.set target should be an array reference")) {
     return;
   }
   auto heapType = curr->ref->type.getHeapType();
   if (heapType == HeapType::none) {
+    return;
+  }
+  if (!shouldBeTrue(heapType != HeapType::array,
+                    curr,
+                    "array.set target should be a specific array reference")) {
     return;
   }
   const auto& element = curr->ref->type.getHeapType().getArray().element;
@@ -2749,6 +2757,10 @@ void FunctionValidator::visitArrayLen(ArrayLen* curr) {
     getModule()->features.hasGC(), curr, "array.len requires gc to be enabled");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "array.len result must be an i32");
+  shouldBeSubType(curr->ref->type,
+                  Type(HeapType::array, Nullable),
+                  curr,
+                  "array.len argument must be an array reference");
 }
 
 void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
@@ -2767,11 +2779,11 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
     return;
   }
   if (!shouldBeSubType(curr->srcRef->type,
-                       Type(HeapType::data, Nullable),
+                       Type(HeapType::array, Nullable),
                        curr,
                        "array.copy source should be an array reference") ||
       !shouldBeSubType(curr->destRef->type,
-                       Type(HeapType::data, Nullable),
+                       Type(HeapType::array, Nullable),
                        curr,
                        "array.copy destination should be an array reference")) {
     return;
@@ -2779,6 +2791,16 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   auto srcHeapType = curr->srcRef->type.getHeapType();
   auto destHeapType = curr->destRef->type.getHeapType();
   if (srcHeapType == HeapType::none || destHeapType == HeapType::none) {
+    return;
+  }
+  if (!shouldBeTrue(
+        srcHeapType != HeapType::array,
+        curr,
+        "array.copy source needs to be a specific array reference") ||
+      !shouldBeTrue(
+        srcHeapType != HeapType::array,
+        curr,
+        "array.copy destination needs to be a specific array reference")) {
     return;
   }
   const auto& srcElement = srcHeapType.getArray().element;
