@@ -148,7 +148,7 @@
    )
   )
   (drop
-   (array.len $[mut:f64]
+   (array.len
     (local.get $0)
    )
   )

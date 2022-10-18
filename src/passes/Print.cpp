@@ -2236,14 +2236,7 @@ struct PrintExpressionContents
     printMedium(o, "array.set ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
-  void visitArrayLen(ArrayLen* curr) {
-    printMedium(o, "array.len ");
-    if (curr->ref->type == Type::unreachable) {
-      TypeNamePrinter(o, wasm).print(HeapType::array);
-    } else {
-      TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
-    }
-  }
+  void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
     if (printUnreachableOrNullReplacement(curr->srcRef) ||
         printUnreachableOrNullReplacement(curr->destRef)) {

@@ -11,25 +11,25 @@
 
 (module
  (type $byte-array (array (mut i8)))
+ ;; CHECK:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
+
  ;; CHECK:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
  ;; CHECK:      (type $nullref_=>_i32 (func (param nullref) (result i32)))
 
- ;; CHECK:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
-
  ;; CHECK:      (func $len (param $a (ref array)) (result i32)
- ;; CHECK-NEXT:  (array.len array
+ ;; CHECK-NEXT:  (array.len
  ;; CHECK-NEXT:   (local.get $a)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ROUNDTRIP:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
+
  ;; ROUNDTRIP:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
  ;; ROUNDTRIP:      (type $nullref_=>_i32 (func (param nullref) (result i32)))
 
- ;; ROUNDTRIP:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
-
  ;; ROUNDTRIP:      (func $len (param $a (ref array)) (result i32)
- ;; ROUNDTRIP-NEXT:  (array.len array
+ ;; ROUNDTRIP-NEXT:  (array.len
  ;; ROUNDTRIP-NEXT:   (local.get $a)
  ;; ROUNDTRIP-NEXT:  )
  ;; ROUNDTRIP-NEXT: )
@@ -41,12 +41,12 @@
  )
 
  ;; CHECK:      (func $impossible-len (param $none nullref) (result i32)
- ;; CHECK-NEXT:  (array.len none
+ ;; CHECK-NEXT:  (array.len
  ;; CHECK-NEXT:   (local.get $none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ROUNDTRIP:      (func $impossible-len (param $none nullref) (result i32)
- ;; ROUNDTRIP-NEXT:  (array.len none
+ ;; ROUNDTRIP-NEXT:  (array.len
  ;; ROUNDTRIP-NEXT:   (local.get $none)
  ;; ROUNDTRIP-NEXT:  )
  ;; ROUNDTRIP-NEXT: )
@@ -57,7 +57,7 @@
  )
 
  ;; CHECK:      (func $unreachable-len (param $a arrayref) (result i32)
- ;; CHECK-NEXT:  (array.len array
+ ;; CHECK-NEXT:  (array.len
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -67,6 +67,22 @@
  (func $unreachable-len (param $a arrayref) (result i32)
   (array.len $byte-array
    (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $unannotated-len (param $a arrayref) (result i32)
+ ;; CHECK-NEXT:  (array.len
+ ;; CHECK-NEXT:   (local.get $a)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ROUNDTRIP:      (func $unannotated-len (param $a arrayref) (result i32)
+ ;; ROUNDTRIP-NEXT:  (array.len
+ ;; ROUNDTRIP-NEXT:   (local.get $a)
+ ;; ROUNDTRIP-NEXT:  )
+ ;; ROUNDTRIP-NEXT: )
+ (func $unannotated-len (param $a arrayref) (result i32)
+  (array.len
+   (local.get $a)
   )
  )
 )

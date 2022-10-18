@@ -148,7 +148,7 @@
    )
   )
   (drop
-   (array.len $vector
+   (array.len
     (local.get $x)
    )
   )

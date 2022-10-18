@@ -3027,9 +3027,14 @@ Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
-  // Ignore the type annotation and don't bother validating it.
-  parseHeapType(*s[1]);
-  auto ref = parseExpression(*s[2]);
+  // There may or may not be a type annotation.
+  Index childIdx = 1;
+  try {
+    parseHeapType(*s[1]);
+    childIdx = 2;
+  } catch (...) {
+  }
+  auto ref = parseExpression(*s[childIdx]);
   return Builder(wasm).makeArrayLen(ref);
 }
 

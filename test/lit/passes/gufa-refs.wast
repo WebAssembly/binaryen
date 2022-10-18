@@ -4150,7 +4150,7 @@
 
   ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.len $B
+  ;; CHECK-NEXT:   (array.len
   ;; CHECK-NEXT:    (array.init_static $B
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (ref.null none)

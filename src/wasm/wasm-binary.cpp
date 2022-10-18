@@ -7111,11 +7111,12 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::ArrayLen) {
+  if (code == BinaryConsts::ArrayLenAnnotated) {
+    // Ignore the type annotation and don't bother validating it.
+    getU32LEB();
+  } else if (code != BinaryConsts::ArrayLen) {
     return false;
   }
-  // Ignore the type annotation and don't bother validating it.
-  getU32LEB();
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeArrayLen(ref);
   return true;
