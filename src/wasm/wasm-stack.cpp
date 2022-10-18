@@ -2168,12 +2168,7 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
-  if (curr->ref->type.isNull()) {
-    emitUnreachable();
-    return;
-  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
-  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {

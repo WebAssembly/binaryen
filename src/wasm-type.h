@@ -325,6 +325,7 @@ public:
     eq,
     i31,
     data,
+    array,
     string,
     stringview_wtf8,
     stringview_wtf16,

@@ -108,6 +108,9 @@ bool maybePrintRefShorthand(std::ostream& o, Type type) {
       case HeapType::data:
         o << "dataref";
         return true;
+      case HeapType::array:
+        o << "arrayref";
+        return true;
       case HeapType::string:
         o << "stringref";
         return true;
@@ -2233,13 +2236,7 @@ struct PrintExpressionContents
     printMedium(o, "array.set ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
-  void visitArrayLen(ArrayLen* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
-    printMedium(o, "array.len ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
-  }
+  void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
     if (printUnreachableOrNullReplacement(curr->srcRef) ||
         printUnreachableOrNullReplacement(curr->destRef)) {
@@ -2799,9 +2796,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
   }
   void visitArrayGet(ArrayGet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
-  }
-  void visitArrayLen(ArrayLen* curr) {
     maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
   }
   // Module-level visitors
