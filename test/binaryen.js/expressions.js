@@ -1814,13 +1814,13 @@ console.log("# I31New");
   assert(theI31New instanceof binaryen.I31New);
   assert(theI31New instanceof binaryen.Expression);
   assert(theI31New.value === value);
-  assert(theI31New.type === binaryen.i31ref);
+  // assert(theI31New.type === binaryen.?); // TODO: (ref i31)
 
   theI31New.value = value = module.local.get(2, binaryen.i32);
   assert(theI31New.value === value);
   theI31New.type = binaryen.f64;
   theI31New.finalize();
-  assert(theI31New.type === binaryen.i31ref);
+  // assert(theI31New.type === binaryen.?); // TODO: (ref i31)
 
   console.log(theI31New.toText());
   assert(
