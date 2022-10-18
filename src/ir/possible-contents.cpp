@@ -1987,12 +1987,12 @@ void Flower::readFromData(HeapType declaredHeapType,
   // normalize the cone which can avoid wasted work later (we don't want two
   // cone depths which refer to the same types in practice).
   auto cone = refContents.getCone();
-  normalizeConeType(cone.type, cone.depth);
+  auto depth = getNormalizedConeDepth(cone.type, cone.depth);
 
   // We create a ConeReadLocation for the canonical cone of this type, to
   // avoid bloating the graph, see comment on ConeReadLocation().
   auto coneReadLocation =
-    ConeReadLocation{cone.type.getHeapType(), cone.depth, fieldIndex};
+    ConeReadLocation{cone.type.getHeapType(), depth, fieldIndex};
   if (!hasIndex(coneReadLocation)) {
     // This is the first time we use this location, so create the links for it
     // in the graph.
@@ -2004,7 +2004,7 @@ void Flower::readFromData(HeapType declaredHeapType,
     // Next, connect strict subtypes.
 
     subTypes->iterSubTypes(
-      cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
+      cone.type.getHeapType(), depth, [&](HeapType type, Index depth) {
         connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
       });
 
@@ -2053,10 +2053,10 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
   // As in readFromData, normalize to the proper cone.
   auto cone = refContents.getCone();
-  normalizeConeType(cone.type, cone.depth);
+  auto depth = getNormalizedConeDepth(cone.type, cone.depth);
 
   subTypes->iterSubTypes(
-    cone.type.getHeapType(), cone.depth, [&](HeapType type, Index depth) {
+    cone.type.getHeapType(), depth, [&](HeapType type, Index depth) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
     });
