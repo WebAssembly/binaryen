@@ -1917,10 +1917,12 @@ void Flower::readFromData(Type declaredHeapType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
+#ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
   auto maximalContents = PossibleContents::fullConeType(declaredHeapType);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
+#endif
 
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
@@ -2021,11 +2023,14 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   std::cout << "    add special writes\n";
 #endif
 
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+
+#ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
-  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto maximalContents = PossibleContents::fullConeType(ref->type);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
+#endif
 
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
