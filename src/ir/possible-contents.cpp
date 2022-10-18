@@ -1997,7 +1997,9 @@ void Flower::readFromData(Type declaredHeapType,
     // Next, connect strict subtypes.
 
     subTypes->iterSubTypes(
-      cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
+      cone.type.getHeapType(),
+      normalizedDepth,
+      [&](HeapType type, Index depth) {
         connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
       });
 
