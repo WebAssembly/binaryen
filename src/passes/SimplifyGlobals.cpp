@@ -652,6 +652,8 @@ struct SimplifyGlobals : public Pass {
     // contain math that is optimizable after the rest of this pass. For
     // example, a global equal to $other + 1 might become optimizable if we
     // infer a constant value for $other.
+    // TODO: this may also make sense for inits of other things like segment
+    //       offsets
     PassRunner runner(getPassRunner());
     runner.add("precompute");
     runner.add("optimize-instructions");
