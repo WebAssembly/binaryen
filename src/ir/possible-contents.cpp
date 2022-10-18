@@ -1951,16 +1951,10 @@ void Flower::readFromData(Type declaredHeapType,
   // future.
 
   if (refContents.isNull() || refContents.isNone()) {
-    // Nothing is read here.
-    return;
-  }
-
-  if (refContents.isLiteral()) {
-    // The only reference literals we have are nulls (handled above) and
-    // ref.func. ref.func will trap in struct|array.get, so nothing will be read
-    // here (when we finish optimizing all instructions like BrOn then
-    // ref.funcs should get filtered out before arriving here TODO).
-    assert(refContents.getType().isFunction());
+    // Nothing is read here as this is either a null or unreachable code. (Note
+    // that the contents must be a subtype of the wasm type, which rules out
+    // other possibilities like a non-null literal such as an integer or a
+    // function reference.)
     return;
   }
 
@@ -1968,9 +1962,8 @@ void Flower::readFromData(Type declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  // Note that this cannot be Many - we should be emitting a cone for the
-  // relevant reference type in that case. That is, at worst we should have
-  // a cone here of the same type as the declared type of the read.
+  // The only possibilities left are a cone type (the worst case is where the
+  // cone matches the wasm type), or a global.
   //
   // TODO: The Global case may have a different cone type than the heapType,
   //       which we could use here.
@@ -1985,15 +1978,14 @@ void Flower::readFromData(Type declaredHeapType,
 
   // Just look at the cone here, discarding information about this being a
   // global, if it was one. All that matters from now is the cone. We also
-  // normalize the cone which can avoid wasted work later (we don't want two
-  // cone depths which refer to the same types in practice).
+  // normalize the cone to avoid wasted work later.
   auto cone = refContents.getCone();
-  auto depth = getNormalizedConeDepth(cone.type, cone.depth);
+  auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
 
   // We create a ConeReadLocation for the canonical cone of this type, to
   // avoid bloating the graph, see comment on ConeReadLocation().
   auto coneReadLocation =
-    ConeReadLocation{cone.type.getHeapType(), depth, fieldIndex};
+    ConeReadLocation{cone.type.getHeapType(), normalizedDepth, fieldIndex};
   if (!hasIndex(coneReadLocation)) {
     // This is the first time we use this location, so create the links for it
     // in the graph.
@@ -2005,7 +1997,7 @@ void Flower::readFromData(Type declaredHeapType,
     // Next, connect strict subtypes.
 
     subTypes->iterSubTypes(
-      cone.type.getHeapType(), depth, [&](HeapType type, Index depth) {
+      cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
         connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
       });
 
