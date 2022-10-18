@@ -642,6 +642,12 @@ struct SimplifyGlobals : public Pass {
   }
 
   void optimizeInits() {
+    // Interesting math (add, etc.) only happens when we have the proper
+    // feature enabled.
+    if (!module->features.hasExtendedConst()) {
+      return;
+    }
+
     // Run basic optimization passes on global init expressions, which can
     // contain math that is optimizable after the rest of this pass. For
     // example, a global equal to $other + 1 might become optimizable if we
