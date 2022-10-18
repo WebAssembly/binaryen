@@ -204,7 +204,7 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemories() {
-  if (wasm->memories.empty()) {
+  if (importInfo->getNumDefinedMemories() == 0) {
     return;
   }
   BYN_TRACE("== writeMemories\n");
@@ -1414,6 +1414,9 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::data:
           o << S32LEB(BinaryConsts::EncodedType::dataref);
           return;
+        case HeapType::array:
+          o << S32LEB(BinaryConsts::EncodedType::arrayref);
+          return;
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
@@ -1519,6 +1522,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       break;
     case HeapType::data:
       ret = BinaryConsts::EncodedHeapType::data;
+      break;
+    case HeapType::array:
+      ret = BinaryConsts::EncodedHeapType::array;
       break;
     case HeapType::string:
       ret = BinaryConsts::EncodedHeapType::string;
@@ -1887,6 +1893,9 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::dataref:
       out = Type(HeapType::data, Nullable);
       return true;
+    case BinaryConsts::EncodedType::arrayref:
+      out = Type(HeapType::array, Nullable);
+      return true;
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);
       return true;
@@ -1932,6 +1941,9 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::data:
       out = HeapType::data;
+      return true;
+    case BinaryConsts::EncodedHeapType::array:
+      out = HeapType::array;
       return true;
     case BinaryConsts::EncodedHeapType::string:
       out = HeapType::string;
@@ -7099,12 +7111,13 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::ArrayLen) {
+  if (code == BinaryConsts::ArrayLenAnnotated) {
+    // Ignore the type annotation and don't bother validating it.
+    getU32LEB();
+  } else if (code != BinaryConsts::ArrayLen) {
     return false;
   }
-  auto heapType = getIndexedHeapType();
   auto* ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(ref, heapType);
   out = Builder(wasm).makeArrayLen(ref);
   return true;
 }

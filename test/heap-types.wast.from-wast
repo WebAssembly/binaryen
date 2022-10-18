@@ -150,7 +150,7 @@
    )
   )
   (drop
-   (array.len $vector
+   (array.len
     (local.get $x)
    )
   )
@@ -383,10 +383,7 @@
  )
  (func $unreachables-array-6
   (drop
-   (block ;; (replaces something unreachable we can't emit)
-    (drop
-     (unreachable)
-    )
+   (array.len
     (unreachable)
    )
   )

@@ -28,13 +28,13 @@ BinaryenHeapTypeAny: 2
 BinaryenHeapTypeEq: 3
 BinaryenHeapTypeI31: 4
 BinaryenHeapTypeData: 5
-BinaryenHeapTypeString: 6
-BinaryenHeapTypeStringviewWTF8: 7
-BinaryenHeapTypeStringviewWTF16: 8
-BinaryenHeapTypeStringviewIter: 9
-BinaryenHeapTypeNone: 10
-BinaryenHeapTypeNoext: 11
-BinaryenHeapTypeNofunc: 12
+BinaryenHeapTypeString: 7
+BinaryenHeapTypeStringviewWTF8: 8
+BinaryenHeapTypeStringviewWTF16: 9
+BinaryenHeapTypeStringviewIter: 10
+BinaryenHeapTypeNone: 11
+BinaryenHeapTypeNoext: 12
+BinaryenHeapTypeNofunc: 13
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -2219,7 +2219,7 @@ BinaryenFeatureAll: 126975
        (i32.const 42)
       )
       (drop
-       (array.len $[mut:i8]
+       (array.len
         (global.get $i8Array-global)
        )
       )

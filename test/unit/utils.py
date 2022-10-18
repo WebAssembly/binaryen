@@ -9,9 +9,11 @@ class BinaryenTestCase(unittest.TestCase):
         return os.path.join(shared.options.binaryen_test, 'unit', 'input',
                             filename)
 
-    def roundtrip(self, filename, opts=[]):
+    def roundtrip(self, filename, opts=[], debug=True):
+        if debug:
+            opts = opts + ['-g']
         path = self.input_path(filename)
-        p = shared.run_process(shared.WASM_OPT + ['-g', '-o', 'a.wasm', path] +
+        p = shared.run_process(shared.WASM_OPT + ['-o', 'a.wasm', path] +
                                opts)
         self.assertEqual(p.returncode, 0)
         with open(path, 'rb') as f:

@@ -126,6 +126,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::eq:
         case HeapType::func:
         case HeapType::data:
+        case HeapType::array:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
         case HeapType::stringview_wtf8:
@@ -523,6 +524,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::eq:
         case HeapType::func:
         case HeapType::data:
+        case HeapType::array:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
         case HeapType::stringview_wtf8:

@@ -86,6 +86,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::eq:
       case HeapType::func:
       case HeapType::data:
+      case HeapType::array:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
       case HeapType::stringview_wtf8:
@@ -138,6 +139,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::eq:
       case HeapType::func:
       case HeapType::data:
+      case HeapType::array:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
       case HeapType::stringview_wtf8:

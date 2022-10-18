@@ -1194,6 +1194,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
       (str.substr(0, 9) == "structref" && (prefix || str.size() == 9))) {
     return Type(HeapType::data, Nullable);
   }
+  if (str.substr(0, 8) == "arrayref" && (prefix || str.size() == 8)) {
+    return Type(HeapType::array, Nullable);
+  }
   if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
     return Type(HeapType::string, Nullable);
   }
@@ -1242,6 +1245,9 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   if ((str.substr(0, 4) == "data" && (prefix || str.size() == 4)) ||
       (str.substr(0, 6) == "struct" && (prefix || str.size() == 6))) {
     return HeapType::data;
+  }
+  if (str.substr(0, 5) == "array" && (prefix || str.size() == 5)) {
+    return HeapType::array;
   }
   if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
     return HeapType::string;
@@ -3021,9 +3027,14 @@ Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto ref = parseExpression(*s[2]);
-  validateHeapTypeUsingChild(ref, heapType, s);
+  // There may or may not be a type annotation.
+  Index i = 1;
+  try {
+    parseHeapType(*s[i]);
+    ++i;
+  } catch (...) {
+  }
+  auto ref = parseExpression(*s[i]);
   return Builder(wasm).makeArrayLen(ref);
 }
 

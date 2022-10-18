@@ -2069,7 +2069,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       }
       return builder.makeI31New(makeConst(Type::i32));
     }
-    case HeapType::data: {
+    case HeapType::data:
       assert(wasm.features.hasGC());
       // TODO: Construct nontrivial types. For now just create a hard coded
       // struct or array.
@@ -2078,13 +2078,14 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
         // --nominal mode.
         static HeapType trivialStruct = HeapType(Struct());
         return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
-      } else {
-        // Use a local static to avoid creating a fresh nominal types in
-        // --nominal mode.
-        static HeapType trivialArray =
-          HeapType(Array(Field(Field::PackedType::i8, Immutable)));
-        return builder.makeArrayInit(trivialArray, {});
       }
+      [[fallthrough]];
+    case HeapType::array: {
+      // Use a local static to avoid creating a fresh nominal types in
+      // --nominal mode.
+      static HeapType trivialArray =
+        HeapType(Array(Field(Field::PackedType::i8, Immutable)));
+      return builder.makeArrayInit(trivialArray, {});
     }
     case HeapType::string:
     case HeapType::stringview_wtf8:
@@ -3052,7 +3053,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::i31, Nullable),
                      // Type(HeapType::i31, NonNullable),
                      Type(HeapType::data, Nullable),
-                     Type(HeapType::data, NonNullable)));
+                     Type(HeapType::data, NonNullable),
+                     Type(HeapType::array, Nullable),
+                     Type(HeapType::array, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
@@ -3171,18 +3174,24 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                     HeapType::eq,
                     HeapType::i31,
                     HeapType::data,
+                    HeapType::array,
                     HeapType::none);
       case HeapType::eq:
         // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(
-          HeapType::eq, HeapType::i31, HeapType::data, HeapType::none);
+        return pick(HeapType::eq,
+                    HeapType::i31,
+                    HeapType::data,
+                    HeapType::array,
+                    HeapType::none);
       case HeapType::i31:
         return pick(HeapType::i31, HeapType::none);
       case HeapType::data:
         // TODO: nontrivial types as well.
-        return pick(HeapType::data, HeapType::none);
+        return pick(HeapType::data, HeapType::array, HeapType::none);
+      case HeapType::array:
+        return pick(HeapType::array, HeapType::none);
       case HeapType::string:
       case HeapType::stringview_wtf8:
       case HeapType::stringview_wtf16:

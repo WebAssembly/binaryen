@@ -766,7 +766,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.len $array
+  ;; CHECK-NEXT:   (array.len
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -801,7 +801,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (array.len $array
+  ;; NOMNL-NEXT:   (array.len
   ;; NOMNL-NEXT:    (local.get $y)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
