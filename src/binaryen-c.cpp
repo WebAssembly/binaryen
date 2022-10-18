@@ -297,6 +297,15 @@ BinaryenHeapType BinaryenHeapTypeStringviewIter() {
   return static_cast<BinaryenHeapType>(
     HeapType::BasicHeapType::stringview_iter);
 }
+BinaryenHeapType BinaryenHeapTypeNone() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::none);
+}
+BinaryenHeapType BinaryenHeapTypeNoext() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::noext);
+}
+BinaryenHeapType BinaryenHeapTypeNofunc() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::nofunc);
+}
 
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();

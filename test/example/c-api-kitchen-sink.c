@@ -294,6 +294,24 @@ void test_types() {
   BinaryenTypeExpand(stringview_iter_, &valueType);
   assert(valueType == stringview_iter_);
 
+  BinaryenType nullref = BinaryenTypeNullref();
+  printf("BinaryenTypeNullref: (ptr)\n");
+  assert(BinaryenTypeArity(nullref) == 1);
+  BinaryenTypeExpand(nullref, &valueType);
+  assert(valueType == nullref);
+
+  BinaryenType nullexternref = BinaryenTypeNullExternref();
+  printf("BinaryenTypeNullExternref: (ptr)\n");
+  assert(BinaryenTypeArity(nullexternref) == 1);
+  BinaryenTypeExpand(nullexternref, &valueType);
+  assert(valueType == nullexternref);
+
+  BinaryenType nullfuncref = BinaryenTypeNullFuncref();
+  printf("BinaryenTypeNullFuncref: (ptr)\n");
+  assert(BinaryenTypeArity(nullfuncref) == 1);
+  BinaryenTypeExpand(nullfuncref, &valueType);
+  assert(valueType == nullfuncref);
+
   printf("BinaryenTypeAuto: %zd\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};
@@ -331,6 +349,9 @@ void test_types() {
          BinaryenHeapTypeStringviewWTF16());
   printf("BinaryenHeapTypeStringviewIter: %zd\n",
          BinaryenHeapTypeStringviewIter());
+  printf("BinaryenHeapTypeNone: %zd\n", BinaryenHeapTypeNone());
+  printf("BinaryenHeapTypeNoext: %zd\n", BinaryenHeapTypeNoext());
+  printf("BinaryenHeapTypeNofunc: %zd\n", BinaryenHeapTypeNofunc());
 
   BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
   assert(eq == BinaryenHeapTypeEq());

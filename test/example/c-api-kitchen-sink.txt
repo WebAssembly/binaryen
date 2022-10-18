@@ -15,6 +15,9 @@ BinaryenTypeStringref: (ptr)
 BinaryenTypeStringviewWTF8: (ptr)
 BinaryenTypeStringviewWTF16: (ptr)
 BinaryenTypeStringviewIter: (ptr)
+BinaryenTypeNullref: (ptr)
+BinaryenTypeNullExternref: (ptr)
+BinaryenTypeNullFuncref: (ptr)
 BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
@@ -29,6 +32,9 @@ BinaryenHeapTypeString: 6
 BinaryenHeapTypeStringviewWTF8: 7
 BinaryenHeapTypeStringviewWTF16: 8
 BinaryenHeapTypeStringviewIter: 9
+BinaryenHeapTypeNone: 10
+BinaryenHeapTypeNoext: 11
+BinaryenHeapTypeNofunc: 12
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16

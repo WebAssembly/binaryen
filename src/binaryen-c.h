@@ -150,6 +150,9 @@ BINARYEN_API BinaryenHeapType BinaryenHeapTypeString(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF8(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF16(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewIter(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNone(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNoext(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNofunc(void);
 
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
 BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
