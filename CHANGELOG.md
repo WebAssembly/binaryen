@@ -25,6 +25,7 @@ Current Trunk
 - Implemented bottom heap types: `none`, `nofunc`, and `noextern`. RefNull
   expressions and null `Literal`s must now have type `nullref`, `nullfuncref`,
   or `nullexternref`.
+* The C-API's `BinaryenTypeI31ref` and `BinaryenTypeDataref` now return nullable types.
 
 v110
 ----
