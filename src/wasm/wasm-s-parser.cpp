@@ -3028,13 +3028,13 @@ Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
   // There may or may not be a type annotation.
-  Index childIdx = 1;
+  Index i = 1;
   try {
-    parseHeapType(*s[1]);
-    childIdx = 2;
+    parseHeapType(*s[i]);
+    ++i;
   } catch (...) {
   }
-  auto ref = parseExpression(*s[childIdx]);
+  auto ref = parseExpression(*s[i]);
   return Builder(wasm).makeArrayLen(ref);
 }
 
