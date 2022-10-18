@@ -656,7 +656,6 @@ struct SimplifyGlobals : public Pass {
     //       offsets
     PassRunner runner(getPassRunner());
     runner.add("precompute");
-    runner.add("optimize-instructions");
     Function tempFunc;
     for (auto& global : module->globals) {
       if (!global->imported()) {
