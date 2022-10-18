@@ -11,6 +11,7 @@ BinaryenTypeAnyref: (ptr)
 BinaryenTypeEqref: (ptr)
 BinaryenTypeI31ref: (ptr)
 BinaryenTypeDataref: (ptr)
+BinaryenTypeArrayref: (ptr)
 BinaryenTypeStringref: (ptr)
 BinaryenTypeStringviewWTF8: (ptr)
 BinaryenTypeStringviewWTF16: (ptr)
@@ -28,6 +29,7 @@ BinaryenHeapTypeAny: 2
 BinaryenHeapTypeEq: 3
 BinaryenHeapTypeI31: 4
 BinaryenHeapTypeData: 5
+BinaryenHeapTypeArray: 6
 BinaryenHeapTypeString: 7
 BinaryenHeapTypeStringviewWTF8: 8
 BinaryenHeapTypeStringviewWTF16: 9

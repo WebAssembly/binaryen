@@ -270,6 +270,13 @@ void test_types() {
   BinaryenTypeExpand(dataref, &valueType);
   assert(valueType == dataref);
 
+  BinaryenType arrayref = BinaryenTypeArrayref();
+  printf("BinaryenTypeArrayref: (ptr)\n");
+  assert(arrayref == BinaryenTypeArrayref());
+  assert(BinaryenTypeArity(arrayref) == 1);
+  BinaryenTypeExpand(arrayref, &valueType);
+  assert(valueType == arrayref);
+
   BinaryenType stringref = BinaryenTypeStringref();
   printf("BinaryenTypeStringref: (ptr)\n");
   assert(BinaryenTypeArity(stringref) == 1);
@@ -342,6 +349,7 @@ void test_types() {
   printf("BinaryenHeapTypeEq: %zd\n", BinaryenHeapTypeEq());
   printf("BinaryenHeapTypeI31: %zd\n", BinaryenHeapTypeI31());
   printf("BinaryenHeapTypeData: %zd\n", BinaryenHeapTypeData());
+  printf("BinaryenHeapTypeArray: %zd\n", BinaryenHeapTypeArray());
   printf("BinaryenHeapTypeString: %zd\n", BinaryenHeapTypeString());
   printf("BinaryenHeapTypeStringviewWTF8: %zd\n",
          BinaryenHeapTypeStringviewWTF8());

@@ -202,6 +202,9 @@ BinaryenType BinaryenTypeI31ref(void) {
 BinaryenType BinaryenTypeDataref(void) {
   return Type(HeapType::data, NonNullable).getID();
 }
+BinaryenType BinaryenTypeArrayref(void) {
+  return Type(HeapType::array, Nullable).getID();
+}
 BinaryenType BinaryenTypeStringref() {
   return Type(HeapType::string, Nullable).getID();
 }
@@ -283,6 +286,9 @@ BinaryenHeapType BinaryenHeapTypeI31() {
 }
 BinaryenHeapType BinaryenHeapTypeData() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::data);
+}
+BinaryenHeapType BinaryenHeapTypeArray() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::array);
 }
 BinaryenHeapType BinaryenHeapTypeString() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::string);
