@@ -1195,17 +1195,17 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   }
 
   Result<Name> getGlobalFromIdx(uint32_t idx) {
-    if (idx < wasm.globals.size()) {
-      return wasm.globals[idx]->name;
+    if (idx >= wasm.globals.size()) {
+      return in.err("global index out of bounds");
     }
-    return in.err("global index out of bounds");
+    return wasm.globals[idx]->name;
   }
 
   Result<Name> getGlobalFromName(Name name) {
-    if (wasm.getGlobalOrNull(name)) {
-      return name;
+    if (!wasm.getGlobalOrNull(name)) {
+      return in.err("global $" + name.toString() + " does not exist");
     }
-    return in.err("global $" + name.toString() + " does not exist");
+    return name;
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
