@@ -1374,7 +1374,7 @@ private:
   // in the reference the read receives, and the read instruction itself. We
   // compute where we need to read from based on the type and the ref contents
   // and get that data, adding new links in the graph as needed.
-  void readFromData(HeapType declaredHeapType,
+  void readFromData(Type declaredHeapType,
                     Index fieldIndex,
                     const PossibleContents& refContents,
                     Expression* read);
@@ -1759,14 +1759,14 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     if (auto* get = parent->dynCast<StructGet>()) {
       // |child| is the reference child of a struct.get.
       assert(get->ref == child);
-      readFromData(get->ref->type.getHeapType(), get->index, contents, get);
+      readFromData(get->ref->type, get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
-      readFromData(get->ref->type.getHeapType(), 0, contents, get);
+      readFromData(get->ref->type, 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
@@ -1919,10 +1919,15 @@ void Flower::filterGlobalContents(PossibleContents& contents,
   }
 }
 
-void Flower::readFromData(HeapType declaredHeapType,
+void Flower::readFromData(Type declaredHeapType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::fullConeType(declaredHeapType);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
+
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
   // which DataLocations are relevant: if it is an exact type then we have a
@@ -2022,6 +2027,12 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   std::cout << "    add special writes\n";
 #endif
 
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+  auto maximalContents = PossibleContents::fullConeType(ref->type);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
+
   // We could set up links here as we do for reads, but as we get to this code
   // in any case, we can just flow the values forward directly. This avoids
   // adding any links (edges) to the graph (and edges are what we want to avoid
@@ -2043,7 +2054,6 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // we've sent information based on the final and correct information about our
   // reference and value.)
 
-  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
   if (refContents.isNone() || refContents.isNull()) {
     return;
