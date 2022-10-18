@@ -1394,24 +1394,20 @@ private:
   // and so forth.
   std::unordered_map<HeapType, Index> maxDepths;
 
-  // Given a ConeType, normalize it, that is, make its depth the canonical
-  // depth given the actual children it has. If this is a full cone, then we can
+  // Given a ConeType, return the normalized depth, that is, the canonical depth
+  // given the actual children it has. If this is a full cone, then we can
   // always pick the actual maximal depth and use that instead of FullDepth==-1.
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
-  void normalizeConeType(Type type, Index& depth) {
-    auto max = maxDepths[type.getHeapType()];
-    if (depth > max) {
-      depth = max;
-    }
+  Index getNormalizedConeDepth(Type type, Index depth) {
+    return std::min(depth, maxDepths[type.getHeapType()]);
   }
 
   void normalizeConeType(PossibleContents& cone) {
     assert(cone.isConeType());
     auto type = cone.getType();
     auto before = cone.getCone().depth;
-    auto normalized = before;
-    normalizeConeType(type, normalized);
+    auto normalized = getNormalizedConeDepth(type, before);
     if (normalized != before) {
       cone = PossibleContents::coneType(type, normalized);
     }
@@ -1841,13 +1837,18 @@ void Flower::filterExpressionContents(PossibleContents& contents,
     return;
   }
 
+  // The caller cannot know of a situation where it might not be worth sending
+  // more to a reference - all that logic is in here. That is, the rest of this
+  // function is the only place we can mark |worthSendingMore| as false for a
+  // reference.
+  assert(worthSendingMore);
+
   // The maximal contents here are the declared type and all subtypes. Nothing
   // else can pass through, so filter such things out.
   auto maximalContents = PossibleContents::fullConeType(type);
   contents.intersectWithFullCone(maximalContents);
   if (contents.isNone()) {
-    // Nothing was left here at all. It is definitely worth sending more.
-    worthSendingMore = true;
+    // Nothing was left here at all.
     return;
   }
 
