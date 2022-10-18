@@ -353,6 +353,11 @@ void test_types() {
   printf("BinaryenHeapTypeNoext: %zd\n", BinaryenHeapTypeNoext());
   printf("BinaryenHeapTypeNofunc: %zd\n", BinaryenHeapTypeNofunc());
 
+  assert(!BinaryenHeapTypeIsBottom(BinaryenHeapTypeExt()));
+  assert(BinaryenHeapTypeIsBottom(BinaryenHeapTypeNoext()));
+  assert(BinaryenHeapTypeGetBottom(BinaryenHeapTypeExt()) ==
+         BinaryenHeapTypeNoext());
+
   BinaryenHeapType eq = BinaryenTypeGetHeapType(eqref);
   assert(eq == BinaryenHeapTypeEq());
   BinaryenType ref_null_eq = BinaryenTypeFromHeapType(eq, true);

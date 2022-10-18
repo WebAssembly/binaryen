@@ -307,6 +307,13 @@ BinaryenHeapType BinaryenHeapTypeNofunc() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::nofunc);
 }
 
+bool BinaryenHeapTypeIsBottom(BinaryenHeapType heapType) {
+  return HeapType(heapType).isBottom();
+}
+BinaryenHeapType BinaryenHeapTypeGetBottom(BinaryenHeapType heapType) {
+  return static_cast<BinaryenHeapType>(HeapType(heapType).getBottom());
+}
+
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();
 }
