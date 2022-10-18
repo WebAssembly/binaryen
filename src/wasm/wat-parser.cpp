@@ -558,6 +558,7 @@ struct NullInstrParserCtx {
   using ExprT = Ok;
 
   using LocalT = Ok;
+  using GlobalT = Ok;
 
   InstrsT makeInstrs() { return Ok{}; }
   void appendInstr(InstrsT&, InstrT) {}
@@ -565,26 +566,31 @@ struct NullInstrParserCtx {
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
 
-  LocalT getLocalFromIdx(uint32_t idx) { return Ok{}; }
-  LocalT getLocalFromName(Name name) { return Ok{}; }
+  LocalT getLocalFromIdx(uint32_t) { return Ok{}; }
+  LocalT getLocalFromName(Name) { return Ok{}; }
+  GlobalT getGlobalFromIdx(uint32_t) { return Ok{}; }
+  GlobalT getGlobalFromName(Name) { return Ok{}; }
 
-  InstrT makeUnreachable(Index pos) { return Ok{}; }
-  InstrT makeNop(Index pos) { return Ok{}; }
-  InstrT makeBinary(Index pos, BinaryOp op) { return Ok{}; }
-  InstrT makeUnary(Index pos, UnaryOp op) { return Ok{}; }
-  template<typename ResultsT> InstrT makeSelect(Index pos, ResultsT* res) {
+  InstrT makeUnreachable(Index) { return Ok{}; }
+  InstrT makeNop(Index) { return Ok{}; }
+  InstrT makeBinary(Index, BinaryOp) { return Ok{}; }
+  InstrT makeUnary(Index, UnaryOp) { return Ok{}; }
+  template<typename ResultsT> InstrT makeSelect(Index, ResultsT*) {
     return Ok{};
   }
-  InstrT makeDrop(Index pos) { return Ok{}; }
+  InstrT makeDrop(Index) { return Ok{}; }
 
   InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
   InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
   InstrT makeF32Const(Index, float) { return Ok{}; }
   InstrT makeF64Const(Index, double) { return Ok{}; }
 
-  InstrT makeLocalGet(Index pos, LocalT local) { return Ok{}; }
-  InstrT makeLocalTee(Index pos, LocalT local) { return Ok{}; }
-  InstrT makeLocalSet(Index pos, LocalT local) { return Ok{}; }
+  InstrT makeLocalGet(Index, LocalT) { return Ok{}; }
+  InstrT makeLocalTee(Index, LocalT) { return Ok{}; }
+  InstrT makeLocalSet(Index, LocalT) { return Ok{}; }
+
+  InstrT makeGlobalGet(Index, GlobalT) { return Ok{}; }
+  InstrT makeGlobalSet(Index, GlobalT) { return Ok{}; }
 
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
@@ -599,6 +605,7 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
   using ExprT = Expression*;
 
   using LocalT = Index;
+  using GlobalT = Name;
 
   Builder builder;
 
@@ -1167,7 +1174,16 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     return types[idx];
   }
 
-  Index getLocalFromIdx(uint32_t idx) { return idx; }
+  Result<Index> getLocalFromIdx(uint32_t idx) {
+    if (!func) {
+      return in.err("cannot access locals outside of a funcion");
+    }
+    if (idx >= func->getNumLocals()) {
+      return in.err("local index out of bounds");
+    }
+    return idx;
+  }
+
   Result<Index> getLocalFromName(Name name) {
     if (!func) {
       return in.err("cannot access locals outside of a function");
@@ -1176,6 +1192,20 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       return in.err("local $" + name.toString() + " does not exist");
     }
     return func->getLocalIndex(name);
+  }
+
+  Result<Name> getGlobalFromIdx(uint32_t idx) {
+    if (idx < wasm.globals.size()) {
+      return wasm.globals[idx]->name;
+    }
+    return in.err("global index out of bounds");
+  }
+
+  Result<Name> getGlobalFromName(Name name) {
+    if (wasm.getGlobalOrNull(name)) {
+      return name;
+    }
+    return in.err("global $" + name.toString() + " does not exist");
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
@@ -1284,6 +1314,19 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     auto val = pop(pos);
     CHECK_ERR(val);
     return push(pos, builder.makeLocalSet(local, *val));
+  }
+
+  Result<> makeGlobalGet(Index pos, Name global) {
+    assert(wasm.getGlobalOrNull(global));
+    auto type = wasm.getGlobal(global)->type;
+    return push(pos, builder.makeGlobalGet(global, type));
+  }
+
+  Result<> makeGlobalSet(Index pos, Name global) {
+    assert(wasm.getGlobalOrNull(global));
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeGlobalSet(global, *val));
   }
 };
 
@@ -1463,6 +1506,7 @@ Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, Index);
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
@@ -1922,12 +1966,16 @@ Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto global = globalidx(ctx);
+  CHECK_ERR(global);
+  return ctx.makeGlobalGet(pos, *global);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto global = globalidx(ctx);
+  CHECK_ERR(global);
+  return ctx.makeGlobalSet(pos, *global);
 }
 
 template<typename Ctx>
@@ -2402,8 +2450,20 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
   return ctx.in.err("expected type index or identifier");
 }
 
+// globalidx ::= x:u32 => x
+//             | v:id  => x (if globals[x] = v)
+template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getGlobalFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getGlobalFromName(*id);
+  }
+  return ctx.in.err("expected global index or identifier");
+}
+
 // localidx ::= x:u32 => x
-//            | v:id  => x (if types[x] = v)
+//            | v:id  => x (if locals[x] = v)
 template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getLocalFromIdx(*x);
