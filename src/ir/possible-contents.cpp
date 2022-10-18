@@ -2046,10 +2046,13 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // reference and value.)
 
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+
+  // See the related comment in readFromData() as to why these are the only
+  // things we need to check, and why the assertion afterwards contains the only
+  // things possible.
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  // This cannot be Many for the same reasons as in readFromData().
   assert(refContents.isGlobal() || refContents.isConeType());
 
   // As in readFromData, normalize to the proper cone.
