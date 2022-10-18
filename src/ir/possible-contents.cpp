@@ -1989,13 +1989,6 @@ void Flower::readFromData(Type declaredHeapType,
   if (!hasIndex(coneReadLocation)) {
     // This is the first time we use this location, so create the links for it
     // in the graph.
-
-    // First, connect the base type itself.
-    auto coneType = cone.type.getHeapType();
-    connectDuringFlow(DataLocation{coneType, fieldIndex}, coneReadLocation);
-
-    // Next, connect strict subtypes.
-
     subTypes->iterSubTypes(
       cone.type.getHeapType(),
       normalizedDepth,
