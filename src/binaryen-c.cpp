@@ -202,6 +202,9 @@ BinaryenType BinaryenTypeI31ref(void) {
 BinaryenType BinaryenTypeDataref(void) {
   return Type(HeapType::data, NonNullable).getID();
 }
+BinaryenType BinaryenTypeArrayref(void) {
+  return Type(HeapType::array, Nullable).getID();
+}
 BinaryenType BinaryenTypeStringref() {
   return Type(HeapType::string, Nullable).getID();
 }
@@ -284,6 +287,9 @@ BinaryenHeapType BinaryenHeapTypeI31() {
 BinaryenHeapType BinaryenHeapTypeData() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::data);
 }
+BinaryenHeapType BinaryenHeapTypeArray() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::array);
+}
 BinaryenHeapType BinaryenHeapTypeString() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::string);
 }
@@ -298,6 +304,22 @@ BinaryenHeapType BinaryenHeapTypeStringviewWTF16() {
 BinaryenHeapType BinaryenHeapTypeStringviewIter() {
   return static_cast<BinaryenHeapType>(
     HeapType::BasicHeapType::stringview_iter);
+}
+BinaryenHeapType BinaryenHeapTypeNone() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::none);
+}
+BinaryenHeapType BinaryenHeapTypeNoext() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::noext);
+}
+BinaryenHeapType BinaryenHeapTypeNofunc() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::nofunc);
+}
+
+bool BinaryenHeapTypeIsBottom(BinaryenHeapType heapType) {
+  return HeapType(heapType).isBottom();
+}
+BinaryenHeapType BinaryenHeapTypeGetBottom(BinaryenHeapType heapType) {
+  return static_cast<BinaryenHeapType>(HeapType(heapType).getBottom());
 }
 
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
