@@ -1665,13 +1665,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
     }
   }
 
-  // Check if anything changed. Note that we check not just the content but
-  // also its type. That handles the case of nulls, that compare equal even if
-  // their type differs. We want to keep flowing if the type can change, so that
-  // we always end up with a deterministic result no matter in what order the
-  // flow happens (the final result will be the LUB of all the types of nulls
-  // that can arrive).
-  if (contents == oldContents && contents.getType() == oldContents.getType()) {
+  // Check if anything changed.
+  if (contents == oldContents) {
     // Nothing actually changed, so just return.
     return worthSendingMore;
   }
@@ -1692,9 +1687,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
     filtered = true;
   }
 
-  if (filtered && contents == oldContents &&
-      contents.getType() == oldContents.getType()) {
-    // Nothing actually changed after filtering, so just return.
+  // Check if anything changed after filtering, if we did so.
+  if (filtered && contents == oldContents) {
     return worthSendingMore;
   }
 
