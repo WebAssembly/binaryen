@@ -123,7 +123,7 @@
  (func $1 (; has Stack IR ;)
   (local $0 (ref $bytes))
   (call $log
-   (array.len $bytes
+   (array.len
     (local.tee $0
      (array.new $bytes
       (i32.const 42)
@@ -319,7 +319,7 @@
  (func $24 (; has Stack IR ;)
   (local $0 (ref $bytes))
   (call $log
-   (array.len $bytes
+   (array.len
     (local.tee $0
      (array.init_static $bytes
       (i32.const 42)

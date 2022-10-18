@@ -2213,7 +2213,7 @@ BinaryenFeatureAll: 126975
        (i32.const 42)
       )
       (drop
-       (array.len $[mut:i8]
+       (array.len
         (global.get $i8Array-global)
        )
       )
