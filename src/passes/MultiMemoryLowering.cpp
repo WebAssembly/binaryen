@@ -58,7 +58,7 @@ struct MultiMemoryLowering : public Pass {
   std::vector<Name> memoryGrowNames;
 
   void run(Module* module) override {
-    // Disabling multi-memories so that the target features esction in the
+    // Disabling multi-memories so that the target features section in the
     // emitted module does not report the use of MultiMemories. Also prevents
     // later passes from adding additional memories.
     module->features.disable(FeatureSet::MultiMemories);
@@ -107,7 +107,7 @@ struct MultiMemoryLowering : public Pass {
 
       void visitMemorySize(MemorySize* curr) {
         auto idx = parent.memoryIdxMap.at(curr->memory);
-        Name funcName = parent.memoryGrowNames[idx];
+        Name funcName = parent.memorySizeNames[idx];
         replaceCurrent(builder.makeCall(funcName, {}, curr->type));
       }
 
@@ -120,7 +120,7 @@ struct MultiMemoryLowering : public Pass {
         auto idx = parent.memoryIdxMap.at(curr->memory);
         auto global = parent.getOffsetGlobal(idx);
         curr->memory = parent.combinedMemory;
-        if (global == "") {
+        if (!global) {
           return;
         }
         curr->ptr = builder.makeBinary(
@@ -208,9 +208,7 @@ struct MultiMemoryLowering : public Pass {
         Builder::makeGlobal(name,
                             pointerType,
                             Builder(*wasm).makeConst(
-                              pointerType == Type::i32
-                                ? Literal::makeFromInt32(offset, pointerType)
-                                : Literal::makeFromInt64(offset, pointerType)),
+                              Literal::makeFromInt64(offset, pointerType)),
                             Builder::Mutable);
       global->hasExplicitName = true;
       wasm->addGlobal(std::move(global));
@@ -241,8 +239,6 @@ struct MultiMemoryLowering : public Pass {
       dataSegment->memory = combinedMemory;
       // No need to update the offset of data segments for the first memory
       if (idx != 0) {
-        // We need to subtract 1 here because there is no offsetGlobal for the
-        // first memory
         auto offsetGlobalName = getOffsetGlobal(idx);
         dataSegment->offset = builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::Add),
@@ -274,7 +270,7 @@ struct MultiMemoryLowering : public Pass {
   // instruction to grow.
   std::unique_ptr<Function> memoryGrow(Index memIdx) {
     Builder builder(*wasm);
-    Name name = "custom_memory_grow_" + std::to_string(memIdx);
+    Name name = "memory_grow_" + std::to_string(memIdx);
     Name functionName = Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
       functionName, Signature(pointerType, pointerType), {});
@@ -297,7 +293,7 @@ struct MultiMemoryLowering : public Pass {
     // shifting it over to accomodate the increase from page_delta
     if (!isLastMemory(memIdx)) {
       // This offset is the starting pt for copying
-      auto& offsetGlobalName = offsetGlobalNames[memIdx];
+      auto& offsetGlobalName = getOffsetGlobal(memIdx + 1);
       functionBody = builder.blockify(
         functionBody,
         builder.makeMemoryCopy(
@@ -353,7 +349,7 @@ struct MultiMemoryLowering : public Pass {
     // Thus, offsetGlobalNames[0] is the offset for wasm->memories[1] and
     // the size of wasm->memories[0].
     if (memIdx == 0) {
-      auto offsetGlobalName = offsetGlobalNames[0];
+      auto offsetGlobalName = getOffsetGlobal(1);
       functionBody = builder.makeReturn(
         builder.makeGlobalGet(offsetGlobalName, pointerType));
     } else if (isLastMemory(memIdx)) {
