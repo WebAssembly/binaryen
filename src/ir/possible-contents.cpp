@@ -2052,10 +2052,10 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
   // As in readFromData, normalize to the proper cone.
   auto cone = refContents.getCone();
-  auto depth = getNormalizedConeDepth(cone.type, cone.depth);
+  auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
 
   subTypes->iterSubTypes(
-    cone.type.getHeapType(), depth, [&](HeapType type, Index depth) {
+    cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
     });
