@@ -606,6 +606,8 @@ struct NullInstrParserCtx {
   InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
+  InstrT makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
+  InstrT makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
 
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
@@ -1364,6 +1366,24 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     auto lhs = pop(pos);
     CHECK_ERR(lhs);
     return push(pos, builder.makeSIMDShuffle(*lhs, *rhs, lanes));
+  }
+
+  Result<> makeSIMDTernary(Index pos, SIMDTernaryOp op) {
+    auto c = pop(pos);
+    CHECK_ERR(c);
+    auto b = pop(pos);
+    CHECK_ERR(b);
+    auto a = pop(pos);
+    CHECK_ERR(a);
+    return push(pos, builder.makeSIMDTernary(op, *a, *b, *c));
+  }
+
+  Result<> makeSIMDShift(Index pos, SIMDShiftOp op) {
+    auto shift = pop(pos);
+    CHECK_ERR(shift);
+    auto vec = pop(pos);
+    CHECK_ERR(vec);
+    return push(pos, builder.makeSIMDShift(op, *vec, *shift));
   }
 };
 
@@ -2139,13 +2159,13 @@ Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx, Index pos) {
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeSIMDTernary(Ctx& ctx, Index pos, SIMDTernaryOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeSIMDTernary(pos, op);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeSIMDShift(Ctx& ctx, Index pos, SIMDShiftOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeSIMDShift(pos, op);
 }
 
 template<typename Ctx>

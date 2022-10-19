@@ -15,6 +15,8 @@
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
+  ;; CHECK:      (type $v128_i32_=>_v128 (func_subtype (param v128 i32) (result v128) func))
+
   ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
 
   ;; CHECK:      (type $i32_i32_=>_none (func_subtype (param i32 i32) func))
@@ -27,9 +29,9 @@
 
   ;; CHECK:      (type $v128_=>_i32 (func_subtype (param v128) (result i32) func))
 
-  ;; CHECK:      (type $v128_i32_=>_v128 (func_subtype (param v128 i32) (result v128) func))
-
   ;; CHECK:      (type $v128_v128_=>_v128 (func_subtype (param v128 v128) (result v128) func))
+
+  ;; CHECK:      (type $v128_v128_v128_=>_v128 (func_subtype (param v128 v128 v128) (result v128) func))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
@@ -741,6 +743,32 @@
   local.get 0
   local.get 1
   i8x16.shuffle 0 1 2 3 4 5 6 7 16 17 18 19 20 21 22 23
+ )
+
+ ;; CHECK:      (func $simd-ternary (type $v128_v128_v128_=>_v128) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK-NEXT:  (v128.bitselect
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simd-ternary (param v128 v128 v128) (result v128)
+  local.get 0
+  local.get 1
+  local.get 2
+  v128.bitselect
+ )
+
+ ;; CHECK:      (func $simd-shift (type $v128_i32_=>_v128) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK-NEXT:  (i8x16.shl
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simd-shift (param v128 i32) (result v128)
+  local.get 0
+  local.get 1
+  i8x16.shl
  )
 
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
