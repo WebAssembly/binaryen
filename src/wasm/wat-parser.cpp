@@ -218,6 +218,18 @@ struct ParseInput {
     return {};
   }
 
+  std::optional<uint8_t> takeU8() {
+    if (auto t = peek()) {
+      if (auto n = t->getU32()) {
+        if (n <= std::numeric_limits<uint8_t>::max()) {
+          ++lexer;
+          return uint8_t(*n);
+        }
+      }
+    }
+    return {};
+  }
+
   std::optional<double> takeF64() {
     if (auto t = peek()) {
       if (auto d = t->getF64()) {
@@ -591,6 +603,9 @@ struct NullInstrParserCtx {
 
   InstrT makeGlobalGet(Index, GlobalT) { return Ok{}; }
   InstrT makeGlobalSet(Index, GlobalT) { return Ok{}; }
+  InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
+  InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
+  InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
 
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
@@ -1328,6 +1343,28 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     CHECK_ERR(val);
     return push(pos, builder.makeGlobalSet(global, *val));
   }
+
+  Result<> makeSIMDExtract(Index pos, SIMDExtractOp op, uint8_t lane) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeSIMDExtract(op, *val, lane));
+  }
+
+  Result<> makeSIMDReplace(Index pos, SIMDReplaceOp op, uint8_t lane) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto vec = pop(pos);
+    CHECK_ERR(vec);
+    return push(pos, builder.makeSIMDReplace(op, *vec, lane, *val));
+  }
+
+  Result<> makeSIMDShuffle(Index pos, const std::array<uint8_t, 16>& lanes) {
+    auto rhs = pop(pos);
+    CHECK_ERR(rhs);
+    auto lhs = pop(pos);
+    CHECK_ERR(lhs);
+    return push(pos, builder.makeSIMDShuffle(*lhs, *rhs, lanes));
+  }
 };
 
 // ================
@@ -1874,7 +1911,7 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
           }
 
           if (ctx.in.getPos() != *end) {
-            return ctx.in.err(start, "expected end of instruction");
+            return ctx.in.err("expected end of instruction");
           }
         } else {
           WASM_UNREACHABLE("expected paren");
@@ -2068,19 +2105,35 @@ Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx& ctx, Index pos, SIMDExtractOp op, size_t lanes) {
-  return ctx.in.err("unimplemented instruction");
+makeSIMDExtract(Ctx& ctx, Index pos, SIMDExtractOp op, size_t) {
+  auto lane = ctx.in.takeU8();
+  if (!lane) {
+    return ctx.in.err("expected lane index");
+  }
+  return ctx.makeSIMDExtract(pos, op, *lane);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeSIMDReplace(Ctx& ctx, Index pos, SIMDReplaceOp op, size_t lanes) {
-  return ctx.in.err("unimplemented instruction");
+  auto lane = ctx.in.takeU8();
+  if (!lane) {
+    return ctx.in.err("expected lane index");
+  }
+  return ctx.makeSIMDReplace(pos, op, *lane);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  std::array<uint8_t, 16> lanes;
+  for (int i = 0; i < 16; ++i) {
+    auto lane = ctx.in.takeU8();
+    if (!lane) {
+      return ctx.in.err("expected lane index");
+    }
+    lanes[i] = *lane;
+  }
+  return ctx.makeSIMDShuffle(pos, lanes);
 }
 
 template<typename Ctx>
