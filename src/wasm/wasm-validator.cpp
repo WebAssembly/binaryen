@@ -2909,27 +2909,7 @@ static bool checkSegmentOffset(Expression* curr,
                                Address add,
                                Address max,
                                FeatureSet features) {
-  if (!Properties::isValidInConstantExpression(curr, features)) {
-    return false;
-  }
-  auto* c = curr->dynCast<Const>();
-  if (!c) {
-    // Unless the instruction is actually a const instruction, we don't
-    // currently try to evaluate it.
-    // TODO: Attempt to evaluate other expressions that might also be const
-    // such as `global.get` or more complex instruction sequences involving
-    // add/sub/mul/etc.
-    return true;
-  }
-  uint64_t raw = c->value.getInteger();
-  if (raw > std::numeric_limits<Address::address32_t>::max()) {
-    return false;
-  }
-  if (raw + uint64_t(add) > std::numeric_limits<Address::address32_t>::max()) {
-    return false;
-  }
-  Address offset = raw;
-  return offset + add <= max;
+  return Properties::isValidInConstantExpression(curr, features);
 }
 
 void FunctionValidator::validateAlignment(
