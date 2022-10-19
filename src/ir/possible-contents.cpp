@@ -1374,7 +1374,7 @@ private:
   // in the reference the read receives, and the read instruction itself. We
   // compute where we need to read from based on the type and the ref contents
   // and get that data, adding new links in the graph as needed.
-  void readFromData(HeapType declaredHeapType,
+  void readFromData(Type declaredType,
                     Index fieldIndex,
                     const PossibleContents& refContents,
                     Expression* read);
@@ -1753,14 +1753,14 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     if (auto* get = parent->dynCast<StructGet>()) {
       // |child| is the reference child of a struct.get.
       assert(get->ref == child);
-      readFromData(get->ref->type.getHeapType(), get->index, contents, get);
+      readFromData(get->ref->type, get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
-      readFromData(get->ref->type.getHeapType(), 0, contents, get);
+      readFromData(get->ref->type, 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
@@ -1913,10 +1913,17 @@ void Flower::filterGlobalContents(PossibleContents& contents,
   }
 }
 
-void Flower::readFromData(HeapType declaredHeapType,
+void Flower::readFromData(Type declaredType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
+#ifndef NDEBUG
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::fullConeType(declaredType);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
+#endif
+
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
   // which DataLocations are relevant: if it is an exact type then we have a
@@ -1944,16 +1951,10 @@ void Flower::readFromData(HeapType declaredHeapType,
   // future.
 
   if (refContents.isNull() || refContents.isNone()) {
-    // Nothing is read here.
-    return;
-  }
-
-  if (refContents.isLiteral()) {
-    // The only reference literals we have are nulls (handled above) and
-    // ref.func. ref.func will trap in struct|array.get, so nothing will be read
-    // here (when we finish optimizing all instructions like BrOn then
-    // ref.funcs should get filtered out before arriving here TODO).
-    assert(refContents.getType().isFunction());
+    // Nothing is read here as this is either a null or unreachable code. (Note
+    // that the contents must be a subtype of the wasm type, which rules out
+    // other possibilities like a non-null literal such as an integer or a
+    // function reference.)
     return;
   }
 
@@ -1961,55 +1962,61 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.hasExactType()) {
-    // Add a single link to the exact location the reference points to.
-    connectDuringFlow(
-      DataLocation{refContents.getType().getHeapType(), fieldIndex},
-      ExpressionLocation{read, 0});
-  } else {
-    // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
-    // type of the reference or some of its subtypes.
-    // TODO: The Global case may have a different cone type than the heapType,
-    //       which we could use here.
-    // TODO: A Global may refer to an immutable global, which we can read the
-    //       field from potentially (reading it from the struct.new/array.new
-    //       in the definition of it, if it is not imported; or, we could track
-    //       the contents of immutable fields of allocated objects, and not just
-    //       represent them as an exact type).
-    //       See the test TODO with text "We optimize some of this, but stop at
-    //       reading from the immutable global"
-    assert(refContents.isMany() || refContents.isGlobal() ||
-           refContents.isConeType());
+  // The only possibilities left are a cone type (the worst case is where the
+  // cone matches the wasm type), or a global.
+  //
+  // TODO: The Global case may have a different cone type than the heapType,
+  //       which we could use here.
+  // TODO: A Global may refer to an immutable global, which we can read the
+  //       field from potentially (reading it from the struct.new/array.new
+  //       in the definition of it, if it is not imported; or, we could track
+  //       the contents of immutable fields of allocated objects, and not just
+  //       represent them as an exact type).
+  //       See the test TODO with text "We optimize some of this, but stop at
+  //       reading from the immutable global"
+  assert(refContents.isGlobal() || refContents.isConeType());
 
-    // TODO: Use the cone depth here for ConeType. Right now we do the
-    //       pessimistic thing and assume a full cone of all subtypes.
+  // Just look at the cone here, discarding information about this being a
+  // global, if it was one. All that matters from now is the cone. We also
+  // normalize the cone to avoid wasted work later.
+  auto cone = refContents.getCone();
+  auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
 
-    // We create a ConeReadLocation for the canonical cone of this type, to
-    // avoid bloating the graph, see comment on ConeReadLocation().
-    // TODO: A cone with no subtypes needs no canonical location, just
-    //       add one direct link here.
-    auto coneReadLocation = ConeReadLocation{declaredHeapType, fieldIndex};
-    if (!hasIndex(coneReadLocation)) {
-      // This is the first time we use this location, so create the links for it
-      // in the graph.
-      for (auto type : subTypes->getAllSubTypes(declaredHeapType)) {
+  // We create a ConeReadLocation for the canonical cone of this type, to
+  // avoid bloating the graph, see comment on ConeReadLocation().
+  auto coneReadLocation =
+    ConeReadLocation{cone.type.getHeapType(), normalizedDepth, fieldIndex};
+  if (!hasIndex(coneReadLocation)) {
+    // This is the first time we use this location, so create the links for it
+    // in the graph.
+    subTypes->iterSubTypes(
+      cone.type.getHeapType(),
+      normalizedDepth,
+      [&](HeapType type, Index depth) {
         connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
-      }
+      });
 
-      // TODO: if the old contents here were an exact type then we have an old
-      //       link here that we could remove as it is redundant (the cone
-      //       contains the exact type among the others). But removing links
-      //       is not efficient, so maybe not worth it.
-    }
-
-    // Link to the canonical location.
-    connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
+    // TODO: we can end up with redundant links here if we see one cone first
+    //       and then a larger one later. But removing links is not efficient,
+    //       so for now just leave that.
   }
+
+  // Link to the canonical location.
+  connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
 void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
+#endif
+
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+
+#ifndef NDEBUG
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::fullConeType(ref->type);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 
   // We could set up links here as we do for reads, but as we get to this code
@@ -2033,29 +2040,25 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // we've sent information based on the final and correct information about our
   // reference and value.)
 
-  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+
+  // See the related comment in readFromData() as to why these are the only
+  // things we need to check, and why the assertion afterwards contains the only
+  // things possible.
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.hasExactType()) {
-    // Update the one possible type here.
-    auto heapLoc =
-      DataLocation{refContents.getType().getHeapType(), fieldIndex};
-    updateContents(heapLoc, valueContents);
-  } else {
-    assert(refContents.isMany() || refContents.isGlobal() ||
-           refContents.isConeType());
+  assert(refContents.isGlobal() || refContents.isConeType());
 
-    // Update all possible subtypes here.
-    // TODO: Use the cone depth here for ConeType. Right now we do the
-    //       pessimistic thing and assume a full cone of all subtypes.
-    auto type = ref->type.getHeapType();
-    for (auto subType : subTypes->getAllSubTypes(type)) {
-      auto heapLoc = DataLocation{subType, fieldIndex};
+  // As in readFromData, normalize to the proper cone.
+  auto cone = refContents.getCone();
+  auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
+
+  subTypes->iterSubTypes(
+    cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
+      auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
-    }
-  }
+    });
 }
 
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {

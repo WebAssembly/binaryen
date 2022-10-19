@@ -4705,13 +4705,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (select (result (ref $A))
-  ;; CHECK-NEXT:     (local.get $A)
-  ;; CHECK-NEXT:     (local.get $B)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
@@ -4752,8 +4746,7 @@
         (i32.const 20)
       )
     )
-    ;; We can optimize the first of these, which mixes A and B, into 10. This
-    ;; will require more cone opts, though TODO
+    ;; We can optimize the first of these, which mixes A and B, into 10.
     (drop
       (struct.get $A 0
         (select
@@ -4944,9 +4937,7 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $C 0
-  ;; CHECK-NEXT:    (local.get $C)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $write (export "write") (param $x i32)
@@ -4978,8 +4969,7 @@
       )
       (i32.const 10)
     )
-    ;; Read from all the locals. We can optimize them all, to 10, 10, 20. The
-    ;; last requires more cone opts, however. TODO
+    ;; Read from all the locals. We can optimize them all, to 10, 10, 20.
     (drop
       (struct.get $A 0
         (local.get $A)
