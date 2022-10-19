@@ -1468,7 +1468,6 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryFill(Ctx&, Index);
-template<typename Ctx> Result<typename Ctx::InstrT> makePush(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makePop(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeIf(Ctx&, Index);
 template<typename Ctx>
@@ -2196,11 +2195,6 @@ Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makePush(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
