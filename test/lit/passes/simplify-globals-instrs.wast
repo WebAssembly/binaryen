@@ -7,9 +7,6 @@
 ;; value of the first into the second. The second's value then becomes constant
 ;; as well.
 (module
-  (memory 1)
-  (table 10 funcref)
-
   ;; CHECK:      (global $A i32 (i32.const 40))
   (global $A (mut i32) (i32.const 40))
 
@@ -19,16 +16,17 @@
     (i32.const 2)
   ))
 
+  ;; CHECK:      (memory $0 1)
+  (memory 1)
+
+  ;; CHECK:      (data (i32.const 58) "foo")
   (data (i32.sub
     (i32.const 100)
     (global.get $B)
   ) "foo")
 
-  ;; CHECK:      (memory $0 1)
-
-  ;; CHECK:      (data (i32.const 58) "foo")
-
   ;; CHECK:      (table $0 10 funcref)
+  (table 10 funcref)
 
   ;; CHECK:      (elem $0 (table $0) (i32.const 1) funcref (ref.null nofunc) (ref.null nofunc))
   (elem $0 (table 0) (i32.sub
