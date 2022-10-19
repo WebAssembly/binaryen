@@ -197,10 +197,10 @@ BinaryenType BinaryenTypeEqref(void) {
   return Type(HeapType::eq, Nullable).getID();
 }
 BinaryenType BinaryenTypeI31ref(void) {
-  return Type(HeapType::i31, NonNullable).getID();
+  return Type(HeapType::i31, Nullable).getID();
 }
 BinaryenType BinaryenTypeDataref(void) {
-  return Type(HeapType::data, NonNullable).getID();
+  return Type(HeapType::data, Nullable).getID();
 }
 BinaryenType BinaryenTypeArrayref(void) {
   return Type(HeapType::array, Nullable).getID();
