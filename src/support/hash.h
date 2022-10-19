@@ -61,6 +61,16 @@ template<typename T1, typename T2> struct hash<pair<T1, T2>> {
   }
 };
 
+// Hashing tuples is often useful
+template<typename A, typename B, typename C> struct hash<std::tuple<A, B, C>> {
+  size_t operator()(const std::tuple<A, B, C>& t) const {
+    auto digest = wasm::hash(std::get<0>(t));
+    wasm::rehash(digest, std::get<1>(t));
+    wasm::rehash(digest, std::get<2>(t));
+    return digest;
+  }
+};
+
 } // namespace std
 
 #endif // wasm_support_hash_h
