@@ -531,8 +531,8 @@ template<> struct hash<wasm::ResultLocation> {
 
 template<> struct hash<wasm::BreakTargetLocation> {
   size_t operator()(const wasm::BreakTargetLocation& loc) const {
-    return std::hash<std::pair<size_t, std::pair<wasm::Name, wasm::Index>>>{}(
-      {size_t(loc.func), {loc.target, loc.tupleIndex}});
+    return std::hash<std::tuple<size_t, wasm::Name, wasm::Index>>{}(
+      {size_t(loc.func), loc.target, loc.tupleIndex});
   }
 };
 
@@ -578,9 +578,8 @@ template<> struct hash<wasm::NullLocation> {
 
 template<> struct hash<wasm::ConeReadLocation> {
   size_t operator()(const wasm::ConeReadLocation& loc) const {
-    return std::hash<
-      std::pair<wasm::HeapType, std::pair<wasm::Index, wasm::Index>>>{}(
-      {loc.type, {loc.depth, loc.index}});
+    return std::hash<std::tuple<wasm::HeapType, wasm::Index, wasm::Index>>{}(
+      {loc.type, loc.depth, loc.index});
   }
 };
 

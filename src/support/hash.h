@@ -61,6 +61,24 @@ template<typename T1, typename T2> struct hash<pair<T1, T2>> {
   }
 };
 
+// And hashing tuples is useful, too.
+template<typename T, typename... Ts> struct hash<tuple<T, Ts...>> {
+private:
+  template<size_t... I>
+  static void rehash(const tuple<T, Ts...>& tup,
+                     size_t& digest,
+                     std::index_sequence<I...>) {
+    (wasm::rehash(digest, std::get<1 + I>(tup)), ...);
+  }
+
+public:
+  size_t operator()(const tuple<T, Ts...>& tup) const {
+    auto digest = wasm::hash(std::get<0>(tup));
+    rehash(tup, digest, std::index_sequence_for<Ts...>{});
+    return digest;
+  }
+};
+
 } // namespace std
 
 #endif // wasm_support_hash_h
