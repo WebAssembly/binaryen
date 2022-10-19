@@ -1374,7 +1374,7 @@ private:
   // in the reference the read receives, and the read instruction itself. We
   // compute where we need to read from based on the type and the ref contents
   // and get that data, adding new links in the graph as needed.
-  void readFromData(Type declaredHeapType,
+  void readFromData(Type declaredType,
                     Index fieldIndex,
                     const PossibleContents& refContents,
                     Expression* read);
@@ -1913,14 +1913,14 @@ void Flower::filterGlobalContents(PossibleContents& contents,
   }
 }
 
-void Flower::readFromData(Type declaredHeapType,
+void Flower::readFromData(Type declaredType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
 #ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
-  auto maximalContents = PossibleContents::fullConeType(declaredHeapType);
+  auto maximalContents = PossibleContents::fullConeType(declaredType);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 
