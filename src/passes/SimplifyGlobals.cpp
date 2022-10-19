@@ -662,9 +662,9 @@ struct SimplifyGlobals : public Pass {
       if (!curr) {
         return;
       }
-      tempFunc.body = global->init;
+      tempFunc.body = curr;
       runner.runOnFunction(&tempFunc);
-      global->init = tempFunc.body;
+      curr = tempFunc.body;
     };
 
     for (auto& global : module->globals) {
