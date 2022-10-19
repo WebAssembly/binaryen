@@ -654,7 +654,8 @@ struct SimplifyGlobals : public Pass {
       return;
     }
 
-    struct Optimizer : public PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>> {
+    struct Optimizer
+      : public PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>> {
       PassRunner runner;
 
       Function tempFunc;
