@@ -218,6 +218,18 @@ struct ParseInput {
     return {};
   }
 
+  std::optional<uint8_t> takeU8() {
+    if (auto t = peek()) {
+      if (auto n = t->getU32()) {
+        if (n <= std::numeric_limits<uint8_t>::max()) {
+          ++lexer;
+          return uint8_t(*n);
+        }
+      }
+    }
+    return {};
+  }
+
   std::optional<double> takeF64() {
     if (auto t = peek()) {
       if (auto d = t->getF64()) {
@@ -558,6 +570,7 @@ struct NullInstrParserCtx {
   using ExprT = Ok;
 
   using LocalT = Ok;
+  using GlobalT = Ok;
 
   InstrsT makeInstrs() { return Ok{}; }
   void appendInstr(InstrsT&, InstrT) {}
@@ -565,26 +578,34 @@ struct NullInstrParserCtx {
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
 
-  LocalT getLocalFromIdx(uint32_t idx) { return Ok{}; }
-  LocalT getLocalFromName(Name name) { return Ok{}; }
+  LocalT getLocalFromIdx(uint32_t) { return Ok{}; }
+  LocalT getLocalFromName(Name) { return Ok{}; }
+  GlobalT getGlobalFromIdx(uint32_t) { return Ok{}; }
+  GlobalT getGlobalFromName(Name) { return Ok{}; }
 
-  InstrT makeUnreachable(Index pos) { return Ok{}; }
-  InstrT makeNop(Index pos) { return Ok{}; }
-  InstrT makeBinary(Index pos, BinaryOp op) { return Ok{}; }
-  InstrT makeUnary(Index pos, UnaryOp op) { return Ok{}; }
-  template<typename ResultsT> InstrT makeSelect(Index pos, ResultsT* res) {
+  InstrT makeUnreachable(Index) { return Ok{}; }
+  InstrT makeNop(Index) { return Ok{}; }
+  InstrT makeBinary(Index, BinaryOp) { return Ok{}; }
+  InstrT makeUnary(Index, UnaryOp) { return Ok{}; }
+  template<typename ResultsT> InstrT makeSelect(Index, ResultsT*) {
     return Ok{};
   }
-  InstrT makeDrop(Index pos) { return Ok{}; }
+  InstrT makeDrop(Index) { return Ok{}; }
 
   InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
   InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
   InstrT makeF32Const(Index, float) { return Ok{}; }
   InstrT makeF64Const(Index, double) { return Ok{}; }
 
-  InstrT makeLocalGet(Index pos, LocalT local) { return Ok{}; }
-  InstrT makeLocalTee(Index pos, LocalT local) { return Ok{}; }
-  InstrT makeLocalSet(Index pos, LocalT local) { return Ok{}; }
+  InstrT makeLocalGet(Index, LocalT) { return Ok{}; }
+  InstrT makeLocalTee(Index, LocalT) { return Ok{}; }
+  InstrT makeLocalSet(Index, LocalT) { return Ok{}; }
+
+  InstrT makeGlobalGet(Index, GlobalT) { return Ok{}; }
+  InstrT makeGlobalSet(Index, GlobalT) { return Ok{}; }
+  InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
+  InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
+  InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
 
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
@@ -599,6 +620,7 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
   using ExprT = Expression*;
 
   using LocalT = Index;
+  using GlobalT = Name;
 
   Builder builder;
 
@@ -1167,7 +1189,16 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     return types[idx];
   }
 
-  Index getLocalFromIdx(uint32_t idx) { return idx; }
+  Result<Index> getLocalFromIdx(uint32_t idx) {
+    if (!func) {
+      return in.err("cannot access locals outside of a funcion");
+    }
+    if (idx >= func->getNumLocals()) {
+      return in.err("local index out of bounds");
+    }
+    return idx;
+  }
+
   Result<Index> getLocalFromName(Name name) {
     if (!func) {
       return in.err("cannot access locals outside of a function");
@@ -1176,6 +1207,20 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       return in.err("local $" + name.toString() + " does not exist");
     }
     return func->getLocalIndex(name);
+  }
+
+  Result<Name> getGlobalFromIdx(uint32_t idx) {
+    if (idx >= wasm.globals.size()) {
+      return in.err("global index out of bounds");
+    }
+    return wasm.globals[idx]->name;
+  }
+
+  Result<Name> getGlobalFromName(Name name) {
+    if (!wasm.getGlobalOrNull(name)) {
+      return in.err("global $" + name.toString() + " does not exist");
+    }
+    return name;
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
@@ -1284,6 +1329,41 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     auto val = pop(pos);
     CHECK_ERR(val);
     return push(pos, builder.makeLocalSet(local, *val));
+  }
+
+  Result<> makeGlobalGet(Index pos, Name global) {
+    assert(wasm.getGlobalOrNull(global));
+    auto type = wasm.getGlobal(global)->type;
+    return push(pos, builder.makeGlobalGet(global, type));
+  }
+
+  Result<> makeGlobalSet(Index pos, Name global) {
+    assert(wasm.getGlobalOrNull(global));
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeGlobalSet(global, *val));
+  }
+
+  Result<> makeSIMDExtract(Index pos, SIMDExtractOp op, uint8_t lane) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeSIMDExtract(op, *val, lane));
+  }
+
+  Result<> makeSIMDReplace(Index pos, SIMDReplaceOp op, uint8_t lane) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto vec = pop(pos);
+    CHECK_ERR(vec);
+    return push(pos, builder.makeSIMDReplace(op, *vec, lane, *val));
+  }
+
+  Result<> makeSIMDShuffle(Index pos, const std::array<uint8_t, 16>& lanes) {
+    auto rhs = pop(pos);
+    CHECK_ERR(rhs);
+    auto lhs = pop(pos);
+    CHECK_ERR(lhs);
+    return push(pos, builder.makeSIMDShuffle(*lhs, *rhs, lanes));
   }
 };
 
@@ -1463,6 +1543,7 @@ Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, Index);
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
@@ -1830,7 +1911,7 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
           }
 
           if (ctx.in.getPos() != *end) {
-            return ctx.in.err(start, "expected end of instruction");
+            return ctx.in.err("expected end of instruction");
           }
         } else {
           WASM_UNREACHABLE("expected paren");
@@ -1922,12 +2003,16 @@ Result<typename Ctx::InstrT> makeLocalSet(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeGlobalGet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto global = globalidx(ctx);
+  CHECK_ERR(global);
+  return ctx.makeGlobalGet(pos, *global);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto global = globalidx(ctx);
+  CHECK_ERR(global);
+  return ctx.makeGlobalSet(pos, *global);
 }
 
 template<typename Ctx>
@@ -2020,19 +2105,35 @@ Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDExtract(Ctx& ctx, Index pos, SIMDExtractOp op, size_t lanes) {
-  return ctx.in.err("unimplemented instruction");
+makeSIMDExtract(Ctx& ctx, Index pos, SIMDExtractOp op, size_t) {
+  auto lane = ctx.in.takeU8();
+  if (!lane) {
+    return ctx.in.err("expected lane index");
+  }
+  return ctx.makeSIMDExtract(pos, op, *lane);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeSIMDReplace(Ctx& ctx, Index pos, SIMDReplaceOp op, size_t lanes) {
-  return ctx.in.err("unimplemented instruction");
+  auto lane = ctx.in.takeU8();
+  if (!lane) {
+    return ctx.in.err("expected lane index");
+  }
+  return ctx.makeSIMDReplace(pos, op, *lane);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeSIMDShuffle(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  std::array<uint8_t, 16> lanes;
+  for (int i = 0; i < 16; ++i) {
+    auto lane = ctx.in.takeU8();
+    if (!lane) {
+      return ctx.in.err("expected lane index");
+    }
+    lanes[i] = *lane;
+  }
+  return ctx.makeSIMDShuffle(pos, lanes);
 }
 
 template<typename Ctx>
@@ -2402,8 +2503,20 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
   return ctx.in.err("expected type index or identifier");
 }
 
+// globalidx ::= x:u32 => x
+//             | v:id  => x (if globals[x] = v)
+template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getGlobalFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getGlobalFromName(*id);
+  }
+  return ctx.in.err("expected global index or identifier");
+}
+
 // localidx ::= x:u32 => x
-//            | v:id  => x (if types[x] = v)
+//            | v:id  => x (if locals[x] = v)
 template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getLocalFromIdx(*x);

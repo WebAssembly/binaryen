@@ -105,6 +105,7 @@ BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
 BINARYEN_API BinaryenType BinaryenTypeEqref(void);
 BINARYEN_API BinaryenType BinaryenTypeI31ref(void);
 BINARYEN_API BinaryenType BinaryenTypeDataref(void);
+BINARYEN_API BinaryenType BinaryenTypeArrayref(void);
 BINARYEN_API BinaryenType BinaryenTypeStringref(void);
 BINARYEN_API BinaryenType BinaryenTypeStringviewWTF8(void);
 BINARYEN_API BinaryenType BinaryenTypeStringviewWTF16(void);
@@ -146,10 +147,18 @@ BINARYEN_API BinaryenHeapType BinaryenHeapTypeAny(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeEq(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeI31(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeData(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeArray(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeString(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF8(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF16(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewIter(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNone(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNoext(void);
+BINARYEN_API BinaryenHeapType BinaryenHeapTypeNofunc(void);
+
+BINARYEN_API bool BinaryenHeapTypeIsBottom(BinaryenHeapType heapType);
+BINARYEN_API BinaryenHeapType
+BinaryenHeapTypeGetBottom(BinaryenHeapType heapType);
 
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
 BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);

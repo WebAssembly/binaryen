@@ -1359,8 +1359,13 @@ private:
   // exists it is not added.
   void connectDuringFlow(Location from, Location to);
 
-  // Contents sent to a global location can be filtered in a special way during
-  // the flow, which is handled in this helper.
+  // Contents sent to certain locations can be filtered in a special way during
+  // the flow, which is handled in these helpers. These may update
+  // |worthSendingMore| which is whether it is worth sending any more content to
+  // this location in the future.
+  void filterExpressionContents(PossibleContents& contents,
+                                const ExpressionLocation& exprLoc,
+                                bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
 
@@ -1369,7 +1374,7 @@ private:
   // in the reference the read receives, and the read instruction itself. We
   // compute where we need to read from based on the type and the ref contents
   // and get that data, adding new links in the graph as needed.
-  void readFromData(HeapType declaredHeapType,
+  void readFromData(Type declaredType,
                     Index fieldIndex,
                     const PossibleContents& refContents,
                     Expression* read);
@@ -1383,6 +1388,30 @@ private:
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
+
+  // The depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  std::unordered_map<HeapType, Index> maxDepths;
+
+  // Given a ConeType, return the normalized depth, that is, the canonical depth
+  // given the actual children it has. If this is a full cone, then we can
+  // always pick the actual maximal depth and use that instead of FullDepth==-1.
+  // For a non-full cone, we also reduce the depth as much as possible, so it is
+  // equal to the maximum depth of an existing subtype.
+  Index getNormalizedConeDepth(Type type, Index depth) {
+    return std::min(depth, maxDepths[type.getHeapType()]);
+  }
+
+  void normalizeConeType(PossibleContents& cone) {
+    assert(cone.isConeType());
+    auto type = cone.getType();
+    auto before = cone.getCone().depth;
+    auto normalized = getNormalizedConeDepth(type, before);
+    if (normalized != before) {
+      cone = PossibleContents::coneType(type, normalized);
+    }
+  }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
@@ -1530,6 +1559,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   if (getTypeSystem() == TypeSystem::Nominal ||
       getTypeSystem() == TypeSystem::Isorecursive) {
     subTypes = std::make_unique<SubTypes>(wasm);
+    maxDepths = subTypes->getMaxDepths();
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -1616,38 +1646,55 @@ bool Flower::updateContents(LocationIndex locationIndex,
 
   // It is not worth sending any more to this location if we are now in the
   // worst possible case, as no future value could cause any change.
-  //
-  // Many is always the worst possible case. A cone type of a non-reference is
-  // also the worst case, since subtyping is not relevant there, and so if we
-  // only know something about the type then we already know nothing beyond what
-  // the type in the wasm tells us (and from there we can only go to Many).
-  bool worthSendingMore = !contents.isMany();
-  if (!contents.getType().isRef() && contents.isConeType()) {
-    worthSendingMore = false;
+  bool worthSendingMore = true;
+  if (contents.isConeType()) {
+    if (!contents.getType().isRef()) {
+      // A cone type of a non-reference is the worst case, since subtyping is
+      // not relevant there, and so if we only know something about the type
+      // then we already know nothing beyond what the type in the wasm tells us
+      // (and from there we can only go to Many).
+      worthSendingMore = false;
+    } else {
+      // Normalize all reference cones. There is never a point to flow around
+      // anything non-normalized, which might lead to extra work. For example,
+      // if A has no subtypes, then a full cone for A is really the same as one
+      // with depth 0 (an exact type). And we don't want to see the full cone
+      // arrive and think it was an improvement over the one with depth 0 and do
+      // more flowing based on that.
+      normalizeConeType(contents);
+    }
   }
 
-  // Check if anything changed. Note that we check not just the content but
-  // also its type. That handles the case of nulls, that compare equal even if
-  // their type differs. We want to keep flowing if the type can change, so that
-  // we always end up with a deterministic result no matter in what order the
-  // flow happens (the final result will be the LUB of all the types of nulls
-  // that can arrive).
-  if (contents == oldContents && contents.getType() == oldContents.getType()) {
+  // Check if anything changed.
+  if (contents == oldContents) {
     // Nothing actually changed, so just return.
     return worthSendingMore;
   }
 
   // Handle special cases: Some locations can only contain certain contents, so
   // filter accordingly.
-  if (auto* globalLoc =
-        std::get_if<GlobalLocation>(&getLocation(locationIndex))) {
+  auto location = getLocation(locationIndex);
+  bool filtered = false;
+  if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    // TODO: Replace this with specific filterFoo or flowBar methods like we
+    //       have for flowRefCast and filterGlobalContents. That could save a
+    //       little wasted work here. Might be best to do that after the spec is
+    //       fully stable.
+    filterExpressionContents(contents, *exprLoc, worthSendingMore);
+    filtered = true;
+  } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
-    if (contents == oldContents &&
-        contents.getType() == oldContents.getType()) {
-      // Nothing actually changed after filtering, so just return.
-      return worthSendingMore;
-    }
+    filtered = true;
   }
+
+  // Check if anything changed after filtering, if we did so.
+  if (filtered && contents == oldContents) {
+    return worthSendingMore;
+  }
+
+  // After filtering we should always have more precise information than "many"
+  // - in the worst case, we can have the type declared in the wasm.
+  assert(!contents.isMany());
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "  updateContents has something new\n";
@@ -1706,14 +1753,14 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     if (auto* get = parent->dynCast<StructGet>()) {
       // |child| is the reference child of a struct.get.
       assert(get->ref == child);
-      readFromData(get->ref->type.getHeapType(), get->index, contents, get);
+      readFromData(get->ref->type, get->index, contents, get);
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
-      readFromData(get->ref->type.getHeapType(), 0, contents, get);
+      readFromData(get->ref->type, 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
@@ -1776,6 +1823,68 @@ void Flower::connectDuringFlow(Location from, Location to) {
   }
 }
 
+void Flower::filterExpressionContents(PossibleContents& contents,
+                                      const ExpressionLocation& exprLoc,
+                                      bool& worthSendingMore) {
+  auto type = exprLoc.expr->type;
+  if (!type.isRef()) {
+    return;
+  }
+
+  // The caller cannot know of a situation where it might not be worth sending
+  // more to a reference - all that logic is in here. That is, the rest of this
+  // function is the only place we can mark |worthSendingMore| as false for a
+  // reference.
+  assert(worthSendingMore);
+
+  // The maximal contents here are the declared type and all subtypes. Nothing
+  // else can pass through, so filter such things out.
+  auto maximalContents = PossibleContents::fullConeType(type);
+  contents.intersectWithFullCone(maximalContents);
+  if (contents.isNone()) {
+    // Nothing was left here at all.
+    return;
+  }
+
+  // Normalize the intersection. We want to check later if any more content can
+  // arrive here, and also we want to avoid flowing around anything non-
+  // normalized, as explained earlier.
+  //
+  // Note that this normalization is necessary even though |contents| was
+  // normalized before the intersection, e.g.:
+  /*
+  //      A
+  //     / \
+  //    B   C
+  //        |
+  //        D
+  */
+  // Consider the case where |maximalContents| is Cone(B, Infinity) and the
+  // original |contents| was Cone(A, 2) (which is normalized). The naive
+  // intersection is Cone(B, 1), since the core intersection logic makes no
+  // assumptions about the rest of the types. That is then normalized to
+  // Cone(B, 0) since there happens to be no subtypes for B.
+  //
+  // Note that the intersection may also not be a cone type, if it is a global
+  // or literal. In that case we don't have anything more to do here.
+  if (!contents.isConeType()) {
+    return;
+  }
+
+  normalizeConeType(contents);
+
+  // There is a chance that the intersection is equal to the maximal contents,
+  // which would mean nothing more can arrive here. (Note that we can't
+  // normalize |maximalContents| before the intersection as
+  // intersectWithFullCone assumes a full/infinite cone.)
+  normalizeConeType(maximalContents);
+
+  if (contents == maximalContents) {
+    // We already contain everything possible, so this is the worst case.
+    worthSendingMore = false;
+  }
+}
+
 void Flower::filterGlobalContents(PossibleContents& contents,
                                   const GlobalLocation& globalLoc) {
   auto* global = wasm.getGlobal(globalLoc.name);
@@ -1804,10 +1913,17 @@ void Flower::filterGlobalContents(PossibleContents& contents,
   }
 }
 
-void Flower::readFromData(HeapType declaredHeapType,
+void Flower::readFromData(Type declaredType,
                           Index fieldIndex,
                           const PossibleContents& refContents,
                           Expression* read) {
+#ifndef NDEBUG
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::fullConeType(declaredType);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
+#endif
+
   // The data that a struct.get reads depends on two things: the reference that
   // we read from, and the relevant DataLocations. The reference determines
   // which DataLocations are relevant: if it is an exact type then we have a
@@ -1835,16 +1951,10 @@ void Flower::readFromData(HeapType declaredHeapType,
   // future.
 
   if (refContents.isNull() || refContents.isNone()) {
-    // Nothing is read here.
-    return;
-  }
-
-  if (refContents.isLiteral()) {
-    // The only reference literals we have are nulls (handled above) and
-    // ref.func. ref.func will trap in struct|array.get, so nothing will be read
-    // here (when we finish optimizing all instructions like BrOn then
-    // ref.funcs should get filtered out before arriving here TODO).
-    assert(refContents.getType().isFunction());
+    // Nothing is read here as this is either a null or unreachable code. (Note
+    // that the contents must be a subtype of the wasm type, which rules out
+    // other possibilities like a non-null literal such as an integer or a
+    // function reference.)
     return;
   }
 
@@ -1852,55 +1962,61 @@ void Flower::readFromData(HeapType declaredHeapType,
   std::cout << "    add special reads\n";
 #endif
 
-  if (refContents.hasExactType()) {
-    // Add a single link to the exact location the reference points to.
-    connectDuringFlow(
-      DataLocation{refContents.getType().getHeapType(), fieldIndex},
-      ExpressionLocation{read, 0});
-  } else {
-    // Otherwise, this is a true cone (i.e., it has a depth > 0): the declared
-    // type of the reference or some of its subtypes.
-    // TODO: The Global case may have a different cone type than the heapType,
-    //       which we could use here.
-    // TODO: A Global may refer to an immutable global, which we can read the
-    //       field from potentially (reading it from the struct.new/array.new
-    //       in the definition of it, if it is not imported; or, we could track
-    //       the contents of immutable fields of allocated objects, and not just
-    //       represent them as an exact type).
-    //       See the test TODO with text "We optimize some of this, but stop at
-    //       reading from the immutable global"
-    assert(refContents.isMany() || refContents.isGlobal() ||
-           refContents.isConeType());
+  // The only possibilities left are a cone type (the worst case is where the
+  // cone matches the wasm type), or a global.
+  //
+  // TODO: The Global case may have a different cone type than the heapType,
+  //       which we could use here.
+  // TODO: A Global may refer to an immutable global, which we can read the
+  //       field from potentially (reading it from the struct.new/array.new
+  //       in the definition of it, if it is not imported; or, we could track
+  //       the contents of immutable fields of allocated objects, and not just
+  //       represent them as an exact type).
+  //       See the test TODO with text "We optimize some of this, but stop at
+  //       reading from the immutable global"
+  assert(refContents.isGlobal() || refContents.isConeType());
 
-    // TODO: Use the cone depth here for ConeType. Right now we do the
-    //       pessimistic thing and assume a full cone of all subtypes.
+  // Just look at the cone here, discarding information about this being a
+  // global, if it was one. All that matters from now is the cone. We also
+  // normalize the cone to avoid wasted work later.
+  auto cone = refContents.getCone();
+  auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
 
-    // We create a ConeReadLocation for the canonical cone of this type, to
-    // avoid bloating the graph, see comment on ConeReadLocation().
-    // TODO: A cone with no subtypes needs no canonical location, just
-    //       add one direct link here.
-    auto coneReadLocation = ConeReadLocation{declaredHeapType, fieldIndex};
-    if (!hasIndex(coneReadLocation)) {
-      // This is the first time we use this location, so create the links for it
-      // in the graph.
-      for (auto type : subTypes->getAllSubTypes(declaredHeapType)) {
+  // We create a ConeReadLocation for the canonical cone of this type, to
+  // avoid bloating the graph, see comment on ConeReadLocation().
+  auto coneReadLocation =
+    ConeReadLocation{cone.type.getHeapType(), normalizedDepth, fieldIndex};
+  if (!hasIndex(coneReadLocation)) {
+    // This is the first time we use this location, so create the links for it
+    // in the graph.
+    subTypes->iterSubTypes(
+      cone.type.getHeapType(),
+      normalizedDepth,
+      [&](HeapType type, Index depth) {
         connectDuringFlow(DataLocation{type, fieldIndex}, coneReadLocation);
-      }
+      });
 
-      // TODO: if the old contents here were an exact type then we have an old
-      //       link here that we could remove as it is redundant (the cone
-      //       contains the exact type among the others). But removing links
-      //       is not efficient, so maybe not worth it.
-    }
-
-    // Link to the canonical location.
-    connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
+    // TODO: we can end up with redundant links here if we see one cone first
+    //       and then a larger one later. But removing links is not efficient,
+    //       so for now just leave that.
   }
+
+  // Link to the canonical location.
+  connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
 void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
+#endif
+
+  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
+
+#ifndef NDEBUG
+  // We must not have anything in the reference that is invalid for the wasm
+  // type there.
+  auto maximalContents = PossibleContents::fullConeType(ref->type);
+  assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 
   // We could set up links here as we do for reads, but as we get to this code
@@ -1924,29 +2040,25 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // we've sent information based on the final and correct information about our
   // reference and value.)
 
-  auto refContents = getContents(getIndex(ExpressionLocation{ref, 0}));
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+
+  // See the related comment in readFromData() as to why these are the only
+  // things we need to check, and why the assertion afterwards contains the only
+  // things possible.
   if (refContents.isNone() || refContents.isNull()) {
     return;
   }
-  if (refContents.hasExactType()) {
-    // Update the one possible type here.
-    auto heapLoc =
-      DataLocation{refContents.getType().getHeapType(), fieldIndex};
-    updateContents(heapLoc, valueContents);
-  } else {
-    assert(refContents.isMany() || refContents.isGlobal() ||
-           refContents.isConeType());
+  assert(refContents.isGlobal() || refContents.isConeType());
 
-    // Update all possible subtypes here.
-    // TODO: Use the cone depth here for ConeType. Right now we do the
-    //       pessimistic thing and assume a full cone of all subtypes.
-    auto type = ref->type.getHeapType();
-    for (auto subType : subTypes->getAllSubTypes(type)) {
-      auto heapLoc = DataLocation{subType, fieldIndex};
+  // As in readFromData, normalize to the proper cone.
+  auto cone = refContents.getCone();
+  auto normalizedDepth = getNormalizedConeDepth(cone.type, cone.depth);
+
+  subTypes->iterSubTypes(
+    cone.type.getHeapType(), normalizedDepth, [&](HeapType type, Index depth) {
+      auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
-    }
-  }
+    });
 }
 
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {

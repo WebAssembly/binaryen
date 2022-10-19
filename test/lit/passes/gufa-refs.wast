@@ -4150,7 +4150,7 @@
 
   ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.len $B
+  ;; CHECK-NEXT:   (array.len
   ;; CHECK-NEXT:    (array.init_static $B
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (ref.null none)
@@ -4705,13 +4705,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (select (result (ref $A))
-  ;; CHECK-NEXT:     (local.get $A)
-  ;; CHECK-NEXT:     (local.get $B)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
@@ -4752,8 +4746,7 @@
         (i32.const 20)
       )
     )
-    ;; We can optimize the first of these, which mixes A and B, into 10. This
-    ;; will require more cone opts, though TODO
+    ;; We can optimize the first of these, which mixes A and B, into 10.
     (drop
       (struct.get $A 0
         (select
@@ -4944,9 +4937,7 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $C 0
-  ;; CHECK-NEXT:    (local.get $C)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $write (export "write") (param $x i32)
@@ -4978,8 +4969,7 @@
       )
       (i32.const 10)
     )
-    ;; Read from all the locals. We can optimize them all, to 10, 10, 20. The
-    ;; last requires more cone opts, however. TODO
+    ;; Read from all the locals. We can optimize them all, to 10, 10, 20.
     (drop
       (struct.get $A 0
         (local.get $A)
@@ -5209,6 +5199,8 @@
 
   ;; CHECK:      (type $none_=>_ref|$A| (func_subtype (result (ref $A)) func))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
   ;; CHECK:      (import "a" "b" (global $A (ref $A)))
   (import "a" "b" (global $A (ref $A)))
 
@@ -5321,6 +5313,82 @@
     (drop
       (ref.test_static $B
         (global.get $A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $filtering (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $B (result (ref $B))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (br_on_cast_static $B $B
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (i32.const 100)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $A (result (ref $A))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (br_on_cast_static $A $A
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (i32.const 200)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $filtering
+    ;; Check for filtering of values by the declared type in the wasm. We do not
+    ;; have specific filtering or flowing for br_on_* yet, so it will always
+    ;; send the value to the branch target. But the target has a declared type
+    ;; of $B, which means the exact $A gets filtered out, and nothing remains,
+    ;; so we can append an unreachable.
+    ;;
+    ;; When we add filtering/flowing for br_on_* this test should continue to
+    ;; pass and only the comment will need to be updated, so if you are reading
+    ;; this and it is stale, please fix that :)
+    (drop
+      (block $B (result (ref $B))
+        (drop
+          (br_on_cast_static $B $B
+            (struct.new $A
+              (i32.const 100)
+            )
+          )
+        )
+        (unreachable)
+      )
+    )
+    ;; But casting to $A will succeed, so the block is reachable, and also the
+    ;; cast will return 1.
+    (drop
+      (ref.test_static $A
+        (block $A (result (ref $A))
+          (drop
+            (br_on_cast_static $A $A
+              (struct.new $A
+                (i32.const 200)
+              )
+            )
+          )
+          (unreachable)
+        )
       )
     )
   )
