@@ -2017,7 +2017,7 @@ public:
 class ElementSegment : public Named {
 public:
   Name table;
-  Expression* offset;
+  Expression* offset = nullptr;
   Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
