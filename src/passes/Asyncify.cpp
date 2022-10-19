@@ -311,6 +311,7 @@
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/file.h"
@@ -1509,11 +1510,6 @@ struct Asyncify : public Pass {
   void run(Module* module) override {
     auto& options = getPassOptions();
     bool optimize = options.optimizeLevel > 0;
-    is64 = module->memories.size() && module->memories[0]->is64();
-    pointerType = is64 ? Type::i64 : Type::i32;
-
-    // Ensure there is a memory, as we need it.
-    MemoryUtils::ensureExists(module);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
@@ -1551,6 +1547,18 @@ struct Asyncify : public Pass {
     auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
     auto relocatable =
       options.getArgumentOrDefault("asyncify-relocatable", "") != "";
+    auto secondaryMemory = options.getArgumentOrDefault("in-secondary-memory", "") != "";
+
+    // Ensure there is a memory, as we need it.
+    if (secondaryMemory) {
+      auto secondaryMemorySizeString = options.getArgumentOrDefault("secondary-memory-size", "1");
+      Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
+      asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
+    } else {
+      MemoryUtils::ensureExists(module);
+      asyncifyMemory = module->memories[0]->name;
+    }
+    pointerType = module->memories.size() && module->memories[0]->is64() ? Type::i64 : Type::i32;
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1686,15 +1694,15 @@ private:
                          pointerType.getByteSize(),
                          builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
                          pointerType,
-                         module->memories[0]->name);
+                         asyncifyMemory);
       auto* stackEnd = builder.makeLoad(
         pointerType.getByteSize(),
         false,
-        int(is64 ? DataOffset::BStackEnd64 : DataOffset::BStackEnd),
+        int(pointerType == Type::i64 ? DataOffset::BStackEnd64 : DataOffset::BStackEnd),
         pointerType.getByteSize(),
         builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
         pointerType,
-        module->memories[0]->name);
+        asyncifyMemory);
       body->list.push_back(builder.makeIf(
         builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::GtU), stackPos, stackEnd),
@@ -1720,8 +1728,15 @@ private:
       ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }
 
-  bool is64;
+  Name createSecondaryMemory(Module *module, Address secondaryMemorySize) {
+    Name name = Names::getValidMemoryName(*module, "asyncify_memory");
+    auto secondaryMemory = Builder::makeMemory(name, secondaryMemorySize, secondaryMemorySize);
+    module->addMemory(std::move(secondaryMemory));
+    return name;
+  }
+
   Type pointerType;
+  Name asyncifyMemory;
 };
 
 Pass* createAsyncifyPass() { return new Asyncify(); }
