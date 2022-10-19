@@ -28,7 +28,9 @@
 //  * Remove writes to globals that are always assigned the same value.
 //  * Remove writes to globals that are only read from in order to write (see
 //    below, "readOnlyToWrite").
-//  * Optimize math on global inits expressions.
+//  * Optimize math in init/offset expressions in global locations, which often
+//    read global values, so optimization opportunities can arise from the
+//    previous improvements.
 //
 // Some globals may not have uses after these changes, which we leave
 // to other passes to optimize.
@@ -641,6 +643,10 @@ struct SimplifyGlobals : public Pass {
     applier.runOnModuleCode(getPassRunner(), module);
   }
 
+  // Run basic optimization passes on global init expressions, which can contain
+  // math that is optimizable after the rest of this pass. For example, a global
+  // equal to $other + 1 might become optimizable if we infer a constant value
+  // for $other, as then it is just two added constants.
   void optimizeInits() {
     // Interesting math (add, etc.) only happens when we have the proper
     // feature enabled.
@@ -648,21 +654,27 @@ struct SimplifyGlobals : public Pass {
       return;
     }
 
-    // Run basic optimization passes on global init expressions, which can
-    // contain math that is optimizable after the rest of this pass. For
-    // example, a global equal to $other + 1 might become optimizable if we
-    // infer a constant value for $other.
-    // TODO: this may also make sense for inits of other things like segment
-    //       offsets
     PassRunner runner(getPassRunner());
     runner.add("precompute");
     Function tempFunc;
-    for (auto& global : module->globals) {
-      if (!global->imported()) {
-        tempFunc.body = global->init;
-        runner.runOnFunction(&tempFunc);
-        global->init = tempFunc.body;
+
+    auto optimize = [&](Expression*& curr) {
+      if (!curr) {
+        return;
       }
+      tempFunc.body = global->init;
+      runner.runOnFunction(&tempFunc);
+      global->init = tempFunc.body;
+    };
+
+    for (auto& global : module->globals) {
+      optimize(global->init);
+    }
+    for (auto& segment : module->dataSegments) {
+      optimize(segment->offset);
+    }
+    for (auto& segment : module->elementSegments) {
+      optimize(segment->offset);
     }
   }
 };
