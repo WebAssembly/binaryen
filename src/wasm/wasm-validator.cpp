@@ -3211,13 +3211,6 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
                                            module.features),
                         segment->offset,
                         "memory segment offset should be reasonable");
-      if (segment->offset->is<Const>()) {
-        auto start = segment->offset->cast<Const>()->value.getUnsigned();
-        auto end = start + size;
-        info.shouldBeTrue(end <= memory->initial * Memory::kPageSize,
-                          segment->data.size(),
-                          "segment size should fit in memory (end)");
-      }
       FunctionValidator(module, &info).validate(segment->offset);
       // If the memory is imported we don't actually know its initial size.
       // Specifically wasm dll's import a zero sized memory which is perfectly
