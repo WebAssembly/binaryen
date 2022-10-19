@@ -2203,32 +2203,65 @@ void test_typebuilder() {
   bool didBuildAndDispose = TypeBuilderBuildAndDispose(
     builder, (BinaryenHeapType*)&heapTypes, &errorIndex, &errorReason);
   assert(didBuildAndDispose);
-  BinaryenType arrayType =
-    BinaryenTypeFromHeapType(heapTypes[tempArrayIndex], true);
-  BinaryenType structType =
-    BinaryenTypeFromHeapType(heapTypes[tempStructIndex], true);
+
+  BinaryenHeapType arrayHeapType = heapTypes[tempArrayIndex];
+  assert(!BinaryenHeapTypeIsBasic(arrayHeapType));
+  assert(!BinaryenHeapTypeIsSignature(arrayHeapType));
+  assert(!BinaryenHeapTypeIsStruct(arrayHeapType));
+  assert(BinaryenHeapTypeIsArray(arrayHeapType));
+  assert(!BinaryenHeapTypeIsBottom(arrayHeapType));
+  assert(BinaryenHeapTypeIsSubType(arrayHeapType, BinaryenHeapTypeArray()));
+  BinaryenType arrayType = BinaryenTypeFromHeapType(arrayHeapType, true);
+
+  BinaryenHeapType structHeapType = heapTypes[tempStructIndex];
+  assert(!BinaryenHeapTypeIsBasic(structHeapType));
+  assert(!BinaryenHeapTypeIsSignature(structHeapType));
+  assert(BinaryenHeapTypeIsStruct(structHeapType));
+  assert(!BinaryenHeapTypeIsArray(structHeapType));
+  assert(!BinaryenHeapTypeIsBottom(structHeapType));
+  assert(BinaryenHeapTypeIsSubType(structHeapType, BinaryenHeapTypeData()));
+  BinaryenType structType = BinaryenTypeFromHeapType(structHeapType, true);
+
+  BinaryenHeapType signatureHeapType = heapTypes[tempSignatureIndex];
+  assert(!BinaryenHeapTypeIsBasic(signatureHeapType));
+  assert(BinaryenHeapTypeIsSignature(signatureHeapType));
+  assert(!BinaryenHeapTypeIsStruct(signatureHeapType));
+  assert(!BinaryenHeapTypeIsArray(signatureHeapType));
+  assert(!BinaryenHeapTypeIsBottom(signatureHeapType));
+  assert(BinaryenHeapTypeIsSubType(signatureHeapType, BinaryenHeapTypeFunc()));
   BinaryenType signatureType =
-    BinaryenTypeFromHeapType(heapTypes[tempSignatureIndex], true);
-  BinaryenType basicType =
-    BinaryenTypeFromHeapType(heapTypes[tempBasicIndex], true);
+    BinaryenTypeFromHeapType(signatureHeapType, true);
+
+  BinaryenHeapType basicHeapType = heapTypes[tempBasicIndex]; // = eq
+  assert(BinaryenHeapTypeIsBasic(basicHeapType));
+  assert(!BinaryenHeapTypeIsSignature(basicHeapType));
+  assert(!BinaryenHeapTypeIsStruct(basicHeapType));
+  assert(!BinaryenHeapTypeIsArray(basicHeapType));
+  assert(!BinaryenHeapTypeIsBottom(basicHeapType));
+  assert(BinaryenHeapTypeIsSubType(basicHeapType, BinaryenHeapTypeAny()));
+  BinaryenType basicType = BinaryenTypeFromHeapType(basicHeapType, true);
+
+  BinaryenHeapType subStructHeapType = heapTypes[tempSubStructIndex];
+  assert(!BinaryenHeapTypeIsBasic(subStructHeapType));
+  assert(!BinaryenHeapTypeIsSignature(subStructHeapType));
+  assert(BinaryenHeapTypeIsStruct(subStructHeapType));
+  assert(!BinaryenHeapTypeIsArray(subStructHeapType));
+  assert(!BinaryenHeapTypeIsBottom(subStructHeapType));
+  assert(BinaryenHeapTypeIsSubType(subStructHeapType, BinaryenHeapTypeData()));
+  assert(BinaryenHeapTypeIsSubType(subStructHeapType, structHeapType));
   BinaryenType subStructType =
-    BinaryenTypeFromHeapType(heapTypes[tempSubStructIndex], true);
+    BinaryenTypeFromHeapType(subStructHeapType, true);
 
   // Build a simple test module, validate and print it
   BinaryenModuleRef module = BinaryenModuleCreate();
-  BinaryenModuleSetTypeName(module, heapTypes[tempArrayIndex], "SomeArray");
-  BinaryenModuleSetTypeName(module, heapTypes[tempStructIndex], "SomeStruct");
-  BinaryenModuleSetFieldName(
-    module, heapTypes[tempStructIndex], 0, "SomeField");
-  BinaryenModuleSetTypeName(
-    module, heapTypes[tempSignatureIndex], "SomeSignature");
-  BinaryenModuleSetTypeName(module, heapTypes[tempBasicIndex], "does-nothing");
-  BinaryenModuleSetTypeName(
-    module, heapTypes[tempSubStructIndex], "SomeSubStruct");
-  BinaryenModuleSetFieldName(
-    module, heapTypes[tempSubStructIndex], 0, "SomeField");
-  BinaryenModuleSetFieldName(
-    module, heapTypes[tempSubStructIndex], 1, "SomePackedField");
+  BinaryenModuleSetTypeName(module, arrayHeapType, "SomeArray");
+  BinaryenModuleSetTypeName(module, structHeapType, "SomeStruct");
+  BinaryenModuleSetFieldName(module, structHeapType, 0, "SomeField");
+  BinaryenModuleSetTypeName(module, signatureHeapType, "SomeSignature");
+  BinaryenModuleSetTypeName(module, basicHeapType, "does-nothing");
+  BinaryenModuleSetTypeName(module, subStructHeapType, "SomeSubStruct");
+  BinaryenModuleSetFieldName(module, subStructHeapType, 0, "SomeField");
+  BinaryenModuleSetFieldName(module, subStructHeapType, 1, "SomePackedField");
   BinaryenModuleSetFeatures(
     module, BinaryenFeatureReferenceTypes() | BinaryenFeatureGC());
   {

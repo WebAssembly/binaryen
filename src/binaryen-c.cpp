@@ -315,11 +315,26 @@ BinaryenHeapType BinaryenHeapTypeNofunc() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::nofunc);
 }
 
+bool BinaryenHeapTypeIsBasic(BinaryenHeapType heapType) {
+  return HeapType(heapType).isBasic();
+}
+bool BinaryenHeapTypeIsSignature(BinaryenHeapType heapType) {
+  return HeapType(heapType).isSignature();
+}
+bool BinaryenHeapTypeIsStruct(BinaryenHeapType heapType) {
+  return HeapType(heapType).isStruct();
+}
+bool BinaryenHeapTypeIsArray(BinaryenHeapType heapType) {
+  return HeapType(heapType).isArray();
+}
 bool BinaryenHeapTypeIsBottom(BinaryenHeapType heapType) {
   return HeapType(heapType).isBottom();
 }
 BinaryenHeapType BinaryenHeapTypeGetBottom(BinaryenHeapType heapType) {
   return static_cast<BinaryenHeapType>(HeapType(heapType).getBottom());
+}
+bool BinaryenHeapTypeIsSubType(BinaryenHeapType left, BinaryenHeapType right) {
+  return HeapType::isSubType(HeapType(left), HeapType(right));
 }
 
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
