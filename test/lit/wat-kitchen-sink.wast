@@ -88,6 +88,8 @@
  (global (mut i32) i32.const 0)
  ;; CHECK:      (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none (func_subtype (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany)) func))
 
+ ;; CHECK:      (import "" "mem" (memory $mimport$1 0))
+
  ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
  ;; CHECK:      (import "mod" "g2" (global $g2 (mut i64)))
@@ -103,12 +105,30 @@
  ;; CHECK:      (global $i32 i32 (i32.const 42))
  (global $i32 i32 i32.const 42)
 
+ ;; memories
+ ;; CHECK:      (memory $mem 1 1)
+ (memory $mem 1 1)
+ (memory 0)
+ ;; CHECK:      (memory $0 0)
+
+ ;; CHECK:      (memory $mem-i32 0 1)
+ (memory $mem-i32 i32 0 1)
+ ;; CHECK:      (memory $mem-i64 i64 2)
+ (memory $mem-i64 i64 2)
+ (memory (export "mem") (export "mem2") (import "" "mem") 0)
+ ;; CHECK:      (memory $mem-init 1 1)
+ (memory $mem-init (data "hello, world!"))
+
  ;; functions
  (func)
 
  ;; CHECK:      (export "g1" (global $g1))
 
  ;; CHECK:      (export "g1.1" (global $g1))
+
+ ;; CHECK:      (export "mem" (memory $mimport$1))
+
+ ;; CHECK:      (export "mem2" (memory $mimport$1))
 
  ;; CHECK:      (export "f5.0" (func $fimport$1))
 

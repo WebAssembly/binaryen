@@ -324,6 +324,16 @@ struct ImportNames {
   Name nm;
 };
 
+struct Limits {
+  uint64_t initial;
+  uint64_t max;
+};
+
+struct MemType {
+  Type type;
+  Limits limits;
+};
+
 // RAII utility for temporarily changing the parsing position of a parsing
 // context.
 template<typename Ctx> struct WithPosition {
@@ -342,8 +352,7 @@ template<typename Ctx> WithPosition(Ctx& ctx, Index) -> WithPosition<Ctx>;
 
 using IndexMap = std::unordered_map<Name, Index>;
 
-void applyImportNames(Importable& item,
-                      const std::optional<ImportNames>& names) {
+void applyImportNames(Importable& item, ImportNames* names) {
   if (names) {
     item.module = names->mod;
     item.base = names->nm;
@@ -417,9 +426,12 @@ struct NullTypeParserCtx {
   using FieldsT = Ok;
   using StructT = Ok;
   using ArrayT = Ok;
+  using LimitsT = Ok;
+  using MemTypeT = Ok;
   using GlobalTypeT = Ok;
   using TypeUseT = Ok;
   using LocalsT = Ok;
+  using DataStringT = Ok;
 
   HeapTypeT makeFunc() { return Ok{}; }
   HeapTypeT makeAny() { return Ok{}; }
@@ -464,6 +476,15 @@ struct NullTypeParserCtx {
 
   Result<Index> getTypeIndex(Name) { return 1; }
   Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
+
+  DataStringT makeDataString() { return Ok{}; }
+  void appendDataString(DataStringT&, std::string_view) {}
+
+  LimitsT makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
+  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
+
+  MemTypeT makeMemType32(LimitsT) { return Ok{}; }
+  MemTypeT makeMemType64(LimitsT) { return Ok{}; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -478,7 +499,10 @@ template<typename Ctx> struct TypeParserCtx {
   using FieldsT = std::pair<std::vector<Name>, std::vector<Field>>;
   using StructT = std::pair<std::vector<Name>, Struct>;
   using ArrayT = Array;
+  using LimitsT = Limits;
+  using MemTypeT = MemType;
   using LocalsT = std::vector<NameType>;
+  using DataStringT = std::vector<char>;
 
   // Map heap type names to their indices.
   const IndexMap& typeIndices;
@@ -562,6 +586,22 @@ template<typename Ctx> struct TypeParserCtx {
     }
     return it->second;
   }
+
+  std::vector<char> makeDataString() { return {}; }
+  void appendDataString(std::vector<char>& data, std::string_view str) {
+    data.insert(data.end(), str.begin(), str.end());
+  }
+
+  Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
+    return m ? Limits{n, *m} : Limits{n, Memory::kUnlimitedSize};
+  }
+  Limits getLimitsFromData(const std::vector<char>& data) {
+    uint64_t size = (data.size() + Memory::kPageSize - 1) / Memory::kPageSize;
+    return {size, size};
+  }
+
+  MemType makeMemType32(Limits limits) { return {Type::i32, limits}; }
+  MemType makeMemType64(Limits limits) { return {Type::i64, limits}; }
 };
 
 struct NullInstrParserCtx {
@@ -820,14 +860,16 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> typeDefs;
   std::vector<DefPos> subtypeDefs;
   std::vector<DefPos> funcDefs;
+  std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
 
   // Positions of typeuses that might implicitly define new types.
   std::vector<Index> implicitTypeDefs;
 
   // Counters used for generating names for module elements.
-  int globalCounter = 0;
   int funcCounter = 0;
+  int memoryCounter = 0;
+  int globalCounter = 0;
 
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
@@ -853,16 +895,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return Ok{};
   }
 
-  Result<Function*> addFuncDecl(ParseInput& in,
-                                Name name,
-                                std::optional<ImportNames> importNames) {
+  Result<Function*>
+  addFuncDecl(Index pos, Name name, ImportNames* importNames) {
     auto f = std::make_unique<Function>();
     if (name.is()) {
       if (wasm.getFunctionOrNull(name)) {
         // TDOO: if the existing function is not explicitly named, fix its name
         // and continue.
-        // TODO: Fix error location to point to name.
-        return in.err("repeated function name");
+        return in.err(pos, "repeated function name");
       }
       f->setExplicitName(name);
     } else {
@@ -884,24 +924,55 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     if (import && hasNonImport) {
       return in.err("import after non-import");
     }
-    auto imp = import ? std::make_optional(*import) : std::nullopt;
-    auto f = addFuncDecl(in, name, imp);
+    auto f = addFuncDecl(pos, name, import);
     CHECK_ERR(f);
     CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
     funcDefs.push_back({name, pos});
     return Ok{};
   }
 
-  Result<Global*> addGlobalDecl(ParseInput& in,
-                                Name name,
-                                std::optional<ImportNames> importNames) {
+  Result<Memory*>
+  addMemoryDecl(Index pos, Name name, ImportNames* importNames) {
+    auto m = std::make_unique<Memory>();
+    if (name) {
+      // TODO: if the existing memory is not explicitly named, fix its name
+      // and continue.
+      if (wasm.getMemoryOrNull(name)) {
+        return in.err(pos, "repeated memory name");
+      }
+      m->setExplicitName(name);
+    } else {
+      name = (importNames ? "mimport$" : "") + std::to_string(memoryCounter++);
+      name = Names::getValidMemoryName(wasm, name);
+      m->name = name;
+    }
+    applyImportNames(*m, importNames);
+    return wasm.addMemory(std::move(m));
+  }
+
+  Result<> addMemory(Name name,
+                     const std::vector<Name>& exports,
+                     ImportNames* import,
+                     MemTypeT,
+                     Index pos) {
+    if (import && hasNonImport) {
+      return in.err(pos, "import after non-import");
+    }
+    auto m = addMemoryDecl(pos, name, import);
+    CHECK_ERR(m);
+    CHECK_ERR(addExports(in, wasm, *m, exports, ExternalKind::Memory));
+    memoryDefs.push_back({name, pos});
+    return Ok{};
+  }
+
+  Result<Global*>
+  addGlobalDecl(Index pos, Name name, ImportNames* importNames) {
     auto g = std::make_unique<Global>();
-    if (name.is()) {
+    if (name) {
       if (wasm.getGlobalOrNull(name)) {
         // TODO: if the existing global is not explicitly named, fix its name
         // and continue.
-        // TODO: Fix error location to point to name.
-        return in.err("repeated global name");
+        return in.err(pos, "repeated global name");
       }
       g->setExplicitName(name);
     } else {
@@ -922,8 +993,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     if (import && hasNonImport) {
       return in.err(pos, "import after non-import");
     }
-    auto imp = import ? std::make_optional(*import) : std::nullopt;
-    auto g = addGlobalDecl(in, name, imp);
+    auto g = addGlobalDecl(pos, name, import);
     CHECK_ERR(g);
     CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
     globalDefs.push_back({name, pos});
@@ -1123,7 +1193,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   Result<> addFunc(Name name,
                    const std::vector<Name>&,
                    ImportNames*,
-                   TypeUseT type,
+                   TypeUse type,
                    std::optional<LocalsT> locals,
                    std::optional<InstrsT>,
                    Index) {
@@ -1142,10 +1212,21 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return Ok{};
   }
 
+  Result<> addMemory(
+    Name, const std::vector<Name>&, ImportNames*, MemType type, Index pos) {
+    auto& m = wasm.memories[index];
+    m->indexType = type.type;
+    m->initial = type.limits.initial;
+    m->max = type.limits.max;
+    // TODO: shared memories.
+    m->shared = false;
+    return Ok{};
+  }
+
   Result<> addGlobal(Name,
                      const std::vector<Name>&,
                      ImportNames*,
-                     GlobalTypeT type,
+                     GlobalType type,
                      std::optional<ExprT>,
                      Index) {
     auto& g = wasm.globals[index];
@@ -1403,6 +1484,9 @@ template<typename Ctx> Result<typename Ctx::FieldT> fieldtype(Ctx&);
 template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::StructT> structtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&);
+template<typename Ctx> Result<typename Ctx::LimitsT> limits32(Ctx&);
+template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
+template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 
 // Instructions
@@ -1572,7 +1656,9 @@ template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
 template<typename Ctx> MaybeResult<> func(Ctx&);
+template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
+template<typename Ctx> Result<typename Ctx::DataStringT> datastring(Ctx&);
 MaybeResult<> modulefield(ParseDeclsCtx&);
 Result<> module(ParseDeclsCtx&);
 
@@ -1849,6 +1935,39 @@ template<typename Ctx> MaybeResult<typename Ctx::ArrayT> arraytype(Ctx& ctx) {
     return *array;
   }
   return ctx.in.err("expected exactly one field in array definition");
+}
+
+// limits32 ::= n:u32 m:u32?
+template<typename Ctx> Result<typename Ctx::LimitsT> limits32(Ctx& ctx) {
+  auto n = ctx.in.takeU32();
+  if (!n) {
+    return ctx.in.err("expected initial size");
+  }
+  std::optional<uint64_t> m = ctx.in.takeU32();
+  return ctx.makeLimits(uint64_t(*n), m);
+}
+
+// limits64 ::= n:u64 m:u64?
+template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
+  auto n = ctx.in.takeU64();
+  if (!n) {
+    return ctx.in.err("expected initial size");
+  }
+  std::optional<uint64_t> m = ctx.in.takeU64();
+  return ctx.makeLimits(uint64_t(*n), m);
+}
+
+// memtype ::= limits32 | 'i32' limits32 | 'i64' limit64
+template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
+  if (ctx.in.takeKeyword("i64"sv)) {
+    auto limits = limits64(ctx);
+    CHECK_ERR(limits);
+    return ctx.makeMemType64(*limits);
+  }
+  ctx.in.takeKeyword("i32"sv);
+  auto limits = limits32(ctx);
+  CHECK_ERR(limits);
+  return ctx.makeMemType32(*limits);
 }
 
 // globaltype ::= t:valtype               => const t
@@ -2725,7 +2844,7 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
 // func ::= '(' 'func' id? ('(' 'export' name ')')*
 //              x,I:typeuse t*:vec(local) (in:instr)* ')'
 //        | '(' 'func' id? ('(' 'export' name ')')*
-//              '(' 'import' mode:name nm:name ')' typeuse ')'
+//              '(' 'import' mod:name nm:name ')' typeuse ')'
 template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto pos = ctx.in.getPos();
   if (!ctx.in.takeSExprStart("func"sv)) {
@@ -2771,6 +2890,54 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   return Ok{};
 }
 
+// mem ::= '(' 'memory' id? ('(' 'export' name ')')*
+//             ('(' 'data' b:datastring ')' | memtype) ')'
+//       | '(' 'memory' id? ('(' 'export' name ')')*
+//             '(' 'import' mod:name nm:name ')' memtype ')'
+template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("memory"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = ctx.in.takeID()) {
+    name = *id;
+  }
+
+  auto exports = inlineExports(ctx.in);
+  CHECK_ERR(exports);
+
+  auto import = inlineImport(ctx.in);
+  CHECK_ERR(import);
+
+  std::optional<typename Ctx::MemTypeT> mtype;
+
+  if (ctx.in.takeSExprStart("data"sv)) {
+    if (import) {
+      return ctx.in.err("imported memories cannot have inline data");
+    }
+    auto data = datastring(ctx);
+    CHECK_ERR(data);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of inline data");
+    }
+    mtype = ctx.makeMemType32(ctx.getLimitsFromData(*data));
+    // TODO: addDataSegment as well.
+  } else {
+    auto type = memtype(ctx);
+    CHECK_ERR(type);
+    mtype = *type;
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of memory declaration");
+  }
+
+  CHECK_ERR(ctx.addMemory(name, *exports, import.getPtr(), *mtype, pos));
+  return Ok{};
+}
+
 // global ::= '(' 'global' id? ('(' 'export' name ')')* gt:globaltype e:expr ')'
 //          | '(' 'global' id? ('(' 'export' name ')')*
 //                '(' 'import' mod:name nm:name ')' gt:globaltype ')'
@@ -2809,11 +2976,20 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
   return Ok{};
 }
 
+// datastring ::= (b:string)* => concat(b*)
+template<typename Ctx> Result<typename Ctx::DataStringT> datastring(Ctx& ctx) {
+  auto data = ctx.makeDataString();
+  while (auto str = ctx.in.takeString()) {
+    ctx.appendDataString(data, *str);
+  }
+  return data;
+}
+
 // modulefield ::= deftype
 //               | import
 //               | func
 //               | table
-//               | mem
+//               | memory
 //               | global
 //               | export
 //               | start
@@ -2828,6 +3004,10 @@ MaybeResult<> modulefield(ParseDeclsCtx& ctx) {
     return Ok{};
   }
   if (auto res = func(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = memory(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
@@ -2912,8 +3092,9 @@ Result<> parseModule(Module& wasm, std::string_view input) {
   {
     // Parse module-level types.
     ParseModuleTypesCtx ctx(input, wasm, types, implicitTypes, *typeIndices);
-    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
     CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
+    CHECK_ERR(parseDefs(ctx, decls.memoryDefs, memory));
+    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
     // TODO: Parse types of other module elements.
   }
   {
