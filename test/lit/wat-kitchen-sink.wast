@@ -108,10 +108,10 @@
  (global $i32 i32 i32.const 42)
 
  ;; memories
- ;; CHECK:      (memory $mem 1 1)
- (memory $mem 1 1)
- (memory 0)
- ;; CHECK:      (memory $0 0)
+ ;; CHECK:      (memory $mem (shared 1 1))
+ (memory $mem 1 1 shared)
+ (memory 0 1 shared)
+ ;; CHECK:      (memory $0 (shared 0 1))
 
  ;; CHECK:      (memory $mem-i32 0 1)
  (memory $mem-i32 i32 0 1)
