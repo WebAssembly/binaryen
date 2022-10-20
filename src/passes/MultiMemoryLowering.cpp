@@ -280,10 +280,17 @@ struct MultiMemoryLowering : public Pass {
     auto getPageDelta = [&]() { return builder.makeLocalGet(0, pointerType); };
     auto getMoveSource = [&](Name global) { return builder.makeGlobalGet(global, pointerType); };
     Expression* functionBody;
+    Index sizeLocal;
 
     Index returnLocal = Builder::addVar(function.get(), pointerType);
     functionBody = builder.blockify(builder.makeLocalSet(
       returnLocal, builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
+
+    if (!isLastMemory(memIdx)) {
+      sizeLocal = Builder::addVar(function.get(), pointerType);
+      functionBody = builder.blockify(functionBody, builder.makeLocalSet(
+        sizeLocal, builder.makeMemorySize(combinedMemory, memoryInfo)));
+    }
 
     // TODO: Check the result of makeMemoryGrow for errors and return the error
     // instead
@@ -310,7 +317,7 @@ struct MultiMemoryLowering : public Pass {
           // size
           builder.makeBinary(
             Abstract::getBinary(pointerType, Abstract::Sub),
-            builder.makeMemorySize(combinedMemory, memoryInfo),
+            builder.makeLocalGet(sizeLocal, pointerType),
             getMoveSource(offsetGlobalName)),
           combinedMemory,
           combinedMemory));
