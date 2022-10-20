@@ -15,9 +15,18 @@
  */
 
 //
-// Condensing Multi-Memories into a single memory for browsers that don’t
+// Condensing a module with multiple memories into a module with a single memory for browsers that don’t
 // support multiple memories.
 //
+// This pass also disables multi-memories so that the target features section in the
+// emitted module does not report the use of MultiMemories. Disabling the
+// multi-memories feature also prevents later passes from adding additional memories.
+//
+// Also worth noting that we are diverging from the spec with regards to
+// handling load and store instructions. We are not trapping if the offset +
+// write size is larger than the length of the memory's data. Warning:
+// out-of-bounds loads and stores can read junk out of or corrupt other
+// memories instead of trapping.
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -58,9 +67,6 @@ struct MultiMemoryLowering : public Pass {
   std::vector<Name> memoryGrowNames;
 
   void run(Module* module) override {
-    // Disabling multi-memories so that the target features section in the
-    // emitted module does not report the use of MultiMemories. Also prevents
-    // later passes from adding additional memories.
     module->features.disable(FeatureSet::MultiMemories);
 
     // If there are no memories or 1 memory, skip this pass
@@ -111,10 +117,6 @@ struct MultiMemoryLowering : public Pass {
         replaceCurrent(builder.makeCall(funcName, {}, curr->type));
       }
 
-      // We diverge from the spec here and are not trapping if the offset +
-      // write size is larger than the length of the memory's data. Warning:
-      // out-of-bounds loads and stores can read junk out of or corrupt other
-      // memories instead of trapping.
       // TODO: Add an option to add bounds checks.
       void visitLoad(Load* curr) {
         auto idx = parent.memoryIdxMap.at(curr->memory);
@@ -137,7 +139,7 @@ struct MultiMemoryLowering : public Pass {
         auto idx = parent.memoryIdxMap.at(curr->memory);
         auto global = parent.getOffsetGlobal(idx);
         curr->memory = parent.combinedMemory;
-        if (global == "") {
+        if (!global) {
           return;
         }
         curr->ptr = builder.makeBinary(
@@ -210,7 +212,6 @@ struct MultiMemoryLowering : public Pass {
                             Builder(*wasm).makeConst(
                               Literal::makeFromInt64(offset, pointerType)),
                             Builder::Mutable);
-      global->hasExplicitName = true;
       wasm->addGlobal(std::move(global));
     };
 
@@ -240,6 +241,7 @@ struct MultiMemoryLowering : public Pass {
       // No need to update the offset of data segments for the first memory
       if (idx != 0) {
         auto offsetGlobalName = getOffsetGlobal(idx);
+        assert(wasm->features.hasExtendedConst());
         dataSegment->offset = builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::Add),
           builder.makeGlobalGet(offsetGlobalName, pointerType),
@@ -250,7 +252,7 @@ struct MultiMemoryLowering : public Pass {
 
   void createMemorySizeFunctions() {
     for (Index i = 0; i < wasm->memories.size(); i++) {
-      auto function = memorySize(i);
+      auto function = memorySize(i, wasm->memories[i]->name);
       memorySizeNames.push_back(function->name);
       wasm->addFunction(std::move(function));
     }
@@ -258,7 +260,7 @@ struct MultiMemoryLowering : public Pass {
 
   void createMemoryGrowFunctions() {
     for (Index i = 0; i < wasm->memories.size(); i++) {
-      auto function = memoryGrow(i);
+      auto function = memoryGrow(i, wasm->memories[i]->name);
       memoryGrowNames.push_back(function->name);
       wasm->addFunction(std::move(function));
     }
@@ -268,9 +270,9 @@ struct MultiMemoryLowering : public Pass {
   // Because the multiple discrete memories are lowered into a single memory,
   // we need to adjust offsets as a particular memory receives an
   // instruction to grow.
-  std::unique_ptr<Function> memoryGrow(Index memIdx) {
+  std::unique_ptr<Function> memoryGrow(Index memIdx, Name memoryName) {
     Builder builder(*wasm);
-    Name name = "memory_grow_" + std::to_string(memIdx);
+    Name name = memoryName.toString() + "_grow";
     Name functionName = Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
       functionName, Signature(pointerType, pointerType), {});
@@ -293,7 +295,8 @@ struct MultiMemoryLowering : public Pass {
     // shifting it over to accomodate the increase from page_delta
     if (!isLastMemory(memIdx)) {
       // This offset is the starting pt for copying
-      auto& offsetGlobalName = getOffsetGlobal(memIdx + 1);
+      auto offsetGlobalName = getOffsetGlobal(memIdx + 1);
+      //auto getMoveSource = [&]() { return builder.makeGlobalGet(offsetGlobalName, pointerType); };
       functionBody = builder.blockify(
         functionBody,
         builder.makeMemoryCopy(
@@ -335,9 +338,9 @@ struct MultiMemoryLowering : public Pass {
 
   // This function replaces memory.size instructions with a function that can
   // return the size of each memory as if each was discrete and separate.
-  std::unique_ptr<Function> memorySize(Index memIdx) {
+  std::unique_ptr<Function> memorySize(Index memIdx, Name memoryName) {
     Builder builder(*wasm);
-    Name name = "custom_memory_size_" + std::to_string(memIdx);
+    Name name = memoryName.toString() + "_size";
     Name functionName = Names::getValidFunctionName(*wasm, name);
     auto function = Builder::makeFunction(
       functionName, Signature(Type::none, pointerType), {});
