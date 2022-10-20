@@ -2,21 +2,78 @@
 ;; RUN: wasm-opt %s --dce -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $param (param $nofunc (ref nofunc))
+  ;; CHECK:      (func $param1 (param $no (ref nofunc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $nofunc)
+  ;; CHECK-NEXT:   (local.get $no)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $param (param $nofunc (ref nofunc)) (param $noext (ref noext)) (param $none (ref none))
+  (func $param1 (param $no (ref nofunc))
     (drop
-      (local.get $nofunc)
+      (local.get $no)
     )
+  )
+
+  ;; CHECK:      (func $param2 (param $no (ref noextern))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $no)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $param2 (param $no (ref noextern))
     (drop
-      (local.get $noext)
+      (local.get $no)
     )
+  )
+
+  ;; CHECK:      (func $param3 (param $no (ref none))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $no)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $param3 (param $no (ref none))
     (drop
-      (local.get $none)
+      (local.get $no)
+    )
+  )
+
+  ;; CHECK:      (func $return (result (ref nofunc))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $return (result (ref nofunc))
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $call
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $call
+    (drop
+      (call $return)
+    )
+  )
+
+  ;; CHECK:      (func $control-flow
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref nofunc))
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $control-flow
+    (drop
+      (if (result (ref nofunc))
+        (i32.const 1)
+        (unreachable)
+        (unreachable)
+      )
     )
   )
 )
