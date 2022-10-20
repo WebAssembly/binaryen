@@ -78,12 +78,8 @@ struct DeadCodeElimination
     // enable the rest of the optimization here.
     if (curr->type.isNull() && curr->type.isNonNullable()) {
       Builder builder(*getModule());
-      curr = replaceCurrent(
-        builder.makeSequence(
-          builder.makeDrop(curr),
-          builder.makeUnreachable()
-        )
-      );
+      curr = replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                                 builder.makeUnreachable()));
     }
 
     if (!Properties::isControlFlowStructure(curr)) {
