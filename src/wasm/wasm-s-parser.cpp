@@ -1885,37 +1885,11 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   return ret;
 }
 
-static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
-  uint8_t ret;
-  if (s[0] == '8') {
-    ret = 1;
-    s++;
-  } else if (s[0] == '1') {
-    if (s[1] != '6') {
-      throw ParseException(std::string("expected 16 for memop size: ") + s);
-    }
-    ret = 2;
-    s += 2;
-  } else if (s[0] == '3') {
-    if (s[1] != '2') {
-      throw ParseException(std::string("expected 32 for memop size: ") + s);
-    };
-    ret = 4;
-    s += 2;
-  } else {
-    ret = fallback;
-  }
-  return ret;
-}
-
 static size_t parseMemAttributes(size_t i,
                                  Element& s,
                                  Address& offset,
                                  Address& align,
-                                 Address fallbackAlign,
                                  bool memory64) {
-  offset = 0;
-  align = fallbackAlign;
   // Parse "align=X" and "offset=X" arguments, bailing out on anything else.
   while (!s[i]->isList()) {
     const char* str = s[i]->str().str.data();
@@ -1956,23 +1930,6 @@ static size_t parseMemAttributes(size_t i,
   return i;
 }
 
-static const char* findMemExtra(const Element& s, size_t skip, bool isAtomic) {
-  auto* str = s.str().str.data();
-  auto size = strlen(str);
-  auto* ret = strchr(str, '.');
-  if (!ret) {
-    throw ParseException("missing '.' in memory access", s.line, s.col);
-  }
-  ret += skip;
-  if (isAtomic) {
-    ret += 7; // after "type.atomic.load"
-  }
-  if (ret > str + size) {
-    throw ParseException("memory access ends abruptly", s.line, s.col);
-  }
-  return ret;
-}
-
 bool SExpressionWasmBuilder::hasMemoryIdx(Element& s,
                                           Index defaultSize,
                                           Index i) {
@@ -1984,14 +1941,15 @@ bool SExpressionWasmBuilder::hasMemoryIdx(Element& s,
   return false;
 }
 
-Expression*
-SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
-  const char* extra = findMemExtra(*s[0], 5 /* after "type.load" */, isAtomic);
+Expression* SExpressionWasmBuilder::makeLoad(
+  Element& s, Type type, bool signed_, int bytes, bool isAtomic) {
   auto* ret = allocator.alloc<Load>();
-  ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = parseMemBytes(extra, type.getByteSize());
-  ret->signed_ = extra[0] && extra[1] == 's';
+  ret->bytes = bytes;
+  ret->signed_ = signed_;
+  ret->offset = 0;
+  ret->align = bytes;
+  ret->isAtomic = isAtomic;
   Index i = 1;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
@@ -2002,20 +1960,22 @@ SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(
-    i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
+  i = parseMemAttributes(i, s, ret->offset, ret->align, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
 }
 
-Expression*
-SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
-  const char* extra = findMemExtra(*s[0], 6 /* after "type.store" */, isAtomic);
+Expression* SExpressionWasmBuilder::makeStore(Element& s,
+                                              Type type,
+                                              int bytes,
+                                              bool isAtomic) {
   auto ret = allocator.alloc<Store>();
+  ret->bytes = bytes;
+  ret->offset = 0;
+  ret->align = bytes;
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = parseMemBytes(extra, type.getByteSize());
   Index i = 1;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
@@ -2026,51 +1986,22 @@ SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(
-    i, s, ret->offset, ret->align, ret->bytes, isMemory64(memory));
+  i = parseMemAttributes(i, s, ret->offset, ret->align, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i + 1]);
   ret->finalize();
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s,
-                                                           Type type) {
-  const char* extra = findMemExtra(
-    *s[0], 11 /* after "type.atomic.rmw" */, /* isAtomic = */ false);
-  auto bytes = parseMemBytes(extra, type.getByteSize());
-  extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
-  if (!extra) {
-    throw ParseException("malformed atomic rmw instruction", s.line, s.col);
-  }
-  extra++; // after the '.'
-  if (!strncmp(extra, "cmpxchg", 7)) {
-    return makeAtomicCmpxchg(s, type, bytes, extra);
-  }
-  return makeAtomicRMW(s, type, bytes, extra);
-}
 Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
+                                                  AtomicRMWOp op,
                                                   Type type,
-                                                  uint8_t bytes,
-                                                  const char* extra) {
+                                                  uint8_t bytes) {
   auto ret = allocator.alloc<AtomicRMW>();
   ret->type = type;
+  ret->op = op;
   ret->bytes = bytes;
-  if (!strncmp(extra, "add", 3)) {
-    ret->op = RMWAdd;
-  } else if (!strncmp(extra, "and", 3)) {
-    ret->op = RMWAnd;
-  } else if (!strncmp(extra, "or", 2)) {
-    ret->op = RMWOr;
-  } else if (!strncmp(extra, "sub", 3)) {
-    ret->op = RMWSub;
-  } else if (!strncmp(extra, "xor", 3)) {
-    ret->op = RMWXor;
-  } else if (!strncmp(extra, "xchg", 4)) {
-    ret->op = RMWXchg;
-  } else {
-    throw ParseException("bad atomic rmw operator", s.line, s.col);
-  }
+  ret->offset = 0;
   Index i = 1;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
@@ -2081,9 +2012,8 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  Address align;
-  i = parseMemAttributes(
-    i, s, ret->offset, align, ret->bytes, isMemory64(memory));
+  Address align = bytes;
+  i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != ret->bytes) {
     throw ParseException("Align of Atomic RMW must match size", s.line, s.col);
   }
@@ -2095,13 +2025,12 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s,
 
 Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
                                                       Type type,
-                                                      uint8_t bytes,
-                                                      const char* extra) {
+                                                      uint8_t bytes) {
   auto ret = allocator.alloc<AtomicCmpxchg>();
   ret->type = type;
   ret->bytes = bytes;
+  ret->offset = 0;
   Index i = 1;
-  Address align;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
   // the mem attributes
@@ -2111,8 +2040,8 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(
-    i, s, ret->offset, align, ret->bytes, isMemory64(memory));
+  Address align = ret->bytes;
+  i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != ret->bytes) {
     throw ParseException(
       "Align of Atomic Cmpxchg must match size", s.line, s.col);
@@ -2127,16 +2056,8 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
 Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   auto ret = allocator.alloc<AtomicWait>();
   ret->type = Type::i32;
+  ret->offset = 0;
   ret->expectedType = type;
-  Address align;
-  Address expectedAlign;
-  if (type == Type::i32) {
-    expectedAlign = 4;
-  } else if (type == Type::i64) {
-    expectedAlign = 8;
-  } else {
-    WASM_UNREACHABLE("Invalid prefix for memory.atomic.wait");
-  }
   Index i = 1;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
@@ -2147,8 +2068,9 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(
-    i, s, ret->offset, align, expectedAlign, isMemory64(memory));
+  Address expectedAlign = type == Type::i64 ? 8 : 4;
+  Address align = expectedAlign;
+  i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != expectedAlign) {
     throw ParseException(
       "Align of memory.atomic.wait must match size", s.line, s.col);
@@ -2163,6 +2085,7 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
 Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   auto ret = allocator.alloc<AtomicNotify>();
   ret->type = Type::i32;
+  ret->offset = 0;
   Index i = 1;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
@@ -2173,8 +2096,8 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  Address align;
-  i = parseMemAttributes(i, s, ret->offset, align, 4, isMemory64(memory));
+  Address align = 4;
+  i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != 4) {
     throw ParseException(
       "Align of memory.atomic.notify must be 4", s.line, s.col);
@@ -2260,17 +2183,17 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
 Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   auto ret = allocator.alloc<SIMDLoad>();
   ret->op = op;
-  Address defaultAlign;
+  ret->offset = 0;
   switch (op) {
     case Load8SplatVec128:
-      defaultAlign = 1;
+      ret->align = 1;
       break;
     case Load16SplatVec128:
-      defaultAlign = 2;
+      ret->align = 2;
       break;
     case Load32SplatVec128:
     case Load32ZeroVec128:
-      defaultAlign = 4;
+      ret->align = 4;
       break;
     case Load64SplatVec128:
     case Load8x8SVec128:
@@ -2280,7 +2203,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     case Load32x2SVec128:
     case Load32x2UVec128:
     case Load64ZeroVec128:
-      defaultAlign = 8;
+      ret->align = 8;
       break;
   }
   Index i = 1;
@@ -2293,8 +2216,7 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(
-    i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
+  i = parseMemAttributes(i, s, ret->offset, ret->align, isMemory64(memory));
   ret->ptr = parseExpression(s[i]);
   ret->finalize();
   return ret;
@@ -2305,27 +2227,27 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
                                               SIMDLoadStoreLaneOp op) {
   auto* ret = allocator.alloc<SIMDLoadStoreLane>();
   ret->op = op;
-  Address defaultAlign;
+  ret->offset = 0;
   size_t lanes;
   switch (op) {
     case Load8LaneVec128:
     case Store8LaneVec128:
-      defaultAlign = 1;
+      ret->align = 1;
       lanes = 16;
       break;
     case Load16LaneVec128:
     case Store16LaneVec128:
-      defaultAlign = 2;
+      ret->align = 2;
       lanes = 8;
       break;
     case Load32LaneVec128:
     case Store32LaneVec128:
-      defaultAlign = 4;
+      ret->align = 4;
       lanes = 4;
       break;
     case Load64LaneVec128:
     case Store64LaneVec128:
-      defaultAlign = 8;
+      ret->align = 8;
       lanes = 2;
       break;
     default:
@@ -2341,8 +2263,7 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  i = parseMemAttributes(
-    i, s, ret->offset, ret->align, defaultAlign, isMemory64(memory));
+  i = parseMemAttributes(i, s, ret->offset, ret->align, isMemory64(memory));
   ret->index = parseLaneIndex(s[i++], lanes);
   ret->ptr = parseExpression(s[i++]);
   ret->vec = parseExpression(s[i]);

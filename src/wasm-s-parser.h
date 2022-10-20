@@ -224,13 +224,12 @@ private:
   Expression* makeBlock(Element& s);
   Expression* makeThenOrElse(Element& s);
   Expression* makeConst(Element& s, Type type);
-  Expression* makeLoad(Element& s, Type type, bool isAtomic);
-  Expression* makeStore(Element& s, Type type, bool isAtomic);
-  Expression* makeAtomicRMWOrCmpxchg(Element& s, Type type);
   Expression*
-  makeAtomicRMW(Element& s, Type type, uint8_t bytes, const char* extra);
+  makeLoad(Element& s, Type type, bool signed_, int bytes, bool isAtomic);
+  Expression* makeStore(Element& s, Type type, int bytes, bool isAtomic);
   Expression*
-  makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra);
+  makeAtomicRMW(Element& s, AtomicRMWOp op, Type type, uint8_t bytes);
+  Expression* makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes);
   Expression* makeAtomicWait(Element& s, Type type);
   Expression* makeAtomicNotify(Element& s);
   Expression* makeAtomicFence(Element& s);
