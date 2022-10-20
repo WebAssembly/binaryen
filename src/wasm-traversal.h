@@ -284,6 +284,11 @@ struct Walker : public VisitorType {
         self->walk(item);
       }
     }
+    for (auto& curr : module->dataSegments) {
+      if (curr->offset) {
+        self->walk(curr->offset);
+      }
+    }
     setModule(nullptr);
   }
 
