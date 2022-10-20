@@ -52,6 +52,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $return (result (ref nofunc))
+    ;; Helper function. It never returns, as its return type indicates.
     (unreachable)
   )
 
@@ -62,6 +63,8 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $call
+    ;; Call a function whose return type shows it never returns. We can emit an
+    ;; unreachable after the call.
     (drop
       (call $return)
     )
@@ -82,11 +85,12 @@
   (func $type-updating
     (block $block
       (drop
-        ;; The value flowing out of this br is a non-nullable null, so it is
-        ;; unreachable. While optimizing it we must properly update the types
-        ;; above us to propagate the new unreachability, but while doing so we
-        ;; must not make the mistake of changing the block's type, as it remains
-        ;; reachable (due to the branch to it).
+        ;; The value flowing out of this br is a non-nullable null (since we
+        ;; would branch if it were null), so it is unreachable. While optimizing
+        ;; it we must properly update the types above us to propagate the new
+        ;; unreachability, but while doing so we must not make the mistake of
+        ;; changing the block's type, as it remains reachable (due to the branch
+        ;; to it).
         (br_on_null $block
           (ref.null none)
         )
