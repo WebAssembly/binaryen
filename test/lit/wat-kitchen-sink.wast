@@ -27,6 +27,8 @@
 
   ;; CHECK:      (type $i32_i32_i32_=>_none (func_subtype (param i32 i32 i32) func))
 
+  ;; CHECK:      (type $i32_i64_=>_none (func_subtype (param i32 i64) func))
+
   ;; CHECK:      (type $v128_=>_i32 (func_subtype (param v128) (result i32) func))
 
   ;; CHECK:      (type $v128_v128_=>_v128 (func_subtype (param v128 v128) (result v128) func))
@@ -718,6 +720,55 @@
   local.get 1
   local.get 2
   select (result) (result i32) (result)
+  drop
+ )
+
+ ;; CHECK:      (func $memory-size (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.size $mem)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.size $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.size $mem-i64)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-size
+  memory.size
+  drop
+  memory.size 1
+  drop
+  memory.size $mem-i64
+  drop
+ )
+
+ ;; CHECK:      (func $memory-grow (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.grow $mem
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.grow $0
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.grow $mem-i64
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-grow (param i32 i64)
+  local.get 0
+  memory.grow
+  drop
+  local.get 0
+  memory.grow 1
+  drop
+  local.get 1
+  memory.grow $mem-i64
   drop
  )
 

@@ -54,6 +54,10 @@ template<typename T = Ok> struct MaybeResult {
   MaybeResult(Err&& e) : val(std::in_place_type<Err>, std::move(e)) {}
   template<typename U = T>
   MaybeResult(U&& u) : val(std::in_place_type<T>, std::forward<U>(u)) {}
+  template<typename U = T>
+  MaybeResult(Result<U>&& u)
+    : val(u.getErr() ? std::variant<T, None, Err>{*u.getErr()}
+                     : std::variant<T, None, Err>{*u}) {}
 
   // Whether we have an error or a value. Useful for assignment in loops and if
   // conditions where errors should not get lost.
