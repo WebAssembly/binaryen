@@ -1555,17 +1555,17 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeThenOrElse(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeConst(Ctx&, Index, Type type);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeLoad(Ctx&, Index, Type type, bool isAtomic);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeStore(Ctx&, Index, Type type, bool isAtomic);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicRMWOrCmpxchg(Ctx&, Index, Type type);
+Result<typename Ctx::InstrT>
+makeLoad(Ctx&, Index, Type type, bool signed_, int bytes, bool isAtomic);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicRMW(Ctx&, Index, Type type, uint8_t bytes, const char* extra);
+makeStore(Ctx&, Index, Type type, int bytes, bool isAtomic);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicCmpxchg(Ctx&, Index, Type type, uint8_t bytes, const char* extra);
+makeAtomicRMW(Ctx&, Index, AtomicRMWOp op, Type type, uint8_t bytes);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeAtomicCmpxchg(Ctx&, Index, Type type, uint8_t bytes);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeAtomicWait(Ctx&, Index, Type type);
 template<typename Ctx>
@@ -2244,32 +2244,26 @@ Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Index pos, Type type) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeLoad(Ctx& ctx, Index pos, Type type, bool isAtomic) {
+Result<typename Ctx::InstrT> makeLoad(
+  Ctx& ctx, Index pos, Type type, bool signed_, int bytes, bool isAtomic) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeStore(Ctx& ctx, Index pos, Type type, bool isAtomic) {
+makeStore(Ctx& ctx, Index pos, Type type, int bytes, bool isAtomic) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeAtomicRMWOrCmpxchg(Ctx& ctx, Index pos, Type type) {
+makeAtomicRMW(Ctx& ctx, Index pos, AtomicRMWOp op, Type type, uint8_t bytes) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicRMW(
-  Ctx& ctx, Index pos, Type type, uint8_t bytes, const char* extra) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeAtomicCmpxchg(
-  Ctx& ctx, Index pos, Type type, uint8_t bytes, const char* extra) {
+Result<typename Ctx::InstrT>
+makeAtomicCmpxchg(Ctx& ctx, Index pos, Type type, uint8_t bytes) {
   return ctx.in.err("unimplemented instruction");
 }
 
