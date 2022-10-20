@@ -965,6 +965,8 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
 }
 
 void PassRunner::runPassOnModuleCode(Pass* pass, Module* module) {
+  assert(pass->isFunctionParallel());
+
   pass->setPassRunner(this);
   pass->runOnModuleCode(module);
 }

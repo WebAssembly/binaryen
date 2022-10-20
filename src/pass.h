@@ -308,9 +308,18 @@ struct PassRunner {
   void run();
 
   // Run the passes on a specific function.
+  //
+  // Only function-parallel passes should call this, as only in them is there a
+  // distinction between function code and module code. (Non-function-parallel
+  // passes simply run on the entire module, and may access/modify anything.)
   void runOnFunction(Function* func);
 
   // Run the passes on module-level code.
+  //
+  // Only function-parallel passes should call this, as with runOnFunction. Note
+  // that such passes run only on functions by default (that is, if run() is
+  // called). This method allows you to manually run on module code in the rare
+  // cases where that is necessary.
   void runOnModuleCode(Module* module);
 
   // When running a pass runner within another pass runner, this
@@ -347,7 +356,12 @@ private:
 
   void doAdd(std::unique_ptr<Pass> pass);
 
+  // Run an arbitrary pass.
   void runPass(Pass* pass);
+
+  // Run a function-parallel pass. Such passes differentiate running on function
+  // code and module code (see notes above on runOnFunction and
+  // runOnModuleCode).
   void runPassOnFunction(Pass* pass, Function* func);
   void runPassOnModuleCode(Pass* pass, Module* module);
 
@@ -403,6 +417,10 @@ public:
   // module state, like globals or imports. However, reading other functions'
   // contents is invalid, as function-parallel tests can be run while still
   // adding functions to the module.
+  //
+  // Function-parallel passes do not process module-level code by default as
+  // they focus on functions. However, you can call runOnModuleCode() in the
+  // rare cases where you want them to run on module-level code.
   virtual bool isFunctionParallel() { return false; }
 
   // This method is used to create instances per function for a
@@ -493,6 +511,7 @@ public:
   }
 
   void runOnModuleCode(Module* module) override {
+    assert(isFunctionParallel());
     assert(getPassRunner());
     WalkerType::walkModuleCode(module);
   }
