@@ -57,26 +57,18 @@
     )
   )
 
-  ;; CHECK:      (func $control-flow
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result (ref nofunc))
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK:      (func $type-updating
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_null $block
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $control-flow
-    (drop
-      (if (result (ref nofunc))
-        (i32.const 1)
-        (unreachable)
-        (unreachable)
-      )
-    )
-  )
-
   (func $type-updating
     (block $block
       (drop

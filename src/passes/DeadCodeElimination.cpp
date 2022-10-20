@@ -31,6 +31,7 @@
 #include <ir/iteration.h>
 #include <ir/properties.h>
 #include <ir/type-updating.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <vector>
 #include <wasm-builder.h>
@@ -67,25 +68,46 @@ struct DeadCodeElimination
   }
 
   void doWalkFunction(Function* func) {
+    if (getModule()->features.hasGC()) {
+      dceGC();
+    }
     typeUpdater.walk(func->body);
     walk(func->body);
   }
 
-  void visitExpression(Expression* curr) {
+  void dceGC() {
     // The wasm type system can indicate that code is unreachable: the null
     // bottom types only allow a null, so a non-nullable reference of such a
     // type allows nothing. When we see that, emit an unreachable after it to
     // enable the rest of the optimization here.
-    if (curr->type.isNull() && curr->type.isNonNullable()) {
-      Builder builder(*getModule());
-      // Note that we call the super's replaceCurrent and not our modified
-      // version. Our modified version (see above) calls noteReplacement()
-      // which is non-recursive, and sufficient for all the other needs in this
-      // file. Here, though, we are not actually replacing anything but just
-      // adding a block and an unreachable XXX call propagateTypesUp()?
-      curr = super::replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                                 builder.makeUnreachable()));
-    }
+    //
+    // We only do this when GC is enabled, since the type is a GC type. And we
+    // do it here before any other work to (1) not slow down non-GC code, and
+    // (2) avoid the complexity of notifying the typeUpdater on the changes we
+    // make, that the main work is very careful about.
+    struct Optimizer : public PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>> {
+      bool refinalize = false;
+
+      void visitExpression(Expression* curr) {
+        if (curr->type.isNull() && curr->type.isNonNullable()) {
+          Builder builder(*getModule());
+          curr = replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                                     builder.makeUnreachable()));
+          refinalize = true;
+        }
+      }
+
+      void visitFunction(Function* func) {
+        if (refinalize) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
+    };
+
+    Optimizer().walkFunctionInModule(getFunction(), getModule());
+  }
+
+  void visitExpression(Expression* curr) {
 
     if (!Properties::isControlFlowStructure(curr)) {
       // Control flow structures require special handling, but others are
