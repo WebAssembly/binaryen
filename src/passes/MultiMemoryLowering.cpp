@@ -278,6 +278,7 @@ struct MultiMemoryLowering : public Pass {
       functionName, Signature(pointerType, pointerType), {});
     function->setLocalName(0, "page_delta");
     auto getPageDelta = [&]() { return builder.makeLocalGet(0, pointerType); };
+    auto getMoveSource = [&](Name global) { return builder.makeGlobalGet(global, pointerType); };
     Expression* functionBody;
 
     Index returnLocal = Builder::addVar(function.get(), pointerType);
@@ -296,22 +297,21 @@ struct MultiMemoryLowering : public Pass {
     if (!isLastMemory(memIdx)) {
       // This offset is the starting pt for copying
       auto offsetGlobalName = getOffsetGlobal(memIdx + 1);
-      //auto getMoveSource = [&]() { return builder.makeGlobalGet(offsetGlobalName, pointerType); };
       functionBody = builder.blockify(
         functionBody,
         builder.makeMemoryCopy(
           // destination
           builder.makeBinary(
             Abstract::getBinary(pointerType, Abstract::Add),
-            builder.makeGlobalGet(offsetGlobalName, pointerType),
+            getMoveSource(offsetGlobalName),
             getPageDelta()),
           // source
-          builder.makeGlobalGet(offsetGlobalName, pointerType),
+          getMoveSource(offsetGlobalName),
           // size
           builder.makeBinary(
             Abstract::getBinary(pointerType, Abstract::Sub),
             builder.makeMemorySize(combinedMemory, memoryInfo),
-            builder.makeGlobalGet(offsetGlobalName, pointerType)),
+            getMoveSource(offsetGlobalName)),
           combinedMemory,
           combinedMemory));
     }
@@ -325,7 +325,7 @@ struct MultiMemoryLowering : public Pass {
           offsetGlobalName,
           builder.makeBinary(
             Abstract::getBinary(pointerType, Abstract::Add),
-            builder.makeGlobalGet(offsetGlobalName, pointerType),
+            getMoveSource(offsetGlobalName),
             getPageDelta())));
     }
 

@@ -4,44 +4,132 @@
 (module
   (memory $memory1 1)
   (memory $memory2 2)
+  (memory $memory3 3)
   (data (memory $memory1) (i32.const 0) "a")
-  (data (memory $memory2) (i32.const 1) "123")
+  (data (memory $memory3) (i32.const 1) "123")
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $memory2_page_offset (mut i32) (i32.const 1))
+
+  ;; CHECK:      (global $memory3_page_offset (mut i32) (i32.const 3))
+
+  ;; CHECK:      (memory $combined_memory 6)
+
+  ;; CHECK:      (data (i32.const 0) "a")
+
+  ;; CHECK:      (data (i32.add
+  ;; CHECK-NEXT:  (global.get $memory3_page_offset)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ) "123")
+
+  ;; CHECK:      (func $loads
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (global.get $memory2_page_offset)
+  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (global.get $memory3_page_offset)
+  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loads
+  (drop
+   (i32.load $memory1
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.load $memory2
+    (i32.const 11)
+   )
+  )
+  (drop
+   (i32.load $memory3
+    (i32.const 12)
+   )
+  )
+  )
+  ;; CHECK:      (func $stores
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 115)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $memory2_page_offset)
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 115)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $memory3_page_offset)
+  ;; CHECK-NEXT:    (i32.const 12)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 115)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $stores
+  (i32.store $memory1
+   (i32.const 10)
+   (i32.const 115)
+  )
+  (i32.store $memory2
+   (i32.const 11)
+   (i32.const 115)
+  )
+  (i32.store $memory3
+   (i32.const 12)
+   (i32.const 115)
+  )
+  )
 )
 
-;; CHECK:      (type $none_=>_i32 (func (result i32)))
-
-;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-
-;; CHECK:      (global $memory2_page_offset (mut i32) (i32.const 1))
-
-;; CHECK:      (memory $combined_memory 3)
-
-;; CHECK:      (data (i32.const 0) "a")
-
-;; CHECK:      (data (i32.add
-;; CHECK-NEXT:  (global.get $memory2_page_offset)
-;; CHECK-NEXT:  (i32.const 1)
-;; CHECK-NEXT: ) "123")
-
-;; CHECK:      (func $custom_memory_size_0 (result i32)
+;; CHECK:      (func $memory1_size (result i32)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (global.get $memory2_page_offset)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $custom_memory_size_1 (result i32)
+;; CHECK:      (func $memory2_size (result i32)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (i32.sub
-;; CHECK-NEXT:    (memory.size)
+;; CHECK-NEXT:    (global.get $memory3_page_offset)
 ;; CHECK-NEXT:    (global.get $memory2_page_offset)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $custom_memory_grow_0 (param $page_delta i32) (result i32)
+;; CHECK:      (func $memory3_size (result i32)
+;; CHECK-NEXT:  (return
+;; CHECK-NEXT:   (i32.sub
+;; CHECK-NEXT:    (memory.size)
+;; CHECK-NEXT:    (global.get $memory3_page_offset)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $memory1_grow (param $page_delta i32) (result i32)
 ;; CHECK-NEXT:  (local $1 i32)
 ;; CHECK-NEXT:  (local.set $1
-;; CHECK-NEXT:   (call $custom_memory_size_0)
+;; CHECK-NEXT:   (call $memory1_size)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (memory.grow
@@ -65,13 +153,49 @@
 ;; CHECK-NEXT:    (local.get $page_delta)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (global.set $memory3_page_offset
+;; CHECK-NEXT:   (i32.add
+;; CHECK-NEXT:    (global.get $memory3_page_offset)
+;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (local.get $1)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $custom_memory_grow_1 (param $page_delta i32) (result i32)
+;; CHECK:      (func $memory2_grow (param $page_delta i32) (result i32)
 ;; CHECK-NEXT:  (local $1 i32)
 ;; CHECK-NEXT:  (local.set $1
-;; CHECK-NEXT:   (call $custom_memory_size_1)
+;; CHECK-NEXT:   (call $memory2_size)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (memory.grow
+;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (memory.copy
+;; CHECK-NEXT:   (i32.add
+;; CHECK-NEXT:    (global.get $memory3_page_offset)
+;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (global.get $memory3_page_offset)
+;; CHECK-NEXT:   (i32.sub
+;; CHECK-NEXT:    (memory.size)
+;; CHECK-NEXT:    (global.get $memory3_page_offset)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (global.set $memory3_page_offset
+;; CHECK-NEXT:   (i32.add
+;; CHECK-NEXT:    (global.get $memory3_page_offset)
+;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (local.get $1)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $memory3_grow (param $page_delta i32) (result i32)
+;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (local.set $1
+;; CHECK-NEXT:   (call $memory3_size)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (memory.grow
