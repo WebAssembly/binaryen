@@ -282,7 +282,7 @@ struct MultiMemoryLowering : public Pass {
       return builder.makeGlobalGet(global, pointerType);
     };
     Expression* functionBody;
-    Index sizeLocal = 1;
+    Index sizeLocal = -1;
 
     Index returnLocal = Builder::addVar(function.get(), pointerType);
     functionBody = builder.blockify(builder.makeLocalSet(
