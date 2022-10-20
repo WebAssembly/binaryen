@@ -611,6 +611,7 @@ struct NullInstrParserCtx {
 
   using LocalT = Ok;
   using GlobalT = Ok;
+  using MemoryT = Ok;
 
   InstrsT makeInstrs() { return Ok{}; }
   void appendInstr(InstrsT&, InstrT) {}
@@ -622,6 +623,8 @@ struct NullInstrParserCtx {
   LocalT getLocalFromName(Name) { return Ok{}; }
   GlobalT getGlobalFromIdx(uint32_t) { return Ok{}; }
   GlobalT getGlobalFromName(Name) { return Ok{}; }
+  MemoryT getMemoryFromIdx(uint32_t) { return Ok{}; }
+  MemoryT getMemoryFromName(Name) { return Ok{}; }
 
   InstrT makeUnreachable(Index) { return Ok{}; }
   InstrT makeNop(Index) { return Ok{}; }
@@ -631,18 +634,19 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   InstrT makeDrop(Index) { return Ok{}; }
+  InstrT makeMemorySize(Index, MemoryT*) { return Ok{}; }
+  InstrT makeMemoryGrow(Index, MemoryT*) { return Ok{}; }
+  InstrT makeLocalGet(Index, LocalT) { return Ok{}; }
+  InstrT makeLocalTee(Index, LocalT) { return Ok{}; }
+  InstrT makeLocalSet(Index, LocalT) { return Ok{}; }
+  InstrT makeGlobalGet(Index, GlobalT) { return Ok{}; }
+  InstrT makeGlobalSet(Index, GlobalT) { return Ok{}; }
 
   InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
   InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
   InstrT makeF32Const(Index, float) { return Ok{}; }
   InstrT makeF64Const(Index, double) { return Ok{}; }
 
-  InstrT makeLocalGet(Index, LocalT) { return Ok{}; }
-  InstrT makeLocalTee(Index, LocalT) { return Ok{}; }
-  InstrT makeLocalSet(Index, LocalT) { return Ok{}; }
-
-  InstrT makeGlobalGet(Index, GlobalT) { return Ok{}; }
-  InstrT makeGlobalSet(Index, GlobalT) { return Ok{}; }
   InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
@@ -663,6 +667,7 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
 
   using LocalT = Index;
   using GlobalT = Name;
+  using MemoryT = Name;
 
   Builder builder;
 
@@ -824,6 +829,18 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
     auto val = pop(pos);
     CHECK_ERR(val);
     return push(pos, builder.makeDrop(*val));
+  }
+  Result<> makeMemorySize(Index pos, Name* mem) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    return push(pos, builder.makeMemorySize(*m));
+  }
+  Result<> makeMemoryGrow(Index pos, Name* mem) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeMemoryGrow(*val, *m));
   }
 
   Result<> makeI32Const(Index pos, uint32_t c) {
@@ -1306,6 +1323,20 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     return name;
   }
 
+  Result<Name> getMemoryFromIdx(uint32_t idx) {
+    if (idx >= wasm.memories.size()) {
+      return in.err("memory index out of bounds");
+    }
+    return wasm.memories[idx]->name;
+  }
+
+  Result<Name> getMemoryFromName(Name name) {
+    if (!wasm.getMemoryOrNull(name)) {
+      return in.err("memory $" + name.toString() + " does not exist");
+    }
+    return name;
+  }
+
   Result<TypeUseT> makeTypeUse(Index pos,
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
@@ -1383,6 +1414,16 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     }
     Name name = Names::getValidLocalName(*func, "scratch");
     return Builder::addVar(func, name, type);
+  }
+
+  Result<Name> getMemory(Index pos, Name* mem) {
+    if (mem) {
+      return *mem;
+    }
+    if (wasm.memories.empty()) {
+      return in.err(pos, "memory required, but there is no memory");
+    }
+    return wasm.memories[0]->name;
   }
 
   Result<> makeLocalGet(Index pos, Index local) {
@@ -1646,6 +1687,8 @@ Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, Index);
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::MemoryT> maybeMemidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::MemoryT> memidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
@@ -2110,12 +2153,16 @@ Result<typename Ctx::InstrT> makeDrop(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemorySize(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeMemorySize(pos, mem.getPtr());
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemoryGrow(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeMemoryGrow(pos, mem.getPtr());
 }
 
 template<typename Ctx>
@@ -2634,6 +2681,27 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
     return ctx.getHeapTypeFromIdx(*idx);
   }
   return ctx.in.err("expected type index or identifier");
+}
+
+// memidx ::= x:u32 => x
+//          | v:id  => x (if memories[x] = v)
+template<typename Ctx>
+MaybeResult<typename Ctx::MemoryT> maybeMemidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getMemoryFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getMemoryFromName(*id);
+  }
+  return {};
+}
+
+template<typename Ctx> Result<typename Ctx::MemoryT> memidx(Ctx& ctx) {
+  if (auto idx = maybeMemidx(ctx)) {
+    CHECK_ERR(idx);
+    return *idx;
+  }
+  return ctx.in.err("expected memory index or identifier");
 }
 
 // globalidx ::= x:u32 => x
