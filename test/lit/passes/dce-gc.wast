@@ -2,13 +2,23 @@
 ;; RUN: wasm-opt %s --dce -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $param1 (param $no (ref nofunc))
+  ;; CHECK:      (func $param1 (param $ignore nullfuncref) (param $no (ref nofunc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $no)
+  ;; CHECK-NEXT:   (local.get $ignore)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $no)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $param1 (param $no (ref nofunc))
+  (func $param1 (param $ignore (ref null nofunc)) (param $no (ref nofunc))
+    ;; The first param may be a null, and we ignore it. The second can be
+    ;; optimized by putting an unreachable after it.
+    (drop
+      (local.get $ignore)
+    )
     (drop
       (local.get $no)
     )
@@ -81,7 +91,10 @@
           (ref.null none)
         )
       )
-      (unreachable)
+      ;; Do a return to avoid the block's type being reachable just due to the
+      ;; fallthrough. (This return will be removed since it is after the
+      ;; unreachable we'll emit after the drop.)
+      (return)
     )
   )
 )
