@@ -85,14 +85,15 @@ struct DeadCodeElimination
     // do it here before any other work to (1) not slow down non-GC code, and
     // (2) avoid the complexity of notifying the typeUpdater on the changes we
     // make, that the main work is very careful about.
-    struct Optimizer : public PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>> {
+    struct Optimizer
+      : public PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>> {
       bool refinalize = false;
 
       void visitExpression(Expression* curr) {
         if (curr->type.isNull() && curr->type.isNonNullable()) {
           Builder builder(*getModule());
-          curr = replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                                     builder.makeUnreachable()));
+          curr = replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr), builder.makeUnreachable()));
           refinalize = true;
         }
       }
