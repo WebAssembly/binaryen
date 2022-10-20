@@ -15,12 +15,13 @@
  */
 
 //
-// Condensing a module with multiple memories into a module with a single memory for browsers that don’t
-// support multiple memories.
+// Condensing a module with multiple memories into a module with a single memory
+// for browsers that don’t support multiple memories.
 //
-// This pass also disables multi-memories so that the target features section in the
-// emitted module does not report the use of MultiMemories. Disabling the
-// multi-memories feature also prevents later passes from adding additional memories.
+// This pass also disables multi-memories so that the target features section in
+// the emitted module does not report the use of MultiMemories. Disabling the
+// multi-memories feature also prevents later passes from adding additional
+// memories.
 //
 // Also worth noting that we are diverging from the spec with regards to
 // handling load and store instructions. We are not trapping if the offset +
@@ -206,12 +207,11 @@ struct MultiMemoryLowering : public Pass {
 
   void addOffsetGlobals() {
     auto addGlobal = [&](Name name, size_t offset) {
-      auto global =
-        Builder::makeGlobal(name,
-                            pointerType,
-                            Builder(*wasm).makeConst(
-                              Literal::makeFromInt64(offset, pointerType)),
-                            Builder::Mutable);
+      auto global = Builder::makeGlobal(
+        name,
+        pointerType,
+        Builder(*wasm).makeConst(Literal::makeFromInt64(offset, pointerType)),
+        Builder::Mutable);
       wasm->addGlobal(std::move(global));
     };
 
@@ -278,7 +278,9 @@ struct MultiMemoryLowering : public Pass {
       functionName, Signature(pointerType, pointerType), {});
     function->setLocalName(0, "page_delta");
     auto getPageDelta = [&]() { return builder.makeLocalGet(0, pointerType); };
-    auto getMoveSource = [&](Name global) { return builder.makeGlobalGet(global, pointerType); };
+    auto getMoveSource = [&](Name global) {
+      return builder.makeGlobalGet(global, pointerType);
+    };
     Expression* functionBody;
     Index sizeLocal;
 
@@ -288,8 +290,10 @@ struct MultiMemoryLowering : public Pass {
 
     if (!isLastMemory(memIdx)) {
       sizeLocal = Builder::addVar(function.get(), pointerType);
-      functionBody = builder.blockify(functionBody, builder.makeLocalSet(
-        sizeLocal, builder.makeMemorySize(combinedMemory, memoryInfo)));
+      functionBody = builder.blockify(
+        functionBody,
+        builder.makeLocalSet(
+          sizeLocal, builder.makeMemorySize(combinedMemory, memoryInfo)));
     }
 
     // TODO: Check the result of makeMemoryGrow for errors and return the error
@@ -308,17 +312,15 @@ struct MultiMemoryLowering : public Pass {
         functionBody,
         builder.makeMemoryCopy(
           // destination
-          builder.makeBinary(
-            Abstract::getBinary(pointerType, Abstract::Add),
-            getMoveSource(offsetGlobalName),
-            getPageDelta()),
+          builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Add),
+                             getMoveSource(offsetGlobalName),
+                             getPageDelta()),
           // source
           getMoveSource(offsetGlobalName),
           // size
-          builder.makeBinary(
-            Abstract::getBinary(pointerType, Abstract::Sub),
-            builder.makeLocalGet(sizeLocal, pointerType),
-            getMoveSource(offsetGlobalName)),
+          builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Sub),
+                             builder.makeLocalGet(sizeLocal, pointerType),
+                             getMoveSource(offsetGlobalName)),
           combinedMemory,
           combinedMemory));
     }
@@ -330,10 +332,9 @@ struct MultiMemoryLowering : public Pass {
         functionBody,
         builder.makeGlobalSet(
           offsetGlobalName,
-          builder.makeBinary(
-            Abstract::getBinary(pointerType, Abstract::Add),
-            getMoveSource(offsetGlobalName),
-            getPageDelta())));
+          builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Add),
+                             getMoveSource(offsetGlobalName),
+                             getPageDelta())));
     }
 
     functionBody = builder.blockify(
