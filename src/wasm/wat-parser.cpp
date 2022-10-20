@@ -158,6 +158,50 @@ struct ParseInput {
     return false;
   }
 
+  std::optional<uint64_t> takeOffset() {
+    if (auto t = peek()) {
+      if (auto keyword = t->getKeyword()) {
+        if (keyword->substr(0, 7) != "offset="sv) {
+          return {};
+        }
+        Lexer subLexer(keyword->substr(7));
+        if (subLexer == subLexer.end()) {
+          return {};
+        }
+        if (auto o = subLexer->getU64()) {
+          ++subLexer;
+          if (subLexer == subLexer.end()) {
+            ++lexer;
+            return o;
+          }
+        }
+      }
+    }
+    return {};
+  }
+
+  std::optional<uint32_t> takeAlign() {
+    if (auto t = peek()) {
+      if (auto keyword = t->getKeyword()) {
+        if (keyword->substr(0, 6) != "align="sv) {
+          return {};
+        }
+        Lexer subLexer(keyword->substr(6));
+        if (subLexer == subLexer.end()) {
+          return {};
+        }
+        if (auto a = subLexer->getU32()) {
+          ++subLexer;
+          if (subLexer == subLexer.end()) {
+            ++lexer;
+            return a;
+          }
+        }
+      }
+    }
+    return {};
+  }
+
   std::optional<uint64_t> takeU64() {
     if (auto t = peek()) {
       if (auto n = t->getU64()) {
@@ -333,6 +377,11 @@ struct MemType {
   Type type;
   Limits limits;
   bool shared;
+};
+
+struct Memarg {
+  uint64_t offset;
+  uint32_t align;
 };
 
 // RAII utility for temporarily changing the parsing position of a parsing
@@ -614,6 +663,8 @@ struct NullInstrParserCtx {
   using GlobalT = Ok;
   using MemoryT = Ok;
 
+  using MemargT = Ok;
+
   InstrsT makeInstrs() { return Ok{}; }
   void appendInstr(InstrsT&, InstrT) {}
   InstrsT finishInstrs(InstrsT&) { return Ok{}; }
@@ -626,6 +677,8 @@ struct NullInstrParserCtx {
   GlobalT getGlobalFromName(Name) { return Ok{}; }
   MemoryT getMemoryFromIdx(uint32_t) { return Ok{}; }
   MemoryT getMemoryFromName(Name) { return Ok{}; }
+
+  MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
   InstrT makeUnreachable(Index) { return Ok{}; }
   InstrT makeNop(Index) { return Ok{}; }
@@ -647,12 +700,27 @@ struct NullInstrParserCtx {
   InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
   InstrT makeF32Const(Index, float) { return Ok{}; }
   InstrT makeF64Const(Index, double) { return Ok{}; }
-
+  InstrT makeLoad(Index, Type, bool, int, bool, MemoryT*, MemargT) {
+    return Ok{};
+  }
+  InstrT makeStore(Index, Type, int, bool, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryT*, MemargT) {
+    return Ok{};
+  }
+  InstrT makeAtomicCmpxchg(Index, Type, int, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeAtomicWait(Index, Type, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeAtomicNotify(Index, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeAtomicFence(Index) { return Ok{}; }
   InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
   InstrT makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
   InstrT makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
+  InstrT makeSIMDLoad(Index, SIMDLoadOp, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeSIMDLoadStoreLane(
+    Index, SIMDLoadStoreLaneOp, MemoryT*, MemargT, uint8_t) {
+    return Ok{};
+  }
 
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
@@ -669,6 +737,8 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
   using LocalT = Index;
   using GlobalT = Name;
   using MemoryT = Name;
+
+  using MemargT = Memarg;
 
   Builder builder;
 
@@ -782,6 +852,8 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
     return std::move(exprStack);
   }
 
+  Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
+
   ExprT makeExpr(InstrsT& instrs) {
     switch (instrs.size()) {
       case 0:
@@ -856,6 +928,95 @@ template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
   Result<> makeF64Const(Index pos, double c) {
     return push(pos, builder.makeConst(Literal(c)));
   }
+  Result<> makeLoad(Index pos,
+                    Type type,
+                    bool signed_,
+                    int bytes,
+                    bool isAtomic,
+                    Name* mem,
+                    Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    if (isAtomic) {
+      return push(pos,
+                  builder.makeAtomicLoad(bytes, memarg.offset, *ptr, type, *m));
+    }
+    return push(pos,
+                builder.makeLoad(
+                  bytes, signed_, memarg.offset, memarg.align, *ptr, type, *m));
+  }
+  Result<> makeStore(
+    Index pos, Type type, int bytes, bool isAtomic, Name* mem, Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    if (isAtomic) {
+      return push(
+        pos,
+        builder.makeAtomicStore(bytes, memarg.offset, *ptr, *val, type, *m));
+    }
+    return push(pos,
+                builder.makeStore(
+                  bytes, memarg.offset, memarg.align, *ptr, *val, type, *m));
+  }
+  Result<> makeAtomicRMW(
+    Index pos, AtomicRMWOp op, Type type, int bytes, Name* mem, Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(
+      pos,
+      builder.makeAtomicRMW(op, bytes, memarg.offset, *ptr, *val, type, *m));
+  }
+  Result<>
+  makeAtomicCmpxchg(Index pos, Type type, int bytes, Name* mem, Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto replacement = pop(pos);
+    CHECK_ERR(replacement);
+    auto expected = pop(pos);
+    CHECK_ERR(expected);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(
+      pos,
+      builder.makeAtomicCmpxchg(
+        bytes, memarg.offset, *ptr, *expected, *replacement, type, *m));
+  }
+  Result<> makeAtomicWait(Index pos, Type type, Name* mem, Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto timeout = pop(pos);
+    CHECK_ERR(timeout);
+    auto expected = pop(pos);
+    CHECK_ERR(expected);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(pos,
+                builder.makeAtomicWait(
+                  *ptr, *expected, *timeout, type, memarg.offset, *m));
+  }
+  Result<> makeAtomicNotify(Index pos, Name* mem, Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto count = pop(pos);
+    CHECK_ERR(count);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(pos, builder.makeAtomicNotify(*ptr, *count, memarg.offset, *m));
+  }
+  Result<> makeAtomicFence(Index pos) {
+    return push(pos, builder.makeAtomicFence());
+  }
+
   Result<> makeRefNull(Index pos, HeapType type) {
     return push(pos, builder.makeRefNull(type));
   }
@@ -1507,6 +1668,28 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     CHECK_ERR(vec);
     return push(pos, builder.makeSIMDShift(op, *vec, *shift));
   }
+
+  Result<> makeSIMDLoad(Index pos, SIMDLoadOp op, Name* mem, Memarg memarg) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(
+      pos, builder.makeSIMDLoad(op, memarg.offset, memarg.align, *ptr, *m));
+  }
+
+  Result<> makeSIMDLoadStoreLane(
+    Index pos, SIMDLoadStoreLaneOp op, Name* mem, Memarg memarg, uint8_t lane) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto vec = pop(pos);
+    CHECK_ERR(vec);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(pos,
+                builder.makeSIMDLoadStoreLane(
+                  op, memarg.offset, memarg.align, lane, *ptr, *vec, *m));
+  }
 };
 
 // ================
@@ -1534,6 +1717,7 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx&);
 template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&);
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&);
+template<typename Ctx> Result<typename Ctx::MemargT> memarg(Ctx&, uint32_t);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&, Index);
@@ -1585,10 +1769,11 @@ Result<typename Ctx::InstrT> makeSIMDTernary(Ctx&, Index, SIMDTernaryOp op);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeSIMDShift(Ctx&, Index, SIMDShiftOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoad(Ctx&, Index, SIMDLoadOp op);
+Result<typename Ctx::InstrT>
+makeSIMDLoad(Ctx&, Index, SIMDLoadOp op, int bytes);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDLoadStoreLane(Ctx&, Index, SIMDLoadStoreLaneOp op);
+makeSIMDLoadStoreLane(Ctx&, Index, SIMDLoadStoreLaneOp op, int bytes);
 template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryInit(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeDataDrop(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeMemoryCopy(Ctx&, Index);
@@ -2046,8 +2231,6 @@ template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
     return {};
   }
 
-  auto op = *keyword;
-
 #define NEW_INSTRUCTION_PARSER
 #define NEW_WAT_PARSER
 #include <gen-s-parser.inc>
@@ -2121,6 +2304,22 @@ template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
   auto insts = instrs(ctx);
   CHECK_ERR(insts);
   return ctx.makeExpr(*insts);
+}
+
+// memarg_n ::= o:offset a:align_n
+// offset   ::= 'offset='o:u64 => o | _ => 0
+// align_n  ::= 'align='a:u32 => a | _ => n
+template<typename Ctx>
+Result<typename Ctx::MemargT> memarg(Ctx& ctx, uint32_t n) {
+  uint64_t offset = 0;
+  uint32_t align = n;
+  if (auto o = ctx.in.takeOffset()) {
+    offset = *o;
+  }
+  if (auto a = ctx.in.takeAlign()) {
+    align = *a;
+  }
+  return ctx.getMemarg(offset, align);
 }
 
 template<typename Ctx>
@@ -2250,40 +2449,64 @@ Result<typename Ctx::InstrT> makeConst(Ctx& ctx, Index pos, Type type) {
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeLoad(
   Ctx& ctx, Index pos, Type type, bool signed_, int bytes, bool isAtomic) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, bytes);
+  CHECK_ERR(arg);
+  return ctx.makeLoad(pos, type, signed_, bytes, isAtomic, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStore(Ctx& ctx, Index pos, Type type, int bytes, bool isAtomic) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, bytes);
+  CHECK_ERR(arg);
+  return ctx.makeStore(pos, type, bytes, isAtomic, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeAtomicRMW(Ctx& ctx, Index pos, AtomicRMWOp op, Type type, uint8_t bytes) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, bytes);
+  CHECK_ERR(arg);
+  return ctx.makeAtomicRMW(pos, op, type, bytes, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeAtomicCmpxchg(Ctx& ctx, Index pos, Type type, uint8_t bytes) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, bytes);
+  CHECK_ERR(arg);
+  return ctx.makeAtomicCmpxchg(pos, type, bytes, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeAtomicWait(Ctx& ctx, Index pos, Type type) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, type == Type::i32 ? 4 : 8);
+  CHECK_ERR(arg);
+  return ctx.makeAtomicWait(pos, type, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeAtomicNotify(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, 4);
+  CHECK_ERR(arg);
+  return ctx.makeAtomicNotify(pos, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeAtomicFence(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeAtomicFence(pos);
 }
 
 template<typename Ctx>
@@ -2332,14 +2555,44 @@ makeSIMDShift(Ctx& ctx, Index pos, SIMDShiftOp op) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeSIMDLoad(Ctx& ctx, Index pos, SIMDLoadOp op) {
-  return ctx.in.err("unimplemented instruction");
+Result<typename Ctx::InstrT>
+makeSIMDLoad(Ctx& ctx, Index pos, SIMDLoadOp op, int bytes) {
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  auto arg = memarg(ctx, bytes);
+  CHECK_ERR(arg);
+  return ctx.makeSIMDLoad(pos, op, mem.getPtr(), *arg);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeSIMDLoadStoreLane(Ctx& ctx, Index pos, SIMDLoadStoreLaneOp op) {
-  return ctx.in.err("unimplemented instruction");
+makeSIMDLoadStoreLane(Ctx& ctx, Index pos, SIMDLoadStoreLaneOp op, int bytes) {
+  auto reset = ctx.in.getPos();
+
+  auto retry = [&]() -> Result<typename Ctx::InstrT> {
+    // We failed to parse. Maybe the lane index was accidentally parsed as the
+    // optional memory index. Try again without parsing a memory index.
+    WithPosition with(ctx, reset);
+    auto arg = memarg(ctx, bytes);
+    CHECK_ERR(arg);
+    auto lane = ctx.in.takeU8();
+    if (!lane) {
+      return ctx.in.err("expected lane index");
+    }
+    return ctx.makeSIMDLoadStoreLane(pos, op, nullptr, *arg, *lane);
+  };
+
+  auto mem = maybeMemidx(ctx);
+  if (mem.getErr()) {
+    return retry();
+  }
+  auto arg = memarg(ctx, bytes);
+  CHECK_ERR(arg);
+  auto lane = ctx.in.takeU8();
+  if (!lane) {
+    return retry();
+  }
+  return ctx.makeSIMDLoadStoreLane(pos, op, mem.getPtr(), *arg, *lane);
 }
 
 template<typename Ctx>

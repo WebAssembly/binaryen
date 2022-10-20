@@ -5,13 +5,15 @@
 (module $parse
  ;; types
 
+ ;; CHECK:      (type $void (func_subtype func))
+
  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
  ;; CHECK:      (type $ret2 (func_subtype (result i32 i32) func))
  (type $ret2 (func (result i32 i32)))
 
  (rec
-  ;; CHECK:      (type $void (func_subtype func))
+  ;; CHECK:      (type $i32_i64_=>_none (func_subtype (param i32 i64) func))
 
   ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
 
@@ -27,13 +29,13 @@
 
   ;; CHECK:      (type $i32_i32_i32_=>_none (func_subtype (param i32 i32 i32) func))
 
-  ;; CHECK:      (type $i32_i64_=>_none (func_subtype (param i32 i64) func))
-
   ;; CHECK:      (type $v128_=>_i32 (func_subtype (param v128) (result i32) func))
 
   ;; CHECK:      (type $v128_v128_=>_v128 (func_subtype (param v128 v128) (result v128) func))
 
   ;; CHECK:      (type $v128_v128_v128_=>_v128 (func_subtype (param v128 v128 v128) (result v128) func))
+
+  ;; CHECK:      (type $i32_i64_v128_=>_none (func_subtype (param i32 i64 v128) func))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
@@ -782,6 +784,176 @@
   global.set 4
  )
 
+ ;; CHECK:      (func $load (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load $mem offset=42
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.load8_s $0
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.load16_u $mem-i64 offset=42
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load (param i32 i64)
+  local.get 0
+  i32.load offset=42
+  drop
+  local.get 0
+  i64.load8_s 1 align=1
+  drop
+  local.get 1
+  i32.atomic.load16_u $mem-i64 offset=42 align=2
+  drop
+ )
+
+ ;; CHECK:      (func $store (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (i32.store $mem offset=42 align=1
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i64.atomic.store8 $0
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (i64.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.store $mem-i64
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (f32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store (param i32 i64)
+  local.get 0
+  i32.const 0
+  i32.store offset=42 align=1
+  local.get 0
+  i64.const 1
+  i64.atomic.store8 1
+  local.get 1
+  f32.const 2
+  f32.store $mem-i64
+ )
+
+ ;; CHECK:      (func $atomic-rmw (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.rmw16.add_u $mem
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.rmw.xor $mem-i64 offset=8
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $atomic-rmw (param i32 i64)
+  local.get 0
+  i32.const 1
+  i32.atomic.rmw16.add_u
+  drop
+  local.get 1
+  i64.const 2
+  i64.atomic.rmw.xor $mem-i64 offset=8 align=8
+  drop
+ )
+
+ ;; CHECK:      (func $atomic-cmpxchg (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.atomic.rmw8.cmpxchg_u $mem
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.atomic.rmw32.cmpxchg_u $mem-i64 offset=16
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (i64.const 3)
+ ;; CHECK-NEXT:    (i64.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $atomic-cmpxchg (param i32 i64)
+  local.get 0
+  i32.const 1
+  i32.const 2
+  i32.atomic.rmw8.cmpxchg_u 0 align=1
+  drop
+  local.get 1
+  i64.const 3
+  i64.const 4
+  i64.atomic.rmw32.cmpxchg_u 3 offset=16
+  drop
+ )
+
+ ;; CHECK:      (func $atomic-wait (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.atomic.wait32 $mem
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.atomic.wait64 $mem-i64 offset=8
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (i64.const 3)
+ ;; CHECK-NEXT:    (i64.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $atomic-wait (param i32 i64)
+  local.get 0
+  i32.const 1
+  i64.const 2
+  memory.atomic.wait32
+  drop
+  local.get 1
+  i64.const 3
+  i64.const 4
+  memory.atomic.wait64 $mem-i64 offset=8 align=8
+  drop
+ )
+
+ ;; CHECK:      (func $atomic-notify (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.atomic.notify $mem offset=8
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (memory.atomic.notify $mem-i64
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $atomic-notify (param i32 i64)
+  local.get 0
+  i32.const 0
+  memory.atomic.notify offset=8 align=4
+  drop
+  local.get 1
+  i32.const 1
+  memory.atomic.notify $mem-i64
+  drop
+ )
+
+ ;; CHECK:      (func $atomic-fence (type $void)
+ ;; CHECK-NEXT:  (atomic.fence)
+ ;; CHECK-NEXT: )
+ (func $atomic-fence
+  atomic.fence
+ )
+
  ;; CHECK:      (func $simd-extract (type $v128_=>_i32) (param $0 v128) (result i32)
  ;; CHECK-NEXT:  (i32x4.extract_lane 3
  ;; CHECK-NEXT:   (local.get $0)
@@ -840,6 +1012,49 @@
   local.get 0
   local.get 1
   i8x16.shl
+ )
+
+ ;; CHECK:      (func $simd-load (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load8x8_s $mem offset=8
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load16_splat $mem-i64 offset=2 align=1
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simd-load (param i32 i64)
+  local.get 0
+  v128.load8x8_s offset=8 align=8
+  drop
+  local.get 1
+  v128.load16_splat $mem-i64 offset=2 align=1
+  drop
+ )
+
+ ;; CHECK:      (func $simd-load-store-lane (type $i32_i64_v128_=>_none) (param $0 i32) (param $1 i64) (param $2 v128)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load16_lane $mem 7
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (v128.store64_lane $mem-i64 align=4 0
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simd-load-store-lane (param i32 i64 v128)
+  local.get 0
+  local.get 2
+  v128.load16_lane 7
+  drop
+  local.get 1
+  local.get 2
+  v128.store64_lane 3 align=4 0
  )
 
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))

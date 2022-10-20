@@ -367,7 +367,7 @@ public:
   }
   Load* makeLoad(unsigned bytes,
                  bool signed_,
-                 uint32_t offset,
+                 Address offset,
                  unsigned align,
                  Expression* ptr,
                  Type type,
@@ -384,7 +384,7 @@ public:
     return ret;
   }
   Load* makeAtomicLoad(
-    unsigned bytes, uint32_t offset, Expression* ptr, Type type, Name memory) {
+    unsigned bytes, Address offset, Expression* ptr, Type type, Name memory) {
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type, memory);
     load->isAtomic = true;
     return load;
@@ -419,7 +419,7 @@ public:
   }
   AtomicFence* makeAtomicFence() { return wasm.allocator.alloc<AtomicFence>(); }
   Store* makeStore(unsigned bytes,
-                   uint32_t offset,
+                   Address offset,
                    unsigned align,
                    Expression* ptr,
                    Expression* value,
@@ -439,7 +439,7 @@ public:
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes,
-                         uint32_t offset,
+                         Address offset,
                          Expression* ptr,
                          Expression* value,
                          Type type,
@@ -450,7 +450,7 @@ public:
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op,
                            unsigned bytes,
-                           uint32_t offset,
+                           Address offset,
                            Expression* ptr,
                            Expression* value,
                            Type type,
@@ -467,7 +467,7 @@ public:
     return ret;
   }
   AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes,
-                                   uint32_t offset,
+                                   Address offset,
                                    Expression* ptr,
                                    Expression* expected,
                                    Expression* replacement,
