@@ -654,26 +654,9 @@ struct SimplifyGlobals : public Pass {
       return;
     }
 
-    struct Optimizer
-      : public PostWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>> {
-      PassRunner runner;
-
-      Function tempFunc;
-
-      Optimizer(PassRunner* parentRunner) : runner(parentRunner) {
-        runner.add("precompute");
-      }
-
-      void visitExpression(Expression* curr) {
-        tempFunc.body = curr;
-        runner.runOnFunction(&tempFunc);
-        if (tempFunc.body != curr) {
-          replaceCurrent(tempFunc.body);
-        }
-      }
-    };
-
-    Optimizer(getPassRunner()).walkModuleCode(module);
+    PassRunner runner(getPassRunner());
+    runner.add("precompute");
+    runner.runOnModuleCode(module);
   }
 };
 
