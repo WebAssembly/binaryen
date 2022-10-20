@@ -78,7 +78,12 @@ struct DeadCodeElimination
     // enable the rest of the optimization here.
     if (curr->type.isNull() && curr->type.isNonNullable()) {
       Builder builder(*getModule());
-      curr = replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+      // Note that we call the super's replaceCurrent and not our modified
+      // version. Our modified version (see above) calls noteReplacement()
+      // which is non-recursive, and sufficient for all the other needs in this
+      // file. Here, though, we are not actually replacing anything but just
+      // adding a block and an unreachable XXX call propagateTypesUp()?
+      curr = super::replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
                                                  builder.makeUnreachable()));
     }
 
