@@ -72,6 +72,20 @@ struct DeadCodeElimination
   }
 
   void visitExpression(Expression* curr) {
+    // The wasm type system can indicate that code is unreachable: the null
+    // bottom types only allow a null, so a non-nullable reference of such a
+    // type allows nothing. When we see that, emit an unreachable after it to
+    // enable the rest of the optimization here.
+    if (curr->type.isNull() && curr->type.isNonNullable()) {
+      Builder builder(*getModule());
+      curr = replaceCurrent(
+        builder.makeSequence(
+          builder.makeDrop(curr),
+          builder.makeUnreachable()
+        )
+      );
+    }
+
     if (!Properties::isControlFlowStructure(curr)) {
       // Control flow structures require special handling, but others are
       // simple.
