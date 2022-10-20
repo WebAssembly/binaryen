@@ -8,9 +8,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $param (param $nofunc (ref nofunc))
+  (func $param (param $nofunc (ref nofunc)) (param $noext (ref noext)) (param $none (ref none))
     (drop
       (local.get $nofunc)
+    )
+    (drop
+      (local.get $noext)
+    )
+    (drop
+      (local.get $none)
     )
   )
 )
