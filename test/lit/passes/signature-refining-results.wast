@@ -340,8 +340,6 @@
   ;; CHECK:      (type $sig (func_subtype (result anyref) func))
   (type $sig (func_subtype (result anyref) func))
 
-  ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
-
   ;; CHECK:      (func $dropped (type $sig) (result anyref)
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 2)
