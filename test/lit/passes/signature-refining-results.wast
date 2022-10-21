@@ -271,3 +271,62 @@
     )
   )
 )
+
+;; We don't change the type of a function that contains a return_call (since the
+;; return type has another constraint on it).
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $sig (func_subtype (result anyref) func))
+  (type $sig (func_subtype (result anyref) func))
+
+  ;; CHECK:      (type $ref|$struct|_=>_anyref (func_subtype (param (ref $struct)) (result anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $dropped (type $sig) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (return_call $other
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dropped (type $sig) (result anyref)
+    (if
+      (i32.const 1)
+      (return_call $other
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+    )
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $other (type $ref|$struct|_=>_anyref) (param $0 (ref $struct)) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $other (param anyref) (result anyref)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $dropped)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (drop
+      (call $dropped)
+    )
+  )
+)
