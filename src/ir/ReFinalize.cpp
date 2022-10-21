@@ -191,10 +191,13 @@ void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
   // if the function has a return value
+//std::cout << curr->name << " : " << *curr->body << " : " << curr->getResults() << '\n';
+#if 0
   if (curr->getResults() != Type::none && curr->body->type == Type::none) {
     Builder builder(*getModule());
     curr->body = builder.blockify(curr->body, builder.makeUnreachable());
   }
+#endif
 }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
