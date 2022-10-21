@@ -294,6 +294,8 @@ INITIAL_CONTENTS_IGNORE = [
     'multi-memories-basics.wasm',
     'multi-memories-simd.wasm',
     'multi-memories_size.wast',
+    # TODO: fuzzer support for internalize/externalize
+    'optimize-instructions-gc-extern.wast',
 ]
 
 
