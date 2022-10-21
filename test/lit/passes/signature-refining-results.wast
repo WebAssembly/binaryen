@@ -34,7 +34,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $dropped (type $sig1) (result anyref)
     (if
@@ -210,7 +209,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $dropped (type $sig) (result anyref)
     (if
@@ -245,7 +243,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $dropped2 (type $sig) (result anyref)
     (if
