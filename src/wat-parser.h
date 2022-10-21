@@ -35,6 +35,7 @@ template<typename T = Ok> struct Result {
   std::variant<T, Err> val;
 
   Result(Result<T>& other) = default;
+  Result(Result<T>&& other) = default;
   Result(const Err& e) : val(std::in_place_type<Err>, e) {}
   Result(Err&& e) : val(std::in_place_type<Err>, std::move(e)) {}
   template<typename U = T>
@@ -50,6 +51,7 @@ template<typename T = Ok> struct MaybeResult {
 
   MaybeResult() : val(None{}) {}
   MaybeResult(MaybeResult<T>& other) = default;
+  MaybeResult(MaybeResult<T>&& other) = default;
   MaybeResult(const Err& e) : val(std::in_place_type<Err>, e) {}
   MaybeResult(Err&& e) : val(std::in_place_type<Err>, std::move(e)) {}
   template<typename U = T>
