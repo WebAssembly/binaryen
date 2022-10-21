@@ -75,6 +75,10 @@ struct SignatureRefining : public Pass {
       std::vector<Call*> calls;
       std::vector<CallRef*> callRefs;
 
+      // The relevant drops. In the initial scan we collect all drops, and then
+      // when we merge the information we'll note the drops for each call.
+      std::vector<Drop*> drops;
+
       // A possibly improved LUB for the results.
       LUBFinder resultsLUB;
 
@@ -96,6 +100,7 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+        info.drops = std::move(FindAll<Drop>(func->body).list);
         info.resultsLUB = LUB::getResultsLUB(func, *module);
       });
 
@@ -116,6 +121,18 @@ struct SignatureRefining : public Pass {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
           allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
+        }
+      }
+
+      // Find drops of calls and place them in the relevant location.
+      for (auto* drop : info.drops) {
+        if (auto* call = drop->value->dynCast<Call>()) {
+          allInfo[module->getFunction(call->target)->type].drops.push_back(drop);
+        } else if (auto* callRef = drop->value->dynCast<CallRef>()) {
+          auto calledType = callRef->target->type;
+          if (calledType != Type::unreachable) {
+            allInfo[calledType.getHeapType()].drops.push_back(drop);
+          }
         }
       }
 
@@ -202,6 +219,17 @@ struct SignatureRefining : public Pass {
         newResults = func->getResults();
       } else {
         newResults = resultsLUB.getBestPossible();
+      }
+
+      // If calls to this type are always dropped, we do not need the results.
+      auto numCalls = info.calls.size() + info.callRefs.size();
+      auto numDroppedCalls = info.drops.size();
+      assert(numDroppedCalls <= numCalls);
+      if (numDroppedCalls == numCalls) {
+        // All calls are dropped; return nothing.
+        // TODO: fixups at call sites
+        std::cout << "dropp " << type << '\n';
+        newResults = Type::none;
       }
 
       if (newParams == func->getParams() && newResults == func->getResults()) {
