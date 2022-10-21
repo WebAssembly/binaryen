@@ -10,7 +10,8 @@
  ;; CHECK:      (elem declare func $foo)
 
  ;; CHECK:      (func $foo (type $refined) (param $0 (ref $refined)) (result (ref $refined))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (ref.func $foo)
  ;; CHECK-NEXT:   )
@@ -18,7 +19,9 @@
  ;; CHECK-NEXT:  (ref.func $foo)
  ;; CHECK-NEXT: )
  (func $foo (param funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $foo
     (ref.func $foo)
    )
@@ -40,7 +43,8 @@
  ;; CHECK:      (elem declare func $bar $foo)
 
  ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (ref.func $foo)
@@ -49,7 +53,9 @@
  ;; CHECK-NEXT:  (ref.func $bar)
  ;; CHECK-NEXT: )
  (func $foo (type $0) (param i32 funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $foo
     (i32.const 0)
     (ref.func $foo)
@@ -59,7 +65,8 @@
  )
 
  ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref $1)) (result (ref $0))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $bar
  ;; CHECK-NEXT:    (f32.const 0)
  ;; CHECK-NEXT:    (ref.func $bar)
@@ -68,7 +75,9 @@
  ;; CHECK-NEXT:  (ref.func $foo)
  ;; CHECK-NEXT: )
  (func $bar (type $1) (param f32 funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $bar
     (f32.const 0)
     (ref.func $bar)
@@ -134,7 +143,8 @@
  ;; CHECK:      (elem declare func $bar $foo)
 
  ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (ref.func $foo)
@@ -143,7 +153,9 @@
  ;; CHECK-NEXT:  (ref.func $bar)
  ;; CHECK-NEXT: )
  (func $foo (param i32 funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $foo
     (i32.const 0)
     (ref.func $foo)
@@ -153,7 +165,8 @@
  )
 
  ;; CHECK:      (func $baz (type $2) (param $0 (ref $0)) (result (ref $1))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $quux
  ;; CHECK-NEXT:    (ref.func $foo)
  ;; CHECK-NEXT:   )
@@ -161,7 +174,9 @@
  ;; CHECK-NEXT:  (ref.func $bar)
  ;; CHECK-NEXT: )
  (func $baz (param funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $quux
     (ref.func $foo)
    )
@@ -170,7 +185,8 @@
  )
 
  ;; CHECK:      (func $bar (type $1) (param $0 f32) (param $1 (ref $1)) (result (ref $0))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $bar
  ;; CHECK-NEXT:    (f32.const 0)
  ;; CHECK-NEXT:    (ref.func $bar)
@@ -179,7 +195,9 @@
  ;; CHECK-NEXT:  (ref.func $foo)
  ;; CHECK-NEXT: )
  (func $bar (param f32 funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $bar
     (f32.const 0)
     (ref.func $bar)
@@ -189,7 +207,8 @@
  )
 
  ;; CHECK:      (func $quux (type $2) (param $0 (ref $0)) (result (ref $1))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $temp funcref)
+ ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $baz
  ;; CHECK-NEXT:    (ref.func $foo)
  ;; CHECK-NEXT:   )
@@ -197,7 +216,9 @@
  ;; CHECK-NEXT:  (ref.func $bar)
  ;; CHECK-NEXT: )
  (func $quux (param funcref) (result funcref)
-  (drop
+  (local $temp funcref)
+  ;; Store to a local to avoid the return value being removed.
+  (local.set $temp
    (call $baz
     (ref.func $foo)
    )
