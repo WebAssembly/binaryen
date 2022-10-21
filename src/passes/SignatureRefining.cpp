@@ -68,6 +68,9 @@ struct SignatureRefining : public Pass {
     // Normally we can optimize, but some cases prevent a particular signature
     // type from being changed at all, see below.
     bool canModify = true;
+
+    // Sometimes we can modify the signature as a whole, but not the results.
+    bool canModifyResults = true;
   };
 
   void run(Module* module) override {
@@ -105,6 +108,21 @@ struct SignatureRefining : public Pass {
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
         info.drops = std::move(FindAllPointers<Drop>(func->body).list);
         info.resultsLUB = LUB::getResultsLUB(func, *module);
+
+        // If this function contains a return_call then we can't modify the
+        // results, as the results must continue to match the return_call.
+        for (auto* call : info.calls) {
+          if (call->isReturn) {
+            info.canModifyResults = false;
+            break;
+          }
+        }
+        for (auto* call : info.callRefs) {
+          if (call->isReturn) {
+            info.canModifyResults = false;
+            break;
+          }
+        }
       });
 
     // A map of types to all the information combined over all the functions
@@ -117,6 +135,9 @@ struct SignatureRefining : public Pass {
       // called.
       for (auto* call : info.calls) {
         allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+        if (call->isReturn) {
+          allInfo[module->getFunction(call->target)->type].canModifyResults = false;
+        }
       }
 
       // For indirect calls, add each call_ref to the type the call_ref uses.
@@ -124,6 +145,9 @@ struct SignatureRefining : public Pass {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
           allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
+        }
+        if (callRef->isReturn) {
+          allInfo[calledType.getHeapType()].canModifyResults = false;
         }
       }
 
@@ -148,6 +172,9 @@ struct SignatureRefining : public Pass {
       // If one function cannot be modified, that entire type cannot be.
       if (!info.canModify) {
         allInfo[func->type].canModify = false;
+      }
+      if (!info.canModifyResults) {
+        allInfo[func->type].canModifyResults = false;
       }
     }
 
@@ -217,26 +244,28 @@ struct SignatureRefining : public Pass {
       }
 
       auto& resultsLUB = info.resultsLUB;
-      Type newResults;
-      if (!resultsLUB.noted()) {
-        // We did not have type information to calculate a LUB (no returned
-        // value, or it can return a value but traps instead etc.).
-        newResults = func->getResults();
-      } else {
-        newResults = resultsLUB.getBestPossible();
-      }
+      Type newResults = func->getResults();
+      if (info.canModifyResults) {
+        if (resultsLUB.noted()) {
+          // XXX We did not have type information to calculate a LUB (no returned
+          // value, or it can return a value but traps instead etc.).
+          newResults = resultsLUB.getBestPossible();
+        }
 
-      // If calls to this type are always dropped, we do not need the results.
-      if (func->getResults() != Type::none) {
-        auto numCalls = info.calls.size() + info.callRefs.size();
-        auto numDroppedCalls = info.drops.size();
-        assert(numDroppedCalls <= numCalls);
-        // Check that all calls are dropped, but also that there are calls at
-        // all - it would be wasted work to do anything to a type that is
-        // effectively unreachable. Leave that for other passes.
-        if (numDroppedCalls == numCalls && numCalls > 0) {
-          removeResults(type, info, module);
-          newResults = Type::none;
+        // If calls to this type are always dropped, we do not need the results.
+        if (func->getResults() != Type::none) {
+          auto numCalls = info.calls.size() + info.callRefs.size();
+          auto numDroppedCalls = info.drops.size();
+          assert(numDroppedCalls <= numCalls);
+          // Check that all calls are dropped, but also that there are calls at
+          // all - it would be wasted work to do anything to a type that is
+          // effectively unreachable. Leave that for other passes.
+          if (numDroppedCalls == numCalls && numCalls > 0) {
+            // We also need there to not be any return_calls. Those require more
+            // care as the type must match the function they are in.
+            removeResults(type, info, module);
+            newResults = Type::none;
+          }
         }
       }
 
