@@ -4,10 +4,27 @@
 ;; One function is dropped, while the the other is used. We can remove the
 ;; result from the dropped one.
 (module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct_subtype (field i32) data))
 
-  (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func_subtype (result (ref $struct)) func))
+  (type $sig (func_subtype (result anyref) func))
 
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $dropped (type $sig) (result (ref $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $dropped (type $sig) (result anyref)
     (if
       (i32.const 1)
@@ -22,6 +39,19 @@
     )
   )
 
+  ;; CHECK:      (func $used (type $sig) (result (ref $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $used (type $sig) (result anyref)
     (if
       (i32.const 1)
@@ -36,8 +66,17 @@
     )
   )
 
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $dropped)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (call $used)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller
-    (local $temp (ref any))
+    (local $temp anyref)
     (drop
       (call $dropped)
     )
