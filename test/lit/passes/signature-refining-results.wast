@@ -330,3 +330,49 @@
     )
   )
 )
+
+;; We don't change the type of a function that is return_call'ed (since the
+;; return type has another constraint on it).
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $sig (func_subtype (result anyref) func))
+  (type $sig (func_subtype (result anyref) func))
+
+  ;; CHECK:      (type $anyref_=>_anyref (func_subtype (param anyref) (result anyref) func))
+
+  ;; CHECK:      (func $dropped (type $sig) (result anyref)
+  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dropped (type $sig) (result anyref)
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $sig) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (return_call $dropped)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (result anyref)
+    (if
+      (i32.const 1)
+      (drop
+        (return_call $dropped)
+      )
+    )
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+)
