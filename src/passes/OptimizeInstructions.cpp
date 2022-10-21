@@ -2040,6 +2040,12 @@ struct OptimizeInstructions
       return;
     }
 
+    if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
+      // We can't optimize these. Even removing a non-null cast is not valid as
+      // they allow nulls to filter through, unlike other RefAs*
+      return;
+    }
+
     skipNonNullCast(curr->value);
 
     // Check if the type is the kind we are checking for.
