@@ -730,301 +730,6 @@ struct NullInstrParserCtx {
   }
 };
 
-template<typename Ctx> struct InstrParserCtx : TypeParserCtx<Ctx> {
-  // Keep track of instructions internally rather than letting the general
-  // parser collect them.
-  using InstrT = Ok;
-  using InstrsT = std::vector<Expression*>;
-  using ExprT = Expression*;
-
-  using LocalT = Index;
-  using GlobalT = Name;
-  using MemoryT = Name;
-
-  using MemargT = Memarg;
-
-  Builder builder;
-
-  // The stack of parsed expressions, used as the children of newly parsed
-  // expressions.
-  std::vector<Expression*> exprStack;
-
-  // Whether we have seen an unreachable instruction and are in
-  // stack-polymorphic unreachable mode.
-  bool unreachable = false;
-
-  // The expected result type of the instruction sequence we are parsing.
-  Type type;
-
-  InstrParserCtx(Module& wasm, const IndexMap& typeIndices)
-    : TypeParserCtx<Ctx>(typeIndices), builder(wasm) {}
-
-  Ctx& self() { return *static_cast<Ctx*>(this); }
-
-  Result<> push(Index pos, Expression* expr) {
-    if (expr->type == Type::unreachable) {
-      // We want to avoid popping back past this most recent unreachable
-      // instruction. Drop all prior instructions so they won't be consumed by
-      // later instructions but will still be emitted for their side effects, if
-      // any.
-      for (auto& expr : exprStack) {
-        expr = builder.dropIfConcretelyTyped(expr);
-      }
-      unreachable = true;
-      exprStack.push_back(expr);
-    } else if (expr->type.isTuple()) {
-      auto scratchIdx = self().addScratchLocal(pos, expr->type);
-      CHECK_ERR(scratchIdx);
-      CHECK_ERR(push(pos, builder.makeLocalSet(*scratchIdx, expr)));
-      for (Index i = 0; i < expr->type.size(); ++i) {
-        CHECK_ERR(push(pos,
-                       builder.makeTupleExtract(
-                         builder.makeLocalGet(*scratchIdx, expr->type[i]), i)));
-      }
-    } else {
-      exprStack.push_back(expr);
-    }
-    return Ok{};
-  }
-
-  Result<Expression*> pop(Index pos) {
-    // Find the suffix of expressions that do not produce values.
-    auto firstNone = exprStack.size();
-    for (; firstNone > 0; --firstNone) {
-      auto* expr = exprStack[firstNone - 1];
-      if (expr->type != Type::none) {
-        break;
-      }
-    }
-
-    if (firstNone == 0) {
-      // There are no expressions that produce values.
-      if (unreachable) {
-        return builder.makeUnreachable();
-      }
-      return self().in.err(pos, "popping from empty stack");
-    }
-
-    if (firstNone == exprStack.size()) {
-      // The last expression produced a value.
-      auto expr = exprStack.back();
-      exprStack.pop_back();
-      return expr;
-    }
-
-    // We need to assemble a block of expressions that returns the value of the
-    // first one using a scratch local (unless it's unreachable, in which case
-    // we can throw the following expressions away).
-    auto* expr = exprStack[firstNone - 1];
-    if (expr->type == Type::unreachable) {
-      exprStack.resize(firstNone - 1);
-      return expr;
-    }
-    auto scratchIdx = self().addScratchLocal(pos, expr->type);
-    CHECK_ERR(scratchIdx);
-    std::vector<Expression*> exprs;
-    exprs.reserve(exprStack.size() - firstNone + 2);
-    exprs.push_back(builder.makeLocalSet(*scratchIdx, expr));
-    exprs.insert(exprs.end(), exprStack.begin() + firstNone, exprStack.end());
-    exprs.push_back(builder.makeLocalGet(*scratchIdx, expr->type));
-
-    exprStack.resize(firstNone - 1);
-    return builder.makeBlock(exprs, expr->type);
-  }
-
-  Ok makeInstrs() { return Ok{}; }
-  void appendInstr(Ok&, InstrT instr) {}
-  Result<InstrsT> finishInstrs(Ok&) {
-    // We have finished parsing a sequence of instructions. Fix up the parsed
-    // instructions and reset the context for the next sequence.
-    if (type.isTuple()) {
-      std::vector<Expression*> elems(type.size());
-      for (size_t i = 0; i < elems.size(); ++i) {
-        auto elem = pop(self().in.getPos());
-        CHECK_ERR(elem);
-        elems[elems.size() - 1 - i] = *elem;
-      }
-      exprStack.push_back(builder.makeTupleMake(std::move(elems)));
-    } else if (type != Type::none) {
-      // Ensure the last expression produces the value.
-      auto expr = pop(self().in.getPos());
-      CHECK_ERR(expr);
-      exprStack.push_back(*expr);
-    }
-    unreachable = false;
-    return std::move(exprStack);
-  }
-
-  Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
-
-  ExprT makeExpr(InstrsT& instrs) {
-    switch (instrs.size()) {
-      case 0:
-        return builder.makeNop();
-      case 1:
-        return instrs.front();
-      default:
-        return builder.makeBlock(instrs);
-    }
-  }
-
-  Result<> makeUnreachable(Index pos) {
-    return push(pos, builder.makeUnreachable());
-  }
-  Result<> makeNop(Index pos) { return push(pos, builder.makeNop()); }
-  Result<> makeBinary(Index pos, BinaryOp op) {
-    auto rhs = pop(pos);
-    CHECK_ERR(rhs);
-    auto lhs = pop(pos);
-    CHECK_ERR(lhs);
-    return push(pos, builder.makeBinary(op, *lhs, *rhs));
-  }
-  Result<> makeUnary(Index pos, UnaryOp op) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeUnary(op, *val));
-  }
-  Result<> makeSelect(Index pos, std::vector<Type>* res) {
-    if (res && res->size() > 1) {
-      return self().in.err(pos,
-                           "select may not have more than one result type");
-    }
-    auto cond = pop(pos);
-    CHECK_ERR(cond);
-    auto ifFalse = pop(pos);
-    CHECK_ERR(ifFalse);
-    auto ifTrue = pop(pos);
-    CHECK_ERR(ifTrue);
-    auto select = builder.makeSelect(*cond, *ifTrue, *ifFalse);
-    if (res && !res->empty() && !Type::isSubType(select->type, res->front())) {
-      return self().in.err(pos, "select type annotation is incorrect");
-    }
-    return push(pos, builder.makeSelect(*cond, *ifTrue, *ifFalse));
-  }
-  Result<> makeDrop(Index pos) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeDrop(*val));
-  }
-  Result<> makeMemorySize(Index pos, Name* mem) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    return push(pos, builder.makeMemorySize(*m));
-  }
-  Result<> makeMemoryGrow(Index pos, Name* mem) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeMemoryGrow(*val, *m));
-  }
-
-  Result<> makeI32Const(Index pos, uint32_t c) {
-    return push(pos, builder.makeConst(Literal(c)));
-  }
-  Result<> makeI64Const(Index pos, uint64_t c) {
-    return push(pos, builder.makeConst(Literal(c)));
-  }
-  Result<> makeF32Const(Index pos, float c) {
-    return push(pos, builder.makeConst(Literal(c)));
-  }
-  Result<> makeF64Const(Index pos, double c) {
-    return push(pos, builder.makeConst(Literal(c)));
-  }
-  Result<> makeLoad(Index pos,
-                    Type type,
-                    bool signed_,
-                    int bytes,
-                    bool isAtomic,
-                    Name* mem,
-                    Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    if (isAtomic) {
-      return push(pos,
-                  builder.makeAtomicLoad(bytes, memarg.offset, *ptr, type, *m));
-    }
-    return push(pos,
-                builder.makeLoad(
-                  bytes, signed_, memarg.offset, memarg.align, *ptr, type, *m));
-  }
-  Result<> makeStore(
-    Index pos, Type type, int bytes, bool isAtomic, Name* mem, Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    if (isAtomic) {
-      return push(
-        pos,
-        builder.makeAtomicStore(bytes, memarg.offset, *ptr, *val, type, *m));
-    }
-    return push(pos,
-                builder.makeStore(
-                  bytes, memarg.offset, memarg.align, *ptr, *val, type, *m));
-  }
-  Result<> makeAtomicRMW(
-    Index pos, AtomicRMWOp op, Type type, int bytes, Name* mem, Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(
-      pos,
-      builder.makeAtomicRMW(op, bytes, memarg.offset, *ptr, *val, type, *m));
-  }
-  Result<>
-  makeAtomicCmpxchg(Index pos, Type type, int bytes, Name* mem, Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto replacement = pop(pos);
-    CHECK_ERR(replacement);
-    auto expected = pop(pos);
-    CHECK_ERR(expected);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(
-      pos,
-      builder.makeAtomicCmpxchg(
-        bytes, memarg.offset, *ptr, *expected, *replacement, type, *m));
-  }
-  Result<> makeAtomicWait(Index pos, Type type, Name* mem, Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto timeout = pop(pos);
-    CHECK_ERR(timeout);
-    auto expected = pop(pos);
-    CHECK_ERR(expected);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(pos,
-                builder.makeAtomicWait(
-                  *ptr, *expected, *timeout, type, memarg.offset, *m));
-  }
-  Result<> makeAtomicNotify(Index pos, Name* mem, Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
-    CHECK_ERR(m);
-    auto count = pop(pos);
-    CHECK_ERR(count);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(pos, builder.makeAtomicNotify(*ptr, *count, memarg.offset, *m));
-  }
-  Result<> makeAtomicFence(Index pos) {
-    return push(pos, builder.makeAtomicFence());
-  }
-
-  Result<> makeRefNull(Index pos, HeapType type) {
-    return push(pos, builder.makeRefNull(type));
-  }
-};
-
 // Phase 1: Parse definition spans for top-level module elements and determine
 // their indices and names.
 struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
@@ -1418,13 +1123,26 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 };
 
 // Phase 5: Parse module element definitions, including instructions.
-struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
+struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using GlobalTypeT = Ok;
   using TypeUseT = HeapType;
+
+  // Keep track of instructions internally rather than letting the general
+  // parser collect them.
+  using InstrT = Ok;
+  using InstrsT = std::vector<Expression*>;
+  using ExprT = Expression*;
+
+  using LocalT = Index;
+  using GlobalT = Name;
+  using MemoryT = Name;
+
+  using MemargT = Memarg;
 
   ParseInput in;
 
   Module& wasm;
+  Builder builder;
 
   const std::vector<HeapType>& types;
   const std::unordered_map<Index, HeapType>& implicitTypes;
@@ -1436,13 +1154,120 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   // local.get, etc.
   Function* func = nullptr;
 
+  // The stack of parsed expressions, used as the children of newly parsed
+  // expressions.
+  std::vector<Expression*> exprStack;
+
+  // Whether we have seen an unreachable instruction and are in
+  // stack-polymorphic unreachable mode.
+  bool unreachable = false;
+
+  // The expected result type of the instruction sequence we are parsing.
+  Type type;
+
   ParseDefsCtx(std::string_view in,
                Module& wasm,
                const std::vector<HeapType>& types,
                const std::unordered_map<Index, HeapType>& implicitTypes,
                const IndexMap& typeIndices)
-    : InstrParserCtx<ParseDefsCtx>(wasm, typeIndices), in(in), wasm(wasm),
+    : TypeParserCtx(typeIndices), in(in), wasm(wasm), builder(wasm),
       types(types), implicitTypes(implicitTypes) {}
+
+  Result<> push(Index pos, Expression* expr) {
+    if (expr->type == Type::unreachable) {
+      // We want to avoid popping back past this most recent unreachable
+      // instruction. Drop all prior instructions so they won't be consumed by
+      // later instructions but will still be emitted for their side effects, if
+      // any.
+      for (auto& expr : exprStack) {
+        expr = builder.dropIfConcretelyTyped(expr);
+      }
+      unreachable = true;
+      exprStack.push_back(expr);
+    } else if (expr->type.isTuple()) {
+      auto scratchIdx = addScratchLocal(pos, expr->type);
+      CHECK_ERR(scratchIdx);
+      CHECK_ERR(push(pos, builder.makeLocalSet(*scratchIdx, expr)));
+      for (Index i = 0; i < expr->type.size(); ++i) {
+        CHECK_ERR(push(pos,
+                       builder.makeTupleExtract(
+                         builder.makeLocalGet(*scratchIdx, expr->type[i]), i)));
+      }
+    } else {
+      exprStack.push_back(expr);
+    }
+    return Ok{};
+  }
+
+  Result<Expression*> pop(Index pos) {
+    // Find the suffix of expressions that do not produce values.
+    auto firstNone = exprStack.size();
+    for (; firstNone > 0; --firstNone) {
+      auto* expr = exprStack[firstNone - 1];
+      if (expr->type != Type::none) {
+        break;
+      }
+    }
+
+    if (firstNone == 0) {
+      // There are no expressions that produce values.
+      if (unreachable) {
+        return builder.makeUnreachable();
+      }
+      return in.err(pos, "popping from empty stack");
+    }
+
+    if (firstNone == exprStack.size()) {
+      // The last expression produced a value.
+      auto expr = exprStack.back();
+      exprStack.pop_back();
+      return expr;
+    }
+
+    // We need to assemble a block of expressions that returns the value of the
+    // first one using a scratch local (unless it's unreachable, in which case
+    // we can throw the following expressions away).
+    auto* expr = exprStack[firstNone - 1];
+    if (expr->type == Type::unreachable) {
+      exprStack.resize(firstNone - 1);
+      return expr;
+    }
+    auto scratchIdx = addScratchLocal(pos, expr->type);
+    CHECK_ERR(scratchIdx);
+    std::vector<Expression*> exprs;
+    exprs.reserve(exprStack.size() - firstNone + 2);
+    exprs.push_back(builder.makeLocalSet(*scratchIdx, expr));
+    exprs.insert(exprs.end(), exprStack.begin() + firstNone, exprStack.end());
+    exprs.push_back(builder.makeLocalGet(*scratchIdx, expr->type));
+
+    exprStack.resize(firstNone - 1);
+    return builder.makeBlock(exprs, expr->type);
+  }
+
+  Ok makeInstrs() { return Ok{}; }
+
+  void appendInstr(Ok&, InstrT instr) {}
+
+  Result<InstrsT> finishInstrs(Ok&) {
+    // We have finished parsing a sequence of instructions. Fix up the parsed
+    // instructions and reset the context for the next sequence.
+    if (type.isTuple()) {
+      std::vector<Expression*> elems(type.size());
+      for (size_t i = 0; i < elems.size(); ++i) {
+        auto elem = pop(self().in.getPos());
+        CHECK_ERR(elem);
+        elems[elems.size() - 1 - i] = *elem;
+      }
+      exprStack.push_back(builder.makeTupleMake(std::move(elems)));
+    } else if (type != Type::none) {
+      // Ensure the last expression produces the value.
+      auto expr = pop(self().in.getPos());
+      CHECK_ERR(expr);
+      exprStack.push_back(*expr);
+    }
+    unreachable = false;
+    return std::move(exprStack);
+  }
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
@@ -1580,6 +1405,19 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
+  Expression* makeExpr(InstrsT& instrs) {
+    switch (instrs.size()) {
+      case 0:
+        return builder.makeNop();
+      case 1:
+        return instrs.front();
+      default:
+        return builder.makeBlock(instrs);
+    }
+  }
+
+  Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
+
   Result<Name> getMemory(Index pos, Name* mem) {
     if (mem) {
       return *mem;
@@ -1588,6 +1426,63 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
       return in.err(pos, "memory required, but there is no memory");
     }
     return wasm.memories[0]->name;
+  }
+
+  Result<> makeUnreachable(Index pos) {
+    return push(pos, builder.makeUnreachable());
+  }
+
+  Result<> makeNop(Index pos) { return push(pos, builder.makeNop()); }
+
+  Result<> makeBinary(Index pos, BinaryOp op) {
+    auto rhs = pop(pos);
+    CHECK_ERR(rhs);
+    auto lhs = pop(pos);
+    CHECK_ERR(lhs);
+    return push(pos, builder.makeBinary(op, *lhs, *rhs));
+  }
+
+  Result<> makeUnary(Index pos, UnaryOp op) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeUnary(op, *val));
+  }
+
+  Result<> makeSelect(Index pos, std::vector<Type>* res) {
+    if (res && res->size() > 1) {
+      return in.err(pos, "select may not have more than one result type");
+    }
+    auto cond = pop(pos);
+    CHECK_ERR(cond);
+    auto ifFalse = pop(pos);
+    CHECK_ERR(ifFalse);
+    auto ifTrue = pop(pos);
+    CHECK_ERR(ifTrue);
+    auto select = builder.makeSelect(*cond, *ifTrue, *ifFalse);
+    if (res && !res->empty() && !Type::isSubType(select->type, res->front())) {
+      return in.err(pos, "select type annotation is incorrect");
+    }
+    return push(pos, builder.makeSelect(*cond, *ifTrue, *ifFalse));
+  }
+
+  Result<> makeDrop(Index pos) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeDrop(*val));
+  }
+
+  Result<> makeMemorySize(Index pos, Name* mem) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    return push(pos, builder.makeMemorySize(*m));
+  }
+
+  Result<> makeMemoryGrow(Index pos, Name* mem) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeMemoryGrow(*val, *m));
   }
 
   Result<> makeLocalGet(Index pos, Index local) {
@@ -1632,6 +1527,117 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     return push(pos, builder.makeGlobalSet(global, *val));
   }
 
+  Result<> makeI32Const(Index pos, uint32_t c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+
+  Result<> makeI64Const(Index pos, uint64_t c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+
+  Result<> makeF32Const(Index pos, float c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+
+  Result<> makeF64Const(Index pos, double c) {
+    return push(pos, builder.makeConst(Literal(c)));
+  }
+
+  Result<> makeLoad(Index pos,
+                    Type type,
+                    bool signed_,
+                    int bytes,
+                    bool isAtomic,
+                    Name* mem,
+                    Memarg memarg) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    if (isAtomic) {
+      return push(pos,
+                  builder.makeAtomicLoad(bytes, memarg.offset, *ptr, type, *m));
+    }
+    return push(pos,
+                builder.makeLoad(
+                  bytes, signed_, memarg.offset, memarg.align, *ptr, type, *m));
+  }
+
+  Result<> makeStore(
+    Index pos, Type type, int bytes, bool isAtomic, Name* mem, Memarg memarg) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    if (isAtomic) {
+      return push(
+        pos,
+        builder.makeAtomicStore(bytes, memarg.offset, *ptr, *val, type, *m));
+    }
+    return push(pos,
+                builder.makeStore(
+                  bytes, memarg.offset, memarg.align, *ptr, *val, type, *m));
+  }
+
+  Result<> makeAtomicRMW(
+    Index pos, AtomicRMWOp op, Type type, int bytes, Name* mem, Memarg memarg) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(
+      pos,
+      builder.makeAtomicRMW(op, bytes, memarg.offset, *ptr, *val, type, *m));
+  }
+
+  Result<>
+  makeAtomicCmpxchg(Index pos, Type type, int bytes, Name* mem, Memarg memarg) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto replacement = pop(pos);
+    CHECK_ERR(replacement);
+    auto expected = pop(pos);
+    CHECK_ERR(expected);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(
+      pos,
+      builder.makeAtomicCmpxchg(
+        bytes, memarg.offset, *ptr, *expected, *replacement, type, *m));
+  }
+
+  Result<> makeAtomicWait(Index pos, Type type, Name* mem, Memarg memarg) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto timeout = pop(pos);
+    CHECK_ERR(timeout);
+    auto expected = pop(pos);
+    CHECK_ERR(expected);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(pos,
+                builder.makeAtomicWait(
+                  *ptr, *expected, *timeout, type, memarg.offset, *m));
+  }
+
+  Result<> makeAtomicNotify(Index pos, Name* mem, Memarg memarg) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto count = pop(pos);
+    CHECK_ERR(count);
+    auto ptr = pop(pos);
+    CHECK_ERR(ptr);
+    return push(pos, builder.makeAtomicNotify(*ptr, *count, memarg.offset, *m));
+  }
+
+  Result<> makeAtomicFence(Index pos) {
+    return push(pos, builder.makeAtomicFence());
+  }
+
   Result<> makeSIMDExtract(Index pos, SIMDExtractOp op, uint8_t lane) {
     auto val = pop(pos);
     CHECK_ERR(val);
@@ -1673,7 +1679,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeSIMDLoad(Index pos, SIMDLoadOp op, Name* mem, Memarg memarg) {
-    auto m = self().getMemory(pos, mem);
+    auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     auto ptr = pop(pos);
     CHECK_ERR(ptr);
@@ -1683,7 +1689,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
 
   Result<> makeSIMDLoadStoreLane(
     Index pos, SIMDLoadStoreLaneOp op, Name* mem, Memarg memarg, uint8_t lane) {
-    auto m = self().getMemory(pos, mem);
+    auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     auto vec = pop(pos);
     CHECK_ERR(vec);
@@ -1695,9 +1701,9 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeMemoryCopy(Index pos, Name* destMem, Name* srcMem) {
-    auto destMemory = self().getMemory(pos, destMem);
+    auto destMemory = getMemory(pos, destMem);
     CHECK_ERR(destMemory);
-    auto srcMemory = self().getMemory(pos, srcMem);
+    auto srcMemory = getMemory(pos, srcMem);
     CHECK_ERR(srcMemory);
     auto size = pop(pos);
     CHECK_ERR(size);
@@ -1710,7 +1716,7 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeMemoryFill(Index pos, Name* mem) {
-    auto m = self().getMemory(pos, mem);
+    auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     auto size = pop(pos);
     CHECK_ERR(size);
@@ -1719,6 +1725,10 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
     auto dest = pop(pos);
     CHECK_ERR(dest);
     return push(pos, builder.makeMemoryFill(*dest, *val, *size, *m));
+  }
+
+  Result<> makeRefNull(Index pos, HeapType type) {
+    return push(pos, builder.makeRefNull(type));
   }
 };
 
