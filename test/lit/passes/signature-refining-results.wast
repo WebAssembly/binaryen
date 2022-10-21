@@ -7,6 +7,100 @@
   ;; CHECK:      (type $struct (struct_subtype (field i32) data))
   (type $struct (struct_subtype (field i32) data))
 
+  ;; CHECK:      (type $sig1 (func_subtype func))
+  (type $sig1 (func_subtype (result anyref) func))
+
+  ;; CHECK:      (type $sig2 (func_subtype (result (ref $struct)) func))
+  (type $sig2 (func_subtype (result anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $dropped (type $sig1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.new $struct
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $dropped (type $sig1) (result anyref)
+    (if
+      (i32.const 1)
+      (return
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+    )
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $used (type $sig2) (result (ref $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new $struct
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $used (type $sig2) (result anyref)
+    (if
+      (i32.const 1)
+      (return
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+    )
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (call $dropped)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (call $used)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (local $temp anyref)
+    (drop
+      (call $dropped)
+    )
+    (local.set $temp
+      (call $used)
+    )
+  )
+)
+
+;; As before, but now the signature is shared. We cannot optimize them both, so
+;; we do not optimize.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) data))
+
   ;; CHECK:      (type $sig (func_subtype (result (ref $struct)) func))
   (type $sig (func_subtype (result anyref) func))
 
@@ -82,6 +176,101 @@
     )
     (local.set $temp
       (call $used)
+    )
+  )
+)
+
+;; As before with a shared signature, but now both are dropped, so we optimize
+;; both.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $sig (func_subtype func))
+  (type $sig (func_subtype (result anyref) func))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (func $dropped (type $sig)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.new $struct
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $dropped (type $sig) (result anyref)
+    (if
+      (i32.const 1)
+      (return
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+    )
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $dropped2 (type $sig)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.new $struct
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $dropped2 (type $sig) (result anyref)
+    (if
+      (i32.const 1)
+      (return
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+    )
+    (struct.new $struct
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $dropped)
+  ;; CHECK-NEXT:  (call $dropped2)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (drop
+      (call $dropped)
+    )
+    (drop
+      (call $dropped2)
     )
   )
 )
