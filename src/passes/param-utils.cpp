@@ -246,7 +246,6 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   return optimized;
 }
 
-
 void removeReturns(Function* func, Module* module) {
   // Remove any return values.
   struct ReturnUpdater : public PostWalker<ReturnUpdater> {

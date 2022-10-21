@@ -131,7 +131,8 @@ struct SignatureRefining : public Pass {
       for (auto** dropp : info.drops) {
         auto* drop = (*dropp)->cast<Drop>();
         if (auto* call = drop->value->dynCast<Call>()) {
-          allInfo[module->getFunction(call->target)->type].drops.push_back(dropp);
+          allInfo[module->getFunction(call->target)->type].drops.push_back(
+            dropp);
         } else if (auto* callRef = drop->value->dynCast<CallRef>()) {
           auto calledType = callRef->target->type;
           if (calledType != Type::unreachable) {

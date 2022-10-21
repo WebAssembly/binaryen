@@ -94,7 +94,7 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
 
 // Removes any returns from a function. This does not change the function's type
 // and leaves that part to the caller - it just updates all Return expressions
-// (and a value flowing out) to not return anything. 
+// (and a value flowing out) to not return anything.
 void removeReturns(Function* func, Module* module);
 
 } // namespace wasm::ParamUtils
