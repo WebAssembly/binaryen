@@ -37,6 +37,8 @@
 
   ;; CHECK:      (type $i32_i64_v128_=>_none (func_subtype (param i32 i64 v128) func))
 
+  ;; CHECK:      (type $i32_i32_i64_i64_=>_none (func_subtype (param i32 i32 i64 i64) func))
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
   (type $s0 (sub (struct)))
@@ -1055,6 +1057,70 @@
   local.get 1
   local.get 2
   v128.store64_lane 3 align=4 0
+ )
+
+ ;; CHECK:      (func $memory-copy (type $i32_i32_i64_i64_=>_none) (param $0 i32) (param $1 i32) (param $2 i64) (param $3 i64)
+ ;; CHECK-NEXT:  (memory.copy $mem $mem
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.copy $mem $mem-i32
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.copy $mem-i64 $mem-i64
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i64.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-copy (param i32 i32 i64 i64)
+  local.get 0
+  local.get 1
+  i32.const 2
+  memory.copy
+  local.get 0
+  local.get 1
+  i32.const 3
+  memory.copy 0 $mem-i32
+  local.get 2
+  local.get 3
+  i64.const 4
+  memory.copy $mem-i64 3
+ )
+
+ ;; CHECK:      (func $memory-fill (type $i32_i64_=>_none) (param $0 i32) (param $1 i64)
+ ;; CHECK-NEXT:  (memory.fill $mem
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill $mem
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill $mem-i64
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (i32.const 5)
+ ;; CHECK-NEXT:   (i64.const 6)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-fill (param i32 i64)
+  local.get 0
+  i32.const 1
+  i32.const 2
+  memory.fill
+  local.get 0
+  i32.const 3
+  i32.const 4
+  memory.fill 0
+  local.get 1
+  i32.const 5
+  i64.const 6
+  memory.fill $mem-i64
  )
 
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))

@@ -722,6 +722,9 @@ struct NullInstrParserCtx {
     return Ok{};
   }
 
+  InstrT makeMemoryCopy(Index, MemoryT*, MemoryT*) { return Ok{}; }
+  InstrT makeMemoryFill(Index, MemoryT*) { return Ok{}; }
+
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
   }
@@ -1690,6 +1693,33 @@ struct ParseDefsCtx : InstrParserCtx<ParseDefsCtx> {
                 builder.makeSIMDLoadStoreLane(
                   op, memarg.offset, memarg.align, lane, *ptr, *vec, *m));
   }
+
+  Result<> makeMemoryCopy(Index pos, Name* destMem, Name* srcMem) {
+    auto destMemory = self().getMemory(pos, destMem);
+    CHECK_ERR(destMemory);
+    auto srcMemory = self().getMemory(pos, srcMem);
+    CHECK_ERR(srcMemory);
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto src = pop(pos);
+    CHECK_ERR(src);
+    auto dest = pop(pos);
+    CHECK_ERR(dest);
+    return push(
+      pos, builder.makeMemoryCopy(*dest, *src, *size, *destMemory, *srcMemory));
+  }
+
+  Result<> makeMemoryFill(Index pos, Name* mem) {
+    auto m = self().getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto dest = pop(pos);
+    CHECK_ERR(dest);
+    return push(pos, builder.makeMemoryFill(*dest, *val, *size, *m));
+  }
 };
 
 // ================
@@ -2607,12 +2637,22 @@ Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto destMem = maybeMemidx(ctx);
+  CHECK_ERR(destMem);
+  std::optional<typename Ctx::MemoryT> srcMem = std::nullopt;
+  if (destMem) {
+    auto mem = memidx(ctx);
+    CHECK_ERR(mem);
+    srcMem = *mem;
+  }
+  return ctx.makeMemoryCopy(pos, destMem.getPtr(), srcMem ? &*srcMem : nullptr);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemoryFill(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeMemoryFill(pos, mem.getPtr());
 }
 
 template<typename Ctx>
