@@ -231,7 +231,10 @@ struct SignatureRefining : public Pass {
         auto numCalls = info.calls.size() + info.callRefs.size();
         auto numDroppedCalls = info.drops.size();
         assert(numDroppedCalls <= numCalls);
-        if (numDroppedCalls == numCalls) {
+        // Check that all calls are dropped, but also that there are calls at
+        // all - it would be wasted work to do anything to a type that is
+        // effectively unreachable. Leave that for other passes.
+        if (numDroppedCalls == numCalls && numCalls > 0) {
           removeResults(type, info, module);
           newResults = Type::none;
         }
