@@ -1873,7 +1873,9 @@ public:
         break;
       case ExternInternalize:
       case ExternExternalize:
-        WASM_UNREACHABLE("unimplemented extern conversion");
+        // The Binaryen interpreter doesn't have a special representation for
+        // internal vs external objects; just leave the reference as it is.
+        break;
       default:
         WASM_UNREACHABLE("unimplemented ref.as_*");
     }
@@ -2227,10 +2229,6 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitRefAs(RefAs* curr) {
-    // TODO: Remove this once interpretation is implemented.
-    if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
-      return Flow(NONCONSTANT_FLOW);
-    }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
 
