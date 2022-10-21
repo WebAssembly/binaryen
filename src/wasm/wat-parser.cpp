@@ -332,6 +332,7 @@ struct Limits {
 struct MemType {
   Type type;
   Limits limits;
+  bool shared;
 };
 
 // RAII utility for temporarily changing the parsing position of a parsing
@@ -483,8 +484,7 @@ struct NullTypeParserCtx {
   LimitsT makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
 
-  MemTypeT makeMemType32(LimitsT) { return Ok{}; }
-  MemTypeT makeMemType64(LimitsT) { return Ok{}; }
+  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -600,8 +600,9 @@ template<typename Ctx> struct TypeParserCtx {
     return {size, size};
   }
 
-  MemType makeMemType32(Limits limits) { return {Type::i32, limits}; }
-  MemType makeMemType64(Limits limits) { return {Type::i64, limits}; }
+  MemType makeMemType(Type type, Limits limits, bool shared) {
+    return {type, limits, shared};
+  }
 };
 
 struct NullInstrParserCtx {
@@ -1235,8 +1236,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     m->indexType = type.type;
     m->initial = type.limits.initial;
     m->max = type.limits.max;
-    // TODO: shared memories.
-    m->shared = false;
+    m->shared = type.shared;
     return Ok{};
   }
 
@@ -2000,17 +2000,21 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
   return ctx.makeLimits(uint64_t(*n), m);
 }
 
-// memtype ::= limits32 | 'i32' limits32 | 'i64' limit64
+// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared?
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
+  auto type = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
-    auto limits = limits64(ctx);
-    CHECK_ERR(limits);
-    return ctx.makeMemType64(*limits);
+    type = Type::i64;
+  } else {
+    ctx.in.takeKeyword("i32"sv);
   }
-  ctx.in.takeKeyword("i32"sv);
-  auto limits = limits32(ctx);
+  auto limits = type == Type::i32 ? limits32(ctx) : limits64(ctx);
   CHECK_ERR(limits);
-  return ctx.makeMemType32(*limits);
+  bool shared = false;
+  if (ctx.in.takeKeyword("shared"sv)) {
+    shared = true;
+  }
+  return ctx.makeMemType(type, *limits, shared);
 }
 
 // globaltype ::= t:valtype               => const t
@@ -2984,7 +2988,7 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
-    mtype = ctx.makeMemType32(ctx.getLimitsFromData(*data));
+    mtype = ctx.makeMemType(Type::i32, ctx.getLimitsFromData(*data), false);
     // TODO: addDataSegment as well.
   } else {
     auto type = memtype(ctx);
