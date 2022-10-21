@@ -317,25 +317,7 @@ private:
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
     func->setResults(Type::none);
-    Builder builder(*module);
-    // Remove any return values.
-    struct ReturnUpdater : public PostWalker<ReturnUpdater> {
-      Module* module;
-      ReturnUpdater(Function* func, Module* module) : module(module) {
-        walk(func->body);
-      }
-      void visitReturn(Return* curr) {
-        auto* value = curr->value;
-        assert(value);
-        curr->value = nullptr;
-        Builder builder(*module);
-        replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
-      }
-    } returnUpdater(func, module);
-    // Remove any value flowing out.
-    if (func->body->type.isConcrete()) {
-      func->body = builder.makeDrop(func->body);
-    }
+    ParamUtils::removeReturns(func, module);
     // Remove the drops on the calls.
     for (auto* call : calls) {
       auto iter = allDroppedCalls.find(call);

@@ -32,6 +32,7 @@
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "param-utils.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -49,6 +50,25 @@ struct SignatureRefining : public Pass {
   // an update of the types. If a type has no improvement that we can find, it
   // will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
+
+  struct Info {
+    // The calls and call_refs.
+    std::vector<Call*> calls;
+    std::vector<CallRef*> callRefs;
+
+    // The relevant drops. In the initial scan we collect all drops, and then
+    // when we merge the information we'll note the drops for each call. We
+    // list pointers to the drops so that we can replace them (we won't need
+    // the drop if we remove all returned values).
+    std::vector<Expression**> drops;
+
+    // A possibly improved LUB for the results.
+    LUBFinder resultsLUB;
+
+    // Normally we can optimize, but some cases prevent a particular signature
+    // type from being changed at all, see below.
+    bool canModify = true;
+  };
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -69,24 +89,7 @@ struct SignatureRefining : public Pass {
 
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
-
-    struct Info {
-      // The calls and call_refs.
-      std::vector<Call*> calls;
-      std::vector<CallRef*> callRefs;
-
-      // The relevant drops. In the initial scan we collect all drops, and then
-      // when we merge the information we'll note the drops for each call.
-      std::vector<Drop*> drops;
-
-      // A possibly improved LUB for the results.
-      LUBFinder resultsLUB;
-
-      // Normally we can optimize, but some cases prevent a particular signature
-      // type from being changed at all, see below.
-      bool canModify = true;
-    };
-
+    //
     // This analysis also modifies the wasm as it goes, as the getResultsLUB()
     // operation has side effects (see comment on header declaration).
     ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
@@ -100,7 +103,7 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.drops = std::move(FindAll<Drop>(func->body).list);
+        info.drops = std::move(FindAllPointers<Drop>(func->body).list);
         info.resultsLUB = LUB::getResultsLUB(func, *module);
       });
 
@@ -125,13 +128,14 @@ struct SignatureRefining : public Pass {
       }
 
       // Find drops of calls and place them in the relevant location.
-      for (auto* drop : info.drops) {
+      for (auto** dropp : info.drops) {
+        auto* drop = (*dropp)->cast<Drop>();
         if (auto* call = drop->value->dynCast<Call>()) {
-          allInfo[module->getFunction(call->target)->type].drops.push_back(drop);
+          allInfo[module->getFunction(call->target)->type].drops.push_back(dropp);
         } else if (auto* callRef = drop->value->dynCast<CallRef>()) {
           auto calledType = callRef->target->type;
           if (calledType != Type::unreachable) {
-            allInfo[calledType.getHeapType()].drops.push_back(drop);
+            allInfo[calledType.getHeapType()].drops.push_back(dropp);
           }
         }
       }
@@ -222,14 +226,14 @@ struct SignatureRefining : public Pass {
       }
 
       // If calls to this type are always dropped, we do not need the results.
-      auto numCalls = info.calls.size() + info.callRefs.size();
-      auto numDroppedCalls = info.drops.size();
-      assert(numDroppedCalls <= numCalls);
-      if (numDroppedCalls == numCalls) {
-        // All calls are dropped; return nothing.
-        // TODO: fixups at call sites
-        std::cout << "dropp " << type << '\n';
-        newResults = Type::none;
+      if (func->getResults() != Type::none) {
+        auto numCalls = info.calls.size() + info.callRefs.size();
+        auto numDroppedCalls = info.drops.size();
+        assert(numDroppedCalls <= numCalls);
+        if (numDroppedCalls == numCalls) {
+          removeResults(type, info, module);
+          newResults = Type::none;
+        }
       }
 
       if (newParams == func->getParams() && newResults == func->getResults()) {
@@ -315,6 +319,21 @@ struct SignatureRefining : public Pass {
       // TODO: we could do this only in relevant functions perhaps
       ReFinalize().run(getPassRunner(), module);
     }
+  }
+
+  void removeResults(HeapType type, const Info& info, Module* module) {
+    // Replace all drops of calls with the call itself.
+    for (auto** dropp : info.drops) {
+      auto* drop = (*dropp)->cast<Drop>();
+      (*dropp) = drop->value;
+    }
+
+    // Remove returns inside the functions.
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+      if (func->type == type) {
+        ParamUtils::removeReturns(func, module);
+      }
+    });
   }
 };
 
