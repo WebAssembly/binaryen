@@ -2180,32 +2180,12 @@ Expression* SExpressionWasmBuilder::makeSIMDShift(Element& s, SIMDShiftOp op) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
+Expression*
+SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op, int bytes) {
   auto ret = allocator.alloc<SIMDLoad>();
   ret->op = op;
   ret->offset = 0;
-  switch (op) {
-    case Load8SplatVec128:
-      ret->align = 1;
-      break;
-    case Load16SplatVec128:
-      ret->align = 2;
-      break;
-    case Load32SplatVec128:
-    case Load32ZeroVec128:
-      ret->align = 4;
-      break;
-    case Load64SplatVec128:
-    case Load8x8SVec128:
-    case Load8x8UVec128:
-    case Load16x4SVec128:
-    case Load16x4UVec128:
-    case Load32x2SVec128:
-    case Load32x2UVec128:
-    case Load64ZeroVec128:
-      ret->align = 8;
-      break;
-  }
+  ret->align = bytes;
   Index i = 1;
   Name memory;
   // Check to make sure there are more than the default args & this str isn't
@@ -2222,32 +2202,28 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   return ret;
 }
 
-Expression*
-SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
-                                              SIMDLoadStoreLaneOp op) {
+Expression* SExpressionWasmBuilder::makeSIMDLoadStoreLane(
+  Element& s, SIMDLoadStoreLaneOp op, int bytes) {
   auto* ret = allocator.alloc<SIMDLoadStoreLane>();
   ret->op = op;
   ret->offset = 0;
+  ret->align = bytes;
   size_t lanes;
   switch (op) {
     case Load8LaneVec128:
     case Store8LaneVec128:
-      ret->align = 1;
       lanes = 16;
       break;
     case Load16LaneVec128:
     case Store16LaneVec128:
-      ret->align = 2;
       lanes = 8;
       break;
     case Load32LaneVec128:
     case Store32LaneVec128:
-      ret->align = 4;
       lanes = 4;
       break;
     case Load64LaneVec128:
     case Store64LaneVec128:
-      ret->align = 8;
       lanes = 2;
       break;
     default:

@@ -357,14 +357,14 @@ instructions = [
     ("v128.andnot",          "makeBinary(s, BinaryOp::AndNotVec128)"),
     ("v128.any_true",        "makeUnary(s, UnaryOp::AnyTrueVec128)"),
     ("v128.bitselect",       "makeSIMDTernary(s, SIMDTernaryOp::Bitselect)"),
-    ("v128.load8_lane",      "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load8LaneVec128)"),
-    ("v128.load16_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load16LaneVec128)"),
-    ("v128.load32_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load32LaneVec128)"),
-    ("v128.load64_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load64LaneVec128)"),
-    ("v128.store8_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store8LaneVec128)"),
-    ("v128.store16_lane",    "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store16LaneVec128)"),
-    ("v128.store32_lane",    "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store32LaneVec128)"),
-    ("v128.store64_lane",    "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store64LaneVec128)"),
+    ("v128.load8_lane",      "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load8LaneVec128, 1)"),
+    ("v128.load16_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load16LaneVec128, 2)"),
+    ("v128.load32_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load32LaneVec128, 4)"),
+    ("v128.load64_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load64LaneVec128, 8)"),
+    ("v128.store8_lane",     "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store8LaneVec128, 1)"),
+    ("v128.store16_lane",    "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store16LaneVec128, 2)"),
+    ("v128.store32_lane",    "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store32LaneVec128, 4)"),
+    ("v128.store64_lane",    "makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Store64LaneVec128, 8)"),
     ("i8x16.popcnt",         "makeUnary(s, UnaryOp::PopcntVecI8x16)"),
     ("i8x16.abs",            "makeUnary(s, UnaryOp::AbsVecI8x16)"),
     ("i8x16.neg",            "makeUnary(s, UnaryOp::NegVecI8x16)"),
@@ -475,18 +475,18 @@ instructions = [
     ("i32x4.trunc_sat_f32x4_u",  "makeUnary(s, UnaryOp::TruncSatUVecF32x4ToVecI32x4)"),
     ("f32x4.convert_i32x4_s",    "makeUnary(s, UnaryOp::ConvertSVecI32x4ToVecF32x4)"),
     ("f32x4.convert_i32x4_u",    "makeUnary(s, UnaryOp::ConvertUVecI32x4ToVecF32x4)"),
-    ("v128.load8_splat",         "makeSIMDLoad(s, SIMDLoadOp::Load8SplatVec128)"),
-    ("v128.load16_splat",        "makeSIMDLoad(s, SIMDLoadOp::Load16SplatVec128)"),
-    ("v128.load32_splat",        "makeSIMDLoad(s, SIMDLoadOp::Load32SplatVec128)"),
-    ("v128.load64_splat",        "makeSIMDLoad(s, SIMDLoadOp::Load64SplatVec128)"),
-    ("v128.load8x8_s",           "makeSIMDLoad(s, SIMDLoadOp::Load8x8SVec128)"),
-    ("v128.load8x8_u",           "makeSIMDLoad(s, SIMDLoadOp::Load8x8UVec128)"),
-    ("v128.load16x4_s",          "makeSIMDLoad(s, SIMDLoadOp::Load16x4SVec128)"),
-    ("v128.load16x4_u",          "makeSIMDLoad(s, SIMDLoadOp::Load16x4UVec128)"),
-    ("v128.load32x2_s",          "makeSIMDLoad(s, SIMDLoadOp::Load32x2SVec128)"),
-    ("v128.load32x2_u",          "makeSIMDLoad(s, SIMDLoadOp::Load32x2UVec128)"),
-    ("v128.load32_zero",         "makeSIMDLoad(s, SIMDLoadOp::Load32ZeroVec128)"),
-    ("v128.load64_zero",         "makeSIMDLoad(s, SIMDLoadOp::Load64ZeroVec128)"),
+    ("v128.load8_splat",         "makeSIMDLoad(s, SIMDLoadOp::Load8SplatVec128, 1)"),
+    ("v128.load16_splat",        "makeSIMDLoad(s, SIMDLoadOp::Load16SplatVec128, 2)"),
+    ("v128.load32_splat",        "makeSIMDLoad(s, SIMDLoadOp::Load32SplatVec128, 4)"),
+    ("v128.load64_splat",        "makeSIMDLoad(s, SIMDLoadOp::Load64SplatVec128, 8)"),
+    ("v128.load8x8_s",           "makeSIMDLoad(s, SIMDLoadOp::Load8x8SVec128, 8)"),
+    ("v128.load8x8_u",           "makeSIMDLoad(s, SIMDLoadOp::Load8x8UVec128, 8)"),
+    ("v128.load16x4_s",          "makeSIMDLoad(s, SIMDLoadOp::Load16x4SVec128, 8)"),
+    ("v128.load16x4_u",          "makeSIMDLoad(s, SIMDLoadOp::Load16x4UVec128, 8)"),
+    ("v128.load32x2_s",          "makeSIMDLoad(s, SIMDLoadOp::Load32x2SVec128, 8)"),
+    ("v128.load32x2_u",          "makeSIMDLoad(s, SIMDLoadOp::Load32x2UVec128, 8)"),
+    ("v128.load32_zero",         "makeSIMDLoad(s, SIMDLoadOp::Load32ZeroVec128, 4)"),
+    ("v128.load64_zero",         "makeSIMDLoad(s, SIMDLoadOp::Load64ZeroVec128, 8)"),
     ("i8x16.narrow_i16x8_s",     "makeBinary(s, BinaryOp::NarrowSVecI16x8ToVecI8x16)"),
     ("i8x16.narrow_i16x8_u",     "makeBinary(s, BinaryOp::NarrowUVecI16x8ToVecI8x16)"),
     ("i16x8.narrow_i32x4_s",     "makeBinary(s, BinaryOp::NarrowSVecI32x4ToVecI16x8)"),
@@ -711,12 +711,16 @@ def instruction_parser(new_parser=False):
 
     printer = CodePrinter()
 
-    if not new_parser:
+    printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
+
+    if new_parser:
+        printer.print_line("auto str = *keyword;")
+    else:
         printer.print_line("using namespace std::string_view_literals;")
         printer.print_line("auto str = s[0]->str().str;")
-        printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
-        printer.print_line("memcpy(buf, str.data(), str.size());")
-        printer.print_line("std::string_view op = {buf, str.size()};")
+
+    printer.print_line("memcpy(buf, str.data(), str.size());")
+    printer.print_line("std::string_view op = {buf, str.size()};")
 
     def print_leaf(expr, inst):
         if new_parser:
