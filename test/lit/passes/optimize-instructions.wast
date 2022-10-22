@@ -2638,11 +2638,8 @@
   )
   ;; CHECK:      (func $lt_s-sext-zero (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.lt_s
-  ;; CHECK-NEXT:   (i32.shr_s
-  ;; CHECK-NEXT:    (i32.shl
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (i32.const 24)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (i32.const 24)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 0)
