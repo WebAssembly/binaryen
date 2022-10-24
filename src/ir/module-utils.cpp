@@ -40,6 +40,11 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
       (*this)[type];
     }
   }
+  void include(Type type) {
+    for (HeapType ht : type.getHeapTypeChildren()) {
+      include(ht);
+    }
+  }
 };
 
 struct CodeScanner
@@ -73,13 +78,19 @@ struct CodeScanner
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {
       counts.note(get->ref->type);
+      // If the type we read is a reference type then we must include it. It is
+      // not written in the binary format, so it doesn't need to be counted, but
+      // it does need to be taken into account in the IR (this may be the only
+      // place this type appears in the entire binary).
+      counts.include(get->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       counts.note(set->ref->type);
     } else if (auto* get = curr->dynCast<ArrayGet>()) {
       counts.note(get->ref->type);
+      // See note on StructGet above.
+      counts.include(get->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       counts.note(set->ref->type);
-
     } else if (Properties::isControlFlowStructure(curr)) {
       if (curr->type.isTuple()) {
         // TODO: Allow control flow to have input types as well
