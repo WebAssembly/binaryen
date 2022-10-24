@@ -74,7 +74,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
 // A visitor which must be overridden for each visitor that is reached.
 
 template<typename SubType, typename ReturnType = void>
-struct OverriddenVisitor : public Visitor<SubType, ReturnType> {
+struct OverriddenVisitor {
 // Expression visitors, which must be overridden
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
@@ -86,6 +86,22 @@ struct OverriddenVisitor : public Visitor<SubType, ReturnType> {
   }
 
 #include "wasm-delegations.def"
+
+  ReturnType visit(Expression* curr) {
+    assert(curr);
+
+    switch (curr->_id) {
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
+    return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
+      static_cast<CLASS_TO_VISIT*>(curr))
+
+#include "wasm-delegations.def"
+
+      default:
+        WASM_UNREACHABLE("unexpected expression type");
+    }
+  }
 };
 
 // Visit with a single unified visitor, called on every node, instead of
