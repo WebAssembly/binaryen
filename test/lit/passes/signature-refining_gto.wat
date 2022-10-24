@@ -16,7 +16,7 @@
  ;; CHECK-NEXT: )
  (func $struct.get (param $0 (ref $A))
   ;; This function is always called with a null, so the parameter type will be
-  ;; refined to that. After doing so, the struct.get will get reading from a
+  ;; refined to that. After doing so, the struct.get will be reading from a
   ;; null type, and we should avoid erroring on that in --gto which scans all
   ;; the heap types and updates them. Likewise, we should not error during
   ;; roundtrip which also scans heap types.

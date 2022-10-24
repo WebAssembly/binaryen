@@ -81,7 +81,8 @@ struct CodeScanner
       // If the type we read is a reference type then we must include it. It is
       // not written in the binary format, so it doesn't need to be counted, but
       // it does need to be taken into account in the IR (this may be the only
-      // place this type appears in the entire binary).
+      // place this type appears in the entire binary, and we must scan all
+      // types as the analyses that use us depend on that).
       counts.include(get->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       counts.note(set->ref->type);
