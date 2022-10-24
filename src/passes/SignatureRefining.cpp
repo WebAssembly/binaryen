@@ -134,13 +134,13 @@ struct SignatureRefining : public Pass {
       // For direct calls, add each call to the type of the function being
       // called.
       for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+        auto type = module->getFunction(call->target)->type;
+        allInfo[type].calls.push_back(call);
         // If a function is return_call'd then we can't modify the results, as
         // the results must continue to match the function the return_call is
         // inside.
         if (call->isReturn) {
-          allInfo[module->getFunction(call->target)->type].canModifyResults =
-            false;
+          allInfo[type].canModifyResults = false;
         }
       }
 
