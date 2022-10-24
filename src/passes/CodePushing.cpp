@@ -138,7 +138,8 @@ private:
     // it was already behind, and potentially put it behind further ones.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(passOptions, module, set->value).hasUnremovableSideEffects()) {
+        !EffectAnalyzer(passOptions, module, set->value)
+           .hasUnremovableSideEffects()) {
       return set;
     }
     return nullptr;
