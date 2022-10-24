@@ -139,7 +139,8 @@ struct SignatureRefining : public Pass {
         // the results must continue to match the function the return_call is
         // inside.
         if (call->isReturn) {
-          allInfo[module->getFunction(call->target)->type].canModifyResults = false;
+          allInfo[module->getFunction(call->target)->type].canModifyResults =
+            false;
         }
       }
 
@@ -250,10 +251,10 @@ struct SignatureRefining : public Pass {
       auto& resultsLUB = info.resultsLUB;
       Type newResults = func->getResults();
       if (info.canModifyResults) {
-         // If we had enough information to infer a LUB for the results, we can
-         // use that. (We couldn't if there was no returned value or it can
-         // return a value but traps instead etc.)
-         if (resultsLUB.noted()) {
+        // If we had enough information to infer a LUB for the results, we can
+        // use that. (We couldn't if there was no returned value or it can
+        // return a value but traps instead etc.)
+        if (resultsLUB.noted()) {
           newResults = resultsLUB.getBestPossible();
         }
 
