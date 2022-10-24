@@ -134,14 +134,14 @@ private:
     return nullptr;
   }
 
-  // Push past conditional control flow.
+  // Try to push past conditional control flow.
   // TODO: push into ifs as well
   bool isPushPoint(Expression* curr) {
     // look through drops
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>()) {
+    if (curr->is<If>() || curr->is<BrOn>()) {
       return true;
     }
     if (auto* br = curr->dynCast<Break>()) {

@@ -138,8 +138,6 @@ struct ReFinalize
 
 #include "wasm-delegations.def"
 
-  void visitFunction(Function* curr);
-
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
