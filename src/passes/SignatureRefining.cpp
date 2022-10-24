@@ -250,9 +250,10 @@ struct SignatureRefining : public Pass {
       auto& resultsLUB = info.resultsLUB;
       Type newResults = func->getResults();
       if (info.canModifyResults) {
-        if (resultsLUB.noted()) {
-          // XXX We did not have type information to calculate a LUB (no returned
-          // value, or it can return a value but traps instead etc.).
+         // If we had enough information to infer a LUB for the results, we can
+         // use that. (We couldn't if there was no returned value or it can
+         // return a value but traps instead etc.)
+         if (resultsLUB.noted()) {
           newResults = resultsLUB.getBestPossible();
         }
 
