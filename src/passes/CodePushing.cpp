@@ -124,11 +124,21 @@ private:
       return nullptr;
     }
     auto index = set->index;
-    // to be pushable, this must be SFA and the right # of gets,
-    // but also have no side effects, as it may not execute if pushed.
+    // To be pushable, this must be SFA and the right # of gets.
+    //
+    // It must also not have side effects, as it may no longer execute after it
+    // is pushed, since it may be behind a condition that ends up false some of
+    // the time. However, removable side effects are ok here: while in general
+    // it is not valid to much such effects, because of situations like this:
+    //
+    //   if (x != 0) foo(1 / x);
+    //
+    // If we move 1 / x to execute unconditionally then it may trap. But in this
+    // pass we do not unconditionalize: we keep the code behind any conditions
+    // it was already behind, and potentially put it behind further ones.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(passOptions, module, set->value).hasSideEffects()) {
+        !EffectAnalyzer(passOptions, module, set->value).hasUnremovableSideEffects()) {
       return set;
     }
     return nullptr;
