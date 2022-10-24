@@ -135,6 +135,9 @@ struct SignatureRefining : public Pass {
       // called.
       for (auto* call : info.calls) {
         allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+        // If a function is return_call'd then we can't modify the results, as
+        // the results must continue to match the function the return_call is
+        // inside.
         if (call->isReturn) {
           allInfo[module->getFunction(call->target)->type].canModifyResults = false;
         }
@@ -146,6 +149,7 @@ struct SignatureRefining : public Pass {
         if (calledType != Type::unreachable) {
           allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
         }
+        // See comment above on return_call.
         if (callRef->isReturn) {
           allInfo[calledType.getHeapType()].canModifyResults = false;
         }
@@ -261,8 +265,6 @@ struct SignatureRefining : public Pass {
           // all - it would be wasted work to do anything to a type that is
           // effectively unreachable. Leave that for other passes.
           if (numDroppedCalls == numCalls && numCalls > 0) {
-            // We also need there to not be any return_calls. Those require more
-            // care as the type must match the function they are in.
             removeResults(type, info, module);
             newResults = Type::none;
           }
