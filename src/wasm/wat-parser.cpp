@@ -725,6 +725,7 @@ struct NullInstrParserCtx {
   InstrT makeMemoryCopy(Index, MemoryT*, MemoryT*) { return Ok{}; }
   InstrT makeMemoryFill(Index, MemoryT*) { return Ok{}; }
 
+  InstrT makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
   }
@@ -1253,12 +1254,23 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     // instructions and reset the context for the next sequence.
     if (type.isTuple()) {
       std::vector<Expression*> elems(type.size());
+      bool hadUnreachableElem = false;
       for (size_t i = 0; i < elems.size(); ++i) {
         auto elem = pop(self().in.getPos());
         CHECK_ERR(elem);
         elems[elems.size() - 1 - i] = *elem;
+        if ((*elem)->type == Type::unreachable) {
+          // We don't want to pop back past an unreachable here. Push the
+          // unreachable back and throw away any post-unreachable values we have
+          // popped.
+          exprStack.push_back(*elem);
+          hadUnreachableElem = true;
+          break;
+        }
       }
-      exprStack.push_back(builder.makeTupleMake(std::move(elems)));
+      if (!hadUnreachableElem) {
+        exprStack.push_back(builder.makeTupleMake(std::move(elems)));
+      }
     } else if (type != Type::none) {
       // Ensure the last expression produces the value.
       auto expr = pop(self().in.getPos());
@@ -1725,6 +1737,28 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     auto dest = pop(pos);
     CHECK_ERR(dest);
     return push(pos, builder.makeMemoryFill(*dest, *val, *size, *m));
+  }
+
+  Result<> makeReturn(Index pos) {
+    if (!func) {
+      return in.err("cannot return outside of a function");
+    }
+    size_t n = func->getResults().size();
+    if (n == 0) {
+      return push(pos, builder.makeReturn());
+    }
+    if (n == 1) {
+      auto val = pop(pos);
+      CHECK_ERR(val);
+      return push(pos, builder.makeReturn(*val));
+    }
+    std::vector<Expression*> vals(n);
+    for (size_t i = 0; i < n; ++i) {
+      auto val = pop(pos);
+      CHECK_ERR(val);
+      vals[n - i - 1] = *val;
+    }
+    return push(pos, builder.makeReturn(builder.makeTupleMake(vals)));
   }
 
   Result<> makeRefNull(Index pos, HeapType type) {
@@ -2709,7 +2743,7 @@ Result<typename Ctx::InstrT> makeBreakTable(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeReturn(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeReturn(pos);
 }
 
 template<typename Ctx>
