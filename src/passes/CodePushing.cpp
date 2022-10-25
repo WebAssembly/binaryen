@@ -128,14 +128,18 @@ private:
     //
     // It must also not have side effects, as it may no longer execute after it
     // is pushed, since it may be behind a condition that ends up false some of
-    // the time. However, removable side effects are ok here: while in general
-    // it is not valid to much such effects, because of situations like this:
+    // the time. However, removable side effects are ok here. The general
+    // problem with removable effects is that we can only remove them, but not
+    // move them, because of stuff like this:
     //
     //   if (x != 0) foo(1 / x);
     //
-    // If we move 1 / x to execute unconditionally then it may trap. But in this
-    // pass we do not unconditionalize: we keep the code behind any conditions
-    // it was already behind, and potentially put it behind further ones.
+    // If we move 1 / x to execute unconditionally then it may trap, but it
+    // would be fine to remove it. This pass does not move code to places where
+    // it might execute more, but *less*: we keep the code behind any conditions
+    // it was already behind, and potentially put it behind further ones. In
+    // effect, we "partially remove" the code, making it not execute some of the
+    // time, which is fine.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
         !EffectAnalyzer(passOptions, module, set->value)
