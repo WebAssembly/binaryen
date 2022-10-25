@@ -419,7 +419,8 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
           // the intersection. That is, normalization must not have a bug that
           // results in cones that are too shallow.
           auto normalizedDepth = maxDepths[type.getHeapType()];
-          auto normalizedCone = PossibleContents::coneType(type, normalizedDepth);
+          auto normalizedCone =
+            PossibleContents::coneType(type, normalizedDepth);
           assertHaveIntersection(normalizedCone, item);
         }
 
@@ -499,9 +500,11 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
                                                   coneFuncref1};
 
   // Add some additional interesting types.
-  auto structType = Type(HeapType(Struct({Field(Type::i32, Immutable)})), NonNullable);
+  auto structType =
+    Type(HeapType(Struct({Field(Type::i32, Immutable)})), NonNullable);
   initial.insert(PossibleContents::coneType(structType, 0));
-  auto arrayType = Type(HeapType(Array(Field(Type::i32, Immutable))), NonNullable);
+  auto arrayType =
+    Type(HeapType(Array(Field(Type::i32, Immutable))), NonNullable);
   initial.insert(PossibleContents::coneType(arrayType, 0));
 
   // After testing on the initial contents, also test using anything new that

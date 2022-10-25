@@ -128,8 +128,8 @@ struct SubTypes {
       depths[basic] = std::max(depths[basic], depths[type] + 1);
     }
 
-    depths[HeapType::data] = std::max(depths[HeapType::data],
-                                      depths[HeapType::array] + 1);
+    depths[HeapType::data] =
+      std::max(depths[HeapType::data], depths[HeapType::array] + 1);
     depths[HeapType::eq] = std::max(Index(1), depths[HeapType::data] + 1);
     depths[HeapType::any] = depths[HeapType::eq] + 1;
 
