@@ -1,4 +1,5 @@
 #include "ir/possible-contents.h"
+#include "ir/subtypes.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
@@ -347,6 +348,18 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
   auto doTest = [](std::unordered_set<PossibleContents> set) {
     std::vector<PossibleContents> vec(set.begin(), set.end());
 
+    // Find the maximum depths for the normalized cone tests later down.
+    std::unordered_set<HeapType> heapTypes;
+    for (auto& contents : set) {
+      auto type = contents.getType();
+      if (type.isRef()) {
+        heapTypes.insert(type.getHeapType());
+      }
+    }
+    std::vector<HeapType> heapTypesVec(heapTypes.begin(), heapTypes.end());
+    SubTypes subTypes(heapTypesVec);
+    auto maxDepths = subTypes.getMaxDepths();
+
     // Go over all permutations up to a certain size (this quickly becomes
     // extremely slow, obviously, so keep this low).
     size_t max = 3;
@@ -413,6 +426,11 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
             abort();
           }
 #endif
+
+          // The intersection is contained in each of the things we intersected.
+          EXPECT_TRUE(PossibleContents::isSubContents(intersection, item));
+          EXPECT_TRUE(PossibleContents::isSubContents(intersection,
+                                                      combination));
         }
       }
 
