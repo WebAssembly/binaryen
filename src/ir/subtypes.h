@@ -113,12 +113,23 @@ struct SubTypes {
     }
 
     // Add the max depths of basic types.
-    // TODO: update when we get structtype and arraytype
+    // TODO: update when we get structtype
     for (auto type : types) {
-      HeapType basic = type.isData() ? HeapType::data : HeapType::func;
+      HeapType basic;
+      if (type.isData()) {
+        if (type.isArray()) {
+          basic = HeapType::array;
+        } else {
+          basic = HeapType::data;
+        }
+      } else {
+        basic = HeapType::func;
+      }
       depths[basic] = std::max(depths[basic], depths[type] + 1);
     }
 
+    depths[HeapType::data] = std::max(depths[HeapType::data],
+                                      depths[HeapType::array] + 1);
     depths[HeapType::eq] = std::max(Index(1), depths[HeapType::data] + 1);
     depths[HeapType::any] = depths[HeapType::eq] + 1;
 
