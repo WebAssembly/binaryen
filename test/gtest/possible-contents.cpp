@@ -413,6 +413,16 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 #endif
         assertHaveIntersection(combination, item);
 
+        auto type = combination.getType();
+        if (type.isRef()) {
+          // If we normalize the combination's depth, the item must still be in
+          // the intersection. That is, normalization must not have a bug that
+          // results in cones that are too shallow.
+          auto normalizedDepth = maxDepths[type.getHeapType()];
+          auto normalizedCone = PossibleContents::coneType(type, normalizedDepth);
+          assertHaveIntersection(normalizedCone, item);
+        }
+
         // Test intersectWithFullCone() method, which is supported with a full
         // cone type. In that case we can test that the intersection of A with
         // A + B is simply A.
