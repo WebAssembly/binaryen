@@ -429,8 +429,8 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 
           // The intersection is contained in each of the things we intersected.
           EXPECT_TRUE(PossibleContents::isSubContents(intersection, item));
-          EXPECT_TRUE(PossibleContents::isSubContents(intersection,
-                                                      combination));
+          EXPECT_TRUE(
+            PossibleContents::isSubContents(intersection, combination));
         }
       }
 
