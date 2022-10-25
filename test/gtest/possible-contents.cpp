@@ -353,7 +353,10 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
     for (auto& contents : set) {
       auto type = contents.getType();
       if (type.isRef()) {
-        heapTypes.insert(type.getHeapType());
+        auto heapType = type.getHeapType();
+        if (!heapType.isBasic()) {
+          heapTypes.insert(heapType);
+        }
       }
     }
     std::vector<HeapType> heapTypesVec(heapTypes.begin(), heapTypes.end());
