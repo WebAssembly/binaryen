@@ -430,8 +430,9 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
           }
 #endif
 
-          // The intersection is contained in each of the things we intersected.
-          EXPECT_TRUE(PossibleContents::isSubContents(intersection, item));
+          // The intersection is contained in each of the things we intersected
+          // (but we can only compare to the full cone, as the API is restricted
+          // to that).
           EXPECT_TRUE(
             PossibleContents::isSubContents(intersection, combination));
         }
