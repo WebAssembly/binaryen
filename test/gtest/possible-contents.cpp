@@ -498,6 +498,12 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
                                                   coneFuncref,
                                                   coneFuncref1};
 
+  // Add some additional interesting types.
+  auto structType = Type(HeapType(Struct({Field(Type::i32, Immutable)})), NonNullable);
+  initial.insert(PossibleContents::coneType(structType, 0));
+  //auto arrayType = Type(HeapType(Array(Field(Type::i32, Immutable))), NonNullable);
+  //initial.insert(PossibleContents::coneType(arrayType, 0));
+
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
   auto subsequent = doTest(initial);
