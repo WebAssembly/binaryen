@@ -150,4 +150,30 @@
       (drop (local.get $x))
     )
   )
+
+  ;; CHECK:      (func $if-use-use (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-use-use (param $p i32)
+    (local $x i32)
+    ;; The set local is used in both arms, so we can't do anything.
+    (local.set $x (i32.const 1))
+    (if
+      (local.get $p)
+      (drop (local.get $x))
+      (drop (local.get $x))
+    )
+  )
 )
