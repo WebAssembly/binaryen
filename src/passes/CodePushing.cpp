@@ -375,8 +375,20 @@ private:
       // Either of those use(x)s would stop us from moving to if-true arm.
       //
       // One specific case we handle is if there is a use after the if but the
-      // other arm is unreachable. In that case we only get to the code after
-      // the if through the arm we can push into, which is fine.
+      // arm we don't push into is unreachable. In that case we only get to the
+      // later code after going through the reachable arm, which is ok to push
+      // into:
+      //
+      //    x = op();
+      //    if (..) {
+      //      // We'll push "x = op()" to here, even if there is no use of x in
+      //      // this arm, since the other arm is unreachable. That way if we
+      //      // end up going to the other arm we didn't waste work on x.
+      //    } else {
+      //      return;
+      //    }
+      //    use(x);
+      // TODO do it and test
       auto localReadInIfTrue = ifTrueEffects.localsRead.count(index);
       auto localReadInIfFalse = ifFalseEffects.localsRead.count(index);
       auto localReadAfterIf = postIfEffects.localsRead.count(index);
