@@ -374,13 +374,18 @@ private:
       //      return;
       //    }
       //    use(x);
-      auto maybePushInto = [&](Expression*& arm, const Expression* otherArm, const EffectAnalyzer& armEffects, const EffectAnalyzer& otherArmEffects) {
-        if (!arm || !armEffects.localsRead.count(index) || otherArmEffects.localsRead.count(index)) {
+      auto maybePushInto = [&](Expression*& arm,
+                               const Expression* otherArm,
+                               const EffectAnalyzer& armEffects,
+                               const EffectAnalyzer& otherArmEffects) {
+        if (!arm || !armEffects.localsRead.count(index) ||
+            otherArmEffects.localsRead.count(index)) {
           // No arm, or this arm has no read of the index, or the other arm
           // reads the index.
           return false;
         }
-        if (postIfEffects.localsRead.count(index) && (!otherArm || otherArm->type != Type::unreachable)) {
+        if (postIfEffects.localsRead.count(index) &&
+            (!otherArm || otherArm->type != Type::unreachable)) {
           // The local is read later, which is bad, and there is no unreachable
           // in the other arm which as mentioned above is the only thing that
           // could have made it work out for us.
@@ -401,8 +406,10 @@ private:
         return true;
       };
 
-      if (!maybePushInto(iff->ifTrue, iff->ifFalse, ifTrueEffects, ifFalseEffects) &&
-          !maybePushInto(iff->ifFalse, iff->ifTrue, ifFalseEffects, ifTrueEffects)) {
+      if (!maybePushInto(
+            iff->ifTrue, iff->ifFalse, ifTrueEffects, ifFalseEffects) &&
+          !maybePushInto(
+            iff->ifFalse, iff->ifTrue, ifFalseEffects, ifTrueEffects)) {
         // We didn't push this anywhere, so further pushables must pass it.
         cumulativeEffects.mergeIn(effects);
       }
