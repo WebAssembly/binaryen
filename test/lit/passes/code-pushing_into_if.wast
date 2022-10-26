@@ -429,4 +429,30 @@
       (drop (local.get $x))
     )
   )
+
+  ;; CHECK:      (func $past-condition-no (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $t)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.tee $t
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $past-condition-no (param $p i32)
+    (local $x i32)
+    (local $t i32)
+    ;; We cannot push this due to the tee in the if condition.
+    (local.set $x (local.get $t))
+    (if
+      (local.tee $t (local.get $p))
+      (drop (local.get $x))
+    )
+  )
 )
