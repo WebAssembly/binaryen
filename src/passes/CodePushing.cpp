@@ -108,7 +108,12 @@ public:
         continue;
       }
       if (firstPushable != nothing && isPushPoint(list[i])) {
-        // optimize this segment, and proceed from where it tells us
+        // Optimize this segment, and proceed from where it tells us. First
+        // optimize things into the if, if possible, which does not move the
+        // push point. Then move things past the push point (which has the
+        // relative effect of moving the push point backwards as other things
+        // move forward).
+        optimizeIntoIf(firstPushable, i);
         i = optimizeSegment(firstPushable, i);
         firstPushable = nothing;
         continue;
@@ -235,6 +240,96 @@ private:
     }
     // proceed right after the push point, we may push the pushed elements again
     return pushPoint - total + 1;
+  }
+
+  // Similar to optimizeSegment, but for the case where the push point is an if,
+  // and we try to push into the if's arms, doing things like this:
+  //
+  //    x = op();
+  //    if (..) {
+  //      ..
+  //    }
+  // =>
+  //    if (..) {
+  //      x = op(); // this moved
+  //      ..
+  //    }
+  //
+  // This does not move the push point, so it does not have a return value,
+  // unlike optimizeSegment.
+  Index optimizeIntoIf(Index firstPushable, Index pushPoint) {
+    assert(firstPushable != Index(-1) && pushPoint != Index(-1) &&
+           firstPushable < pushPoint);
+
+    auto* iff = list[pushPoint]->dynCast<If>();
+    if (!iff) {
+      return;
+    }
+
+    // Everything that matters if you want to be pushed past the pushPoint. This
+    // begins with the if's effects, as we must always push past those. Later,
+    // we will add to this if we need to.
+    EffectAnalyzer cumulativeEffects(passOptions, module);
+    cumulativeEffects.walk(iff->condition);
+
+    // Find the effects of the arms, which will affect what can be pushed.
+    EffectAnalyzer ifTrueEffects(iff->ifTrue, passOptions, module);
+    EffectAnalyzer ifFalseEffects(passOptions, module);
+    if (iff->ifFalse) {
+      ifFalseEffects.walk(iff->ifFalse);
+    }
+
+    // See optimizeSegment for why we can ignore control flow transfers here.
+    cumulativeEffects.ignoreControlFlowTransfers();
+    ifTrueEffects.ignoreControlFlowTransfers();
+    ifFalseEffects.ignoreControlFlowTransfers();
+
+    // Start at the instruction right before the push point, and go back from
+    // there:
+    //
+    //    x = op();
+    //    y = op();
+    //    if (..) {
+    //      ..
+    //    }
+    //
+    // Here we will try to push y first, and then x. Note that if we push y
+    // then we can immediately try to push x after it, as it will remain in
+    // order with x if we do. If we do *not* push y we can still try to push x
+    // but we must move it past y, which means we need to check for interference
+    // between them (which we do by adding y's effects to cumulativeEffects).
+    Index i = pushPoint - 1;
+    while (1) {
+      auto* pushable = isPushable(list[i]);
+      if (pushable) {
+        auto iter = pushableEffects.find(pushable);
+        if (iter == pushableEffects.end()) {
+          iter =
+            pushableEffects
+              .emplace(std::piecewise_construct,
+                       std::forward_as_tuple(pushable),
+                       std::forward_as_tuple(passOptions, module, pushable))
+              .first;
+        }
+        auto& effects = iter->second;
+        if (canPushPastPushPoint(effects)) {
+          // we can push this, great!
+          toPush.push_back(pushable);
+        } else {
+          // we can't push this, so further pushables must pass it
+          cumulativeEffects.mergeIn(effects);
+        }
+        if (i == firstPushable) {
+          // no point in looking further
+          break;
+        }
+      } else {
+        // something that can't be pushed, so it might block further pushing
+        cumulativeEffects.walk(list[i]);
+      }
+      assert(i > 0);
+      i--;
+    }
   }
 
   // Pushables may need to be scanned more than once, so cache their effects.
