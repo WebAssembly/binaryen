@@ -202,4 +202,31 @@
     )
     (drop (local.get $x))
   )
+
+  ;; CHECK:      (func $if-else-use-after (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-else-use-after (param $p i32)
+    (local $x i32)
+    (local.set $x (i32.const 1))
+    (if
+      (local.get $p)
+      (nop)
+      (drop (local.get $x)) ;; now the use in the if is in the else arm
+    )
+    (drop (local.get $x))
+  )
 )
