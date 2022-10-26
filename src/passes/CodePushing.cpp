@@ -99,17 +99,13 @@ public:
     const Index nothing = -1;
     Index i = 0;
     Index firstPushable = nothing;
-std::cout << "b0\n";
     while (i < list.size()) {
       if (firstPushable == nothing && isPushable(list[i])) {
-std::cout << "b1\n";
         firstPushable = i;
         i++;
         continue;
       }
-std::cout << "b2\n";
       if (firstPushable != nothing && isPushPoint(list[i])) {
-std::cout << "b3\n";
         // Optimize this segment, and proceed from where it tells us. First
         // optimize things into the if, if possible, which does not move the
         // push point. Then move things past the push point (which has the
@@ -264,7 +260,6 @@ private:
   // This does not move the push point, so it does not have a return value,
   // unlike optimizeSegment.
   void optimizeIntoIf(Index firstPushable, Index pushPoint) {
-std::cout << "a1\n";
     assert(firstPushable != Index(-1) && pushPoint != Index(-1) &&
            firstPushable < pushPoint);
 
@@ -272,7 +267,6 @@ std::cout << "a1\n";
     if (!iff) {
       return;
     }
-std::cout << "a2\n";
 
     // Everything that matters if you want to be pushed past the pushPoint. This
     // begins with the if's effects, as we must always push past those. Later,

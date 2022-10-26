@@ -262,7 +262,19 @@
 
 ;; CHECK:      (func $4 (; has Stack IR ;) (param $0 f64) (result f64)
 ;; CHECK-NEXT:  (local $1 i32)
+;; CHECK-NEXT:  (local $2 i32)
+;; CHECK-NEXT:  (local $3 i32)
 ;; CHECK-NEXT:  (loop $label$1
+;; CHECK-NEXT:   (if
+;; CHECK-NEXT:    (local.get $3)
+;; CHECK-NEXT:    (if
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.atomic.store32
+;; CHECK-NEXT:      (i32.const 3)
+;; CHECK-NEXT:      (i64.const 4294934528)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (br $label$1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
