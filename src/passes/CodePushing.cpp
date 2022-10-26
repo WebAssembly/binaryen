@@ -321,12 +321,11 @@ private:
 
       auto iter = pushableEffects.find(pushable);
       if (iter == pushableEffects.end()) {
-        iter =
-          pushableEffects
-            .emplace(std::piecewise_construct,
-                     std::forward_as_tuple(pushable),
-                     std::forward_as_tuple(passOptions, module, pushable))
-            .first;
+        iter = pushableEffects
+                 .emplace(std::piecewise_construct,
+                          std::forward_as_tuple(pushable),
+                          std::forward_as_tuple(passOptions, module, pushable))
+                 .first;
       }
       auto& effects = iter->second;
 
@@ -368,15 +367,16 @@ private:
       auto localReadInIfFalse = ifFalseEffects.localsRead.count(index);
       auto localReadAfterIf = postIfEffects.localsRead.count(index);
       if (localReadInIfTrue && !localReadInIfFalse &&
-          (!localReadAfterIf || (iff->ifFalse && iff->ifFalse->type == Type::unreachable))) {
+          (!localReadAfterIf ||
+           (iff->ifFalse && iff->ifFalse->type == Type::unreachable))) {
         pushInto(iff->ifTrue);
       } else if (localReadInIfFalse && !localReadInIfTrue &&
-          (!localReadAfterIf || (iff->ifTrue->type == Type::unreachable))) {
+                 (!localReadAfterIf ||
+                  (iff->ifTrue->type == Type::unreachable))) {
         pushInto(iff->ifFalse);
       } else {
         // We didn't push this anywhere, so further pushables must pass it.
         cumulativeEffects.mergeIn(effects);
- 
       }
       if (i == firstPushable) {
         // no point in looking further
