@@ -156,9 +156,15 @@ BINARYEN_API BinaryenHeapType BinaryenHeapTypeNone(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNoext(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNofunc(void);
 
+BINARYEN_API bool BinaryenHeapTypeIsBasic(BinaryenHeapType heapType);
+BINARYEN_API bool BinaryenHeapTypeIsSignature(BinaryenHeapType heapType);
+BINARYEN_API bool BinaryenHeapTypeIsStruct(BinaryenHeapType heapType);
+BINARYEN_API bool BinaryenHeapTypeIsArray(BinaryenHeapType heapType);
 BINARYEN_API bool BinaryenHeapTypeIsBottom(BinaryenHeapType heapType);
 BINARYEN_API BinaryenHeapType
 BinaryenHeapTypeGetBottom(BinaryenHeapType heapType);
+BINARYEN_API bool BinaryenHeapTypeIsSubType(BinaryenHeapType left,
+                                            BinaryenHeapType right);
 
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
 BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
