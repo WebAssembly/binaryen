@@ -505,4 +505,36 @@
       (drop (local.get $x))
     )
   )
+
+  ;; CHECK:      (func $if-condition-return (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:    (local.get $p)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-condition-return (param $p i32)
+    (local $x i32)
+    (local.set $x (i32.const 1))
+    (if
+      (block (result i32)
+        (return) ;; This return does not prevent us from optimizing; if it
+                 ;; happens then we don't need the local.set to execute
+                 ;; anyhow.
+        (local.get $p)
+      )
+      (drop (local.get $x))
+    )
+  )
 )

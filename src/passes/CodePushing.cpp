@@ -269,8 +269,8 @@ private:
     }
 
     // Everything that matters if you want to be pushed past the pushPoint. This
-    // begins with the if's effects, as we must always push past those. Later,
-    // we will add to this if we need to.
+    // begins with the if condition's effects, as we must always push past
+    // those. Later, we will add to this when we need to.
     EffectAnalyzer cumulativeEffects(passOptions, module, iff->condition);
 
     // See optimizeSegment for why we can ignore control flow transfers here.
@@ -310,7 +310,8 @@ private:
     Index i = pushPoint;
     while (1) {
       if (i == firstPushable) {
-        // We just processed the first thing that could be pushed; stop.
+        // We just finished processing the first thing that could be pushed;
+        // stop.
         break;
       }
       assert(i > 0);
