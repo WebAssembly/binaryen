@@ -343,19 +343,6 @@ private:
         continue;
       }
 
-      // Push into one of the if's arms, and put a nop where it used to be.
-      auto pushInto = [&](Expression*& ifArm) {
-        Builder builder(module);
-        auto* block = builder.blockify(ifArm);
-        ifArm = block;
-        // TODO: this is quadratic in the number of pushed things
-        ExpressionManipulator::spliceIntoBlock(block, 0, pushable);
-        list[i] = builder.makeNop();
-        // TODO: After pushing we could recurse and run both this function and
-        //       optimizeSegment in that location. For now, leave that to later
-        //       cycles of the optimizer, as this case seems rairly rare.
-      };
-
       // We only try to push into an arm if the local is used there. If the
       // local is not used in either arm then we'll want to push it past the
       // entire if, which is what optimizeSegment handles.
@@ -381,26 +368,41 @@ private:
       //
       //    x = op();
       //    if (..) {
-      //      // We'll push "x = op()" to here, even if there is no use of x in
-      //      // this arm, since the other arm is unreachable. That way if we
-      //      // end up going to the other arm we didn't waste work on x.
+      //      // We'll push "x = op()" to here.
+      //      use(x);
       //    } else {
       //      return;
       //    }
       //    use(x);
-      // TODO do it and test
-      auto localReadInIfTrue = ifTrueEffects.localsRead.count(index);
-      auto localReadInIfFalse = ifFalseEffects.localsRead.count(index);
-      auto localReadAfterIf = postIfEffects.localsRead.count(index);
-      if (localReadInIfTrue && !localReadInIfFalse &&
-          (!localReadAfterIf ||
-           (iff->ifFalse && iff->ifFalse->type == Type::unreachable))) {
-        pushInto(iff->ifTrue);
-      } else if (localReadInIfFalse && !localReadInIfTrue &&
-                 (!localReadAfterIf ||
-                  (iff->ifTrue->type == Type::unreachable))) {
-        pushInto(iff->ifFalse);
-      } else {
+      auto maybePushInto = [&](Expression*& arm, const Expression* otherArm, const EffectAnalyzer& armEffects, const EffectAnalyzer& otherArmEffects) {
+        if (!arm || !armEffects.localsRead.count(index) || otherArmEffects.localsRead.count(index)) {
+          // No arm, or this arm has no read of the index, or the other arm
+          // reads the index.
+          return false;
+        }
+        if (postIfEffects.localsRead.count(index) && (!otherArm || otherArm->type != Type::unreachable)) {
+          // The local is read later, which is bad, and there is no unreachable
+          // in the other arm which as mentioned above is the only thing that
+          // could have made it work out for us.
+          return false;
+        }
+
+        // We can do it! Push into one of the if's arms, and put a nop where it
+        // used to be.
+        Builder builder(module);
+        auto* block = builder.blockify(arm);
+        arm = block;
+        // TODO: this is quadratic in the number of pushed things
+        ExpressionManipulator::spliceIntoBlock(block, 0, pushable);
+        list[i] = builder.makeNop();
+        // TODO: After pushing we could recurse and run both this function and
+        //       optimizeSegment in that location. For now, leave that to later
+        //       cycles of the optimizer, as this case seems rairly rare.
+        return true;
+      };
+
+      if (!maybePushInto(iff->ifTrue, iff->ifFalse, ifTrueEffects, ifFalseEffects) &&
+          !maybePushInto(iff->ifFalse, iff->ifTrue, ifFalseEffects, ifTrueEffects)) {
         // We didn't push this anywhere, so further pushables must pass it.
         cumulativeEffects.mergeIn(effects);
       }
