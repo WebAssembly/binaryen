@@ -455,4 +455,28 @@
       (drop (local.get $x))
     )
   )
+
+  ;; CHECK:      (func $past-condition-no-2
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $t)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $past-condition-no-2
+    (local $x i32)
+    (local $t i32)
+    ;; We cannot push this due to the use of $x in the if condition.
+    (local.set $x (local.get $t))
+    (if
+      (local.get $x)
+      (drop (local.get $x))
+    )
+  )
 )
