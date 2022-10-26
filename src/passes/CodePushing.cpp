@@ -258,7 +258,7 @@ private:
   //
   // This does not move the push point, so it does not have a return value,
   // unlike optimizeSegment.
-  Index optimizeIntoIf(Index firstPushable, Index pushPoint) {
+  void optimizeIntoIf(Index firstPushable, Index pushPoint) {
     assert(firstPushable != Index(-1) && pushPoint != Index(-1) &&
            firstPushable < pushPoint);
 
@@ -270,11 +270,10 @@ private:
     // Everything that matters if you want to be pushed past the pushPoint. This
     // begins with the if's effects, as we must always push past those. Later,
     // we will add to this if we need to.
-    EffectAnalyzer cumulativeEffects(passOptions, module);
-    cumulativeEffects.walk(iff->condition);
+    EffectAnalyzer cumulativeEffects(passOptions, module, iff->condition);
 
     // Find the effects of the arms, which will affect what can be pushed.
-    EffectAnalyzer ifTrueEffects(iff->ifTrue, passOptions, module);
+    EffectAnalyzer ifTrueEffects(passOptions, module, iff->ifTrue);
     EffectAnalyzer ifFalseEffects(passOptions, module);
     if (iff->ifFalse) {
       ifFalseEffects.walk(iff->ifFalse);
@@ -334,7 +333,7 @@ private:
       // Push into one of the if's arms, and put a nop where it used to be.
       auto pushInto = [&](Expression*& ifArm) {
         Builder builder(module);
-        auto* block = blockify(ifArm);
+        auto* block = builder.blockify(ifArm);
         ifArm = block;
         // TODO: this is quadratic in the number of pushed things
         ExpressionManipulator::spliceIntoBlock(block, 0, pushable);
@@ -369,11 +368,11 @@ private:
       auto localReadInIfFalse = ifFalseEffects.localsRead.count(index);
       auto localReadAfterIf = postIfEffects.localsRead.count(index);
       if (localReadInIfTrue && !localReadInIfFalse &&
-          (!localRefAfterIf || (iff->ifFalse && iff->ifFalse->type == Type::unreachable))) {
-        pushInfo(iff->ifTrue);
+          (!localReadAfterIf || (iff->ifFalse && iff->ifFalse->type == Type::unreachable))) {
+        pushInto(iff->ifTrue);
       } else if (localReadInIfFalse && !localReadInIfTrue &&
-          (!localRefAfterIf || (iff->ifTrue->type == Type::unreachable))) {
-        pushInfo(iff->ifFalse);
+          (!localReadAfterIf || (iff->ifTrue->type == Type::unreachable))) {
+        pushInto(iff->ifFalse);
       } else {
         // We didn't push this anywhere, so further pushables must pass it.
         cumulativeEffects.mergeIn(effects);
