@@ -352,7 +352,7 @@ private:
         list[i] = builder.makeNop();
         // TODO: After pushing we could recurse and run both this function and
         //       optimizeSegment in that location. For now, leave that to later
-        //       cycles of the optimizer.
+        //       cycles of the optimizer, as this case seems rairly rare.
       };
 
       // We only try to push into an arm if the local is used there. If the
