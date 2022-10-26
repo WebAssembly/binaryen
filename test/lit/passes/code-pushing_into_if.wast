@@ -97,19 +97,16 @@
   ;; CHECK:      (func $unpushed-interference (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
