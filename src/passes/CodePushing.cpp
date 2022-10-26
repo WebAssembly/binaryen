@@ -273,17 +273,15 @@ private:
     // we will add to this if we need to.
     EffectAnalyzer cumulativeEffects(passOptions, module, iff->condition);
 
+    // See optimizeSegment for why we can ignore control flow transfers here.
+    cumulativeEffects.ignoreControlFlowTransfers();
+
     // Find the effects of the arms, which will affect what can be pushed.
     EffectAnalyzer ifTrueEffects(passOptions, module, iff->ifTrue);
     EffectAnalyzer ifFalseEffects(passOptions, module);
     if (iff->ifFalse) {
       ifFalseEffects.walk(iff->ifFalse);
     }
-
-    // See optimizeSegment for why we can ignore control flow transfers here.
-    cumulativeEffects.ignoreControlFlowTransfers();
-    ifTrueEffects.ignoreControlFlowTransfers();
-    ifFalseEffects.ignoreControlFlowTransfers();
 
     // We need to know which locals are used after the if, as that can determine
     // if we can push or not.
