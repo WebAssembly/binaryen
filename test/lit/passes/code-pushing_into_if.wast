@@ -94,6 +94,33 @@
     )
   )
 
+  ;; CHECK:      (func $if-else-use (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-else-use (param $p i32)
+    (local $x i32)
+    ;; The set local is used in one arm and nowhere else; push it there.
+    (local.set $x (i32.const 1))
+    (if
+      (local.get $p)
+      (nop)
+      (drop (local.get $x))
+    )
+  )
+
   ;; CHECK:      (func $unpushed-interference (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
