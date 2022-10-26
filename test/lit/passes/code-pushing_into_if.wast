@@ -203,6 +203,17 @@
     (drop (local.get $x))
   )
 
+  (func $if-use-after-nop (param $p i32)
+    (local $x i32)
+    (local.set $x (i32.const 1))
+    (if
+      (local.get $p)
+      (drop (local.get $x))
+      (nop) ;; add a nop here compared to the last testcase (no output change)
+    )
+    (drop (local.get $x))
+  )
+
   ;; CHECK:      (func $if-else-use-after (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -226,6 +237,18 @@
       (local.get $p)
       (nop)
       (drop (local.get $x)) ;; now the use in the if is in the else arm
+    )
+    (drop (local.get $x))
+  )
+
+  (func $if-use-after-unreachable (param $p i32)
+    (local $x i32)
+    ;; A use after the if is ok as the other arm is unreachable.
+    (local.set $x (i32.const 1))
+    (if
+      (local.get $p)
+      (drop (local.get $x))
+      (return)
     )
     (drop (local.get $x))
   )
