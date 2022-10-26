@@ -287,6 +287,36 @@
     )
     (drop (local.get $x))
   )
+
+  ;; CHECK:      (func $if-use-after-unreachable-else (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-use-after-unreachable-else (param $p i32)
+    (local $x i32)
+    (local.set $x (i32.const 1))
+    (if
+      (local.get $p)
+      (return) ;; as above, but with arms flipped
+      (drop (local.get $x))
+    )
+    (drop (local.get $x))
+  )
 )
 ;; test push multiple
 ;; test push past nop
