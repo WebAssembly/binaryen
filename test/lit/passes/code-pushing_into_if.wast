@@ -317,6 +317,56 @@
     )
     (drop (local.get $x))
   )
+
+  ;; CHECK:      (func $optimize-many (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local $z i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $z
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $y
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-many (param $p i32)
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    ;; Multiple things we can push, to various arms.
+    (local.set $x (i32.const 1))
+    (local.set $y (i32.const 2))
+    (local.set $z (i32.const 3))
+    (if
+      (local.get $p)
+      (block
+        (drop (local.get $x))
+        (drop (local.get $z))
+      )
+      (drop (local.get $y))
+    )
+  )
 )
-;; test push multiple
 ;; test push past nop
