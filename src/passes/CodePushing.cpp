@@ -205,13 +205,13 @@ private:
           // we can push this, great!
           toPush.push_back(pushable);
         }
-        if (i == firstPushable) {
-          // no point in looking further
-          break;
-        }
       } else {
         // something that can't be pushed, so it might block further pushing
         cumulativeEffects.walk(list[i]);
+      }
+      if (i == firstPushable) {
+        // no point in looking further
+        break;
       }
       assert(i > 0);
       i--;
@@ -308,11 +308,11 @@ private:
     // between them (which we do by adding y's effects to cumulativeEffects).
     //
     // Decrement at the top of the loop for simplicity, so start with i at one
-    // past the first thing we can push.
+    // past the first thing we can push (which is right before the push point).
     Index i = pushPoint;
     while (1) {
       if (i == firstPushable) {
-        // no point in looking further
+        // We just processed the first thing that could be pushed; stop.
         break;
       }
       assert(i > 0);
