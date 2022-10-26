@@ -284,6 +284,13 @@ private:
     ifTrueEffects.ignoreControlFlowTransfers();
     ifFalseEffects.ignoreControlFlowTransfers();
 
+    // We need to know which locals are used after the if, as that can determine
+    // if we can push or not.
+    EffectAnalyzer postIfEffects(passOptions, module);
+    for (Index i = pushPoint + 1; i < list.size(); i++) {
+      postIfEffects.walk(list[pushPoint]);
+    }
+
     // Start at the instruction right before the push point, and go back from
     // there:
     //
@@ -301,31 +308,62 @@ private:
     Index i = pushPoint - 1;
     while (1) {
       auto* pushable = isPushable(list[i]);
-      if (pushable) {
-        auto iter = pushableEffects.find(pushable);
-        if (iter == pushableEffects.end()) {
-          iter =
-            pushableEffects
-              .emplace(std::piecewise_construct,
-                       std::forward_as_tuple(pushable),
-                       std::forward_as_tuple(passOptions, module, pushable))
-              .first;
-        }
-        auto& effects = iter->second;
-        if (canPushPastPushPoint(effects)) {
-          // we can push this, great!
-          toPush.push_back(pushable);
-        } else {
-          // we can't push this, so further pushables must pass it
-          cumulativeEffects.mergeIn(effects);
-        }
-        if (i == firstPushable) {
-          // no point in looking further
-          break;
-        }
-      } else {
-        // something that can't be pushed, so it might block further pushing
+      if (!pushable) {
+        // Something that can't be pushed, so anything we push later must move
+        // past it. Note the effects and continue.
         cumulativeEffects.walk(list[i]);
+        assert(i > 0);
+        i--;
+        continue;
+      }
+
+      auto index = pushable->index;
+
+      auto iter = pushableEffects.find(pushable);
+      if (iter == pushableEffects.end()) {
+        iter =
+          pushableEffects
+            .emplace(std::piecewise_construct,
+                     std::forward_as_tuple(pushable),
+                     std::forward_as_tuple(passOptions, module, pushable))
+            .first;
+      }
+      auto& effects = iter->second;
+
+      // We only try to push into an arm if the local is used there. If the
+      // local is not used in either arm then we'll want to push it past the
+      // entire if, which is what optimizeSegment handles.
+      //
+      // We can push into the if-true arm if the local cannot be used if we go
+      // through the other arm:
+      //
+      //    x = op();
+      //    if (..) {
+      //      // we would like to move "x = op()" to here
+      //      ..
+      //    } else {
+      //      use(x);
+      //    }
+      //    use(x);
+      //
+      // Either of those use(x)s would stop us from moving to if-true arm.
+      auto localReadInIfTrue = ifTrueEffects.localsRead.count(index);
+      auto localReadInIfFalse = ifFalseEffects.localsRead.count(index);
+      auto localReadPostIf = localReadPostIf.localsRead.count(index);
+      if (localReadInIfTrue && !localReadInIfFalse &&
+          (
+
+
+      if (canPushPastPushPoint(effects)) {
+        // we can push this, great!
+        toPush.push_back(pushable);
+      } else {
+        // we can't push this, so further pushables must pass it
+        cumulativeEffects.mergeIn(effects);
+      }
+      if (i == firstPushable) {
+        // no point in looking further
+        break;
       }
       assert(i > 0);
       i--;
