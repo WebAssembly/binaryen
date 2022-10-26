@@ -368,5 +368,65 @@
       (drop (local.get $y))
     )
   )
+
+  ;; CHECK:      (func $past-other (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (local.get $t)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $past-other (param $p i32)
+    (local $x i32)
+    (local $t i32)
+    ;; We can push this past the drop after it.
+    (local.set $x (local.get $t))
+    (drop (i32.const 2))
+    (if
+      (local.get $p)
+      (drop (local.get $x))
+    )
+  )
+
+  ;; CHECK:      (func $past-other-no (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.get $t)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $t
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $past-other-no (param $p i32)
+    (local $x i32)
+    (local $t i32)
+    ;; We cannot push this due to the tee, which interferes with us.
+    (local.set $x (local.get $t))
+    (drop (local.tee $t (i32.const 2)))
+    (if
+      (local.get $p)
+      (drop (local.get $x))
+    )
+  )
 )
-;; test push past nop
