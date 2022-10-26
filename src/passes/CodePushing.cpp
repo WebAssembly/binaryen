@@ -306,15 +306,22 @@ private:
     // order with x if we do. If we do *not* push y we can still try to push x
     // but we must move it past y, which means we need to check for interference
     // between them (which we do by adding y's effects to cumulativeEffects).
-    Index i = pushPoint - 1;
+    //
+    // Decrement at the top of the loop for simplicity, so start with i at one
+    // past the first thing we can push.
+    Index i = pushPoint;
     while (1) {
+      if (i == firstPushable) {
+        // no point in looking further
+        break;
+      }
+      assert(i > 0);
+      i--;
       auto* pushable = isPushable(list[i]);
       if (!pushable) {
-        // Something that can't be pushed, so anything we push later must move
-        // past it. Note the effects and continue.
+        // Something that is staying where it is, so anything we push later must
+        // move past it. Note the effects and continue.
         cumulativeEffects.walk(list[i]);
-        assert(i > 0);
-        i--;
         continue;
       }
 
@@ -329,6 +336,13 @@ private:
                  .first;
       }
       auto& effects = iter->second;
+
+      if (cumulativeEffects.invalidates(effects)) {
+        // This can't be moved forward. Add it to the things that are not
+        // moving.
+        cumulativeEffects.walk(list[i]);
+        continue;
+      }
 
       // Push into one of the if's arms, and put a nop where it used to be.
       auto pushInto = [&](Expression*& ifArm) {
@@ -379,12 +393,6 @@ private:
         // We didn't push this anywhere, so further pushables must pass it.
         cumulativeEffects.mergeIn(effects);
       }
-      if (i == firstPushable) {
-        // no point in looking further
-        break;
-      }
-      assert(i > 0);
-      i--;
     }
   }
 
