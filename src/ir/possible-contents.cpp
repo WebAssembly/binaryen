@@ -42,7 +42,8 @@ std::ostream& operator<<(std::ostream& stream,
 
 namespace wasm {
 
-PossibleContents PossibleContents::combine(const PossibleContents& a, const PossibleContents& b) {
+PossibleContents PossibleContents::combine(const PossibleContents& a,
+                                           const PossibleContents& b) {
   auto aType = a.getType();
   auto bType = b.getType();
   // First handle the trivial cases of them being equal, or one of them is
@@ -133,8 +134,7 @@ PossibleContents PossibleContents::combine(const PossibleContents& a, const Poss
     assert(lubDepthFromRoot <= aDepthFromRoot);
     assert(lubDepthFromRoot <= bDepthFromRoot);
     Index aDepthUnderLub = aDepthFromRoot - lubDepthFromRoot + aDepth;
-    Index bDepthUnderLub =
-      bDepthFromRoot - lubDepthFromRoot + bDepth;
+    Index bDepthUnderLub = bDepthFromRoot - lubDepthFromRoot + bDepth;
 
     // The total cone must be big enough to contain all the above.
     newDepth = std::max(aDepthUnderLub, bDepthUnderLub);
