@@ -24,15 +24,13 @@ template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
 // Asserts a combined with b (in any order) is equal to c.
 template<typename T>
 void assertCombination(const T& a, const T& b, const T& c) {
-  T temp1 = a;
-  temp1.combine(b);
+  T temp1 = PossibleContents::combine(a, b);
   assertEqualSymmetric(temp1, c);
   // Also check the type, as nulls will compare equal even if their types
   // differ. We want to make sure even the types are identical.
   assertEqualSymmetric(temp1.getType(), c.getType());
 
-  T temp2 = b;
-  temp2.combine(a);
+  T temp2 = PossibleContents::combine(b, a);
   assertEqualSymmetric(temp2, c);
   assertEqualSymmetric(temp2.getType(), c.getType());
 }
@@ -362,14 +360,14 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
       // check they all have an intersection.
       PossibleContents combination;
       for (auto index : indexes) {
-        combination.combine(vec[index]);
+        combination = PossibleContents::combine(combination, vec[index]);
       }
       // Note the combination in the set.
       set.insert(combination);
 #if BINARYEN_TEST_DEBUG
       for (auto index : indexes) {
         std::cout << index << ' ';
-        combination.combine(vec[index]);
+        combination = PossibleContents::combine(combination, vec[index]);
       }
       std::cout << '\n';
 #endif

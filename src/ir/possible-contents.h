@@ -103,11 +103,12 @@ class PossibleContents {
   // full cone of all subtypes for that type.
   static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
 
+  template<typename T>
+  PossibleContents(T value) : value(value) {}
+
 public:
   PossibleContents() : value(None()) {}
   PossibleContents(const PossibleContents& other) = default;
-
-  template<typename T> explicit PossibleContents(T val) : value(val) {}
 
   // Most users will use one of the following static functions to construct a
   // new instance:
@@ -163,7 +164,7 @@ public:
 
   // Combine the information in a given PossibleContents to this one. The
   // contents here will then include whatever content was possible in |other|.
-  void combine(const PossibleContents& other);
+  static PossibleContents combine(const PossibleContents& a, const PossibleContents& b);
 
   // Removes anything not in |other| from this object, so that it ends up with
   // only their intersection. Currently this only handles an intersection with a

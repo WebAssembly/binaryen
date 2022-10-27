@@ -42,90 +42,83 @@ std::ostream& operator<<(std::ostream& stream,
 
 namespace wasm {
 
-void PossibleContents::combine(const PossibleContents& other) {
-  auto type = getType();
-  auto otherType = other.getType();
+PossibleContents PossibleContents::combine(const PossibleContents& a, const PossibleContents& b) {
+  auto aType = a.getType();
+  auto bType = b.getType();
   // First handle the trivial cases of them being equal, or one of them is
   // None or Many.
-  if (*this == other) {
-    return;
+  if (a == b) {
+    return a;
   }
-  if (other.isNone()) {
-    return;
+  if (b.isNone()) {
+    return a;
   }
-  if (isNone()) {
-    value = other.value;
-    return;
+  if (a.isNone()) {
+    return b;
   }
-  if (isMany()) {
-    return;
+  if (a.isMany()) {
+    return a;
   }
-  if (other.isMany()) {
-    value = Many();
-    return;
+  if (b.isMany()) {
+    return b;
   }
 
-  if (!type.isRef() || !otherType.isRef()) {
+  if (!aType.isRef() || !bType.isRef()) {
     // At least one is not a reference. The only possibility left for a useful
     // combination here is if they have the same type (since we've already ruled
     // out the case of them being equal). If they have the same type then
     // neither is a reference and we can emit an exact type (since subtyping is
     // not relevant for non-references).
-    if (type == otherType) {
-      value = ExactType(type);
+    if (aType == bType) {
+      return ExactType(aType);
     } else {
-      value = Many();
+      return Many();
     }
-    return;
   }
 
   // Special handling for references from here.
 
-  if (isNull() && other.isNull()) {
-    // These must be nulls in different hierarchies, otherwise this would have
-    // been handled by the `*this == other` case above.
-    assert(type != otherType);
-    value = Many();
-    return;
+  if (a.isNull() && b.isNull()) {
+    // These must be nulls in different hierarchies, otherwise a would have
+    // been handled by the `a == b` case above.
+    assert(aType != bType);
+    return Many();
   }
 
-  auto lub = Type::getLeastUpperBound(type, otherType);
+  auto lub = Type::getLeastUpperBound(aType, bType);
   if (lub == Type::none) {
     // The types are not in the same hierarchy.
-    value = Many();
-    return;
+    return Many();
   }
 
   // From here we can assume there is a useful LUB.
 
   // Nulls can be combined in by just adding nullability to a type.
-  if (isNull() || other.isNull()) {
+  if (a.isNull() || b.isNull()) {
     // Only one of them can be null here, since we already handled the case
     // where they were both null.
-    assert(!isNull() || !other.isNull());
-    // If only one is a null then we can use the type info from the other, and
+    assert(!a.isNull() || !b.isNull());
+    // If only one is a null then we can use the type info from the b, and
     // just add in nullability. For example, a literal of type T and a null
     // becomes an exact type of T that allows nulls, and so forth.
     auto mixInNull = [](ConeType cone) {
       cone.type = Type(cone.type.getHeapType(), Nullable);
       return cone;
     };
-    if (!isNull()) {
-      value = mixInNull(getCone());
-      return;
-    } else if (!other.isNull()) {
-      value = mixInNull(other.getCone());
-      return;
+    if (!a.isNull()) {
+      return mixInNull(a.getCone());
+    } else if (!b.isNull()) {
+      return mixInNull(b.getCone());
     }
   }
 
   // Find a ConeType that describes both inputs, using the shared ancestor which
   // is the LUB. We need to find how big a cone we need: the cone must be big
   // enough to contain both the inputs.
-  auto depth = getCone().depth;
-  auto otherDepth = other.getCone().depth;
+  auto aDepth = a.getCone().depth;
+  auto bDepth = b.getCone().depth;
   Index newDepth;
-  if (depth == FullDepth || otherDepth == FullDepth) {
+  if (aDepth == FullDepth || bDepth == FullDepth) {
     // At least one has full (infinite) depth, so we know the new depth must
     // be the same.
     newDepth = FullDepth;
@@ -134,20 +127,20 @@ void PossibleContents::combine(const PossibleContents& other) {
     // the depth of our cone.
     // TODO: we could make a single loop that also does the LUB, at the same
     // time, and also avoids calling getDepth() which loops once more?
-    auto depthFromRoot = type.getHeapType().getDepth();
-    auto otherDepthFromRoot = otherType.getHeapType().getDepth();
+    auto aDepthFromRoot = aType.getHeapType().getDepth();
+    auto bDepthFromRoot = bType.getHeapType().getDepth();
     auto lubDepthFromRoot = lub.getHeapType().getDepth();
-    assert(lubDepthFromRoot <= depthFromRoot);
-    assert(lubDepthFromRoot <= otherDepthFromRoot);
-    Index depthUnderLub = depthFromRoot - lubDepthFromRoot + depth;
-    Index otherDepthUnderLub =
-      otherDepthFromRoot - lubDepthFromRoot + otherDepth;
+    assert(lubDepthFromRoot <= aDepthFromRoot);
+    assert(lubDepthFromRoot <= bDepthFromRoot);
+    Index aDepthUnderLub = aDepthFromRoot - lubDepthFromRoot + aDepth;
+    Index bDepthUnderLub =
+      bDepthFromRoot - lubDepthFromRoot + bDepth;
 
     // The total cone must be big enough to contain all the above.
-    newDepth = std::max(depthUnderLub, otherDepthUnderLub);
+    newDepth = std::max(aDepthUnderLub, bDepthUnderLub);
   }
 
-  value = ConeType{lub, newDepth};
+  return ConeType{lub, newDepth};
 }
 
 void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
@@ -1636,7 +1629,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
-  contents.combine(newContents);
+  contents = PossibleContents::combine(contents, newContents);
 
   if (contents.isNone()) {
     // There is still nothing here. There is nothing more to do here but to
