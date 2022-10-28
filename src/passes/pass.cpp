@@ -359,6 +359,9 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-globals",
                "sorts globals by access frequency",
                createReorderGlobalsPass);
+  registerPass("reorder-globals-always",
+               "sorts globals by access frequency (even if there are few)",
+               createReorderGlobalsAlwaysPass);
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);

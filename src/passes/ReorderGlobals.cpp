@@ -56,8 +56,14 @@ private:
 };
 
 struct ReorderGlobals : public Pass {
+  // Whether to always reorder globals, even if there are very few and the
+  // benefit is minor. That is useful for testing.
+  bool always;
+
+  ReorderGlobals(bool always) : always(always) {}
+
   void run(Module* module) override {
-    if (module->globals.size() < 128) {
+    if (always || module->globals.size() < 128) {
       // The module has so few globals that they all fit in a single-byte U32LEB
       // value, so no reordering we can do can actually decrease code size. Note
       // that this is the common case with wasm MVP modules where the only
@@ -146,6 +152,8 @@ struct ReorderGlobals : public Pass {
   }
 };
 
-Pass* createReorderGlobalsPass() { return new ReorderGlobals(); }
+Pass* createReorderGlobalsPass() { return new ReorderGlobals(false); }
+
+Pass* createReorderGlobalsAlwaysPass() { return new ReorderGlobals(true); }
 
 } // namespace wasm
