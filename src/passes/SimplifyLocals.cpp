@@ -1094,10 +1094,9 @@ struct SimplifyLocals
           // the same # of locals - make sure we actually improve.
           auto bestType = func->getLocalType(best);
           auto oldType = func->getLocalType(curr->index);
-          if (best != curr->index &&
-              (getNumGetsIgnoringCurr(best) >
-                 getNumGetsIgnoringCurr(curr->index) ||
-               bestType != oldType)) {
+          if (best != curr->index && (getNumGetsIgnoringCurr(best) >
+                                        getNumGetsIgnoringCurr(curr->index) ||
+                                      bestType != oldType)) {
             // Update the get counts.
             (*numLocalGets)[best]++;
             assert((*numLocalGets)[curr->index] >= 1);
