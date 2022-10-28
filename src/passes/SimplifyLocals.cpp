@@ -1017,7 +1017,8 @@ struct SimplifyLocals
 
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
-        auto* value = Properties::getFallthrough(curr->value, passOptions, *module);
+        auto* value =
+          Properties::getFallthrough(curr->value, passOptions, *module);
         if (auto* get = value->dynCast<LocalGet>()) {
           if (equivalences.check(curr->index, get->index)) {
             // This is an unnecessary copy!
@@ -1064,10 +1065,11 @@ struct SimplifyLocals
           auto* func = this->getFunction();
           Index best = -1;
           for (auto index : *set) {
-            if ((best == Index(-1) ||
-                getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) &&
+            if ((best == Index(-1) || getNumGetsIgnoringCurr(index) >
+                                        getNumGetsIgnoringCurr(best)) &&
                 // Only use more refined types, not less.
-                Type::isSubType(func->getLocalType(index), func->getLocalType(curr->index))) {
+                Type::isSubType(func->getLocalType(index),
+                                func->getLocalType(curr->index))) {
               best = index;
             }
           }
