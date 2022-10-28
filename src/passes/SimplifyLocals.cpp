@@ -1064,7 +1064,8 @@ struct SimplifyLocals
           // Pick the index with the most uses - maximizing the chance to
           // lower one's uses to zero. If types differ though then we prefer to
           // switch to a more refined type even if there are fewer uses, as that
-          // may have significant benefits to later optimizations.
+          // may have significant benefits to later optimizations (we may be
+          // able to use it to remove casts, etc.).
           auto* func = this->getFunction();
           Index best = -1;
           for (auto index : *set) {
@@ -1091,23 +1092,25 @@ struct SimplifyLocals
           assert(best != Index(-1));
           // Due to ordering, the best index may be different from us but have
           // the same # of locals - make sure we actually improve.
+          auto bestType = func->getLocalType(best);
+          auto oldType = func->getLocalType(curr->index);
           if (best != curr->index &&
               (getNumGetsIgnoringCurr(best) >
                  getNumGetsIgnoringCurr(curr->index) ||
-               func->getLocalType(best) != func->getLocalType(curr->index))) {
+               bestType != oldType)) {
             // Update the get counts.
             (*numLocalGets)[best]++;
             assert((*numLocalGets)[curr->index] >= 1);
             (*numLocalGets)[curr->index]--;
             // Make the change.
-            if (func->getLocalType(best) != func->getLocalType(curr->index)) {
+            curr->index = best;
+            anotherCycle = true;
+            if (bestType != oldType) {
               curr->type = func->getLocalType(best);
               // We are switching to a more refined type, which might require
               // changes in the user of the local.get.
               refinalize = true;
             }
-            curr->index = best;
-            anotherCycle = true;
           }
         }
       }
