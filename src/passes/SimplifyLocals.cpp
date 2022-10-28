@@ -1049,8 +1049,6 @@ struct SimplifyLocals
         // Canonicalize gets: if some are equivalent, then we can pick more
         // then one, and other passes may benefit from having more uniformity.
         if (auto* set = equivalences.getEquivalents(curr->index)) {
-          // Pick the index with the most uses - maximizing the chance to
-          // lower one's uses to zero.
           // Helper method that returns the # of gets *ignoring the current
           // get*, as we want to see what is best overall, treating this one as
           // to be decided upon.
@@ -1062,22 +1060,40 @@ struct SimplifyLocals
             }
             return ret;
           };
+
+          // Pick the index with the most uses - maximizing the chance to
+          // lower one's uses to zero. If types differ though then we prefer to
+          // switch to a more refined type even if there are fewer uses, as that
+          // may have significant benefits to later optimizations.
           auto* func = this->getFunction();
           Index best = -1;
           for (auto index : *set) {
-            if ((best == Index(-1) || getNumGetsIgnoringCurr(index) >
-                                        getNumGetsIgnoringCurr(best)) &&
-                // Only use more refined types, not less.
-                Type::isSubType(func->getLocalType(index),
-                                func->getLocalType(curr->index))) {
+            if (best == Index(-1)) {
+              // This is the first possible option we've seen.
+              best = index;
+              continue;
+            }
+
+            auto bestType = func->getLocalType(best);
+            auto indexType = func->getLocalType(index);
+            if (!Type::isSubType(indexType, bestType)) {
+              // This is less refined than the current best; ignore.
+              continue;
+            }
+
+            // This is better if it has a more refined type, or if it has more
+            // uses.
+            if (indexType != bestType || getNumGetsIgnoringCurr(index) >
+                                         getNumGetsIgnoringCurr(best)) {              
               best = index;
             }
           }
           assert(best != Index(-1));
           // Due to ordering, the best index may be different from us but have
           // the same # of locals - make sure we actually improve.
-          if (best != curr->index && getNumGetsIgnoringCurr(best) >
-                                       getNumGetsIgnoringCurr(curr->index)) {
+          if (best != curr->index && (getNumGetsIgnoringCurr(best) >
+                                       getNumGetsIgnoringCurr(curr->index) ||
+                                       func->getLocalType(best) != func->getLocalType(curr->index))) {
             // Update the get counts.
             (*numLocalGets)[best]++;
             assert((*numLocalGets)[curr->index] >= 1);
