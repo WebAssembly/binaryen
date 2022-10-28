@@ -446,23 +446,86 @@
     (unreachable)
   )
 
+  ;; CHECK:      (func $pick-refined (param $nn-any (ref any)) (result anyref)
+  ;; CHECK-NEXT:  (local $any anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $use-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-nn-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $nn-any)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-refined (type $ref|any|_=>_anyref) (param $nn-any (ref any)) (result anyref)
+  ;; NOMNL-NEXT:  (local $any anyref)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (call $use-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-nn-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $nn-any)
+  ;; NOMNL-NEXT: )
   (func $pick-refined (param $nn-any (ref any)) (result anyref)
     (local $any anyref)
     (local.set $any
-      (local.get $any)
+      (local.get $nn-any)
     )
-    ;; Use the non-nullable local so it's not entirely removed.
+    ;; Use the locals so neither is trivially removed.
     (call $use-any
       (local.get $any)
     )
-    ;; This local.get might as well use the non-nullable local.
+    (call $use-nn-any
+      (local.get $nn-any)
+    )
+    ;; This local.get might as well use the non-nullable local, which is more
+    ;; refined. In fact, all uses of locals can be switched to that one in the
+    ;; entire fnction (and the other local would be removed by other passes).
     (local.get $any)
   )
 
+  ;; CHECK:      (func $use-any (param $any anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $use-any (type $anyref_=>_none) (param $any anyref)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
   (func $use-any (param $any anyref)
     ;; Helper function for the above.
   )
 
+  ;; CHECK:      (func $pick-casted (param $any anyref) (result anyref)
+  ;; CHECK-NEXT:  (local $nn-any (ref any))
+  ;; CHECK-NEXT:  (local.set $nn-any
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-any
+  ;; CHECK-NEXT:   (local.get $any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-nn-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $any)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-casted (type $anyref_=>_anyref) (param $any anyref) (result anyref)
+  ;; NOMNL-NEXT:  (local $nn-any (ref any))
+  ;; NOMNL-NEXT:  (local.set $nn-any
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (local.get $any)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-any
+  ;; NOMNL-NEXT:   (local.get $any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-nn-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $any)
+  ;; NOMNL-NEXT: )
   (func $pick-casted (param $any anyref) (result anyref)
     (local $nn-any (ref any))
     (local.set $nn-any
@@ -470,7 +533,10 @@
         (local.get $any)
       )
     )
-    ;; Use the non-nullable local so it's not entirely removed.
+    ;; Use the locals so neither is trivially removed.
+    (call $use-any
+      (local.get $any)
+    )
     (call $use-nn-any
       (local.get $nn-any)
     )
@@ -478,6 +544,12 @@
     (local.get $any)
   )
 
+  ;; CHECK:      (func $use-nn-any (param $nn-any (ref any))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $use-nn-any (type $ref|any|_=>_none) (param $nn-any (ref any))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
   (func $use-nn-any (param $nn-any (ref any))
     ;; Helper function for the above.
   )
