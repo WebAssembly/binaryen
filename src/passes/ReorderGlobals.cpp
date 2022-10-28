@@ -37,7 +37,9 @@ struct UseCountScanner : public WalkerPass<PostWalker<UseCountScanner>> {
 
   UseCountScanner(NameCountMap& counts) : counts(counts) {}
 
-  std::unique_ptr<Pass> create() override { return std::make_unique<UseCountScanner>(counts); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<UseCountScanner>(counts);
+  }
 
   void visitGlobalGet(GlobalGet* curr) {
     // We can't add a new element to the map in parallel.
