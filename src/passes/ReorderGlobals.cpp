@@ -136,7 +136,7 @@ struct ReorderGlobals : public Pass {
 
                 // Break ties by the name.
                 if (counts[a->name] == counts[b->name]) {
-                  return strcmp(a->name.str, b->name.str) > 0;
+                  return a->name.toString().compare(b->name.toString()) > 0;
                 }
 
                 return counts[a->name] > counts[b->name];
