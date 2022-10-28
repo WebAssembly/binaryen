@@ -116,13 +116,12 @@ struct SubTypes {
     // TODO: update when we get structtype
     for (auto type : types) {
       HeapType basic;
-      if (type.isData()) {
-        if (type.isArray()) {
-          basic = HeapType::array;
-        } else {
-          basic = HeapType::data;
-        }
+      if (type.isStruct()) {
+        basic = HeapType::data;
+      } else if (type.isArray()) {
+        basic = HeapType::array;
       } else {
+        assert(type.isSignature());
         basic = HeapType::func;
       }
       depths[basic] = std::max(depths[basic], depths[type] + 1);
