@@ -33,6 +33,15 @@ void assertCombination(const T& a, const T& b, const T& c) {
   T temp2 = PossibleContents::combine(b, a);
   assertEqualSymmetric(temp2, c);
   assertEqualSymmetric(temp2.getType(), c.getType());
+
+  // Verify the shorthand API works like the static one.
+  T temp3 = a;
+  temp3.combine(b);
+  assertEqualSymmetric(temp3, temp1);
+
+  T temp4 = b;
+  temp4.combine(a);
+  assertEqualSymmetric(temp4, temp2);
 }
 
 // Parse a module from text and return it.
@@ -360,14 +369,14 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
       // check they all have an intersection.
       PossibleContents combination;
       for (auto index : indexes) {
-        combination = PossibleContents::combine(combination, vec[index]);
+        combination.combine(vec[index]);
       }
       // Note the combination in the set.
       set.insert(combination);
 #if BINARYEN_TEST_DEBUG
       for (auto index : indexes) {
         std::cout << index << ' ';
-        combination = PossibleContents::combine(combination, vec[index]);
+        combination.combine(vec[index]);
       }
       std::cout << '\n';
 #endif

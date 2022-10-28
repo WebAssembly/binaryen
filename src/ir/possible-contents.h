@@ -163,8 +163,12 @@ public:
 
   // Combine the information in a given PossibleContents to this one. The
   // contents here will then include whatever content was possible in |other|.
-  static PossibleContents combine(const PossibleContents& a,
-                                  const PossibleContents& b);
+  [[nodiscard]] static PossibleContents combine(const PossibleContents& a,
+                                                const PossibleContents& b);
+
+  void combine(const PossibleContents& other) {
+    *this = PossibleContents::combine(*this, other);
+  }
 
   // Removes anything not in |other| from this object, so that it ends up with
   // only their intersection. Currently this only handles an intersection with a

@@ -1629,7 +1629,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
-  contents = PossibleContents::combine(contents, newContents);
+  contents.combine(newContents);
 
   if (contents.isNone()) {
     // There is still nothing here. There is nothing more to do here but to
