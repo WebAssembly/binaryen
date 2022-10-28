@@ -1019,7 +1019,7 @@ struct SimplifyLocals
         // Remove trivial copies, even through a tee
         auto* value =
           Properties::getFallthrough(curr->value, passOptions, *module);
-        if (auto* get = value->dynCast<LocalGet>()) {
+        if (auto* get = value->template dynCast<LocalGet>()) {
           if (equivalences.check(curr->index, get->index)) {
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
