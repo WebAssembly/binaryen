@@ -54,7 +54,7 @@ private:
 };
 
 struct ReorderGlobals : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (module->globals.size() < 128) {
       // The module has so few globals that they all fit in a single-byte U32LEB
       // value, so no reordering we can do can actually decrease code size. Note
@@ -72,8 +72,8 @@ struct ReorderGlobals : public Pass {
 
     // Count uses.
     UseCountScanner scanner(counts);
-    scanner.run(runner, module);
-    scanner.runOnModuleCode(runner, module);
+    scanner.run(getPassRunner(), module);
+    scanner.runOnModuleCode(getPassRunner(), module);
 
     // To sort, we must first find dependencies, since if $b's definition
     // depends on $a then $b must appear later:
