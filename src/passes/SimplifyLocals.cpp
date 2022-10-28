@@ -1102,6 +1102,9 @@ struct SimplifyLocals
     eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
     eqOpter.walkFunction(func);
+    if (eqOpter.refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
 
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such
