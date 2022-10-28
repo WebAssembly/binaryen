@@ -445,4 +445,40 @@
     ;; Helper function for the above.
     (unreachable)
   )
+
+  (func $pick-refined (param $nn-any (ref any)) (result anyref)
+    (local $any anyref)
+    (local.set $any
+      (local.get $any)
+    )
+    ;; Use the non-nullable local so it's not entirely removed.
+    (call $use-any
+      (local.get $any)
+    )
+    ;; This local.get might as well use the non-nullable local.
+    (local.get $any)
+  )
+
+  (func $use-any (param $any anyref)
+    ;; Helper function for the above.
+  )
+
+  (func $pick-casted (param $any anyref) (result anyref)
+    (local $nn-any (ref any))
+    (local.set $nn-any
+      (ref.as_non_null
+        (local.get $any)
+      )
+    )
+    ;; Use the non-nullable local so it's not entirely removed.
+    (call $use-nn-any
+      (local.get $nn-any)
+    )
+    ;; This local.get might as well use the non-nullable local.
+    (local.get $any)
+  )
+
+  (func $use-nn-any (param $nn-any (ref any))
+    ;; Helper function for the above.
+  )
 )
