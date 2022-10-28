@@ -21,6 +21,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -143,8 +144,8 @@ public:
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
   // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
-  // │ i31ref      ║ x │   │ x │ x │       │ │
-  // │ dataref     ║ x │   │ x │ x │       │ │
+  // │ i31ref      ║ x │   │ x │ x │    n  │ │
+  // │ dataref     ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -169,6 +170,8 @@ public:
   // is irrelevant. (For that reason, this is only the negation of isNullable()
   // on references, but both return false on non-references.)
   bool isNonNullable() const;
+  // Whether this type is only inhabited by null values.
+  bool isNull() const;
   bool isStruct() const;
   bool isArray() const;
   bool isDefaultable() const;
@@ -316,17 +319,22 @@ class HeapType {
 
 public:
   enum BasicHeapType : uint32_t {
+    ext,
     func,
     any,
     eq,
     i31,
     data,
+    array,
     string,
     stringview_wtf8,
     stringview_wtf16,
     stringview_iter,
+    none,
+    noext,
+    nofunc,
   };
-  static constexpr BasicHeapType _last_basic_type = stringview_iter;
+  static constexpr BasicHeapType _last_basic_type = nofunc;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -357,6 +365,7 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isBottom() const;
 
   Signature getSignature() const;
   const Struct& getStruct() const;
@@ -369,6 +378,9 @@ public:
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.
   size_t getDepth() const;
+
+  // Get the bottom heap type for this heap type's hierarchy.
+  BasicHeapType getBottom() const;
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
@@ -398,8 +410,8 @@ public:
   // exists.
   std::vector<HeapType> getReferencedHeapTypes() const;
 
-  // Return the LUB of two HeapTypes. The LUB always exists.
-  static HeapType getLeastUpperBound(HeapType a, HeapType b);
+  // Return the LUB of two HeapTypes, which may or may not exist.
+  static std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
 
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
@@ -419,6 +431,8 @@ public:
 
   std::string toString() const;
 };
+
+inline bool Type::isNull() const { return isRef() && getHeapType().isBottom(); }
 
 // A recursion group consisting of one or more HeapTypes. HeapTypes with single
 // members are encoded without using any additional memory, which is why
@@ -598,9 +612,9 @@ struct TypeBuilder {
   Type getTempRefType(HeapType heapType, Nullability nullable);
 
   // In nominal mode, or for nominal types, declare the HeapType being built at
-  // index `i` to be an immediate subtype of the HeapType being built at index
-  // `j`. Does nothing for equirecursive types.
-  void setSubType(size_t i, size_t j);
+  // index `i` to be an immediate subtype of the given HeapType. Does nothing
+  // for equirecursive types.
+  void setSubType(size_t i, HeapType super);
 
   // Create a new recursion group covering slots [i, i + length). Groups must
   // not overlap or go out of bounds.
@@ -668,7 +682,7 @@ struct TypeBuilder {
     }
     Entry& subTypeOf(Entry other) {
       assert(&builder == &other.builder);
-      builder.setSubType(index, other.index);
+      builder.setSubType(index, other);
       return *this;
     }
   };

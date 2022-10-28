@@ -44,7 +44,6 @@
 #include <ir/eh-utils.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
-#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -77,7 +76,9 @@ struct Flatten
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new Flatten; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Flatten>();
+  }
 
   // For each expression, a bunch of expressions that should execute right
   // before it
@@ -368,17 +369,6 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
-    // New locals we added may be non-nullable.
-    TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
-    // We cannot handle non-nullable tuples currently, see the comment at the
-    // top of the file.
-    for (auto type : curr->vars) {
-      if (!type.isDefaultable()) {
-        Fatal() << "Flatten was forced to add a local of a type it cannot "
-                   "handle yet: "
-                << type;
-      }
-    }
 
     // Flatten can generate blocks within 'catch', making pops invalid. Fix them
     // up.

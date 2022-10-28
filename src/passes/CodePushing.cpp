@@ -124,24 +124,39 @@ private:
       return nullptr;
     }
     auto index = set->index;
-    // to be pushable, this must be SFA and the right # of gets,
-    // but also have no side effects, as it may not execute if pushed.
+    // To be pushable, this must be SFA and the right # of gets.
+    //
+    // It must also not have side effects, as it may no longer execute after it
+    // is pushed, since it may be behind a condition that ends up false some of
+    // the time. However, removable side effects are ok here. The general
+    // problem with removable effects is that we can only remove them, but not
+    // move them, because of stuff like this:
+    //
+    //   if (x != 0) foo(1 / x);
+    //
+    // If we move 1 / x to execute unconditionally then it may trap, but it
+    // would be fine to remove it. This pass does not move code to places where
+    // it might execute more, but *less*: we keep the code behind any conditions
+    // it was already behind, and potentially put it behind further ones. In
+    // effect, we "partially remove" the code, making it not execute some of the
+    // time, which is fine.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(passOptions, module, set->value).hasSideEffects()) {
+        !EffectAnalyzer(passOptions, module, set->value)
+           .hasUnremovableSideEffects()) {
       return set;
     }
     return nullptr;
   }
 
-  // Push past conditional control flow.
+  // Try to push past conditional control flow.
   // TODO: push into ifs as well
   bool isPushPoint(Expression* curr) {
     // look through drops
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>()) {
+    if (curr->is<If>() || curr->is<BrOn>()) {
       return true;
     }
     if (auto* br = curr->dynCast<Break>()) {
@@ -161,11 +176,21 @@ private:
     // everything that matters if you want to be pushed past the pushPoint
     EffectAnalyzer cumulativeEffects(passOptions, module);
     cumulativeEffects.walk(list[pushPoint]);
-    // it is ok to ignore the branching here, that is the crucial point of this
-    // opt
-    // TODO: it would be ok to ignore thrown exceptions here, if we know they
-    //       could not be caught and must go outside of the function
-    cumulativeEffects.ignoreBranches();
+    // It is ok to ignore branching out of the block here, that is the crucial
+    // point of this optimization. That is, we are in a situation like this:
+    //
+    // {
+    //   x = value;
+    //   if (..) break;
+    //   foo(x);
+    // }
+    //
+    // If the branch is taken, then that's fine, it will jump out of this block
+    // and reach some outer scope, and in that case we never need x at all
+    // (since we've proven before that x is not used outside of this block, see
+    // numGetsSoFar which we use for that). Similarly, control flow could
+    // transfer away via a return or an exception and that would be ok as well.
+    cumulativeEffects.ignoreControlFlowTransfers();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
@@ -234,7 +259,14 @@ private:
 struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new CodePushing; }
+  // This pass moves code forward in blocks, but a local.set would not be moved
+  // after a local.get with the same index (effects prevent breaking things that
+  // way), so validation will be preserved.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CodePushing>();
+  }
 
   LocalAnalyzer analyzer;
 

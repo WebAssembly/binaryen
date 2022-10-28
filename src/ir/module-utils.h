@@ -106,10 +106,22 @@ inline Table* copyTable(const Table* table, Module& out) {
   return out.addTable(std::move(ret));
 }
 
+inline Memory* copyMemory(const Memory* memory, Module& out) {
+  auto ret = Builder::makeMemory(memory->name);
+  ret->hasExplicitName = memory->hasExplicitName;
+  ret->initial = memory->initial;
+  ret->max = memory->max;
+  ret->shared = memory->shared;
+  ret->indexType = memory->indexType;
+
+  return out.addMemory(std::move(ret));
+}
+
 inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   auto ret = Builder::makeDataSegment();
   ret->name = segment->name;
   ret->hasExplicitName = segment->hasExplicitName;
+  ret->memory = segment->memory;
   ret->isPassive = segment->isPassive;
   if (!segment->isPassive) {
     auto offset = ExpressionManipulator::copy(segment->offset, out);
@@ -141,10 +153,12 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
+  for (auto& curr : in.memories) {
+    copyMemory(curr.get(), out);
+  }
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
-  out.memory = in.memory;
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
@@ -162,40 +176,45 @@ inline void clearModule(Module& wasm) {
 // Rename functions along with all their uses.
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
-// call this redirect all of its uses.
+// call this to redirect all of its uses.
 template<typename T> inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& [oldName, newName] : map) {
-    if (Function* F = wasm.getFunctionOrNull(oldName)) {
-      assert(!wasm.getFunctionOrNull(newName) || F->name == newName);
-      F->name = newName;
+    if (Function* func = wasm.getFunctionOrNull(oldName)) {
+      assert(!wasm.getFunctionOrNull(newName) || func->name == newName);
+      func->name = newName;
     }
   }
   wasm.updateMaps();
-  // Update other global things.
-  auto maybeUpdate = [&](Name& name) {
-    auto iter = map.find(name);
-    if (iter != map.end()) {
-      name = iter->second;
-    }
-  };
-  maybeUpdate(wasm.start);
-  ElementUtils::iterAllElementFunctionNames(&wasm, maybeUpdate);
-  for (auto& exp : wasm.exports) {
-    if (exp->kind == ExternalKind::Function) {
-      maybeUpdate(exp->value);
-    }
-  }
-  // Update call instructions.
-  for (auto& func : wasm.functions) {
-    // TODO: parallelize
-    if (!func->imported()) {
-      FindAll<Call> calls(func->body);
-      for (auto* call : calls.list) {
-        maybeUpdate(call->target);
+
+  // Update all references to it.
+  struct Updater : public WalkerPass<PostWalker<Updater>> {
+    bool isFunctionParallel() override { return true; }
+
+    T& map;
+
+    void maybeUpdate(Name& name) {
+      if (auto iter = map.find(name); iter != map.end()) {
+        name = iter->second;
       }
     }
-  }
+
+    Updater(T& map) : map(map) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Updater>(map);
+    }
+
+    void visitCall(Call* curr) { maybeUpdate(curr->target); }
+
+    void visitRefFunc(RefFunc* curr) { maybeUpdate(curr->func); }
+  };
+
+  Updater updater(map);
+  updater.maybeUpdate(wasm.start);
+  PassRunner runner(&wasm);
+  updater.run(&runner, &wasm);
+  updater.runOnModuleCode(&runner, &wasm);
 }
 
 inline void renameFunction(Module& wasm, Name oldName, Name newName) {
@@ -207,14 +226,27 @@ inline void renameFunction(Module& wasm, Name oldName, Name newName) {
 // Convenient iteration over imported/non-imported module elements
 
 template<typename T> inline void iterImportedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 
 template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    visitor(&wasm.memory);
+  for (auto& import : wasm.memories) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterMemorySegments(Module& wasm, Name memory, T visitor) {
+  for (auto& segment : wasm.dataSegments) {
+    if (!segment->isPassive && segment->memory == memory) {
+      visitor(segment.get());
+    }
   }
 }
 
@@ -362,7 +394,9 @@ struct ParallelFunctionAnalysis {
       Mapper(Module& module, Map& map, Func work)
         : module(module), map(map), work(work) {}
 
-      Mapper* create() override { return new Mapper(module, map, work); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Mapper>(module, map, work);
+      }
 
       void doWalkFunction(Function* curr) {
         assert(map.count(curr));

@@ -79,7 +79,7 @@
  )
  (func $drop-block
   (drop
-   (block (result i32 i64)
+   (block $block (result i32 i64)
     (tuple.make
      (i32.const 42)
      (i64.const 42)

@@ -16,6 +16,7 @@
 
 #include "type-updating.h"
 #include "find_all.h"
+#include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
@@ -79,7 +80,8 @@ void GlobalTypeRewriter::update() {
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(i, indexedTypes.indices[*super]);
+      typeBuilder.setSubType(
+        i, typeBuilder.getTempHeapType(indexedTypes.indices[*super]));
     }
   }
 
@@ -111,7 +113,9 @@ void GlobalTypeRewriter::update() {
 
     CodeUpdater(OldToNewTypes& oldToNewTypes) : oldToNewTypes(oldToNewTypes) {}
 
-    CodeUpdater* create() override { return new CodeUpdater(oldToNewTypes); }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<CodeUpdater>(oldToNewTypes);
+    }
 
     Type getNew(Type type) {
       if (type.isRef()) {
@@ -268,8 +272,12 @@ bool canHandleAsLocal(Type type) {
 }
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
-  // Check if this is an issue.
   if (wasm.features.hasGCNNLocals()) {
+    // We have nothing to fix up: all locals are allowed.
+    return;
+  }
+  if (!wasm.features.hasReferenceTypes()) {
+    // No references, so no non-nullable ones at all.
     return;
   }
   bool hasNonNullable = false;
@@ -280,6 +288,26 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     }
   }
   if (!hasNonNullable) {
+    // No non-nullable types exist in practice.
+    return;
+  }
+
+  // Non-nullable locals exist, which we may need to fix up. See if they
+  // validate as they are, that is, if they fall within the validation rules of
+  // the wasm spec. We do not need to modify such locals.
+  LocalStructuralDominance info(
+    func, wasm, LocalStructuralDominance::NonNullableOnly);
+  std::unordered_set<Index> badIndexes;
+  for (auto index : info.nonDominatingIndices) {
+    badIndexes.insert(index);
+
+    // LocalStructuralDominance should have only looked at non-nullable indexes
+    // since we told it to ignore nullable ones. Also, params always dominate
+    // and should not appear here.
+    assert(func->getLocalType(index).isNonNullable());
+    assert(!func->isParam(index));
+  }
+  if (badIndexes.empty()) {
     return;
   }
 
@@ -287,11 +315,9 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
     auto* get = (*getp)->cast<LocalGet>();
-    if (!func->isVar(get->index)) {
-      // We do not need to process params, which can legally be non-nullable.
-      continue;
+    if (badIndexes.count(get->index)) {
+      *getp = fixLocalGet(get, wasm);
     }
-    *getp = fixLocalGet(get, wasm);
   }
 
   // Update tees, whose type must match the local (if the wasm spec changes for
@@ -307,8 +333,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     if (!set->isTee() || set->type == Type::unreachable) {
       continue;
     }
-    auto type = func->getLocalType(set->index);
-    if (type.isNonNullable()) {
+    if (badIndexes.count(set->index)) {
+      auto type = func->getLocalType(set->index);
       set->type = Type(type.getHeapType(), Nullable);
       *setp = builder.makeRefAs(RefAsNonNull, set);
     }
@@ -316,12 +342,14 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
-  for (auto& type : func->vars) {
-    type = getValidLocalType(type, wasm.features);
+  for (auto index : badIndexes) {
+    func->vars[index - func->getNumParams()] =
+      getValidLocalType(func->getLocalType(index), wasm.features);
   }
 }
 
 Type getValidLocalType(Type type, FeatureSet features) {
+  // TODO: this should handle tuples with a non-nullable item
   assert(canHandleAsLocal(type));
   if (type.isNonNullable() && !features.hasGCNNLocals()) {
     type = Type(type.getHeapType(), Nullable);

@@ -15,12 +15,14 @@
 
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
+
  ;; CHECK:      (type $B (struct (field (mut f64))))
+ ;; NOMNL:      (type $func-return-i32 (func_subtype (result i32) func))
+
  ;; NOMNL:      (type $B (struct_subtype (field (mut f64)) data))
  (type $B (struct (field (mut f64))))
 
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
- ;; NOMNL:      (type $func-return-i32 (func_subtype (result i32) func))
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
@@ -30,11 +32,11 @@
  ;; CHECK:      (func $test-fallthrough (result i32)
  ;; CHECK-NEXT:  (local $x funcref)
  ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (block (result funcref)
+ ;; CHECK-NEXT:   (block (result nullfuncref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (call $test-fallthrough)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:    (ref.null nofunc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const 1)
@@ -42,11 +44,11 @@
  ;; NOMNL:      (func $test-fallthrough (type $func-return-i32) (result i32)
  ;; NOMNL-NEXT:  (local $x funcref)
  ;; NOMNL-NEXT:  (local.set $x
- ;; NOMNL-NEXT:   (block (result funcref)
+ ;; NOMNL-NEXT:   (block (result nullfuncref)
  ;; NOMNL-NEXT:    (drop
  ;; NOMNL-NEXT:     (call $test-fallthrough)
  ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:    (ref.null func)
+ ;; NOMNL-NEXT:    (ref.null nofunc)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (i32.const 1)
@@ -340,13 +342,13 @@
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
@@ -365,13 +367,13 @@
  ;; NOMNL-NEXT:  (call $log
  ;; NOMNL-NEXT:   (ref.eq
  ;; NOMNL-NEXT:    (local.get $x)
- ;; NOMNL-NEXT:    (ref.null $struct)
+ ;; NOMNL-NEXT:    (ref.null none)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $log
  ;; NOMNL-NEXT:   (ref.eq
  ;; NOMNL-NEXT:    (local.get $x)
- ;; NOMNL-NEXT:    (ref.null $struct)
+ ;; NOMNL-NEXT:    (ref.null none)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $log
@@ -1053,22 +1055,28 @@
  ;; CHECK:      (func $odd-cast-and-get
  ;; CHECK-NEXT:  (local $temp (ref null $B))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (ref.null $B)
+ ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (struct.get $B 0
- ;; CHECK-NEXT:    (ref.null $B)
+ ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $odd-cast-and-get (type $none_=>_none)
  ;; NOMNL-NEXT:  (local $temp (ref null $B))
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (ref.null $B)
+ ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (struct.get $B 0
- ;; NOMNL-NEXT:    (ref.null $B)
+ ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; NOMNL-NEXT:    (drop
+ ;; NOMNL-NEXT:     (ref.null none)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (unreachable)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
@@ -1096,13 +1104,16 @@
  ;; CHECK-NEXT:  (local $temp ((ref null $B) i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (tuple.make
- ;; CHECK-NEXT:    (ref.null $B)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (i32.const 10)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (struct.get $B 0
- ;; CHECK-NEXT:    (ref.null $B)
+ ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1110,13 +1121,16 @@
  ;; NOMNL-NEXT:  (local $temp ((ref null $B) i32))
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (tuple.make
- ;; NOMNL-NEXT:    (ref.null $B)
+ ;; NOMNL-NEXT:    (ref.null none)
  ;; NOMNL-NEXT:    (i32.const 10)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (struct.get $B 0
- ;; NOMNL-NEXT:    (ref.null $B)
+ ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; NOMNL-NEXT:    (drop
+ ;; NOMNL-NEXT:     (ref.null none)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (unreachable)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
@@ -1157,7 +1171,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call_ref
+ ;; CHECK-NEXT:   (call_ref $func-return-i32
  ;; CHECK-NEXT:    (local.get $temp)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1169,7 +1183,7 @@
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (call_ref
+ ;; NOMNL-NEXT:   (call_ref $func-return-i32
  ;; NOMNL-NEXT:    (local.get $temp)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
@@ -1197,6 +1211,7 @@
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $new_block_unreachable (type $none_=>_anyref) (result anyref)
@@ -1206,6 +1221,7 @@
  ;; NOMNL-NEXT:     (unreachable)
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (unreachable)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $new_block_unreachable (result anyref)
@@ -1261,7 +1277,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $ref
- ;; CHECK-NEXT:   (ref.null $empty)
+ ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $helper
@@ -1293,7 +1309,7 @@
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (local.set $ref
- ;; NOMNL-NEXT:   (ref.null $empty)
+ ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (drop
  ;; NOMNL-NEXT:   (call $helper
@@ -1352,6 +1368,64 @@
     (ref.is_null
      (local.get $ref)
     )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $remove-set (result (ref func))
+ ;; CHECK-NEXT:  (local $nn funcref)
+ ;; CHECK-NEXT:  (local $i i32)
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (local.set $i
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $loop)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $nn)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $remove-set (type $none_=>_ref|func|) (result (ref func))
+ ;; NOMNL-NEXT:  (local $nn funcref)
+ ;; NOMNL-NEXT:  (local $i i32)
+ ;; NOMNL-NEXT:  (loop $loop
+ ;; NOMNL-NEXT:   (local.set $i
+ ;; NOMNL-NEXT:    (i32.const 0)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (br $loop)
+ ;; NOMNL-NEXT:   (return
+ ;; NOMNL-NEXT:    (ref.as_non_null
+ ;; NOMNL-NEXT:     (local.get $nn)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $remove-set (result (ref func))
+  (local $nn (ref func))
+  (local $i i32)
+  (loop $loop
+   ;; Add a local.set here in the loop, just so the entire loop is not optimized
+   ;; out.
+   (local.set $i
+    (i32.const 0)
+   )
+   ;; This entire block can be precomputed into an unconditional br. That
+   ;; removes the local.set, which means the local no longer validates since
+   ;; there is a get without a set (the get is never reached, but the validator
+   ;; does not take that into account). Fixups will turn the local nullable to
+   ;; avoid that problem.
+   (block
+    (br_if $loop
+     (i32.const 1)
+    )
+    (local.set $nn
+     (ref.func $remove-set)
+    )
+   )
+   (return
+    (local.get $nn)
    )
   )
  )

@@ -3,6 +3,7 @@ total
  [funcs]        : 50      
  [globals]      : 7       
  [imports]      : 4       
+ [memories]     : 1       
  [memory-data]  : 4       
  [table-data]   : 17      
  [tables]       : 1       

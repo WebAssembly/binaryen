@@ -20,7 +20,7 @@
 
   ;; CHECK:      (type $none_=>_ref?|$struct| (func_subtype (result (ref null $struct)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (table $0 0 funcref)
 
@@ -33,18 +33,18 @@
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (ref.null func)
-  ;; CHECK-NEXT:    (ref.null func)
-  ;; CHECK-NEXT:    (ref.null func)
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (local.get $x)
@@ -108,7 +108,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $foo (result (ref null $struct))
     ;; Use a tag so that we test proper updating of its type after making
@@ -153,17 +153,17 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 2
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
+  (func $field-keepalive (param $struct (ref null $struct))
     ;; --gto will remove fields that are not read from, so add reads to any
     ;; that don't already have them.
-    (drop (struct.get $struct 2 (ref.null $struct)))
+    (drop (struct.get $struct 2 (local.get $struct)))
   )
 )
 
@@ -178,12 +178,12 @@
 
   ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func_subtype (param (ref null $A) (ref null $B)) func))
 
   ;; CHECK:      (func $func (type $ref|$A|_=>_none) (param $x (ref $A))
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 1
   ;; CHECK-NEXT:   (local.get $x)
@@ -201,33 +201,33 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$A|_ref?|$B|_=>_none) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 1
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $A 0 (ref.null $A)))
-    (drop (struct.get $A 1 (ref.null $A)))
-    (drop (struct.get $B 0 (ref.null $B)))
-    (drop (struct.get $B 1 (ref.null $B)))
+  (func $field-keepalive (param $A (ref null $A)) (param $B (ref null $B))
+    (drop (struct.get $A 0 (local.get $A)))
+    (drop (struct.get $A 1 (local.get $A)))
+    (drop (struct.get $B 0 (local.get $B)))
+    (drop (struct.get $B 1 (local.get $B)))
   )
 )
 
@@ -242,12 +242,12 @@
 
   ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func_subtype (param (ref null $A) (ref null $B)) func))
 
   ;; CHECK:      (func $func (type $ref|$B|_=>_none) (param $x (ref $B))
   ;; CHECK-NEXT:  (struct.set $B 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $B 1
   ;; CHECK-NEXT:   (local.get $x)
@@ -265,53 +265,54 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$A|_ref?|$B|_=>_none) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 1
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $A 0 (ref.null $A)))
-    (drop (struct.get $A 1 (ref.null $A)))
-    (drop (struct.get $B 0 (ref.null $B)))
-    (drop (struct.get $B 1 (ref.null $B)))
+  (func $field-keepalive (param $A (ref null $A)) (param $B (ref null $B))
+    (drop (struct.get $A 0 (local.get $A)))
+    (drop (struct.get $A 1 (local.get $A)))
+    (drop (struct.get $B 0 (local.get $B)))
+    (drop (struct.get $B 1 (local.get $B)))
   )
 )
 
 (module
   ;; As before, but now one field in each can become immutable.
 
+  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $B))) (field i32) data))
+
   ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) (field (mut f64)) data))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $B))) (field i32) data))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
   ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func_subtype (param (ref $A) (ref $B)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func_subtype (param (ref null $A) (ref null $B)) func))
 
   ;; CHECK:      (func $func (type $ref|$A|_ref|$B|_=>_none) (param $x (ref $A)) (param $y (ref $B))
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (ref.null $B)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $B 1
   ;; CHECK-NEXT:   (local.get $y)
@@ -329,33 +330,33 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$A|_ref?|$B|_=>_none) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 1
-  ;; CHECK-NEXT:    (ref.null $A)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $A 0 (ref.null $A)))
-    (drop (struct.get $A 1 (ref.null $A)))
-    (drop (struct.get $B 0 (ref.null $B)))
-    (drop (struct.get $B 1 (ref.null $B)))
+  (func $field-keepalive (param $A (ref null $A)) (param $B (ref null $B))
+    (drop (struct.get $A 0 (local.get $A)))
+    (drop (struct.get $A 1 (local.get $A)))
+    (drop (struct.get $B 0 (local.get $B)))
+    (drop (struct.get $B 1 (local.get $B)))
   )
 )
 
@@ -369,7 +370,7 @@
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 2
@@ -384,27 +385,27 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 1
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 2
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $struct 0 (ref.null $struct)))
-    (drop (struct.get $struct 1 (ref.null $struct)))
-    (drop (struct.get $struct 2 (ref.null $struct)))
+  (func $field-keepalive (param $struct (ref null $struct))
+    (drop (struct.get $struct 0 (local.get $struct)))
+    (drop (struct.get $struct 1 (local.get $struct)))
+    (drop (struct.get $struct 2 (local.get $struct)))
   )
 )
 
@@ -418,6 +419,8 @@
   (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func_subtype (param (ref null $super) (ref null $sub)) func))
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -445,21 +448,21 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$super|_ref?|$sub|_=>_none) (param $super (ref null $super)) (param $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $super 0
-  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:    (local.get $super)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
-  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:    (local.get $sub)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $super 0 (ref.null $super)))
-    (drop (struct.get $sub 0 (ref.null $sub)))
+  (func $field-keepalive (param $super (ref null $super)) (param $sub (ref null $sub))
+    (drop (struct.get $super 0 (local.get $super)))
+    (drop (struct.get $sub 0 (local.get $sub)))
   )
 )
 
@@ -473,7 +476,7 @@
 
   ;; CHECK:      (type $ref|$super|_=>_none (func_subtype (param (ref $super)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func_subtype (param (ref null $super) (ref null $sub)) func))
 
   ;; CHECK:      (func $func (type $ref|$super|_=>_none) (param $x (ref $super))
   ;; CHECK-NEXT:  (drop
@@ -509,21 +512,21 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$super|_ref?|$sub|_=>_none) (param $super (ref null $super)) (param $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $super 0
-  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:    (local.get $super)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
-  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:    (local.get $sub)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $super 0 (ref.null $super)))
-    (drop (struct.get $sub 0 (ref.null $sub)))
+  (func $field-keepalive (param $super (ref null $super)) (param $sub (ref null $sub))
+    (drop (struct.get $super 0 (local.get $super)))
+    (drop (struct.get $sub 0 (local.get $sub)))
   )
 )
 
@@ -538,7 +541,7 @@
 
   ;; CHECK:      (type $ref|$sub|_=>_none (func_subtype (param (ref $sub)) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func_subtype (param (ref null $super) (ref null $sub)) func))
 
   ;; CHECK:      (func $func (type $ref|$sub|_=>_none) (param $x (ref $sub))
   ;; CHECK-NEXT:  (struct.set $sub 0
@@ -553,20 +556,20 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $none_=>_none)
+  ;; CHECK:      (func $field-keepalive (type $ref?|$super|_ref?|$sub|_=>_none) (param $super (ref null $super)) (param $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $super 0
-  ;; CHECK-NEXT:    (ref.null $super)
+  ;; CHECK-NEXT:    (local.get $super)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
-  ;; CHECK-NEXT:    (ref.null $sub)
+  ;; CHECK-NEXT:    (local.get $sub)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $field-keepalive
-    (drop (struct.get $super 0 (ref.null $super)))
-    (drop (struct.get $sub 0 (ref.null $sub)))
+  (func $field-keepalive (param $super (ref null $super)) (param $sub (ref null $sub))
+    (drop (struct.get $super 0 (local.get $super)))
+    (drop (struct.get $sub 0 (local.get $sub)))
   )
 )

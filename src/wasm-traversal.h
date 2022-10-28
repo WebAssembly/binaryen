@@ -74,7 +74,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
 // A visitor which must be overridden for each visitor that is reached.
 
 template<typename SubType, typename ReturnType = void>
-struct OverriddenVisitor {
+struct OverriddenVisitor : public Visitor<SubType, ReturnType> {
 // Expression visitors, which must be overridden
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
@@ -86,22 +86,6 @@ struct OverriddenVisitor {
   }
 
 #include "wasm-delegations.def"
-
-  ReturnType visit(Expression* curr) {
-    assert(curr);
-
-    switch (curr->_id) {
-#define DELEGATE(CLASS_TO_VISIT)                                               \
-  case Expression::Id::CLASS_TO_VISIT##Id:                                     \
-    return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
-      static_cast<CLASS_TO_VISIT*>(curr))
-
-#include "wasm-delegations.def"
-
-      default:
-        WASM_UNREACHABLE("unexpected expression type");
-    }
-  }
 };
 
 // Visit with a single unified visitor, called on every node, instead of
@@ -258,7 +242,9 @@ struct Walker : public VisitorType {
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    self->walkMemory(&module->memory);
+    for (auto& curr : module->memories) {
+      self->walkMemory(curr.get());
+    }
     for (auto& curr : module->dataSegments) {
       self->walkDataSegment(curr.get());
     }
@@ -266,6 +252,7 @@ struct Walker : public VisitorType {
 
   // Walks module-level code, that is, code that is not in functions.
   void walkModuleCode(Module* module) {
+    setModule(module);
     // Dispatch statically through the SubType.
     SubType* self = static_cast<SubType*>(this);
     for (auto& curr : module->globals) {
@@ -281,6 +268,12 @@ struct Walker : public VisitorType {
         self->walk(item);
       }
     }
+    for (auto& curr : module->dataSegments) {
+      if (curr->offset) {
+        self->walk(curr->offset);
+      }
+    }
+    setModule(nullptr);
   }
 
   // Walk implementation. We don't use recursion as ASTs may be highly

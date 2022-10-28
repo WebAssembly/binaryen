@@ -203,14 +203,16 @@
   (local $x anyref)
   ;; set x to something that is not null, but also not data
   (local.set $x
-   (ref.func $a-void-func)
+   (i31.new
+    (i32.const 0)
+   )
   )
   (drop
    (block $any (result anyref)
     (drop
      (br_on_non_data $any (local.get $x))
     )
-    ;; $x refers to a function, so we will branch, and not log
+    ;; $x refers to an i31, so we will branch, and not log
     (call $log (i32.const 1))
     (ref.null any)
    )
@@ -219,8 +221,8 @@
  (func "br-on_non_null"
   (drop
    (block $non-null (result (ref any))
-    (br_on_non_null $non-null (ref.func $a-void-func))
-    ;; $x refers to a function, which is not null, so we will branch, and not
+    (br_on_non_null $non-null (i31.new (i32.const 0)))
+    ;; $x refers to an i31, which is not null, so we will branch, and not
     ;; log
     (call $log (i32.const 1))
     (unreachable)

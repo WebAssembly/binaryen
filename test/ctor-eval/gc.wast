@@ -22,8 +22,8 @@
   (global $global2 (mut (ref null $struct)) (ref.null $struct))
 
   (func "test1"
-    ;; Leave the first local as null, which we should handle properly (we will
-    ;; end up emitting nothing and still using the default null value).
+    ;; The locals will be optimized into a single non-nullable one by the
+    ;; optimizer.
     (local $temp1 (ref null $struct))
     (local $temp2 (ref null $struct))
 

@@ -117,6 +117,25 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     `(elem declare func $..)`. Binaryen will emit that data when necessary, but
     it does not represent it in IR. That is, IR can be worked on without needing
     to think about declaring function references.
+  * Binaryen IR allows non-nullable locals in the form that the wasm spec does,
+    (which was historically nicknamed "1a"), in which a `local.get` must be
+    structurally dominated by a `local.set` in order to validate (that ensures
+    we do not read the default value of null). Despite being aligned with the
+    wasm spec, there are some minor details that you may notice:
+    * A nameless `Block` in Binaryen IR does not interfere with validation.
+      Nameless blocks are never emitted into the binary format (we just emit
+      their contents), so we ignore them for purposes of non-nullable locals. As
+      a result, if you read wasm text emitted by Binaryen then you may see what
+      seems to be code that should not validate per the spec (and may not
+      validate in wasm text parsers), but that difference will not exist in the
+      binary format (binaries emitted by Binaryen will always work everywhere,
+      aside for bugs of course).
+    * The Binaryen pass runner will automatically fix up validation after each
+      pass (finding things that do not validate and fixing them up, usually by
+      demoting a local to be nullable). As a result you do not need to worry
+      much about this when writing Binaryen passes. For more details see the
+      `requiresNonNullableLocalFixups()` hook in `pass.h` and the
+      `LocalStructuralDominance` class.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
@@ -634,7 +653,7 @@ Windows and OS X as most of the core devs are on Linux.
 
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
 [win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md
-[C API]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api-1
+[C API]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api
 [control flow graph]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 [JS_API]: https://github.com/WebAssembly/binaryen/wiki/binaryen.js-API
 [compile_to_wasm]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly

@@ -90,7 +90,9 @@ struct DAEScanner
   : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new DAEScanner(infoMap); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<DAEScanner>(infoMap);
+  }
 
   DAEScanner(DAEFunctionInfoMap* infoMap) : infoMap(infoMap) {}
 
@@ -172,16 +174,16 @@ struct DAE : public Pass {
 
   bool optimize = false;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // Iterate to convergence.
     while (1) {
-      if (!iteration(runner, module)) {
+      if (!iteration(module)) {
         break;
       }
     }
   }
 
-  bool iteration(PassRunner* runner, Module* module) {
+  bool iteration(Module* module) {
     allDroppedCalls.clear();
 
     DAEFunctionInfoMap infoMap;
@@ -198,7 +200,7 @@ struct DAE : public Pass {
       }
     }
     // Scan all the functions.
-    scanner.run(runner, module);
+    scanner.run(getPassRunner(), module);
     // Combine all the info.
     std::map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
@@ -245,7 +247,7 @@ struct DAE : public Pass {
       // Changing a call expression's return type can propagate out to its
       // parents, and so we must refinalize.
       // TODO: We could track in which functions we actually make changes.
-      ReFinalize().run(runner, module);
+      ReFinalize().run(getPassRunner(), module);
     }
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
@@ -260,7 +262,7 @@ struct DAE : public Pass {
         continue;
       }
       auto removedIndexes = ParamUtils::removeParameters(
-        {func}, infoMap[name].unusedParams, calls, {}, module, runner);
+        {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
         // Success!
         changed.insert(func);
@@ -304,7 +306,7 @@ struct DAE : public Pass {
       }
     }
     if (optimize && !changed.empty()) {
-      OptUtils::optimizeAfterInlining(changed, module, runner);
+      OptUtils::optimizeAfterInlining(changed, module, getPassRunner());
     }
     return !changed.empty() || refinedReturnTypes;
   }

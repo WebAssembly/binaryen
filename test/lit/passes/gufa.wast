@@ -246,7 +246,7 @@
 
   ;; CHECK:      (func $param-yes (param $param i32) (result i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (local.set $param
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -254,19 +254,16 @@
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $param-yes (param $param i32) (result i32)
+    ;; As above, but now the function is not exported. That means it has no
+    ;; callers, so the first local.get can contain nothing, and will become an
+    ;; unreachable. The other local.get later down can only contain the
+    ;; local.set in the if, so we'll optimize it to 1.
     (if
       (local.get $param)
       (local.set $param
         (i32.const 1)
       )
     )
-    ;; As above, but now the function is not exported. That means it has no
-    ;; callers, so the only possible contents for $param are the local.set here,
-    ;; as this code is unreachable. We will infer a constant of 1 for all values
-    ;; of $param here. (With an SSA analysis, we could see that the first
-    ;; local.get must be unreachable, and optimize even better; as things are,
-    ;; we see the local.set and it is the only thing that sends values to the
-    ;; local.)
     (local.get $param)
   )
 
@@ -1001,7 +998,7 @@
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param i32 funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
@@ -1015,10 +1012,10 @@
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (param $A (ref null $A))
   ;; CHECK-NEXT:  (call $call-without-effects
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (ref.null $A)
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-keep)
@@ -1027,14 +1024,14 @@
   ;; CHECK-NEXT:   (ref.func $target-keep-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     ;; Call the intrinsic without a RefFunc. All we infer here is the type,
     ;; which means we must assume anything with type $A (and a reference) can be
     ;; called, which will keep alive the bodies of both $target-keep and
     ;; $target-keep-2 - no unreachables will be placed in either one.
     (call $call-without-effects
       (i32.const 1)
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-keep)
@@ -1063,6 +1060,57 @@
   (func $target-keep-2 (type $A) (param $x i32)
     (drop
       (local.get $x)
+    )
+  )
+)
+
+;; Exported mutable globals can contain any value, as the outside can write to
+;; them.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $exported-mutable (mut i32) (i32.const 42))
+  (global $exported-mutable (mut i32) (i32.const 42))
+  ;; CHECK:      (global $exported-immutable i32 (i32.const 42))
+  (global $exported-immutable i32 (i32.const 42))
+  ;; CHECK:      (global $mutable (mut i32) (i32.const 42))
+  (global $mutable (mut i32) (i32.const 42))
+  ;; CHECK:      (global $immutable i32 (i32.const 42))
+  (global $immutable i32 (i32.const 42))
+
+  ;; CHECK:      (export "exported-mutable" (global $exported-mutable))
+  (export "exported-mutable" (global $exported-mutable))
+  ;; CHECK:      (export "exported-immutable" (global $exported-immutable))
+  (export "exported-immutable" (global $exported-immutable))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $exported-mutable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; This should not be optimized to a constant.
+    (drop
+      (global.get $exported-mutable)
+    )
+    ;; All the rest can be optimized.
+    (drop
+      (global.get $exported-immutable)
+    )
+    (drop
+      (global.get $mutable)
+    )
+    (drop
+      (global.get $immutable)
     )
   )
 )

@@ -22,13 +22,11 @@
  (memory $0 0)
  (export "test" (func $test))
  (func $test (param $0 i32) (result i32)
-  block $block0 (result i32)
+  local.get $0
+  if (result i32)
    local.get $0
-   if (result i32)
-    local.get $0
-   else
-    i32.const 0
-   end
+  else
+   i32.const 0
   end
  )
 )

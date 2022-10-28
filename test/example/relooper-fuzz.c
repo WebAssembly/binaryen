@@ -25,7 +25,8 @@ int main() {
                    0,
                    0,
                    BinaryenTypeInt32(),
-                   BinaryenConst(module, BinaryenLiteralInt32(4))),
+                   BinaryenConst(module, BinaryenLiteralInt32(4)),
+                   "0"),
       BinaryenConst(module, BinaryenLiteralInt32(4 * 27)) // jumps of 4 bytes
       ),
     BinaryenUnreachable(module),
@@ -45,29 +46,32 @@ int main() {
                                 0,
                                 0,
                                 BinaryenTypeInt32(),
-                                BinaryenConst(module, BinaryenLiteralInt32(4))),
+                                BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                "0"),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
-    BinaryenTypeInt32());
+    BinaryenTypeInt32(),
+    "0");
 
   // optionally, print the return value
   BinaryenExpressionRef args[] = {BinaryenBinary(
     module,
     BinaryenSubInt32(),
     BinaryenConst(module, BinaryenLiteralInt32(0)),
-    BinaryenLoad(
-      module,
-      4,
-      0,
-      4,
-      0,
-      BinaryenTypeInt32(),
-      BinaryenLoad(module,
-                   4,
-                   0,
-                   0,
-                   0,
-                   BinaryenTypeInt32(),
-                   BinaryenConst(module, BinaryenLiteralInt32(4)))))};
+    BinaryenLoad(module,
+                 4,
+                 0,
+                 4,
+                 0,
+                 BinaryenTypeInt32(),
+                 BinaryenLoad(module,
+                              4,
+                              0,
+                              0,
+                              0,
+                              BinaryenTypeInt32(),
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0"))};
   BinaryenExpressionRef debugger;
   if (1)
     debugger = BinaryenCall(module, "print", args, 1, BinaryenTypeNone());
@@ -89,7 +93,9 @@ int main() {
                               0,
                               0,
                               BinaryenTypeInt32(),
-                              BinaryenConst(module, BinaryenLiteralInt32(4))));
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0");
   BinaryenExpressionRef checkBodyList[] = {halter, incer, debugger, returner};
   BinaryenExpressionRef checkBody =
     BinaryenBlock(module,
@@ -338,7 +344,8 @@ int main() {
                       0,
                       BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
                       BinaryenConst(module, BinaryenLiteralInt32(decisions[i])),
-                      BinaryenTypeInt32());
+                      BinaryenTypeInt32(),
+                      "0");
     }
   }
   full[numDecisions] = body;
@@ -362,7 +369,7 @@ int main() {
                             BinaryenTypeNone());
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0);
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0, 0, "0");
 
   assert(BinaryenModuleValidate(module));
 

@@ -399,7 +399,7 @@
    (block $label$5
     (if
      (i32.const 1)
-     (block $block
+     (block
       (local.set $x
        (i32.const 203)
       )

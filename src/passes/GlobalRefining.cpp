@@ -31,7 +31,10 @@ namespace wasm {
 namespace {
 
 struct GlobalRefining : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  // Only modifies globals and global.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -102,13 +105,18 @@ struct GlobalRefining : public Pass {
     struct GetUpdater : public WalkerPass<PostWalker<GetUpdater>> {
       bool isFunctionParallel() override { return true; }
 
+      // Only modifies global.get operations.
+      bool requiresNonNullableLocalFixups() override { return false; }
+
       GlobalRefining& parent;
       Module& wasm;
 
       GetUpdater(GlobalRefining& parent, Module& wasm)
         : parent(parent), wasm(wasm) {}
 
-      GetUpdater* create() override { return new GetUpdater(parent, wasm); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<GetUpdater>(parent, wasm);
+      }
 
       // If we modify anything in a function then we must refinalize so that
       // types propagate outwards.
@@ -129,7 +137,7 @@ struct GlobalRefining : public Pass {
         }
       }
     };
-    GetUpdater(*this, *module).run(runner, module);
+    GetUpdater(*this, *module).run(getPassRunner(), module);
   }
 };
 

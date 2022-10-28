@@ -48,7 +48,8 @@ enum {
 enum WebLimitations : uint32_t {
   MaxDataSegments = 100 * 1000,
   MaxFunctionBodySize = 128 * 1024,
-  MaxFunctionLocals = 50 * 1000
+  MaxFunctionLocals = 50 * 1000,
+  MaxFunctionParams = 1000
 };
 
 template<typename T, typename MiniT> struct LEB {
@@ -363,8 +364,10 @@ enum EncodedType {
   i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // top type of references, including host references
-  anyref = -0x11, // 0x6f
+  // external (host) references
+  externref = -0x11, // 0x6f
+  // top type of references to non-function Wasm data.
+  anyref = -0x12, // 0x6e
   // comparable reference type
   eqref = -0x13, // 0x6d
   // nullable typed function reference type, with parameter
@@ -375,10 +378,15 @@ enum EncodedType {
   i31ref = -0x16, // 0x6a
   // gc and string reference types
   dataref = -0x19,          // 0x67
+  arrayref = -0x1a,         // 0x66
   stringref = -0x1c,        // 0x64
   stringview_wtf8 = -0x1d,  // 0x63
   stringview_wtf16 = -0x1e, // 0x62
   stringview_iter = -0x1f,  // 0x61
+  // bottom types
+  nullexternref = -0x17, // 0x69
+  nullfuncref = -0x18,   // 0x68
+  nullref = -0x1b,       // 0x65
   // type forms
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -396,10 +404,12 @@ enum EncodedType {
 
 enum EncodedHeapType {
   func = -0x10,   // 0x70
-  any = -0x11,    // 0x6f
+  ext = -0x11,    // 0x6f
+  any = -0x12,    // 0x6e
   eq = -0x13,     // 0x6d
   i31 = -0x16,    // 0x6a
   data = -0x19,   // 0x67
+  array = -0x1a,  // 0x66
   string = -0x1c, // 0x64
   // stringview/iter constants are identical to type, and cannot be duplicated
   // here as that would be a compiler error, so add _heap suffixes. See
@@ -407,6 +417,10 @@ enum EncodedHeapType {
   stringview_wtf8_heap = -0x1d,  // 0x63
   stringview_wtf16_heap = -0x1e, // 0x62
   stringview_iter_heap = -0x1f,  // 0x61
+  // bottom types
+  noext = -0x17,  // 0x69
+  nofunc = -0x18, // 0x68
+  none = -0x1b,   // 0x65
 };
 
 namespace UserSections {
@@ -431,10 +445,10 @@ extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
-extern const char* TypedFunctionReferencesFeature;
 extern const char* RelaxedSIMDFeature;
 extern const char* ExtendedConstFeature;
 extern const char* StringsFeature;
+extern const char* MultiMemoriesFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -450,6 +464,7 @@ enum Subsection {
   NameData = 9,
   // see: https://github.com/WebAssembly/gc/issues/193
   NameField = 10,
+  NameTag = 11,
 
   DylinkMemInfo = 1,
   DylinkNeeded = 2,
@@ -1079,7 +1094,8 @@ enum ASTNodes {
 
   // typed function references opcodes
 
-  CallRef = 0x14,
+  CallRefUnannotated = 0x14,
+  CallRef = 0x17,
   RetCallRef = 0x15,
 
   // gc opcodes
@@ -1095,8 +1111,9 @@ enum ASTNodes {
   ArrayGetS = 0x14,
   ArrayGetU = 0x15,
   ArraySet = 0x16,
-  ArrayLen = 0x17,
+  ArrayLenAnnotated = 0x17,
   ArrayCopy = 0x18,
+  ArrayLen = 0x19,
   ArrayInitStatic = 0x1a,
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
@@ -1120,6 +1137,8 @@ enum ASTNodes {
   BrOnNonFunc = 0x63,
   BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
+  ExternInternalize = 0x70,
+  ExternExternalize = 0x71,
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
@@ -1187,6 +1206,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
+    std::unordered_map<Name, Index> memoryIndexes;
     std::unordered_map<Name, Index> dataIndexes;
 
     BinaryIndexes(Module& wasm) {
@@ -1209,6 +1229,7 @@ class WasmBinaryWriter {
       addIndexes(wasm.functions, functionIndexes);
       addIndexes(wasm.tags, tagIndexes);
       addIndexes(wasm.tables, tableIndexes);
+      addIndexes(wasm.memories, memoryIndexes);
 
       for (auto& curr : wasm.elementSegments) {
         auto index = elemIndexes.size();
@@ -1281,7 +1302,7 @@ public:
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
   void writeStart();
-  void writeMemory();
+  void writeMemories();
   void writeTypes();
   void writeImports();
 
@@ -1297,6 +1318,7 @@ public:
 
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getTableIndex(Name name) const;
+  uint32_t getMemoryIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
@@ -1322,8 +1344,8 @@ public:
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
   // helpers
-  void writeInlineString(const char* name);
-  void writeEscapedName(const char* name);
+  void writeInlineString(std::string_view name);
+  void writeEscapedName(std::string_view name);
   void writeInlineBuffer(const char* data, size_t size);
   void writeData(const char* data, size_t size);
 
@@ -1432,7 +1454,7 @@ public:
 
   bool more() { return pos < input.size(); }
 
-  std::pair<const char*, const char*> getByteView(size_t size);
+  std::string_view getByteView(size_t size);
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();
@@ -1466,14 +1488,18 @@ public:
   void verifyInt64(int64_t x);
   void readHeader();
   void readStart();
-  void readMemory();
+  void readMemories();
   void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
   Name getTableName(Index index);
+  Name getMemoryName(Index index);
   Name getGlobalName(Index index);
   Name getTagName(Index index);
+
+  // gets a memory in the combined import+defined space
+  Memory* getMemory(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
@@ -1500,11 +1526,6 @@ public:
   // We read functions and globals before we know their names, so we need to
   // backpatch the names later
 
-  // we store functions here before wasm.addFunction after we know their names
-  std::vector<Function*> functions;
-  // we store function imports here before wasm.addFunctionImport after we know
-  // their names
-  std::vector<Function*> functionImports;
   // at index i we have all refs to the function i
   std::map<Index, std::vector<Name*>> functionRefs;
   Function* currFunction = nullptr;
@@ -1512,30 +1533,19 @@ public:
   // function to check
   Index endOfFunction = -1;
 
-  // we store tables here before wasm.addTable after we know their names
-  std::vector<std::unique_ptr<Table>> tables;
-  // we store table imports here before wasm.addTableImport after we know
-  // their names
-  std::vector<Table*> tableImports;
   // at index i we have all references to the table i
   std::map<Index, std::vector<Name*>> tableRefs;
 
   std::map<Index, Name> elemTables;
 
-  // we store elems here after being read from binary, until when we know their
-  // names
-  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  // at index i we have all references to the memory i
+  std::map<Index, std::vector<wasm::Name*>> memoryRefs;
 
-  // we store data here after being read from binary, before we know their names
-  std::vector<std::unique_ptr<DataSegment>> dataSegments;
-
-  // we store globals here before wasm.addGlobal after we know their names
-  std::vector<std::unique_ptr<Global>> globals;
-  // we store global imports here before wasm.addGlobalImport after we know
-  // their names
-  std::vector<Global*> globalImports;
   // at index i we have all refs to the global i
   std::map<Index, std::vector<Name*>> globalRefs;
+
+  // at index i we have all refs to the tag i
+  std::map<Index, std::vector<Name*>> tagRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -1646,7 +1656,7 @@ public:
   BreakTarget getBreakTarget(int32_t offset);
   Name getExceptionTargetName(int32_t offset);
 
-  void readMemoryAccess(Address& alignment, Address& offset);
+  Index readMemoryAccess(Address& alignment, Address& offset);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
@@ -1730,7 +1740,8 @@ public:
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitCallRef(CallRef* curr);
+  void visitCallRef(CallRef* curr,
+                    std::optional<HeapType> maybeType = std::nullopt);
   void visitRefAs(RefAs* curr, uint8_t code);
 
   [[noreturn]] void throwError(std::string text);

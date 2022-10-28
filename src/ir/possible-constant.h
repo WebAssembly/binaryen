@@ -114,8 +114,14 @@ public:
       auto type = getConstantLiteral().type.getHeapType();
       auto otherType = other.getConstantLiteral().type.getHeapType();
       auto lub = HeapType::getLeastUpperBound(type, otherType);
-      if (lub != type) {
-        value = Literal::makeNull(lub);
+      if (!lub) {
+        // TODO: Remove this workaround once we have bottom types to assign to
+        // null literals.
+        value = Many();
+        return true;
+      }
+      if (*lub != type) {
+        value = Literal::makeNull(*lub);
         return true;
       }
       return false;

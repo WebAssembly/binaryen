@@ -43,7 +43,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (f64.const 3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (f64.const 7)
   ;; CHECK-NEXT:   (ref.func $foo)
@@ -107,7 +107,7 @@
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i64.const 5)
   ;; CHECK-NEXT:   (f32.const 6)
   ;; CHECK-NEXT:   (ref.func $foo)
@@ -167,14 +167,14 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $caller)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (i64.const 5)
   ;; CHECK-NEXT:   (f32.const 6)
@@ -246,8 +246,8 @@
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
-  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:  (call_ref $sig
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $caller)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
@@ -301,7 +301,7 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $foo)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -501,10 +501,10 @@
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT:  (call $bar)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -527,7 +527,7 @@
 
   ;; CHECK:      (func $caller-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (call $bar)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -747,12 +747,10 @@
 
   ;; CHECK:      (memory $0 1 1)
 
-  ;; CHECK:      (elem declare func $foo)
-
   ;; CHECK:      (func $foo (type $sig-foo)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (ref.null any)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
@@ -765,7 +763,7 @@
   (func $foo (type $sig-foo) (param $anyref anyref)
     (drop (local.get $anyref))
     (call $foo (ref.null any))
-    (call $foo (ref.null func))
+    (call $foo (ref.null data))
   )
 
   ;; CHECK:      (func $bar (type $sig-bar) (param $anyref anyref)
@@ -773,17 +771,19 @@
   ;; CHECK-NEXT:   (local.get $anyref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $bar
-  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $bar
-  ;; CHECK-NEXT:   (ref.null func)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $bar (type $sig-bar) (param $anyref anyref)
     (drop (local.get $anyref))
     ;; Mixing a null with something else prevents optimization, of course.
-    (call $bar (ref.func $foo))
-    (call $bar (ref.null func))
+    (call $bar (i31.new (i32.const 0)))
+    (call $bar (ref.null data))
   )
 )
 

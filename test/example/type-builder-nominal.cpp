@@ -307,7 +307,7 @@ void test_subtypes() {
   std::cout << ";; Test subtyping\n";
 
   Type anyref = Type(HeapType::any, Nullable);
-  Type funcref = Type(HeapType::func, Nullable);
+  Type eqref = Type(HeapType::eq, Nullable);
 
   auto LUB = [&](HeapType a, HeapType b) {
     Type refA = Type(a, Nullable);
@@ -330,14 +330,13 @@ void test_subtypes() {
 
   {
     // Basic Types
-    for (auto other : {HeapType::func,
+    for (auto other : {HeapType::eq,
                        HeapType::any,
                        HeapType::eq,
                        HeapType::i31,
                        HeapType::data}) {
       assert(LUB(HeapType::any, other) == HeapType::any);
     }
-    assert(LUB(HeapType::eq, HeapType::func) == HeapType::any);
     assert(LUB(HeapType::i31, HeapType::data) == HeapType::eq);
   }
 
@@ -430,7 +429,7 @@ void test_subtypes() {
     {
       TypeBuilder builder(2);
       builder[0] = Struct({Field(anyref, Immutable)});
-      builder[1] = Struct({Field(funcref, Immutable)});
+      builder[1] = Struct({Field(eqref, Immutable)});
       builder[1].subTypeOf(builder[0]);
       built = *builder.build();
     }

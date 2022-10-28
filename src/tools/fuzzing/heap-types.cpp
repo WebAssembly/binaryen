@@ -34,10 +34,6 @@ struct HeapTypeGeneratorImpl {
   // Map the HeapTypes we are building to their indices in the builder.
   std::unordered_map<HeapType, Index> typeIndices;
 
-  // Abstract over all the types that may be assigned to a builder slot.
-  using Assignable =
-    std::variant<HeapType::BasicHeapType, Signature, Struct, Array>;
-
   // Top-level kinds, chosen before the types are actually constructed. This
   // allows us to choose HeapTypes that we know will be subtypes of data or func
   // before we actually generate the types.
@@ -73,7 +69,7 @@ struct HeapTypeGeneratorImpl {
       typeIndices.insert({builder[i], i});
       // Everything is a subtype of itself.
       subtypeIndices[i].push_back(i);
-      if (i < numRoots) {
+      if (i < numRoots || rand.oneIn(2)) {
         // This is a root type with no supertype. Choose a kind for this type.
         typeKinds.emplace_back(generateHeapTypeKind());
       } else {
@@ -152,7 +148,13 @@ struct HeapTypeGeneratorImpl {
   }
 
   HeapType::BasicHeapType generateBasicHeapType() {
+    // Choose bottom types more rarely.
+    if (rand.oneIn(16)) {
+      return rand.pick(HeapType::noext, HeapType::nofunc, HeapType::none);
+    }
+    // TODO: strings and array
     return rand.pick(HeapType::func,
+                     HeapType::ext,
                      HeapType::any,
                      HeapType::eq,
                      HeapType::i31,
@@ -237,68 +239,6 @@ struct HeapTypeGeneratorImpl {
 
   Array generateArray() { return {generateField()}; }
 
-  Assignable generateSubData() {
-    switch (rand.upTo(2)) {
-      case 0:
-        return generateStruct();
-      case 1:
-        return generateArray();
-    }
-    WASM_UNREACHABLE("unexpected index");
-  }
-
-  Assignable generateSubEq() {
-    switch (rand.upTo(3)) {
-      case 0:
-        return HeapType::i31;
-      case 1:
-        return HeapType::data;
-      case 2:
-        return generateSubData();
-    }
-    WASM_UNREACHABLE("unexpected index");
-  }
-
-  Assignable generateSubAny() {
-    switch (rand.upTo(4)) {
-      case 0:
-        return HeapType::eq;
-      case 1:
-        return HeapType::func;
-      case 2:
-        return generateSubEq();
-      case 3:
-        return generateSignature();
-    }
-    WASM_UNREACHABLE("unexpected index");
-  }
-
-  Assignable generateSubBasic(HeapType::BasicHeapType type) {
-    if (rand.oneIn(2)) {
-      return type;
-    } else {
-      switch (type) {
-        case HeapType::i31:
-          // No other subtypes.
-          return type;
-        case HeapType::func:
-          return generateSignature();
-        case HeapType::any:
-          return generateSubAny();
-        case HeapType::eq:
-          return generateSubEq();
-        case HeapType::data:
-          return generateSubData();
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: fuzz strings");
-      }
-      WASM_UNREACHABLE("unexpected index");
-    }
-  }
-
   template<typename Kind> std::optional<HeapType> pickKind() {
     std::vector<Index> candidateIndices;
     // Iterate through the top level kinds, finding matches for `Kind`. Since we
@@ -319,6 +259,8 @@ struct HeapTypeGeneratorImpl {
   HeapType pickSubFunc() {
     if (auto type = pickKind<SignatureKind>()) {
       return *type;
+    } else if (rand.oneIn(2)) {
+      return HeapType::nofunc;
     } else {
       return HeapType::func;
     }
@@ -327,6 +269,8 @@ struct HeapTypeGeneratorImpl {
   HeapType pickSubData() {
     if (auto type = pickKind<DataKind>()) {
       return *type;
+    } else if (rand.oneIn(2)) {
+      return HeapType::none;
     } else {
       return HeapType::data;
     }
@@ -341,14 +285,10 @@ struct HeapTypeGeneratorImpl {
   }
 
   HeapType pickSubAny() {
-    switch (rand.upTo(4)) {
+    switch (rand.upTo(2)) {
       case 0:
-        return HeapType::func;
-      case 1:
         return HeapType::eq;
-      case 2:
-        return pickSubFunc();
-      case 3:
+      case 1:
         return pickSubEq();
     }
     WASM_UNREACHABLE("unexpected index");
@@ -361,7 +301,7 @@ struct HeapTypeGeneratorImpl {
       // can only choose those defined before the end of the current recursion
       // group.
       std::vector<Index> candidateIndices;
-      for (auto i : subtypeIndices[typeIndices[type]]) {
+      for (auto i : subtypeIndices[it->second]) {
         if (i < recGroupEnds[index]) {
           candidateIndices.push_back(i);
         }
@@ -370,7 +310,12 @@ struct HeapTypeGeneratorImpl {
     } else {
       // This is not a constructed type, so it must be a basic type.
       assert(type.isBasic());
+      if (rand.oneIn(8)) {
+        return type.getBottom();
+      }
       switch (type.getBasic()) {
+        case HeapType::ext:
+          return HeapType::ext;
         case HeapType::func:
           return pickSubFunc();
         case HeapType::any:
@@ -381,11 +326,16 @@ struct HeapTypeGeneratorImpl {
           return HeapType::i31;
         case HeapType::data:
           return pickSubData();
+        case HeapType::array:
+          WASM_UNREACHABLE("TODO: fuzz array");
         case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: fuzz strings");
+        case HeapType::none:
+        case HeapType::noext:
+        case HeapType::nofunc:
+          return type;
       }
       WASM_UNREACHABLE("unexpected kind");
     }
@@ -470,6 +420,17 @@ struct HeapTypeGeneratorImpl {
   }
 
   HeapTypeKind getSubKind(HeapTypeKind super) {
+    if (rand.oneIn(16)) {
+      // Occasionally go directly to the bottom type.
+      if (auto* basic = std::get_if<BasicKind>(&super)) {
+        return HeapType(*basic).getBottom();
+      } else if (std::get_if<SignatureKind>(&super)) {
+        return HeapType::nofunc;
+      } else if (std::get_if<DataKind>(&super)) {
+        return HeapType::none;
+      }
+      WASM_UNREACHABLE("unexpected kind");
+    }
     if (auto* basic = std::get_if<BasicKind>(&super)) {
       if (rand.oneIn(8)) {
         return super;
@@ -477,23 +438,43 @@ struct HeapTypeGeneratorImpl {
       switch (*basic) {
         case HeapType::func:
           return SignatureKind{};
+        case HeapType::ext:
         case HeapType::i31:
           return super;
         case HeapType::any:
-          return generateHeapTypeKind();
+          if (rand.oneIn(4)) {
+            switch (rand.upTo(3)) {
+              case 0:
+                return HeapType::eq;
+              case 1:
+                return HeapType::i31;
+              case 2:
+                return HeapType::data;
+            }
+          }
+          return DataKind{};
         case HeapType::eq:
           if (rand.oneIn(4)) {
-            return HeapType::i31;
-          } else {
-            return DataKind{};
+            switch (rand.upTo(2)) {
+              case 0:
+                return HeapType::i31;
+              case 1:
+                return HeapType::data;
+            }
           }
+          return DataKind{};
         case HeapType::data:
           return DataKind{};
+        case HeapType::array:
+          WASM_UNREACHABLE("TODO: fuzz array");
         case HeapType::string:
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: fuzz strings");
+        case HeapType::none:
+        case HeapType::noext:
+        case HeapType::nofunc:
+          return super;
       }
       WASM_UNREACHABLE("unexpected kind");
     } else {

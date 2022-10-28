@@ -36,10 +36,11 @@
 (module
   ;; As above, but the call is via call_ref.
 
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -53,7 +54,7 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
@@ -71,17 +72,18 @@
   ;; call uses a nullable $struct, the other a non-nullable dataref, so the LUB
   ;; is a nullable dataref.
 
+  ;; CHECK:      (type $sig (func_subtype (param dataref) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref null data)) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (func $func (type $sig) (param $x (ref null data))
+  ;; CHECK:      (func $func (type $sig) (param $x dataref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
@@ -92,7 +94,7 @@
   ;; CHECK-NEXT:  (call $func
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.as_data
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:   )
@@ -203,8 +205,8 @@
   ;; Define a field in the struct of the signature type that will be updated,
   ;; to check for proper validation after the update.
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
-  (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct) (ref $sig)) func))
+  (type $sig (func_subtype (param anyref funcref) func))
 
   ;; CHECK:      (type $struct (struct_subtype (field (ref $sig)) data))
   (type $struct (struct_subtype (field (ref $sig)) data))
@@ -213,33 +215,33 @@
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
+  ;; CHECK:      (func $func (type $sig) (param $x (ref $struct)) (param $f (ref $sig))
   ;; CHECK-NEXT:  (local $temp (ref null $sig))
-  ;; CHECK-NEXT:  (local $2 anyref)
-  ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  (local $3 funcref)
+  ;; CHECK-NEXT:  (local.set $3
+  ;; CHECK-NEXT:   (local.get $f)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:   (local.set $3
   ;; CHECK-NEXT:    (local.get $temp)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func (type $sig) (param $x anyref)
+  (func $func (type $sig) (param $x anyref) (param $f funcref)
     ;; Define a local of the signature type that is updated.
     (local $temp (ref null $sig))
     ;; Do a local.get of the param, to verify its type is valid.
     (drop
       (local.get $x)
     )
-    ;; Copy between the param and the local, to verify their types are still
-    ;; compatible after the update. Note that we will need to add a fixup local
-    ;; here, as $x's new type becomes too specific to be assigned the value
-    ;; here.
-    (local.set $x
+    ;; Copy from a funcref local to the formerly funcref param to verify their
+    ;; types are still compatible after the update. Note that we will need to
+    ;; add a fixup local here, as $f's new type becomes too specific to be
+    ;; assigned the value here.
+    (local.set $f
       (local.get $temp)
     )
   )
@@ -249,6 +251,7 @@
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (ref.func $func)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
@@ -256,6 +259,7 @@
       (struct.new $struct
         (ref.func $func)
       )
+      (ref.func $func)
     )
   )
 )
@@ -264,10 +268,11 @@
   ;; An unreachable value does not prevent optimization: we will update the
   ;; param to be $struct.
 
+  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
@@ -284,7 +289,7 @@
   ;; CHECK-NEXT:  (call $func
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
@@ -320,7 +325,7 @@
   )
 
   ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (call_ref
+  ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
@@ -354,22 +359,23 @@
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig-1 (func_subtype (param (ref null data) anyref) func))
+  ;; CHECK:      (type $sig-2 (func_subtype (param eqref (ref $struct)) func))
+
+  ;; CHECK:      (type $sig-1 (func_subtype (param dataref anyref) func))
   (type $sig-1 (func_subtype (param anyref) (param anyref) func))
-  ;; CHECK:      (type $sig-2 (func_subtype (param anyref (ref $struct)) func))
   (type $sig-2 (func_subtype (param anyref) (param anyref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (elem declare func $func-2)
 
-  ;; CHECK:      (func $func-1 (type $sig-1) (param $x (ref null data)) (param $y anyref)
+  ;; CHECK:      (func $func-1 (type $sig-1) (param $x dataref) (param $y anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1 (type $sig-1) (param $x anyref) (param $y anyref)
   )
 
-  ;; CHECK:      (func $func-2 (type $sig-2) (param $x anyref) (param $y (ref $struct))
+  ;; CHECK:      (func $func-2 (type $sig-2) (param $x eqref) (param $y (ref $struct))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2 (type $sig-2) (param $x anyref) (param $y anyref)
@@ -377,8 +383,8 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (local $any anyref)
-  ;; CHECK-NEXT:  (local $data (ref null data))
-  ;; CHECK-NEXT:  (local $func funcref)
+  ;; CHECK-NEXT:  (local $data dataref)
+  ;; CHECK-NEXT:  (local $i31 i31ref)
   ;; CHECK-NEXT:  (call $func-1
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (local.get $data)
@@ -391,8 +397,8 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
-  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:  (call_ref $sig-2
+  ;; CHECK-NEXT:   (local.get $i31)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:   (ref.func $func-2)
   ;; CHECK-NEXT:  )
@@ -400,7 +406,7 @@
   (func $caller
     (local $any (ref null any))
     (local $data (ref null data))
-    (local $func (ref null func))
+    (local $i31 (ref null i31))
 
     (call $func-1
       (struct.new $struct)
@@ -415,7 +421,7 @@
       (struct.new $struct)
     )
     (call_ref
-      (local.get $func)
+      (local.get $i31)
       (struct.new $struct)
       (ref.func $func-2)
     )
@@ -479,7 +485,7 @@
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $func
-  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
@@ -521,7 +527,7 @@
   )
 
   ;; CHECK:      (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
-  ;; CHECK-NEXT:  (ref.null any)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
     (ref.null any)
@@ -545,7 +551,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref $struct))
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call_ref
+  ;; CHECK-NEXT:    (call_ref $sig-can-refine
   ;; CHECK-NEXT:     (ref.func $func-can-refine)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
@@ -577,12 +583,13 @@
 )
 
 (module
+  ;; CHECK:      (type $sig (func_subtype (result (ref null $struct)) func))
+
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
   ;; This signature has multiple functions using it, and some of them have nulls
   ;; which should be updated when we refine.
-  ;; CHECK:      (type $sig (func_subtype (result (ref null $struct)) func))
   (type $sig (func_subtype (result anyref) func))
 
   ;; CHECK:      (func $func-1 (type $sig) (result (ref null $struct))
@@ -593,14 +600,14 @@
   )
 
   ;; CHECK:      (func $func-2 (type $sig) (result (ref null $struct))
-  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $func-2 (type $sig) (result anyref)
     (ref.null any)
   )
 
   ;; CHECK:      (func $func-3 (type $sig) (result (ref null $struct))
-  ;; CHECK-NEXT:  (ref.null $struct)
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $func-3 (type $sig) (result anyref)
     (ref.null eq)
@@ -610,7 +617,7 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
@@ -688,13 +695,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (call $foo
-  ;; CHECK-NEXT:    (block $block
+  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (ref.null eq)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -724,14 +731,14 @@
 ;; Do not modify the types used on imported functions (until the spec and VM
 ;; support becomes stable).
 (module
-  ;; CHECK:      (type $ref?|data|_=>_none (func_subtype (param (ref null data)) func))
+  ;; CHECK:      (type $dataref_=>_none (func_subtype (param dataref) func))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
   ;; CHECK:      (type $struct (struct_subtype  data))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (import "a" "b" (func $import (param (ref null data))))
+  ;; CHECK:      (import "a" "b" (func $import (param dataref)))
   (import "a" "b" (func $import (param (ref null data))))
 
   ;; CHECK:      (func $test (type $none_=>_none)

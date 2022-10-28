@@ -79,7 +79,9 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func, HeapType type)
-    : func(func), type(type, NonNullable) {}
+    : func(func), type(type, NonNullable) {
+    assert(type.isSignature());
+  }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -90,21 +92,8 @@ public:
   bool isFunction() const { return type.isFunction(); }
   bool isData() const { return type.isData(); }
 
-  bool isNull() const {
-    if (type.isNullable()) {
-      if (type.isFunction()) {
-        return func.isNull();
-      }
-      if (isData()) {
-        return !gcData;
-      }
-      if (type.getHeapType() == HeapType::i31) {
-        return i32 == 0;
-      }
-      return true;
-    }
-    return false;
-  }
+  bool isNull() const { return type.isNull(); }
+
   bool isZero() const {
     switch (type.getBasic()) {
       case Type::i32:
@@ -239,7 +228,7 @@ public:
     }
   }
   static Literal makeNull(HeapType type) {
-    return Literal(Type(type, Nullable));
+    return Literal(Type(type.getBottom(), Nullable));
   }
   static Literal makeFunc(Name func, HeapType type) {
     return Literal(func, type);
@@ -249,6 +238,28 @@ public:
     lit.i32 = value | 0x80000000;
     return lit;
   }
+  // Wasm has nondeterministic rules for NaN propagation in some operations. For
+  // example. f32.neg is deterministic and just flips the sign, even of a NaN,
+  // but f32.add is nondeterministic, and if one or more of the inputs is a NaN,
+  // then
+  //
+  //  * if all NaNs are canonical, the output is some arbitrary canonical NaN
+  //  * otherwise the output is some arbitrary arithmetic NaN
+  //
+  // (canonical = NaN payload is 1000..000; arithmetic: 1???..???, that is, the
+  // high bit is 1 and all others can be 0 or 1)
+  //
+  // For many things we don't need to care, and can just do a normal C++ add for
+  // an f32.add, for example - the wasm rules are specified so that things like
+  // that just work (in order for such math to be fast). However, for our
+  // optimizer, it is useful to "standardize" NaNs when there is nondeterminism.
+  // That is, when there are multiple valid outputs, it's nice to emit the same
+  // one consistently, so that it doesn't look like the optimization changed
+  // something. In other words, if the valid output of an expression is a set of
+  // valid NaNs, and after optimization the output is still that same set, then
+  // the optimization is valid. And if the interpreter picks the same NaN in
+  // both cases from that identical set then nothing looks wrong to the fuzzer.
+  static Literal standardizeNaN(const Literal& input);
 
   Literal castToF32();
   Literal castToF64();

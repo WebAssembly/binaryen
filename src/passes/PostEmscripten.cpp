@@ -46,7 +46,9 @@ struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
 
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SegmentRemover(segment); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<SegmentRemover>(segment);
+  }
 
   void visitMemoryInit(MemoryInit* curr) {
     if (segment == curr->segment) {
@@ -182,13 +184,17 @@ static void removeData(Module& wasm,
           << startAddress << ") and " << end_sym << " (" << endAddress << ")";
 }
 
-cashew::IString EM_JS_PREFIX("__em_js__");
+IString EM_JS_PREFIX("__em_js__");
+IString EM_JS_DEPS_PREFIX("__em_lib_deps_");
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
   std::vector<Export> toRemove;
 
   void visitExport(Export* curr) {
-    if (curr->name.startsWith(EM_JS_PREFIX.str)) {
+    if (curr->name.startsWith(EM_JS_PREFIX)) {
+      toRemove.push_back(*curr);
+    }
+    if (curr->name.startsWith(EM_JS_DEPS_PREFIX)) {
       toRemove.push_back(*curr);
     }
   }
@@ -197,26 +203,30 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
 } // namespace
 
 struct PostEmscripten : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    removeExports(runner, *module);
-    removeEmJsExports(runner, *module);
+  void run(Module* module) override {
+    removeExports(*module);
+    removeEmJsExports(*module);
     // Optimize exceptions
-    optimizeExceptions(runner, module);
+    optimizeExceptions(module);
   }
 
-  void removeExports(PassRunner* runner, Module& module) {
+  void removeExports(Module& module) {
     std::vector<Address> segmentOffsets; // segment index => address offset
     calcSegmentOffsets(module, segmentOffsets);
 
     removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
     removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
+    removeData(
+      module, segmentOffsets, "__start_em_lib_deps", "__stop_em_lib_deps");
     module.removeExport("__start_em_asm");
     module.removeExport("__stop_em_asm");
     module.removeExport("__start_em_js");
     module.removeExport("__stop_em_js");
+    module.removeExport("__start_em_lib_deps");
+    module.removeExport("__stop_em_lib_deps");
   }
 
-  void removeEmJsExports(PassRunner* runner, Module& module) {
+  void removeEmJsExports(Module& module) {
     EmJsWalker walker;
     walker.walkModule(&module);
     for (const Export& exp : walker.toRemove) {
@@ -233,7 +243,7 @@ struct PostEmscripten : public Pass {
   // An invoke is a call to JS with a function pointer; JS does a try-catch
   // and calls the pointer, catching and reporting any error. If we know no
   // exception will be thrown, we can simply skip the invoke.
-  void optimizeExceptions(PassRunner* runner, Module* module) {
+  void optimizeExceptions(Module* module) {
     // First, check if this code even uses invokes.
     bool hasInvokes = false;
     for (auto& imp : module->functions) {
@@ -277,7 +287,9 @@ struct PostEmscripten : public Pass {
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
       bool isFunctionParallel() override { return true; }
 
-      Pass* create() override { return new OptimizeInvokes(map, flatTable); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<OptimizeInvokes>(map, flatTable);
+      }
 
       std::map<Function*, Info>& map;
       TableUtils::FlatTable& flatTable;
@@ -317,7 +329,7 @@ struct PostEmscripten : public Pass {
         }
       }
     };
-    OptimizeInvokes(analyzer.map, flatTable).run(runner, module);
+    OptimizeInvokes(analyzer.map, flatTable).run(getPassRunner(), module);
   }
 };
 

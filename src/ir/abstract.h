@@ -34,7 +34,6 @@ enum Op {
   Mul,
   DivU,
   DivS,
-  Rem,
   RemU,
   RemS,
   Shl,
@@ -45,6 +44,7 @@ enum Op {
   And,
   Or,
   Xor,
+  CopySign,
   // Relational
   EqZ,
   Eq,
@@ -261,6 +261,8 @@ inline BinaryOp getBinary(Type type, Op op) {
           return DivFloat32;
         case DivS:
           return DivFloat32;
+        case CopySign:
+          return CopySignFloat32;
         case Eq:
           return EqFloat32;
         case Ne:
@@ -282,6 +284,8 @@ inline BinaryOp getBinary(Type type, Op op) {
           return DivFloat64;
         case DivS:
           return DivFloat64;
+        case CopySign:
+          return CopySignFloat64;
         case Eq:
           return EqFloat64;
         case Ne:

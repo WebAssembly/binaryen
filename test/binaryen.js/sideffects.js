@@ -17,6 +17,7 @@ console.log("SideEffects.TrapsNeverHappen=" + binaryen.SideEffects.TrapsNeverHap
 console.log("SideEffects.Any=" + binaryen.SideEffects.Any);
 
 var module = new binaryen.Module();
+module.setMemory(1, 1, null);
 assert(
   binaryen.getSideEffects(
     module.i32.const(1),

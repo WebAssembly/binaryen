@@ -343,7 +343,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types', 'gc'])
         disassembly = self.disassemble(filename)
-        self.assertIn('anyref', disassembly)
+        self.assertIn('externref', disassembly)
         self.assertIn('eqref', disassembly)
 
     def test_superset(self):
@@ -395,8 +395,8 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-multivalue',
             '--enable-gc',
             '--enable-memory64',
-            '--enable-typed-function-references',
             '--enable-relaxed-simd',
             '--enable-extended-const',
             '--enable-strings',
+            '--enable-multi-memories',
         ], p2.stdout.splitlines())

@@ -117,7 +117,9 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new RemoveUnusedBrs; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<RemoveUnusedBrs>();
+  }
 
   bool anotherCycle;
 
@@ -203,11 +205,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (skip > 0) {
           flows.resize(size - skip);
         }
-        // drop a nop at the end of a block, which prevents a value flowing
-        while (list.size() > 0 && list.back()->is<Nop>()) {
-          list.resize(list.size() - 1);
-          self->anotherCycle = true;
-        }
+      }
+      // Drop a nop at the end of a block, which prevents a value flowing. Note
+      // that this is worth doing regardless of whether we have a name on this
+      // block or not (which the if right above us checks) - such a nop is
+      // always unneeded and can limit later optimizations.
+      while (list.size() > 0 && list.back()->is<Nop>()) {
+        list.resize(list.size() - 1);
+        self->anotherCycle = true;
       }
       // A value flowing is only valid if it is a value that the block actually
       // flows out. If it is never reached, it does not flow out, and may be

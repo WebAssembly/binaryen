@@ -28,7 +28,10 @@
 namespace wasm {
 
 struct DuplicateImportElimination : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  // This pass does not alter function contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override {
     ImportInfo imports(*module);
     std::map<Name, Name> replacements;
     std::map<std::pair<Name, Name>, Name> seen;
@@ -51,7 +54,7 @@ struct DuplicateImportElimination : public Pass {
     }
     if (!replacements.empty()) {
       module->updateMaps();
-      OptUtils::replaceFunctions(runner, *module, replacements);
+      OptUtils::replaceFunctions(getPassRunner(), *module, replacements);
       for (auto name : toRemove) {
         module->removeFunction(name);
       }

@@ -15,37 +15,38 @@
  ;; NOMNL:      (type $B (struct_subtype (field (ref null $D)) $A))
  (type $B (struct_subtype (field (ref null $D)) $A))
 
+ ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
+
  ;; CHECK:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
  ;; NOMNL:      (type $C (struct_subtype (field (mut (ref $A))) data))
 
  ;; NOMNL:      (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
  (type $D (struct_subtype (field (mut (ref $A))) (field (mut (ref $A))) $C))
 
- ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
  (type $C (struct (field (mut (ref $A)))))
 
 
- ;; CHECK:      (func $foo (param $a (ref null $A)) (result (ref null $A))
+ ;; CHECK:      (func $foo (param $a (ref null $A)) (param $b (ref null $B)) (result (ref null $A))
  ;; CHECK-NEXT:  (select (result (ref null $A))
  ;; CHECK-NEXT:   (local.get $a)
- ;; CHECK-NEXT:   (ref.null $B)
+ ;; CHECK-NEXT:   (local.get $b)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $foo (type $ref?|$A|_=>_ref?|$A|) (param $a (ref null $A)) (result (ref null $A))
+ ;; NOMNL:      (func $foo (type $ref?|$A|_ref?|$B|_=>_ref?|$A|) (param $a (ref null $A)) (param $b (ref null $B)) (result (ref null $A))
  ;; NOMNL-NEXT:  (select (result (ref null $A))
  ;; NOMNL-NEXT:   (local.get $a)
- ;; NOMNL-NEXT:   (ref.null $B)
+ ;; NOMNL-NEXT:   (local.get $b)
  ;; NOMNL-NEXT:   (i32.const 0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
- (func $foo (param $a (ref null $A)) (result (ref null $A))
+ (func $foo (param $a (ref null $A)) (param $b (ref null $B)) (result (ref null $A))
   ;; the select should have type $A
   (select (result (ref null $A))
    ;; one arm has type $A
    (local.get $a)
    ;; one arm has type $B (a subtype of $A)
-   (ref.null $B)
+   (local.get $b)
    (i32.const 0)
   )
  )

@@ -41,13 +41,16 @@ namespace wasm {
 namespace {
 
 struct SignatureRefining : public Pass {
+  // Only changes heap types and parameter types (but not locals).
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // Maps each heap type to the possible refinement of the types in their
   // signatures. We will fill this during analysis and then use it while doing
   // an update of the types. If a type has no improvement that we can find, it
   // will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -241,13 +244,19 @@ struct SignatureRefining : public Pass {
     struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
       bool isFunctionParallel() override { return true; }
 
+      // Updating parameter types cannot affect validation (only updating var
+      // types types might).
+      bool requiresNonNullableLocalFixups() override { return false; }
+
       SignatureRefining& parent;
       Module& wasm;
 
       CodeUpdater(SignatureRefining& parent, Module& wasm)
         : parent(parent), wasm(wasm) {}
 
-      CodeUpdater* create() override { return new CodeUpdater(parent, wasm); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<CodeUpdater>(parent, wasm);
+      }
 
       void doWalkFunction(Function* func) {
         auto iter = parent.newSignatures.find(func->type);
@@ -268,7 +277,7 @@ struct SignatureRefining : public Pass {
         }
       }
     };
-    CodeUpdater(*this, *module).run(runner, module);
+    CodeUpdater(*this, *module).run(getPassRunner(), module);
 
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
@@ -276,7 +285,7 @@ struct SignatureRefining : public Pass {
     if (refinedResults) {
       // After return types change we need to propagate.
       // TODO: we could do this only in relevant functions perhaps
-      ReFinalize().run(runner, module);
+      ReFinalize().run(getPassRunner(), module);
     }
   }
 };

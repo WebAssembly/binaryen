@@ -63,7 +63,9 @@ struct RedundantSetElimination
                                 Info>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new RedundantSetElimination(); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<RedundantSetElimination>();
+  }
 
   Index numLocals;
 

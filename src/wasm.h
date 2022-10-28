@@ -30,6 +30,7 @@
 #include <map>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "literal.h"
@@ -568,6 +569,8 @@ enum RefAsOp {
   RefAsFunc,
   RefAsData,
   RefAsI31,
+  ExternInternalize,
+  ExternExternalize,
 };
 
 enum BrOnOp {
@@ -744,6 +747,15 @@ public:
 
   Expression(Id id) : _id(id) {}
 
+protected:
+  // An expression cannot be constructed without knowing what kind of expression
+  // it should be.
+  Expression(const Expression& other) = default;
+  Expression(Expression&& other) = default;
+  Expression& operator=(Expression& other) = default;
+  Expression& operator=(Expression&& other) = default;
+
+public:
   void finalize() {}
 
   template<class T> bool is() const {
@@ -969,6 +981,7 @@ public:
   Address align;
   bool isAtomic;
   Expression* ptr;
+  Name memory;
 
   // type must be set during creation, cannot be inferred
 
@@ -987,6 +1000,7 @@ public:
   Expression* ptr;
   Expression* value;
   Type valueType;
+  Name memory;
 
   void finalize();
 };
@@ -1001,6 +1015,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* value;
+  Name memory;
 
   void finalize();
 };
@@ -1015,6 +1030,7 @@ public:
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
+  Name memory;
 
   void finalize();
 };
@@ -1029,6 +1045,7 @@ public:
   Expression* expected;
   Expression* timeout;
   Type expectedType;
+  Name memory;
 
   void finalize();
 };
@@ -1041,6 +1058,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* notifyCount;
+  Name memory;
 
   void finalize();
 };
@@ -1129,6 +1147,7 @@ public:
   Address offset;
   Address align;
   Expression* ptr;
+  Name memory;
 
   Index getMemBytes();
   void finalize();
@@ -1146,6 +1165,7 @@ public:
   uint8_t index;
   Expression* ptr;
   Expression* vec;
+  Name memory;
 
   bool isStore();
   bool isLoad() { return !isStore(); }
@@ -1162,6 +1182,7 @@ public:
   Expression* dest;
   Expression* offset;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1184,6 +1205,8 @@ public:
   Expression* dest;
   Expression* source;
   Expression* size;
+  Name destMemory;
+  Name sourceMemory;
 
   void finalize();
 };
@@ -1196,6 +1219,7 @@ public:
   Expression* dest;
   Expression* value;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1279,6 +1303,7 @@ public:
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1291,6 +1316,7 @@ public:
 
   Expression* delta = nullptr;
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1955,6 +1981,7 @@ public:
 
   Name getLocalName(Index index);
   Index getLocalIndex(Name name);
+  bool hasLocalIndex(Name name) const;
   Index getVarIndexBase();
   Type getLocalType(Index index);
 
@@ -1990,7 +2017,7 @@ public:
 class ElementSegment : public Named {
 public:
   Name table;
-  Expression* offset;
+  Expression* offset = nullptr;
   Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
@@ -2029,6 +2056,7 @@ public:
 
 class DataSegment : public Named {
 public:
+  Name memory;
   bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
@@ -2042,18 +2070,15 @@ public:
   static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
-  bool exists = false;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
 
   bool shared = false;
   Type indexType = Type::i32;
 
-  Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return indexType == Type::i64; }
   void clear() {
-    exists = false;
     name = "";
     initial = 0;
     max = kMaxSize32;
@@ -2100,10 +2125,10 @@ public:
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<Memory>> memories;
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
-  Memory memory;
   Name start;
 
   std::vector<UserSection> userSections;
@@ -2135,6 +2160,7 @@ private:
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, Memory*> memoriesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, DataSegment*> dataSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
@@ -2147,12 +2173,14 @@ public:
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
+  Memory* getMemory(Name name);
   DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
+  Memory* getMemoryOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
   DataSegment* getDataSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
@@ -2168,6 +2196,7 @@ public:
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  Memory* addMemory(std::unique_ptr<Memory>&& curr);
   DataSegment* addDataSegment(std::unique_ptr<DataSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Tag* addTag(std::unique_ptr<Tag>&& curr);
@@ -2178,6 +2207,7 @@ public:
   void removeFunction(Name name);
   void removeTable(Name name);
   void removeElementSegment(Name name);
+  void removeMemory(Name name);
   void removeDataSegment(Name name);
   void removeGlobal(Name name);
   void removeTag(Name name);
@@ -2186,10 +2216,12 @@ public:
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
+  void removeMemories(std::function<bool(Memory*)> pred);
   void removeDataSegments(std::function<bool(DataSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);
 
+  void updateDataSegmentsMap();
   void updateMaps();
 
   void clearDebugInfo();

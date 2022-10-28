@@ -28,7 +28,7 @@
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (throw $e-i32
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -60,11 +60,11 @@
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (throw $e-i32
-  ;; CHECK-NEXT:     (block $block (result i32)
-  ;; CHECK-NEXT:      (block $block0 (result i32)
-  ;; CHECK-NEXT:       (block $block1 (result i32)
-  ;; CHECK-NEXT:        (block $block2 (result i32)
-  ;; CHECK-NEXT:         (block $block3 (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (block (result i32)
+  ;; CHECK-NEXT:         (block (result i32)
   ;; CHECK-NEXT:          (local.get $0)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -177,12 +177,10 @@
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-i32
-  ;; CHECK-NEXT:    (block $block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (pop i32)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $helper)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $helper)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -331,7 +329,7 @@
   ;; CHECK-NEXT:     (pop i32 f32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (throw $e-i32
-  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (local.set $x
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
@@ -357,7 +355,7 @@
   )
 
   ;; CHECK:      (func $pop-non-defaultable-type-within-block
-  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $0 (ref $struct.A))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -367,10 +365,8 @@
   ;; CHECK-NEXT:     (pop (ref $struct.A))
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (throw $e-struct.A
-  ;; CHECK-NEXT:     (block $block (result (ref $struct.A))
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

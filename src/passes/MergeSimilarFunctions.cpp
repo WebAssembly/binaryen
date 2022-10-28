@@ -174,7 +174,7 @@ struct EquivalentClass {
 struct MergeSimilarFunctions : public Pass {
   bool invalidatesDWARF() override { return true; }
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     std::vector<EquivalentClass> classes;
     collectEquivalentClasses(classes, module);
     std::sort(
@@ -202,8 +202,7 @@ struct MergeSimilarFunctions : public Pass {
 
   // Parameterize direct calls if the module supports func ref values.
   bool isCallIndirectionEnabled(Module* module) const {
-    return module->features.hasReferenceTypes() &&
-           module->features.hasTypedFunctionReferences();
+    return module->features.hasReferenceTypes() && module->features.hasGC();
   }
   bool areInEquvalentClass(Function* lhs, Function* rhs, Module* module);
   void collectEquivalentClasses(std::vector<EquivalentClass>& classes,
@@ -527,8 +526,9 @@ bool EquivalentClass::hasMergeBenefit(Module* module,
 
 Function* EquivalentClass::createShared(Module* module,
                                         const std::vector<ParamInfo>& params) {
-  Name fnName = Names::getValidFunctionName(
-    *module, std::string("byn$mgfn-shared$") + primaryFunction->name.str);
+  Name fnName = Names::getValidFunctionName(*module,
+                                            std::string("byn$mgfn-shared$") +
+                                              primaryFunction->name.toString());
   Builder builder(*module);
   std::vector<Type> sigParams;
   Index extraParamBase = primaryFunction->getNumParams();

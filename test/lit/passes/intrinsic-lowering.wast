@@ -17,9 +17,9 @@
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe-n (param funcref)))
 
-  ;; CHECK:      (func $test (result i32)
+  ;; CHECK:      (func $test (param $none (ref null $none))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $test)
+  ;; CHECK-NEXT:   (call $make-i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $dif
@@ -27,19 +27,22 @@
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref
-  ;; CHECK-NEXT:   (ref.null $none)
+  ;; CHECK-NEXT:  (call_ref $none
+  ;; CHECK-NEXT:   (local.get $none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
-  (func $test (result i32)
+  (func $test (param $none (ref null $none))
     ;; These will be lowered into calls.
-    (drop (call $cwe-v (ref.func $test)))
+    (drop (call $cwe-v (ref.func $make-i32)))
     (drop (call $cwe-dif (f64.const 3.14159) (i32.const 42) (ref.func $dif)))
     ;; The last must be a call_ref, as we don't see a constant ref.func
-    (call $cwe-n
-      (ref.null $none)
-    )
+    (call $cwe-n (local.get $none))
+  )
+
+  ;; CHECK:      (func $make-i32 (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $make-i32 (result i32)
     (i32.const 1)
   )
 

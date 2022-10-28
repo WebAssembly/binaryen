@@ -2,9 +2,9 @@
 ;; RUN: wasm-opt %s --rse --enable-gc-nn-locals -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $B (struct (field dataref)))
+ ;; CHECK:      (type $B (struct (field (ref data))))
 
- ;; CHECK:      (type $A (struct (field (ref null data))))
+ ;; CHECK:      (type $A (struct (field dataref)))
  (type $A (struct_subtype (field (ref null data)) data))
 
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-

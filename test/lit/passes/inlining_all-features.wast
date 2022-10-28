@@ -135,29 +135,19 @@
  (export "func_36_invoker" (func $1))
 
  (func $0
-  (return_call_ref
+  (return_call_ref $none_=>_none
    (ref.null $none_=>_none)
   )
  )
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (block $__inlined_func$0
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (call_ref
- ;; CHECK-NEXT:     (ref.null $none_=>_none)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $__inlined_func$0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (br $__inlined_func$0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $1 (type $none_=>_none)
  ;; NOMNL-NEXT:  (block $__inlined_func$0
- ;; NOMNL-NEXT:   (block
- ;; NOMNL-NEXT:    (call_ref
- ;; NOMNL-NEXT:     (ref.null $none_=>_none)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:    (br $__inlined_func$0)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (unreachable)
  ;; NOMNL-NEXT:   (br $__inlined_func$0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
@@ -177,14 +167,12 @@
  ;; CHECK:      (elem declare func $1)
 
  ;; CHECK:      (func $1 (result (ref func))
- ;; CHECK-NEXT:  (local $0 funcref)
+ ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (ref.func $1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (type $none_=>_ref|func| (func_subtype (result (ref func)) func))
@@ -192,14 +180,12 @@
  ;; NOMNL:      (elem declare func $1)
 
  ;; NOMNL:      (func $1 (type $none_=>_ref|func|) (result (ref func))
- ;; NOMNL-NEXT:  (local $0 funcref)
+ ;; NOMNL-NEXT:  (local $0 (ref func))
  ;; NOMNL-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; NOMNL-NEXT:   (local.set $0
  ;; NOMNL-NEXT:    (ref.func $1)
  ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:   (ref.as_non_null
- ;; NOMNL-NEXT:    (local.get $0)
- ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (local.get $0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $1 (result (ref func))

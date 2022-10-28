@@ -151,7 +151,7 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref
+;; CHECK-NEXT:  (call_ref $type$0
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (nop)
@@ -287,7 +287,7 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref
+;; CHECK-NEXT:  (call_ref $type$0
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (nop)
@@ -309,7 +309,7 @@
 ;; NOMNL-NEXT:  (nop)
 ;; NOMNL-NEXT:  (nop)
 ;; NOMNL-NEXT:  (nop)
-;; NOMNL-NEXT:  (call_ref
+;; NOMNL-NEXT:  (call_ref $type$1
 ;; NOMNL-NEXT:   (local.get $0)
 ;; NOMNL-NEXT:  )
 ;; NOMNL-NEXT:  (nop)

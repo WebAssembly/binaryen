@@ -30,10 +30,45 @@
 #include <limits>
 #include <vector>
 
-#include "istring.h"
+#include "support/istring.h"
 #include "support/safe_integer.h"
 
 namespace cashew {
+
+using IString = wasm::IString;
+
+// IStringSet
+
+class IStringSet : public std::unordered_set<IString> {
+  std::vector<char> data;
+
+public:
+  IStringSet() = default;
+  IStringSet(const char* init) { // comma-delimited list
+    int size = strlen(init) + 1;
+    data.resize(size);
+    char* curr = &data[0];
+    strncpy(curr, init, size);
+    while (1) {
+      char* end = strchr(curr, ' ');
+      if (end) {
+        *end = 0;
+      }
+      insert(curr);
+      if (!end) {
+        break;
+      }
+      curr = end + 1;
+    }
+  }
+
+  bool has(const IString& str) { return count(str) > 0; }
+};
+
+class IOrderedStringSet : public std::set<IString> {
+public:
+  bool has(const IString& str) { return count(str) > 0; }
+};
 
 // common strings
 
@@ -233,11 +268,11 @@ template<class NodeRef, class Builder> class Parser {
           src++;
         }
         if (*src == 0) {
-          str.set(start);
+          str = IString(start);
         } else {
           char temp = *src;
           *src = 0;
-          str.set(start, false);
+          str = IString(start, false);
           *src = temp;
         }
         type = keywords.has(str) ? KEYWORD : IDENT;
@@ -333,11 +368,11 @@ template<class NodeRef, class Builder> class Parser {
           default:
             abort();
         }
-        size = strlen(str.str);
+        size = str.size();
 #ifndef NDEBUG
         char temp = start[size];
         start[size] = 0;
-        assert(strcmp(str.str, start) == 0);
+        assert(str.str == start);
         start[size] = temp;
 #endif
         type = OPERATOR;
@@ -346,13 +381,13 @@ template<class NodeRef, class Builder> class Parser {
         type = SEPARATOR;
         char temp = src[1];
         src[1] = 0;
-        str.set(src, false);
+        str = IString(src, false);
         src[1] = temp;
         src++;
       } else if (*src == '"' || *src == '\'') {
         char* end = strchr(src + 1, *src);
         *end = 0;
-        str.set(src + 1);
+        str = IString(src + 1);
         src = end + 1;
         type = STRING;
       } else {

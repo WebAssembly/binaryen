@@ -30,19 +30,25 @@ namespace wasm::MemoryUtils {
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
+// Does not yet support multi-memories
 bool flatten(Module& wasm);
 
-// Ensures that the memory exists (of minimal size).
-inline void ensureExists(Memory& memory) {
-  if (!memory.exists) {
-    memory.exists = true;
-    memory.initial = memory.max = 1;
+// Ensures that a memory exists (of minimal size).
+inline void ensureExists(Module* wasm) {
+  if (wasm->memories.empty()) {
+    auto memory = Builder::makeMemory("0");
+    memory->initial = memory->max = 1;
+    wasm->addMemory(std::move(memory));
   }
 }
 
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
+// Does not yet support multi-memories
 inline bool ensureLimitedSegments(Module& module) {
+  if (module.memories.size() > 1) {
+    return false;
+  }
   auto& dataSegments = module.dataSegments;
   if (dataSegments.size() <= WebLimitations::MaxDataSegments) {
     return true;
@@ -136,6 +142,7 @@ inline bool ensureLimitedSegments(Module& module) {
     c->type = Type::i32;
 
     auto combined = Builder::makeDataSegment();
+    combined->memory = module.memories[0]->name;
     combined->offset = c;
     for (Index j = i; j < dataSegments.size(); j++) {
       auto& segment = dataSegments[j];
@@ -156,6 +163,7 @@ inline bool ensureLimitedSegments(Module& module) {
   }
 
   dataSegments.swap(mergedSegments);
+  module.updateDataSegmentsMap();
   return true;
 }
 } // namespace wasm::MemoryUtils

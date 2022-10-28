@@ -34,7 +34,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     if (curr->align == 0 || curr->align == curr->bytes) {
       return curr;
     }
-    auto indexType = getModule()->memory.indexType;
+    auto mem = getModule()->getMemory(curr->memory);
+    auto indexType = mem->indexType;
     Builder builder(*getModule());
     assert(curr->type == Type::i32);
     auto temp = builder.addVar(getFunction(), indexType);
@@ -47,7 +48,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                          curr->offset,
                          1,
                          builder.makeLocalGet(temp, indexType),
-                         Type::i32),
+                         Type::i32,
+                         curr->memory),
         builder.makeBinary(
           ShlInt32,
           builder.makeLoad(1,
@@ -55,7 +57,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                            curr->offset + 1,
                            1,
                            builder.makeLocalGet(temp, indexType),
-                           Type::i32),
+                           Type::i32,
+                           curr->memory),
           builder.makeConst(int32_t(8))));
       if (curr->signed_) {
         ret = Bits::makeSignExt(ret, 2, *getModule());
@@ -71,7 +74,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              curr->offset,
                              1,
                              builder.makeLocalGet(temp, indexType),
-                             Type::i32),
+                             Type::i32,
+                             curr->memory),
             builder.makeBinary(
               ShlInt32,
               builder.makeLoad(1,
@@ -79,7 +83,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                curr->offset + 1,
                                1,
                                builder.makeLocalGet(temp, indexType),
-                               Type::i32),
+                               Type::i32,
+                               curr->memory),
               builder.makeConst(int32_t(8)))),
           builder.makeBinary(
             OrInt32,
@@ -90,7 +95,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                curr->offset + 2,
                                1,
                                builder.makeLocalGet(temp, indexType),
-                               Type::i32),
+                               Type::i32,
+                               curr->memory),
               builder.makeConst(int32_t(16))),
             builder.makeBinary(
               ShlInt32,
@@ -99,7 +105,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                curr->offset + 3,
                                1,
                                builder.makeLocalGet(temp, indexType),
-                               Type::i32),
+                               Type::i32,
+                               curr->memory),
               builder.makeConst(int32_t(24)))));
       } else if (curr->align == 2) {
         ret = builder.makeBinary(
@@ -109,7 +116,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                            curr->offset,
                            2,
                            builder.makeLocalGet(temp, indexType),
-                           Type::i32),
+                           Type::i32,
+                           curr->memory),
           builder.makeBinary(
             ShlInt32,
             builder.makeLoad(2,
@@ -117,7 +125,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              curr->offset + 2,
                              2,
                              builder.makeLocalGet(temp, indexType),
-                             Type::i32),
+                             Type::i32,
+                             curr->memory),
             builder.makeConst(int32_t(16))));
       } else {
         WASM_UNREACHABLE("invalid alignment");
@@ -135,7 +144,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     }
     Builder builder(*getModule());
     assert(curr->value->type == Type::i32);
-    auto indexType = getModule()->memory.indexType;
+    auto mem = getModule()->getMemory(curr->memory);
+    auto indexType = mem->indexType;
     auto tempPtr = builder.addVar(getFunction(), indexType);
     auto tempValue = builder.addVar(getFunction(), Type::i32);
     auto* block =
@@ -148,7 +158,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                           1,
                           builder.makeLocalGet(tempPtr, indexType),
                           builder.makeLocalGet(tempValue, Type::i32),
-                          Type::i32));
+                          Type::i32,
+                          curr->memory));
       block->list.push_back(builder.makeStore(
         1,
         curr->offset + 1,
@@ -157,7 +168,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         builder.makeBinary(ShrUInt32,
                            builder.makeLocalGet(tempValue, Type::i32),
                            builder.makeConst(int32_t(8))),
-        Type::i32));
+        Type::i32,
+        curr->memory));
     } else if (curr->bytes == 4) {
       if (curr->align == 1) {
         block->list.push_back(
@@ -166,7 +178,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                             1,
                             builder.makeLocalGet(tempPtr, indexType),
                             builder.makeLocalGet(tempValue, Type::i32),
-                            Type::i32));
+                            Type::i32,
+                            curr->memory));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 1,
@@ -175,7 +188,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(8))),
-          Type::i32));
+          Type::i32,
+          curr->memory));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 2,
@@ -184,7 +198,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(16))),
-          Type::i32));
+          Type::i32,
+          curr->memory));
         block->list.push_back(builder.makeStore(
           1,
           curr->offset + 3,
@@ -193,7 +208,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(24))),
-          Type::i32));
+          Type::i32,
+          curr->memory));
       } else if (curr->align == 2) {
         block->list.push_back(
           builder.makeStore(2,
@@ -201,7 +217,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                             2,
                             builder.makeLocalGet(tempPtr, indexType),
                             builder.makeLocalGet(tempValue, Type::i32),
-                            Type::i32));
+                            Type::i32,
+                            curr->memory));
         block->list.push_back(builder.makeStore(
           2,
           curr->offset + 2,
@@ -210,7 +227,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(16))),
-          Type::i32));
+          Type::i32,
+          curr->memory));
       } else {
         WASM_UNREACHABLE("invalid alignment");
       }
@@ -256,7 +274,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           break;
         }
         // Load two 32-bit pieces, and combine them.
-        auto indexType = getModule()->memory.indexType;
+        auto mem = getModule()->getMemory(curr->memory);
+        auto indexType = mem->indexType;
         auto temp = builder.addVar(getFunction(), indexType);
         auto* set = builder.makeLocalSet(temp, curr->ptr);
         Expression* low =
@@ -265,7 +284,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                         curr->offset,
                                         curr->align,
                                         builder.makeLocalGet(temp, indexType),
-                                        Type::i32));
+                                        Type::i32,
+                                        curr->memory));
         low = builder.makeUnary(ExtendUInt32, low);
         // Note that the alignment is assumed to be the same here, even though
         // we add an offset of 4. That is because this is an unaligned load, so
@@ -277,7 +297,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                         curr->offset + 4,
                                         curr->align,
                                         builder.makeLocalGet(temp, indexType),
-                                        Type::i32));
+                                        Type::i32,
+                                        curr->memory));
         high = builder.makeUnary(ExtendUInt32, high);
         high =
           builder.makeBinary(ShlInt64, high, builder.makeConst(int64_t(32)));
@@ -335,7 +356,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           value = builder.makeUnary(ReinterpretFloat64, value);
         }
         // Store as two 32-bit pieces.
-        auto indexType = getModule()->memory.indexType;
+        auto mem = getModule()->getMemory(curr->memory);
+        auto indexType = mem->indexType;
         auto tempPtr = builder.addVar(getFunction(), indexType);
         auto* setPtr = builder.makeLocalSet(tempPtr, curr->ptr);
         auto tempValue = builder.addVar(getFunction(), Type::i64);
@@ -348,7 +370,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                             curr->align,
                             builder.makeLocalGet(tempPtr, indexType),
                             low,
-                            Type::i32));
+                            Type::i32,
+                            curr->memory));
         Expression* high =
           builder.makeBinary(ShrUInt64,
                              builder.makeLocalGet(tempValue, Type::i64),
@@ -364,7 +387,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                             curr->align,
                             builder.makeLocalGet(tempPtr, indexType),
                             high,
-                            Type::i32));
+                            Type::i32,
+                            curr->memory));
         replacement = builder.makeBlock({setPtr, setValue, low, high});
         break;
     }

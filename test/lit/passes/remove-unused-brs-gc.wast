@@ -8,13 +8,15 @@
 
  ;; CHECK:      (func $br_on_non_data-1
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result anyref)
+ ;; CHECK-NEXT:   (block $any (result i31ref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br $any
- ;; CHECK-NEXT:      (ref.func $br_on_non_data-1)
+ ;; CHECK-NEXT:      (i31.new
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -22,22 +24,22 @@
   (drop
    (block $any (result anyref)
     (drop
-     ;; A function is not data, and so we should branch.
+     ;; An i31 is not data, and so we should branch.
      (br_on_non_data $any
-      (ref.func $br_on_non_data-1)
+      (i31.new (i32.const 0))
      )
     )
     (ref.null any)
    )
   )
  )
- ;; CHECK:      (func $br_on_non_data-2 (param $data dataref)
+ ;; CHECK:      (func $br_on_non_data-2 (param $data (ref data))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result anyref)
+ ;; CHECK-NEXT:   (block $any (result nullref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (local.get $data)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -55,10 +57,10 @@
   )
  )
 
- ;; CHECK:      (func $br_on-if (param $0 dataref)
+ ;; CHECK:      (func $br_on-if (param $0 (ref data))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (select (result dataref)
+ ;; CHECK-NEXT:    (select (result (ref data))
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (i32.const 0)
@@ -142,7 +144,7 @@
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br_on_cast_static $block $struct
- ;; CHECK-NEXT:     (ref.null $struct)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -189,7 +191,7 @@
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.test_static $struct
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
@@ -197,41 +199,39 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (ref.cast_static $struct
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (block $block (result anyref)
- ;; CHECK-NEXT:     (block $something (result anyref)
- ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (br_on_cast_static $something $struct
- ;; CHECK-NEXT:        (ref.null $struct)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:    (block $something (result anyref)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (br_on_cast_static $something $struct
+ ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (ref.null any)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (select (result anyref)
- ;; CHECK-NEXT:    (block $block3 (result anyref)
+ ;; CHECK-NEXT:    (block (result anyref)
  ;; CHECK-NEXT:     (block $nothing
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (br_on_null $nothing
- ;; CHECK-NEXT:        (ref.null $struct)
+ ;; CHECK-NEXT:        (ref.null none)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (ref.null any)
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

@@ -31,7 +31,6 @@
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
-using namespace cashew;
 using namespace wasm;
 
 Name ASSERT_RETURN("assert_return");
@@ -162,7 +161,7 @@ protected:
     instances[name] = instances[lastModule];
 
     Colors::green(std::cerr);
-    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.c_str()
+    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.str
               << "\"  [line: " << s.line << "]\n";
     Colors::normal(std::cerr);
   }
@@ -190,7 +189,7 @@ protected:
       return instance->getExport(base);
     }
 
-    Fatal() << "Invalid operation " << s[0]->c_str();
+    Fatal() << "Invalid operation " << s[0]->toString();
   }
 
   void parseAssertTrap(Element& s) {
@@ -284,9 +283,7 @@ protected:
           }
         }
       });
-      if (wasm.memory.imported()) {
-        reportUnknownImport(&wasm.memory);
-      }
+      ModuleUtils::iterImportedMemories(wasm, reportUnknownImport);
     }
 
     if (!invalid && id == ASSERT_TRAP) {
@@ -352,11 +349,10 @@ protected:
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
-    spectest->memory.exists = true;
-    spectest->memory.initial = 1;
-    spectest->memory.max = 2;
-    spectest->addExport(builder.makeExport(
-      "memory", spectest->memory.name, ExternalKind::Memory));
+    Memory* memory =
+      spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
+    spectest->addExport(
+      builder.makeExport("memory", memory->name, ExternalKind::Memory));
 
     modules["spectest"].swap(spectest);
     modules["spectest"]->features = FeatureSet::All;

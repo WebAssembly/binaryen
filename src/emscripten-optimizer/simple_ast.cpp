@@ -24,13 +24,11 @@ Ref& Ref::operator[](unsigned x) { return (*get())[x]; }
 
 Ref& Ref::operator[](IString x) { return (*get())[x]; }
 
-bool Ref::operator==(const char* str) {
-  return get()->isString() && !strcmp(get()->str.str, str);
+bool Ref::operator==(std::string_view str) {
+  return get()->isString() && get()->str == str;
 }
 
-bool Ref::operator!=(const char* str) {
-  return get()->isString() ? !!strcmp(get()->str.str, str) : true;
-}
+bool Ref::operator!=(std::string_view str) { return !(*this == str); }
 
 bool Ref::operator==(const IString& str) {
   return get()->isString() && get()->str == str;
@@ -81,8 +79,8 @@ void Value::stringify(std::ostream& os, bool pretty) {
   }
   switch (type) {
     case String: {
-      if (str.str) {
-        os << '"' << str.str << '"';
+      if (str) {
+        os << '"' << str << '"';
       } else {
         os << "\"(null)\"";
       }
@@ -147,7 +145,7 @@ void Value::stringify(std::ostream& os, bool pretty) {
           }
         }
         indentify();
-        os << '"' << i.first.c_str() << "\": ";
+        os << '"' << i.first << "\": ";
         i.second->stringify(os, pretty);
       }
       if (pretty) {

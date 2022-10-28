@@ -223,6 +223,7 @@ void test_recursive() {
 void test_lub() {
   std::cout << ";; Test LUBs\n";
 
+  Type ext = Type(HeapType::ext, Nullable);
   Type func = Type(HeapType::func, Nullable);
   Type any = Type(HeapType::any, Nullable);
   Type eq = Type(HeapType::eq, Nullable);
@@ -247,10 +248,11 @@ void test_lub() {
 
   {
     // Basic Types
-    for (auto other : {func, any, eq, i31, data}) {
+    for (auto other : {any, eq, i31, data}) {
       assert(LUB(any, other) == any);
+      assert(LUB(func, other) == Type::none);
+      assert(LUB(ext, other) == Type::none);
     }
-    assert(LUB(eq, func) == any);
     assert(LUB(i31, data) == eq);
   }
 
@@ -314,17 +316,17 @@ void test_lub() {
 
   {
     // Immutable fields are covariant
-    Type a(Array(Field(eq, Immutable)), Nullable);
-    Type b(Array(Field(func, Immutable)), Nullable);
-    Type lub(Array(Field(any, Immutable)), Nullable);
+    Type a(Array(Field(data, Immutable)), Nullable);
+    Type b(Array(Field(i31, Immutable)), Nullable);
+    Type lub(Array(Field(eq, Immutable)), Nullable);
     assert(LUB(a, b) == lub);
   }
 
   {
     // Depth subtyping
-    Type a(Struct({Field(eq, Immutable)}), Nullable);
-    Type b(Struct({Field(func, Immutable)}), Nullable);
-    Type lub(Struct({Field(any, Immutable)}), Nullable);
+    Type a(Struct({Field(data, Immutable)}), Nullable);
+    Type b(Struct({Field(i31, Immutable)}), Nullable);
+    Type lub(Struct({Field(eq, Immutable)}), Nullable);
     assert(LUB(a, b) == lub);
   }
 
@@ -348,11 +350,11 @@ void test_lub() {
 
   {
     // Width and depth subtyping with different suffixes
-    Type a(Struct({Field(eq, Immutable), Field(Type::i64, Immutable)}),
+    Type a(Struct({Field(data, Immutable), Field(Type::i64, Immutable)}),
            Nullable);
-    Type b(Struct({Field(func, Immutable), Field(Type::f32, Immutable)}),
+    Type b(Struct({Field(i31, Immutable), Field(Type::f32, Immutable)}),
            Nullable);
-    Type lub(Struct({Field(any, Immutable)}), Nullable);
+    Type lub(Struct({Field(eq, Immutable)}), Nullable);
     assert(LUB(a, b) == lub);
   }
 
@@ -368,9 +370,9 @@ void test_lub() {
 
   {
     // Nested structs
-    Type innerA(Struct({Field(eq, Immutable)}), Nullable);
-    Type innerB(Struct({Field(func, Immutable)}), Nullable);
-    Type innerLub(Struct({Field(any, Immutable)}), Nullable);
+    Type innerA(Struct({Field(data, Immutable)}), Nullable);
+    Type innerB(Struct({Field(i31, Immutable)}), Nullable);
+    Type innerLub(Struct({Field(eq, Immutable)}), Nullable);
     Type a(Struct({Field(innerA, Immutable)}), Nullable);
     Type b(Struct({Field(innerB, Immutable)}), Nullable);
     Type lub(Struct({Field(innerLub, Immutable)}), Nullable);
@@ -382,15 +384,15 @@ void test_lub() {
     TypeBuilder builder(2);
     Type tempA = builder.getTempRefType(builder[0], Nullable);
     Type tempB = builder.getTempRefType(builder[1], Nullable);
-    builder[0] = Struct({Field(tempB, Immutable), Field(eq, Immutable)});
-    builder[1] = Struct({Field(tempA, Immutable), Field(func, Immutable)});
+    builder[0] = Struct({Field(tempB, Immutable), Field(data, Immutable)});
+    builder[1] = Struct({Field(tempA, Immutable), Field(i31, Immutable)});
     auto built = *builder.build();
     Type a(built[0], Nullable);
     Type b(built[1], Nullable);
 
     TypeBuilder lubBuilder(1);
     Type tempLub = builder.getTempRefType(lubBuilder[0], Nullable);
-    lubBuilder[0] = Struct({Field(tempLub, Immutable), Field(any, Immutable)});
+    lubBuilder[0] = Struct({Field(tempLub, Immutable), Field(eq, Immutable)});
     built = *lubBuilder.build();
     Type lub(built[0], Nullable);
 

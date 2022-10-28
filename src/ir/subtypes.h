@@ -18,26 +18,38 @@
 #define wasm_ir_subtypes_h
 
 #include "ir/module-utils.h"
+#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
 
 // Analyze subtyping relationships and provide useful interfaces to discover
 // them.
+//
+// This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
-  SubTypes(Module& wasm) {
+  SubTypes(const std::vector<HeapType>& types) : types(types) {
     if (getTypeSystem() != TypeSystem::Nominal &&
         getTypeSystem() != TypeSystem::Isorecursive) {
       Fatal() << "SubTypes requires explicit supers";
     }
-    types = ModuleUtils::collectHeapTypes(wasm);
     for (auto type : types) {
       note(type);
     }
   }
 
-  const std::vector<HeapType>& getStrictSubTypes(HeapType type) {
-    return typeSubTypes[type];
+  SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
+
+  const std::vector<HeapType>& getStrictSubTypes(HeapType type) const {
+    assert(!type.isBasic());
+    if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
+      return iter->second;
+    }
+
+    // No entry exists. Return a canonical constant empty vec, to avoid
+    // allocation.
+    static const std::vector<HeapType> empty;
+    return empty;
   }
 
   // Get all subtypes of a type, and their subtypes and so forth, recursively.
@@ -62,6 +74,100 @@ struct SubTypes {
     return ret;
   }
 
+  // Computes the depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  //
+  // This depth ignores bottom types.
+  std::unordered_map<HeapType, Index> getMaxDepths() {
+    struct DepthSort : TopologicalSort<HeapType, DepthSort> {
+      const SubTypes& parent;
+
+      DepthSort(const SubTypes& parent) : parent(parent) {
+        for (auto type : parent.types) {
+          // The roots are types with no supertype.
+          if (!type.getSuperType()) {
+            push(type);
+          }
+        }
+      }
+
+      void pushPredecessors(HeapType type) {
+        // Things we need to process before each type are its subtypes. Once we
+        // know their depth, we can easily compute our own.
+        for (auto pred : parent.getStrictSubTypes(type)) {
+          push(pred);
+        }
+      }
+    };
+
+    std::unordered_map<HeapType, Index> depths;
+
+    for (auto type : DepthSort(*this)) {
+      // Begin with depth 0, then take into account the subtype depths.
+      Index depth = 0;
+      for (auto subType : getStrictSubTypes(type)) {
+        depth = std::max(depth, depths[subType] + 1);
+      }
+      depths[type] = depth;
+    }
+
+    // Add the max depths of basic types.
+    // TODO: update when we get structtype and arraytype
+    for (auto type : types) {
+      HeapType basic = type.isData() ? HeapType::data : HeapType::func;
+      depths[basic] = std::max(depths[basic], depths[type] + 1);
+    }
+
+    depths[HeapType::eq] = std::max(Index(1), depths[HeapType::data] + 1);
+    depths[HeapType::any] = depths[HeapType::eq] + 1;
+
+    return depths;
+  }
+
+  // Efficiently iterate on subtypes of a type, up to a particular depth (depth
+  // 0 means not to traverse subtypes, etc.). The callback function receives
+  // (type, depth).
+  template<typename F> void iterSubTypes(HeapType type, Index depth, F func) {
+    // Start by traversing the type itself.
+    func(type, 0);
+
+    if (depth == 0) {
+      // Nothing else to scan.
+      return;
+    }
+
+    // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
+    // pointers to those in our work queue to avoid allocations. See the note
+    // below on typeSubTypes for why this is safe.
+    struct Item {
+      const std::vector<HeapType>* vec;
+      Index depth;
+    };
+
+    // Real-world type hierarchies tend to have a limited depth, so try to avoid
+    // allocations in our work queue with a SmallVector.
+    SmallVector<Item, 10> work;
+
+    // Start with the subtypes of the base type. Those have depth 1.
+    work.push_back({&getStrictSubTypes(type), 1});
+
+    while (!work.empty()) {
+      auto& item = work.back();
+      work.pop_back();
+      auto currDepth = item.depth;
+      auto& currVec = *item.vec;
+      assert(currDepth <= depth);
+      for (auto type : currVec) {
+        func(type, currDepth);
+        auto* subVec = &getStrictSubTypes(type);
+        if (currDepth + 1 <= depth && !subVec->empty()) {
+          work.push_back({subVec, currDepth + 1});
+        }
+      }
+    }
+  }
+
   // All the types in the program. This is computed here anyhow, and can be
   // useful for callers to iterate on, so it is public.
   std::vector<HeapType> types;
@@ -75,6 +181,9 @@ private:
   }
 
   // Maps a type to its subtypes.
+  //
+  // After our constructor we never modify this data structure, so we can take
+  // references to the vectors here safely.
   std::unordered_map<HeapType, std::vector<HeapType>> typeSubTypes;
 };
 

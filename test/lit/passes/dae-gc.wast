@@ -21,13 +21,11 @@
   )
  )
  ;; CHECK:      (func $bar
- ;; CHECK-NEXT:  (local $0 (ref null i31))
+ ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (local.tee $0
- ;; CHECK-NEXT:     (i31.new
- ;; CHECK-NEXT:      (i32.const 2)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:   (local.tee $0
+ ;; CHECK-NEXT:    (i31.new
+ ;; CHECK-NEXT:     (i32.const 2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -36,13 +34,11 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $bar (type $none_=>_none)
- ;; NOMNL-NEXT:  (local $0 (ref null i31))
+ ;; NOMNL-NEXT:  (local $0 i31ref)
  ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (ref.as_non_null
- ;; NOMNL-NEXT:    (local.tee $0
- ;; NOMNL-NEXT:     (i31.new
- ;; NOMNL-NEXT:      (i32.const 2)
- ;; NOMNL-NEXT:     )
+ ;; NOMNL-NEXT:   (local.tee $0
+ ;; NOMNL-NEXT:    (i31.new
+ ;; NOMNL-NEXT:     (i32.const 2)
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
@@ -70,13 +66,13 @@
   )
  )
  ;; A function that gets a non-nullable reference that is never used. We can
- ;; still create a nullable local for that parameter.
+ ;; still create a non-nullable local for that parameter.
  ;; CHECK:      (func $get-nonnull
- ;; CHECK-NEXT:  (local $0 (ref null ${}))
+ ;; CHECK-NEXT:  (local $0 (ref ${}))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get-nonnull (type $none_=>_none)
- ;; NOMNL-NEXT:  (local $0 (ref null ${}))
+ ;; NOMNL-NEXT:  (local $0 (ref ${}))
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $get-nonnull (param $0 (ref ${}))
@@ -98,15 +94,13 @@
 ;; Test ref.func and ref.null optimization of constant parameter values.
 (module
  ;; CHECK:      (func $foo (param $0 (ref $none_=>_none))
- ;; CHECK-NEXT:  (local $1 (ref null $none_=>_none))
+ ;; CHECK-NEXT:  (local $1 (ref $none_=>_none))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $a)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $0)
@@ -114,15 +108,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $foo (type $ref|none_->_none|_=>_none) (param $0 (ref $none_=>_none))
- ;; NOMNL-NEXT:  (local $1 (ref null $none_=>_none))
+ ;; NOMNL-NEXT:  (local $1 (ref $none_=>_none))
  ;; NOMNL-NEXT:  (local.set $1
  ;; NOMNL-NEXT:   (ref.func $a)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (block
  ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (ref.as_non_null
- ;; NOMNL-NEXT:     (local.get $1)
- ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (local.get $1)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:   (drop
  ;; NOMNL-NEXT:    (local.get $0)
@@ -164,10 +156,10 @@
   )
  )
 
- ;; CHECK:      (func $bar (param $0 (ref null $none_=>_none))
+ ;; CHECK:      (func $bar (param $0 i31ref)
  ;; CHECK-NEXT:  (local $1 anyref)
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (ref.null any)
+ ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -178,10 +170,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (func $bar (type $ref?|none_->_none|_=>_none) (param $0 (ref null $none_=>_none))
+ ;; NOMNL:      (func $bar (type $i31ref_=>_none) (param $0 i31ref)
  ;; NOMNL-NEXT:  (local $1 anyref)
  ;; NOMNL-NEXT:  (local.set $1
- ;; NOMNL-NEXT:   (ref.null any)
+ ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (block
  ;; NOMNL-NEXT:   (drop
@@ -200,18 +192,22 @@
 
  ;; CHECK:      (func $call-bar
  ;; CHECK-NEXT:  (call $bar
- ;; CHECK-NEXT:   (ref.null $none_=>_none)
+ ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $bar
- ;; CHECK-NEXT:   (ref.func $a)
+ ;; CHECK-NEXT:   (i31.new
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-bar (type $none_=>_none)
  ;; NOMNL-NEXT:  (call $bar
- ;; NOMNL-NEXT:   (ref.null $none_=>_none)
+ ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (call $bar
- ;; NOMNL-NEXT:   (ref.func $a)
+ ;; NOMNL-NEXT:   (i31.new
+ ;; NOMNL-NEXT:    (i32.const 0)
+ ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-bar
@@ -219,12 +215,12 @@
   ;; we can optimize (to the LUB of the nulls). However, mixing a null with a
   ;; reference stops us in the second param.
   (call $bar
-   (ref.null func)
-   (ref.null func)
+   (ref.null i31)
+   (ref.null data)
   )
   (call $bar
    (ref.null any)
-   (ref.func $a)
+   (i31.new (i32.const 0))
   )
  )
 

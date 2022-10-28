@@ -8,12 +8,12 @@
 
 
  (rec
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $unused-6 (struct_subtype  data))
 
   ;; CHECK:       (type $used-a-bit (struct_subtype  data))
 
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $unused-1 (struct_subtype  data))
   (type $unused-1 (struct_subtype data))
   ;; CHECK:       (type $unused-2 (struct_subtype  data))
@@ -46,7 +46,7 @@
 
 
  (rec
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $leaf (struct_subtype  data))
   (type $leaf (struct_subtype data))
   ;; CHECK:       (type $unused (struct_subtype  data))
@@ -54,12 +54,12 @@
  )
 
  (rec
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $shrub (struct_subtype  $leaf))
 
   ;; CHECK:       (type $used-a-ton (struct_subtype  data))
 
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $twig (struct_subtype  data))
   (type $twig (struct_subtype data))
   ;; CHECK:       (type $used-a-bit (struct_subtype (field (ref $leaf)) data))
@@ -72,7 +72,7 @@
  )
 
  (rec
-  ;; CHECK:      (rec 
+  ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $root (struct_subtype  data))
   (type $root (struct_subtype data))
   ;; CHECK:       (type $used-a-lot (struct_subtype  $twig))

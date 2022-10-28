@@ -37,6 +37,7 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
+  GlobalEffects.cpp
   GlobalRefining.cpp
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
@@ -47,6 +48,7 @@ set(passes_SOURCES
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
+  JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp

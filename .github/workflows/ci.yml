@@ -266,12 +266,14 @@ jobs:
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
+      # TODO: Go back to tot once problem with
+      # https://github.com/emscripten-core/emscripten/pull/17948 is resolved.
       run: |
         mkdir $HOME/emsdk
         git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
         $HOME/emsdk/emsdk update-tags
-        $HOME/emsdk/emsdk install tot
-        $HOME/emsdk/emsdk activate tot
+        $HOME/emsdk/emsdk install latest
+        $HOME/emsdk/emsdk activate latest
     - name: update path
       run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
     - name: emcc-tests

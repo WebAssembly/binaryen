@@ -52,7 +52,12 @@ using PCVFunctionStructValuesMap =
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionOptimizer(infos); }
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionOptimizer>(infos);
+  }
 
   FunctionOptimizer(PCVStructValuesMap& infos) : infos(infos) {}
 
@@ -123,8 +128,8 @@ private:
 
 struct PCVScanner
   : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
-  Pass* create() override {
-    return new PCVScanner(functionNewInfos, functionSetGetInfos);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos);
   }
 
   PCVScanner(StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
@@ -175,7 +180,10 @@ struct PCVScanner
 };
 
 struct ConstantFieldPropagation : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  // Only modifies struct.get operations.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -187,6 +195,7 @@ struct ConstantFieldPropagation : public Pass {
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
     PCVScanner scanner(functionNewInfos, functionSetInfos);
+    auto* runner = getPassRunner();
     scanner.run(runner, module);
     scanner.runOnModuleCode(runner, module);
 

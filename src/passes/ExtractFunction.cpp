@@ -54,25 +54,24 @@ static void extract(PassRunner* runner, Module* module, Name name) {
   // Remove unneeded things.
   PassRunner postRunner(runner);
   postRunner.add("remove-unused-module-elements");
-  postRunner.setIsNested(true);
   postRunner.run();
 }
 
 struct ExtractFunction : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    Name name = runner->options.getArgument(
+  void run(Module* module) override {
+    Name name = getPassOptions().getArgument(
       "extract-function",
       "ExtractFunction usage:  wasm-opt --extract-function=FUNCTION_NAME");
-    extract(runner, module, name);
+    extract(getPassRunner(), module, name);
   }
 };
 
 struct ExtractFunctionIndex : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     std::string index =
-      runner->options.getArgument("extract-function-index",
-                                  "ExtractFunctionIndex usage: wasm-opt "
-                                  "--extract-function-index=FUNCTION_INDEX");
+      getPassOptions().getArgument("extract-function-index",
+                                   "ExtractFunctionIndex usage: wasm-opt "
+                                   "--extract-function-index=FUNCTION_INDEX");
     for (char c : index) {
       if (!std::isdigit(c)) {
         Fatal() << "Expected numeric function index";
@@ -80,11 +79,12 @@ struct ExtractFunctionIndex : public Pass {
     }
     Index i = std::stoi(index);
     if (i >= module->functions.size()) {
-      Fatal() << "Invalid function index";
+      Fatal() << "Out of bounds function index " << i << "! (module has only "
+              << module->functions.size() << " functions)";
     }
     // Assumes imports are at the beginning
-    Name name = module->functions[std::stoi(index)]->name;
-    extract(runner, module, name);
+    Name name = module->functions[i]->name;
+    extract(getPassRunner(), module, name);
   }
 };
 

@@ -27,21 +27,15 @@
     (field f32)
     (field $named f64)
   ))
+  ;; CHECK:      (type $array (array (mut f64)))
+  ;; NOMNL:      (type $array (array_subtype (mut f64) data))
+  (type $array (array (mut f64)))
+
   ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
-
-  ;; CHECK:      (type $array (array (mut f64)))
-  ;; NOMNL:      (type $i32_i32_i32_i32_=>_i32 (func_subtype (param i32 i32 i32 i32) (result i32) func))
-
-  ;; NOMNL:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
-
-  ;; NOMNL:      (type $ref|$array|_=>_none (func_subtype (param (ref $array)) func))
-
-  ;; NOMNL:      (type $array (array_subtype (mut f64) data))
-  (type $array (array (mut f64)))
 
   ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (param i32 i32 i32 i32) (result i32)))
 
@@ -132,6 +126,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NOMNL:      (type $i32_i32_i32_i32_=>_i32 (func_subtype (param i32 i32 i32 i32) (result i32) func))
+
+  ;; NOMNL:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+
+  ;; NOMNL:      (type $ref|$array|_=>_none (func_subtype (param (ref $array)) func))
+
   ;; NOMNL:      (import "env" "load_ptr" (func $load_ptr (param i32 i32 i32 i32) (result i32)))
 
   ;; NOMNL:      (import "env" "load_val_i32" (func $load_val_i32 (param i32 i32) (result i32)))

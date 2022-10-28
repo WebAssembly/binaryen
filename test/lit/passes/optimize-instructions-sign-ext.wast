@@ -87,21 +87,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.shr_u
-  ;; CHECK-NEXT:    (i32.shl
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 24)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 255)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.shr_u
-  ;; CHECK-NEXT:    (i32.shl
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 16)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 65535)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop

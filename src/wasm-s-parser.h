@@ -31,12 +31,10 @@ namespace wasm {
 
 class SourceLocation {
 public:
-  cashew::IString filename;
+  IString filename;
   uint32_t line;
   uint32_t column;
-  SourceLocation(cashew::IString filename_,
-                 uint32_t line_,
-                 uint32_t column_ = 0)
+  SourceLocation(IString filename_, uint32_t line_, uint32_t column_ = 0)
     : filename(filename_), line(line_), column(column_) {}
 };
 
@@ -48,7 +46,7 @@ class Element {
 
   bool isList_ = true;
   List list_;
-  cashew::IString str_;
+  IString str_;
   bool dollared_;
   bool quoted_;
 
@@ -74,9 +72,9 @@ public:
   List::Iterator end() { return list().end(); }
 
   // string methods
-  cashew::IString str() const;
-  const char* c_str() const;
-  Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
+  IString str() const;
+  std::string toString() const;
+  Element* setString(IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
   // comparisons
@@ -126,6 +124,7 @@ class SExpressionWasmBuilder {
 
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
+  std::vector<Name> memoryNames;
   std::vector<Name> globalNames;
   std::vector<Name> tagNames;
   int functionCounter = 0;
@@ -137,7 +136,7 @@ class SExpressionWasmBuilder {
   int dataCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, HeapType> functionTypes;
-  std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
+  std::unordered_map<IString, Index> debugInfoFileIndices;
 
   // Maps type indexes to a mapping of field index => name. This is not the same
   // as the field names stored on the wasm object, as that maps types after
@@ -158,6 +157,7 @@ private:
   void preParseFunctionType(Element& s);
   bool isImport(Element& curr);
   void preParseImports(Element& curr);
+  void preParseMemory(Element& curr);
   void parseModuleElement(Element& curr);
 
   // function parsing state
@@ -166,32 +166,37 @@ private:
 
   UniqueNameMapper nameMapper;
 
+  int parseIndex(Element& s);
+
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
+  Name getMemoryName(Element& s);
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
+
+  Name getMemoryNameAtIdx(Index i);
+  bool isMemory64(Name memoryName);
+  bool hasMemoryIdx(Element& s, Index defaultSize, Index i);
 
   // returns the next index in s
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
   void parseFunction(Element& s, bool preParseImport = false);
 
-  Type stringToType(cashew::IString str,
-                    bool allowError = false,
-                    bool prefix = false) {
+  Type stringToType(IString str, bool allowError = false, bool prefix = false) {
     return stringToType(str.str, allowError, prefix);
   }
-  Type
-  stringToType(const char* str, bool allowError = false, bool prefix = false);
-  HeapType stringToHeapType(cashew::IString str, bool prefix = false) {
+  Type stringToType(std::string_view str,
+                    bool allowError = false,
+                    bool prefix = false);
+  HeapType stringToHeapType(IString str, bool prefix = false) {
     return stringToHeapType(str.str, prefix);
   }
-  HeapType stringToHeapType(const char* str, bool prefix = false);
+  HeapType stringToHeapType(std::string_view str, bool prefix = false);
   Type elementToType(Element& s);
+  // TODO: Use std::string_view for this and similar functions.
   Type stringToLaneType(const char* str);
-  bool isType(cashew::IString str) {
-    return stringToType(str, true) != Type::none;
-  }
+  bool isType(IString str) { return stringToType(str, true) != Type::none; }
   HeapType getFunctionType(Name name, Element& s);
 
 public:
@@ -219,13 +224,12 @@ private:
   Expression* makeBlock(Element& s);
   Expression* makeThenOrElse(Element& s);
   Expression* makeConst(Element& s, Type type);
-  Expression* makeLoad(Element& s, Type type, bool isAtomic);
-  Expression* makeStore(Element& s, Type type, bool isAtomic);
-  Expression* makeAtomicRMWOrCmpxchg(Element& s, Type type);
   Expression*
-  makeAtomicRMW(Element& s, Type type, uint8_t bytes, const char* extra);
+  makeLoad(Element& s, Type type, bool signed_, int bytes, bool isAtomic);
+  Expression* makeStore(Element& s, Type type, int bytes, bool isAtomic);
   Expression*
-  makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra);
+  makeAtomicRMW(Element& s, AtomicRMWOp op, Type type, uint8_t bytes);
+  Expression* makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes);
   Expression* makeAtomicWait(Element& s, Type type);
   Expression* makeAtomicNotify(Element& s);
   Expression* makeAtomicFence(Element& s);
@@ -234,13 +238,13 @@ private:
   Expression* makeSIMDShuffle(Element& s);
   Expression* makeSIMDTernary(Element& s, SIMDTernaryOp op);
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
-  Expression* makeSIMDLoad(Element& s, SIMDLoadOp op);
-  Expression* makeSIMDLoadStoreLane(Element& s, SIMDLoadStoreLaneOp op);
+  Expression* makeSIMDLoad(Element& s, SIMDLoadOp op, int bytes);
+  Expression*
+  makeSIMDLoadStoreLane(Element& s, SIMDLoadStoreLaneOp op, int bytes);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);
   Expression* makeMemoryFill(Element& s);
-  Expression* makePush(Element& s);
   Expression* makePop(Element& s);
   Expression* makeIf(Element& s);
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
@@ -311,8 +315,12 @@ private:
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);
-  Index parseMemoryLimits(Element& s, Index i);
-  Index parseMemoryIndex(Element& s, Index i);
+  Index parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory);
+  Index parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory);
+  Index parseMemoryForInstruction(const std::string& instrName,
+                                  Memory& memory,
+                                  Element& s,
+                                  Index i);
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
@@ -323,15 +331,11 @@ private:
                       std::vector<NameType>& namedParams);
   size_t parseTypeUse(Element& s, size_t startPos, HeapType& functionType);
 
-  void stringToBinary(const char* input, size_t size, std::vector<char>& data);
+  void
+  stringToBinary(Element& s, std::string_view str, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
-  void parseInnerData(Element& s,
-                      Index i,
-                      Name name,
-                      bool hasExplicitName,
-                      Expression* offset,
-                      bool isPassive);
+  void parseInnerData(Element& s, Index i, std::unique_ptr<DataSegment>& seg);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);

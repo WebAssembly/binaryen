@@ -43,15 +43,31 @@
 
 namespace wasm {
 
+// These are aliases for getTempRet0/setTempRet0 which emscripten defines in
+// compiler-rt and exports under these names.
+static Name GET_TEMP_RET_EXPORT("__get_temp_ret");
+static Name SET_TEMP_RET_EXPORT("__set_temp_ret");
+
+// For non-emscripten module we expect the host to define these functions so
+// and we import them under these names.
+static Name GET_TEMP_RET_IMPORT("getTempRet0");
+static Name SET_TEMP_RET_IMPORT("setTempRet0");
+
 struct LegalizeJSInterface : public Pass {
   bool full;
 
   LegalizeJSInterface(bool full) : full(full) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
+    setTempRet0 = nullptr;
+    getTempRet0 = nullptr;
     auto exportOriginals =
-      !runner->options
+      !getPassOptions()
          .getArgumentOrDefault("legalize-js-interface-export-originals", "")
+         .empty();
+    exportedHelpers =
+      !getPassOptions()
+         .getArgumentOrDefault("legalize-js-interface-exported-helpers", "")
          .empty();
     // for each illegal export, we must export a legalized stub instead
     std::vector<std::unique_ptr<Export>> newExports;
@@ -74,7 +90,7 @@ struct LegalizeJSInterface : public Pass {
             // are only called from JS.
             if (!func->imported() && !isDynCall(ex->name)) {
               Builder builder(*module);
-              Name newName = std::string("orig$") + ex->name.str;
+              Name newName = std::string("orig$") + ex->name.toString();
               newExports.push_back(builder.makeExport(
                 newName, func->name, ExternalKind::Function));
             }
@@ -82,6 +98,7 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
+
     for (auto& ex : newExports) {
       module->addExport(std::move(ex));
     }
@@ -112,7 +129,9 @@ struct LegalizeJSInterface : public Pass {
       struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override { return new Fixer(illegalImportsToLegal); }
+        std::unique_ptr<Pass> create() override {
+          return std::make_unique<Fixer>(illegalImportsToLegal);
+        }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
@@ -142,19 +161,25 @@ struct LegalizeJSInterface : public Pass {
       };
 
       Fixer fixer(&illegalImportsToLegal);
-      fixer.run(runner, module);
-      fixer.runOnModuleCode(runner, module);
+      fixer.run(getPassRunner(), module);
+      fixer.runOnModuleCode(getPassRunner(), module);
 
       // Finally we can remove all the now-unused illegal imports
       for (const auto& pair : illegalImportsToLegal) {
         module->removeFunction(pair.first);
       }
     }
+
+    module->removeExport(GET_TEMP_RET_EXPORT);
+    module->removeExport(SET_TEMP_RET_EXPORT);
   }
 
 private:
   // map of illegal to legal names for imports
   std::map<Name, Name> illegalImportsToLegal;
+  bool exportedHelpers = false;
+  Function* getTempRet0 = nullptr;
+  Function* setTempRet0 = nullptr;
 
   template<typename T> bool isIllegal(T* t) {
     for (const auto& param : t->getParams()) {
@@ -185,10 +210,36 @@ private:
     return im->module == ENV && im->base.startsWith("invoke_");
   }
 
+  Function* tempSetter(Module* module) {
+    if (!setTempRet0) {
+      if (exportedHelpers) {
+        auto* ex = module->getExport(SET_TEMP_RET_EXPORT);
+        setTempRet0 = module->getFunction(ex->value);
+      } else {
+        setTempRet0 = getFunctionOrImport(
+          module, SET_TEMP_RET_IMPORT, Type::i32, Type::none);
+      }
+    }
+    return setTempRet0;
+  }
+
+  Function* tempGetter(Module* module) {
+    if (!getTempRet0) {
+      if (exportedHelpers) {
+        auto* ex = module->getExport(GET_TEMP_RET_EXPORT);
+        getTempRet0 = module->getFunction(ex->value);
+      } else {
+        getTempRet0 = getFunctionOrImport(
+          module, GET_TEMP_RET_IMPORT, Type::none, Type::i32);
+      }
+    }
+    return getTempRet0;
+  }
+
   // JS calls the export, so it must call a legal stub that calls the actual
   // wasm function
   Name makeLegalStub(Function* func, Module* module) {
-    Name legalName(std::string("legalstub$") + func->name.str);
+    Name legalName(std::string("legalstub$") + func->name.toString());
 
     // a method may be exported multiple times
     if (module->getFunctionOrNull(legalName)) {
@@ -220,13 +271,13 @@ private:
       func->getResults() == Type::i64 ? Type::i32 : func->getResults();
     legal->type = Signature(Type(legalParams), resultsType);
     if (func->getResults() == Type::i64) {
-      Function* f =
-        getFunctionOrImport(module, SET_TEMP_RET0, Type::i32, Type::none);
       auto index = Builder::addVar(legal, Name(), Type::i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeLocalSet(index, call));
-      block->list.push_back(builder.makeCall(
-        f->name, {I64Utilities::getI64High(builder, index)}, Type::none));
+      block->list.push_back(
+        builder.makeCall(tempSetter(module)->name,
+                         {I64Utilities::getI64High(builder, index)},
+                         Type::none));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
@@ -241,11 +292,11 @@ private:
   Name makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
     auto legalIm = make_unique<Function>();
-    legalIm->name = Name(std::string("legalimport$") + im->name.str);
+    legalIm->name = Name(std::string("legalimport$") + im->name.toString());
     legalIm->module = im->module;
     legalIm->base = im->base;
     auto stub = make_unique<Function>();
-    stub->name = Name(std::string("legalfunc$") + im->name.str);
+    stub->name = Name(std::string("legalfunc$") + im->name.toString());
     stub->type = im->type;
 
     auto* call = module->allocator.alloc<Call>();
@@ -267,10 +318,9 @@ private:
     }
 
     if (im->getResults() == Type::i64) {
-      Function* f =
-        getFunctionOrImport(module, GET_TEMP_RET0, Type::none, Type::i32);
       call->type = Type::i32;
-      Expression* get = builder.makeCall(f->name, {}, call->type);
+      Expression* get =
+        builder.makeCall(tempGetter(module)->name, {}, call->type);
       stub->body = I64Utilities::recreateI64(builder, call, get);
     } else {
       call->type = im->getResults();

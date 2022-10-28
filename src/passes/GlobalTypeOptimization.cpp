@@ -62,8 +62,9 @@ struct FieldInfo {
 
 struct FieldInfoScanner
   : public StructUtils::StructScanner<FieldInfo, FieldInfoScanner> {
-  Pass* create() override {
-    return new FieldInfoScanner(functionNewInfos, functionSetGetInfos);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FieldInfoScanner>(functionNewInfos,
+                                              functionSetGetInfos);
   }
 
   FieldInfoScanner(
@@ -112,7 +113,7 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
@@ -124,8 +125,8 @@ struct GlobalTypeOptimization : public Pass {
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
     FieldInfoScanner scanner(functionNewInfos, functionSetGetInfos);
-    scanner.run(runner, module);
-    scanner.runOnModuleCode(runner, module);
+    scanner.run(getPassRunner(), module);
+    scanner.runOnModuleCode(getPassRunner(), module);
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
@@ -241,7 +242,7 @@ struct GlobalTypeOptimization : public Pass {
     // that we can identify, and only after this should we update all the types
     // throughout the module.)
     if (!indexesAfterRemovals.empty()) {
-      removeFieldsInInstructions(runner, *module);
+      removeFieldsInInstructions(*module);
     }
 
     // Update the types in the entire module.
@@ -314,7 +315,7 @@ struct GlobalTypeOptimization : public Pass {
 
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
-  void removeFieldsInInstructions(PassRunner* runner, Module& wasm) {
+  void removeFieldsInInstructions(Module& wasm) {
     struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
 
@@ -322,7 +323,9 @@ struct GlobalTypeOptimization : public Pass {
 
       FieldRemover(GlobalTypeOptimization& parent) : parent(parent) {}
 
-      FieldRemover* create() override { return new FieldRemover(parent); }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<FieldRemover>(parent);
+      }
 
       void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable) {
@@ -366,7 +369,6 @@ struct GlobalTypeOptimization : public Pass {
           block->list.push_back(curr);
           block->finalize(curr->type);
           replaceCurrent(block);
-          addedLocals = true;
         }
 
         // Remove the unneeded operands.
@@ -405,7 +407,6 @@ struct GlobalTypeOptimization : public Pass {
                                           getPassOptions());
           replaceCurrent(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
-          addedLocals = true;
         }
       }
 
@@ -420,15 +421,7 @@ struct GlobalTypeOptimization : public Pass {
         curr->index = newIndex;
       }
 
-      void visitFunction(Function* curr) {
-        if (addedLocals) {
-          TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
-        }
-      }
-
     private:
-      bool addedLocals = false;
-
       Index getNewIndex(HeapType type, Index index) {
         auto iter = parent.indexesAfterRemovals.find(type);
         if (iter == parent.indexesAfterRemovals.end()) {
@@ -443,8 +436,8 @@ struct GlobalTypeOptimization : public Pass {
     };
 
     FieldRemover remover(*this);
-    remover.run(runner, &wasm);
-    remover.runOnModuleCode(runner, &wasm);
+    remover.run(getPassRunner(), &wasm);
+    remover.runOnModuleCode(getPassRunner(), &wasm);
   }
 };
 
