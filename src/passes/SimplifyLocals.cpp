@@ -1083,17 +1083,18 @@ struct SimplifyLocals
 
             // This is better if it has a more refined type, or if it has more
             // uses.
-            if (indexType != bestType || getNumGetsIgnoringCurr(index) >
-                                         getNumGetsIgnoringCurr(best)) {              
+            if (indexType != bestType ||
+                getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
               best = index;
             }
           }
           assert(best != Index(-1));
           // Due to ordering, the best index may be different from us but have
           // the same # of locals - make sure we actually improve.
-          if (best != curr->index && (getNumGetsIgnoringCurr(best) >
-                                       getNumGetsIgnoringCurr(curr->index) ||
-                                       func->getLocalType(best) != func->getLocalType(curr->index))) {
+          if (best != curr->index &&
+              (getNumGetsIgnoringCurr(best) >
+                 getNumGetsIgnoringCurr(curr->index) ||
+               func->getLocalType(best) != func->getLocalType(curr->index))) {
             // Update the get counts.
             (*numLocalGets)[best]++;
             assert((*numLocalGets)[curr->index] >= 1);
