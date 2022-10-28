@@ -63,7 +63,7 @@ struct ReorderGlobals : public Pass {
   ReorderGlobals(bool always) : always(always) {}
 
   void run(Module* module) override {
-    if (always || module->globals.size() < 128) {
+    if (module->globals.size() < 128 && !always) {
       // The module has so few globals that they all fit in a single-byte U32LEB
       // value, so no reordering we can do can actually decrease code size. Note
       // that this is the common case with wasm MVP modules where the only
