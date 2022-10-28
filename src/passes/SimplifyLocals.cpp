@@ -1002,6 +1002,7 @@ struct SimplifyLocals
       Module* module;
 
       bool anotherCycle = false;
+      bool refinalize = false;
 
       // We track locals containing the same value.
       EquivalentSets equivalences;
@@ -1016,7 +1017,7 @@ struct SimplifyLocals
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
         auto* value = curr->value;
-        Function* func = this->getFunction();
+        //Function* func = this->getFunction();
         while (auto* subSet = value->dynCast<LocalSet>()) {
           value = subSet->value;
         }
@@ -1033,13 +1034,9 @@ struct SimplifyLocals
             }
             // Nothing more to do, ignore the copy.
             return;
-          } else if (func->getLocalType(curr->index) ==
-                     func->getLocalType(get->index)) {
+          } else {
             // There is a new equivalence now. Remove all the old ones, and add
             // the new one.
-            // Note that we ignore the case of subtyping here, to keep this
-            // optimization simple by assuming all equivalent indexes also have
-            // the same type. TODO: consider optimizing this.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);
             return;
@@ -1067,10 +1064,13 @@ struct SimplifyLocals
             }
             return ret;
           };
+          auto* func = this->getFunction();
           Index best = -1;
           for (auto index : *set) {
-            if (best == Index(-1) ||
-                getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
+            if ((best == Index(-1) ||
+                getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) &&
+                // Only use more refined types, not less.
+                Type::isSubType(func->getLocalType(index), func->getLocalType(curr->index))) {
               best = index;
             }
           }
@@ -1084,6 +1084,12 @@ struct SimplifyLocals
             assert((*numLocalGets)[curr->index] >= 1);
             (*numLocalGets)[curr->index]--;
             // Make the change.
+            if (func->getLocalType(best) != func->getLocalType(curr->index)) {
+              curr->type = func->getLocalType(best);
+              // We are switching to a more refined type, which might require
+              // changes in the user of the local.get.
+              refinalize = true;
+            }
             curr->index = best;
             anotherCycle = true;
           }
