@@ -55,6 +55,15 @@ private:
 
 struct ReorderGlobals : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    if (module->globals.size() < 128) {
+      // The module has so few globals that they all fit in a single-byte U32LEB
+      // value, so no reordering we can do can actually decrease code size. Note
+      // that this is the common case with wasm MVP modules where the only
+      // globals are typically the stack pointer and perhaps a handful of others
+      // (however, features like wasm GC there may be a great many globals).
+      return;
+    }
+
     NameCountMap counts;
     // Fill in info, as we'll operate on it in parallel.
     for (auto& global : module->globals) {
