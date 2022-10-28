@@ -1000,6 +1000,7 @@ struct SimplifyLocals
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
       Module* module;
+      PassOptions passOptions;
 
       bool anotherCycle = false;
       bool refinalize = false;
@@ -1016,11 +1017,7 @@ struct SimplifyLocals
 
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
-        auto* value = curr->value;
-        //Function* func = this->getFunction();
-        while (auto* subSet = value->dynCast<LocalSet>()) {
-          value = subSet->value;
-        }
+        auto* value = Properties::getFallthrough(curr->value, passOptions, *module);
         if (auto* get = value->dynCast<LocalGet>()) {
           if (equivalences.check(curr->index, get->index)) {
             // This is an unnecessary copy!
@@ -1099,6 +1096,7 @@ struct SimplifyLocals
 
     EquivalentOptimizer eqOpter;
     eqOpter.module = this->getModule();
+    eqOpter.passOptions = this->getPassOptions();
     eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
     eqOpter.walkFunction(func);
