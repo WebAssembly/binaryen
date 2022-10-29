@@ -165,6 +165,23 @@ BINARYEN_API BinaryenHeapType
 BinaryenHeapTypeGetBottom(BinaryenHeapType heapType);
 BINARYEN_API bool BinaryenHeapTypeIsSubType(BinaryenHeapType left,
                                             BinaryenHeapType right);
+BINARYEN_API BinaryenIndex
+BinaryenStructTypeGetNumFields(BinaryenHeapType heapType);
+BINARYEN_API BinaryenType
+BinaryenStructTypeGetFieldType(BinaryenHeapType heapType, BinaryenIndex index);
+BINARYEN_API BinaryenPackedType BinaryenStructTypeGetFieldPackedType(
+  BinaryenHeapType heapType, BinaryenIndex index);
+BINARYEN_API bool BinaryenStructTypeIsFieldMutable(BinaryenHeapType heapType,
+                                                   BinaryenIndex index);
+BINARYEN_API BinaryenType
+BinaryenArrayTypeGetElementType(BinaryenHeapType heapType);
+BINARYEN_API BinaryenPackedType
+BinaryenArrayTypeGetElementPackedType(BinaryenHeapType heapType);
+BINARYEN_API bool BinaryenArrayTypeIsElementMutable(BinaryenHeapType heapType);
+BINARYEN_API BinaryenType
+BinaryenSignatureTypeGetParams(BinaryenHeapType heapType);
+BINARYEN_API BinaryenType
+BinaryenSignatureTypeGetResults(BinaryenHeapType heapType);
 
 BINARYEN_API BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type);
 BINARYEN_API bool BinaryenTypeIsNullable(BinaryenType type);
