@@ -341,7 +341,7 @@ A C++17 compiler is required. Note that you can also use `ninja` as your generat
 
 To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
-Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
+Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
 ```
 emcmake cmake . && emmake make binaryen_js
