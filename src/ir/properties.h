@@ -286,8 +286,22 @@ inline Expression* getImmediateFallthrough(
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
+    // Note that we must check for the ability to reorder the condition and the
+    // value, as the value is first, which would be a problem here:
+    //
+    //  (br_if ..
+    //    (local.get $x)    ;; value
+    //    (tee_local $x ..) ;; condition
+    //  )
+    //
+    // We must not say that the fallthrough value is $x, since it is the
+    // *earlier* value of $x before the tee that is passed out. But, if we can
+    // reorder then that means that the value could have been last and so we do
+    // know the fallthrough in that case.
     if (br->condition && br->value &&
-        behavior == FallthroughBehavior::AllowTeeBrIf) {
+        behavior == FallthroughBehavior::AllowTeeBrIf &&
+        EffectAnalyzer::canReorder(
+          passOptions, module, br->condition, br->value)) {
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
