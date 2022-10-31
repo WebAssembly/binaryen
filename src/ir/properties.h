@@ -300,7 +300,8 @@ inline Expression* getImmediateFallthrough(
     // know the fallthrough in that case.
     if (br->condition && br->value &&
         behavior == FallthroughBehavior::AllowTeeBrIf &&
-        EffectAnalyzer::canReorder(passOptions, module, br->condition, br->value)) {
+        EffectAnalyzer::canReorder(
+          passOptions, module, br->condition, br->value)) {
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
