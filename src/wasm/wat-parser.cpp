@@ -177,7 +177,6 @@ struct ParseInput {
         }
       }
     }
-
     return std::nullopt;
   }
 
