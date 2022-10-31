@@ -178,21 +178,7 @@ struct ParseInput {
       }
     }
 
-
-// Trick to avoid a bug in older gcc
-// Upstream bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80635
-#define GCC_VERSION                                                            \
-  (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION < 100500
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-
-    return {};
-
-#if GCC_VERSION < 100500
-#pragma GCC diagnostic pop
-#endif
+    return std::nullopt;
   }
 
   std::optional<uint32_t> takeAlign() {
