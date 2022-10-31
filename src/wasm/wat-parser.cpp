@@ -177,7 +177,7 @@ struct ParseInput {
         }
       }
     }
-    return {};
+    return std::nullopt;
   }
 
   std::optional<uint32_t> takeAlign() {
@@ -209,7 +209,7 @@ struct ParseInput {
         return n;
       }
     }
-    return {};
+    return std::nullopt;
   }
 
   std::optional<int64_t> takeS64() {
@@ -239,7 +239,7 @@ struct ParseInput {
         return n;
       }
     }
-    return {};
+    return std::nullopt;
   }
 
   std::optional<int32_t> takeS32() {
@@ -281,7 +281,7 @@ struct ParseInput {
         return d;
       }
     }
-    return {};
+    return std::nullopt;
   }
 
   std::optional<float> takeF32() {
@@ -291,7 +291,7 @@ struct ParseInput {
         return f;
       }
     }
-    return {};
+    return std::nullopt;
   }
 
   std::optional<std::string_view> takeString() {
