@@ -20,7 +20,7 @@
 // an async manner, for example, you can do a blocking wait, and that will
 // be turned into code that unwinds the stack at the "blocking" operation,
 // then is able to rewind it back up when the actual async operation
-// comples, the so the code appears to have been running synchronously
+// completes, so the code appears to have been running synchronously
 // all the while. Use cases for this include coroutines, python generators,
 // etc.
 //
