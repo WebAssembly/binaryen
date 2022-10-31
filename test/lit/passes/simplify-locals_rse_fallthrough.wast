@@ -3,6 +3,21 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (func $no (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $no (param $x i32) (result i32)
     (i32.add
       (block $block (result i32)
@@ -15,7 +30,8 @@
         ;; is 42), and flow out the old $x, which gets tee'd into $x once more.
         ;; As a result, the block flows out the original value of $x, and the
         ;; local.get reads that same value, so the final add returns 2 times the
-        ;; original value of $x.
+        ;; original value of $x. For all that to happen, we need those
+        ;; optimization passes to *not* remove the outer local.tee.
         (local.tee $x
           (br_if $block
             (local.get $x)
@@ -27,5 +43,5 @@
       )
       (local.get $x)
     )
-  )   
+  )
 )
