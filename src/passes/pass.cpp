@@ -572,7 +572,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("once-reduction");
   }
-  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+  if (wasm->features.hasGC() &&
+      (getTypeSystem() == TypeSystem::Nominal ||
+       getTypeSystem() == TypeSystem::Isorecursive) &&
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("type-refining");
     addIfNoDWARFIssues("signature-pruning");
