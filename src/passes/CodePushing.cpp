@@ -188,16 +188,7 @@ private:
     while (1) {
       auto* pushable = isPushable(list[i]);
       if (pushable) {
-        auto iter = pushableEffects.find(pushable);
-        if (iter == pushableEffects.end()) {
-          iter =
-            pushableEffects
-              .emplace(std::piecewise_construct,
-                       std::forward_as_tuple(pushable),
-                       std::forward_as_tuple(passOptions, module, pushable))
-              .first;
-        }
-        auto& effects = iter->second;
+        const auto& effects = getPushableEffects(pushable);
         if (cumulativeEffects.invalidates(effects)) {
           // we can't push this, so further pushables must pass it
           cumulativeEffects.mergeIn(effects);
@@ -326,15 +317,7 @@ private:
 
       auto index = pushable->index;
 
-      auto iter = pushableEffects.find(pushable);
-      if (iter == pushableEffects.end()) {
-        iter = pushableEffects
-                 .emplace(std::piecewise_construct,
-                          std::forward_as_tuple(pushable),
-                          std::forward_as_tuple(passOptions, module, pushable))
-                 .first;
-      }
-      auto& effects = iter->second;
+      const auto& effects = getPushableEffects(pushable);
 
       if (cumulativeEffects.invalidates(effects)) {
         // This can't be moved forward. Add it to the things that are not
@@ -414,6 +397,18 @@ private:
         cumulativeEffects.mergeIn(effects);
       }
     }
+  }
+
+  const EffectAnalyzer& getPushableEffects(LocalSet* pushable) {
+    auto iter = pushableEffects.find(pushable);
+    if (iter == pushableEffects.end()) {
+      iter = pushableEffects
+               .emplace(std::piecewise_construct,
+                        std::forward_as_tuple(pushable),
+                        std::forward_as_tuple(passOptions, module, pushable))
+               .first;
+    }
+    return iter->second;
   }
 
   // Pushables may need to be scanned more than once, so cache their effects.
