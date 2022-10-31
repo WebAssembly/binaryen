@@ -359,7 +359,7 @@ private:
       //    use(x);
       auto maybePushInto = [&](Expression*& arm,
                                const Expression* otherArm,
-                               const EffectAnalyzer& armEffects,
+                               EffectAnalyzer& armEffects,
                                const EffectAnalyzer& otherArmEffects) {
         if (!arm || !armEffects.localsRead.count(index) ||
             otherArmEffects.localsRead.count(index)) {
@@ -383,6 +383,10 @@ private:
         // TODO: this is quadratic in the number of pushed things
         ExpressionManipulator::spliceIntoBlock(block, 0, pushable);
         list[i] = builder.makeNop();
+
+        // The code we pushed adds to the effects in that arm.
+        armEffects.walk(pushable);
+
         // TODO: After pushing we could recurse and run both this function and
         //       optimizeSegment in that location. For now, leave that to later
         //       cycles of the optimizer, as this case seems rairly rare.
