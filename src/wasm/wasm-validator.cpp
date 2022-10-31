@@ -612,9 +612,10 @@ void FunctionValidator::validatePoppyExpression(Expression* curr) {
 
 void FunctionValidator::visitBlock(Block* curr) {
   if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(!curr->type.isTuple(),
-                 curr,
-                 "Multivalue block type require multivalue [--enable-multivalue]");
+    shouldBeTrue(
+      !curr->type.isTuple(),
+      curr,
+      "Multivalue block type require multivalue [--enable-multivalue]");
   }
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
@@ -1177,8 +1178,9 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
 }
 
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   shouldBeEqualOrFirstIsUnreachable(curr->vec->type,
                                     Type(Type::v128),
                                     curr,
@@ -1222,8 +1224,9 @@ void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
 }
 
 void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "replace_lane must have type v128");
   shouldBeEqualOrFirstIsUnreachable(curr->vec->type,
@@ -1264,8 +1267,9 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
 }
 
 void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "i8x16.shuffle must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1278,8 +1282,9 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
 }
 
 void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "SIMD ternary must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1291,8 +1296,9 @@ void FunctionValidator::visitSIMDTernary(SIMDTernary* curr) {
 }
 
 void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "vector shift must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1306,8 +1312,9 @@ void FunctionValidator::visitSIMDShift(SIMDShift* curr) {
 void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.SIMDLoad memory must exist");
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::v128), curr, "load_splat must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1341,8 +1348,9 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
 void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.SIMDLoadStoreLane memory must exist");
-  shouldBeTrue(
-    getModule()->features.hasSIMD(), curr, "SIMD operations require SIMD [--enable-simd]");
+  shouldBeTrue(getModule()->features.hasSIMD(),
+               curr,
+               "SIMD operations require SIMD [--enable-simd]");
   if (curr->isLoad()) {
     shouldBeEqualOrFirstIsUnreachable(
       curr->type, Type(Type::v128), curr, "loadX_lane must have type v128");
@@ -1392,9 +1400,10 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
-  shouldBeTrue(getModule()->features.hasBulkMemory(),
-               curr,
-               "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1418,9 +1427,10 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
-  shouldBeTrue(getModule()->features.hasBulkMemory(),
-               curr,
-               "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
   if (!shouldBeFalse(getModule()->memories.empty(),
@@ -1434,9 +1444,10 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(getModule()->features.hasBulkMemory(),
-               curr,
-               "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   auto* destMemory = getModule()->getMemoryOrNull(curr->destMemory);
@@ -1466,9 +1477,10 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
-  shouldBeTrue(getModule()->features.hasBulkMemory(),
-               curr,
-               "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(
@@ -2234,17 +2246,19 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
 }
 
 void FunctionValidator::visitTableSize(TableSize* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
-               curr,
-               "table.size requires reference types [--enable-reference-types]");
+  shouldBeTrue(
+    getModule()->features.hasReferenceTypes(),
+    curr,
+    "table.size requires reference types [--enable-reference-types]");
   auto* table = getModule()->getTableOrNull(curr->table);
   shouldBeTrue(!!table, curr, "table.size table must exist");
 }
 
 void FunctionValidator::visitTableGrow(TableGrow* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
-               curr,
-               "table.grow requires reference types [--enable-reference-types]");
+  shouldBeTrue(
+    getModule()->features.hasReferenceTypes(),
+    curr,
+    "table.grow requires reference types [--enable-reference-types]");
   auto* table = getModule()->getTableOrNull(curr->table);
   if (shouldBeTrue(!!table, curr, "table.grow table must exist") &&
       curr->type != Type::unreachable) {
@@ -2361,9 +2375,10 @@ void FunctionValidator::visitTry(Try* curr) {
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
-  shouldBeTrue(getModule()->features.hasExceptionHandling(),
-               curr,
-               "throw requires exception-handling [--enable-exception-handling]");
+  shouldBeTrue(
+    getModule()->features.hasExceptionHandling(),
+    curr,
+    "throw requires exception-handling [--enable-exception-handling]");
   shouldBeEqual(curr->type,
                 Type(Type::unreachable),
                 curr,
@@ -2394,9 +2409,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
 }
 
 void FunctionValidator::visitRethrow(Rethrow* curr) {
-  shouldBeTrue(getModule()->features.hasExceptionHandling(),
-               curr,
-               "rethrow requires exception-handling [--enable-exception-handling]");
+  shouldBeTrue(
+    getModule()->features.hasExceptionHandling(),
+    curr,
+    "rethrow requires exception-handling [--enable-exception-handling]");
   shouldBeEqual(curr->type,
                 Type(Type::unreachable),
                 curr,
@@ -3014,7 +3030,8 @@ static void validateImports(Module& module, ValidationInfo& info) {
     if (curr->getResults().isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
-                        "Imported multivalue function requires multivalue [--enable-multivalue]");
+                        "Imported multivalue function requires multivalue "
+                        "[--enable-multivalue]");
     }
     if (info.validateWeb) {
       for (const auto& param : curr->getParams()) {
@@ -3043,8 +3060,10 @@ static void validateImports(Module& module, ValidationInfo& info) {
   });
   ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
     if (!module.features.hasMutableGlobals()) {
-      info.shouldBeFalse(
-        curr->mutable_, curr->name, "Imported mutable global requires mutable-globals [--enable-mutable-globals]");
+      info.shouldBeFalse(curr->mutable_,
+                         curr->name,
+                         "Imported mutable global requires mutable-globals "
+                         "[--enable-mutable-globals]");
     }
     info.shouldBeFalse(
       curr->type.isTuple(), curr->name, "Imported global cannot be tuple");
@@ -3073,8 +3092,10 @@ static void validateExports(Module& module, ValidationInfo& info) {
     } else if (curr->kind == ExternalKind::Global) {
       if (Global* g = module.getGlobalOrNull(curr->value)) {
         if (!module.features.hasMutableGlobals()) {
-          info.shouldBeFalse(
-            g->mutable_, g->name, "Exported mutable global requires mutable-globals [--enable-mutable-globals]");
+          info.shouldBeFalse(g->mutable_,
+                             g->name,
+                             "Exported mutable global requires mutable-globals "
+                             "[--enable-mutable-globals]");
         }
         info.shouldBeFalse(
           g->type.isTuple(), g->name, "Exported global cannot be tuple");
@@ -3177,9 +3198,10 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
   for (auto& segment : module.dataSegments) {
     auto size = segment->data.size();
     if (segment->isPassive) {
-      info.shouldBeTrue(module.features.hasBulkMemory(),
-                        segment->offset,
-                        "nonzero segment flags require bulk memory [--bulk-memory]");
+      info.shouldBeTrue(
+        module.features.hasBulkMemory(),
+        segment->offset,
+        "nonzero segment flags require bulk memory [--bulk-memory]");
       info.shouldBeEqual(segment->offset,
                          (Expression*)nullptr,
                          segment->offset,
@@ -3345,9 +3367,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
 
 static void validateTags(Module& module, ValidationInfo& info) {
   if (!module.tags.empty()) {
-    info.shouldBeTrue(module.features.hasExceptionHandling(),
-                      module.tags[0]->name,
-                      "Tags require exception-handling [--enable-exception-handling]");
+    info.shouldBeTrue(
+      module.features.hasExceptionHandling(),
+      module.tags[0]->name,
+      "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
     info.shouldBeEqual(curr->sig.results,
@@ -3355,9 +3378,10 @@ static void validateTags(Module& module, ValidationInfo& info) {
                        curr->name,
                        "Tag type's result type should be none");
     if (curr->sig.params.isTuple()) {
-      info.shouldBeTrue(module.features.hasMultivalue(),
-                        curr->name,
-                        "Multivalue tag type requires multivalue [--enable-multivalue]");
+      info.shouldBeTrue(
+        module.features.hasMultivalue(),
+        curr->name,
+        "Multivalue tag type requires multivalue [--enable-multivalue]");
     }
     for (const auto& param : curr->sig.params) {
       info.shouldBeTrue(param.isConcrete(),
