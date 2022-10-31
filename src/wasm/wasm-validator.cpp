@@ -3201,7 +3201,7 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(
         module.features.hasBulkMemory(),
         segment->offset,
-        "nonzero segment flags require bulk memory [--bulk-memory]");
+        "nonzero segment flags require bulk memory [--enable-bulk-memory]");
       info.shouldBeEqual(segment->offset,
                          (Expression*)nullptr,
                          segment->offset,
