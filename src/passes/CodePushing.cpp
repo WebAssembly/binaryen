@@ -450,8 +450,8 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   void visitLocalGet(LocalGet* curr) { numGetsSoFar[curr->index]++; }
 
   void visitBlock(Block* curr) {
-    // Pushing code only makes sense if we are size 3 or above: we need
-    // one element to push and an element to push it into, at minimum.
+    // Pushing code only makes sense if we are size 2 or above: we need one
+    // element to push and an element to push it into, at minimum.
     if (curr->list.size() < 2) {
       return;
     }
