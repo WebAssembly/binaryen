@@ -385,17 +385,15 @@ struct MultiMemoryLowering : public Pass {
         builder.makeReturn(getOffsetInPageUnits(offsetGlobalName)));
     } else if (isLastMemory(memIdx)) {
       auto offsetGlobalName = getOffsetGlobal(memIdx);
-      functionBody =
-        builder.blockify(builder.makeReturn(builder.makeBinary(
-                           Abstract::getBinary(pointerType, Abstract::Sub),
+      functionBody = builder.blockify(builder.makeReturn(
+        builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Sub),
                            builder.makeMemorySize(combinedMemory, memoryInfo),
                            getOffsetInPageUnits(offsetGlobalName))));
     } else {
       auto offsetGlobalName = getOffsetGlobal(memIdx);
       auto nextOffsetGlobalName = getOffsetGlobal(memIdx + 1);
-      functionBody =
-        builder.blockify(builder.makeReturn(builder.makeBinary(
-                           Abstract::getBinary(pointerType, Abstract::Sub),
+      functionBody = builder.blockify(builder.makeReturn(
+        builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Sub),
                            getOffsetInPageUnits(nextOffsetGlobalName),
                            getOffsetInPageUnits(offsetGlobalName))));
     }
