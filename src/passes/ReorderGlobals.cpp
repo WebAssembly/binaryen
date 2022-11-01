@@ -24,6 +24,7 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
+#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -83,72 +84,76 @@ struct ReorderGlobals : public Pass {
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
 
-    // To sort, we must first find dependencies, since if $b's definition
-    // depends on $a then $b must appear later:
+    // Do a toplogical sort to ensure we keep dependencies before the things
+    // that need them. For example, if $b's definition depends on $a then $b
+    // must appear later:
     //
     //   (global $a i32 (i32.const 10))
     //   (global $b i32 (global.get $a)) ;; $b depends on $a
     //
-    // To compute this we fill out a map of each global name to the set of
-    // other globals it depends on, then compute the transitive closure.
-    std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
-    for (auto& global : module->globals) {
-      if (global->imported()) {
-        continue;
-      }
-      for (auto get : FindAll<GlobalGet>(global->init).list) {
-        dependsOn[global->name].insert(get->name);
-      }
-    }
-    while (true) {
-      // Compute the transitive closure in a simple but inefficient way. Long
-      // chains of deps are very rare, so this should be good enough.
-      bool more = false;
+    struct DependencySort : TopologicalSort<Name, DependencySort> {
+      Module& wasm;
+      const NameCountMap& counts;
 
-      // Transitive property: If curr depends on dep, and dep depends on dep2,
-      // then curr depends on dep2.
-      for (auto& [curr, currDeps] : dependsOn) {
-        auto currDepsCopy = currDeps;
-        for (auto dep : currDepsCopy) {
-          // Chains are impossible.
-          assert(dep != curr);
+      std::unordered_map<Name, std::vector<Name>> deps;
 
-          for (auto dep2 : dependsOn[dep]) {
-            // Chains are impossible.
-            assert(dep2 != dep && dep2 != curr);
+      DependencySort(Module& wasm, const NameCountMap& counts)
+        : wasm(wasm), counts(counts) {
+        // Sort a list of global names by their counts.
+        auto sort = [&](std::vector<Name>& globals) {
+          std::stable_sort(
+            globals.begin(), globals.end(), [&](const Name& a, const Name& b) {
+              return counts.at(a) < counts.at(b);
+            });
+        };
 
-            if (!currDepsCopy.count(dep2)) {
-              currDeps.insert(dep2);
-              more = true;
-            }
+        // Sort the globals.
+        std::vector<Name> sortedNames;
+        for (auto& global : wasm.globals) {
+          sortedNames.push_back(global->name);
+        }
+        sort(sortedNames);
+
+        // Everything is a root (we need to emit all globals).
+        for (auto global : sortedNames) {
+          push(global);
+        }
+
+        // The dependencies are the globals referred to.
+        for (auto& global : wasm.globals) {
+          if (global->imported()) {
+            continue;
           }
+          std::vector<Name> vec;
+          for (auto* get : FindAll<GlobalGet>(global->init).list) {
+            vec.push_back(get->name);
+          }
+          sort(vec);
+          deps[global->name] = std::move(vec);
         }
       }
-      if (!more) {
-        break;
+
+      void pushPredecessors(Name global) {
+        for (auto pred : deps[global]) {
+          push(pred);
+        }
       }
+    };
+
+    std::unordered_map<Name, Index> sortedIndexes;
+    for (auto global : DependencySort(*module, counts)) {
+      auto index = sortedIndexes.size();
+      sortedIndexes[global] = index;
     }
 
-    // Sort.
-    std::sort(module->globals.begin(),
-              module->globals.end(),
-              [&](const std::unique_ptr<Global>& a,
-                  const std::unique_ptr<Global>& b) -> bool {
-                // If one depends on the other, the other must be first.
-                if (dependsOn[a->name].count(b->name)) {
-                  return false;
-                }
-                if (dependsOn[b->name].count(a->name)) {
-                  return true;
-                }
+    std::sort(
+      module->globals.begin(),
+      module->globals.end(),
+      [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
+        return sortedIndexes[a->name] < sortedIndexes[b->name];
+      });
 
-                // Break ties by the name.
-                if (counts[a->name] == counts[b->name]) {
-                  return a->name.toString().compare(b->name.toString()) > 0;
-                }
-
-                return counts[a->name] > counts[b->name];
-              });
+    module->updateMaps();
   }
 };
 
