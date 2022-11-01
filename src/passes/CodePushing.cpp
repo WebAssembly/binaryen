@@ -406,9 +406,9 @@ private:
   const EffectAnalyzer& getPushableEffects(LocalSet* pushable) {
     auto iter = pushableEffects.find(pushable);
     if (iter == pushableEffects.end()) {
-      iter = pushableEffects
-               .try_emplace(pushable, passOptions, module, pushable)
-               .first;
+      iter =
+        pushableEffects.try_emplace(pushable, passOptions, module, pushable)
+          .first;
     }
     return iter->second;
   }
