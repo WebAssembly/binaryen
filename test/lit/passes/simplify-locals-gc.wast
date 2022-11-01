@@ -488,7 +488,7 @@
     )
     ;; This local.get might as well use the non-nullable local, which is more
     ;; refined. In fact, all uses of locals can be switched to that one in the
-    ;; entire fnction (and the other local would be removed by other passes).
+    ;; entire function (and the other local would be removed by other passes).
     (local.get $any)
   )
 
