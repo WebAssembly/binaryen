@@ -272,6 +272,9 @@ void PassRegistry::registerPasses() {
   registerPass("mod-asyncify-never-unwind",
                "apply the assumption that asyncify never unwinds",
                createModAsyncifyNeverUnwindPass);
+  registerPass("multi-memory-lowering",
+               "combines multiple memories into a single memory",
+               createMultiMemoryLoweringPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
   registerPass("once-reduction",
@@ -572,7 +575,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("once-reduction");
   }
-  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+  if (wasm->features.hasGC() &&
+      (getTypeSystem() == TypeSystem::Nominal ||
+       getTypeSystem() == TypeSystem::Isorecursive) &&
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("type-refining");
     addIfNoDWARFIssues("signature-pruning");

@@ -52,8 +52,9 @@ struct SignaturePruning : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SignaturePruning requires nominal typing";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "SignaturePruning requires nominal/isorecursive typing";
     }
 
     if (!module->tables.empty()) {

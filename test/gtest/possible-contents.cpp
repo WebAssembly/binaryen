@@ -1,4 +1,5 @@
 #include "ir/possible-contents.h"
+#include "ir/subtypes.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
@@ -24,17 +25,24 @@ template<typename T> void assertNotEqualSymmetric(const T& a, const T& b) {
 // Asserts a combined with b (in any order) is equal to c.
 template<typename T>
 void assertCombination(const T& a, const T& b, const T& c) {
-  T temp1 = a;
-  temp1.combine(b);
+  T temp1 = PossibleContents::combine(a, b);
   assertEqualSymmetric(temp1, c);
   // Also check the type, as nulls will compare equal even if their types
   // differ. We want to make sure even the types are identical.
   assertEqualSymmetric(temp1.getType(), c.getType());
 
-  T temp2 = b;
-  temp2.combine(a);
+  T temp2 = PossibleContents::combine(b, a);
   assertEqualSymmetric(temp2, c);
   assertEqualSymmetric(temp2.getType(), c.getType());
+
+  // Verify the shorthand API works like the static one.
+  T temp3 = a;
+  temp3.combine(b);
+  assertEqualSymmetric(temp3, temp1);
+
+  T temp4 = b;
+  temp4.combine(a);
+  assertEqualSymmetric(temp4, temp2);
 }
 
 // Parse a module from text and return it.
@@ -347,6 +355,21 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
   auto doTest = [](std::unordered_set<PossibleContents> set) {
     std::vector<PossibleContents> vec(set.begin(), set.end());
 
+    // Find the maximum depths for the normalized cone tests later down.
+    std::unordered_set<HeapType> heapTypes;
+    for (auto& contents : set) {
+      auto type = contents.getType();
+      if (type.isRef()) {
+        auto heapType = type.getHeapType();
+        if (!heapType.isBasic()) {
+          heapTypes.insert(heapType);
+        }
+      }
+    }
+    std::vector<HeapType> heapTypesVec(heapTypes.begin(), heapTypes.end());
+    SubTypes subTypes(heapTypesVec);
+    auto maxDepths = subTypes.getMaxDepths();
+
     // Go over all permutations up to a certain size (this quickly becomes
     // extremely slow, obviously, so keep this low).
     size_t max = 3;
@@ -397,6 +420,17 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
 #endif
         assertHaveIntersection(combination, item);
 
+        auto type = combination.getType();
+        if (type.isRef()) {
+          // If we normalize the combination's depth, the item must still have
+          // an intersection. That is, normalization must not have a bug that
+          // results in cones that are too shallow.
+          auto normalizedDepth = maxDepths[type.getHeapType()];
+          auto normalizedCone =
+            PossibleContents::coneType(type, normalizedDepth);
+          assertHaveIntersection(normalizedCone, item);
+        }
+
         // Test intersectWithFullCone() method, which is supported with a full
         // cone type. In that case we can test that the intersection of A with
         // A + B is simply A.
@@ -413,6 +447,12 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
             abort();
           }
 #endif
+
+          // The intersection is contained in each of the things we intersected
+          // (but we can only compare to the full cone, as the API is restricted
+          // to that).
+          EXPECT_TRUE(
+            PossibleContents::isSubContents(intersection, combination));
         }
       }
 
@@ -465,6 +505,14 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
                                                   coneAnyref,
                                                   coneFuncref,
                                                   coneFuncref1};
+
+  // Add some additional interesting types.
+  auto structType =
+    Type(HeapType(Struct({Field(Type::i32, Immutable)})), NonNullable);
+  initial.insert(PossibleContents::coneType(structType, 0));
+  auto arrayType =
+    Type(HeapType(Array(Field(Type::i32, Immutable))), NonNullable);
+  initial.insert(PossibleContents::coneType(arrayType, 0));
 
   // After testing on the initial contents, also test using anything new that
   // showed up while combining them.
