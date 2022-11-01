@@ -98,7 +98,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_simd(module, 'SIMD operation (SIMD is disabled)')
+        self.check_simd(module, 'SIMD operations require SIMD [--enable-simd]')
 
     def test_simd_splat(self):
         module = '''
@@ -130,7 +130,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_bulk_mem(module,
-                            'Bulk memory operation (bulk memory is disabled')
+                            'Bulk memory operations require bulk memory [--enable-bulk-memory]')
 
     def test_bulk_mem_segment(self):
         module = '''
@@ -139,7 +139,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (data "42")
         )
         '''
-        self.check_bulk_mem(module, 'nonzero segment flags (bulk memory is disabled)')
+        self.check_bulk_mem(module, 'nonzero segment flags require bulk memory [--enable-bulk-memory]')
 
     def test_tail_call(self):
         module = '''
@@ -150,7 +150,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_tail_call(module, 'return_call* requires tail calls to be enabled')
+        self.check_tail_call(module, 'return_call* requires tail calls [--enable-tail-call]')
 
     def test_tail_call_indirect(self):
         module = '''
@@ -164,7 +164,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_tail_call(module, 'return_call* requires tail calls to be enabled')
+        self.check_tail_call(module, 'return_call* requires tail calls [--enable-tail-call]')
 
     def test_reference_types_externref(self):
         module = '''
@@ -193,7 +193,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_exception_handling(module, 'Module has tags')
+        self.check_exception_handling(module, 'Tags require exception-handling [--enable-exception-handling]')
 
     def test_multivalue_import(self):
         module = '''
@@ -201,8 +201,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (import "env" "foo" (func $foo (result i32 i64)))
         )
         '''
-        self.check_multivalue(module, 'Imported multivalue function ' +
-                              '(multivalue is not enabled)')
+        self.check_multivalue(module, 'Imported multivalue function requires multivalue [--enable-multivalue]')
 
     def test_multivalue_function(self):
         module = '''
@@ -224,8 +223,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (tag $foo (param i32 i64))
         )
         '''
-        self.check_multivalue_exception_handling(module, 'Multivalue tag type ' +
-                                                 '(multivalue is not enabled)')
+        self.check_multivalue_exception_handling(module, 'Multivalue tag type requires multivalue [--enable-multivalue]')
 
     def test_multivalue_block(self):
         module = '''
@@ -242,8 +240,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_multivalue(module, 'Multivalue block type ' +
-                              '(multivalue is not enabled)')
+        self.check_multivalue(module, 'Multivalue block type require multivalue [--enable-multivalue]')
 
     def test_i31_global(self):
         module = '''
