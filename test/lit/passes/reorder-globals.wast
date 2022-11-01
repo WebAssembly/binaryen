@@ -374,3 +374,31 @@
     )
   )
 )
+
+;; As above, but with a and b's names flipped, to check that the names do not
+;; matter, and we keep imports first.
+(module
+  ;; CHECK:      (import "a" "b" (global $b i32))
+  ;; RTRIP:      (import "a" "b" (global $b i32))
+  (import "a" "b" (global $b i32))
+
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  ;; RTRIP:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+
+  ;; CHECK:      (func $uses
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $uses
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (global.get $a)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $uses
+    (drop
+      (global.get $a)
+    )
+  )
+)
