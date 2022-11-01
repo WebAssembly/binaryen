@@ -445,4 +445,168 @@
     ;; Helper function for the above.
     (unreachable)
   )
+
+  ;; CHECK:      (func $pick-refined (param $nn-any (ref any)) (result anyref)
+  ;; CHECK-NEXT:  (local $any anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $use-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-nn-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.get $nn-any)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-refined (type $ref|any|_=>_anyref) (param $nn-any (ref any)) (result anyref)
+  ;; NOMNL-NEXT:  (local $any anyref)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (call $use-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-nn-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (local.get $nn-any)
+  ;; NOMNL-NEXT: )
+  (func $pick-refined (param $nn-any (ref any)) (result anyref)
+    (local $any anyref)
+    (local.set $any
+      (local.get $nn-any)
+    )
+    ;; Use the locals so neither is trivially removed.
+    (call $use-any
+      (local.get $any)
+    )
+    (call $use-nn-any
+      (local.get $nn-any)
+    )
+    ;; This copy is not needed, as they hold the same value.
+    (local.set $any
+      (local.get $nn-any)
+    )
+    ;; This local.get might as well use the non-nullable local, which is more
+    ;; refined. In fact, all uses of locals can be switched to that one in the
+    ;; entire function (and the other local would be removed by other passes).
+    (local.get $any)
+  )
+
+  ;; CHECK:      (func $pick-casted (param $any anyref) (result anyref)
+  ;; CHECK-NEXT:  (local $nn-any (ref any))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $use-any
+  ;; CHECK-NEXT:   (local.tee $nn-any
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-nn-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.get $nn-any)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-casted (type $anyref_=>_anyref) (param $any anyref) (result anyref)
+  ;; NOMNL-NEXT:  (local $nn-any (ref any))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (call $use-any
+  ;; NOMNL-NEXT:   (local.tee $nn-any
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (local.get $any)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-nn-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (local.get $nn-any)
+  ;; NOMNL-NEXT: )
+  (func $pick-casted (param $any anyref) (result anyref)
+    (local $nn-any (ref any))
+    (local.set $nn-any
+      (ref.as_non_null
+        (local.get $any)
+      )
+    )
+    ;; Use the locals so neither is trivially removed.
+    (call $use-any
+      (local.get $any)
+    )
+    (call $use-nn-any
+      (local.get $nn-any)
+    )
+    ;; This copy is not needed, as they hold the same value.
+    (local.set $any
+      (local.get $nn-any)
+    )
+    ;; This local.get might as well use the non-nullable local.
+    (local.get $any)
+  )
+
+  ;; CHECK:      (func $pick-fallthrough (param $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-fallthrough (type $i32_=>_none) (param $x i32)
+  ;; NOMNL-NEXT:  (local $t i32)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $pick-fallthrough (param $x i32)
+    (local $t i32)
+    ;; Similar to the above test wth looking through a cast, but using a non-gc
+    ;; type of fallthrough value.
+    (local.set $t
+      (block (result i32)
+        (local.get $x)
+      )
+    )
+    ;; The locals are identical, as we set $t = $x (we can look through to the
+    ;; block value). Both these gets can go to $x, and we do not need to set $t
+    ;; as it will have 0 uses.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $t)
+    )
+  )
+
+  ;; CHECK:      (func $use-nn-any (param $nn-any (ref any))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $use-nn-any (type $ref|any|_=>_none) (param $nn-any (ref any))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
+  (func $use-nn-any (param $nn-any (ref any))
+    ;; Helper function for the above.
+  )
+
+  ;; CHECK:      (func $use-any (param $any anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $use-any (type $anyref_=>_none) (param $any anyref)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
+  (func $use-any (param $any anyref)
+    ;; Helper function for the above.
+  )
 )
