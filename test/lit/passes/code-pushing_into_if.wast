@@ -537,4 +537,76 @@
       (drop (local.get $x))
     )
   )
+
+  ;; CHECK:      (func $one-push-prevents-another (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $y
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $one-push-prevents-another (param $p i32)
+    (local $x i32)
+    (local $y i32)
+    ;; We will push $y into one arm, and as a result both arms will have a get
+    ;; of $x, which prevents pushing $x.
+    (local.set $x (i32.const 1))
+    (local.set $y (local.get $x))
+    (if
+      (local.get $p)
+      (drop (local.get $x))
+      (drop (local.get $y))
+    )
+  )
+
+  ;; CHECK:      (func $one-push-prevents-another-flipped (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $y
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $one-push-prevents-another-flipped (param $p i32)
+    (local $x i32)
+    (local $y i32)
+    ;; As above but with if arms flipped. The result should be similar, with
+    ;; only $y pushed.
+    (local.set $x (i32.const 1))
+    (local.set $y (local.get $x))
+    (if
+      (local.get $p)
+      (drop (local.get $y))
+      (drop (local.get $x))
+    )
+  )
 )
