@@ -278,15 +278,22 @@ struct MultiMemoryLowering : public Pass {
       functionName, Signature(pointerType, pointerType), {});
     function->setLocalName(0, "page_delta");
     Index pageSizeLocal = -1;
-    auto pageSizeConst = [&]() { return builder.makeLocalGet(pageSizeLocal, Type::i32); };
-    auto getOffsetDelta = [&]() { return builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Mul), builder.makeLocalGet(0, pointerType), pageSizeConst()); };
+    auto pageSizeConst = [&]() {
+      return builder.makeLocalGet(pageSizeLocal, Type::i32);
+    };
+    auto getOffsetDelta = [&]() {
+      return builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Mul),
+                                builder.makeLocalGet(0, pointerType),
+                                pageSizeConst());
+    };
     auto getMoveSource = [&](Name global) {
       return builder.makeGlobalGet(global, pointerType);
     };
     Expression* functionBody;
     Index sizeLocal = -1;
 
-    Index returnLocal = Builder::addVar(function.get(), "return_size", pointerType);
+    Index returnLocal =
+      Builder::addVar(function.get(), "return_size", pointerType);
     functionBody = builder.blockify(builder.makeLocalSet(
       returnLocal, builder.makeCall(memorySizeNames[memIdx], {}, pointerType)));
 
@@ -295,17 +302,18 @@ struct MultiMemoryLowering : public Pass {
       sizeLocal = Builder::addVar(function.get(), "memory_size", pointerType);
       functionBody = builder.blockify(
         functionBody,
-        builder.makeLocalSet(pageSizeLocal, builder.makeConst(Literal(Memory::kPageSize))),
+        builder.makeLocalSet(pageSizeLocal,
+                             builder.makeConst(Literal(Memory::kPageSize))),
         builder.makeLocalSet(
           sizeLocal, builder.makeMemorySize(combinedMemory, memoryInfo)));
     }
 
     // TODO: Check the result of makeMemoryGrow for errors and return the error
     // instead
-    functionBody =
-      builder.blockify(functionBody,
-                       builder.makeDrop(builder.makeMemoryGrow(
-                         builder.makeLocalGet(0, pointerType), combinedMemory, memoryInfo)));
+    functionBody = builder.blockify(
+      functionBody,
+      builder.makeDrop(builder.makeMemoryGrow(
+        builder.makeLocalGet(0, pointerType), combinedMemory, memoryInfo)));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
@@ -322,9 +330,12 @@ struct MultiMemoryLowering : public Pass {
           // source
           getMoveSource(offsetGlobalName),
           // size
-          builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Sub),
-                             builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Mul), builder.makeLocalGet(sizeLocal, pointerType), pageSizeConst()),
-                             getMoveSource(offsetGlobalName)),
+          builder.makeBinary(
+            Abstract::getBinary(pointerType, Abstract::Sub),
+            builder.makeBinary(Abstract::getBinary(pointerType, Abstract::Mul),
+                               builder.makeLocalGet(sizeLocal, pointerType),
+                               pageSizeConst()),
+            getMoveSource(offsetGlobalName)),
           combinedMemory,
           combinedMemory));
     }
@@ -357,12 +368,15 @@ struct MultiMemoryLowering : public Pass {
     auto function = Builder::makeFunction(
       functionName, Signature(Type::none, pointerType), {});
     Expression* functionBody;
-    Index pageSizeLocal = Builder::addVar(function.get(), "page_size", Type::i32);
-    functionBody = builder.makeLocalSet(pageSizeLocal, builder.makeConst(Literal(Memory::kPageSize)));
+    Index pageSizeLocal =
+      Builder::addVar(function.get(), "page_size", Type::i32);
+    functionBody = builder.makeLocalSet(
+      pageSizeLocal, builder.makeConst(Literal(Memory::kPageSize)));
     auto getOffsetInPageUnits = [&](Name global) {
-      return builder.makeBinary(Abstract::getBinary(pointerType, Abstract::DivU),
-                                                builder.makeGlobalGet(global, pointerType),
-                                                builder.makeLocalGet(pageSizeLocal, Type::i32));
+      return builder.makeBinary(
+        Abstract::getBinary(pointerType, Abstract::DivU),
+        builder.makeGlobalGet(global, pointerType),
+        builder.makeLocalGet(pageSizeLocal, Type::i32));
     };
 
     // offsetGlobalNames does not keep track of a global for the offset of
@@ -374,25 +388,24 @@ struct MultiMemoryLowering : public Pass {
       auto offsetGlobalName = getOffsetGlobal(1);
       functionBody = builder.blockify(
         functionBody,
-builder.makeReturn(
-        getOffsetInPageUnits(offsetGlobalName)));
+        builder.makeReturn(getOffsetInPageUnits(offsetGlobalName)));
     } else if (isLastMemory(memIdx)) {
       auto offsetGlobalName = getOffsetGlobal(memIdx);
-      functionBody = builder.blockify(
-        functionBody,
-builder.makeReturn(builder.makeBinary(
-        Abstract::getBinary(pointerType, Abstract::Sub),
-        builder.makeMemorySize(combinedMemory, memoryInfo),
-        getOffsetInPageUnits(offsetGlobalName))));
+      functionBody =
+        builder.blockify(functionBody,
+                         builder.makeReturn(builder.makeBinary(
+                           Abstract::getBinary(pointerType, Abstract::Sub),
+                           builder.makeMemorySize(combinedMemory, memoryInfo),
+                           getOffsetInPageUnits(offsetGlobalName))));
     } else {
       auto offsetGlobalName = getOffsetGlobal(memIdx);
       auto nextOffsetGlobalName = getOffsetGlobal(memIdx + 1);
-      functionBody = builder.blockify(
-        functionBody,
-builder.makeReturn(builder.makeBinary(
-        Abstract::getBinary(pointerType, Abstract::Sub),
-        getOffsetInPageUnits(nextOffsetGlobalName),
-        getOffsetInPageUnits(offsetGlobalName))));
+      functionBody =
+        builder.blockify(functionBody,
+                         builder.makeReturn(builder.makeBinary(
+                           Abstract::getBinary(pointerType, Abstract::Sub),
+                           getOffsetInPageUnits(nextOffsetGlobalName),
+                           getOffsetInPageUnits(offsetGlobalName))));
     }
 
     function->body = functionBody;
