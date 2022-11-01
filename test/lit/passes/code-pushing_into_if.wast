@@ -538,6 +538,45 @@
     )
   )
 
+  ;; CHECK:      (func $if-condition-break-used (param $p i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (br $out)
+  ;; CHECK-NEXT:     (local.get $p)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-condition-break-used (param $p i32)
+    (local $x i32)
+    (local.set $x (i32.const 1))
+    ;; As above, but the return is replaced with a break. The break goes to a
+    ;; location with a use of the local, which prevents optimization.
+    (block $out
+      (if
+        (block (result i32)
+          (br $out)
+          (local.get $p)
+        )
+        (drop (local.get $x))
+      )
+      (return)
+    )
+    (drop (local.get $x))
+  )
+
   ;; CHECK:      (func $one-push-prevents-another (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
