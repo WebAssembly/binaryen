@@ -546,6 +546,50 @@
     (local.get $any)
   )
 
+  ;; CHECK:      (func $pick-fallthrough (param $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-fallthrough (type $i32_=>_none) (param $x i32)
+  ;; NOMNL-NEXT:  (local $t i32)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $pick-fallthrough (param $x i32)
+    (local $t i32)
+    ;; Similar to the above test wth looking through a cast, but using a non-gc
+    ;; type of fallthrough value.
+    (local.set $t
+      (block (result i32)
+        (local.get $x)
+      )
+    )
+    ;; The locals are identical, as we set $t = $x (we can look through to the
+    ;; block value). Both these gets can go to $x, and we do not need to set $t
+    ;; as it will have 0 uses.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $t)
+    )
+  )
+
   ;; CHECK:      (func $use-nn-any (param $nn-any (ref any))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
