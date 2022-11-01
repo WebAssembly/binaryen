@@ -80,6 +80,7 @@ struct ReorderFunctions : public Pass {
     }
     ElementUtils::iterAllElementFunctionNames(
       module, [&](Name& name) { counts[name]++; });
+    // TODO: count all RefFunc as well
     // sort
     std::sort(module->functions.begin(),
               module->functions.end(),
