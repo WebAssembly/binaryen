@@ -407,9 +407,7 @@ private:
     auto iter = pushableEffects.find(pushable);
     if (iter == pushableEffects.end()) {
       iter = pushableEffects
-               .emplace(std::piecewise_construct,
-                        std::forward_as_tuple(pushable),
-                        std::forward_as_tuple(passOptions, module, pushable))
+               .try_emplace(pushable, passOptions, module, pushable)
                .first;
     }
     return iter->second;
