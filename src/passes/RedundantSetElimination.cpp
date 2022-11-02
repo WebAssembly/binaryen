@@ -54,7 +54,7 @@ namespace {
 // information in a basic block
 struct Info {
   LocalValues start, end; // the local values at the start and end of the block
-  std::vector<Expression**> setps;
+  std::vector<Expression**> items;
 };
 
 struct RedundantSetElimination
@@ -74,10 +74,16 @@ struct RedundantSetElimination
 
   // cfg traversal work
 
+  static void doVisitLocalGet(RedundantSetElimination* self,
+                              Expression** currp) {
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.items.push_back(currp);
+    }
+  }
   static void doVisitLocalSet(RedundantSetElimination* self,
                               Expression** currp) {
     if (self->currBasicBlock) {
-      self->currBasicBlock->contents.setps.push_back(currp);
+      self->currBasicBlock->contents.items.push_back(currp);
     }
   }
 
@@ -295,10 +301,11 @@ struct RedundantSetElimination
       // flow values through it, then add those we can reach if they need an
       // update.
       auto currValues = curr->contents.start; // we'll modify this as we go
-      auto& setps = curr->contents.setps;
-      for (auto** setp : setps) {
-        auto* set = (*setp)->cast<LocalSet>();
-        currValues[set->index] = getValue(set->value, currValues);
+      auto& items = curr->contents.items;
+      for (auto** item : items) {
+        if (auto* set = (*item)->dynCast<LocalSet>()) {
+          currValues[set->index] = getValue(set->value, currValues);
+        }
       }
       if (currValues == curr->contents.end) {
         // nothing changed, so no more work to do
@@ -331,24 +338,25 @@ struct RedundantSetElimination
     // and remove redundant sets when we see them
     for (auto& block : basicBlocks) {
       auto currValues = block->contents.start; // we'll modify this as we go
-      auto& setps = block->contents.setps;
-      for (auto** setp : setps) {
-        auto* set = (*setp)->cast<LocalSet>();
-        auto oldValue = currValues[set->index];
-        auto newValue = getValue(set->value, currValues);
-        auto index = set->index;
-        if (newValue == oldValue) {
-          remove(setp);
-          continue; // no more work to do
+      auto& items = block->contents.items;
+      for (auto** item : items) {
+        if (auto* set = (*item)->dynCast<LocalSet>()) {
+          auto oldValue = currValues[set->index];
+          auto newValue = getValue(set->value, currValues); // TODO fallthrough?
+          auto index = set->index;
+          if (newValue == oldValue) {
+            remove(item);
+            continue; // no more work to do
+          }
+          // update for later steps
+          currValues[index] = newValue;
         }
-        // update for later steps
-        currValues[index] = newValue;
       }
     }
   }
 
-  void remove(Expression** setp) {
-    auto* set = (*setp)->cast<LocalSet>();
+  void remove(Expression** item) {
+    auto* set = (*item)->cast<LocalSet>();
     auto* value = set->value;
     if (!set->isTee()) {
       auto* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
@@ -369,7 +377,7 @@ struct RedundantSetElimination
       if (value->type != set->type) {
         refinalize = true;
       }
-      *setp = value;
+      *item = value;
     }
   }
 
@@ -387,8 +395,8 @@ struct RedundantSetElimination
       std::cout << "  start[" << i << "] = " << block->contents.start[i]
                 << '\n';
     }
-    for (auto** setp : block->contents.setps) {
-      std::cout << "  " << *setp << '\n';
+    for (auto** item : block->contents.items) {
+      std::cout << "  " << *item << '\n';
     }
     std::cout << "====\n";
   }
