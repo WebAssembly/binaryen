@@ -338,6 +338,88 @@ enum class DataOffset { BStackPos = 0, BStackEnd = 4, BStackEnd64 = 8 };
 
 const auto STACK_ALIGN = 4;
 
+// A helper class for managing fake global names. Creates the globals and
+// provides mappings for using them.
+// Fake globals are used to stash and then use return values from calls. We need
+// to store them somewhere that is valid Binaryen IR, but also will be ignored
+// by the Asyncify instrumentation, so we don't want to use a local. What we do
+// is replace the local used to receive a call's result with a fake global.set
+// to stash it, then do a fake global.get to receive it afterwards. (We do it in
+// two steps so that if we are async, we only do the first and not the second,
+// i.e., we don't store to the target local if not running normally).
+class FakeGlobalHelper {
+  Module& module;
+
+public:
+  FakeGlobalHelper(Module& module) : module(module) {
+    Builder builder(module);
+    std::string prefix = "asyncify_fake_call_global_";
+    for (auto type : collectTypes()) {
+      auto global = prefix + Type(type).toString();
+      map[type] = global;
+      rev[global] = type;
+      module.addGlobal(builder.makeGlobal(
+        global, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
+    }
+  }
+
+  ~FakeGlobalHelper() {
+    for (auto& pair : map) {
+      auto name = pair.second;
+      module.removeGlobal(name);
+    }
+  }
+
+  Name getName(Type type) { return map.at(type); }
+
+  Type getTypeOrNone(Name name) {
+    auto iter = rev.find(name);
+    if (iter != rev.end()) {
+      return iter->second;
+    }
+    return Type::none;
+  }
+
+private:
+  std::unordered_map<Type, Name> map;
+  std::unordered_map<Name, Type> rev;
+
+  // Collect the types returned from all calls for which call support globals
+  // may need to be generated.
+  using Types = std::unordered_set<Type>;
+  Types collectTypes() {
+    ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
+      module, [&](Function* func, Types& types) {
+        if (!func->body) {
+          return;
+        }
+        struct TypeCollector : PostWalker<TypeCollector> {
+          Types& types;
+          TypeCollector(Types& types) : types(types) {}
+          void visitCall(Call* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+          void visitCallIndirect(CallIndirect* curr) {
+            if (curr->type.isConcrete()) {
+              types.insert(curr->type);
+            }
+          }
+        };
+        TypeCollector(types).walk(func->body);
+      });
+    Types types;
+    for (auto& pair : analysis.map) {
+      Types& functionTypes = pair.second;
+      for (auto t : functionTypes) {
+        types.insert(t);
+      }
+    }
+    return types;
+  }
+};
+
 // Checks if something performs a call: either a direct or indirect call,
 // and perhaps it is dropped or assigned to a local. This captures all the
 // cases of a call in flat IR.
@@ -401,12 +483,14 @@ struct AsyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
+  FakeGlobalHelper& fakeGlobals;
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<AsyncifyFlow>(analyzer);
+    return std::make_unique<AsyncifyFlow>(analyzer, fakeGlobals);
   }
 
-  AsyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
+  AsyncifyFlow(ModuleAnalyzer* analyzer, FakeGlobalHelper& fakeGlobals)
+    : analyzer(analyzer), fakeGlobals(fakeGlobals) {}
 
   void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
@@ -667,7 +751,7 @@ private:
     // AsyncifyLocals locals adds local saving/restoring.
     auto* set = curr->dynCast<LocalSet>();
     if (set) {
-      auto name = analyzer->fakeGlobals.getName(set->value->type);
+      auto name = fakeGlobals.getName(set->value->type);
       curr = builder->makeGlobalSet(name, set->value);
       set->value = builder->makeGlobalGet(name, set->value->type);
     }
@@ -776,12 +860,14 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
+  FakeGlobalHelper& fakeGlobals;
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<AsyncifyLocals>(analyzer);
+    return std::make_unique<AsyncifyLocals>(analyzer, fakeGlobals);
   }
 
-  AsyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
+  AsyncifyLocals(ModuleAnalyzer* analyzer, FakeGlobalHelper& fakeGlobals)
+    : analyzer(analyzer), fakeGlobals(fakeGlobals) {}
 
   void visitCall(Call* curr) {
     // Replace calls to the fake intrinsics.
@@ -809,7 +895,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
+    auto type = fakeGlobals.getTypeOrNone(curr->name);
     if (type != Type::none) {
       replaceCurrent(
         builder->makeLocalSet(getFakeCallLocal(type), curr->value));
@@ -817,7 +903,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    auto type = analyzer->fakeGlobals.getTypeOrNone(curr->name);
+    auto type = fakeGlobals.getTypeOrNone(curr->name);
     if (type != Type::none) {
       replaceCurrent(builder->makeLocalGet(getFakeCallLocal(type), type));
     }
@@ -1062,12 +1148,13 @@ struct Asyncify : public Pass {
     // Ensure there is a memory, as we need it.
     MemoryUtils::ensureExists(module);
 
-    
     auto relocatable =
       options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
     // Scan the module.
-    std::unique_ptr<ModuleAnalyzer> analyzer = AsyncUtils::createAnalyzer(module, options);
+    std::unique_ptr<ModuleAnalyzer> analyzer =
+      AsyncUtils::createAnalyzer(module, options);
+    FakeGlobalHelper fakeGlobals(*module);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module, relocatable);
@@ -1096,7 +1183,7 @@ struct Asyncify : public Pass {
         runner.add("reorder-locals");
         runner.add("merge-blocks");
       }
-      runner.add(make_unique<AsyncifyFlow>(analyzer.get()));
+      runner.add(make_unique<AsyncifyFlow>(analyzer.get(), fakeGlobals));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1111,7 +1198,7 @@ struct Asyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      runner.add(make_unique<AsyncifyLocals>(analyzer.get()));
+      runner.add(make_unique<AsyncifyLocals>(analyzer.get(), fakeGlobals));
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

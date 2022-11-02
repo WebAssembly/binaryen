@@ -171,7 +171,7 @@ ModuleAnalyzer::ModuleAnalyzer(
   bool asserts,
   bool verbose)
   : module(module), canIndirectChangeState(canIndirectChangeState),
-    fakeGlobals(module), asserts(asserts), verbose(verbose) {
+    asserts(asserts), verbose(verbose) {
 
   PatternMatcher removeList("remove", module, removeListInput);
   PatternMatcher addList("add", module, addListInput);
