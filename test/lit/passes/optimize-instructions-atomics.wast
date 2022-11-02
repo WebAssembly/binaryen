@@ -7,14 +7,10 @@
 
  ;; CHECK:      (func $x
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.shr_s
- ;; CHECK-NEXT:    (i32.shl
- ;; CHECK-NEXT:     (i32.atomic.load8_u
- ;; CHECK-NEXT:      (i32.const 100)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 24)
+ ;; CHECK-NEXT:   (i32.extend8_s
+ ;; CHECK-NEXT:    (i32.atomic.load8_u
+ ;; CHECK-NEXT:     (i32.const 100)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (i32.const 24)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

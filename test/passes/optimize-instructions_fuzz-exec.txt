@@ -262,12 +262,8 @@
   (call $log
    (i32.shr_s
     (i32.shl
-     (i32.shr_s
-      (i32.shl
-       (local.get $0)
-       (i32.const 24)
-      )
-      (i32.const 24)
+     (i32.extend8_s
+      (local.get $0)
      )
      (i32.const 30)
     )

@@ -15,7 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
-- Add extra `memory64` argument for `BinaryenSetMemory` and new `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
+- Add extra `memory64` argument for `BinaryenSetMemory` and new
+  `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
 - `TypeBuilderSetSubType` now takes a supertype as the second argument.
 - `call_ref` can now take a signature type immediate in the text format. The
   type immediate will become mandatory in the future.
@@ -25,7 +26,11 @@ Current Trunk
 - Implemented bottom heap types: `none`, `nofunc`, and `noextern`. RefNull
   expressions and null `Literal`s must now have type `nullref`, `nullfuncref`,
   or `nullexternref`.
-* The C-API's `BinaryenTypeI31ref` and `BinaryenTypeDataref` now return nullable types.
+- The C-API's `BinaryenTypeI31ref` and `BinaryenTypeDataref` now return nullable
+  types.
+- The `sign-extension` and `mutable-globals` features are now both enabled by
+  default in all tools. This is in order to match llvm's defaults (See
+  https://reviews.llvm.org/D125728).
 
 v110
 ----

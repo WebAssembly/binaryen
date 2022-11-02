@@ -119,7 +119,7 @@
  ;; custom section ".debug_line", size 109
  ;; custom section ".debug_str", size 178
  ;; custom section "producers", size 134
- ;; features section: exception-handling
+ ;; features section: mutable-globals, sign-ext, exception-handling
 )
 DWARF debug info
 ================
@@ -540,5 +540,5 @@ file_names[  1]:
  ;; custom section ".debug_line", size 162
  ;; custom section ".debug_str", size 178
  ;; custom section "producers", size 134
- ;; features section: exception-handling
+ ;; features section: mutable-globals, sign-ext, exception-handling
 )

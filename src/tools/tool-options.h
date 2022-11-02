@@ -205,8 +205,8 @@ struct ToolOptions : public Options {
   }
 
 private:
-  FeatureSet enabledFeatures = FeatureSet::MVP;
-  FeatureSet disabledFeatures = FeatureSet::MVP;
+  FeatureSet enabledFeatures = FeatureSet::Default;
+  FeatureSet disabledFeatures = FeatureSet::None;
 };
 
 } // namespace wasm
