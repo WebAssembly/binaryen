@@ -104,7 +104,7 @@ struct RedundantSetElimination
     // flow values across blocks
     flowValues(func);
     // remove redundant sets
-    optimize();
+    optimize(func);
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, this->getModule());
@@ -333,7 +333,7 @@ struct RedundantSetElimination
   }
 
   // optimizing
-  void optimize() {
+  void optimize(Function* func) {
     // in each block, run the values through the sets,
     // and remove redundant sets when we see them
     for (auto& block : basicBlocks) {
@@ -346,10 +346,25 @@ struct RedundantSetElimination
           auto index = set->index;
           if (newValue == oldValue) {
             remove(item);
-            continue; // no more work to do
+          } else {
+            // update for later steps
+            currValues[index] = newValue;
           }
-          // update for later steps
-          currValues[index] = newValue;
+          continue;
+        }
+
+        // For gets, see if there is another index with that value, of a more
+        // refined type.
+        auto* get = (*item)->dynCast<LocalGet>();
+        // If we see nothing better, the best index will be the same as the old.
+        for (Index i = 0; i < currValues.size(); i++) {
+          auto currType = func->getLocalType(get->index);
+          auto possibleType = func->getLocalType(i);
+          if (possibleType != currType && Type::isSubType(possibleType, currType)) {
+            // We found an improvement!
+            get->index = i;
+            refinalize = true;
+          }
         }
       }
     }
