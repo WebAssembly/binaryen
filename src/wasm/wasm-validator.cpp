@@ -3208,9 +3208,11 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
                          "passive segment should not have an offset");
     } else {
       auto memory = module.getMemoryOrNull(segment->memory);
-      info.shouldBeTrue(memory != nullptr,
-                        "segment",
-                        "active segment must have a valid memory name");
+      if (!info.shouldBeTrue(memory != nullptr,
+                             "segment",
+                             "active segment must have a valid memory name")) {
+        continue;
+      }
       if (memory->is64()) {
         if (!info.shouldBeEqual(segment->offset->type,
                                 Type(Type::i64),
