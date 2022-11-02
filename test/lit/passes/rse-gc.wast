@@ -147,4 +147,36 @@
    (local.get $B)
   )
  )
+
+ ;; CHECK:      (func $avoid-unrefined (param $A (ref $A)) (param $x i32)
+ ;; CHECK-NEXT:  (local $B (ref null $B))
+ ;; CHECK-NEXT:  (local.set $B
+ ;; CHECK-NEXT:   (ref.cast_static $B
+ ;; CHECK-NEXT:    (local.get $A)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $A)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $B)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $avoid-unrefined (param $A (ref $A)) (param $x i32)
+  (local $B (ref null $B))
+  ;; As above, but now the local is nullable. Since the parameter is non-
+  ;; nullable, that means neither is a subtype of the other, and we will make
+  ;; no changes.
+  (local.set $B
+   (ref.cast_static $B
+    (local.get $A)
+   )
+  )
+  (drop
+   (local.get $A)
+  )
+  (drop
+   (local.get $B)
+  )
+ )
 )
