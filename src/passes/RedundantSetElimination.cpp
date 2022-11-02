@@ -305,7 +305,9 @@ struct RedundantSetElimination
       auto& items = curr->contents.items;
       for (auto** item : items) {
         if (auto* set = (*item)->dynCast<LocalSet>()) {
-          currValues[set->index] = getValue(set->value, currValues);
+          auto* value = Properties::getFallthrough(
+            set->value, getPassOptions(), *getModule());
+          currValues[set->index] = getValue(value, currValues);
         }
       }
       if (currValues == curr->contents.end) {
