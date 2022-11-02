@@ -49,4 +49,33 @@
    )
   )
  )
+
+ ;; CHECK:      (func $pick-refined (param $A (ref null $A))
+ ;; CHECK-NEXT:  (local $B (ref null $B))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast_static $B
+ ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $B)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $B)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $pick-refined (param $A (ref null $A))
+  (local $B (ref null $B))
+  (local.set $B
+   (ref.cast_static $B
+    (local.get $A)
+   )
+  )
+  (drop
+   (local.get $A)
+  )
+  (drop
+   (local.get $B)
+  )
+ )
 )

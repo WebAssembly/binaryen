@@ -364,6 +364,7 @@ struct RedundantSetElimination
           if (possibleType != currType && Type::isSubType(possibleType, currType)) {
             // We found an improvement!
             get->index = i;
+            get->type = possibleType;
             refinalize = true;
           }
         }
