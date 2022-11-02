@@ -342,7 +342,8 @@ struct RedundantSetElimination
       for (auto** item : items) {
         if (auto* set = (*item)->dynCast<LocalSet>()) {
           auto oldValue = currValues[set->index];
-          auto newValue = getValue(set->value, currValues); // TODO fallthrough?
+          auto* value = Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+          auto newValue = getValue(value, currValues);
           auto index = set->index;
           if (newValue == oldValue) {
             remove(item);
