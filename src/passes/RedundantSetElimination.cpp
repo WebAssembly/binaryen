@@ -347,9 +347,15 @@ struct RedundantSetElimination
       // them as we go, so we can use them at any point in the middle. This data
       // structure maps a value number to the local indexes that have that
       // value.
-      std::unordered_map<Index, SmallSet<Index, 3>> valueToLocals;
+      // 3.6 vs 4.6
+      std::vector<SmallSet<Index, 3>> valueToLocals;
+      valueToLocals.resize(valueNumbering.getMaxValue());
       for (Index i = 0; i < currValues.size(); i++) {
-        valueToLocals[currValues[i]].insert(i);
+        auto value = currValues[i];
+        if (value >= valueToLocals.size()) {
+          valueToLocals.resize(value + 1);
+        }
+        valueToLocals[value].insert(i);
       }
 
       for (auto** item : items) {
@@ -364,7 +370,11 @@ struct RedundantSetElimination
           } else {
             // update for later steps
             currValues[index] = newValue;
+            assert(oldValue < valueToLocals.size());
             valueToLocals[oldValue].erase(index);
+            if (newValue >= valueToLocals.size()) {
+              valueToLocals.resize(newValue + 1);
+            }
             valueToLocals[newValue].insert(index);
           }
           continue;
@@ -374,6 +384,10 @@ struct RedundantSetElimination
         // refined type.
         auto* get = (*item)->dynCast<LocalGet>();
         auto value = getValue(get, currValues);
+        if (value >= valueToLocals.size()) {
+          // Nothing is equivalent to this.
+          continue;
+        }
         for (auto i : valueToLocals[value]) {
           auto currType = func->getLocalType(get->index);
           auto possibleType = func->getLocalType(i);
