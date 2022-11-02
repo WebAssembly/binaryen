@@ -39,6 +39,7 @@
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/small_set.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm.h>
@@ -339,6 +340,16 @@ struct RedundantSetElimination
     for (auto& block : basicBlocks) {
       auto currValues = block->contents.start; // we'll modify this as we go
       auto& items = block->contents.items;
+
+      // Set up the equivalences at the beginning of the block. We'll update
+      // them as we go, so we can use them at any point in the middle. This data
+      // structure maps a value number to the local indexes that have that
+      // value.
+      std::unordered_map<Index, SmallSet<Index, 3>> valueToLocals;
+      for (Index i = 0; i < currValues.size(); i++) {
+        valueToLocals[currValues[i]].insert(i);
+      }
+
       for (auto** item : items) {
         if (auto* set = (*item)->dynCast<LocalSet>()) {
           auto oldValue = currValues[set->index];
@@ -351,6 +362,8 @@ struct RedundantSetElimination
           } else {
             // update for later steps
             currValues[index] = newValue;
+            valueToLocals[oldValue].erase(index);
+            valueToLocals[newValue].insert(index);
           }
           continue;
         }
@@ -358,8 +371,8 @@ struct RedundantSetElimination
         // For gets, see if there is another index with that value, of a more
         // refined type.
         auto* get = (*item)->dynCast<LocalGet>();
-        // If we see nothing better, the best index will be the same as the old.
-        for (Index i = 0; i < currValues.size(); i++) {
+        auto value = getValue(get, currValues);
+        for (auto i : valueToLocals[value]) {
           auto currType = func->getLocalType(get->index);
           auto possibleType = func->getLocalType(i);
           if (possibleType != currType &&

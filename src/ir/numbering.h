@@ -55,6 +55,9 @@ public:
   // to get a new value that will not collide with any others.
   Index getUniqueValue() { return nextValue++; }
 
+  // Returns a value guaranteed to be larger than any value given out so far.
+  Index getMaxValue() { return nextValue; }
+
 private:
   Index nextValue = 0;
 
