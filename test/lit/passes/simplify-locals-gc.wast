@@ -9,19 +9,22 @@
   ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) data))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct-immutable (struct (field i32)))
-  ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
-  (type $struct-immutable (struct (field i32)))
-
   ;; CHECK:      (type $B (struct (field (ref data))))
 
   ;; CHECK:      (type $A (struct (field dataref)))
+
+  ;; CHECK:      (type $struct-immutable (struct (field i32)))
   ;; NOMNL:      (type $A (struct_subtype (field dataref) data))
+
+  ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
+
+  ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
+  (type $struct-immutable (struct (field i32)))
+
   (type $A (struct_subtype (field (ref null data)) data))
 
   ;; $B is a subtype of $A, and its field has a more refined type (it is non-
   ;; nullable).
-  ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
   (type $B (struct_subtype (field (ref data)) $A))
 
   ;; Writes to heap objects cannot be reordered with reads.
@@ -587,6 +590,96 @@
     )
     (drop
       (local.get $t)
+    )
+  )
+
+  ;; CHECK:      (func $ignore-unrefined (param $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref null $B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.tee $B
+  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ignore-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; NOMNL-NEXT:  (local $B (ref null $B))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.get $A 0
+  ;; NOMNL-NEXT:    (local.get $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.get $B 0
+  ;; NOMNL-NEXT:    (local.tee $B
+  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:      (local.get $A)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.get $A 0
+  ;; NOMNL-NEXT:    (local.get $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.get $B 0
+  ;; NOMNL-NEXT:    (local.get $B)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ignore-unrefined (param $A (ref $A))
+    ;; $A is a supertype, but non-nullable; $B is a subtype, but nullable. We
+    ;; should not switch any of the gets from $B to $A: that would improve
+    ;; nullability but not the heap type.
+    (local $B (ref null $B))
+    (local.set $B
+      (ref.cast_static $B
+        (local.get $A)
+      )
+    )
+    ;; Read from both locals a few times. We should keep reading from the same
+    ;; locals as before.
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $B)
+      )
     )
   )
 
