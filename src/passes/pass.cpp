@@ -359,6 +359,12 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
+  registerPass("reorder-globals",
+               "sorts globals by access frequency",
+               createReorderGlobalsPass);
+  registerTestPass("reorder-globals-always",
+                   "sorts globals by access frequency (even if there are few)",
+                   createReorderGlobalsAlwaysPass);
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);
@@ -621,6 +627,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("reorder-globals");
+  }
   // may allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
   // perform Stack IR optimizations here, at the very end of the
