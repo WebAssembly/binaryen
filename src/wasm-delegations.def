@@ -77,6 +77,7 @@ DELEGATE(StructNew);
 DELEGATE(StructGet);
 DELEGATE(StructSet);
 DELEGATE(ArrayNew);
+DELEGATE(ArrayNewSeg);
 DELEGATE(ArrayInit);
 DELEGATE(ArrayGet);
 DELEGATE(ArraySet);

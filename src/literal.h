@@ -197,6 +197,40 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+
+  static Literal makeFromMemory(void* p, Type type) {
+    assert(type.isNumber());
+    switch (type.getBasic()) {
+      case Type::i32: {
+        int32_t i;
+        memcpy(&i, p, sizeof(i));
+        return Literal(i);
+      }
+      case Type::i64: {
+        int64_t i;
+        memcpy(&i, p, sizeof(i));
+        return Literal(i);
+      }
+      case Type::f32: {
+        int32_t i;
+        memcpy(&i, p, sizeof(i));
+        return Literal(bit_cast<float>(i));
+      }
+      case Type::f64: {
+        int64_t i;
+        memcpy(&i, p, sizeof(i));
+        return Literal(bit_cast<double>(i));
+      }
+      case Type::v128: {
+        uint8_t bytes[16];
+        memcpy(bytes, p, sizeof(bytes));
+        return Literal(bytes);
+      }
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
       case Type::i32:

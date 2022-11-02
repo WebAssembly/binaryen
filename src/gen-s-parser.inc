@@ -47,9 +47,25 @@ switch (op[0]) {
               case '\0':
                 if (op == "array.new"sv) { return makeArrayNewStatic(s, false); }
                 goto parse_error;
-              case '_':
-                if (op == "array.new_default"sv) { return makeArrayNewStatic(s, true); }
-                goto parse_error;
+              case '_': {
+                switch (op[10]) {
+                  case 'd': {
+                    switch (op[11]) {
+                      case 'a':
+                        if (op == "array.new_data"sv) { return makeArrayNewSeg(s, NewData); }
+                        goto parse_error;
+                      case 'e':
+                        if (op == "array.new_default"sv) { return makeArrayNewStatic(s, true); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'e':
+                    if (op == "array.new_elem"sv) { return makeArrayNewSeg(s, NewElem); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }
@@ -3602,13 +3618,37 @@ switch (op[0]) {
                   return *ret;
                 }
                 goto parse_error;
-              case '_':
-                if (op == "array.new_default"sv) {
-                  auto ret = makeArrayNewStatic(ctx, pos, true);
-                  CHECK_ERR(ret);
-                  return *ret;
+              case '_': {
+                switch (op[10]) {
+                  case 'd': {
+                    switch (op[11]) {
+                      case 'a':
+                        if (op == "array.new_data"sv) {
+                          auto ret = makeArrayNewSeg(ctx, pos, NewData);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case 'e':
+                        if (op == "array.new_default"sv) {
+                          auto ret = makeArrayNewStatic(ctx, pos, true);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'e':
+                    if (op == "array.new_elem"sv) {
+                      auto ret = makeArrayNewSeg(ctx, pos, NewElem);
+                      CHECK_ERR(ret);
+                      return *ret;
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
                 }
-                goto parse_error;
+              }
               default: goto parse_error;
             }
           }

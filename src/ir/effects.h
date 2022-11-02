@@ -755,6 +755,7 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
+    void visitArrayNewSeg(ArrayNewSeg* curr) {}
     void visitArrayInit(ArrayInit* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       if (curr->ref->type.isNull()) {

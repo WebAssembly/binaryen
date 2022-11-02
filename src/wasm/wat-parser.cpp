@@ -1907,6 +1907,8 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx&, Index, bool default_);
 template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayNewSeg(Ctx&, Index, ArrayNewSegOp op);
+template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayGet(Ctx&, Index, bool signed_ = false);
@@ -2888,6 +2890,12 @@ Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, Index pos) {
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeArrayNewStatic(Ctx& ctx, Index pos, bool default_) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeArrayNewSeg(Ctx& ctx, Index pos, ArrayNewSegOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 

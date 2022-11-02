@@ -896,6 +896,14 @@ struct InfoCollector
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    // TODO: How to add a connection between data/elem segments and the
+    // allocated value / its type?
+    WASM_UNREACHABLE("What is this supposed to do???");
+  }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
       return;

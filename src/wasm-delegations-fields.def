@@ -664,6 +664,15 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayNew);
     break;
   }
+  case Expression::Id::ArrayNewSegId: {
+    DELEGATE_START(ArrayNewSeg);
+    DELEGATE_FIELD_INT(ArrayNewSeg, op);
+    DELEGATE_FIELD_INT(ArrayNewSeg, segment);
+    DELEGATE_FIELD_CHILD(ArrayNewSeg, size);
+    DELEGATE_FIELD_CHILD(ArrayNewSeg, offset);
+    DELEGATE_END(ArrayNewSeg);
+    break;
+  }
   case Expression::Id::ArrayInitId: {
     DELEGATE_START(ArrayInit);
     DELEGATE_FIELD_CHILD_VECTOR(ArrayInit, values);
