@@ -1091,24 +1091,28 @@ struct SimplifyLocals
           }
           assert(best != Index(-1));
           // Due to ordering, the best index may be different from us but have
-          // the same # of locals - make sure we actually improve.
+          // the same # of locals - make sure we actually improve, either adding
+          // more gets, or a more refined type (and never change to a less
+          // refined type).
           auto bestType = func->getLocalType(best);
           auto oldType = func->getLocalType(curr->index);
-          if (best != curr->index && (getNumGetsIgnoringCurr(best) >
-                                        getNumGetsIgnoringCurr(curr->index) ||
-                                      bestType != oldType)) {
-            // Update the get counts.
-            (*numLocalGets)[best]++;
-            assert((*numLocalGets)[curr->index] >= 1);
-            (*numLocalGets)[curr->index]--;
-            // Make the change.
-            curr->index = best;
-            anotherCycle = true;
-            if (bestType != oldType) {
-              curr->type = func->getLocalType(best);
-              // We are switching to a more refined type, which might require
-              // changes in the user of the local.get.
-              refinalize = true;
+          if (best != curr->index && Type::isSubType(bestType, oldType)) {
+            auto hasMoreGets = getNumGetsIgnoringCurr(best) >
+                               getNumGetsIgnoringCurr(curr->index);
+            if (hasMoreGets || bestType != oldType) {
+              // Update the get counts.
+              (*numLocalGets)[best]++;
+              assert((*numLocalGets)[curr->index] >= 1);
+              (*numLocalGets)[curr->index]--;
+              // Make the change.
+              curr->index = best;
+              anotherCycle = true;
+              if (bestType != oldType) {
+                curr->type = func->getLocalType(best);
+                // We are switching to a more refined type, which might require
+                // changes in the user of the local.get.
+                refinalize = true;
+              }
             }
           }
         }
