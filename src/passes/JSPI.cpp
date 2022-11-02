@@ -29,11 +29,14 @@
 
 //
 // Convert a module to be compatible with JavaScript promise integration (JSPI).
-// All exports will be wrapped with a function that will handle storing
+// Async exports will be wrapped with a function that will handle storing
 // the suspsender that is passed in as the first param from a "promising"
-// `WebAssembly.Function`. All imports will also be wrapped, but they will take
-// the stored suspender and pass it as the first param to the imported function
-// that should be created from a "suspending" `WebAssembly.Function`.
+// `WebAssembly.Function`. All async imports will also be wrapped, but they will
+// take the stored suspender and pass it as the first param to the imported
+// function that should be created from a "suspending" `WebAssembly.Function`.
+//
+// The JSPI pass supports the same arguments as Asyncify for controlling which
+// imports and exports are wrapped. See Asyncify.cpp for more details.
 //
 namespace wasm {
 
