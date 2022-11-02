@@ -298,7 +298,9 @@ struct RedundantSetElimination
       auto& setps = curr->contents.setps;
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<LocalSet>();
-        currValues[set->index] = getValue(set->value, currValues);
+        auto* value = Properties::getFallthrough(
+          set->value, getPassOptions(), *getModule());
+        currValues[set->index] = getValue(value, currValues);
       }
       if (currValues == curr->contents.end) {
         // nothing changed, so no more work to do
@@ -335,7 +337,9 @@ struct RedundantSetElimination
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<LocalSet>();
         auto oldValue = currValues[set->index];
-        auto newValue = getValue(set->value, currValues);
+        auto* value = Properties::getFallthrough(
+          set->value, getPassOptions(), *getModule());
+        auto newValue = getValue(value, currValues);
         auto index = set->index;
         if (newValue == oldValue) {
           remove(setp);
