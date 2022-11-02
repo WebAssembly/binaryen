@@ -337,6 +337,15 @@ struct RedundantSetElimination
 
   // optimizing
   void optimize(Function* func) {
+    std::vector<bool> isRefinable(numLocals, false);
+    for (Index i = 0; i < numLocals; i++) {
+      // TODO: we could also note which locals have "maximal" types, where no
+      //       other local is a refinement of them
+      if (func->getLocalType(i).isRef()) {
+        isRefinable[i] = true;
+      }
+    }
+
     // in each block, run the values through the sets,
     // and remove redundant sets when we see them
     for (auto& block : basicBlocks) {
@@ -349,8 +358,11 @@ struct RedundantSetElimination
       // value.
       // 3.6 => 4.6
       std::unordered_map<Index, SmallUnorderedSet<Index, 3>> valueToLocals;
-      for (Index i = 0; i < currValues.size(); i++) {
-        valueToLocals[currValues[i]].insert(i);
+      assert(currValues.size() == numLocals);
+      for (Index i = 0; i < numLocals; i++) {
+        if (isRefinable[i]) {
+          valueToLocals[currValues[i]].insert(i);
+        }
       }
 
       for (auto** item : items) {
@@ -365,8 +377,10 @@ struct RedundantSetElimination
           } else {
             // update for later steps
             currValues[index] = newValue;
-            valueToLocals[oldValue].erase(index);
-            valueToLocals[newValue].insert(index);
+            if (isRefinable[index]) {
+              valueToLocals[oldValue].erase(index);
+              valueToLocals[newValue].insert(index);
+            }
           }
           continue;
         }
@@ -374,8 +388,11 @@ struct RedundantSetElimination
         // For gets, see if there is another index with that value, of a more
         // refined type.
         auto* get = (*item)->dynCast<LocalGet>();
-        auto value = getValue(get, currValues);
-        for (auto i : valueToLocals[value]) {
+        if (!isRefinable[get->index]) {
+          continue;
+        }
+
+        for (auto i : valueToLocals[getValue(get, currValues)]) {
           auto currType = func->getLocalType(get->index);
           auto possibleType = func->getLocalType(i);
           if (possibleType != currType &&
