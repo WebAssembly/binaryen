@@ -179,4 +179,31 @@
    (local.get $B)
   )
  )
+
+ ;; CHECK:      (func $pick-refined-earlier (param $A (ref $A)) (param $x i32)
+ ;; CHECK-NEXT:  (local $A2 (ref null $A))
+ ;; CHECK-NEXT:  (local.set $A2
+ ;; CHECK-NEXT:   (local.get $A)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $A)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $A)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $pick-refined-earlier (param $A (ref $A)) (param $x i32)
+  ;; As above but now the local has the same heap type but is nullable. Now we
+  ;; prefer the non-nullable parameter.
+  (local $A2 (ref null $A))
+  (local.set $A2
+   (local.get $A)
+  )
+  (drop
+   (local.get $A)
+  )
+  (drop
+   (local.get $A2)
+  )
+ )
 )
