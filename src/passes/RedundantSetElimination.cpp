@@ -342,7 +342,8 @@ struct RedundantSetElimination
       for (auto** item : items) {
         if (auto* set = (*item)->dynCast<LocalSet>()) {
           auto oldValue = currValues[set->index];
-          auto* value = Properties::getFallthrough(set->value, getPassOptions(), *getModule());
+          auto* value = Properties::getFallthrough(
+            set->value, getPassOptions(), *getModule());
           auto newValue = getValue(value, currValues);
           auto index = set->index;
           if (newValue == oldValue) {
@@ -361,7 +362,8 @@ struct RedundantSetElimination
         for (Index i = 0; i < currValues.size(); i++) {
           auto currType = func->getLocalType(get->index);
           auto possibleType = func->getLocalType(i);
-          if (possibleType != currType && Type::isSubType(possibleType, currType)) {
+          if (possibleType != currType &&
+              Type::isSubType(possibleType, currType)) {
             // We found an improvement!
             get->index = i;
             get->type = possibleType;
