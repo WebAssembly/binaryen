@@ -61,6 +61,10 @@ struct BinaryenDWARFInfo {
     uint8_t addrSize = AddressSize;
     bool isLittleEndian = true;
     context = llvm::DWARFContext::create(sections, addrSize, isLittleEndian);
+    if (context->getMaxVersion() > 4) {
+      std::cerr << "warning: unsupported DWARF version ("
+                << context->getMaxVersion() << ")\n";
+    }
   }
 };
 
@@ -159,8 +163,8 @@ struct LineState {
           }
           default: {
             // An unknown opcode, ignore.
-            std::cerr << "warning: unknown subopcopde " << opcode.SubOpcode
-                      << '\n';
+            std::cerr << "warning: unknown subopcode " << opcode.SubOpcode
+                      << " (this may be an unsupported version of DWARF)\n";
           }
         }
         break;
@@ -177,7 +181,10 @@ struct LineState {
         return true;
       }
       case llvm::dwarf::DW_LNS_advance_pc: {
-        assert(table.MinInstLength == 1);
+        if (table.MinInstLength != 1) {
+          std::cerr << "warning: bad MinInstLength "
+                       "(this may be an unsupported DWARF version)";
+        }
         addr += opcode.Data;
         break;
       }
@@ -1062,7 +1069,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
 
   updateDebugLines(data, locationUpdater);
 
-  updateCompileUnits(info, data, locationUpdater, wasm.memory.is64());
+  bool is64 = wasm.memories.size() > 0 ? wasm.memories[0]->is64() : false;
+  updateCompileUnits(info, data, locationUpdater, is64);
 
   updateRanges(data, locationUpdater);
 

@@ -34,10 +34,10 @@ namespace wasm {
 struct PrintFunctionMap : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // If an argument is provided, write to that file; otherwise write to
     // stdout.
-    auto outFile = runner->options.getArgumentOrDefault("symbolmap", "");
+    auto outFile = getPassOptions().getArgumentOrDefault("symbolmap", "");
     Output output(outFile, Flags::Text);
     auto& o = output.getStream();
     Index i = 0;

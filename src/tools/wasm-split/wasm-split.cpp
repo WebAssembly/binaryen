@@ -110,8 +110,19 @@ void instrumentModule(const WasmSplitOptions& options) {
   }
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
+  InstrumenterConfig config;
+  if (options.importNamespace.size()) {
+    config.importNamespace = options.importNamespace;
+  }
+  if (options.secondaryMemoryName.size()) {
+    config.secondaryMemoryName = options.secondaryMemoryName;
+  }
+  config.storageKind = options.storageKind;
+  config.profileExport = options.profileExport;
+
   PassRunner runner(&wasm, options.passOptions);
-  Instrumenter(options, moduleHash).run(&runner, &wasm);
+  runner.add(std::make_unique<Instrumenter>(config, moduleHash));
+  runner.run();
 
   adjustTableSize(wasm, options.initialTableSize);
 
@@ -441,7 +452,8 @@ void printReadableProfile(const WasmSplitOptions& options) {
   auto printFnSet = [&](auto funcs, std::string prefix) {
     for (auto it = funcs.begin(); it != funcs.end(); ++it) {
       std::cout << prefix << " "
-                << (options.unescape ? unescape(it->c_str()) : it->c_str())
+                << (options.unescape ? unescape(it->toString())
+                                     : it->toString())
                 << std::endl;
     }
   };

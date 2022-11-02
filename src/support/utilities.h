@@ -24,6 +24,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <type_traits>
 
 #include "support/bits.h"
@@ -62,19 +63,35 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 
 // For fatal errors which could arise from input (i.e. not assertion failures)
 class Fatal {
+private:
+  std::stringstream buffer;
+
 public:
-  Fatal() { std::cerr << "Fatal: "; }
-  template<typename T> Fatal& operator<<(T arg) {
-    std::cerr << arg;
+  Fatal() { buffer << "Fatal: "; }
+  template<typename T> Fatal& operator<<(T&& arg) {
+    buffer << arg;
     return *this;
   }
+#ifndef THROW_ON_FATAL
   [[noreturn]] ~Fatal() {
-    std::cerr << "\n";
+    std::cerr << buffer.str() << std::endl;
     // Use _Exit here to avoid calling static destructors. This avoids deadlocks
     // in (for example) the thread worker pool, where workers hold a lock while
     // performing their work.
-    _Exit(1);
+    _Exit(EXIT_FAILURE);
   }
+#else
+  // This variation is a best-effort attempt to make fatal errors recoverable
+  // for embedders of Binaryen as a library, namely wasm-opt-rs.
+  //
+  // Throwing in destructors is strongly discouraged, since it is easy to
+  // accidentally throw during unwinding, which will trigger an abort. Since
+  // `Fatal` is a special type that only occurs on error paths, we are hoping it
+  // is never constructed during unwinding or while destructing another type.
+  [[noreturn]] ~Fatal() noexcept(false) {
+    throw std::runtime_error(buffer.str());
+  }
+#endif
 };
 
 [[noreturn]] void handle_unreachable(const char* msg = nullptr,

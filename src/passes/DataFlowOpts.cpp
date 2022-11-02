@@ -39,7 +39,9 @@ namespace wasm {
 struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new DataFlowOpts; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<DataFlowOpts>();
+  }
 
   DataFlow::Users nodeUsers;
 

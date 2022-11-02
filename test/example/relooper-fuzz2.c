@@ -23,7 +23,8 @@ int main() {
                    0,
                    0,
                    BinaryenTypeInt32(),
-                   BinaryenConst(module, BinaryenLiteralInt32(4))),
+                   BinaryenConst(module, BinaryenLiteralInt32(4)),
+                   "0"),
       BinaryenConst(module, BinaryenLiteralInt32(4 * 27)) // jumps of 4 bytes
       ),
     BinaryenUnreachable(module),
@@ -43,29 +44,32 @@ int main() {
                                 0,
                                 0,
                                 BinaryenTypeInt32(),
-                                BinaryenConst(module, BinaryenLiteralInt32(4))),
+                                BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                "0"),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
-    BinaryenTypeInt32());
+    BinaryenTypeInt32(),
+    "0");
 
   // optionally, print the return value
   BinaryenExpressionRef args[] = {BinaryenBinary(
     module,
     BinaryenSubInt32(),
     BinaryenConst(module, BinaryenLiteralInt32(0)),
-    BinaryenLoad(
-      module,
-      4,
-      0,
-      4,
-      0,
-      BinaryenTypeInt32(),
-      BinaryenLoad(module,
-                   4,
-                   0,
-                   0,
-                   0,
-                   BinaryenTypeInt32(),
-                   BinaryenConst(module, BinaryenLiteralInt32(4)))))};
+    BinaryenLoad(module,
+                 4,
+                 0,
+                 4,
+                 0,
+                 BinaryenTypeInt32(),
+                 BinaryenLoad(module,
+                              4,
+                              0,
+                              0,
+                              0,
+                              BinaryenTypeInt32(),
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0"))};
   BinaryenExpressionRef debugger;
   if (1)
     debugger = BinaryenCall(module, "print", args, 1, BinaryenTypeNone());
@@ -87,7 +91,9 @@ int main() {
                               0,
                               0,
                               BinaryenTypeInt32(),
-                              BinaryenConst(module, BinaryenLiteralInt32(4))));
+                              BinaryenConst(module, BinaryenLiteralInt32(4)),
+                              "0"),
+                 "0");
   BinaryenExpressionRef checkBodyList[] = {halter, incer, debugger, returner};
   BinaryenExpressionRef checkBody =
     BinaryenBlock(module,
@@ -266,47 +272,49 @@ int main() {
     b0,
     b1,
     NULL,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranch(
     b1,
     b1,
     NULL,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   {
     BinaryenIndex values[] = {0,  2,  4,  6,  8,  10, 12, 14, 16, 18, 20,
@@ -333,9 +341,11 @@ int main() {
                        0,
                        0,
                        BinaryenTypeInt32(),
-                       BinaryenConst(module, BinaryenLiteralInt32(4))),
+                       BinaryenConst(module, BinaryenLiteralInt32(4)),
+                       "0"),
           BinaryenConst(module, BinaryenLiteralInt32(4 * 6))),
-        BinaryenTypeInt32()));
+        BinaryenTypeInt32(),
+        "0"));
   }
 
   RelooperAddBranchForSwitch(
@@ -343,48 +353,50 @@ int main() {
     b4,
     NULL,
     0,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranchForSwitch(
     b3,
     b6,
     NULL,
     0,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 5))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 5))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranch(
     b4,
@@ -397,71 +409,74 @@ int main() {
                      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
                      BinaryenConst(module, BinaryenLiteralInt32(2))),
       BinaryenConst(module, BinaryenLiteralInt32(0))),
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 5))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 5))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranch(
     b4,
     b3,
     NULL,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranchForSwitch(
     b5,
     b1,
     NULL,
     0,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   {
     BinaryenIndex values[] = {0,  3,  6,  9,  12,  15,  18, 21, 24, 27,
@@ -488,9 +503,11 @@ int main() {
                        0,
                        0,
                        BinaryenTypeInt32(),
-                       BinaryenConst(module, BinaryenLiteralInt32(4))),
+                       BinaryenConst(module, BinaryenLiteralInt32(4)),
+                       "0"),
           BinaryenConst(module, BinaryenLiteralInt32(4 * 2))),
-        BinaryenTypeInt32()));
+        BinaryenTypeInt32(),
+        "0"));
   }
 
   {
@@ -519,9 +536,11 @@ int main() {
                        0,
                        0,
                        BinaryenTypeInt32(),
-                       BinaryenConst(module, BinaryenLiteralInt32(4))),
+                       BinaryenConst(module, BinaryenLiteralInt32(4)),
+                       "0"),
           BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
-        BinaryenTypeInt32()));
+        BinaryenTypeInt32(),
+        "0"));
   }
 
   RelooperAddBranchForSwitch(
@@ -529,24 +548,25 @@ int main() {
     b2,
     NULL,
     0,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 3))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranch(
     b7,
@@ -559,70 +579,73 @@ int main() {
                      BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
                      BinaryenConst(module, BinaryenLiteralInt32(2))),
       BinaryenConst(module, BinaryenLiteralInt32(0))),
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 1))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 1))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranch(
     b7,
     b1,
     NULL,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 4))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   RelooperAddBranch(
     b8,
     b8,
     NULL,
-    BinaryenStore(
-      module,
-      4,
-      0,
-      0,
-      BinaryenConst(module, BinaryenLiteralInt32(4)),
-      BinaryenBinary(
-        module,
-        BinaryenAddInt32(),
-        BinaryenLoad(module,
-                     4,
-                     0,
-                     0,
-                     0,
-                     BinaryenTypeInt32(),
-                     BinaryenConst(module, BinaryenLiteralInt32(4))),
-        BinaryenConst(module, BinaryenLiteralInt32(4 * 2))),
-      BinaryenTypeInt32()));
+    BinaryenStore(module,
+                  4,
+                  0,
+                  0,
+                  BinaryenConst(module, BinaryenLiteralInt32(4)),
+                  BinaryenBinary(
+                    module,
+                    BinaryenAddInt32(),
+                    BinaryenLoad(module,
+                                 4,
+                                 0,
+                                 0,
+                                 0,
+                                 BinaryenTypeInt32(),
+                                 BinaryenConst(module, BinaryenLiteralInt32(4)),
+                                 "0"),
+                    BinaryenConst(module, BinaryenLiteralInt32(4 * 2))),
+                  BinaryenTypeInt32(),
+                  "0"));
 
   BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1);
 
@@ -644,7 +667,8 @@ int main() {
                       0,
                       BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
                       BinaryenConst(module, BinaryenLiteralInt32(decisions[i])),
-                      BinaryenTypeInt32());
+                      BinaryenTypeInt32(),
+                      "0");
     }
   }
   full[numDecisions] = body;
@@ -666,7 +690,7 @@ int main() {
                             BinaryenTypeNone());
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0);
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, NULL, 0, 0, 0, "0");
 
   // optionally, optimize
   if (0)

@@ -64,8 +64,8 @@ struct FunctionRefReplacer
 
   FunctionRefReplacer(MaybeReplace maybeReplace) : maybeReplace(maybeReplace) {}
 
-  FunctionRefReplacer* create() override {
-    return new FunctionRefReplacer(maybeReplace);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionRefReplacer>(maybeReplace);
   }
 
   void visitCall(Call* curr) { maybeReplace(curr->target); }

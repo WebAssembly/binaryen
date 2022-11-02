@@ -1,5 +1,4 @@
-import { memoryBase } from 'env';
-import { tableBase } from 'env';
+import * as env from 'env';
 
 function Table(ret) {
   // grow method not included; table is not growable
@@ -34,9 +33,10 @@ function Table(ret) {
     return uint8Array;
   }
 function initActiveSegments(imports) {
-  base64DecodeToExistingUint8Array(bufferView, imports[memoryBase], "ZHluYW1pYyBkYXRh");
+  base64DecodeToExistingUint8Array(bufferView, imports['env']['memoryBase'], "ZHluYW1pYyBkYXRh");
 }
-function asmFunc(env) {
+function asmFunc(imports) {
+ var env = imports.env;
  var memory = env.memory;
  var buffer = memory.buffer;
  var HEAP8 = new Int8Array(buffer);
@@ -57,7 +57,6 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
  var import$memoryBase = env.memoryBase | 0;
@@ -67,7 +66,7 @@ function asmFunc(env) {
  }
  
  bufferView = HEAPU8;
- initActiveSegments(env);
+ initActiveSegments(imports);
  var FUNCTION_TABLE = Table(new Array(10));
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = foo;
@@ -82,7 +81,9 @@ function asmFunc(env) {
 }
 
 var memasmFunc = new ArrayBuffer(16777216);
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
+var retasmFunc = asmFunc({
+  "env": {
     memory: { buffer : memasmFunc }
-  });
+  },
+});
 export var baz = retasmFunc.baz;

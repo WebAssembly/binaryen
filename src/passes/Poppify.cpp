@@ -87,8 +87,8 @@ namespace {
 
 // Generate names for the elements of tuple globals
 Name getGlobalElem(Module* module, Name global, Index i) {
-  return Names::getValidGlobalName(
-    *module, std::string(global.c_str()) + '$' + std::to_string(i));
+  return Names::getValidGlobalName(*module,
+                                   global.toString() + '$' + std::to_string(i));
 }
 
 struct Poppifier : BinaryenIRWriter<Poppifier> {
@@ -447,21 +447,22 @@ void Poppifier::poppify(Expression* expr) {
 
 class PoppifyFunctionsPass : public Pass {
   bool isFunctionParallel() override { return true; }
-  void
-  runOnFunction(PassRunner* runner, Module* module, Function* func) override {
+  void runOnFunction(Module* module, Function* func) override {
     if (func->profile != IRProfile::Poppy) {
       Poppifier(func, module).write();
       func->profile = IRProfile::Poppy;
     }
   }
-  Pass* create() override { return new PoppifyFunctionsPass; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<PoppifyFunctionsPass>();
+  }
 };
 
 } // anonymous namespace
 
 class PoppifyPass : public Pass {
-  void run(PassRunner* runner, Module* module) {
-    PassRunner subRunner(runner);
+  void run(Module* module) {
+    PassRunner subRunner(getPassRunner());
     subRunner.add(std::make_unique<PoppifyFunctionsPass>());
     // TODO: Enable this once it handles Poppy blocks correctly
     // subRunner.add(std::make_unique<ReFinalize>());

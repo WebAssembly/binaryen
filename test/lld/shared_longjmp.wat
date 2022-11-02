@@ -1,14 +1,13 @@
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 1))
- (data $.bss (global.get $__memory_base) "\00\00\00\00\00\00\00\00")
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
@@ -25,12 +24,13 @@
  (import "env" "free" (func $free (param i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 4))
+ (data $.bss (global.get $__memory_base) "\00\00\00\00\00\00\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "__wasm_apply_data_relocs" (func $__wasm_apply_data_relocs))
  (export "_start" (func $_start))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
  (func $__wasm_call_ctors
-  (call $__wasm_apply_data_relocs)
  )
  (func $__wasm_apply_data_relocs
  )
@@ -140,7 +140,11 @@
   )
   (unreachable)
  )
- ;; custom section "dylink.0", size 6
+ ;; dylink section
+ ;;   memorysize: 8
+ ;;   memoryalignment: 2
+ ;;   tablesize: 0
+ ;;   tablealignment: 0
  ;; custom section "producers", size 112
  ;; features section: mutable-globals
 )

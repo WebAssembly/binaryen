@@ -31,12 +31,13 @@ namespace {
 // Pass to test EHUtil::handleBlockNestedPops function
 struct CatchPopFixup : public WalkerPass<PostWalker<CatchPopFixup>> {
   bool isFunctionParallel() override { return true; }
-  Pass* create() override { return new CatchPopFixup; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CatchPopFixup>();
+  }
 
   void doWalkFunction(Function* func) {
     EHUtils::handleBlockNestedPops(func, *getModule());
   }
-  void run(PassRunner* runner, Module* module) override {}
 };
 
 } // anonymous namespace

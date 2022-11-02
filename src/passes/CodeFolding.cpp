@@ -86,7 +86,9 @@ struct ExpressionMarker
 struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new CodeFolding; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CodeFolding>();
+  }
 
   // information about a "tail" - code that reaches a point that we can
   // merge (e.g., a branch and some code leading up to it)

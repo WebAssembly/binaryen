@@ -437,6 +437,17 @@ Index getMaxBits(Expression* curr,
   }
 }
 
+// As getMaxBits, but returns the minimum amount of bits.
+inline Index getMinBits(Expression* curr) {
+  if (auto* c = curr->dynCast<Const>()) {
+    // Constants are simple: the min and max are identical.
+    return getMaxBits(c);
+  }
+
+  // TODO: everything else
+  return 0;
+}
+
 } // namespace wasm::Bits
 
 #endif // wasm_ir_bits_h

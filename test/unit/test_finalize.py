@@ -4,14 +4,10 @@ from . import utils
 
 class EmscriptenFinalizeTest(utils.BinaryenTestCase):
     def do_output_test(self, args):
-        # without any output file specified, don't error, don't write the wasm,
-        # but do emit metadata
+        # without any output file specified, don't error, don't write the wasm
         p = shared.run_process(shared.WASM_EMSCRIPTEN_FINALIZE + [
             self.input_path('empty_lld.wat'), '--global-base=1024'
         ] + args, capture_output=True)
-        # metadata is always present
-        self.assertIn('{', p.stdout)
-        self.assertIn('}', p.stdout)
         return p.stdout
 
     def test_no_output(self):

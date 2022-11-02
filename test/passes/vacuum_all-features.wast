@@ -64,7 +64,7 @@
       (nop)
     )
   )
-  (func $l (type $0)
+  (func $l (result i32)
     (local $x i32)
     (local $y i32)
     (drop
@@ -99,6 +99,7 @@
         (local.get $y)
       )
     )
+    (local.get $x)
   )
   (func $loopy (type $1) (param $0 i32)
     (loop $loop-in1
@@ -463,7 +464,7 @@
       )
     )
   )
-  (func $if-1-block (param $x i32)
+  (func $if-1-block (param $x i32) (result i32)
    (block $out
     (if
      (local.get $x)
@@ -480,6 +481,7 @@
      )
     )
    )
+   (local.get $x)
   )
   (func $block-resize-br-gone
     (block $out
@@ -805,9 +807,7 @@
     ;; nullable reference type and we don't have a type to put in its place, so
     ;; don't try to replace it. (later operations will remove all the body of
     ;; this function; this test verifies we don't crash along the way)
-    (struct.new_default_with_rtt $A
-     (rtt.canon $A)
-    )
+    (struct.new_default $A)
    )
   )
  )

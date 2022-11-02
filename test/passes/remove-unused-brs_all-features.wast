@@ -5,14 +5,12 @@
  (func $foo (result (ref null $struct))
   (if (result (ref null $struct))
    (i32.const 1)
-   (struct.new_with_rtt $struct
+   (struct.new $struct
     ;; regression test for computing the cost of an array.new_default, which
     ;; lacks the optional field "init"
-    (array.new_default_with_rtt $vector
+    (array.new_default $vector
      (i32.const 1)
-     (rtt.canon $vector)
     )
-    (rtt.canon $struct)
    )
    (ref.null $struct)
   )
@@ -81,16 +79,14 @@
     ;; a non-null data reference means we always take the br
     (drop
      (br_on_data $data
-      (array.new_default_with_rtt $vector
+      (array.new_default $vector
        (i32.const 1)
-       (rtt.canon $vector)
       )
      )
     )
     (call $log (i32.const 5))
-    (array.new_default_with_rtt $vector
+    (array.new_default $vector
      (i32.const 2)
-     (rtt.canon $vector)
     )
    )
   )
@@ -147,9 +143,8 @@
    (block $func (result (ref null func))
     (drop
      (br_on_func $func
-      (array.new_default_with_rtt $vector
+      (array.new_default $vector
        (i32.const 2)
-       (rtt.canon $vector)
       )
      )
     )
@@ -171,9 +166,8 @@
    (block $i31 (result (ref null i31))
     (drop
      (br_on_i31 $i31
-      (array.new_default_with_rtt $vector
+      (array.new_default $vector
        (i32.const 2)
-       (rtt.canon $vector)
       )
      )
     )

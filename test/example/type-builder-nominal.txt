@@ -7,28 +7,22 @@ $array => (; temp ;) (func_subtype func)
 (ref $struct) => (; temp ;) (ref $1)
 (ref $array) => (; temp ;) (ref $2)
 (ref null $array) => (; temp ;) (ref null $2)
-(rtt 0 $array) => (; temp ;) (rtt 0 $2)
-
 After setting heap types:
 $sig => (; temp ;) (func_subtype (param (; temp ;) (ref $1)) (result (; temp ;) (ref $2) i32) func)
-$struct => (; temp ;) (struct_subtype (field (; temp ;) (ref null $2) (mut (; temp ;) (rtt 0 $2))) data)
+$struct => (; temp ;) (struct_subtype (field (; temp ;) (ref null $2)) data)
 $array => (; temp ;) (array_subtype (mut anyref) data)
 (ref $sig) => (; temp ;) (ref $0)
 (ref $struct) => (; temp ;) (ref $1)
 (ref $array) => (; temp ;) (ref $2)
 (ref null $array) => (; temp ;) (ref null $2)
-(rtt 0 $array) => (; temp ;) (rtt 0 $2)
-
 After building types:
 $sig => (func_subtype (param (ref $1)) (result (ref $2) i32) func)
-$struct => (struct_subtype (field (ref null $2) (mut (rtt 0 $2))) data)
+$struct => (struct_subtype (field (ref null $2)) data)
 $array => (array_subtype (mut anyref) data)
 (ref $sig) => (ref $0)
 (ref $struct) => (ref $1)
 (ref $array) => (ref $2)
 (ref null $array) => (ref null $2)
-(rtt 0 $array) => (rtt 0 $2)
-
 ;; Test canonicalization
 ;; Test basic
 ;; Test canonical signatures
@@ -64,28 +58,22 @@ $array => (; temp ;) (func_subtype func)
 (ref $struct) => (; temp ;) (ref $1)
 (ref $array) => (; temp ;) (ref $2)
 (ref null $array) => (; temp ;) (ref null $2)
-(rtt 0 $array) => (; temp ;) (rtt 0 $2)
-
 After setting heap types:
 $sig => (; temp ;) (func_subtype (param (; temp ;) (ref $1)) (result (; temp ;) (ref $2) i32) func)
-$struct => (; temp ;) (struct_subtype (field (; temp ;) (ref null $2) (mut (; temp ;) (rtt 0 $2))) data)
+$struct => (; temp ;) (struct_subtype (field (; temp ;) (ref null $2)) data)
 $array => (; temp ;) (array_subtype (mut anyref) data)
 (ref $sig) => (; temp ;) (ref $0)
 (ref $struct) => (; temp ;) (ref $1)
 (ref $array) => (; temp ;) (ref $2)
 (ref null $array) => (; temp ;) (ref null $2)
-(rtt 0 $array) => (; temp ;) (rtt 0 $2)
-
 After building types:
 $sig => (func_subtype (param (ref $1)) (result (ref $2) i32) func)
-$struct => (struct_subtype (field (ref null $2) (mut (rtt 0 $2))) data)
+$struct => (struct_subtype (field (ref null $2)) data)
 $array => (array_subtype (mut anyref) data)
 (ref $sig) => (ref $0)
 (ref $struct) => (ref $1)
 (ref $array) => (ref $2)
 (ref null $array) => (ref null $2)
-(rtt 0 $array) => (rtt 0 $2)
-
 ;; Test canonicalization
 ;; Test basic
 ;; Test canonical signatures

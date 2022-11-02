@@ -24,7 +24,9 @@ namespace wasm {
 struct IntrinsicLowering : public WalkerPass<PostWalker<IntrinsicLowering>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new IntrinsicLowering; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<IntrinsicLowering>();
+  }
 
   void visitCall(Call* curr) {
     if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {

@@ -116,7 +116,11 @@ inline void verifyFlatness(Module* module) {
         PostWalker<VerifyFlatness, UnifiedExpressionVisitor<VerifyFlatness>>> {
     bool isFunctionParallel() override { return true; }
 
-    VerifyFlatness* create() override { return new VerifyFlatness(); }
+    bool modifiesBinaryenIR() override { return false; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<VerifyFlatness>();
+    }
 
     void doVisitFunction(Function* func) { verifyFlatness(func); }
   };

@@ -38,6 +38,7 @@ typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
 // Finds reachabilities
 // TODO: use Effects to determine if a memory is used
+// This pass does not have multi-memories support
 
 struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
@@ -132,7 +133,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       // handle this automatically by the reference flowing out to an import,
       // which is what binaryen intrinsics look like. For now, to support use
       // cases of a closed world but that also use this intrinsic, handle the
-      // intrinsic specifically here.
+      // intrinsic specifically here. (Without that, the closed world assumption
+      // makes us ignore the function ref that flows to an import, so we are not
+      // aware that it is actually called.)
       auto* target = curr->operands.back();
       if (auto* refFunc = target->dynCast<RefFunc>()) {
         // We can see exactly where this goes.
@@ -227,19 +230,23 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 };
 
 struct RemoveUnusedModuleElements : public Pass {
+  // This pass only removes module elements, it never modifies function
+  // contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   bool rootAllFunctions;
 
   RemoveUnusedModuleElements(bool rootAllFunctions)
     : rootAllFunctions(rootAllFunctions) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
       auto startFunction = module->getFunction(module->start);
       // Can be skipped if the start function is empty.
       if (!startFunction->imported() && startFunction->body->is<Nop>()) {
-        module->start.clear();
+        module->start = Name{};
       } else {
         roots.emplace_back(ModuleElementKind::Function, module->start);
       }
@@ -279,7 +286,7 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     // Check for special imports, which are roots.
     bool importsMemory = false;
-    if (module->memory.imported()) {
+    if (!module->memories.empty() && module->memories[0]->imported()) {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
@@ -365,13 +372,10 @@ struct RemoveUnusedModuleElements : public Pass {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the
         // contents.
-        module->dataSegments.clear();
+        module->removeDataSegments([&](DataSegment* curr) { return true; });
       }
-      if (module->dataSegments.empty()) {
-        module->memory.exists = false;
-        module->memory.module = module->memory.base = Name();
-        module->memory.initial = 0;
-        module->memory.max = 0;
+      if (module->dataSegments.empty() && !module->memories.empty()) {
+        module->removeMemory(module->memories[0]->name);
       }
     }
   }

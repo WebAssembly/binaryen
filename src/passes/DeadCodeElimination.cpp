@@ -44,7 +44,13 @@ struct DeadCodeElimination
                  UnifiedExpressionVisitor<DeadCodeElimination>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new DeadCodeElimination; }
+  // This pass removes dead code, which can only help validation (a dead
+  // local.get might have prevented validation).
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<DeadCodeElimination>();
+  }
 
   // as we remove code, we must keep the types of other nodes valid
   TypeUpdater typeUpdater;

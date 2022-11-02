@@ -27,7 +27,9 @@ namespace wasm {
 struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeForJSPass; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<OptimizeForJSPass>();
+  }
 
   void visitBinary(Binary* curr) {
     using namespace Abstract;

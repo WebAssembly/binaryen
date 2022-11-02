@@ -28,7 +28,7 @@
 namespace wasm {
 
 struct RoundTrip : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     BufferWithRandomAccess buffer;
     // Save features, which would not otherwise make it through a round trip if
     // the target features section has been stripped. We also need them in order
@@ -39,7 +39,7 @@ struct RoundTrip : public Pass {
     ModuleUtils::clearModule(*module);
     auto input = buffer.getAsChars();
     WasmBinaryBuilder parser(*module, features, input);
-    parser.setDWARF(runner->options.debugInfo);
+    parser.setDWARF(getPassOptions().debugInfo);
     try {
       parser.read();
     } catch (ParseException& p) {

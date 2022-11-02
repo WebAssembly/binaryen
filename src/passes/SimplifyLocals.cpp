@@ -47,15 +47,16 @@
 //
 
 #include "ir/equivalent_sets.h"
-#include "ir/branch-utils.h"
-#include "ir/effects.h"
-#include "ir/find_all.h"
-#include "ir/linear-execution.h"
-#include "ir/local-utils.h"
-#include "ir/manipulation.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "wasm-traversal.h"
+#include <ir/branch-utils.h>
+#include <ir/effects.h>
+#include <ir/find_all.h>
+#include <ir/linear-execution.h>
+#include <ir/local-utils.h>
+#include <ir/manipulation.h>
+#include <ir/utils.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm-traversal.h>
 #include "../wasm.h"
 
 namespace wasm {
@@ -70,8 +71,9 @@ struct SimplifyLocals
       SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override {
-    return new SimplifyLocals<allowTee, allowStructure, allowNesting>();
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<
+      SimplifyLocals<allowTee, allowStructure, allowNesting>>();
   }
 
   // information for a local.set we can sink
@@ -119,6 +121,9 @@ struct SimplifyLocals
 
   // local => # of local.gets for it
   LocalGetCounter getCounter;
+
+  // In rare cases we make a change to a type that requires a refinalize.
+  bool refinalize = false;
 
   static void
   doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
@@ -254,6 +259,23 @@ struct SimplifyLocals
       if (oneUse) {
         // with just one use, we can sink just the value
         this->replaceCurrent(set->value);
+
+        // We are replacing a local.get with the value of the local.set. That
+        // may require a refinalize in certain cases, like this:
+        //
+        //  (struct.get $X 0
+        //    (local.get $x)
+        //  )
+        //
+        // If we replace the local.get with a more refined type then the
+        // struct.get may read a more refined type (if the subtype has a more
+        // refined type for that particular field). Note that this cannot happen
+        // in the other arm of this if-else, where we replace the local.get with
+        // a tee, since tees have the type of the local, so no types change
+        // there.
+        if (set->value->type != curr->type) {
+          refinalize = true;
+        }
       } else {
         this->replaceCurrent(set);
         assert(!set->isTee());
@@ -309,50 +331,6 @@ struct SimplifyLocals
         if (info.effects.throws()) {
           invalidated.push_back(index);
           continue;
-        }
-
-        // Non-nullable local.sets cannot be moved into a try, as that may
-        // change dominance from the perspective of the spec
-        //
-        //  (local.set $x X)
-        //  (try
-        //    ..
-        //    (Y
-        //      (local.get $x))
-        //  (catch
-        //    (Z
-        //      (local.get $x)))
-        //
-        // =>
-        //
-        //  (try
-        //    ..
-        //    (Y
-        //      (local.tee $x X))
-        //  (catch
-        //    (Z
-        //      (local.get $x)))
-        //
-        // After sinking the set, the tee does not dominate the get in the
-        // catch, at least not in the simple way the spec defines it, see
-        // https://github.com/WebAssembly/function-references/issues/44#issuecomment-1083146887
-        // We have more refined information about control flow and dominance
-        // than the spec, and so we would see if ".." can throw or not (only if
-        // it can throw is there a branch to the catch, which can change
-        // dominance). To stay compliant with the spec, however, we must not
-        // move code regardless of whether ".." can throw - we must simply keep
-        // the set outside of the try.
-        //
-        // The problem described can also occur on the *value* and not the set
-        // itself. For example, |X| above could be a local.set of a non-nullable
-        // local. For that reason we must scan it all.
-        if (self->getModule()->features.hasGCNNLocals()) {
-          for (auto* set : FindAll<LocalSet>(*info.item).list) {
-            if (self->getFunction()->getLocalType(set->index).isNonNullable()) {
-              invalidated.push_back(index);
-              break;
-            }
-          }
         }
       }
       for (auto index : invalidated) {
@@ -783,7 +761,48 @@ struct SimplifyLocals
     if (sinkables.empty()) {
       return;
     }
+
+    // Check if the type makes sense. A non-nullable local might be dangerous
+    // here, as creating new local.gets for such locals is risky:
+    //
+    //  (func $silly
+    //    (local $x (ref $T))
+    //    (if
+    //      (condition)
+    //      (local.set $x ..)
+    //    )
+    //  )
+    //
+    // That local is silly as the write is never read. If we optimize it and add
+    // a local.get, however, then we'd no longer validate (as no set would
+    // dominate that new get in the if's else arm). Fixups would add a
+    // ref.as_non_null around the local.get, which will then trap at runtime:
+    //
+    //  (func $silly
+    //    (local $x (ref null $T))
+    //    (local.set $x
+    //      (if
+    //        (condition)
+    //        (..)
+    //        (ref.as_non_null
+    //          (local.get $x)
+    //        )
+    //      )
+    //    )
+    //  )
+    //
+    // In other words, local.get is not necessarily free of effects if the local
+    // is non-nullable - it must have been set already. We could check that
+    // here, but running that linear-time check may not be worth it as this
+    // optimization is fairly minor, so just skip the non-nullable case.
+    //
+    // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
+    auto localType = this->getFunction()->getLocalType(goodIndex);
+    if (localType.isNonNullable()) {
+      return;
+    }
+
     // Ensure we have a place to write the return values for, if not, we
     // need another cycle.
     auto* ifTrueBlock = iff->ifTrue->dynCast<Block>();
@@ -792,6 +811,9 @@ struct SimplifyLocals
       ifsToEnlarge.push_back(iff);
       return;
     }
+
+    // We can optimize!
+
     // Update the ifTrue side.
     Builder builder(*this->getModule());
     auto** item = sinkables.at(goodIndex).item;
@@ -801,8 +823,7 @@ struct SimplifyLocals
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(
-      set->index, this->getFunction()->getLocalType(set->index));
+    iff->ifFalse = builder.makeLocalGet(set->index, localType);
     iff->finalize(); // update type
     // Update the get count.
     getCounter.num[set->index]++;
@@ -889,6 +910,10 @@ struct SimplifyLocals
         }
       }
     } while (anotherCycle);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
   }
 
   bool runMainOptimizations(Function* func) {
@@ -975,8 +1000,10 @@ struct SimplifyLocals
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
       Module* module;
+      PassOptions passOptions;
 
       bool anotherCycle = false;
+      bool refinalize = false;
 
       // We track locals containing the same value.
       EquivalentSets equivalences;
@@ -990,12 +1017,9 @@ struct SimplifyLocals
 
       void visitLocalSet(LocalSet* curr) {
         // Remove trivial copies, even through a tee
-        auto* value = curr->value;
-        Function* func = this->getFunction();
-        while (auto* subSet = value->dynCast<LocalSet>()) {
-          value = subSet->value;
-        }
-        if (auto* get = value->dynCast<LocalGet>()) {
+        auto* value =
+          Properties::getFallthrough(curr->value, passOptions, *module);
+        if (auto* get = value->template dynCast<LocalGet>()) {
           if (equivalences.check(curr->index, get->index)) {
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
@@ -1008,13 +1032,9 @@ struct SimplifyLocals
             }
             // Nothing more to do, ignore the copy.
             return;
-          } else if (func->getLocalType(curr->index) ==
-                     func->getLocalType(get->index)) {
+          } else {
             // There is a new equivalence now. Remove all the old ones, and add
             // the new one.
-            // Note that we ignore the case of subtyping here, to keep this
-            // optimization simple by assuming all equivalent indexes also have
-            // the same type. TODO: consider optimizing this.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);
             return;
@@ -1029,8 +1049,6 @@ struct SimplifyLocals
         // Canonicalize gets: if some are equivalent, then we can pick more
         // then one, and other passes may benefit from having more uniformity.
         if (auto* set = equivalences.getEquivalents(curr->index)) {
-          // Pick the index with the most uses - maximizing the chance to
-          // lower one's uses to zero.
           // Helper method that returns the # of gets *ignoring the current
           // get*, as we want to see what is best overall, treating this one as
           // to be decided upon.
@@ -1042,9 +1060,31 @@ struct SimplifyLocals
             }
             return ret;
           };
+
+          // Pick the index with the most uses - maximizing the chance to
+          // lower one's uses to zero. If types differ though then we prefer to
+          // switch to a more refined type even if there are fewer uses, as that
+          // may have significant benefits to later optimizations (we may be
+          // able to use it to remove casts, etc.).
+          auto* func = this->getFunction();
           Index best = -1;
           for (auto index : *set) {
-            if (best == Index(-1) ||
+            if (best == Index(-1)) {
+              // This is the first possible option we've seen.
+              best = index;
+              continue;
+            }
+
+            auto bestType = func->getLocalType(best);
+            auto indexType = func->getLocalType(index);
+            if (!Type::isSubType(indexType, bestType)) {
+              // This is less refined than the current best; ignore.
+              continue;
+            }
+
+            // This is better if it has a more refined type, or if it has more
+            // uses.
+            if (indexType != bestType ||
                 getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
               best = index;
             }
@@ -1052,8 +1092,11 @@ struct SimplifyLocals
           assert(best != Index(-1));
           // Due to ordering, the best index may be different from us but have
           // the same # of locals - make sure we actually improve.
-          if (best != curr->index && getNumGetsIgnoringCurr(best) >
-                                       getNumGetsIgnoringCurr(curr->index)) {
+          auto bestType = func->getLocalType(best);
+          auto oldType = func->getLocalType(curr->index);
+          if (best != curr->index && (getNumGetsIgnoringCurr(best) >
+                                        getNumGetsIgnoringCurr(curr->index) ||
+                                      bestType != oldType)) {
             // Update the get counts.
             (*numLocalGets)[best]++;
             assert((*numLocalGets)[curr->index] >= 1);
@@ -1061,6 +1104,12 @@ struct SimplifyLocals
             // Make the change.
             curr->index = best;
             anotherCycle = true;
+            if (bestType != oldType) {
+              curr->type = func->getLocalType(best);
+              // We are switching to a more refined type, which might require
+              // changes in the user of the local.get.
+              refinalize = true;
+            }
           }
         }
       }
@@ -1068,9 +1117,13 @@ struct SimplifyLocals
 
     EquivalentOptimizer eqOpter;
     eqOpter.module = this->getModule();
+    eqOpter.passOptions = this->getPassOptions();
     eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
     eqOpter.walkFunction(func);
+    if (eqOpter.refinalize) {
+      ReFinalize().walkFunctionInModule(func, this->getModule());
+    }
 
     // We may have already had a local with no uses, or we may have just
     // gotten there thanks to the EquivalentOptimizer. If there are such

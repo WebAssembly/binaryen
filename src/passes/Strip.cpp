@@ -28,13 +28,15 @@
 namespace wasm {
 
 struct Strip : public Pass {
+  bool requiresNonNullableLocalFixups() override { return false; }
+
   // A function that returns true if the method should be removed.
   typedef std::function<bool(UserSection&)> Decider;
   Decider decider;
 
   Strip(Decider decider) : decider(decider) {}
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     // Remove name and debug sections.
     auto& sections = module->userSections;
     sections.erase(std::remove_if(sections.begin(), sections.end(), decider),

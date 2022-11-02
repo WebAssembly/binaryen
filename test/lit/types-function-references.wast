@@ -10,15 +10,17 @@
 ;; RUN: cat %t.text.wast | filecheck %s --check-prefix=CHECK-TEXT
 
 (module
-  ;; inline ref type in result
-  (type $_=>_eqref (func (result eqref)))
   ;; CHECK-BINARY:      (type $mixed_results (func (result anyref f32 anyref f32)))
 
-  ;; CHECK-BINARY:      (type $none_=>_none (func))
+  ;; CHECK-BINARY:      (type $void (func))
+  ;; CHECK-TEXT:      (type $mixed_results (func (result anyref f32 anyref f32)))
 
+  ;; CHECK-TEXT:      (type $void (func))
+  (type $void (func))
+
+  ;; inline ref type in result
+  (type $_=>_eqref (func (result eqref)))
   ;; CHECK-BINARY:      (type $i32-i32 (func (param i32) (result i32)))
-
-  ;; CHECK-BINARY:      (type $=>eqref (func (result eqref)))
 
   ;; CHECK-BINARY:      (type $ref|$i32-i32|_=>_i32 (func (param (ref $i32-i32)) (result i32)))
 
@@ -27,13 +29,7 @@
   ;; CHECK-BINARY:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK-BINARY:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $=>eqref))))
-  ;; CHECK-TEXT:      (type $mixed_results (func (result anyref f32 anyref f32)))
-
-  ;; CHECK-TEXT:      (type $none_=>_none (func))
-
   ;; CHECK-TEXT:      (type $i32-i32 (func (param i32) (result i32)))
-
-  ;; CHECK-TEXT:      (type $=>eqref (func (result eqref)))
 
   ;; CHECK-TEXT:      (type $ref|$i32-i32|_=>_i32 (func (param (ref $i32-i32)) (result i32)))
 
@@ -43,33 +39,37 @@
 
   ;; CHECK-TEXT:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $=>eqref))))
   (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $_=>_eqref))))
-  (type $=>eqref (func (result eqref)))
   ;; CHECK-BINARY:      (type $=>anyref (func (result anyref)))
-  ;; CHECK-TEXT:      (type $=>anyref (func (result anyref)))
-  (type $=>anyref (func (result anyref)))
-  (type $mixed_results (func (result anyref f32 anyref f32)))
-
-  (type $i32-i32 (func (param i32) (result i32)))
 
   ;; CHECK-BINARY:      (type $none_=>_i32_ref?|$mixed_results|_f64 (func (result i32 (ref null $mixed_results) f64)))
 
   ;; CHECK-BINARY:      (type $ref?|$mixed_results|_=>_none (func (param (ref null $mixed_results))))
 
-  ;; CHECK-BINARY:      (elem declare func $call-ref $call-ref-more)
+  ;; CHECK-BINARY:      (type $=>eqref (func (result eqref)))
+  ;; CHECK-TEXT:      (type $=>anyref (func (result anyref)))
 
-  ;; CHECK-BINARY:      (func $call-ref
-  ;; CHECK-BINARY-NEXT:  (call_ref
-  ;; CHECK-BINARY-NEXT:   (ref.func $call-ref)
-  ;; CHECK-BINARY-NEXT:  )
-  ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (type $none_=>_i32_ref?|$mixed_results|_f64 (func (result i32 (ref null $mixed_results) f64)))
 
   ;; CHECK-TEXT:      (type $ref?|$mixed_results|_=>_none (func (param (ref null $mixed_results))))
 
+  ;; CHECK-TEXT:      (type $=>eqref (func (result eqref)))
+  (type $=>eqref (func (result eqref)))
+  (type $=>anyref (func (result anyref)))
+  (type $mixed_results (func (result anyref f32 anyref f32)))
+
+  (type $i32-i32 (func (param i32) (result i32)))
+
+  ;; CHECK-BINARY:      (elem declare func $call-ref $call-ref-more)
+
+  ;; CHECK-BINARY:      (func $call-ref
+  ;; CHECK-BINARY-NEXT:  (call_ref $void
+  ;; CHECK-BINARY-NEXT:   (ref.func $call-ref)
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (elem declare func $call-ref $call-ref-more)
 
   ;; CHECK-TEXT:      (func $call-ref
-  ;; CHECK-TEXT-NEXT:  (call_ref
+  ;; CHECK-TEXT-NEXT:  (call_ref $void
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
@@ -77,26 +77,26 @@
     (call_ref (ref.func $call-ref))
   )
   ;; CHECK-BINARY:      (func $return-call-ref
-  ;; CHECK-BINARY-NEXT:  (return_call_ref
+  ;; CHECK-BINARY-NEXT:  (return_call_ref $void
   ;; CHECK-BINARY-NEXT:   (ref.func $call-ref)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $return-call-ref
-  ;; CHECK-TEXT-NEXT:  (return_call_ref
+  ;; CHECK-TEXT-NEXT:  (return_call_ref $void
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   (func $return-call-ref
-    (return_call_ref (ref.func $call-ref))
+    (return_call_ref $void (ref.func $call-ref))
   )
   ;; CHECK-BINARY:      (func $call-ref-more (param $0 i32) (result i32)
-  ;; CHECK-BINARY-NEXT:  (call_ref
+  ;; CHECK-BINARY-NEXT:  (call_ref $i32-i32
   ;; CHECK-BINARY-NEXT:   (i32.const 42)
   ;; CHECK-BINARY-NEXT:   (ref.func $call-ref-more)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $call-ref-more (param $0 i32) (result i32)
-  ;; CHECK-TEXT-NEXT:  (call_ref
+  ;; CHECK-TEXT-NEXT:  (call_ref $i32-i32
   ;; CHECK-TEXT-NEXT:   (i32.const 42)
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref-more)
   ;; CHECK-TEXT-NEXT:  )
@@ -105,13 +105,13 @@
     (call_ref (i32.const 42) (ref.func $call-ref-more))
   )
   ;; CHECK-BINARY:      (func $call_from-param (param $f (ref $i32-i32)) (result i32)
-  ;; CHECK-BINARY-NEXT:  (call_ref
+  ;; CHECK-BINARY-NEXT:  (call_ref $i32-i32
   ;; CHECK-BINARY-NEXT:   (i32.const 42)
   ;; CHECK-BINARY-NEXT:   (local.get $f)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $call_from-param (param $f (ref $i32-i32)) (result i32)
-  ;; CHECK-TEXT-NEXT:  (call_ref
+  ;; CHECK-TEXT-NEXT:  (call_ref $i32-i32
   ;; CHECK-TEXT-NEXT:   (i32.const 42)
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
@@ -120,13 +120,13 @@
     (call_ref (i32.const 42) (local.get $f))
   )
   ;; CHECK-BINARY:      (func $call_from-param-null (param $f (ref null $i32-i32)) (result i32)
-  ;; CHECK-BINARY-NEXT:  (call_ref
+  ;; CHECK-BINARY-NEXT:  (call_ref $i32-i32
   ;; CHECK-BINARY-NEXT:   (i32.const 42)
   ;; CHECK-BINARY-NEXT:   (local.get $f)
   ;; CHECK-BINARY-NEXT:  )
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $call_from-param-null (param $f (ref null $i32-i32)) (result i32)
-  ;; CHECK-TEXT-NEXT:  (call_ref
+  ;; CHECK-TEXT-NEXT:  (call_ref $i32-i32
   ;; CHECK-TEXT-NEXT:   (i32.const 42)
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
@@ -139,7 +139,7 @@
   ;; CHECK-BINARY-NEXT:  (local.set $f
   ;; CHECK-BINARY-NEXT:   (ref.func $call-ref-more)
   ;; CHECK-BINARY-NEXT:  )
-  ;; CHECK-BINARY-NEXT:  (call_ref
+  ;; CHECK-BINARY-NEXT:  (call_ref $i32-i32
   ;; CHECK-BINARY-NEXT:   (i32.const 42)
   ;; CHECK-BINARY-NEXT:   (local.get $f)
   ;; CHECK-BINARY-NEXT:  )
@@ -149,7 +149,7 @@
   ;; CHECK-TEXT-NEXT:  (local.set $f
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref-more)
   ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (call_ref
+  ;; CHECK-TEXT-NEXT:  (call_ref $i32-i32
   ;; CHECK-TEXT-NEXT:   (i32.const 42)
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
@@ -160,10 +160,10 @@
     (call_ref (i32.const 42) (local.get $f))
   )
   ;; CHECK-BINARY:      (func $ref-in-sig (param $0 f64) (result (ref null $=>eqref))
-  ;; CHECK-BINARY-NEXT:  (ref.null $=>eqref)
+  ;; CHECK-BINARY-NEXT:  (ref.null nofunc)
   ;; CHECK-BINARY-NEXT: )
   ;; CHECK-TEXT:      (func $ref-in-sig (param $0 f64) (result (ref null $=>eqref))
-  ;; CHECK-TEXT-NEXT:  (ref.null $=>eqref)
+  ;; CHECK-TEXT-NEXT:  (ref.null nofunc)
   ;; CHECK-TEXT-NEXT: )
   (func $ref-in-sig (param $0 f64) (result (ref null $=>eqref))
     (ref.null $=>eqref)
@@ -228,14 +228,14 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block (result i32)
+  ;; CHECK-TEXT-NEXT:   (block (result i32)
   ;; CHECK-TEXT-NEXT:    (local.set $2
   ;; CHECK-TEXT-NEXT:     (tuple.extract 0
   ;; CHECK-TEXT-NEXT:      (local.get $0)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (block $block0 (result (ref null $mixed_results))
+  ;; CHECK-TEXT-NEXT:     (block (result (ref null $mixed_results))
   ;; CHECK-TEXT-NEXT:      (local.set $1
   ;; CHECK-TEXT-NEXT:       (tuple.extract 1
   ;; CHECK-TEXT-NEXT:        (local.get $0)
@@ -255,7 +255,7 @@
   ;; CHECK-TEXT-NEXT: )
   (func $type-only-in-tuple-block
     (drop
-      (block (result i32 (ref null $mixed_results) f64)
+      (block $block (result i32 (ref null $mixed_results) f64)
         (unreachable)
       )
     )
@@ -380,8 +380,6 @@
 
 ;; CHECK-NODEBUG:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-;; CHECK-NODEBUG:      (type $none_=>_eqref (func (result eqref)))
-
 ;; CHECK-NODEBUG:      (type $ref|i32_->_i32|_=>_i32 (func (param (ref $i32_=>_i32)) (result i32)))
 
 ;; CHECK-NODEBUG:      (type $ref?|i32_->_i32|_=>_i32 (func (param (ref null $i32_=>_i32)) (result i32)))
@@ -396,36 +394,38 @@
 
 ;; CHECK-NODEBUG:      (type $ref?|none_->_anyref_f32_anyref_f32|_=>_none (func (param (ref null $none_=>_anyref_f32_anyref_f32))))
 
+;; CHECK-NODEBUG:      (type $none_=>_eqref (func (result eqref)))
+
 ;; CHECK-NODEBUG:      (elem declare func $0 $2)
 
 ;; CHECK-NODEBUG:      (func $0
-;; CHECK-NODEBUG-NEXT:  (call_ref
+;; CHECK-NODEBUG-NEXT:  (call_ref $none_=>_none
 ;; CHECK-NODEBUG-NEXT:   (ref.func $0)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $1
-;; CHECK-NODEBUG-NEXT:  (return_call_ref
+;; CHECK-NODEBUG-NEXT:  (return_call_ref $none_=>_none
 ;; CHECK-NODEBUG-NEXT:   (ref.func $0)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $2 (param $0 i32) (result i32)
-;; CHECK-NODEBUG-NEXT:  (call_ref
+;; CHECK-NODEBUG-NEXT:  (call_ref $i32_=>_i32
 ;; CHECK-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-NODEBUG-NEXT:   (ref.func $2)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $3 (param $0 (ref $i32_=>_i32)) (result i32)
-;; CHECK-NODEBUG-NEXT:  (call_ref
+;; CHECK-NODEBUG-NEXT:  (call_ref $i32_=>_i32
 ;; CHECK-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $4 (param $0 (ref null $i32_=>_i32)) (result i32)
-;; CHECK-NODEBUG-NEXT:  (call_ref
+;; CHECK-NODEBUG-NEXT:  (call_ref $i32_=>_i32
 ;; CHECK-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-NODEBUG-NEXT:  )
@@ -436,14 +436,14 @@
 ;; CHECK-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-NODEBUG-NEXT:   (ref.func $2)
 ;; CHECK-NODEBUG-NEXT:  )
-;; CHECK-NODEBUG-NEXT:  (call_ref
+;; CHECK-NODEBUG-NEXT:  (call_ref $i32_=>_i32
 ;; CHECK-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $6 (param $0 f64) (result (ref null $none_=>_eqref))
-;; CHECK-NODEBUG-NEXT:  (ref.null $none_=>_eqref)
+;; CHECK-NODEBUG-NEXT:  (ref.null nofunc)
 ;; CHECK-NODEBUG-NEXT: )
 
 ;; CHECK-NODEBUG:      (func $7

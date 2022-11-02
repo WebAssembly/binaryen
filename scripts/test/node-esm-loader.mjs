@@ -25,6 +25,8 @@ const specialTestSuiteModules = {
 export async function resolve(specifier, context, defaultResolve) {
   const specialModule = specialTestSuiteModules[specifier];
   if (specialModule) {
+    // This is needed for newer node versions.
+    specialModule.shortCircuit = true;
     return specialModule;
   }
   return defaultResolve(specifier, context, defaultResolve);

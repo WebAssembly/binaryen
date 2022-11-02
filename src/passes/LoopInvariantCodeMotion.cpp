@@ -37,7 +37,9 @@ struct LoopInvariantCodeMotion
   : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new LoopInvariantCodeMotion; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<LoopInvariantCodeMotion>();
+  }
 
   typedef std::unordered_set<LocalSet*> LoopSets;
 

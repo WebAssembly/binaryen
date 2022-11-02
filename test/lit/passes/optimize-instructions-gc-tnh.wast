@@ -52,19 +52,6 @@
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.eq
-  ;; TNH-NEXT:    (block (result (ref null $struct))
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (ref.null any)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (ref.null $struct)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (ref.as_data
-  ;; TNH-NEXT:     (ref.null any)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_=>_none) (param $a eqref) (param $b eqref)
   ;; NO_TNH-NEXT:  (drop
@@ -75,24 +62,11 @@
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (unreachable)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (block (result dataref)
+  ;; NO_TNH-NEXT:    (block (result (ref data))
   ;; NO_TNH-NEXT:     (drop
   ;; NO_TNH-NEXT:      (ref.func $ref.eq-no)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.eq
-  ;; NO_TNH-NEXT:    (block (result (ref null $struct))
-  ;; NO_TNH-NEXT:     (drop
-  ;; NO_TNH-NEXT:      (ref.null any)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:     (ref.null $struct)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.as_data
-  ;; NO_TNH-NEXT:     (ref.null any)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -111,23 +85,6 @@
           (ref.as_data
             (ref.as_non_null
               (ref.func $ref.eq-no) ;; *Not* an eqref!
-            )
-          )
-        )
-      )
-    )
-    ;; As above, but now with nulls of a non-eq type.
-    ;; Note that we could in theory change a null's type to get validation in
-    ;; such cases.
-    (drop
-      (ref.eq
-        (ref.cast_static $struct
-          (ref.null any) ;; *Not* an eqref!
-        )
-        (ref.as_non_null
-          (ref.as_data
-            (ref.as_non_null
-              (ref.null any) ;; *Not* an eqref!
             )
           )
         )

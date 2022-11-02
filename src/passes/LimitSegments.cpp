@@ -21,7 +21,7 @@
 namespace wasm {
 
 struct LimitSegments : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!MemoryUtils::ensureLimitedSegments(*module)) {
       std::cerr << "Unable to merge segments. "
                 << "wasm VMs may not accept this binary" << std::endl;

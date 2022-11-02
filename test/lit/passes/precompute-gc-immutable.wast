@@ -94,6 +94,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $helper
@@ -136,8 +137,11 @@
   ;; CHECK:      (func $local-null (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (call $helper
-  ;; CHECK-NEXT:   (struct.get $struct-imm 0
-  ;; CHECK-NEXT:    (ref.null $struct-imm)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -248,7 +252,7 @@
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 1)
@@ -258,7 +262,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block0
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 2)
@@ -735,7 +739,7 @@
   ;; data that is filled with vtables of different types. On usage, we do a
   ;; cast of the vtable type.
 
-  ;; CHECK:      (type $itable (array_subtype (ref null data) data))
+  ;; CHECK:      (type $itable (array_subtype dataref data))
   (type $itable (array_subtype (ref null data) data))
 
   ;; CHECK:      (type $object (struct_subtype (field (ref $itable)) data))

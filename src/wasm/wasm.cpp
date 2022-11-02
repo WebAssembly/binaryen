@@ -47,19 +47,14 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
-const char* TypedFunctionReferencesFeature = "typed-function-references";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
+const char* MultiMemoriesFeature = "multi-memories";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name MEMORY_BASE("__memory_base");
-Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
-Name GET_TEMP_RET0("getTempRet0");
-Name SET_TEMP_RET0("setTempRet0");
-Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
 Name GLOBAL("global");
@@ -183,7 +178,7 @@ void Block::finalize() {
     return;
   }
   // The default type is what is at the end. Next we need to see if breaks and/
-  // or unreachabitily change that.
+  // or unreachability change that.
   type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
@@ -261,6 +256,12 @@ void Break::finalize() {
     if (condition->type == Type::unreachable) {
       type = Type::unreachable;
     } else if (value) {
+      // N.B. This is not correct wrt the spec, which mandates that it be the
+      // type of the block we target. In practice this does not matter because
+      // the br_if return value is not really used in the wild. To fix this,
+      // we'd need to do something like what we do for local.tee's type, which
+      // is to fix it up in a way that is aware of function-level context and
+      // not just the instruction itself (which would be a pain).
       type = value->type;
     } else {
       type = Type::none;
@@ -795,7 +796,10 @@ void MemoryGrow::finalize() {
   }
 }
 
-void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
+void RefNull::finalize(HeapType heapType) {
+  assert(heapType.isBottom());
+  type = Type(heapType, Nullable);
+}
 
 void RefNull::finalize(Type type_) { type = type_; }
 
@@ -931,36 +935,25 @@ void CallRef::finalize(Type type_) {
 }
 
 void RefTest::finalize() {
-  if (ref->type == Type::unreachable ||
-      (rtt && rtt->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
   }
 }
 
-HeapType RefTest::getIntendedType() {
-  return rtt ? rtt->type.getHeapType() : intendedType;
-}
-
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable ||
-      (rtt && rtt->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     // The output of ref.cast may be null if the input is null (in that case the
     // null is passed through).
-    type = Type(getIntendedType(), ref->type.getNullability());
+    type = Type(intendedType, ref->type.getNullability());
   }
 }
 
-HeapType RefCast::getIntendedType() {
-  return rtt ? rtt->type.getHeapType() : intendedType;
-}
-
 void BrOn::finalize() {
-  if (ref->type == Type::unreachable ||
-      (rtt && rtt->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable) {
     type = Type::unreachable;
     return;
   }
@@ -984,7 +977,7 @@ void BrOn::finalize() {
     case BrOnCastFail:
       // If we do not branch, the cast worked, and we have something of the cast
       // type.
-      type = Type(getIntendedType(), NonNullable);
+      type = Type(intendedType, NonNullable);
       break;
     case BrOnNonFunc:
       type = Type(HeapType::func, NonNullable);
@@ -998,11 +991,6 @@ void BrOn::finalize() {
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
-}
-
-HeapType BrOn::getIntendedType() {
-  assert(op == BrOnCast || op == BrOnCastFail);
-  return rtt ? rtt->type.getHeapType() : intendedType;
 }
 
 Type BrOn::getSentType() {
@@ -1022,7 +1010,7 @@ Type BrOn::getSentType() {
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
-      return Type(getIntendedType(), NonNullable);
+      return Type(intendedType, NonNullable);
     case BrOnFunc:
       return Type(HeapType::func, NonNullable);
     case BrOnData:
@@ -1039,37 +1027,16 @@ Type BrOn::getSentType() {
   }
 }
 
-void RttCanon::finalize() {
-  // Nothing to do - the type must have been set already during construction.
-}
-
-void RttSub::finalize() {
-  if (parent->type == Type::unreachable) {
-    type = Type::unreachable;
-  }
-  // Else nothing to do - the type must have been set already during
-  // construction.
-}
-
 void StructNew::finalize() {
-  if (rtt && rtt->type == Type::unreachable) {
-    type = Type::unreachable;
-    return;
-  }
   if (handleUnreachableOperands(this)) {
     return;
-  }
-  // A dynamic StructNew infers the type from the rtt. A static one has the type
-  // already in the type field.
-  if (rtt) {
-    type = Type(rtt->type.getHeapType(), NonNullable);
   }
 }
 
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
+  } else if (!ref->type.isNull()) {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
@@ -1083,41 +1050,26 @@ void StructSet::finalize() {
 }
 
 void ArrayNew::finalize() {
-  if ((rtt && rtt->type == Type::unreachable) ||
-      size->type == Type::unreachable ||
+  if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
   }
-  // A dynamic ArrayNew infers the type from the rtt. A static one has the type
-  // already in the type field.
-  if (rtt) {
-    type = Type(rtt->type.getHeapType(), NonNullable);
-  }
 }
 
 void ArrayInit::finalize() {
-  if (rtt && rtt->type == Type::unreachable) {
-    type = Type::unreachable;
-    return;
-  }
   for (auto* value : values) {
     if (value->type == Type::unreachable) {
       type = Type::unreachable;
       return;
     }
   }
-  // A dynamic ArrayInit infers the type from the rtt. A static one has the type
-  // already in the type field.
-  if (rtt) {
-    type = Type(rtt->type.getHeapType(), NonNullable);
-  }
 }
 
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
+  } else if (!ref->type.isNull()) {
     type = ref->type.getHeapType().getArray().element.type;
   }
 }
@@ -1168,6 +1120,12 @@ void RefAs::finalize() {
       break;
     case RefAsI31:
       type = Type(HeapType::i31, NonNullable);
+      break;
+    case ExternInternalize:
+      type = Type(HeapType::any, value->type.getNullability());
+      break;
+    case ExternExternalize:
+      type = Type(HeapType::ext, value->type.getNullability());
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
@@ -1315,6 +1273,7 @@ Name Function::getLocalName(Index index) { return localNames.at(index); }
 void Function::setLocalName(Index index, Name name) {
   assert(index < getNumLocals());
   localNames[index] = name;
+  localIndices[name] = index;
 }
 
 Name Function::getLocalNameOrDefault(Index index) {
@@ -1332,6 +1291,10 @@ Name Function::getLocalNameOrGeneric(Index index) {
     return nameIt->second;
   }
   return Name::fromInt(index);
+}
+
+bool Function::hasLocalIndex(Name name) const {
+  return localIndices.find(name) != localIndices.end();
 }
 
 Index Function::getLocalIndex(Name name) {
@@ -1390,6 +1353,10 @@ ElementSegment* Module::getElementSegment(Name name) {
   return getModuleElement(elementSegmentsMap, name, "getElementSegment");
 }
 
+Memory* Module::getMemory(Name name) {
+  return getModuleElement(memoriesMap, name, "getMemory");
+}
+
 DataSegment* Module::getDataSegment(Name name) {
   return getModuleElement(dataSegmentsMap, name, "getDataSegment");
 }
@@ -1425,6 +1392,10 @@ Table* Module::getTableOrNull(Name name) {
 
 ElementSegment* Module::getElementSegmentOrNull(Name name) {
   return getModuleElementOrNull(elementSegmentsMap, name);
+}
+
+Memory* Module::getMemoryOrNull(Name name) {
+  return getModuleElementOrNull(memoriesMap, name);
 }
 
 DataSegment* Module::getDataSegmentOrNull(Name name) {
@@ -1506,6 +1477,10 @@ Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
     elementSegments, elementSegmentsMap, std::move(curr), "addElementSegment");
 }
 
+Memory* Module::addMemory(std::unique_ptr<Memory>&& curr) {
+  return addModuleElement(memories, memoriesMap, std::move(curr), "addMemory");
+}
+
 DataSegment* Module::addDataSegment(std::unique_ptr<DataSegment>&& curr) {
   return addModuleElement(
     dataSegments, dataSegmentsMap, std::move(curr), "addDataSegment");
@@ -1544,6 +1519,9 @@ void Module::removeTable(Name name) {
 void Module::removeElementSegment(Name name) {
   removeModuleElement(elementSegments, elementSegmentsMap, name);
 }
+void Module::removeMemory(Name name) {
+  removeModuleElement(memories, memoriesMap, name);
+}
 void Module::removeDataSegment(Name name) {
   removeModuleElement(dataSegments, dataSegmentsMap, name);
 }
@@ -1580,6 +1558,9 @@ void Module::removeTables(std::function<bool(Table*)> pred) {
 void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
   removeModuleElements(elementSegments, elementSegmentsMap, pred);
 }
+void Module::removeMemories(std::function<bool(Memory*)> pred) {
+  removeModuleElements(memories, memoriesMap, pred);
+}
 void Module::removeDataSegments(std::function<bool(DataSegment*)> pred) {
   removeModuleElements(dataSegments, dataSegmentsMap, pred);
 }
@@ -1588,6 +1569,13 @@ void Module::removeGlobals(std::function<bool(Global*)> pred) {
 }
 void Module::removeTags(std::function<bool(Tag*)> pred) {
   removeModuleElements(tags, tagsMap, pred);
+}
+
+void Module::updateDataSegmentsMap() {
+  dataSegmentsMap.clear();
+  for (auto& curr : dataSegments) {
+    dataSegmentsMap[curr->name] = curr.get();
+  }
 }
 
 void Module::updateMaps() {
@@ -1607,10 +1595,11 @@ void Module::updateMaps() {
   for (auto& curr : elementSegments) {
     elementSegmentsMap[curr->name] = curr.get();
   }
-  dataSegmentsMap.clear();
-  for (auto& curr : dataSegments) {
-    dataSegmentsMap[curr->name] = curr.get();
+  memoriesMap.clear();
+  for (auto& curr : memories) {
+    memoriesMap[curr->name] = curr.get();
   }
+  updateDataSegmentsMap();
   globalsMap.clear();
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();

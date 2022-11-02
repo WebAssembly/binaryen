@@ -29,6 +29,8 @@ namespace wasm {
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   struct Map : public std::map<Function*, size_t> {};
 
   FunctionHasher(Map* output, ExpressionAnalyzer::ExprHasher customHasher)
@@ -36,8 +38,8 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   FunctionHasher(Map* output)
     : output(output), customHasher(ExpressionAnalyzer::nothingHasher) {}
 
-  FunctionHasher* create() override {
-    return new FunctionHasher(output, customHasher);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<FunctionHasher>(output, customHasher);
   }
 
   static Map createMap(Module* module) {

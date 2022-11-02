@@ -19,9 +19,10 @@
 // a location behind a condition, where it might not always execute.
 //
 
-#include "ir/effects.h"
-#include "pass.h"
-#include "wasm-builder.h"
+#include <ir/effects.h>
+#include <ir/manipulation.h>
+#include <pass.h>
+#include <wasm-builder.h>
 #include "../wasm.h"
 
 namespace wasm {
@@ -95,21 +96,27 @@ public:
     // Find an optimization segment: from the first pushable thing, to the first
     // point past which we want to push. We then push in that range before
     // continuing forward.
-    // we never need to push past a final element, as we couldn't be used after
-    // it.
-    Index relevant = list.size() - 1;
     const Index nothing = -1;
     Index i = 0;
     Index firstPushable = nothing;
-    while (i < relevant) {
+    while (i < list.size()) {
       if (firstPushable == nothing && isPushable(list[i])) {
         firstPushable = i;
         i++;
         continue;
       }
       if (firstPushable != nothing && isPushPoint(list[i])) {
-        // optimize this segment, and proceed from where it tells us
-        i = optimizeSegment(firstPushable, i);
+        // Optimize this segment, and proceed from where it tells us. First
+        // optimize things into the if, if possible, which does not move the
+        // push point. Then move things past the push point (which has the
+        // relative effect of moving the push point backwards as other things
+        // move forward).
+        optimizeIntoIf(firstPushable, i);
+        // We never need to push past a final element, as we couldn't be used
+        // after it.
+        if (i < list.size() - 1) {
+          i = optimizeSegment(firstPushable, i);
+        }
         firstPushable = nothing;
         continue;
       }
@@ -124,24 +131,39 @@ private:
       return nullptr;
     }
     auto index = set->index;
-    // to be pushable, this must be SFA and the right # of gets,
-    // but also have no side effects, as it may not execute if pushed.
+    // To be pushable, this must be SFA and the right # of gets.
+    //
+    // It must also not have side effects, as it may no longer execute after it
+    // is pushed, since it may be behind a condition that ends up false some of
+    // the time. However, removable side effects are ok here. The general
+    // problem with removable effects is that we can only remove them, but not
+    // move them, because of stuff like this:
+    //
+    //   if (x != 0) foo(1 / x);
+    //
+    // If we move 1 / x to execute unconditionally then it may trap, but it
+    // would be fine to remove it. This pass does not move code to places where
+    // it might execute more, but *less*: we keep the code behind any conditions
+    // it was already behind, and potentially put it behind further ones. In
+    // effect, we "partially remove" the code, making it not execute some of the
+    // time, which is fine.
     if (analyzer.isSFA(index) &&
         numGetsSoFar[index] == analyzer.getNumGets(index) &&
-        !EffectAnalyzer(passOptions, module, set->value).hasSideEffects()) {
+        !EffectAnalyzer(passOptions, module, set->value)
+           .hasUnremovableSideEffects()) {
       return set;
     }
     return nullptr;
   }
 
-  // Push past conditional control flow.
+  // Try to push past conditional control flow.
   // TODO: push into ifs as well
   bool isPushPoint(Expression* curr) {
     // look through drops
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>()) {
+    if (curr->is<If>() || curr->is<BrOn>()) {
       return true;
     }
     if (auto* br = curr->dynCast<Break>()) {
@@ -161,26 +183,27 @@ private:
     // everything that matters if you want to be pushed past the pushPoint
     EffectAnalyzer cumulativeEffects(passOptions, module);
     cumulativeEffects.walk(list[pushPoint]);
-    // it is ok to ignore the branching here, that is the crucial point of this
-    // opt
-    // TODO: it would be ok to ignore thrown exceptions here, if we know they
-    //       could not be caught and must go outside of the function
-    cumulativeEffects.ignoreBranches();
+    // It is ok to ignore branching out of the block here, that is the crucial
+    // point of this optimization. That is, we are in a situation like this:
+    //
+    // {
+    //   x = value;
+    //   if (..) break;
+    //   foo(x);
+    // }
+    //
+    // If the branch is taken, then that's fine, it will jump out of this block
+    // and reach some outer scope, and in that case we never need x at all
+    // (since we've proven before that x is not used outside of this block, see
+    // numGetsSoFar which we use for that). Similarly, control flow could
+    // transfer away via a return or an exception and that would be ok as well.
+    cumulativeEffects.ignoreControlFlowTransfers();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
       auto* pushable = isPushable(list[i]);
       if (pushable) {
-        auto iter = pushableEffects.find(pushable);
-        if (iter == pushableEffects.end()) {
-          iter =
-            pushableEffects
-              .emplace(std::piecewise_construct,
-                       std::forward_as_tuple(pushable),
-                       std::forward_as_tuple(passOptions, module, pushable))
-              .first;
-        }
-        auto& effects = iter->second;
+        const auto& effects = getPushableEffects(pushable);
         if (cumulativeEffects.invalidates(effects)) {
           // we can't push this, so further pushables must pass it
           cumulativeEffects.mergeIn(effects);
@@ -188,13 +211,13 @@ private:
           // we can push this, great!
           toPush.push_back(pushable);
         }
-        if (i == firstPushable) {
-          // no point in looking further
-          break;
-        }
       } else {
         // something that can't be pushed, so it might block further pushing
         cumulativeEffects.walk(list[i]);
+      }
+      if (i == firstPushable) {
+        // no point in looking further
+        break;
       }
       assert(i > 0);
       i--;
@@ -227,6 +250,184 @@ private:
     return pushPoint - total + 1;
   }
 
+  // Similar to optimizeSegment, but for the case where the push point is an if,
+  // and we try to push into the if's arms, doing things like this:
+  //
+  //    x = op();
+  //    if (..) {
+  //      ..
+  //    }
+  // =>
+  //    if (..) {
+  //      x = op(); // this moved
+  //      ..
+  //    }
+  //
+  // This does not move the push point, so it does not have a return value,
+  // unlike optimizeSegment.
+  void optimizeIntoIf(Index firstPushable, Index pushPoint) {
+    assert(firstPushable != Index(-1) && pushPoint != Index(-1) &&
+           firstPushable < pushPoint);
+
+    auto* iff = list[pushPoint]->dynCast<If>();
+    if (!iff) {
+      return;
+    }
+
+    // Everything that matters if you want to be pushed past the pushPoint. This
+    // begins with the if condition's effects, as we must always push past
+    // those. Later, we will add to this when we need to.
+    EffectAnalyzer cumulativeEffects(passOptions, module, iff->condition);
+
+    // See optimizeSegment for why we can ignore control flow transfers here.
+    cumulativeEffects.ignoreControlFlowTransfers();
+
+    // Find the effects of the arms, which will affect what can be pushed.
+    EffectAnalyzer ifTrueEffects(passOptions, module, iff->ifTrue);
+    EffectAnalyzer ifFalseEffects(passOptions, module);
+    if (iff->ifFalse) {
+      ifFalseEffects.walk(iff->ifFalse);
+    }
+
+    // We need to know which locals are used after the if, as that can determine
+    // if we can push or not.
+    EffectAnalyzer postIfEffects(passOptions, module);
+    for (Index i = pushPoint + 1; i < list.size(); i++) {
+      postIfEffects.walk(list[pushPoint]);
+    }
+
+    // Start at the instruction right before the push point, and go back from
+    // there:
+    //
+    //    x = op();
+    //    y = op();
+    //    if (..) {
+    //      ..
+    //    }
+    //
+    // Here we will try to push y first, and then x. Note that if we push y
+    // then we can immediately try to push x after it, as it will remain in
+    // order with x if we do. If we do *not* push y we can still try to push x
+    // but we must move it past y, which means we need to check for interference
+    // between them (which we do by adding y's effects to cumulativeEffects).
+    //
+    // Decrement at the top of the loop for simplicity, so start with i at one
+    // past the first thing we can push (which is right before the push point).
+    Index i = pushPoint;
+    while (1) {
+      if (i == firstPushable) {
+        // We just finished processing the first thing that could be pushed;
+        // stop.
+        break;
+      }
+      assert(i > 0);
+      i--;
+      auto* pushable = isPushable(list[i]);
+      if (!pushable) {
+        // Something that is staying where it is, so anything we push later must
+        // move past it. Note the effects and continue.
+        cumulativeEffects.walk(list[i]);
+        continue;
+      }
+
+      auto index = pushable->index;
+
+      const auto& effects = getPushableEffects(pushable);
+
+      if (cumulativeEffects.invalidates(effects)) {
+        // This can't be moved forward. Add it to the things that are not
+        // moving.
+        cumulativeEffects.walk(list[i]);
+        continue;
+      }
+
+      // We only try to push into an arm if the local is used there. If the
+      // local is not used in either arm then we'll want to push it past the
+      // entire if, which is what optimizeSegment handles.
+      //
+      // We can push into the if-true arm if the local cannot be used if we go
+      // through the other arm:
+      //
+      //    x = op();
+      //    if (..) {
+      //      // we would like to move "x = op()" to here
+      //      ..
+      //    } else {
+      //      use(x);
+      //    }
+      //    use(x);
+      //
+      // Either of those use(x)s would stop us from moving to if-true arm.
+      //
+      // One specific case we handle is if there is a use after the if but the
+      // arm we don't push into is unreachable. In that case we only get to the
+      // later code after going through the reachable arm, which is ok to push
+      // into:
+      //
+      //    x = op();
+      //    if (..) {
+      //      // We'll push "x = op()" to here.
+      //      use(x);
+      //    } else {
+      //      return;
+      //    }
+      //    use(x);
+      auto maybePushInto = [&](Expression*& arm,
+                               const Expression* otherArm,
+                               EffectAnalyzer& armEffects,
+                               const EffectAnalyzer& otherArmEffects) {
+        if (!arm || !armEffects.localsRead.count(index) ||
+            otherArmEffects.localsRead.count(index)) {
+          // No arm, or this arm has no read of the index, or the other arm
+          // reads the index.
+          return false;
+        }
+        if (postIfEffects.localsRead.count(index) &&
+            (!otherArm || otherArm->type != Type::unreachable)) {
+          // The local is read later, which is bad, and there is no unreachable
+          // in the other arm which as mentioned above is the only thing that
+          // could have made it work out for us.
+          return false;
+        }
+
+        // We can do it! Push into one of the if's arms, and put a nop where it
+        // used to be.
+        Builder builder(module);
+        auto* block = builder.blockify(arm);
+        arm = block;
+        // TODO: this is quadratic in the number of pushed things
+        ExpressionManipulator::spliceIntoBlock(block, 0, pushable);
+        list[i] = builder.makeNop();
+
+        // The code we pushed adds to the effects in that arm.
+        armEffects.walk(pushable);
+
+        // TODO: After pushing we could recurse and run both this function and
+        //       optimizeSegment in that location. For now, leave that to later
+        //       cycles of the optimizer, as this case seems rairly rare.
+        return true;
+      };
+
+      if (!maybePushInto(
+            iff->ifTrue, iff->ifFalse, ifTrueEffects, ifFalseEffects) &&
+          !maybePushInto(
+            iff->ifFalse, iff->ifTrue, ifFalseEffects, ifTrueEffects)) {
+        // We didn't push this anywhere, so further pushables must pass it.
+        cumulativeEffects.mergeIn(effects);
+      }
+    }
+  }
+
+  const EffectAnalyzer& getPushableEffects(LocalSet* pushable) {
+    auto iter = pushableEffects.find(pushable);
+    if (iter == pushableEffects.end()) {
+      iter =
+        pushableEffects.try_emplace(pushable, passOptions, module, pushable)
+          .first;
+    }
+    return iter->second;
+  }
+
   // Pushables may need to be scanned more than once, so cache their effects.
   std::unordered_map<LocalSet*, EffectAnalyzer> pushableEffects;
 };
@@ -234,7 +435,14 @@ private:
 struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new CodePushing; }
+  // This pass moves code forward in blocks, but a local.set would not be moved
+  // after a local.get with the same index (effects prevent breaking things that
+  // way), so validation will be preserved.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CodePushing>();
+  }
 
   LocalAnalyzer analyzer;
 
@@ -254,10 +462,9 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   void visitLocalGet(LocalGet* curr) { numGetsSoFar[curr->index]++; }
 
   void visitBlock(Block* curr) {
-    // Pushing code only makes sense if we are size 3 or above: we need
-    // one element to push, an element to push it past, and an element to use
-    // what we pushed.
-    if (curr->list.size() < 3) {
+    // Pushing code only makes sense if we are size 2 or above: we need one
+    // element to push and an element to push it into, at minimum.
+    if (curr->list.size() < 2) {
       return;
     }
     // At this point in the postorder traversal we have gone through all our

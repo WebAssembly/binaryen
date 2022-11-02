@@ -84,9 +84,13 @@ struct OptInfo {
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   Scanner(OptInfo& optInfo) : optInfo(optInfo) {}
 
-  Scanner* create() override { return new Scanner(optInfo); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Scanner>(optInfo);
+  }
 
   // All the globals we read from. Any read of a global prevents us from
   // optimizing, unless it is the single read at the top of an "only" function
@@ -217,7 +221,9 @@ struct Optimizer
 
   Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
 
-  Optimizer* create() override { return new Optimizer(optInfo); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Optimizer>(optInfo);
+  }
 
   void visitGlobalSet(GlobalSet* curr) {
     if (currBasicBlock) {
@@ -342,7 +348,7 @@ private:
 } // anonymous namespace
 
 struct OnceReduction : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     OptInfo optInfo;
 
     // Fill out the initial data.
@@ -372,7 +378,7 @@ struct OnceReduction : public Pass {
     }
 
     // Scan the module to find out which globals and functions are "once".
-    Scanner(optInfo).run(runner, module);
+    Scanner(optInfo).run(getPassRunner(), module);
 
     // Combine the information. We found which globals appear to be "once", but
     // other information may have proven they are not so, in fact. Specifically,
@@ -417,7 +423,7 @@ struct OnceReduction : public Pass {
         optInfo.newOnceGlobalsSetInFuncs[func->name];
       }
 
-      Optimizer(optInfo).run(runner, module);
+      Optimizer(optInfo).run(getPassRunner(), module);
 
       optInfo.onceGlobalsSetInFuncs =
         std::move(optInfo.newOnceGlobalsSetInFuncs);

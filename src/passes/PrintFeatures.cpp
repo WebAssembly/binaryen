@@ -25,7 +25,9 @@
 namespace wasm {
 
 struct PrintFeatures : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  bool modifiesBinaryenIR() override { return false; }
+
+  void run(Module* module) override {
     module->features.iterFeatures([](FeatureSet::Feature f) {
       std::cout << "--enable-" << FeatureSet::toString(f) << std::endl;
     });

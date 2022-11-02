@@ -8,7 +8,7 @@
 
 
   (rec
-    ;; HYBRID:      (rec 
+    ;; HYBRID:      (rec
     ;; HYBRID-NEXT:  (type $super-struct (struct_subtype (field i32) data))
     ;; NOMINAL:      (type $super-struct (struct_subtype (field i32) data))
     (type $super-struct (struct i32))
@@ -18,7 +18,7 @@
   )
 
   (rec
-    ;; HYBRID:      (rec 
+    ;; HYBRID:      (rec
     ;; HYBRID-NEXT:  (type $super-array (array_subtype (ref $super-struct) data))
     ;; NOMINAL:      (type $super-array (array_subtype (ref $super-struct) data))
     (type $super-array (array (ref $super-struct)))

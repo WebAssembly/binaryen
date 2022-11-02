@@ -143,12 +143,12 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     size_t currentIteration = 0;
     for (auto& block : flowBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
-      std::cout << "basic block " << block.get() << " :\n";
-      for (auto& action : block->contents.actions) {
+      std::cout << "basic block " << &block << " :\n";
+      for (auto& action : block.actions) {
         std::cout << "  action: " << *action << '\n';
       }
-      for (auto* lastSet : block->contents.lastSets) {
-        std::cout << "  last set " << lastSet << '\n';
+      for (auto& val : block.lastSets) {
+        std::cout << "  last set " << val.second << '\n';
       }
 #endif
       // go through the block, finding each get and adding it to its index,

@@ -83,24 +83,29 @@ const size_t DATA_DROP_SIZE = 3;
 
 Expression*
 makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
+  auto mem = module.getMemory(curr->memory);
   return builder.makeBinary(
-    module.memory.is64() ? GtUInt64 : GtUInt32,
+    mem->is64() ? GtUInt64 : GtUInt32,
     curr->dest,
-    builder.makeBinary(module.memory.is64() ? ShlInt64 : ShlInt32,
-                       builder.makeMemorySize(),
-                       builder.makeConstPtr(16)));
+    builder.makeBinary(mem->is64() ? ShlInt64 : ShlInt32,
+                       builder.makeMemorySize(mem->name),
+                       builder.makeConstPtr(16, mem->indexType)));
 }
 
 } // anonymous namespace
 
 struct MemoryPacking : public Pass {
-  void run(PassRunner* runner, Module* module) override;
-  bool canOptimize(const Memory& memory,
-                   std::vector<std::unique_ptr<DataSegment>>& dataSegments,
-                   const PassOptions& passOptions);
-  void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
+  // This pass operates on linear memory, and does not affect reference locals.
+  // TODO: don't run at all if the module has no memories
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override;
+  bool canOptimize(std::vector<std::unique_ptr<Memory>>& memories,
+                   std::vector<std::unique_ptr<DataSegment>>& dataSegments);
+  void optimizeBulkMemoryOps(Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
-  void dropUnusedSegments(std::vector<std::unique_ptr<DataSegment>>& segments,
+  void dropUnusedSegments(Module* module,
+                          std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
   bool canSplit(const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
@@ -117,13 +122,12 @@ struct MemoryPacking : public Pass {
                           const Referrers& referrers,
                           Replacements& replacements,
                           const Index segmentIndex);
-  void replaceBulkMemoryOps(PassRunner* runner,
-                            Module* module,
-                            Replacements& replacements);
+  void replaceBulkMemoryOps(Module* module, Replacements& replacements);
 };
 
-void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!canOptimize(module->memory, module->dataSegments, runner->options)) {
+void MemoryPacking::run(Module* module) {
+  // Does not have multi-memories support
+  if (!canOptimize(module->memories, module->dataSegments)) {
     return;
   }
 
@@ -138,9 +142,9 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     // segments that can be dropped entirely and allows later replacement
     // creation to make more assumptions about what these instructions will look
     // like, such as memory.inits not having both zero offset and size.
-    optimizeBulkMemoryOps(runner, module);
+    optimizeBulkMemoryOps(module);
     getSegmentReferrers(module, referrers);
-    dropUnusedSegments(segments, referrers);
+    dropUnusedSegments(module, segments, referrers);
   }
 
   // The new, split memory segments
@@ -171,24 +175,24 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 
   segments.swap(packed);
+  module->updateDataSegmentsMap();
 
   if (module->features.hasBulkMemory()) {
-    replaceBulkMemoryOps(runner, module, replacements);
+    replaceBulkMemoryOps(module, replacements);
   }
 }
 
 bool MemoryPacking::canOptimize(
-  const Memory& memory,
-  std::vector<std::unique_ptr<DataSegment>>& dataSegments,
-  const PassOptions& passOptions) {
-  if (!memory.exists) {
+  std::vector<std::unique_ptr<Memory>>& memories,
+  std::vector<std::unique_ptr<DataSegment>>& dataSegments) {
+  if (memories.empty() || memories.size() > 1) {
     return false;
   }
-
+  auto& memory = memories[0];
   // We must optimize under the assumption that memory has been initialized to
   // zero. That is the case for a memory declared in the module, but for a
   // memory that is imported, we must be told that it is zero-initialized.
-  if (memory.imported() && !passOptions.zeroFilledMemory) {
+  if (memory->imported() && !getPassOptions().zeroFilledMemory) {
     return false;
   }
 
@@ -370,10 +374,16 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
   std::swap(ranges, mergedRanges);
 }
 
-void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
+void MemoryPacking::optimizeBulkMemoryOps(Module* module) {
   struct Optimizer : WalkerPass<PostWalker<Optimizer>> {
     bool isFunctionParallel() override { return true; }
-    Pass* create() override { return new Optimizer; }
+
+    // This operates on linear memory, and does not affect reference locals.
+    bool requiresNonNullableLocalFixups() override { return false; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Optimizer>();
+    }
 
     bool needsRefinalizing;
 
@@ -436,7 +446,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
       }
     }
   } optimizer;
-  optimizer.run(runner, module);
+  optimizer.run(getPassRunner(), module);
 }
 
 void MemoryPacking::getSegmentReferrers(Module* module,
@@ -472,6 +482,7 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 }
 
 void MemoryPacking::dropUnusedSegments(
+  Module* module,
   std::vector<std::unique_ptr<DataSegment>>& segments,
   ReferrersMap& referrers) {
   std::vector<std::unique_ptr<DataSegment>> usedSegments;
@@ -508,6 +519,7 @@ void MemoryPacking::dropUnusedSegments(
     }
   }
   std::swap(segments, usedSegments);
+  module->updateDataSegmentsMap();
   std::swap(referrers, usedReferrers);
 }
 
@@ -557,12 +569,12 @@ void MemoryPacking::createSplitSegments(
         name = segment->name;
         hasExplicitName = segment->hasExplicitName;
       } else {
-        name = std::string(segment->name.c_str()) + "." +
-               std::to_string(segmentCount);
+        name = segment->name.toString() + "." + std::to_string(segmentCount);
       }
       segmentCount++;
     }
     auto curr = Builder::makeDataSegment(name,
+                                         segment->memory,
                                          segment->isPassive,
                                          offset,
                                          &segment->data[range.start],
@@ -711,11 +723,12 @@ void MemoryPacking::createReplacements(Module* module,
       // Create new memory.init or memory.fill
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
-        appendResult(builder.makeMemoryFill(dest, value, size));
+        appendResult(builder.makeMemoryFill(dest, value, size, init->memory));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
-        appendResult(builder.makeMemoryInit(initIndex, dest, offset, size));
+        appendResult(
+          builder.makeMemoryInit(initIndex, dest, offset, size, init->memory));
         initIndex++;
       }
     }
@@ -763,16 +776,20 @@ void MemoryPacking::createReplacements(Module* module,
   }
 }
 
-void MemoryPacking::replaceBulkMemoryOps(PassRunner* runner,
-                                         Module* module,
+void MemoryPacking::replaceBulkMemoryOps(Module* module,
                                          Replacements& replacements) {
   struct Replacer : WalkerPass<PostWalker<Replacer>> {
     bool isFunctionParallel() override { return true; }
 
+    // This operates on linear memory, and does not affect reference locals.
+    bool requiresNonNullableLocalFixups() override { return false; }
+
     Replacements& replacements;
 
     Replacer(Replacements& replacements) : replacements(replacements){};
-    Pass* create() override { return new Replacer(replacements); }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Replacer>(replacements);
+    }
 
     void visitMemoryInit(MemoryInit* curr) {
       auto replacement = replacements.find(curr);
@@ -786,7 +803,7 @@ void MemoryPacking::replaceBulkMemoryOps(PassRunner* runner,
       replaceCurrent(replacement->second(getFunction()));
     }
   } replacer(replacements);
-  replacer.run(runner, module);
+  replacer.run(getPassRunner(), module);
 }
 
 Pass* createMemoryPackingPass() { return new MemoryPacking(); }

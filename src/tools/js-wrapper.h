@@ -94,15 +94,15 @@ inline std::string generateJSWrapper(Module& wasm) {
     ret += "if (instance.exports.hangLimitInitializer) "
            "instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
-    ret += std::string("  console.log('[fuzz-exec] calling ") + exp->name.str +
-           "');\n";
+    ret += std::string("  console.log('[fuzz-exec] calling ") +
+           exp->name.toString() + "');\n";
     if (func->getResults() != Type::none) {
       ret += std::string("  console.log('[fuzz-exec] note result: ") +
-             exp->name.str + " => ' + literal(";
+             exp->name.toString() + " => ' + literal(";
     } else {
       ret += "  ";
     }
-    ret += std::string("instance.exports.") + exp->name.str + "(";
+    ret += std::string("instance.exports.") + exp->name.toString() + "(";
     bool first = true;
     for (auto param : func->getParams()) {
       // zeros in arguments TODO more?

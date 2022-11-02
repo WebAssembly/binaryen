@@ -31,7 +31,9 @@ namespace wasm {
 struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new GenerateStackIR; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<GenerateStackIR>();
+  }
 
   bool modifiesBinaryenIR() override { return false; }
 
@@ -69,39 +71,7 @@ public:
     if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
       local2Stack();
     }
-    // Removing unneeded blocks is dangerous with GC, as if we do this:
-    //
-    //   (call
-    //     (rtt)
-    //     (block
-    //       (nop)
-    //       (i32)
-    //     )
-    //   )
-    // === remove inner block ==>
-    //   (call
-    //     (rtt)
-    //     (nop)
-    //     (i32)
-    //   )
-    //
-    // Then we end up with a nop that forces us to emit this during load:
-    //
-    //   (call
-    //     (block
-    //       (local.set
-    //         (rtt)
-    //       )
-    //       (nop)
-    //       (local.get)
-    //     )
-    //     (i32)
-    //   )
-    //
-    // However, that is not valid as an rtt cannot be set to a local.
-    if (!features.hasGC()) {
-      removeUnneededBlocks();
-    }
+    removeUnneededBlocks();
     dce();
   }
 
@@ -368,7 +338,9 @@ private:
 struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeStackIR; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<OptimizeStackIR>();
+  }
 
   bool modifiesBinaryenIR() override { return false; }
 

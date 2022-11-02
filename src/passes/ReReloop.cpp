@@ -36,7 +36,9 @@ namespace wasm {
 struct ReReloop final : public Pass {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new ReReloop; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<ReReloop>();
+  }
 
   std::unique_ptr<CFG::Relooper> relooper;
   std::unique_ptr<Builder> builder;
@@ -291,9 +293,7 @@ struct ReReloop final : public Pass {
     // TODO: optimize with this?
   }
 
-  void runOnFunction(PassRunner* runner,
-                     Module* module,
-                     Function* function) override {
+  void runOnFunction(Module* module, Function* function) override {
     Flat::verifyFlatness(function);
 
     // since control flow is flattened, this is pretty simple

@@ -5,9 +5,6 @@
 (module (memory i64 1 256))
 (module (memory i64 0 65536))
 
-(assert_invalid (module (memory i64 0) (memory i64 0)) "multiple memories")
-(assert_invalid (module (memory (import "spectest" "memory") i64 0) (memory i64 0)) "multiple memories")
-
 (module (memory i64 (data)) (func (export "memsize") (result i64) (memory.size)))
 (assert_return (invoke "memsize") (i64.const 0))
 (module (memory i64 (data "")) (func (export "memsize") (result i64) (memory.size)))

@@ -11,23 +11,3 @@
   (nop)
  )
 )
-(;
---BEGIN METADATA --
-{
-  "declares": [
-  ],
-  "globalImports": [
-  ],
-  "exports": [
-  ],
-  "namedGlobals": {
-    "__heap_base" : "66112",
-    "__data_end" : "576"
-  },
-  "invokeFuncs": [
-  ],
-  "features": [
-  ]
-}
--- END METADATA --
-;)

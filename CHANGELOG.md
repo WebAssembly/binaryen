@@ -14,12 +14,41 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+- Add extra `memory64` argument for `BinaryenSetMemory` and new `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
+- `TypeBuilderSetSubType` now takes a supertype as the second argument.
+- `call_ref` can now take a signature type immediate in the text format. The
+  type immediate will become mandatory in the future.
+- If `THROW_ON_FATAL` is defined at compile-time, then fatal errors will throw a
+  `std::runtime_error` instead of terminating the process. This may be used by
+  embedders of Binaryen to recover from errors.
+- Implemented bottom heap types: `none`, `nofunc`, and `noextern`. RefNull
+  expressions and null `Literal`s must now have type `nullref`, `nullfuncref`,
+  or `nullexternref`.
+* The C-API's `BinaryenTypeI31ref` and `BinaryenTypeDataref` now return nullable types.
+
+v110
+----
+
+- Add support for non-nullable locals in wasm GC. (#4959)
+- Add support for multiple memories. (#4811)
+- Add support for the wasm Strings proposal. (see PRs with [Strings] in name)
+- Add a new flag to Directize, `--pass-arg=directize-initial-contents-immutable`
+  which indicates the initial table contents are immutable. That is the case for
+  LLVM, for example, and it allows us to optimize more indirect calls to direct
+  ones. (#4942)
 - Change constant values of some reference types in the C and JS APIs. This is
   only observable if you hardcode specific values instead of calling the
   relevant methods (like `BinaryenTypeDataref()`). (#4755)
 - `BinaryenModulePrintStackIR`, `BinaryenModuleWriteStackIR` and
   `BinaryenModuleAllocateAndWriteStackIR` now have an extra boolean
   argument `optimize`. (#4832)
+- Remove support for the `let` instruction that has been removed from the typed
+  function references spec.
+- HeapType::ext has been restored but is no longer a subtype of HeapType::any to
+  match the latest updates in the GC spec. (#4898)
+- `i31ref` and `dataref` are now nullable to match the latest GC spec. (#4843)
+- Add support for `extern.externalize` and `extern.internalize`. (#4975)
 
 v109
 ----

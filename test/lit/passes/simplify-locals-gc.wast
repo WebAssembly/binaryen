@@ -13,6 +13,17 @@
   ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
   (type $struct-immutable (struct (field i32)))
 
+  ;; CHECK:      (type $B (struct (field (ref data))))
+
+  ;; CHECK:      (type $A (struct (field dataref)))
+  ;; NOMNL:      (type $A (struct_subtype (field dataref) data))
+  (type $A (struct_subtype (field (ref null data)) data))
+
+  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
+  ;; nullable).
+  ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
+  (type $B (struct_subtype (field (ref data)) $A))
+
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
@@ -97,6 +108,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -112,6 +124,7 @@
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (unreachable)
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (struct.set $struct 0
@@ -143,15 +156,15 @@
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_null $block
-  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br $block)
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -165,15 +178,15 @@
   ;; NOMNL-NEXT:  (block $block
   ;; NOMNL-NEXT:   (drop
   ;; NOMNL-NEXT:    (br_on_null $block
-  ;; NOMNL-NEXT:     (ref.null any)
+  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (local.set $temp
-  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:   (br $block)
   ;; NOMNL-NEXT:   (local.set $temp
-  ;; NOMNL-NEXT:    (ref.null any)
+  ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -213,5 +226,387 @@
      (local.get $temp)
     )
    )
+  )
+
+  ;; CHECK:      (func $if-nnl
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $if-nnl (type $none_=>_none)
+  ;; NOMNL-NEXT:  (local $x (ref func))
+  ;; NOMNL-NEXT:  (if
+  ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:   (local.set $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.tee $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $if-nnl
+   (local $x (ref func))
+   ;; We want to turn this if into an if-else with a set on the outside:
+   ;;
+   ;;  (local.set $x
+   ;;   (if
+   ;;    (i32.const 1)
+   ;;    (ref.func $if-nnl)
+   ;;    (local.get $x)))
+   ;;
+   ;; That will not validate, however (no set dominates the get), so we'll get
+   ;; fixed up by adding a ref.as_non_null. But that may be dangerous - if no
+   ;; set exists before us, then that new instruction will trap, in fact. So we
+   ;; do not optimize here.
+   (if
+    (i32.const 1)
+    (local.set $x
+     (ref.func $if-nnl)
+    )
+   )
+   ;; An exta set + gets, just to avoid other optimizations kicking in
+   ;; (without them, the function only has a set and nothing else, and will
+   ;; remove the set entirely). Nothing should change here.
+   (call $helper
+    (local.tee $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.get $x)
+   )
+  )
+
+  ;; CHECK:      (func $if-nnl-previous-set
+  ;; CHECK-NEXT:  (local $x (ref func))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $if-nnl)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $if-nnl-previous-set (type $none_=>_none)
+  ;; NOMNL-NEXT:  (local $x (ref func))
+  ;; NOMNL-NEXT:  (local.set $x
+  ;; NOMNL-NEXT:   (ref.func $if-nnl)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (if
+  ;; NOMNL-NEXT:   (i32.const 1)
+  ;; NOMNL-NEXT:   (local.set $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.tee $x
+  ;; NOMNL-NEXT:    (ref.func $if-nnl)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $helper
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $if-nnl-previous-set
+   (local $x (ref func))
+   ;; As the above testcase, but now there is a set before the if. We could
+   ;; optimize in this case, but don't atm. TODO
+   (local.set $x
+    (ref.func $if-nnl)
+   )
+   (if
+    (i32.const 1)
+    (local.set $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.tee $x
+     (ref.func $if-nnl)
+    )
+   )
+   (call $helper
+    (local.get $x)
+   )
+  )
+
+  ;; CHECK:      (func $helper (param $ref (ref func))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $helper (type $ref|func|_=>_none) (param $ref (ref func))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
+  (func $helper (param $ref (ref func))
+  )
+
+  ;; CHECK:      (func $needs-refinalize (param $b (ref $B)) (result anyref)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $needs-refinalize (type $ref|$B|_=>_anyref) (param $b (ref $B)) (result anyref)
+  ;; NOMNL-NEXT:  (local $a (ref null $A))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (struct.get $B 0
+  ;; NOMNL-NEXT:   (local.get $b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $needs-refinalize (param $b (ref $B)) (result anyref)
+    (local $a (ref null $A))
+    (local.set $a
+      (local.get $b)
+    )
+    ;; This begins as a struct.get of $A, but after we move the set's value onto
+    ;; the get, we'll be reading from $B. $B's field has a more refined type, so
+    ;; we must update the type of the struct.get using refinalize.
+    (struct.get $A 0
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $call-vs-mutable-read (param $0 (ref $struct)) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (call $side-effect)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $call-vs-mutable-read (type $ref|$struct|_=>_i32) (param $0 (ref $struct)) (result i32)
+  ;; NOMNL-NEXT:  (local $temp i32)
+  ;; NOMNL-NEXT:  (local.set $temp
+  ;; NOMNL-NEXT:   (call $side-effect)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.get $struct 0
+  ;; NOMNL-NEXT:    (local.get $0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (local.get $temp)
+  ;; NOMNL-NEXT: )
+  (func $call-vs-mutable-read (param $0 (ref $struct)) (result i32)
+    (local $temp i32)
+    (local.set $temp
+      ;; This call may have arbitrary side effects, for all we know, as we
+      ;; optimize this function using --simplify-locals.
+      (call $side-effect)
+    )
+    (drop
+      ;; This reads a mutable field, which means the call might modify it.
+      (struct.get $struct 0
+        (local.get $0)
+      )
+    )
+    ;; We should not move the call to here!
+    (local.get $temp)
+  )
+
+  ;; CHECK:      (func $side-effect (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $side-effect (type $none_=>_i32) (result i32)
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $side-effect (result i32)
+    ;; Helper function for the above.
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $pick-refined (param $nn-any (ref any)) (result anyref)
+  ;; CHECK-NEXT:  (local $any anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $use-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-nn-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.get $nn-any)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-refined (type $ref|any|_=>_anyref) (param $nn-any (ref any)) (result anyref)
+  ;; NOMNL-NEXT:  (local $any anyref)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (call $use-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-nn-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (local.get $nn-any)
+  ;; NOMNL-NEXT: )
+  (func $pick-refined (param $nn-any (ref any)) (result anyref)
+    (local $any anyref)
+    (local.set $any
+      (local.get $nn-any)
+    )
+    ;; Use the locals so neither is trivially removed.
+    (call $use-any
+      (local.get $any)
+    )
+    (call $use-nn-any
+      (local.get $nn-any)
+    )
+    ;; This copy is not needed, as they hold the same value.
+    (local.set $any
+      (local.get $nn-any)
+    )
+    ;; This local.get might as well use the non-nullable local, which is more
+    ;; refined. In fact, all uses of locals can be switched to that one in the
+    ;; entire function (and the other local would be removed by other passes).
+    (local.get $any)
+  )
+
+  ;; CHECK:      (func $pick-casted (param $any anyref) (result anyref)
+  ;; CHECK-NEXT:  (local $nn-any (ref any))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $use-any
+  ;; CHECK-NEXT:   (local.tee $nn-any
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $use-nn-any
+  ;; CHECK-NEXT:   (local.get $nn-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.get $nn-any)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-casted (type $anyref_=>_anyref) (param $any anyref) (result anyref)
+  ;; NOMNL-NEXT:  (local $nn-any (ref any))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (call $use-any
+  ;; NOMNL-NEXT:   (local.tee $nn-any
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (local.get $any)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (call $use-nn-any
+  ;; NOMNL-NEXT:   (local.get $nn-any)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (local.get $nn-any)
+  ;; NOMNL-NEXT: )
+  (func $pick-casted (param $any anyref) (result anyref)
+    (local $nn-any (ref any))
+    (local.set $nn-any
+      (ref.as_non_null
+        (local.get $any)
+      )
+    )
+    ;; Use the locals so neither is trivially removed.
+    (call $use-any
+      (local.get $any)
+    )
+    (call $use-nn-any
+      (local.get $nn-any)
+    )
+    ;; This copy is not needed, as they hold the same value.
+    (local.set $any
+      (local.get $nn-any)
+    )
+    ;; This local.get might as well use the non-nullable local.
+    (local.get $any)
+  )
+
+  ;; CHECK:      (func $pick-fallthrough (param $x i32)
+  ;; CHECK-NEXT:  (local $t i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $pick-fallthrough (type $i32_=>_none) (param $x i32)
+  ;; NOMNL-NEXT:  (local $t i32)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (local.get $x)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $pick-fallthrough (param $x i32)
+    (local $t i32)
+    ;; Similar to the above test wth looking through a cast, but using a non-gc
+    ;; type of fallthrough value.
+    (local.set $t
+      (block (result i32)
+        (local.get $x)
+      )
+    )
+    ;; The locals are identical, as we set $t = $x (we can look through to the
+    ;; block value). Both these gets can go to $x, and we do not need to set $t
+    ;; as it will have 0 uses.
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $t)
+    )
+  )
+
+  ;; CHECK:      (func $use-nn-any (param $nn-any (ref any))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $use-nn-any (type $ref|any|_=>_none) (param $nn-any (ref any))
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
+  (func $use-nn-any (param $nn-any (ref any))
+    ;; Helper function for the above.
+  )
+
+  ;; CHECK:      (func $use-any (param $any anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $use-any (type $anyref_=>_none) (param $any anyref)
+  ;; NOMNL-NEXT:  (nop)
+  ;; NOMNL-NEXT: )
+  (func $use-any (param $any anyref)
+    ;; Helper function for the above.
   )
 )

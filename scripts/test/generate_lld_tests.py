@@ -30,7 +30,7 @@ def files_with_extensions(path, extensions):
             yield file, ext
 
 
-def generate_wat_files(llvm_bin, emscripten_root):
+def generate_wat_files(llvm_bin, emscripten_sysroot):
     print('\n[ building wat files from C sources... ]\n')
 
     lld_path = os.path.join(shared.options.binaryen_test, 'lld')
@@ -57,13 +57,12 @@ def generate_wat_files(llvm_bin, emscripten_root):
             '-nostdinc',
             '-Xclang', '-nobuiltininc',
             '-Xclang', '-nostdsysteminc',
-            '-Xclang', '-I%s/system/include' % emscripten_root,
+            '-Xclang', '-I%s/include' % emscripten_sysroot,
             '-O1',
         ]
 
         link_cmd = [
             os.path.join(llvm_bin, 'wasm-ld'), '-flavor', 'wasm',
-            '-z', '-stack-size=1048576',
             obj_path, '-o', wasm_path,
             '--allow-undefined',
             '--export', '__wasm_call_ctors',
@@ -81,7 +80,10 @@ def generate_wat_files(llvm_bin, emscripten_root):
             link_cmd.append('-shared')
             link_cmd.append('--experimental-pic')
         else:
-            link_cmd.append('--entry=main')
+            if 'reserved_func_ptr' in src_file:
+                link_cmd.append('--entry=__main_argc_argv')
+            else:
+                link_cmd.append('--entry=main')
 
         if is_64:
             compile_cmd.append('--target=wasm64-emscripten')

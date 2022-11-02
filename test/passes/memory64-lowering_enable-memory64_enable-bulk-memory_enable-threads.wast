@@ -1,6 +1,8 @@
 (module
+ (import "env" "__memory_base" (global $__memory_base i64))
  (memory $0 i64 1 1)
  (data (i64.const 0) "\00\00\00\00\00\00\00\00\00\00")
+ (data (global.get $__memory_base) "foo")
  (func $func_1
   (local i64)
   (drop (i32.load (i64.const 4)))

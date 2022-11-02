@@ -68,7 +68,7 @@
   ;; CHECK:      (func $caller-if-1
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $once)
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (nop)
@@ -97,7 +97,7 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (call $once)
-  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (call $once)
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

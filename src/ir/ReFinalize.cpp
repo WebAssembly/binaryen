@@ -160,8 +160,6 @@ void ReFinalize::visitBrOn(BrOn* curr) {
     updateBreakValueType(curr->name, curr->getSentType());
   }
 }
-void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
-void ReFinalize::visitRttSub(RttSub* curr) { curr->finalize(); }
 void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
@@ -188,15 +186,6 @@ void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
   curr->finalize();
-}
-
-void ReFinalize::visitFunction(Function* curr) {
-  // we may have changed the body from unreachable to none, which might be bad
-  // if the function has a return value
-  if (curr->getResults() != Type::none && curr->body->type == Type::none) {
-    Builder builder(*getModule());
-    curr->body = builder.blockify(curr->body, builder.makeUnreachable());
-  }
 }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }

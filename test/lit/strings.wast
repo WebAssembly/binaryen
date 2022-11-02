@@ -5,17 +5,25 @@
 ;; runs --precompute in order to verify no problems occur in the optimizer's
 ;; invocation of the interpreter.
 
-;; RUN: foreach %s %t wasm-opt --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
+;; RUN: wasm-opt %s --enable-strings --enable-reference-types --enable-gc --roundtrip --precompute -S -o - | filecheck %s
+
+;; Check that we can roundtrip through the text format as well.
+
+;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all --precompute -S -o - | filecheck %s
 
 (module
+  (memory 10 10)
+
   ;; CHECK:      (type $stringref_=>_none (func (param stringref)))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
 
   ;; CHECK:      (type $stringref_stringref_=>_none (func (param stringref stringref)))
 
-  ;; CHECK:      (type $array (array i32))
-  (type $array (array_subtype i32 data))
+  ;; CHECK:      (type $array (array (mut i8)))
+  (type $array (array_subtype (mut i8) data))
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array_subtype (mut i16) data))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
 
@@ -23,12 +31,14 @@
 
   ;; CHECK:      (type $stringview_wtf16_=>_none (func (param stringview_wtf16)))
 
-  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
+  ;; CHECK:      (type $ref|$array|_ref|$array16|_=>_none (func (param (ref $array) (ref $array16))))
 
-  ;; CHECK:      (type $stringref_ref|$array|_=>_none (func (param stringref (ref $array))))
+  ;; CHECK:      (type $stringref_ref|$array|_ref|$array16|_=>_none (func (param stringref (ref $array) (ref $array16))))
 
-  ;; CHECK:      (global $string-const stringref (string.const "string in a global"))
-  (global $string-const stringref (string.const "string in a global"))
+  ;; CHECK:      (global $string-const stringref (string.const "string in a global \01\ff\00\t\t\n\n\r\r\"\"\'\'\\\\"))
+  (global $string-const stringref (string.const "string in a global \01\ff\00\t\09\n\0a\r\0d\"\22\'\27\\\5c"))
+
+  ;; CHECK:      (memory $0 10 10)
 
   ;; CHECK:      (func $string.new (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
   ;; CHECK-NEXT:  (drop
@@ -436,52 +446,68 @@
     )
   )
 
-  ;; CHECK:      (func $string.new.gc (param $array (ref $array))
+  ;; CHECK:      (func $string.new.gc (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array utf8
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array replace
   ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:    (i32.const 6)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16_array
-  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (local.get $array16)
+  ;; CHECK-NEXT:    (i32.const 7)
+  ;; CHECK-NEXT:    (i32.const 8)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $string.new.gc (param $array (ref $array))
+  (func $string.new.gc (param $array (ref $array)) (param $array16 (ref $array16))
     (drop
       (string.new_wtf8_array utf8
         (local.get $array)
+        (i32.const 1)
+        (i32.const 2)
       )
     )
     (drop
       (string.new_wtf8_array wtf8
         (local.get $array)
+        (i32.const 3)
+        (i32.const 4)
       )
     )
     (drop
       (string.new_wtf8_array replace
         (local.get $array)
+        (i32.const 5)
+        (i32.const 6)
       )
     )
     (drop
       (string.new_wtf16_array
-        (local.get $array)
+        (local.get $array16)
+        (i32.const 7)
+        (i32.const 8)
       )
     )
   )
 
-  ;; CHECK:      (func $string.encode.gc (param $ref stringref) (param $array (ref $array))
+  ;; CHECK:      (func $string.encode.gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.encode_wtf8_array wtf8
@@ -501,12 +527,12 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.encode_wtf16_array
   ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (local.get $array16)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $string.encode.gc (param $ref stringref) (param $array (ref $array))
+  (func $string.encode.gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (drop
       (i32.eqz ;; validate the output is i32
         (string.encode_wtf8_array wtf8
@@ -526,7 +552,7 @@
     (drop
       (string.encode_wtf16_array
         (local.get $ref)
-        (local.get $array)
+        (local.get $array16)
         (i32.const 30)
       )
     )

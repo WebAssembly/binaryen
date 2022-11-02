@@ -88,6 +88,8 @@
 ;; CHECK-NEXT:   --directize                                   turns indirect calls into direct
 ;; CHECK-NEXT:                                                 ones
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --discard-global-effects                      discards global effect info
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --duplicate-function-elimination              removes duplicate functions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --duplicate-import-elimination                removes duplicate imports
@@ -115,6 +117,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-dyncalls                           generate dynCall fuctions used
 ;; CHECK-NEXT:                                                 by emscripten ABI
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-global-effects                     generate global effect info
+;; CHECK-NEXT:                                                 (helps later passes)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-i64-dyncalls                       generate dynCall functions used
 ;; CHECK-NEXT:                                                 by emscripten ABI, but only for
@@ -164,6 +169,9 @@
 ;; CHECK-NEXT:                                                 stores
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
+;; CHECK-NEXT:                                                 JavaScript promise integration
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
@@ -223,6 +231,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mod-asyncify-never-unwind                   apply the assumption that
 ;; CHECK-NEXT:                                                 asyncify never unwinds
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --multi-memory-lowering                       combines multiple memories into
+;; CHECK-NEXT:                                                 a single memory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --name-types                                  (re)name all heap types
 ;; CHECK-NEXT:
@@ -301,6 +312,9 @@
 ;; CHECK-NEXT:                                                 that are not functions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --reorder-functions                           sorts functions by access
+;; CHECK-NEXT:                                                 frequency
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --reorder-globals                             sorts globals by access
 ;; CHECK-NEXT:                                                 frequency
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --reorder-locals                              sorts locals by access frequency
@@ -559,11 +573,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-memory64                            Disable memory64
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-typed-function-references            Enable typed function references
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-typed-function-references           Disable typed function
-;; CHECK-NEXT:                                                 references
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-gc-nn-locals                         Enable GC non-null locals
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-gc-nn-locals                        Disable GC non-null locals
@@ -581,6 +590,14 @@
 ;; CHECK-NEXT:   --enable-strings                              Enable strings
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                             Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories                       Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories                      Disable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references           Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                            Disables validation, assumes
 ;; CHECK-NEXT:                                                 inputs are correct

@@ -26,7 +26,9 @@
 namespace wasm {
 
 struct NameList : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  bool modifiesBinaryenIR() override { return false; }
+
+  void run(Module* module) override {
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       std::cout << "    " << func->name << " : "
                 << Measurer::measure(func->body) << '\n';

@@ -175,7 +175,15 @@ var imports = {
 imports = Asyncify.instrumentImports(imports);
 
 // Create the wasm.
-var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), imports);
+var module = new WebAssembly.Module(binary);
+
+var instance;
+try {
+  instance = new WebAssembly.Instance(module, imports);
+} catch (e) {
+  console.log('exception: failed to instantiate module');
+  quit();
+}
 
 // Handle the exports.
 var exports = instance.exports;
@@ -216,4 +224,3 @@ sortedExports.forEach(function(e) {
 
 // Finish up
 Asyncify.finish();
-

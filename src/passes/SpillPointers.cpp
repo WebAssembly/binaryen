@@ -37,7 +37,9 @@ struct SpillPointers
   : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SpillPointers; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<SpillPointers>();
+  }
 
   // a mapping of the pointers to all the spillable things. We need to know
   // how to replace them, and as we spill we may modify them. This map
@@ -74,7 +76,7 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
-    pointerType = getModule()->memory.indexType;
+    pointerType = getModule()->memories[0]->indexType;
 
     // we only care about possible pointers
     auto* func = getFunction();
@@ -192,7 +194,8 @@ struct SpillPointers
                           pointerType.getByteSize(),
                           builder.makeLocalGet(spillLocal, pointerType),
                           builder.makeLocalGet(index, pointerType),
-                          pointerType));
+                          pointerType,
+                          getModule()->memories[0]->name));
     }
     // add the (modified) call
     block->list.push_back(call);

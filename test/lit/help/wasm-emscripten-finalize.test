@@ -20,9 +20,6 @@
 ;; CHECK-NEXT:                                        output file. In this mode if no output
 ;; CHECK-NEXT:                                        file is specified, we write to stdout.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-emit-metadata,-n                Skip the writing to emscripten metadata
-;; CHECK-NEXT:                                        JSON to stdout.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-base                        The address at which static globals were
 ;; CHECK-NEXT:                                        placed
 ;; CHECK-NEXT:
@@ -131,10 +128,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-memory64                   Disable memory64
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-typed-function-references   Enable typed function references
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-typed-function-references  Disable typed function references
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-gc-nn-locals                Enable GC non-null locals
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-gc-nn-locals               Disable GC non-null locals
@@ -150,6 +143,14 @@
 ;; CHECK-NEXT:   --enable-strings                     Enable strings
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-validation,-n                   Disables validation, assumes inputs are
 ;; CHECK-NEXT:                                        correct

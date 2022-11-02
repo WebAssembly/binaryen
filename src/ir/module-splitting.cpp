@@ -353,7 +353,7 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
       } while (primary.getExportOrNull(exportName) != nullptr);
     } else {
       exportName = Names::getValidExportName(
-        primary, config.newExportPrefix + funcName.c_str());
+        primary, config.newExportPrefix + funcName.toString());
     }
     primary.addExport(
       Builder::makeExport(exportName, funcName, ExternalKind::Function));
@@ -492,8 +492,7 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->module = config.placeholderNamespace;
       placeholder->base = std::to_string(index);
       placeholder->name = Names::getValidFunctionName(
-        primary,
-        std::string("placeholder_") + std::string(placeholder->base.c_str()));
+        primary, std::string("placeholder_") + placeholder->base.toString());
       placeholder->hasExplicitName = false;
       placeholder->type = secondaryFunc->type;
       elem = placeholder->name;
@@ -612,14 +611,9 @@ void ModuleSplitter::shareImportableItems() {
   // TODO: Be more selective by only sharing global items that are actually used
   // in the secondary module, just like we do for functions.
 
-  if (primary.memory.exists) {
-    secondary.memory.exists = true;
-    secondary.memory.initial = primary.memory.initial;
-    secondary.memory.max = primary.memory.max;
-    secondary.memory.shared = primary.memory.shared;
-    secondary.memory.indexType = primary.memory.indexType;
-    makeImportExport(
-      primary.memory, secondary.memory, "memory", ExternalKind::Memory);
+  for (auto& memory : primary.memories) {
+    auto secondaryMemory = ModuleUtils::copyMemory(memory.get(), secondary);
+    makeImportExport(*memory, *secondaryMemory, "memory", ExternalKind::Memory);
   }
 
   for (auto& table : primary.tables) {

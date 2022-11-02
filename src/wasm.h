@@ -30,6 +30,7 @@
 #include <map>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "literal.h"
@@ -568,6 +569,8 @@ enum RefAsOp {
   RefAsFunc,
   RefAsData,
   RefAsI31,
+  ExternInternalize,
+  ExternExternalize,
 };
 
 enum BrOnOp {
@@ -712,8 +715,6 @@ public:
     RefTestId,
     RefCastId,
     BrOnId,
-    RttCanonId,
-    RttSubId,
     StructNewId,
     StructGetId,
     StructSetId,
@@ -746,6 +747,15 @@ public:
 
   Expression(Id id) : _id(id) {}
 
+protected:
+  // An expression cannot be constructed without knowing what kind of expression
+  // it should be.
+  Expression(const Expression& other) = default;
+  Expression(Expression&& other) = default;
+  Expression& operator=(Expression& other) = default;
+  Expression& operator=(Expression&& other) = default;
+
+public:
   void finalize() {}
 
   template<class T> bool is() const {
@@ -971,6 +981,7 @@ public:
   Address align;
   bool isAtomic;
   Expression* ptr;
+  Name memory;
 
   // type must be set during creation, cannot be inferred
 
@@ -989,6 +1000,7 @@ public:
   Expression* ptr;
   Expression* value;
   Type valueType;
+  Name memory;
 
   void finalize();
 };
@@ -1003,6 +1015,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* value;
+  Name memory;
 
   void finalize();
 };
@@ -1017,6 +1030,7 @@ public:
   Expression* ptr;
   Expression* expected;
   Expression* replacement;
+  Name memory;
 
   void finalize();
 };
@@ -1031,6 +1045,7 @@ public:
   Expression* expected;
   Expression* timeout;
   Type expectedType;
+  Name memory;
 
   void finalize();
 };
@@ -1043,6 +1058,7 @@ public:
   Address offset;
   Expression* ptr;
   Expression* notifyCount;
+  Name memory;
 
   void finalize();
 };
@@ -1131,6 +1147,7 @@ public:
   Address offset;
   Address align;
   Expression* ptr;
+  Name memory;
 
   Index getMemBytes();
   void finalize();
@@ -1148,6 +1165,7 @@ public:
   uint8_t index;
   Expression* ptr;
   Expression* vec;
+  Name memory;
 
   bool isStore();
   bool isLoad() { return !isStore(); }
@@ -1164,6 +1182,7 @@ public:
   Expression* dest;
   Expression* offset;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1186,6 +1205,8 @@ public:
   Expression* dest;
   Expression* source;
   Expression* size;
+  Name destMemory;
+  Name sourceMemory;
 
   void finalize();
 };
@@ -1198,6 +1219,7 @@ public:
   Expression* dest;
   Expression* value;
   Expression* size;
+  Name memory;
 
   void finalize();
 };
@@ -1281,6 +1303,7 @@ public:
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1293,6 +1316,7 @@ public:
 
   Expression* delta = nullptr;
   Type ptrType = Type::i32;
+  Name memory;
 
   void make64();
   void finalize();
@@ -1492,16 +1516,9 @@ public:
 
   Expression* ref;
 
-  // If rtt is provided then this is a dynamic test with an rtt. If nullptr then
-  // this is a static cast and intendedType is set, and it contains the type we
-  // intend to cast to.
-  Expression* rtt = nullptr;
   HeapType intendedType;
 
   void finalize();
-
-  // Returns the type we intend to cast to.
-  HeapType getIntendedType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1510,8 +1527,6 @@ public:
 
   Expression* ref;
 
-  // See above with RefTest.
-  Expression* rtt = nullptr;
   HeapType intendedType;
 
   // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
@@ -1520,9 +1535,6 @@ public:
   Safety safety = Safe;
 
   void finalize();
-
-  // Returns the type we intend to cast to.
-  HeapType getIntendedType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1533,54 +1545,17 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast* has, like RefCast and RefTest, either an rtt or a static intended
-  // type.
-  Expression* rtt = nullptr;
   HeapType intendedType;
 
-  // TODO: BrOnNull also has an optional extra value in the spec, which we do
-  //       not support. See also the discussion on
-  //       https://github.com/WebAssembly/function-references/issues/45
-  //       - depending on the decision there, we may want to move BrOnNull into
-  //       Break or a new class of its own.
-
   void finalize();
-
-  // Returns the type we intend to cast to. Relevant only for the cast variants.
-  HeapType getIntendedType();
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
 };
 
-class RttCanon : public SpecificExpression<Expression::RttCanonId> {
-public:
-  RttCanon(MixedArena& allocator) {}
-
-  void finalize();
-};
-
-class RttSub : public SpecificExpression<Expression::RttSubId> {
-public:
-  RttSub(MixedArena& allocator) {}
-
-  Expression* parent;
-
-  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
-  // it always returns a fresh RTT, non-identical to any other RTT in the
-  // system).
-  bool fresh = false;
-
-  void finalize();
-};
-
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
   StructNew(MixedArena& allocator) : operands(allocator) {}
-
-  // A dynamic StructNew has an rtt, while a static one declares the type using
-  // the type field.
-  Expression* rtt = nullptr;
 
   // A struct.new_with_default has empty operands. This does leave the case of a
   // struct with no fields ambiguous, but it doesn't make a difference in that
@@ -1625,10 +1600,6 @@ public:
   Expression* init = nullptr;
   Expression* size;
 
-  // A dynamic ArrayNew has an rtt, while a static one declares the type using
-  // the type field.
-  Expression* rtt = nullptr;
-
   bool isWithDefault() { return !init; }
 
   void finalize();
@@ -1639,10 +1610,6 @@ public:
   ArrayInit(MixedArena& allocator) : values(allocator) {}
 
   ExpressionList values;
-
-  // A dynamic ArrayInit has an rtt, while a static one declares the type using
-  // the type field.
-  Expression* rtt = nullptr;
 
   void finalize();
 };
@@ -1715,6 +1682,10 @@ public:
 
   // Used only in linear memory variations.
   Expression* length = nullptr;
+
+  // Used only in GC variations.
+  Expression* start = nullptr;
+  Expression* end = nullptr;
 
   void finalize();
 };
@@ -2010,6 +1981,7 @@ public:
 
   Name getLocalName(Index index);
   Index getLocalIndex(Name name);
+  bool hasLocalIndex(Name name) const;
   Index getVarIndexBase();
   Type getLocalType(Index index);
 
@@ -2045,7 +2017,7 @@ public:
 class ElementSegment : public Named {
 public:
   Name table;
-  Expression* offset;
+  Expression* offset = nullptr;
   Type type = Type(HeapType::func, Nullable);
   std::vector<Expression*> data;
 
@@ -2084,6 +2056,7 @@ public:
 
 class DataSegment : public Named {
 public:
+  Name memory;
   bool isPassive = false;
   Expression* offset = nullptr;
   std::vector<char> data; // TODO: optimize
@@ -2096,19 +2069,18 @@ public:
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
   static const Address::address32_t kMaxSize32 =
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
+  // in wasm64, the maximum number of pages
+  static const Address::address64_t kMaxSize64 = 1ull << (64 - 16);
 
-  bool exists = false;
   Address initial = 0; // sizes are in pages
   Address max = kMaxSize32;
 
   bool shared = false;
   Type indexType = Type::i32;
 
-  Memory() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
   bool is64() { return indexType == Type::i64; }
   void clear() {
-    exists = false;
     name = "";
     initial = 0;
     max = kMaxSize32;
@@ -2155,10 +2127,10 @@ public:
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+  std::vector<std::unique_ptr<Memory>> memories;
   std::vector<std::unique_ptr<DataSegment>> dataSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
-  Memory memory;
   Name start;
 
   std::vector<UserSection> userSections;
@@ -2190,6 +2162,7 @@ private:
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, Memory*> memoriesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, DataSegment*> dataSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
@@ -2202,12 +2175,14 @@ public:
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
+  Memory* getMemory(Name name);
   DataSegment* getDataSegment(Name name);
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
+  Memory* getMemoryOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
   DataSegment* getDataSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
@@ -2223,6 +2198,7 @@ public:
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
+  Memory* addMemory(std::unique_ptr<Memory>&& curr);
   DataSegment* addDataSegment(std::unique_ptr<DataSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Tag* addTag(std::unique_ptr<Tag>&& curr);
@@ -2233,6 +2209,7 @@ public:
   void removeFunction(Name name);
   void removeTable(Name name);
   void removeElementSegment(Name name);
+  void removeMemory(Name name);
   void removeDataSegment(Name name);
   void removeGlobal(Name name);
   void removeTag(Name name);
@@ -2241,10 +2218,12 @@ public:
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
+  void removeMemories(std::function<bool(Memory*)> pred);
   void removeDataSegments(std::function<bool(DataSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);
 
+  void updateDataSegmentsMap();
   void updateMaps();
 
   void clearDebugInfo();

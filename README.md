@@ -117,6 +117,25 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     `(elem declare func $..)`. Binaryen will emit that data when necessary, but
     it does not represent it in IR. That is, IR can be worked on without needing
     to think about declaring function references.
+  * Binaryen IR allows non-nullable locals in the form that the wasm spec does,
+    (which was historically nicknamed "1a"), in which a `local.get` must be
+    structurally dominated by a `local.set` in order to validate (that ensures
+    we do not read the default value of null). Despite being aligned with the
+    wasm spec, there are some minor details that you may notice:
+    * A nameless `Block` in Binaryen IR does not interfere with validation.
+      Nameless blocks are never emitted into the binary format (we just emit
+      their contents), so we ignore them for purposes of non-nullable locals. As
+      a result, if you read wasm text emitted by Binaryen then you may see what
+      seems to be code that should not validate per the spec (and may not
+      validate in wasm text parsers), but that difference will not exist in the
+      binary format (binaries emitted by Binaryen will always work everywhere,
+      aside for bugs of course).
+    * The Binaryen pass runner will automatically fix up validation after each
+      pass (finding things that do not validate and fixing them up, usually by
+      demoting a local to be nullable). As a result you do not need to worry
+      much about this when writing Binaryen passes. For more details see the
+      `requiresNonNullableLocalFixups()` hook in `pass.h` and the
+      `LocalStructuralDominance` class.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
@@ -322,7 +341,7 @@ A C++17 compiler is required. Note that you can also use `ninja` as your generat
 
 To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
-Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)).
+Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
 ```
 emcmake cmake . && emmake make binaryen_js
@@ -387,7 +406,11 @@ the [`name-types` pass](https://github.com/WebAssembly/binaryen/blob/main/src/pa
 Some more notes:
 
  * See `bin/wasm-opt --help` for the full list of options and passes.
- * Passing `--debug` will emit some debugging info.
+ * Passing `--debug` will emit some debugging info.  Individual debug channels
+   (defined in the source code via `#define DEBUG_TYPE xxx`) can be enabled by
+   passing them as list of comma-separated strings.  For example: `bin/wasm-opt
+   --debug=binary`.  These debug channels can also be enabled via the
+   `BINARYEN_DEBUG` environment variable.
 
 ### wasm2js
 
@@ -562,9 +585,18 @@ The `check.py` script supports some options:
  * We have tests from upstream in `tests/spec`, in git submodules. Running
    `./check.py` should update those.
 
-Note that we are trying to gradually port the legacy wasm-opt tests to use `lit` and `filecheck` as we modify them.
-For `passes` tests that output wast, this can be done automatically with `scripts/port_passes_tests_to_lit.py` and for non-`passes` tests that output wast, see
-https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a simple manual port.
+Note that we are trying to gradually port the legacy wasm-opt tests to use `lit`
+and `filecheck` as we modify them.  For `passes` tests that output wast, this
+can be done automatically with `scripts/port_passes_tests_to_lit.py` and for
+non-`passes` tests that output wast, see
+https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a
+simple manual port.
+
+For lit tests the test expectations (the CHECK lines) can often be automatically
+updated as changes are made to binaryen.  See `scripts/update_lit_checks.py`.
+
+Non-lit tests can also be automatically updated in most cases.  See
+`scripts/auto_update_tests.py`.
 
 ### Setting up dependencies
 
@@ -621,7 +653,7 @@ Windows and OS X as most of the core devs are on Linux.
 
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
 [win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md
-[C API]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api-1
+[C API]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api
 [control flow graph]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 [JS_API]: https://github.com/WebAssembly/binaryen/wiki/binaryen.js-API
 [compile_to_wasm]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly

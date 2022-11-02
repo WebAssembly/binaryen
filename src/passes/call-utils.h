@@ -76,7 +76,7 @@ convertToDirectCalls(T* curr,
     return nullptr;
   }
 
-  if (select->condition->type == Type::unreachable) {
+  if (select->type == Type::unreachable) {
     // Leave this for DCE.
     return nullptr;
   }

@@ -34,11 +34,14 @@ struct DuplicateFunctionElimination : public Pass {
   // FIXME Merge DWARF info
   bool invalidatesDWARF() override { return true; }
 
-  void run(PassRunner* runner, Module* module) override {
+  // This pass merges functions but does not alter their contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override {
     // Multiple iterations may be necessary: A and B may be identical only after
     // we see the functions C1 and C2 that they call are in fact identical.
     // Rarely, such "chains" can be very long, so we limit how many we do.
-    auto& options = runner->options;
+    auto& options = getPassOptions();
     Index limit;
     if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
       limit = module->functions.size(); // no limit
@@ -53,7 +56,7 @@ struct DuplicateFunctionElimination : public Pass {
       limit--;
       // Hash all the functions
       auto hashes = FunctionHasher::createMap(module);
-      FunctionHasher(&hashes).run(runner, module);
+      FunctionHasher(&hashes).run(getPassRunner(), module);
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
@@ -93,7 +96,7 @@ struct DuplicateFunctionElimination : public Pass {
         // remove the duplicates
         module->removeFunctions(
           [&](Function* func) { return duplicates.count(func->name) > 0; });
-        OptUtils::replaceFunctions(runner, *module, replacements);
+        OptUtils::replaceFunctions(getPassRunner(), *module, replacements);
       } else {
         break;
       }

@@ -24,20 +24,20 @@
 #include <algorithm>
 
 #include "abi/js.h"
-#include "emscripten-optimizer/istring.h"
 #include "ir/flat.h"
 #include "ir/iteration.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "../wasm.h"
 
 namespace wasm {
 
-static Name makeHighName(Name n) { return std::string(n.c_str()) + "$hi"; }
+static Name makeHighName(Name n) { return n.toString() + "$hi"; }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   struct TempVar {
@@ -100,7 +100,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   // TODO: allow module-level transformations in parallel passes
   bool isFunctionParallel() override { return false; }
 
-  Pass* create() override { return new I64ToI32Lowering; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<I64ToI32Lowering>();
+  }
 
   void doWalkModule(Module* module) {
     if (!builder) {
@@ -262,7 +264,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // If this was to an import, we need to call the legal version. This assumes
     // that legalize-js-interface has been run before.
     if (fixedCall && getModule()->getFunction(fixedCall->target)->imported()) {
-      fixedCall->target = std::string("legalfunc$") + fixedCall->target.str;
+      fixedCall->target =
+        std::string("legalfunc$") + fixedCall->target.toString();
       return;
     }
   }
@@ -387,7 +390,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                           curr->offset + 4,
                           std::min(uint32_t(curr->align), uint32_t(4)),
                           builder->makeLocalGet(ptrTemp, Type::i32),
-                          Type::i32));
+                          Type::i32,
+                          curr->memory));
     } else if (curr->signed_) {
       loadHigh = builder->makeLocalSet(
         highBits,
@@ -433,7 +437,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                            std::min(uint32_t(curr->align), uint32_t(4)),
                            builder->makeLocalGet(ptrTemp, Type::i32),
                            builder->makeLocalGet(highBits, Type::i32),
-                           Type::i32);
+                           Type::i32,
+                           curr->memory);
       replaceCurrent(builder->blockify(setPtr, curr, storeHigh));
     }
   }
@@ -595,7 +600,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                         Type::i32));
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
-    MemoryUtils::ensureExists(getModule()->memory);
+    MemoryUtils::ensureExists(getModule());
     ABI::wasm2js::ensureHelpers(getModule());
   }
 
@@ -613,7 +618,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
                         Type::none),
       builder->makeCall(ABI::wasm2js::SCRATCH_LOAD_F64, {}, Type::f64));
     replaceCurrent(result);
-    MemoryUtils::ensureExists(getModule()->memory);
+    MemoryUtils::ensureExists(getModule());
     ABI::wasm2js::ensureHelpers(getModule());
   }
 

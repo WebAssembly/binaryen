@@ -53,7 +53,6 @@
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
-#include "ir/type-updating.h"
 #include "pass.h"
 #include "support/permutations.h"
 #include "wasm-builder.h"
@@ -74,7 +73,9 @@ struct SSAify : public Pass {
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
 
-  Pass* create() override { return new SSAify(allowMerges); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<SSAify>(allowMerges);
+  }
 
   SSAify(bool allowMerges) : allowMerges(allowMerges) {}
 
@@ -85,8 +86,7 @@ struct SSAify : public Pass {
   // things we add to the function prologue
   std::vector<Expression*> functionPrepends;
 
-  void
-  runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
+  void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
     func = func_;
     LocalGraph graph(func);
@@ -99,8 +99,6 @@ struct SSAify : public Pass {
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
-    // Handle non-nullability in new locals we added.
-    TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
 
   void createNewIndexes(LocalGraph& graph) {
@@ -140,10 +138,14 @@ struct SSAify : public Pass {
           // no set, assign param or zero
           if (func->isParam(get->index)) {
             // leave it, it's fine
-          } else {
+          } else if (LiteralUtils::canMakeZero(get->type)) {
             // zero it out
             (*graph.locations[get]) =
               LiteralUtils::makeZero(get->type, *module);
+          } else {
+            // No zero exists here, so this is a nondefaultable type. The
+            // default won't be used anyhow, so this value does not really
+            // matter and we have nothing to do.
           }
         }
         continue;

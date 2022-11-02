@@ -23,6 +23,8 @@
 #include "compiler-support.h"
 #include "support/utilities.h"
 
+namespace wasm {
+
 struct FeatureSet {
   enum Feature : uint32_t {
     MVP = 0,
@@ -38,12 +40,12 @@ struct FeatureSet {
     Multivalue = 1 << 9,
     GC = 1 << 10,
     Memory64 = 1 << 11,
-    TypedFunctionReferences = 1 << 12,
     // TODO: Remove this feature when the wasm spec stabilizes.
-    GCNNLocals = 1 << 13,
-    RelaxedSIMD = 1 << 14,
-    ExtendedConst = 1 << 15,
-    Strings = 1 << 16,
+    GCNNLocals = 1 << 12,
+    RelaxedSIMD = 1 << 13,
+    ExtendedConst = 1 << 14,
+    Strings = 1 << 15,
+    MultiMemories = 1 << 16,
     // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
     // get all possible values use AllPossible. See setAll() below for more
     // details.
@@ -77,8 +79,6 @@ struct FeatureSet {
         return "gc";
       case Memory64:
         return "memory64";
-      case TypedFunctionReferences:
-        return "typed-function-references";
       case GCNNLocals:
         return "gc-nn-locals";
       case RelaxedSIMD:
@@ -87,6 +87,8 @@ struct FeatureSet {
         return "extended-const";
       case Strings:
         return "strings";
+      case MultiMemories:
+        return "multi-memories";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -127,13 +129,11 @@ struct FeatureSet {
   bool hasMultivalue() const { return (features & Multivalue) != 0; }
   bool hasGC() const { return (features & GC) != 0; }
   bool hasMemory64() const { return (features & Memory64) != 0; }
-  bool hasTypedFunctionReferences() const {
-    return (features & TypedFunctionReferences) != 0;
-  }
   bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
   bool hasStrings() const { return (features & Strings) != 0; }
+  bool hasMultiMemories() const { return (features & MultiMemories) != 0; }
   bool hasAll() const { return (features & AllPossible) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -151,13 +151,11 @@ struct FeatureSet {
   void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setGC(bool v = true) { set(GC, v); }
   void setMemory64(bool v = true) { set(Memory64, v); }
-  void setTypedFunctionReferences(bool v = true) {
-    set(TypedFunctionReferences, v);
-  }
   void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
   void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
   void setExtendedConst(bool v = true) { set(ExtendedConst, v); }
   void setStrings(bool v = true) { set(Strings, v); }
+  void setMultiMemories(bool v = true) { set(MultiMemories, v); }
   void setMVP() { features = MVP; }
   void setAll() {
     // Do not set GCNNLocals, which forces the user to opt in to that feature
@@ -204,5 +202,7 @@ struct FeatureSet {
 
   uint32_t features;
 };
+
+} // namespace wasm
 
 #endif // wasm_features_h

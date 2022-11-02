@@ -40,9 +40,13 @@ typedef std::unordered_map<Name, std::atomic<Index>> NameCountMap;
 struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
   bool isFunctionParallel() override { return true; }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
 
-  CallCountScanner* create() override { return new CallCountScanner(counts); }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<CallCountScanner>(counts);
+  }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
@@ -55,7 +59,10 @@ private:
 };
 
 struct ReorderFunctions : public Pass {
-  void run(PassRunner* runner, Module* module) override {
+  // Only reorders functions, does not change their contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override {
     NameCountMap counts;
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
@@ -63,7 +70,7 @@ struct ReorderFunctions : public Pass {
       counts[func->name];
     }
     // find counts on function calls
-    CallCountScanner(&counts).run(runner, module);
+    CallCountScanner(&counts).run(getPassRunner(), module);
     // find counts on global usages
     if (module->start.is()) {
       counts[module->start]++;
@@ -79,7 +86,7 @@ struct ReorderFunctions : public Pass {
               [&counts](const std::unique_ptr<Function>& a,
                         const std::unique_ptr<Function>& b) -> bool {
                 if (counts[a->name] == counts[b->name]) {
-                  return strcmp(a->name.str, b->name.str) > 0;
+                  return a->name > b->name;
                 }
                 return counts[a->name] > counts[b->name];
               });

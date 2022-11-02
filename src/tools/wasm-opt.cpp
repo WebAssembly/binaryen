@@ -314,7 +314,7 @@ int main(int argc, const char* argv[]) {
     runner.run();
   }
 
-  ExecutionResults results(options.passOptions);
+  ExecutionResults results;
   if (fuzzExecBefore) {
     results.get(wasm);
   }

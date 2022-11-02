@@ -116,8 +116,8 @@ struct ParallelFuncCastEmulation
   : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override {
-    return new ParallelFuncCastEmulation(ABIType, numParams);
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<ParallelFuncCastEmulation>(ABIType, numParams);
   }
 
   ParallelFuncCastEmulation(HeapType ABIType, Index numParams)
@@ -151,9 +151,9 @@ private:
 };
 
 struct FuncCastEmulation : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    Index numParams =
-      std::stoul(runner->options.getArgumentOrDefault("max-func-params", "16"));
+  void run(Module* module) override {
+    Index numParams = std::stoul(
+      getPassOptions().getArgumentOrDefault("max-func-params", "16"));
     // we just need the one ABI function type for all indirect calls
     HeapType ABIType(
       Signature(Type(std::vector<Type>(numParams, Type::i64)), Type::i64));
@@ -171,13 +171,13 @@ struct FuncCastEmulation : public Pass {
     });
 
     // update call_indirects
-    ParallelFuncCastEmulation(ABIType, numParams).run(runner, module);
+    ParallelFuncCastEmulation(ABIType, numParams).run(getPassRunner(), module);
   }
 
 private:
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name, Module* module, Index numParams) {
-    Name thunk = std::string("byn$fpcast-emu$") + name.str;
+    Name thunk = std::string("byn$fpcast-emu$") + name.toString();
     if (module->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in "
                  "use. Was the pass already run on this code?";

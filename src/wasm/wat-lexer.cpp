@@ -943,7 +943,7 @@ void Lexer::lexToken() {
 }
 
 TextPos Lexer::position(const char* c) const {
-  assert(size_t(c - buffer.data()) < buffer.size());
+  assert(size_t(c - buffer.data()) <= buffer.size());
   TextPos pos{1, 0};
   for (const char* p = buffer.data(); p != c; ++p) {
     if (*p == '\n') {

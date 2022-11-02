@@ -37,6 +37,7 @@ set(passes_SOURCES
   Flatten.cpp
   FuncCastEmulation.cpp
   GenerateDynCalls.cpp
+  GlobalEffects.cpp
   GlobalRefining.cpp
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
@@ -47,6 +48,7 @@ set(passes_SOURCES
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
+  JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
   LocalCSE.cpp
@@ -60,6 +62,7 @@ set(passes_SOURCES
   MergeLocals.cpp
   Metrics.cpp
   MinifyImportsAndExports.cpp
+  MultiMemoryLowering.cpp
   NameList.cpp
   NameTypes.cpp
   OnceReduction.cpp
@@ -88,8 +91,9 @@ set(passes_SOURCES
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
-  ReorderLocals.cpp
   ReorderFunctions.cpp
+  ReorderGlobals.cpp
+  ReorderLocals.cpp
   ReReloop.cpp
   TrapMode.cpp
   TypeRefining.cpp

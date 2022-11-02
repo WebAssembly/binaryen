@@ -116,6 +116,8 @@ public:
     usedFixed = std::min(N, newSize);
     if (newSize > N) {
       flexible.resize(newSize - N);
+    } else {
+      flexible.clear();
     }
   }
 

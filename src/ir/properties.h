@@ -42,8 +42,12 @@ inline bool isSymmetric(Binary* binary) {
     case EqInt64:
     case NeInt64:
 
+    case MinFloat32:
+    case MaxFloat32:
     case EqFloat32:
     case NeFloat32:
+    case MinFloat64:
+    case MaxFloat64:
     case EqFloat64:
     case NeFloat64:
       return true;
@@ -75,8 +79,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 // at compile time, and passes that propagate constants can try to propagate it.
 // Constant expressions are also allowed in global initializers in wasm. Also
 // when two constant expressions compare equal at compile time, their values at
-// runtime will be equal as well.
-// TODO: look into adding more things here like RttCanon.
+// runtime will be equal as well. TODO: combine this with
+// isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
 }
@@ -106,7 +110,7 @@ inline Literal getLiteral(const Expression* curr) {
   } else if (auto* n = curr->dynCast<RefNull>()) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal(r->func, r->type);
+    return Literal(r->func, r->type.getHeapType());
   } else if (auto* i = curr->dynCast<I31New>()) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
@@ -240,17 +244,29 @@ inline Index getZeroExtBits(Expression* curr) {
 // way to the final value falling through, potentially through multiple
 // intermediate expressions.
 //
+// Behavior wrt tee/br_if is customizable, since in some cases we do not want to
+// look through them (for example, the type of a tee is related to the local,
+// not the value, so if we returned the fallthrough of the tee we'd have a
+// possible difference between the type in the IR and the type of the value,
+// which some cases care about; the same for a br_if, whose type is related to
+// the branch target).
+//
 // TODO: Receive a Module instead of FeatureSet, to pass to EffectAnalyzer?
-inline Expression* getImmediateFallthrough(Expression* curr,
-                                           const PassOptions& passOptions,
-                                           Module& module) {
+
+enum class FallthroughBehavior { AllowTeeBrIf, NoTeeBrIf };
+
+inline Expression* getImmediateFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
     return curr;
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
-    if (set->isTee()) {
+    if (set->isTee() && behavior == FallthroughBehavior::AllowTeeBrIf) {
       return set->value;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
@@ -270,7 +286,22 @@ inline Expression* getImmediateFallthrough(Expression* curr,
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
-    if (br->condition && br->value) {
+    // Note that we must check for the ability to reorder the condition and the
+    // value, as the value is first, which would be a problem here:
+    //
+    //  (br_if ..
+    //    (local.get $x)    ;; value
+    //    (tee_local $x ..) ;; condition
+    //  )
+    //
+    // We must not say that the fallthrough value is $x, since it is the
+    // *earlier* value of $x before the tee that is passed out. But, if we can
+    // reorder then that means that the value could have been last and so we do
+    // know the fallthrough in that case.
+    if (br->condition && br->value &&
+        behavior == FallthroughBehavior::AllowTeeBrIf &&
+        EffectAnalyzer::canReorder(
+          passOptions, module, br->condition, br->value)) {
       return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
@@ -289,11 +320,13 @@ inline Expression* getImmediateFallthrough(Expression* curr,
 
 // Similar to getImmediateFallthrough, but looks through multiple children to
 // find the final value that falls through.
-inline Expression* getFallthrough(Expression* curr,
-                                  const PassOptions& passOptions,
-                                  Module& module) {
+inline Expression* getFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
   while (1) {
-    auto* next = getImmediateFallthrough(curr, passOptions, module);
+    auto* next = getImmediateFallthrough(curr, passOptions, module, behavior);
     if (next == curr) {
       return curr;
     }
@@ -407,9 +440,8 @@ bool isGenerative(Expression* curr, FeatureSet features);
 
 inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
   if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
-      expr->is<RttCanon>() || expr->is<RttSub>() || expr->is<StructNew>() ||
-      expr->is<ArrayNew>() || expr->is<ArrayInit>() || expr->is<I31New>() ||
-      expr->is<StringConst>()) {
+      expr->is<StructNew>() || expr->is<ArrayNew>() || expr->is<ArrayInit>() ||
+      expr->is<I31New>() || expr->is<StringConst>()) {
     return true;
   }
 

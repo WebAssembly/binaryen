@@ -38,9 +38,6 @@ constexpr int MAX_TUPLE_SIZE = 6;
 // The maximum number of struct fields.
 static const int MAX_STRUCT_SIZE = 6;
 
-// The maximum rtt depth.
-constexpr int MAX_RTT_DEPTH = 3;
-
 // The number of nontrivial heap types to generate.
 constexpr int MIN_HEAPTYPES = 4;
 constexpr int MAX_HEAPTYPES = 20;

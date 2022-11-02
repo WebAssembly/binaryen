@@ -91,33 +91,6 @@ void test_compound() {
     Tuple otherTuple({Type::f64, Type::i64});
     assert(Type(tuple).getID() != Type(otherTuple).getID());
   }
-  {
-    Rtt rtt(0, HeapType::func);
-    assert(Type(rtt).getID() == Type(rtt).getID());
-
-    Rtt sameRtt(0, HeapType::func);
-    assert(rtt == sameRtt);
-    assert(Type(rtt).getID() == Type(sameRtt).getID());
-
-    Rtt otherDepthRtt(1, HeapType::func);
-    assert(rtt != otherDepthRtt);
-    assert(Type(rtt).getID() != Type(otherDepthRtt).getID());
-
-    Rtt otherHeapTypeRtt(0, HeapType::any);
-    assert(rtt != otherHeapTypeRtt);
-    assert(Type(rtt).getID() != Type(otherHeapTypeRtt).getID());
-
-    Rtt structRtt(0, Struct{});
-    assert(Type(structRtt).getID() == Type(structRtt).getID());
-
-    Rtt sameStructRtt(0, Struct{});
-    assert(structRtt == sameStructRtt);
-    assert(Type(structRtt).getID() == Type(sameStructRtt).getID());
-
-    Rtt otherStructRtt(0, Struct({{Type::i32, Immutable}}));
-    assert(structRtt != otherStructRtt);
-    assert(Type(structRtt).getID() != Type(otherStructRtt).getID());
-  }
 }
 
 void test_printing() {
@@ -188,26 +161,6 @@ void test_printing() {
     });
     std::cout << tuple << "\n";
     std::cout << Type(tuple) << "\n";
-  }
-  {
-    std::cout << "\n;; Rtt\n";
-    std::cout << Rtt(0, HeapType::func) << "\n";
-    std::cout << Type(Rtt(0, HeapType::func)) << "\n";
-    std::cout << Rtt(2, HeapType::any) << "\n";
-    std::cout << Type(Rtt(2, HeapType::any)) << "\n";
-    std::cout << Rtt(3, HeapType::eq) << "\n";
-    std::cout << Type(Rtt(3, HeapType::eq)) << "\n";
-    std::cout << Rtt(4, HeapType::i31) << "\n";
-    std::cout << Type(Rtt(4, HeapType::i31)) << "\n";
-    Rtt signatureRtt(6, Signature(Type::none, Type::none));
-    std::cout << signatureRtt << "\n";
-    std::cout << Type(signatureRtt) << "\n";
-    Rtt structRtt(7, Struct{});
-    std::cout << structRtt << "\n";
-    std::cout << Type(structRtt) << "\n";
-    Rtt arrayRtt(8, Array({Type::i32, Immutable}));
-    std::cout << arrayRtt << "\n";
-    std::cout << Type(arrayRtt) << "\n";
   }
   {
     std::cout << "\n;; Signature of references (param/result)\n";

@@ -44,7 +44,9 @@ static const Index MIN_USES = 2;
 struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new ConstHoisting; }
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<ConstHoisting>();
+  }
 
   InsertOrderedMap<Literal, std::vector<Expression**>> uses;
 

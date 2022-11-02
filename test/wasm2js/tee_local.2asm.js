@@ -1,6 +1,6 @@
-import { setTempRet0 } from 'env';
+import * as env from 'env';
 
-function asmFunc(env) {
+function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -11,9 +11,9 @@ function asmFunc(env) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var abort = env.abort;
  var nan = NaN;
  var infinity = Infinity;
+ var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
@@ -67,9 +67,6 @@ function asmFunc(env) {
   $3_1 = $3_1 | 0;
   $4_1 = $4_1 | 0;
   var i64toi32_i32$0 = 0;
-  i64toi32_i32$0 = 0;
-  i64toi32_i32$0 = 0;
-  i64toi32_i32$0 = 0;
  }
  
  function $9($0_1, $0$hi, $1_1, $2_1, $3_1, $4_1) {
@@ -327,9 +324,9 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({
+  "env": env,
+});
 export var type_local_i32 = retasmFunc.type_local_i32;
 export var type_local_i64 = retasmFunc.type_local_i64;
 export var type_local_f32 = retasmFunc.type_local_f32;

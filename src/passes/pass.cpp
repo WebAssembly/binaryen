@@ -23,6 +23,7 @@
 
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "passes/passes.h"
 #include "support/colors.h"
@@ -127,6 +128,9 @@ void PassRegistry::registerPasses() {
                createDeNaNPass);
   registerPass(
     "directize", "turns indirect calls into direct ones", createDirectizePass);
+  registerPass("discard-global-effects",
+               "discards global effect info",
+               createDiscardGlobalEffectsPass);
   registerPass(
     "dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
   registerPass("dwarfdump",
@@ -164,6 +168,9 @@ void PassRegistry::registerPasses() {
     "functions with i64 in their signature (which cannot be invoked "
     "via the wasm table without JavaScript BigInt support).",
     createGenerateI64DynCallsPass);
+  registerPass("generate-global-effects",
+               "generate global effect info (helps later passes)",
+               createGenerateGlobalEffectsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
@@ -196,6 +203,9 @@ void PassRegistry::registerPasses() {
   registerPass("intrinsic-lowering",
                "lower away binaryen intrinsics",
                createIntrinsicLoweringPass);
+  registerPass("jspi",
+               "wrap imports and exports for JavaScript promise integration",
+               createJSPIPass);
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);
@@ -262,6 +272,9 @@ void PassRegistry::registerPasses() {
   registerPass("mod-asyncify-never-unwind",
                "apply the assumption that asyncify never unwinds",
                createModAsyncifyNeverUnwindPass);
+  registerPass("multi-memory-lowering",
+               "combines multiple memories into a single memory",
+               createMultiMemoryLoweringPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
   registerPass("once-reduction",
@@ -346,6 +359,12 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
+  registerPass("reorder-globals",
+               "sorts globals by access frequency",
+               createReorderGlobalsPass);
+  registerTestPass("reorder-globals-always",
+                   "sorts globals by access frequency (even if there are few)",
+                   createReorderGlobalsAlwaysPass);
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);
@@ -562,7 +581,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("once-reduction");
   }
-  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+  if (wasm->features.hasGC() &&
+      (getTypeSystem() == TypeSystem::Nominal ||
+       getTypeSystem() == TypeSystem::Isorecursive) &&
       options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("type-refining");
     addIfNoDWARFIssues("signature-pruning");
@@ -577,6 +598,10 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("cfp");
     addIfNoDWARFIssues("gsi");
   }
+  // TODO: generate-global-effects here, right before function passes, then
+  //       discard in addDefaultGlobalOptimizationPostPasses? the benefit seems
+  //       quite minor so far, except perhaps when using call.without.effects
+  //       which can lead to more opportunities for global effects to matter.
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
@@ -602,6 +627,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("reorder-globals");
+  }
   // may allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
   // perform Stack IR optimizations here, at the very end of the
@@ -624,7 +652,7 @@ static void dumpWast(Name name, Module* wasm) {
   // TODO: use _getpid() on windows, elsewhere?
   fullName += std::to_string(getpid()) + '-';
 #endif
-  fullName += numstr + "-" + name.str;
+  fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
   ModuleWriter writer;
   writer.writeText(*wasm, fullName + ".wast");
@@ -882,7 +910,11 @@ void PassRunner::runPass(Pass* pass) {
     checker = std::unique_ptr<AfterEffectModuleChecker>(
       new AfterEffectModuleChecker(wasm));
   }
-  pass->run(this, wasm);
+  // Passes can only be run once and we deliberately do not clear the pass
+  // runner after running the pass, so there must not already be a runner here.
+  assert(!pass->getPassRunner());
+  pass->setPassRunner(this);
+  pass->run(wasm);
   handleAfterEffects(pass);
   if (getPassDebug()) {
     checker->check();
@@ -891,31 +923,76 @@ void PassRunner::runPass(Pass* pass) {
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
-  // function-parallel passes get a new instance per function
-  auto instance = std::unique_ptr<Pass>(pass->create());
-  std::unique_ptr<AfterEffectFunctionChecker> checker;
-  if (getPassDebug()) {
-    checker = std::unique_ptr<AfterEffectFunctionChecker>(
-      new AfterEffectFunctionChecker(func));
+
+  auto passDebug = getPassDebug();
+
+  // Add extra validation logic in pass-debug mode 2. The main logic in
+  // PassRunner::run will work at the module level, and here for a function-
+  // parallel pass we can do the same at the function level: we can print the
+  // function before the pass, run the pass on the function, and then if it
+  // fails to validate we can show an error and print the state right before the
+  // pass broke it.
+  //
+  // Skip nameless passes for this. Anything without a name is an internal
+  // component of some larger pass, and information about it won't be very
+  // useful - leave it to the entire module to fail validation in that case.
+  bool extraFunctionValidation =
+    passDebug == 2 && options.validate && !pass->name.empty();
+  std::stringstream bodyBefore;
+  if (extraFunctionValidation) {
+    bodyBefore << *func->body << '\n';
   }
-  instance->runOnFunction(this, wasm, func);
+
+  std::unique_ptr<AfterEffectFunctionChecker> checker;
+  if (passDebug) {
+    checker = std::make_unique<AfterEffectFunctionChecker>(func);
+  }
+
+  // Function-parallel passes get a new instance per function
+  auto instance = pass->create();
+  instance->setPassRunner(this);
+  instance->runOnFunction(wasm, func);
   handleAfterEffects(pass, func);
-  if (getPassDebug()) {
+
+  if (passDebug) {
     checker->check();
+  }
+
+  if (extraFunctionValidation) {
+    if (!WasmValidator().validate(func, *wasm, WasmValidator::Minimal)) {
+      Fatal() << "Last nested function-parallel pass (" << pass->name
+              << ") broke validation of function " << func->name
+              << ". Here is the function body before:\n"
+              << bodyBefore.str() << "\n\nAnd here it is now:\n"
+              << *func->body << '\n';
+    }
   }
 }
 
 void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
-  if (pass->modifiesBinaryenIR()) {
-    // If Binaryen IR is modified, Stack IR must be cleared - it would
-    // be out of sync in a potentially dangerous way.
-    if (func) {
-      func->stackIR.reset(nullptr);
-    } else {
-      for (auto& func : wasm->functions) {
-        func->stackIR.reset(nullptr);
-      }
+  if (!pass->modifiesBinaryenIR()) {
+    return;
+  }
+
+  // Binaryen IR is modified, so we may have work here.
+
+  if (!func) {
+    // If no function is provided, then this is not a function-parallel pass,
+    // and it may have operated on any of the functions in theory, so run on
+    // them all.
+    assert(!pass->isFunctionParallel());
+    for (auto& func : wasm->functions) {
+      handleAfterEffects(pass, func.get());
     }
+    return;
+  }
+
+  // If Binaryen IR is modified, Stack IR must be cleared - it would
+  // be out of sync in a potentially dangerous way.
+  func->stackIR.reset(nullptr);
+
+  if (pass->requiresNonNullableLocalFixups()) {
+    TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
 }
 

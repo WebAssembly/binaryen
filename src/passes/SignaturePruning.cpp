@@ -28,6 +28,7 @@
 //
 
 #include "ir/find_all.h"
+#include "ir/intrinsics.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
@@ -47,12 +48,13 @@ struct SignaturePruning : public Pass {
   // type has no improvement that we can find, it will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
 
-  void run(PassRunner* runner, Module* module) override {
+  void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      Fatal() << "SignaturePruning requires nominal typing";
+    if (getTypeSystem() != TypeSystem::Nominal &&
+        getTypeSystem() != TypeSystem::Isorecursive) {
+      Fatal() << "SignaturePruning requires nominal/isorecursive typing";
     }
 
     if (!module->tables.empty()) {
@@ -103,6 +105,18 @@ struct SignaturePruning : public Pass {
       // called.
       for (auto* call : info.calls) {
         allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+
+        // Intrinsics limit our ability to optimize in some cases. We will avoid
+        // modifying any type that is used by call.without.effects, to avoid
+        // the complexity of handling that. After intrinsics are lowered,
+        // this optimization will be able to run at full power anyhow.
+        if (Intrinsics(*module).isCallWithoutEffects(call)) {
+          // The last operand is the actual call target.
+          auto* target = call->operands.back();
+          if (target->type != Type::unreachable) {
+            allInfo[target->type.getHeapType()].optimizable = false;
+          }
+        }
       }
 
       // For indirect calls, add each call_ref to the type the call_ref uses.
@@ -180,8 +194,12 @@ struct SignaturePruning : public Pass {
       }
 
       auto oldParams = sig.params;
-      auto removedIndexes = ParamUtils::removeParameters(
-        funcs, unusedParams, info.calls, info.callRefs, module, runner);
+      auto removedIndexes = ParamUtils::removeParameters(funcs,
+                                                         unusedParams,
+                                                         info.calls,
+                                                         info.callRefs,
+                                                         module,
+                                                         getPassRunner());
       if (removedIndexes.empty()) {
         continue;
       }

@@ -40,6 +40,11 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
       (*this)[type];
     }
   }
+  void include(Type type) {
+    for (HeapType ht : type.getHeapTypeChildren()) {
+      include(ht);
+    }
+  }
 };
 
 struct CodeScanner
@@ -53,27 +58,39 @@ struct CodeScanner
   void visitExpression(Expression* curr) {
     if (auto* call = curr->dynCast<CallIndirect>()) {
       counts.note(call->heapType);
+    } else if (auto* call = curr->dynCast<CallRef>()) {
+      counts.note(call->target->type);
     } else if (curr->is<RefNull>()) {
       counts.note(curr->type);
-    } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-      counts.note(curr->type.getRtt().heapType);
-    } else if (auto* make = curr->dynCast<StructNew>()) {
-      handleMake(make);
-    } else if (auto* make = curr->dynCast<ArrayNew>()) {
-      handleMake(make);
-    } else if (auto* make = curr->dynCast<ArrayInit>()) {
-      handleMake(make);
+    } else if (curr->is<StructNew>()) {
+      counts.note(curr->type);
+    } else if (curr->is<ArrayNew>()) {
+      counts.note(curr->type);
+    } else if (curr->is<ArrayInit>()) {
+      counts.note(curr->type);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
-      handleCast(cast);
+      counts.note(cast->intendedType);
     } else if (auto* cast = curr->dynCast<RefTest>()) {
-      handleCast(cast);
+      counts.note(cast->intendedType);
     } else if (auto* cast = curr->dynCast<BrOn>()) {
       if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-        handleCast(cast);
+        counts.note(cast->intendedType);
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {
       counts.note(get->ref->type);
+      // If the type we read is a reference type then we must include it. It is
+      // not written in the binary format, so it doesn't need to be counted, but
+      // it does need to be taken into account in the IR (this may be the only
+      // place this type appears in the entire binary, and we must scan all
+      // types as the analyses that use us depend on that).
+      counts.include(get->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
+      counts.note(set->ref->type);
+    } else if (auto* get = curr->dynCast<ArrayGet>()) {
+      counts.note(get->ref->type);
+      // See note on StructGet above.
+      counts.include(get->type);
+    } else if (auto* set = curr->dynCast<ArraySet>()) {
       counts.note(set->ref->type);
     } else if (Properties::isControlFlowStructure(curr)) {
       if (curr->type.isTuple()) {
@@ -82,20 +99,6 @@ struct CodeScanner
       } else {
         counts.note(curr->type);
       }
-    }
-  }
-
-  template<typename T> void handleMake(T* curr) {
-    if (!curr->rtt && curr->type != Type::unreachable) {
-      counts.note(curr->type.getHeapType());
-    }
-  }
-
-  template<typename T> void handleCast(T* curr) {
-    // Some operations emit a HeapType in the binary format, if they are
-    // static and not dynamic (if dynamic, the RTT provides the heap type).
-    if (!curr->rtt) {
-      counts.note(curr->intendedType);
     }
   }
 };
