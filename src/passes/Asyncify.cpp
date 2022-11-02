@@ -304,6 +304,7 @@
 //
 
 #include "asmjs/shared-constants.h"
+#include "async-utils.h"
 #include "cfg/liveness-traversal.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
@@ -322,21 +323,12 @@ namespace wasm {
 
 namespace {
 
+using namespace AsyncUtils;
+
 static const Name ASYNCIFY_STATE = "__asyncify_state";
 static const Name ASYNCIFY_GET_STATE = "asyncify_get_state";
 static const Name ASYNCIFY_DATA = "__asyncify_data";
-static const Name ASYNCIFY_START_UNWIND = "asyncify_start_unwind";
-static const Name ASYNCIFY_STOP_UNWIND = "asyncify_stop_unwind";
-static const Name ASYNCIFY_START_REWIND = "asyncify_start_rewind";
-static const Name ASYNCIFY_STOP_REWIND = "asyncify_stop_rewind";
 static const Name ASYNCIFY_UNWIND = "__asyncify_unwind";
-static const Name ASYNCIFY = "asyncify";
-static const Name START_UNWIND = "start_unwind";
-static const Name STOP_UNWIND = "stop_unwind";
-static const Name START_REWIND = "start_rewind";
-static const Name STOP_REWIND = "stop_rewind";
-static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
-static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
 
 // TODO: having just normal/unwind_or_rewind would decrease code
 //       size, but make debugging harder
@@ -345,447 +337,6 @@ enum class State { Normal = 0, Unwinding = 1, Rewinding = 2 };
 enum class DataOffset { BStackPos = 0, BStackEnd = 4, BStackEnd64 = 8 };
 
 const auto STACK_ALIGN = 4;
-
-// A helper class for managing fake global names. Creates the globals and
-// provides mappings for using them.
-// Fake globals are used to stash and then use return values from calls. We need
-// to store them somewhere that is valid Binaryen IR, but also will be ignored
-// by the Asyncify instrumentation, so we don't want to use a local. What we do
-// is replace the local used to receive a call's result with a fake global.set
-// to stash it, then do a fake global.get to receive it afterwards. (We do it in
-// two steps so that if we are async, we only do the first and not the second,
-// i.e., we don't store to the target local if not running normally).
-class FakeGlobalHelper {
-  Module& module;
-
-public:
-  FakeGlobalHelper(Module& module) : module(module) {
-    Builder builder(module);
-    std::string prefix = "asyncify_fake_call_global_";
-    for (auto type : collectTypes()) {
-      auto global = prefix + Type(type).toString();
-      map[type] = global;
-      rev[global] = type;
-      module.addGlobal(builder.makeGlobal(
-        global, type, LiteralUtils::makeZero(type, module), Builder::Mutable));
-    }
-  }
-
-  ~FakeGlobalHelper() {
-    for (auto& pair : map) {
-      auto name = pair.second;
-      module.removeGlobal(name);
-    }
-  }
-
-  Name getName(Type type) { return map.at(type); }
-
-  Type getTypeOrNone(Name name) {
-    auto iter = rev.find(name);
-    if (iter != rev.end()) {
-      return iter->second;
-    }
-    return Type::none;
-  }
-
-private:
-  std::unordered_map<Type, Name> map;
-  std::unordered_map<Name, Type> rev;
-
-  // Collect the types returned from all calls for which call support globals
-  // may need to be generated.
-  using Types = std::unordered_set<Type>;
-  Types collectTypes() {
-    ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
-      module, [&](Function* func, Types& types) {
-        if (!func->body) {
-          return;
-        }
-        struct TypeCollector : PostWalker<TypeCollector> {
-          Types& types;
-          TypeCollector(Types& types) : types(types) {}
-          void visitCall(Call* curr) {
-            if (curr->type.isConcrete()) {
-              types.insert(curr->type);
-            }
-          }
-          void visitCallIndirect(CallIndirect* curr) {
-            if (curr->type.isConcrete()) {
-              types.insert(curr->type);
-            }
-          }
-        };
-        TypeCollector(types).walk(func->body);
-      });
-    Types types;
-    for (auto& pair : analysis.map) {
-      Types& functionTypes = pair.second;
-      for (auto t : functionTypes) {
-        types.insert(t);
-      }
-    }
-    return types;
-  }
-};
-
-class PatternMatcher {
-public:
-  std::string designation;
-  std::set<Name> names;
-  std::set<std::string> patterns;
-  std::set<std::string> patternsMatched;
-  std::map<std::string, std::string> unescaped;
-
-  PatternMatcher(std::string designation,
-                 Module& module,
-                 const String::Split& list)
-    : designation(designation) {
-    // The lists contain human-readable strings. Turn them into the
-    // internal escaped names for later comparisons
-    for (auto& name : list) {
-      auto escaped = WasmBinaryBuilder::escape(name);
-      unescaped[escaped.toString()] = name;
-      if (name.find('*') != std::string::npos) {
-        patterns.insert(escaped.toString());
-      } else {
-        auto* func = module.getFunctionOrNull(escaped);
-        if (!func) {
-          std::cerr << "warning: Asyncify " << designation
-                    << "list contained a non-existing function name: " << name
-                    << " (" << escaped << ")\n";
-        } else if (func->imported()) {
-          Fatal() << "Asyncify " << designation
-                  << "list contained an imported function name (use the import "
-                     "list for imports): "
-                  << name << '\n';
-        }
-        names.insert(escaped.str);
-      }
-    }
-  }
-
-  bool match(Name funcName) {
-    if (names.count(funcName) > 0) {
-      return true;
-    } else {
-      for (auto& pattern : patterns) {
-        if (String::wildcardMatch(pattern, funcName.toString())) {
-          patternsMatched.insert(pattern);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  void checkPatternsMatches() {
-    for (auto& pattern : patterns) {
-      if (patternsMatched.count(pattern) == 0) {
-        std::cerr << "warning: Asyncify " << designation
-                  << "list contained a non-matching pattern: "
-                  << unescaped[pattern] << " (" << pattern << ")\n";
-      }
-    }
-  }
-};
-
-// Analyze the entire module to see which calls may change the state, that
-// is, start an unwind or rewind), either in itself or in something called
-// by it.
-// Handles global module management, needed from the various parts of this
-// transformation.
-class ModuleAnalyzer {
-  Module& module;
-  bool canIndirectChangeState;
-
-  struct Info
-    : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
-    // The function name.
-    Name name;
-    // If this function can start an unwind/rewind.
-    bool canChangeState = false;
-    // If this function is part of the runtime that receives an unwinding
-    // and starts a rewinding. If so, we do not instrument it, see above.
-    // This is only relevant when handling things entirely inside wasm,
-    // as opposed to imports.
-    bool isBottomMostRuntime = false;
-    // If this function is part of the runtime that starts an unwinding
-    // and stops a rewinding. If so, we do not instrument it, see above.
-    // The difference between the top-most and bottom-most runtime is that
-    // the top-most part is still marked as changing the state; so things
-    // that call it are instrumented. This is not done for the bottom.
-    bool isTopMostRuntime = false;
-    bool inRemoveList = false;
-    bool addedFromList = false;
-  };
-
-  typedef std::map<Function*, Info> Map;
-  Map map;
-
-public:
-  ModuleAnalyzer(Module& module,
-                 std::function<bool(Name, Name)> canImportChangeState,
-                 bool canIndirectChangeState,
-                 const String::Split& removeListInput,
-                 const String::Split& addListInput,
-                 const String::Split& onlyListInput,
-                 bool asserts,
-                 bool verbose)
-    : module(module), canIndirectChangeState(canIndirectChangeState),
-      fakeGlobals(module), asserts(asserts), verbose(verbose) {
-
-    PatternMatcher removeList("remove", module, removeListInput);
-    PatternMatcher addList("add", module, addListInput);
-    PatternMatcher onlyList("only", module, onlyListInput);
-
-    // Rename the asyncify imports so their internal name matches the
-    // convention. This makes replacing them with the implementations
-    // later easier.
-    std::map<Name, Name> renamings;
-    for (auto& func : module.functions) {
-      if (func->module == ASYNCIFY) {
-        if (func->base == START_UNWIND) {
-          renamings[func->name] = ASYNCIFY_START_UNWIND;
-        } else if (func->base == STOP_UNWIND) {
-          renamings[func->name] = ASYNCIFY_STOP_UNWIND;
-        } else if (func->base == START_REWIND) {
-          renamings[func->name] = ASYNCIFY_START_REWIND;
-        } else if (func->base == STOP_REWIND) {
-          renamings[func->name] = ASYNCIFY_STOP_REWIND;
-        } else {
-          Fatal() << "call to unidenfied asyncify import: " << func->base;
-        }
-      }
-    }
-    ModuleUtils::renameFunctions(module, renamings);
-
-    // Scan to see which functions can directly change the state.
-    // Also handle the asyncify imports, removing them (as we will implement
-    // them later), and replace calls to them with calls to the later proper
-    // name.
-    ModuleUtils::CallGraphPropertyAnalysis<Info> scanner(
-      module, [&](Function* func, Info& info) {
-        info.name = func->name;
-        if (func->imported()) {
-          // The relevant asyncify imports can definitely change the state.
-          if (func->module == ASYNCIFY &&
-              (func->base == START_UNWIND || func->base == STOP_REWIND)) {
-            info.canChangeState = true;
-          } else {
-            info.canChangeState =
-              canImportChangeState(func->module, func->base);
-            if (verbose && info.canChangeState) {
-              std::cout << "[asyncify] " << func->name
-                        << " is an import that can change the state\n";
-            }
-          }
-          return;
-        }
-        struct Walker : PostWalker<Walker> {
-          Info& info;
-          Module& module;
-          bool canIndirectChangeState;
-
-          Walker(Info& info, Module& module, bool canIndirectChangeState)
-            : info(info), module(module),
-              canIndirectChangeState(canIndirectChangeState) {}
-
-          void visitCall(Call* curr) {
-            if (curr->isReturn) {
-              Fatal() << "tail calls not yet supported in asyncify";
-            }
-            auto* target = module.getFunction(curr->target);
-            if (target->imported() && target->module == ASYNCIFY) {
-              // Redirect the imports to the functions we'll add later.
-              if (target->base == START_UNWIND) {
-                info.canChangeState = true;
-                info.isTopMostRuntime = true;
-              } else if (target->base == STOP_UNWIND) {
-                info.isBottomMostRuntime = true;
-              } else if (target->base == START_REWIND) {
-                info.isBottomMostRuntime = true;
-              } else if (target->base == STOP_REWIND) {
-                info.canChangeState = true;
-                info.isTopMostRuntime = true;
-              } else {
-                WASM_UNREACHABLE("call to unidenfied asyncify import");
-              }
-            }
-          }
-          void visitCallIndirect(CallIndirect* curr) {
-            if (curr->isReturn) {
-              Fatal() << "tail calls not yet supported in asyncify";
-            }
-            if (canIndirectChangeState) {
-              info.canChangeState = true;
-            }
-            // TODO optimize the other case, at least by type
-          }
-        };
-        Walker walker(info, module, canIndirectChangeState);
-        walker.walk(func->body);
-
-        if (info.isBottomMostRuntime) {
-          info.canChangeState = false;
-          // TODO: issue warnings on suspicious things, like a function in
-          //       the bottom-most runtime also doing top-most runtime stuff
-          //       like starting and unwinding.
-        }
-        if (verbose && info.canChangeState) {
-          std::cout << "[asyncify] " << func->name
-                    << " can change the state due to initial scan\n";
-        }
-      });
-
-    // Functions in the remove-list are assumed to not change the state.
-    for (auto& [func, info] : scanner.map) {
-      if (removeList.match(func->name)) {
-        info.inRemoveList = true;
-        if (verbose && info.canChangeState) {
-          std::cout << "[asyncify] " << func->name
-                    << " is in the remove-list, ignore\n";
-        }
-        info.canChangeState = false;
-      }
-    }
-
-    // Remove the asyncify imports, if any, and any calls to them.
-    std::vector<Name> funcsToDelete;
-    for (auto& [func, info] : scanner.map) {
-      auto& callsTo = info.callsTo;
-      if (func->imported() && func->module == ASYNCIFY) {
-        funcsToDelete.push_back(func->name);
-      }
-      std::vector<Function*> callersToDelete;
-      for (auto* target : callsTo) {
-        if (target->imported() && target->module == ASYNCIFY) {
-          callersToDelete.push_back(target);
-        }
-      }
-      for (auto* target : callersToDelete) {
-        callsTo.erase(target);
-      }
-    }
-    for (auto name : funcsToDelete) {
-      module.removeFunction(name);
-    }
-
-    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
-                          [](const Info& info) {
-                            return !info.isBottomMostRuntime &&
-                                   !info.inRemoveList;
-                          },
-                          [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
-                              std::cout << "[asyncify] " << info.name
-                                        << " can change the state due to "
-                                        << reason->name << "\n";
-                            }
-                            info.canChangeState = true;
-                          },
-                          scanner.IgnoreNonDirectCalls);
-
-    map.swap(scanner.map);
-
-    if (!onlyListInput.empty()) {
-      // Only the functions in the only-list can change the state.
-      for (auto& func : module.functions) {
-        if (!func->imported()) {
-          auto& info = map[func.get()];
-          bool matched = onlyList.match(func->name);
-          info.canChangeState = matched;
-          if (matched) {
-            info.addedFromList = true;
-          }
-          if (verbose) {
-            std::cout << "[asyncify] " << func->name
-                      << "'s state is set based on the only-list to " << matched
-                      << '\n';
-          }
-        }
-      }
-    }
-
-    if (!addListInput.empty()) {
-      for (auto& func : module.functions) {
-        if (!func->imported() && addList.match(func->name)) {
-          auto& info = map[func.get()];
-          if (verbose && !info.canChangeState) {
-            std::cout << "[asyncify] " << func->name
-                      << " is in the add-list, add\n";
-          }
-          info.canChangeState = true;
-          info.addedFromList = true;
-        }
-      }
-    }
-
-    removeList.checkPatternsMatches();
-    addList.checkPatternsMatches();
-    onlyList.checkPatternsMatches();
-  }
-
-  bool needsInstrumentation(Function* func) {
-    auto& info = map[func];
-    return info.canChangeState && !info.isTopMostRuntime;
-  }
-
-  bool canChangeState(Expression* curr, Function* func) {
-    // Look inside to see if we call any of the things we know can change the
-    // state.
-    // TODO: caching, this is O(N^2)
-    struct Walker : PostWalker<Walker> {
-      void visitCall(Call* curr) {
-        // We only implement these at the very end, but we know that they
-        // definitely change the state.
-        if (curr->target == ASYNCIFY_START_UNWIND ||
-            curr->target == ASYNCIFY_STOP_REWIND ||
-            curr->target == ASYNCIFY_GET_CALL_INDEX ||
-            curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
-          canChangeState = true;
-          return;
-        }
-        if (curr->target == ASYNCIFY_STOP_UNWIND ||
-            curr->target == ASYNCIFY_START_REWIND) {
-          isBottomMostRuntime = true;
-          return;
-        }
-        // The target may not exist if it is one of our temporary intrinsics.
-        auto* target = module->getFunctionOrNull(curr->target);
-        if (target && (*map)[target].canChangeState) {
-          canChangeState = true;
-        }
-      }
-      void visitCallIndirect(CallIndirect* curr) { hasIndirectCall = true; }
-      Module* module;
-      ModuleAnalyzer* analyzer;
-      Map* map;
-      bool hasIndirectCall = false;
-      bool canChangeState = false;
-      bool isBottomMostRuntime = false;
-    };
-    Walker walker;
-    walker.module = &module;
-    walker.analyzer = this;
-    walker.map = &map;
-    walker.walk(curr);
-    // An indirect call is normally ignored if we are ignoring indirect calls.
-    // However, see the docs at the top: if the function we are inside was
-    // specifically added by the user (in the only-list or the add-list) then we
-    // instrument indirect calls from it (this allows specifically allowing some
-    // indirect calls but not others).
-    if (walker.hasIndirectCall &&
-        (canIndirectChangeState || map[func].addedFromList)) {
-      walker.canChangeState = true;
-    }
-    // The bottom-most runtime can never change the state.
-    return walker.canChangeState && !walker.isBottomMostRuntime;
-  }
-
-  FakeGlobalHelper fakeGlobals;
-  bool asserts;
-  bool verbose;
-};
 
 // Checks if something performs a call: either a direct or indirect call,
 // and perhaps it is dropped or assigned to a local. This captures all the
@@ -1501,10 +1052,6 @@ private:
 
 } // anonymous namespace
 
-static std::string getFullImportName(Name module, Name base) {
-  return std::string(module.str) + '.' + base.toString();
-}
-
 struct Asyncify : public Pass {
   void run(Module* module) override {
     auto& options = getPassOptions();
@@ -1515,74 +1062,12 @@ struct Asyncify : public Pass {
     // Ensure there is a memory, as we need it.
     MemoryUtils::ensureExists(module);
 
-    // Find which things can change the state.
-    auto stateChangingImports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("asyncify-imports", "")));
-    auto ignoreImports =
-      options.getArgumentOrDefault("asyncify-ignore-imports", "");
-    bool allImportsCanChangeState =
-      stateChangingImports == "" && ignoreImports == "";
-    String::Split listedImports(stateChangingImports, ",");
-    // TODO: consider renaming asyncify-ignore-indirect to
-    //       asyncify-ignore-nondirect, but that could break users.
-    auto ignoreNonDirect =
-      options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
-    std::string removeListInput =
-      options.getArgumentOrDefault("asyncify-removelist", "");
-    if (removeListInput.empty()) {
-      // Support old name for now to avoid immediate breakage TODO remove
-      removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
-    }
-    String::Split removeList(
-      String::trim(read_possible_response_file(removeListInput)), ",");
-    String::Split addList(
-      String::trim(read_possible_response_file(
-        options.getArgumentOrDefault("asyncify-addlist", ""))),
-      ",");
-    std::string onlyListInput =
-      options.getArgumentOrDefault("asyncify-onlylist", "");
-    if (onlyListInput.empty()) {
-      // Support old name for now to avoid immediate breakage TODO remove
-      onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
-    }
-    String::Split onlyList(
-      String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts = options.getArgumentOrDefault("asyncify-asserts", "") != "";
-    auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
+    
     auto relocatable =
       options.getArgumentOrDefault("asyncify-relocatable", "") != "";
 
-    removeList = handleBracketingOperators(removeList);
-    addList = handleBracketingOperators(addList);
-    onlyList = handleBracketingOperators(onlyList);
-
-    if (!onlyList.empty() && (!removeList.empty() || !addList.empty())) {
-      Fatal() << "It makes no sense to use both an asyncify only-list together "
-                 "with another list.";
-    }
-
-    auto canImportChangeState = [&](Name module, Name base) {
-      if (allImportsCanChangeState) {
-        return true;
-      }
-      auto full = getFullImportName(module, base);
-      for (auto& listedImport : listedImports) {
-        if (String::wildcardMatch(listedImport, full)) {
-          return true;
-        }
-      }
-      return false;
-    };
-
     // Scan the module.
-    ModuleAnalyzer analyzer(*module,
-                            canImportChangeState,
-                            ignoreNonDirect,
-                            removeList,
-                            addList,
-                            onlyList,
-                            asserts,
-                            verbose);
+    std::unique_ptr<ModuleAnalyzer> analyzer = AsyncUtils::createAnalyzer(module, options);
 
     // Add necessary globals before we emit code to use them.
     addGlobals(module, relocatable);
@@ -1611,7 +1096,7 @@ struct Asyncify : public Pass {
         runner.add("reorder-locals");
         runner.add("merge-blocks");
       }
-      runner.add(make_unique<AsyncifyFlow>(&analyzer));
+      runner.add(make_unique<AsyncifyFlow>(analyzer.get()));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1626,7 +1111,7 @@ struct Asyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      runner.add(make_unique<AsyncifyLocals>(&analyzer));
+      runner.add(make_unique<AsyncifyLocals>(analyzer.get()));
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

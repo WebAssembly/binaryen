@@ -18,6 +18,7 @@ set(passes_SOURCES
   test_passes.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
+  async-utils.cpp
   AvoidReinterprets.cpp
   CoalesceLocals.cpp
   CodePushing.cpp

@@ -67,7 +67,7 @@
   )
 
   ;; CHECK:      (func $update_state_param_collision (param $susp f64) (result i32)
-  ;; CHECK-NEXT:  (call $update_state_param_collision
+  ;; CHECK-NEXT:  (call $update_state
   ;; CHECK-NEXT:   (f64.sub
   ;; CHECK-NEXT:    (f64.const 1.1)
   ;; CHECK-NEXT:    (local.get $susp)
@@ -75,7 +75,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $update_state_param_collision (param $susp f64) (result i32)
-    (call $update_state_param_collision (f64.sub (f64.const 1.1) (local.get $susp)))
+    (call $update_state (f64.sub (f64.const 1.1) (local.get $susp)))
   )
 )
 ;; CHECK:      (func $export$update_state_void (param $susp externref) (param $0 f64) (result i32)

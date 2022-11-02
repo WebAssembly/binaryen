@@ -15,6 +15,7 @@
  */
 
 #include "asmjs/shared-constants.h"
+#include "async-utils.h"
 #include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
@@ -36,12 +37,17 @@
 //
 namespace wasm {
 
+using namespace AsyncUtils;
+
 struct JSPI : public Pass {
 
   Type externref = Type(HeapType::ext, Nullable);
 
   void run(Module* module) override {
     Builder builder(*module);
+    auto& options = getPassOptions();
+    std::unique_ptr<ModuleAnalyzer> analyzer =
+      AsyncUtils::createAnalyzer(module, options);
     // Create a global to store the suspender that is passed into exported
     // functions and will then need to be passed out to the imported functions.
     Name suspender = Names::getValidGlobalName(*module, "suspender");
@@ -59,6 +65,9 @@ struct JSPI : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         auto* func = module->getFunction(ex->value);
+        if (!analyzer->needsInstrumentation(func)) {
+          continue;
+        }
         Name wrapperName;
         auto iter = wrappedExports.find(func->name);
         if (iter == wrappedExports.end()) {
@@ -79,7 +88,7 @@ struct JSPI : public Pass {
     // Wrap each imported function in a function that gets the global suspender
     // and passes it on to the imported function.
     for (auto* im : originalFunctions) {
-      if (im->imported()) {
+      if (im->imported() && analyzer->needsInstrumentation(im)) {
         makeWrapperForImport(im, module, suspender);
       }
     }
