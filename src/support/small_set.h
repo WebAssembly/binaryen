@@ -53,6 +53,7 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
         // and truncating the size.
         this->used--;
         this->storage[i] = this->storage[this->used];
+        return;
       }
     }
   }
@@ -90,10 +91,12 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
   void erase(const T& x) {
     for (size_t i = 0; i < this->used; i++) {
       if (this->storage[i] == x) {
-        // We found the item; erase it by moving the final item to replace it
-        // and truncating the size.
+        // We found the item; move things backwards and shrink.
+        for (size_t j = i + 1; j < this->used; j++) {
+          this->storage[j - 1] = this->storage[j];
+        }
         this->used--;
-        this->storage[i] = this->storage[this->used];
+        return;
       }
     }
   }
