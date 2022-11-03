@@ -34,8 +34,7 @@
 
 namespace wasm {
 
-template<typename T, size_t N>
-struct FixedStorageBase {
+template<typename T, size_t N> struct FixedStorageBase {
   size_t used = 0;
   std::array<T, N> storage;
 };
@@ -102,7 +101,7 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
 template<typename T, size_t N, typename FixedStorage, typename FlexibleSet>
 class SmallSetBase {
   // fixed-space storage
-  FixedStorage fixed;  
+  FixedStorage fixed;
 
   // flexible additional storage
   FlexibleSet flexible;
@@ -145,7 +144,8 @@ public:
         // No fixed storage remains. Switch to flexible.
         assert(fixed.used == N);
         assert(flexible.empty());
-        flexible.insert(fixed.storage.begin(), fixed.storage.begin() + fixed.used);
+        flexible.insert(fixed.storage.begin(),
+                        fixed.storage.begin() + fixed.used);
         flexible.insert(x);
         assert(!usingFixed());
         fixed.used = 0;
@@ -192,7 +192,8 @@ public:
     flexible.clear();
   }
 
-  bool operator==(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
+  bool
+  operator==(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
     if (size() != other.size()) {
       return false;
     }
@@ -209,7 +210,8 @@ public:
     }
   }
 
-  bool operator!=(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
+  bool
+  operator!=(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
     return !(*this == other);
   }
 
@@ -323,10 +325,14 @@ public:
 };
 
 template<typename T, size_t N>
-class SmallSet : public SmallSetBase<T, N, OrderedFixedStorage<T, N>, std::set<T>> {};
+class SmallSet
+  : public SmallSetBase<T, N, OrderedFixedStorage<T, N>, std::set<T>> {};
 
 template<typename T, size_t N>
-class SmallUnorderedSet : public SmallSetBase<T, N, UnorderedFixedStorage<T, N>, std::unordered_set<T>> {};
+class SmallUnorderedSet : public SmallSetBase<T,
+                                              N,
+                                              UnorderedFixedStorage<T, N>,
+                                              std::unordered_set<T>> {};
 
 } // namespace wasm
 
