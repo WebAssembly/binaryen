@@ -3525,10 +3525,10 @@ public:
         assert(curr->segment < wasm.dataSegments.size());
         assert(elemType.isNumber());
         const auto& seg = *wasm.dataSegments[curr->segment];
-        auto elemBytes = element.packedType == Field::i8 ? 1
-                         : element.packedType == Field::i16
-                           ? 2
-                           : elemType.getByteSize();
+        auto elemBytes =
+          element.packedType == Field::i8
+            ? 1
+            : element.packedType == Field::i16 ? 2 : elemType.getByteSize();
 
         auto end = (uint64_t)offset + size * elemBytes;
         if ((size != 0ull && droppedSegments.count(curr->segment)) ||
