@@ -266,7 +266,7 @@ public:
 };
 
 template<typename T, size_t N>
-class SmallSet : public SmallSetBase<T, N, std::set<T>> {};
+class SmallSet : public SmallSetBase<T, N, std::set<T>> {}; // FIXME: the fixed part must be sorted here!
 
 template<typename T, size_t N>
 class SmallUnorderedSet : public SmallSetBase<T, N, std::unordered_set<T>> {};

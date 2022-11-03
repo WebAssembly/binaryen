@@ -111,7 +111,7 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined-nn (param $A (ref $A)) (param $x i32)
+ ;; CHECK:      (func $pick-refined-nn (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref $B))
  ;; CHECK-NEXT:  (local.set $B
  ;; CHECK-NEXT:   (ref.cast_static $B
@@ -125,7 +125,7 @@
  ;; CHECK-NEXT:   (local.get $B)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $pick-refined-nn (param $A (ref $A)) (param $x i32)
+ (func $pick-refined-nn (param $A (ref $A))
   (local $B (ref $B))
   ;; As above, but now the types are both non-nullable. We should still switch
   ;; to $B.
@@ -142,7 +142,7 @@
   )
  )
 
- ;; CHECK:      (func $avoid-unrefined (param $A (ref $A)) (param $x i32)
+ ;; CHECK:      (func $avoid-unrefined (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
  ;; CHECK-NEXT:   (ref.cast_static $B
@@ -156,7 +156,7 @@
  ;; CHECK-NEXT:   (local.get $B)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $avoid-unrefined (param $A (ref $A)) (param $x i32)
+ (func $avoid-unrefined (param $A (ref $A))
   (local $B (ref null $B))
   ;; As above, but now the local is nullable. Since the parameter is non-
   ;; nullable, that means neither is a subtype of the other, and we will make
@@ -174,7 +174,7 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined-earlier (param $A (ref $A)) (param $x i32)
+ ;; CHECK:      (func $pick-refined-earlier (param $A (ref $A))
  ;; CHECK-NEXT:  (local $A2 (ref null $A))
  ;; CHECK-NEXT:  (local.set $A2
  ;; CHECK-NEXT:   (local.get $A)
@@ -186,7 +186,7 @@
  ;; CHECK-NEXT:   (local.get $A)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $pick-refined-earlier (param $A (ref $A)) (param $x i32)
+ (func $pick-refined-earlier (param $A (ref $A))
   ;; As above but now the local has the same heap type but is nullable. Now we
   ;; prefer the non-nullable parameter.
   (local $A2 (ref null $A))
@@ -198,6 +198,54 @@
   )
   (drop
    (local.get $A2)
+  )
+ )
+
+ ;; CHECK:      (func $different-choices (param $non-nullable (ref $A))
+ ;; CHECK-NEXT:  (local $nullable (ref null $A))
+ ;; CHECK-NEXT:  (local.set $nullable
+ ;; CHECK-NEXT:   (local.get $non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $nullable
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $nullable
+ ;; CHECK-NEXT:   (local.get $non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $different-choices (param $non-nullable (ref $A))
+  (local $nullable (ref null $A))
+  (local.set $nullable
+   (local.get $non-nullable)
+  )
+  ;; Here we can switch to the non-nullable one.
+  (drop
+   (local.get $nullable)
+  )
+
+  (local.set $nullable
+   (ref.null $A)
+  )
+  ;; Here we cannot.
+  (drop
+   (local.get $nullable)
+  )
+
+  (local.set $nullable
+   (local.get $non-nullable)
+  )
+  ;; Here we can switch once more.
+  (drop
+   (local.get $nullable)
   )
  )
 )
