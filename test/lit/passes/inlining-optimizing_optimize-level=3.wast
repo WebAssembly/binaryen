@@ -4523,9 +4523,6 @@
  ;; CHECK-NEXT:            (i32.const 32)
  ;; CHECK-NEXT:           )
  ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:          (local.set $6
- ;; CHECK-NEXT:           (local.get $1)
- ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:          (local.get $9)
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
