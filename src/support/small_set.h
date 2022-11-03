@@ -62,26 +62,27 @@ template<typename T, size_t N>
 struct OrderedFixedStorage : public FixedStorageBase<T, N> {
   void insert(const T& x) {
     assert(this->used < N);
+
     if (this->used == 0) {
       this->storage[0] = x;
       this->used = 1;
       return;
     }
 
-    // Find the insertion point, where x should be placed.
+    // Find the insertion point |i| where x should be placed.
     size_t i = 0;
     while (i < this->used && this->storage[i] <= x) {
-      // We are called under the assumption that the item does not already
-      // exist.
-      assert(this->storage[i] != x);
-
       i++;
     }
+    // |i| is now the location where x should be placed.
 
-    // Push things forward to make room for x.
-    for (size_t j = this->used - 1; j >= i; j--) {
-      this->storage[j + 1] = this->storage[j];
+    if (i != this->used) {
+      // Push things forward to make room for x.
+      for (size_t j = this->used; j >= i + 1; j--) {
+        this->storage[j] = this->storage[j - 1];
+      }
     }
+
     this->storage[i] = x;
     this->used++;
   }
@@ -198,12 +199,12 @@ public:
       return false;
     }
     if (usingFixed()) {
-      return std::all_of(fixed.begin(),
-                         fixed.begin() + fixed.used,
+      return std::all_of(fixed.storage.begin(),
+                         fixed.storage.begin() + fixed.used,
                          [&other](const T& x) { return other.count(x); });
     } else if (other.usingFixed()) {
-      return std::all_of(other.fixed.begin(),
-                         other.fixed.begin() + other.fixed.used,
+      return std::all_of(other.fixed.storage.begin(),
+                         other.fixed.storage.begin() + other.fixed.used,
                          [this](const T& x) { return count(x); });
     } else {
       return flexible == other.flexible;
