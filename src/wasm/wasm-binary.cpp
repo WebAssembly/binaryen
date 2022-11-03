@@ -3126,8 +3126,7 @@ void WasmBinaryBuilder::readDataSegments() {
     if (flags & BinaryConsts::HasIndex) {
       memIdx = getU32LEB();
     }
-    auto* memory = getMemory(memIdx);
-    curr->memory = memory->name;
+    memoryRefs[memIdx].push_back(&curr->memory);
     if (!curr->isPassive) {
       curr->offset = readExpression();
     }
