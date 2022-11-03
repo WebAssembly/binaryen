@@ -43,17 +43,17 @@ struct FixedStorageBase {
 template<typename T, size_t N>
 struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
   void insert(const T& x) {
-    assert(used < N);
-    storage[used++] = x;
+    assert(this->used < N);
+    this->storage[this->used++] = x;
   }
 
   void erase(const T& x) {
-    for (size_t i = 0; i < used; i++) {
-      if (storage[i] == x) {
+    for (size_t i = 0; i < this->used; i++) {
+      if (this->storage[i] == x) {
         // We found the item; erase it by moving the final item to replace it
         // and truncating the size.
-        used--;
-        storage[i] = storage[used];
+        this->used--;
+        this->storage[i] = this->storage[this->used];
       }
     }
   }
@@ -62,46 +62,47 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
 template<typename T, size_t N>
 struct OrderedFixedStorage : public FixedStorageBase<T, N> {
   void insert(const T& x) {
-    assert(used < N);
-    if (used == 0) {
-      storage[0] = x;
-      used = 1;
+    assert(this->used < N);
+    if (this->used == 0) {
+      this->storage[0] = x;
+      this->used = 1;
       return;
     }
 
     // Find the insertion point, where x should be placed.
     size_t i = 0;
-    while (i < used && storage[i] <= x) {
+    while (i < this->used && this->storage[i] <= x) {
       // We are called under the assumption that the item does not already
       // exist.
-      assert(storage[i] != x);
+      assert(this->storage[i] != x);
 
       i++;
     }
 
     // Push things forward to make room for x.
-    for (size_t j = used - 1; j >= i; j--) {
-      storage[j + 1] = storage[j];
+    for (size_t j = this->used - 1; j >= i; j--) {
+      this->storage[j + 1] = this->storage[j];
     }
-    storage[i] = x;
-    used++;
+    this->storage[i] = x;
+    this->used++;
   }
 
   void erase(const T& x) {
-    for (size_t i = 0; i < used; i++) {
-      if (storage[i] == x) {
+    for (size_t i = 0; i < this->used; i++) {
+      if (this->storage[i] == x) {
         // We found the item; erase it by moving the final item to replace it
         // and truncating the size.
-        used--;
-        storage[i] = storage[used];
+        this->used--;
+        this->storage[i] = this->storage[this->used];
       }
     }
   }
 };
 
-template<typename T, size_t N, typename FixedStorage, typename FlexibleSet> class SmallSetBase {
+template<typename T, size_t N, typename FixedStorage, typename FlexibleSet>
+class SmallSetBase {
   // fixed-space storage
-  FixedStorage<T, N> fixed;  
+  FixedStorage fixed;  
 
   // flexible additional storage
   FlexibleSet flexible;
@@ -144,7 +145,7 @@ public:
         // No fixed storage remains. Switch to flexible.
         assert(fixed.used == N);
         assert(flexible.empty());
-        flexible.insert(fixed.begin(), fixed.begin() + fixed.used);
+        flexible.insert(fixed.storage.begin(), fixed.storage.begin() + fixed.used);
         flexible.insert(x);
         assert(!usingFixed());
         fixed.used = 0;
@@ -166,7 +167,7 @@ public:
     if (usingFixed()) {
       // Do a linear search.
       for (size_t i = 0; i < fixed.used; i++) {
-        if (fixed[i] == x) {
+        if (fixed.storage[i] == x) {
           return 1;
         }
       }
@@ -191,7 +192,7 @@ public:
     flexible.clear();
   }
 
-  bool operator==(const SmallSetBase<T, N, FlexibleSet>& other) const {
+  bool operator==(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
     if (size() != other.size()) {
       return false;
     }
@@ -208,7 +209,7 @@ public:
     }
   }
 
-  bool operator!=(const SmallSetBase<T, N, FlexibleSet>& other) const {
+  bool operator!=(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
     return !(*this == other);
   }
 
@@ -282,14 +283,14 @@ public:
 
     const value_type& operator*() const {
       if (this->usingFixed) {
-        return (this->parent->fixed)[this->fixedIndex];
+        return this->parent->fixed.storage[this->fixedIndex];
       } else {
         return *this->flexibleIterator;
       }
     }
   };
 
-  using Iterator = IteratorBase<SmallSetBase<T, N, FlexibleSet>,
+  using Iterator = IteratorBase<SmallSetBase<T, N, FixedStorage, FlexibleSet>,
                                 typename FlexibleSet::const_iterator>;
 
   Iterator begin() {
