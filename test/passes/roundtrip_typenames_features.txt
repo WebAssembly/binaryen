@@ -5,5 +5,5 @@
  (func $0 (param $0 (ref null $NamedStruct))
   (nop)
  )
- ;; features section: reference-types, gc
+ ;; features section: mutable-globals, sign-ext, reference-types, gc
 )

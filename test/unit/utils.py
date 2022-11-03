@@ -10,12 +10,11 @@ class BinaryenTestCase(unittest.TestCase):
                             filename)
 
     def roundtrip(self, filename, opts=[], debug=True):
+        opts = ['--mvp-features'] + opts
         if debug:
-            opts = opts + ['-g']
+            opts.append('-g')
         path = self.input_path(filename)
-        p = shared.run_process(shared.WASM_OPT + ['-o', 'a.wasm', path] +
-                               opts)
-        self.assertEqual(p.returncode, 0)
+        shared.run_process(shared.WASM_OPT + ['-o', 'a.wasm', path] + opts)
         with open(path, 'rb') as f:
             with open('a.wasm', 'rb') as g:
                 self.assertEqual(g.read(), f.read())
@@ -24,15 +23,14 @@ class BinaryenTestCase(unittest.TestCase):
         path = self.input_path(filename)
         p = shared.run_process(shared.WASM_OPT +
                                ['--print', '-o', os.devnull, path],
-                               check=False, capture_output=True)
-        self.assertEqual(p.returncode, 0)
+                               capture_output=True)
         self.assertEqual(p.stderr, '')
         return p.stdout
 
     def check_features(self, filename, features, opts=[]):
         path = self.input_path(filename)
         cmd = shared.WASM_OPT + \
-            ['--print-features', '-o', os.devnull, path] + opts
+            ['--mvp-features', '--print-features', '-o', os.devnull, path] + opts
         p = shared.run_process(cmd, check=False, capture_output=True)
         self.assertEqual(p.returncode, 0)
         self.assertEqual(p.stderr, '')
