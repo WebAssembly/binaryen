@@ -34,10 +34,38 @@
 
 namespace wasm {
 
-template<typename T, size_t N, typename FlexibleSet> class SmallSetBase {
+template<typename T, size_t N>
+struct FixedStorageBase {
+  size_t used = 0;
+  std::array<T, N> storage;
+};
+
+template<typename T, size_t N>
+struct UnsortedFixedStorage : public FixedStorageBase<T, N> {
+  void insert(const T& x) {
+    assert(used < N);
+    storage[used++] = x;
+  }
+
+  void erase(const T& x) {
+    for (size_t i = 0; i < used; i++) {
+      if (storage[i] == x) {
+        // We found the item; erase it by moving the final item to replace it
+        // and truncating the size.
+        used--;
+        storage[i] = storage[used];
+      }
+    }
+  }
+};
+
+template<typename T, size_t N>
+struct SortedFixedStorage : public FixedStorageBase<T, N> {
+};
+
+template<typename T, size_t N, typename FixedStorage, typename FlexibleSet> class SmallSetBase {
   // fixed-space storage
-  size_t usedFixed = 0;
-  std::array<T, N> fixed;
+  FixedStorage<T, N> fixed;  
 
   // flexible additional storage
   FlexibleSet flexible;
@@ -73,17 +101,17 @@ public:
         return;
       }
       // We must add a new item.
-      if (usedFixed < N) {
+      if (fixed.used < N) {
         // Room remains in the fixed storage.
-        fixed[usedFixed++] = x;
+        fixed.insert(x);
       } else {
         // No fixed storage remains. Switch to flexible.
-        assert(usedFixed == N);
+        assert(fixed.used == N);
         assert(flexible.empty());
-        flexible.insert(fixed.begin(), fixed.begin() + usedFixed);
+        flexible.insert(fixed.begin(), fixed.begin() + fixed.used);
         flexible.insert(x);
         assert(!usingFixed());
-        usedFixed = 0;
+        fixed.used = 0;
       }
     } else {
       flexible.insert(x);
@@ -92,15 +120,7 @@ public:
 
   void erase(const T& x) {
     if (usingFixed()) {
-      for (size_t i = 0; i < usedFixed; i++) {
-        if (fixed[i] == x) {
-          // We found the item; erase it by moving the final item to replace it
-          // and truncating the size.
-          usedFixed--;
-          fixed[i] = fixed[usedFixed];
-          return;
-        }
-      }
+      fixed.erase(x);
     } else {
       flexible.erase(x);
     }
@@ -109,7 +129,7 @@ public:
   size_t count(const T& x) const {
     if (usingFixed()) {
       // Do a linear search.
-      for (size_t i = 0; i < usedFixed; i++) {
+      for (size_t i = 0; i < fixed.used; i++) {
         if (fixed[i] == x) {
           return 1;
         }
@@ -122,7 +142,7 @@ public:
 
   size_t size() const {
     if (usingFixed()) {
-      return usedFixed;
+      return fixed.used;
     } else {
       return flexible.size();
     }
@@ -131,7 +151,7 @@ public:
   bool empty() const { return size() == 0; }
 
   void clear() {
-    usedFixed = 0;
+    fixed.used = 0;
     flexible.clear();
   }
 
@@ -141,11 +161,11 @@ public:
     }
     if (usingFixed()) {
       return std::all_of(fixed.begin(),
-                         fixed.begin() + usedFixed,
+                         fixed.begin() + fixed.used,
                          [&other](const T& x) { return other.count(x); });
     } else if (other.usingFixed()) {
       return std::all_of(other.fixed.begin(),
-                         other.fixed.begin() + other.usedFixed,
+                         other.fixed.begin() + other.fixed.used,
                          [this](const T& x) { return count(x); });
     } else {
       return flexible == other.flexible;
