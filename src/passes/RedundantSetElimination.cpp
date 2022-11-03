@@ -337,6 +337,11 @@ struct RedundantSetElimination
 
   // optimizing
   void optimize(Function* func) {
+    // Find which locals are refinable, that is, that when we see a global.get
+    // of them we may consider switching to another local index that has the
+    // same value but in a refined type. Computing which locals are relevant for
+    // that optimization is efficient because it avoids a bunch of work below
+    // for hashing numbers etc.
     std::vector<bool> isRefinable(numLocals, false);
     for (Index i = 0; i < numLocals; i++) {
       // TODO: we could also note which locals have "maximal" types, where no
