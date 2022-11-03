@@ -361,7 +361,6 @@ struct RedundantSetElimination
       // them as we go, so we can use them at any point in the middle. This data
       // structure maps a value number to the local indexes that have that
       // value.
-      // 3.6 => 4.6
       std::unordered_map<Index, SmallUnorderedSet<Index, 3>> valueToLocals;
       assert(currValues.size() == numLocals);
       for (Index i = 0; i < numLocals; i++) {
