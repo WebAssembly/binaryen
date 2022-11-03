@@ -336,6 +336,62 @@ BinaryenHeapType BinaryenHeapTypeGetBottom(BinaryenHeapType heapType) {
 bool BinaryenHeapTypeIsSubType(BinaryenHeapType left, BinaryenHeapType right) {
   return HeapType::isSubType(HeapType(left), HeapType(right));
 }
+BinaryenIndex BinaryenStructTypeGetNumFields(BinaryenHeapType heapType) {
+  auto ht = HeapType(heapType);
+  assert(ht.isStruct());
+  return ht.getStruct().fields.size();
+}
+BinaryenType BinaryenStructTypeGetFieldType(BinaryenHeapType heapType,
+                                            BinaryenIndex index) {
+  auto ht = HeapType(heapType);
+  assert(ht.isStruct());
+  auto& fields = ht.getStruct().fields;
+  assert(index < fields.size());
+  return fields[index].type.getID();
+}
+BinaryenPackedType
+BinaryenStructTypeGetFieldPackedType(BinaryenHeapType heapType,
+                                     BinaryenIndex index) {
+  auto ht = HeapType(heapType);
+  assert(ht.isStruct());
+  auto& fields = ht.getStruct().fields;
+  assert(index < fields.size());
+  return fields[index].packedType;
+}
+bool BinaryenStructTypeIsFieldMutable(BinaryenHeapType heapType,
+                                      BinaryenIndex index) {
+  auto ht = HeapType(heapType);
+  assert(ht.isStruct());
+  auto& fields = ht.getStruct().fields;
+  assert(index < fields.size());
+  return fields[index].mutable_;
+}
+BinaryenType BinaryenArrayTypeGetElementType(BinaryenHeapType heapType) {
+  auto ht = HeapType(heapType);
+  assert(ht.isArray());
+  return ht.getArray().element.type.getID();
+}
+BinaryenPackedType
+BinaryenArrayTypeGetElementPackedType(BinaryenHeapType heapType) {
+  auto ht = HeapType(heapType);
+  assert(ht.isArray());
+  return ht.getArray().element.packedType;
+}
+bool BinaryenArrayTypeIsElementMutable(BinaryenHeapType heapType) {
+  auto ht = HeapType(heapType);
+  assert(ht.isArray());
+  return ht.getArray().element.mutable_;
+}
+BinaryenType BinaryenSignatureTypeGetParams(BinaryenHeapType heapType) {
+  auto ht = HeapType(heapType);
+  assert(ht.isSignature());
+  return ht.getSignature().params.getID();
+}
+BinaryenType BinaryenSignatureTypeGetResults(BinaryenHeapType heapType) {
+  auto ht = HeapType(heapType);
+  assert(ht.isSignature());
+  return ht.getSignature().results.getID();
+}
 
 BinaryenHeapType BinaryenTypeGetHeapType(BinaryenType type) {
   return Type(type).getHeapType().getID();

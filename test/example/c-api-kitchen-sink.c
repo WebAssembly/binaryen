@@ -2173,7 +2173,7 @@ void test_typebuilder() {
   assert(!TypeBuilderIsBasic(builder, tempStructIndex));
   assert(!TypeBuilderIsBasic(builder, tempSignatureIndex));
 
-  // Create a subtype (with an additional packed field)
+  // Create a subtype (with an additional immutable packed field)
   const BinaryenIndex tempSubStructIndex = 4;
   BinaryenHeapType tempSubStructHeapType =
     TypeBuilderGetTempHeapType(builder, tempSubStructIndex);
@@ -2184,7 +2184,7 @@ void test_typebuilder() {
       tempStructType, BinaryenTypeInt32()}; // must repeat existing fields
     BinaryenPackedType fieldPackedTypes[] = {BinaryenPackedTypeNotPacked(),
                                              BinaryenPackedTypeInt8()};
-    bool fieldMutables[] = {true, true};
+    bool fieldMutables[] = {true, false};
     TypeBuilderSetStructType(builder,
                              tempSubStructIndex,
                              fieldTypes,
@@ -2212,6 +2212,10 @@ void test_typebuilder() {
   assert(!BinaryenHeapTypeIsBottom(arrayHeapType));
   assert(BinaryenHeapTypeIsSubType(arrayHeapType, BinaryenHeapTypeArray()));
   BinaryenType arrayType = BinaryenTypeFromHeapType(arrayHeapType, true);
+  assert(BinaryenArrayTypeGetElementType(arrayHeapType) == arrayType);
+  assert(BinaryenArrayTypeGetElementPackedType(arrayHeapType) ==
+         BinaryenPackedTypeNotPacked());
+  assert(BinaryenArrayTypeIsElementMutable(arrayHeapType));
 
   BinaryenHeapType structHeapType = heapTypes[tempStructIndex];
   assert(!BinaryenHeapTypeIsBasic(structHeapType));
@@ -2221,6 +2225,11 @@ void test_typebuilder() {
   assert(!BinaryenHeapTypeIsBottom(structHeapType));
   assert(BinaryenHeapTypeIsSubType(structHeapType, BinaryenHeapTypeData()));
   BinaryenType structType = BinaryenTypeFromHeapType(structHeapType, true);
+  assert(BinaryenStructTypeGetNumFields(structHeapType) == 1);
+  assert(BinaryenStructTypeGetFieldType(structHeapType, 0) == structType);
+  assert(BinaryenStructTypeGetFieldPackedType(structHeapType, 0) ==
+         BinaryenPackedTypeNotPacked());
+  assert(BinaryenStructTypeIsFieldMutable(structHeapType, 0));
 
   BinaryenHeapType signatureHeapType = heapTypes[tempSignatureIndex];
   assert(!BinaryenHeapTypeIsBasic(signatureHeapType));
@@ -2231,6 +2240,17 @@ void test_typebuilder() {
   assert(BinaryenHeapTypeIsSubType(signatureHeapType, BinaryenHeapTypeFunc()));
   BinaryenType signatureType =
     BinaryenTypeFromHeapType(signatureHeapType, true);
+  BinaryenType signatureParams =
+    BinaryenSignatureTypeGetParams(signatureHeapType);
+  assert(BinaryenTypeArity(signatureParams) == 2);
+  BinaryenType expandedSignatureParams[2];
+  BinaryenTypeExpand(signatureParams, (BinaryenType*)expandedSignatureParams);
+  assert(expandedSignatureParams[0] == signatureType);
+  assert(expandedSignatureParams[1] == arrayType);
+  BinaryenType signatureResults =
+    BinaryenSignatureTypeGetResults(signatureHeapType);
+  assert(BinaryenTypeArity(signatureResults) == 1);
+  assert(signatureResults == signatureType);
 
   BinaryenHeapType basicHeapType = heapTypes[tempBasicIndex]; // = eq
   assert(BinaryenHeapTypeIsBasic(basicHeapType));
@@ -2251,6 +2271,16 @@ void test_typebuilder() {
   assert(BinaryenHeapTypeIsSubType(subStructHeapType, structHeapType));
   BinaryenType subStructType =
     BinaryenTypeFromHeapType(subStructHeapType, true);
+  assert(BinaryenStructTypeGetNumFields(subStructHeapType) == 2);
+  assert(BinaryenStructTypeGetFieldType(subStructHeapType, 0) == structType);
+  assert(BinaryenStructTypeGetFieldType(subStructHeapType, 1) ==
+         BinaryenTypeInt32());
+  assert(BinaryenStructTypeGetFieldPackedType(subStructHeapType, 0) ==
+         BinaryenPackedTypeNotPacked());
+  assert(BinaryenStructTypeGetFieldPackedType(subStructHeapType, 1) ==
+         BinaryenPackedTypeInt8());
+  assert(BinaryenStructTypeIsFieldMutable(subStructHeapType, 0));
+  assert(!BinaryenStructTypeIsFieldMutable(subStructHeapType, 1));
 
   // Build a simple test module, validate and print it
   BinaryenModuleRef module = BinaryenModuleCreate();
