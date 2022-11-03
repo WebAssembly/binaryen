@@ -41,7 +41,7 @@ struct FixedStorageBase {
 };
 
 template<typename T, size_t N>
-struct UnsortedFixedStorage : public FixedStorageBase<T, N> {
+struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
   void insert(const T& x) {
     assert(used < N);
     storage[used++] = x;
@@ -60,7 +60,43 @@ struct UnsortedFixedStorage : public FixedStorageBase<T, N> {
 };
 
 template<typename T, size_t N>
-struct SortedFixedStorage : public FixedStorageBase<T, N> {
+struct OrderedFixedStorage : public FixedStorageBase<T, N> {
+  void insert(const T& x) {
+    assert(used < N);
+    if (used == 0) {
+      storage[0] = x;
+      used = 1;
+      return;
+    }
+
+    // Find the insertion point, where x should be placed.
+    size_t i = 0;
+    while (i < used && storage[i] <= x) {
+      // We are called under the assumption that the item does not already
+      // exist.
+      assert(storage[i] != x);
+
+      i++;
+    }
+
+    // Push things forward to make room for x.
+    for (size_t j = used - 1; j >= i; j--) {
+      storage[j + 1] = storage[j];
+    }
+    storage[i] = x;
+    used++;
+  }
+
+  void erase(const T& x) {
+    for (size_t i = 0; i < used; i++) {
+      if (storage[i] == x) {
+        // We found the item; erase it by moving the final item to replace it
+        // and truncating the size.
+        used--;
+        storage[i] = storage[used];
+      }
+    }
+  }
 };
 
 template<typename T, size_t N, typename FixedStorage, typename FlexibleSet> class SmallSetBase {
@@ -286,10 +322,10 @@ public:
 };
 
 template<typename T, size_t N>
-class SmallSet : public SmallSetBase<T, N, std::set<T>> {};
+class SmallSet : public SmallSetBase<T, N, OrderedFixedStorage<T, N>, std::set<T>> {};
 
 template<typename T, size_t N>
-class SmallUnorderedSet : public SmallSetBase<T, N, std::unordered_set<T>> {};
+class SmallUnorderedSet : public SmallSetBase<T, N, UnorderedFixedStorage<T, N>, std::unordered_set<T>> {};
 
 } // namespace wasm
 
