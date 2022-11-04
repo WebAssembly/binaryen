@@ -670,7 +670,16 @@ struct InfoCollector
     receiveChildValue(curr->ref, curr);
   }
   void visitRefAs(RefAs* curr) {
-    // TODO: optimize when possible: like RefCast, not all values flow through.
+    if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
+      // The external conversion ops emit something of a completely different
+      // type, which we must mark as a root.
+      addRoot(curr);
+      return;
+    }
+
+    // All other RefAs operations flow values through while refining them (the
+    // filterExpressionContents method will handle the refinement
+    // automatically).
     receiveChildValue(curr->value, curr);
   }
 
@@ -1681,8 +1690,16 @@ bool Flower::updateContents(LocationIndex locationIndex,
   }
 
   // Check if anything changed after filtering, if we did so.
-  if (filtered && contents == oldContents) {
-    return worthSendingMore;
+  if (filtered) {
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  filtered contents:\n";
+    contents.dump(std::cout, &wasm);
+    std::cout << '\n';
+#endif
+
+    if (contents == oldContents) {
+      return worthSendingMore;
+    }
   }
 
   // After filtering we should always have more precise information than "many"
@@ -2057,6 +2074,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
+  // TODO: Remove this method, as it just filters by the type, which we do
+  //       automatically now in filterExpressionContents.
   auto intendedCone =
     PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
   PossibleContents filtered = contents;
