@@ -2074,7 +2074,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
   // RefCast only allows valid values to go through: nulls and things of the
   // cast type. Filter anything else out.
-  // TODO: do we need this?
+  // TODO: Remove this method, as it just filters by the type, which we do
+  //       automatically now in filterExpressionContents.
   auto intendedCone =
     PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
   PossibleContents filtered = contents;
