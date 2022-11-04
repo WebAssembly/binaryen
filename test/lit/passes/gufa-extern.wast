@@ -2,6 +2,24 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa --nominal -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $externref_anyref_=>_none (func_subtype (param externref anyref) func))
+
+  ;; CHECK:      (export "externals" (func $externals))
+
+  ;; CHECK:      (func $externals (type $externref_anyref_=>_none) (param $ext externref) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_data
+  ;; CHECK-NEXT:    (extern.internalize
+  ;; CHECK-NEXT:     (local.get $ext)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (extern.externalize
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $externals (export "externals") (param $ext externref) (param $any anyref)
     ;; We must not turn these into unreachable code, as the function is
     ;; exported.
