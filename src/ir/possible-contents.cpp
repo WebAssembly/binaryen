@@ -900,9 +900,22 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
-    // TODO: How to add a connection between data/elem segments and the
-    // allocated value / its type?
-    WASM_UNREACHABLE("What is this supposed to do???");
+    auto heapType = curr->type.getHeapType();
+    switch (curr->op) {
+      case NewData: {
+        Type elemType = heapType.getArray().element.type;
+        addRoot(DataLocation{heapType, 0},
+                PossibleContents::exactType(elemType));
+        return;
+      }
+      case NewElem: {
+        Type segType = getModule()->elementSegments[curr->segment]->type;
+        addRoot(DataLocation{heapType, 0},
+                PossibleContents::fullConeType(segType));
+        return;
+      }
+    }
+    WASM_UNREACHABLE("unexpected op");
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {

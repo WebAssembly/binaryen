@@ -235,6 +235,57 @@ Literal Literal::makeNegOne(Type type) {
   return makeFromInt32(-1, type);
 }
 
+Literal Literal::makeFromMemory(void* p, Type type) {
+  assert(type.isNumber());
+  switch (type.getBasic()) {
+    case Type::i32: {
+      int32_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(i);
+    }
+    case Type::i64: {
+      int64_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(i);
+    }
+    case Type::f32: {
+      int32_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(bit_cast<float>(i));
+    }
+    case Type::f64: {
+      int64_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(bit_cast<double>(i));
+    }
+    case Type::v128: {
+      uint8_t bytes[16];
+      memcpy(bytes, p, sizeof(bytes));
+      return Literal(bytes);
+    }
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+Literal Literal::makeFromMemory(void* p, const Field& field) {
+  switch (field.packedType) {
+    case Field::not_packed:
+      return makeFromMemory(p, field.type);
+    case Field::i8: {
+      int8_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(int32_t(i));
+    }
+    case Field::i16: {
+      int16_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(int32_t(i));
+    }
+  }
+  WASM_UNREACHABLE("unexpected type");
+}
+
 Literal Literal::standardizeNaN(const Literal& input) {
   if (!std::isnan(input.getFloat())) {
     return input;

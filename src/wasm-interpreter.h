@@ -3525,11 +3525,7 @@ public:
         assert(curr->segment < wasm.dataSegments.size());
         assert(elemType.isNumber());
         const auto& seg = *wasm.dataSegments[curr->segment];
-        auto elemBytes =
-          element.packedType == Field::i8
-            ? 1
-            : element.packedType == Field::i16 ? 2 : elemType.getByteSize();
-
+        auto elemBytes = element.getByteSize();
         auto end = (uint64_t)offset + size * elemBytes;
         if ((size != 0ull && droppedSegments.count(curr->segment)) ||
             end > seg.data.size()) {
@@ -3537,23 +3533,7 @@ public:
         }
         for (Index i = offset; i < end; i += elemBytes) {
           auto addr = (void*)&seg.data[i];
-          switch (element.packedType) {
-            case Field::not_packed:
-              contents.push_back(Literal::makeFromMemory(addr, elemType));
-              break;
-            case Field::i8: {
-              uint8_t val;
-              memcpy(&val, addr, 1);
-              contents.push_back(Literal(int32_t(val)));
-              break;
-            }
-            case Field::i16: {
-              uint16_t val;
-              memcpy(&val, addr, 2);
-              contents.push_back(Literal(int32_t(val)));
-              break;
-            }
-          }
+          contents.push_back(Literal::makeFromMemory(addr, element));
         }
         break;
       }
