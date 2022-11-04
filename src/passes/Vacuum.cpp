@@ -132,9 +132,39 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitBlock(Block* curr) {
+    auto& list = curr->list;
+
+    // If traps are assumed to never happen, we can remove code on paths that
+    // must reach a trap:
+    //
+    //  (block
+    //    (i32.store ..)
+    //    (br_if ..)      ;; execution branches here, so the first store remains
+    //    (i32.store ..)  ;; this store can be removed
+    //    (unreachable);
+    //  )
+    //
+    // For this to be useful we need to have at least 2 elements: something to
+    // remove, and an unreachable.
+    if (getPassOptions().trapsNeverHappen && list.size() >= 2) {
+      // Go backwards. When we find a trap, mark the things before it as heading
+      // to a trap, until we reach a possible control flow transfer.
+      auto headingToTrap = false;
+      for (int i = list.size() - 1; i >= 0; i--) {
+        if (list[i]->is<Unreachable>()) {
+          headingToTrap = true;
+        } else if (EffectAnalyzer(getPassOptions(), *getModule(), list[i]).transfersControlFlow()) {
+          headingToTrap = false;
+        } else if (headingToTrap) {
+          // This code can be removed. Turn it into a nop, and leave it for the
+          // loop after us to clean up.
+          ExpressionManipulator::nop(list[i]);
+        }
+      }
+    }
+
     // compress out nops and other dead code
     int skip = 0;
-    auto& list = curr->list;
     size_t size = list.size();
     for (size_t z = 0; z < size; z++) {
       auto* child = list[z];
@@ -231,6 +261,23 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
     // from here on, we can assume the condition executed
+
+    // In trapsNeverHappen mode, a definitely-trapping arm can be assumed to not
+    // happen. Such conditional code can be assumed to never be reached in this
+    // mode.
+    //
+    // Ignore the case of an unreachable if, such as having both arms be
+    // unreachable. In that case we'd need to fix up the IR to avoid changing
+    // the type; leave that for DCE to simplify first.
+    if (getPassOptions().trapsNeverHappen && curr->type != Type::unreachable) {
+      if (curr->ifTrue->is<Unreachable>()) {
+        ExpressionManipulator::nop(curr->ifTrue);
+      }
+      if (curr->ifFalse && curr->ifFalse->is<Unreachable>()) {
+        ExpressionManipulator::nop(curr->ifFalse);
+      }
+    }
+
     if (curr->ifFalse) {
       if (curr->ifFalse->is<Nop>()) {
         curr->ifFalse = nullptr;
