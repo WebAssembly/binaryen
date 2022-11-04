@@ -34,10 +34,72 @@
 
 namespace wasm {
 
-template<typename T, size_t N, typename FlexibleSet> class SmallSetBase {
+template<typename T, size_t N> struct FixedStorageBase {
+  size_t used = 0;
+  std::array<T, N> storage;
+};
+
+template<typename T, size_t N>
+struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
+  void insert(const T& x) {
+    assert(this->used < N);
+    this->storage[this->used++] = x;
+  }
+
+  void erase(const T& x) {
+    for (size_t i = 0; i < this->used; i++) {
+      if (this->storage[i] == x) {
+        // We found the item; erase it by moving the final item to replace it
+        // and truncating the size.
+        this->used--;
+        this->storage[i] = this->storage[this->used];
+        return;
+      }
+    }
+  }
+};
+
+template<typename T, size_t N>
+struct OrderedFixedStorage : public FixedStorageBase<T, N> {
+  void insert(const T& x) {
+    assert(this->used < N);
+
+    // Find the insertion point |i| where x should be placed.
+    size_t i = 0;
+    while (i < this->used && this->storage[i] <= x) {
+      i++;
+    }
+    // |i| is now the location where x should be placed.
+
+    if (i != this->used) {
+      // Push things forward to make room for x.
+      for (size_t j = this->used; j >= i + 1; j--) {
+        this->storage[j] = this->storage[j - 1];
+      }
+    }
+
+    this->storage[i] = x;
+    this->used++;
+  }
+
+  void erase(const T& x) {
+    for (size_t i = 0; i < this->used; i++) {
+      if (this->storage[i] == x) {
+        // We found the item; move things backwards and shrink.
+        for (size_t j = i + 1; j < this->used; j++) {
+          this->storage[j - 1] = this->storage[j];
+        }
+        this->used--;
+        return;
+      }
+    }
+  }
+};
+
+template<typename T, size_t N, typename FixedStorage, typename FlexibleSet>
+class SmallSetBase {
   // fixed-space storage
-  size_t usedFixed = 0;
-  std::array<T, N> fixed;
+  FixedStorage fixed;
 
   // flexible additional storage
   FlexibleSet flexible;
@@ -73,17 +135,18 @@ public:
         return;
       }
       // We must add a new item.
-      if (usedFixed < N) {
+      if (fixed.used < N) {
         // Room remains in the fixed storage.
-        fixed[usedFixed++] = x;
+        fixed.insert(x);
       } else {
         // No fixed storage remains. Switch to flexible.
-        assert(usedFixed == N);
+        assert(fixed.used == N);
         assert(flexible.empty());
-        flexible.insert(fixed.begin(), fixed.begin() + usedFixed);
+        flexible.insert(fixed.storage.begin(),
+                        fixed.storage.begin() + fixed.used);
         flexible.insert(x);
         assert(!usingFixed());
-        usedFixed = 0;
+        fixed.used = 0;
       }
     } else {
       flexible.insert(x);
@@ -92,15 +155,7 @@ public:
 
   void erase(const T& x) {
     if (usingFixed()) {
-      for (size_t i = 0; i < usedFixed; i++) {
-        if (fixed[i] == x) {
-          // We found the item; erase it by moving the final item to replace it
-          // and truncating the size.
-          usedFixed--;
-          fixed[i] = fixed[usedFixed];
-          return;
-        }
-      }
+      fixed.erase(x);
     } else {
       flexible.erase(x);
     }
@@ -109,8 +164,8 @@ public:
   size_t count(const T& x) const {
     if (usingFixed()) {
       // Do a linear search.
-      for (size_t i = 0; i < usedFixed; i++) {
-        if (fixed[i] == x) {
+      for (size_t i = 0; i < fixed.used; i++) {
+        if (fixed.storage[i] == x) {
           return 1;
         }
       }
@@ -122,7 +177,7 @@ public:
 
   size_t size() const {
     if (usingFixed()) {
-      return usedFixed;
+      return fixed.used;
     } else {
       return flexible.size();
     }
@@ -131,28 +186,30 @@ public:
   bool empty() const { return size() == 0; }
 
   void clear() {
-    usedFixed = 0;
+    fixed.used = 0;
     flexible.clear();
   }
 
-  bool operator==(const SmallSetBase<T, N, FlexibleSet>& other) const {
+  bool
+  operator==(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
     if (size() != other.size()) {
       return false;
     }
     if (usingFixed()) {
-      return std::all_of(fixed.begin(),
-                         fixed.begin() + usedFixed,
+      return std::all_of(fixed.storage.begin(),
+                         fixed.storage.begin() + fixed.used,
                          [&other](const T& x) { return other.count(x); });
     } else if (other.usingFixed()) {
-      return std::all_of(other.fixed.begin(),
-                         other.fixed.begin() + other.usedFixed,
+      return std::all_of(other.fixed.storage.begin(),
+                         other.fixed.storage.begin() + other.fixed.used,
                          [this](const T& x) { return count(x); });
     } else {
       return flexible == other.flexible;
     }
   }
 
-  bool operator!=(const SmallSetBase<T, N, FlexibleSet>& other) const {
+  bool
+  operator!=(const SmallSetBase<T, N, FixedStorage, FlexibleSet>& other) const {
     return !(*this == other);
   }
 
@@ -226,14 +283,14 @@ public:
 
     const value_type& operator*() const {
       if (this->usingFixed) {
-        return (this->parent->fixed)[this->fixedIndex];
+        return this->parent->fixed.storage[this->fixedIndex];
       } else {
         return *this->flexibleIterator;
       }
     }
   };
 
-  using Iterator = IteratorBase<SmallSetBase<T, N, FlexibleSet>,
+  using Iterator = IteratorBase<SmallSetBase<T, N, FixedStorage, FlexibleSet>,
                                 typename FlexibleSet::const_iterator>;
 
   Iterator begin() {
@@ -266,10 +323,14 @@ public:
 };
 
 template<typename T, size_t N>
-class SmallSet : public SmallSetBase<T, N, std::set<T>> {};
+class SmallSet
+  : public SmallSetBase<T, N, OrderedFixedStorage<T, N>, std::set<T>> {};
 
 template<typename T, size_t N>
-class SmallUnorderedSet : public SmallSetBase<T, N, std::unordered_set<T>> {};
+class SmallUnorderedSet : public SmallSetBase<T,
+                                              N,
+                                              UnorderedFixedStorage<T, N>,
+                                              std::unordered_set<T>> {};
 
 } // namespace wasm
 

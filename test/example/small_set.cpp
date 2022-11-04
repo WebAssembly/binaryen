@@ -201,6 +201,60 @@ template<typename T> void testInternals() {
   }
 }
 
+// Iterate over an input object and check we have the same items, in the same
+// order, as we expect.
+template<typename T>
+void assertEqualOrdered(const T& t, const std::vector<int>& expected) {
+  size_t index = 0;
+  for (auto x : t) {
+    assert(index < expected.size());
+    assert(x == expected[index]);
+    index++;
+  }
+}
+
+template<typename T> void testOrdering() {
+  T t;
+
+  // Do some inserts at the end.
+  t.insert(1);
+  assertEqualOrdered(t, {1});
+
+  t.insert(2);
+  assertEqualOrdered(t, {1, 2});
+
+  t.insert(3);
+  assertEqualOrdered(t, {1, 2, 3});
+
+  // Erase the start.
+  t.erase(1);
+  assertEqualOrdered(t, {2, 3});
+
+  // Insert at the start.
+  t.insert(1);
+  assertEqualOrdered(t, {1, 2, 3});
+
+  // Erase the end.
+  t.erase(3);
+  assertEqualOrdered(t, {1, 2});
+
+  // Erase the end.
+  t.erase(2);
+  assertEqualOrdered(t, {1});
+
+  // Insert at the end.
+  t.insert(3);
+  assertEqualOrdered(t, {1, 3});
+
+  // Insert at the middle.
+  t.insert(2);
+  assertEqualOrdered(t, {1, 2, 3});
+
+  // Erase the middle.
+  t.erase(2);
+  assertEqualOrdered(t, {1, 3});
+}
+
 int main() {
   testAPI<SmallSet<int, 0>>();
   testAPI<SmallSet<int, 1>>();
@@ -216,6 +270,12 @@ int main() {
 
   testInternals<SmallSet<int, 1>>();
   testInternals<SmallUnorderedSet<int, 1>>();
+
+  testOrdering<SmallSet<int, 0>>();
+  testOrdering<SmallSet<int, 1>>();
+  testOrdering<SmallSet<int, 2>>();
+  testOrdering<SmallSet<int, 3>>();
+  testOrdering<SmallSet<int, 10>>();
 
   std::cout << "ok.\n";
 }
