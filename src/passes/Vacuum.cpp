@@ -158,6 +158,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         } else if (headingToTrap) {
           // This code can be removed. Turn it into a nop, and leave it for the
           // loop after us to clean up.
+          typeUpdater.noteRecursiveRemoval(list[i]);
           ExpressionManipulator::nop(list[i]);
         }
       }
@@ -271,9 +272,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // the type; leave that for DCE to simplify first.
     if (getPassOptions().trapsNeverHappen && curr->type != Type::unreachable) {
       if (curr->ifTrue->is<Unreachable>()) {
+        typeUpdater.noteRecursiveRemoval(curr->ifTrue);
         ExpressionManipulator::nop(curr->ifTrue);
       }
       if (curr->ifFalse && curr->ifFalse->is<Unreachable>()) {
+        typeUpdater.noteRecursiveRemoval(curr->ifFalse);
         ExpressionManipulator::nop(curr->ifFalse);
       }
     }

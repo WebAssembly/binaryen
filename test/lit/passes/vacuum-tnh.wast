@@ -278,4 +278,213 @@
       )
     )
   )
+
+  ;; YESTNH:      (func $if-unreachable (param $p i32)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (if
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:   (call $if-unreachable
+  ;; YESTNH-NEXT:    (i32.const 0)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (if
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:   (unreachable)
+  ;; YESTNH-NEXT:   (unreachable)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $if-unreachable (param $p i32)
+  ;; NO_TNH-NEXT:  (if
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (if
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (call $if-unreachable
+  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (if
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $if-unreachable (param $p i32)
+    ;; The if arm can be nopped, as in tnh we assume we never reach it.
+    (if
+      (local.get $p)
+      (unreachable)
+    )
+    ;; This else arm can be removed.
+    (if
+      (local.get $p)
+      (call $if-unreachable
+        (i32.const 0)
+      )
+      (unreachable)
+    )
+    ;; Both of these can be removed, but we leave this for DCE to handle.
+    (if
+      (local.get $p)
+      (unreachable)
+      (unreachable)
+    )
+  )
+
+  ;; YESTNH:      (func $block-unreachable (param $p i32)
+  ;; YESTNH-NEXT:  (if
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (i32.store
+  ;; YESTNH-NEXT:     (i32.const 0)
+  ;; YESTNH-NEXT:     (i32.const 1)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (if
+  ;; YESTNH-NEXT:     (local.get $p)
+  ;; YESTNH-NEXT:     (return)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $block-unreachable (param $p i32)
+  ;; NO_TNH-NEXT:  (if
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 0)
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (if
+  ;; NO_TNH-NEXT:     (local.get $p)
+  ;; NO_TNH-NEXT:     (return)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 2)
+  ;; NO_TNH-NEXT:     (i32.const 3)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $block-unreachable (param $p i32)
+    (if
+      (local.get $p)
+      (block
+        (i32.store
+          (i32.const 0)
+          (i32.const 1)
+        )
+        (if
+          (local.get $p)
+          (return)
+        )
+        ;; This store can be removed as it leads up to an unreachable which we
+        ;; assume is never reached.
+        (i32.store
+          (i32.const 2)
+          (i32.const 3)
+        )
+        (unreachable)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $block-unreachable-named (param $p i32)
+  ;; YESTNH-NEXT:  (if
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:   (block $named
+  ;; YESTNH-NEXT:    (i32.store
+  ;; YESTNH-NEXT:     (i32.const 0)
+  ;; YESTNH-NEXT:     (i32.const 1)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (br_if $named
+  ;; YESTNH-NEXT:     (local.get $p)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $block-unreachable-named (param $p i32)
+  ;; NO_TNH-NEXT:  (if
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (block $named
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 0)
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (br_if $named
+  ;; NO_TNH-NEXT:     (local.get $p)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 2)
+  ;; NO_TNH-NEXT:     (i32.const 3)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $block-unreachable-named (param $p i32)
+    (if
+      (local.get $p)
+      (block $named
+        (i32.store
+          (i32.const 0)
+          (i32.const 1)
+        )
+        ;; As above, but now the block is named and we use a br_if. We should
+        ;; again only remove the last store.
+        (br_if $named
+          (local.get $p)
+        )
+        (i32.store
+          (i32.const 2)
+          (i32.const 3)
+        )
+        (unreachable)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $block-unreachable-all (param $p i32)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $block-unreachable-all (param $p i32)
+  ;; NO_TNH-NEXT:  (if
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 0)
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 2)
+  ;; NO_TNH-NEXT:     (i32.const 3)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $block-unreachable-all (param $p i32)
+    (if
+      (local.get $p)
+      (block
+        ;; Both stores can be removed, and even the entire if arm and then the
+        ;; entire if.
+        (i32.store
+          (i32.const 0)
+          (i32.const 1)
+        )
+        (i32.store
+          (i32.const 2)
+          (i32.const 3)
+        )
+        (unreachable)
+      )
+    )
+  )
 )
