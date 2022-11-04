@@ -51,18 +51,20 @@ template<typename T, size_t N> struct FixedStorageBase {
 
 template<typename T, size_t N>
 struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
+  using InsertResult = typename FixedStorageBase<T, N>::InsertResult;
+
   InsertResult insert(const T& x) {
     for (size_t i = 0; i < this->used; i++) {
       if (this->storage[i] == x) {
-        return AlreadyExists;
+        return InsertResult::AlreadyExists;
       }
     }
     assert(this->used <= N);
-    if (this.used == N) {
-      return CouldNotInsert;
+    if (this->used == N) {
+      return InsertResult::CouldNotInsert;
     }
     this->storage[this->used++] = x;
-    return Inserted;
+    return InsertResult::Inserted;
   }
 
   void erase(const T& x) {
@@ -80,20 +82,22 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
 
 template<typename T, size_t N>
 struct OrderedFixedStorage : public FixedStorageBase<T, N> {
+  using InsertResult = typename FixedStorageBase<T, N>::InsertResult;
+
   InsertResult insert(const T& x) {
     // Find the insertion point |i| where x should be placed.
     size_t i = 0;
     while (i < this->used && this->storage[i] <= x) {
       if (this->storage[i] == x) {
-        return AlreadyExists;
+        return InsertResult::AlreadyExists;
       }
       i++;
     }
     // |i| is now the location where x should be placed.
 
     assert(this->used <= N);
-    if (this.used == N) {
-      return CouldNotInsert;
+    if (this->used == N) {
+      return InsertResult::CouldNotInsert;
     }
 
     if (i != this->used) {
@@ -105,7 +109,7 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
 
     this->storage[i] = x;
     this->used++;
-    return Inserted;
+    return InsertResult::Inserted;
   }
 
   void erase(const T& x) {
@@ -156,7 +160,7 @@ public:
 
   void insert(const T& x) {
     if (usingFixed()) {
-      if (fixed.insert(x) == CouldNotInsert) {
+      if (fixed.insert(x) == FixedStorage::InsertResult::CouldNotInsert) {
         // We need to add an item but no fixed storage remains to grow. Switch
         // to flexible.
         assert(fixed.used == N);
