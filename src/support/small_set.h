@@ -71,10 +71,9 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
     }
 
     // Find the insertion point |i| where x should be placed.
-    size_t i = 0;
-    while (i < this->used && this->storage[i] <= x) {
-      i++;
-    }
+    size_t i = std::lower_bound(
+                 this->storage.begin(), this->storage.begin() + this->used, x) -
+               this->storage.begin();
     // |i| is now the location where x should be placed.
 
     if (i != this->used) {
