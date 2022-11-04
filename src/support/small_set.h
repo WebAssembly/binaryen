@@ -37,13 +37,37 @@ namespace wasm {
 template<typename T, size_t N> struct FixedStorageBase {
   size_t used = 0;
   std::array<T, N> storage;
+
+  enum InsertResult {
+    // We inserted a new item.
+    Inserted,
+    // The item already existed; we had nothing to insert.
+    AlreadyExists,
+    // We needed to insert (the item did not exist), but we were already at full
+    // size, so we did not insert.
+    CouldNotInsert
+  };
 };
 
 template<typename T, size_t N>
 struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
-  void insert(const T& x) {
-    assert(this->used < N);
+  // Returns whether an item was inserted.
+  //
+  // If we are already at size N and need to insert a new item, this will *not*
+  // insert it (we don't have room) but it will still return true. That is, the
+  // return value is "should an item have been inserted" (and if 
+  InsertResult insert(const T& x) {
+    for (size_t i = 0; i < this->used; i++) {
+      if (this->storage[i] == x) {
+        return AlreadyExists;
+      }
+    }
+    assert(this->used <= N);
+    if (this.used == N) {
+      return CouldNotInsert;
+    }
     this->storage[this->used++] = x;
+    return Inserted;
   }
 
   void erase(const T& x) {
@@ -61,15 +85,21 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
 
 template<typename T, size_t N>
 struct OrderedFixedStorage : public FixedStorageBase<T, N> {
-  void insert(const T& x) {
-    assert(this->used < N);
-
+  InsertResult insert(const T& x) {
     // Find the insertion point |i| where x should be placed.
     size_t i = 0;
     while (i < this->used && this->storage[i] <= x) {
+      if (this->storage[i] == x) {
+        return AlreadyExists;
+      }
       i++;
     }
     // |i| is now the location where x should be placed.
+
+    assert(this->used <= N);
+    if (this.used == N) {
+      return CouldNotInsert;
+    }
 
     if (i != this->used) {
       // Push things forward to make room for x.
@@ -80,6 +110,7 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
 
     this->storage[i] = x;
     this->used++;
+    return Inserted;
   }
 
   void erase(const T& x) {
@@ -130,16 +161,9 @@ public:
 
   void insert(const T& x) {
     if (usingFixed()) {
-      if (count(x)) {
-        // The item already exists, so there is nothing to do.
-        return;
-      }
-      // We must add a new item.
-      if (fixed.used < N) {
-        // Room remains in the fixed storage.
-        fixed.insert(x);
-      } else {
-        // No fixed storage remains. Switch to flexible.
+      if (fixed.insert(x) == CouldNotInsert) {
+        // We need to add an item but no fixed storage remains to grow. Switch
+        // to flexible.
         assert(fixed.used == N);
         assert(flexible.empty());
         flexible.insert(fixed.storage.begin(),
