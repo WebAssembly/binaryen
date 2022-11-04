@@ -358,21 +358,6 @@
       (local.get $z)
     )
   )
-
-  (func $externals (export "externals") (param $ext externref) (param $any anyref)
-    (drop
-      (ref.as_data
-        (extern.internalize
-          (local.get $ext)
-        )
-      )
-    )
-    (drop
-      (extern.externalize
-        (local.get $any)
-      )
-    )
-  )
 )
 
 (module
