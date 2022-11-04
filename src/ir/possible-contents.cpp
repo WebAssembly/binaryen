@@ -905,13 +905,12 @@ struct InfoCollector
       case NewData: {
         Type elemType = heapType.getArray().element.type;
         addRoot(DataLocation{heapType, 0},
-                PossibleContents::exactType(elemType));
+                PossibleContents::fromType(elemType));
         return;
       }
       case NewElem: {
         Type segType = getModule()->elementSegments[curr->segment]->type;
-        addRoot(DataLocation{heapType, 0},
-                PossibleContents::fullConeType(segType));
+        addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
         return;
       }
     }
