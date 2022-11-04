@@ -64,12 +64,6 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
   void insert(const T& x) {
     assert(this->used < N);
 
-    if (this->used == 0) {
-      this->storage[0] = x;
-      this->used = 1;
-      return;
-    }
-
     // Find the insertion point |i| where x should be placed.
     size_t i = 0;
     while (i < this->used && this->storage[i] <= x) {
