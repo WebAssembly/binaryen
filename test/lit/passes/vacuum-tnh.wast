@@ -283,8 +283,10 @@
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (local.get $p)
   ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (if
-  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:  (block
+  ;; YESTNH-NEXT:   (drop
+  ;; YESTNH-NEXT:    (local.get $p)
+  ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:   (call $if-unreachable
   ;; YESTNH-NEXT:    (i32.const 0)
   ;; YESTNH-NEXT:   )
@@ -331,6 +333,51 @@
     (if
       (local.get $p)
       (unreachable)
+      (unreachable)
+    )
+  )
+
+  ;; YESTNH:      (func $if-unreachable-value (param $p i32) (result i32)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (i32.const 1)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $if-unreachable-value (param $p i32) (result i32)
+  ;; NO_TNH-NEXT:  (if (result i32)
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $if-unreachable-value (param $p i32) (result i32)
+    ;; When removing the unreachable arm we must update the IR properly, as it
+    ;; cannot have a nop there.
+    (if (result i32)
+      (local.get $p)
+      (unreachable)
+      (i32.const 1)
+    )
+  )
+
+  ;; YESTNH:      (func $if-unreachable-value-2 (param $p i32) (result i32)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (local.get $p)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (i32.const 1)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $if-unreachable-value-2 (param $p i32) (result i32)
+  ;; NO_TNH-NEXT:  (if (result i32)
+  ;; NO_TNH-NEXT:   (local.get $p)
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $if-unreachable-value-2 (param $p i32) (result i32)
+    ;; As above but in the other arm.
+    (if (result i32)
+      (local.get $p)
+      (i32.const 1)
       (unreachable)
     )
   )
