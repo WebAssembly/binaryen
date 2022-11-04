@@ -153,7 +153,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       for (int i = list.size() - 1; i >= 0; i--) {
         if (list[i]->is<Unreachable>()) {
           headingToTrap = true;
-        } else if (EffectAnalyzer(getPassOptions(), *getModule(), list[i]).transfersControlFlow()) {
+        } else if (EffectAnalyzer(getPassOptions(), *getModule(), list[i])
+                     .transfersControlFlow()) {
           headingToTrap = false;
         } else if (headingToTrap) {
           // This code can be removed. Turn it into a nop, and leave it for the
