@@ -23,7 +23,7 @@
 // an add operation appear twice, and the inputs must be identical in both
 // cases, then the second one requests to reuse the computed value from the
 // first. The first one to appear is the "original" expression that will remain
-// in the code; we will save it's value to a local, and get it from that local
+// in the code; we will save its value to a local, and get it from that local
 // later:
 //
 //  (i32.add (A) (B))
