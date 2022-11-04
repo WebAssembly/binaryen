@@ -51,11 +51,6 @@ template<typename T, size_t N> struct FixedStorageBase {
 
 template<typename T, size_t N>
 struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
-  // Returns whether an item was inserted.
-  //
-  // If we are already at size N and need to insert a new item, this will *not*
-  // insert it (we don't have room) but it will still return true. That is, the
-  // return value is "should an item have been inserted" (and if 
   InsertResult insert(const T& x) {
     for (size_t i = 0; i < this->used; i++) {
       if (this->storage[i] == x) {
