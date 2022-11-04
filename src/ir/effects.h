@@ -754,12 +754,12 @@ private:
         parent.implicitTrap = true;
       }
     }
-    void visitArrayNew(ArrayNew* curr) {
+    void visitArrayNew(ArrayNew* curr) {}
+    void visitArrayNewSeg(ArrayNewSeg* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
       parent.implicitTrap = true;
     }
-    void visitArrayNewSeg(ArrayNewSeg* curr) {}
     void visitArrayInit(ArrayInit* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       if (curr->ref->type.isNull()) {

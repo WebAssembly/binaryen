@@ -1543,11 +1543,10 @@
 (module
   (type $nothing (array_subtype (mut (ref null any)) data))
 
-  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
-
   ;; CHECK:      (type $null (array_subtype (mut anyref) data))
   (type $null (array_subtype (mut (ref null any)) data))
 
+  ;; CHECK:      (type $something (array_subtype (mut anyref) data))
   (type $something (array_subtype (mut (ref null any)) data))
 
   (type $something-child (array_subtype (mut (ref null any)) $something))
@@ -1606,14 +1605,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (array.new_default $something
-  ;; CHECK-NEXT:        (i32.const 10)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)

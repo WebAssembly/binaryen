@@ -94,7 +94,7 @@
  (export "ref-as-func-of-data" (func $13))
  (export "ref-as-func-of-func" (func $8))
  (export "cast-on-func" (func $18))
- (export "array-alloc-failure" (func $19))
+ (export "array-alloc-failure" (func $8))
  (export "init-array-packed" (func $20))
  (export "cast-func-to-struct" (func $13))
  (export "array-copy" (func $23))
@@ -252,13 +252,6 @@
   )
   (unreachable)
  )
- (func $19 (; has Stack IR ;)
-  (drop
-   (array.new_default $bytes
-    (i32.const -1)
-   )
-  )
- )
  (func $20 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new $bytes
@@ -271,12 +264,6 @@
  (func $23 (; has Stack IR ;)
   (local $0 (ref $bytes))
   (local $1 (ref $bytes))
-  (local.set $0
-   (array.new $bytes
-    (i32.const 10)
-    (i32.const 100)
-   )
-  )
   (array.set $bytes
    (local.tee $1
     (array.new_default $bytes
@@ -288,7 +275,12 @@
   )
   (call $log
    (array.get_u $bytes
-    (local.get $0)
+    (local.tee $0
+     (array.new $bytes
+      (i32.const 10)
+      (i32.const 100)
+     )
+    )
     (i32.const 10)
    )
   )
@@ -427,7 +419,6 @@
 [LoggingExternalInterface logging 1]
 [trap unreachable]
 [fuzz-exec] calling array-alloc-failure
-[host limit allocation failure]
 [fuzz-exec] calling init-array-packed
 [fuzz-exec] note result: init-array-packed => 213
 [fuzz-exec] calling cast-func-to-struct
@@ -460,17 +451,11 @@ ignoring comparison of ExecutionResults!
 [host limit allocation failure]
 (module
  (type $none_=>_i32 (func (result i32)))
- (type $[mut:i8] (array (mut i8)))
  (export "foo" (func $0))
  (func $0 (; has Stack IR ;) (result i32)
-  (drop
-   (array.new_default $[mut:i8]
-    (i32.const -1)
-   )
-  )
   (i32.const 0)
  )
 )
 [fuzz-exec] calling foo
-[host limit allocation failure]
+[fuzz-exec] note result: foo => 0
 ignoring comparison of ExecutionResults!
