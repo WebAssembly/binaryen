@@ -288,7 +288,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
       // As mentioned above, do not try to optimize both arms; leave that case
       // for DCE.
-      if (optimizeArm(curr->ifTrue, curr->ifFalse) || (curr->ifFalse && optimizeArm(curr->ifFalse, curr->ifTrue))) {
+      if (optimizeArm(curr->ifTrue, curr->ifFalse) ||
+          (curr->ifFalse && optimizeArm(curr->ifFalse, curr->ifTrue))) {
         return;
       }
     }
