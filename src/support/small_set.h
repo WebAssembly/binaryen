@@ -79,9 +79,9 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
 
     if (i != this->used) {
       // Push things forward to make room for x.
-      std::move(this->storage.begin() + i,
-                this->storage.begin() + this->used,
-                this->storage.begin() + i + 1);
+      for (size_t j = this->used; j >= i + 1; j--) {
+        this->storage[j] = this->storage[j - 1];
+      }
     }
 
     this->storage[i] = x;
