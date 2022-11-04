@@ -278,10 +278,11 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
         typeUpdater.noteRecursiveRemoval(arm);
         Builder builder(*getModule());
-        replaceCurrent(builder.makeSequence(
-          builder.makeDrop(curr->condition),
-          otherArm
-        ));
+        Expression* rep = builder.makeDrop(curr->condition);
+        if (otherArm) {
+          rep = builder.makeSequence(rep, otherArm);
+        }
+        replaceCurrent(rep);
         return true;
       };
 
