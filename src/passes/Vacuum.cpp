@@ -156,6 +156,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         } else if (EffectAnalyzer(getPassOptions(), *getModule(), list[i])
                      .transfersControlFlow()) {
           headingToTrap = false;
+          // XXX calls too?
         } else if (headingToTrap) {
           // This code can be removed. Turn it into a nop, and leave it for the
           // loop after us to clean up.
