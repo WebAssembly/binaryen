@@ -272,13 +272,23 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // unreachable. In that case we'd need to fix up the IR to avoid changing
     // the type; leave that for DCE to simplify first.
     if (getPassOptions().trapsNeverHappen && curr->type != Type::unreachable) {
-      if (curr->ifTrue->is<Unreachable>()) {
-        typeUpdater.noteRecursiveRemoval(curr->ifTrue);
-        ExpressionManipulator::nop(curr->ifTrue);
-      }
-      if (curr->ifFalse && curr->ifFalse->is<Unreachable>()) {
-        typeUpdater.noteRecursiveRemoval(curr->ifFalse);
-        ExpressionManipulator::nop(curr->ifFalse);
+      auto optimizeArm = [&](Expression* arm, Expression* otherArm) {
+        if (!arm->is<Unreachable>()) {
+          return false;
+        }
+        typeUpdater.noteRecursiveRemoval(arm);
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->condition),
+          otherArm
+        ));
+        return true;
+      };
+
+      // As mentioned above, do not try to optimize both arms; leave that case
+      // for DCE.
+      if (optimizeArm(curr->ifTrue, curr->ifFalse) || (curr->ifFalse || optimizeArm(curr->ifFalse, curr->ifTrue))) {
+        return;
       }
     }
 
