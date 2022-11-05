@@ -1563,12 +1563,12 @@ struct Asyncify : public Pass {
     auto relocatable =
       options.getArgumentOrDefault("asyncify-relocatable", "") != "";
     auto secondaryMemory =
-      options.getArgumentOrDefault("in-secondary-memory", "") != "";
+      options.getArgumentOrDefault("asyncify-in-secondary-memory", "") != "";
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
       auto secondaryMemorySizeString =
-        options.getArgumentOrDefault("secondary-memory-size", "1");
+        options.getArgumentOrDefault("asyncify-secondary-memory-size", "1");
       Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
       asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
     } else {
