@@ -451,6 +451,7 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
+  void visitArrayNewSeg(ArrayNewSeg* curr);
   void visitArrayInit(ArrayInit* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
@@ -2680,6 +2681,73 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
                     element.type,
                     curr,
                     "array.new init must have proper type");
+  }
+}
+
+void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.new_{data, elem} requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type,
+    Type(Type::i32),
+    curr,
+    "array.new_{data, elem} offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type,
+    Type(Type::i32),
+    curr,
+    "array.new_{data, elem} size must be an i32");
+  switch (curr->op) {
+    case NewData:
+      if (!shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+                        curr,
+                        "array.new_data segment index out of bounds")) {
+        return;
+      }
+      break;
+    case NewElem:
+      if (!shouldBeTrue(curr->segment < getModule()->elementSegments.size(),
+                        curr,
+                        "array.new_elem segment index out of bounds")) {
+        return;
+      }
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected op");
+  }
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->type.isRef(),
+        curr,
+        "array.new_{data, elem} type should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->type.getHeapType();
+  if (!shouldBeTrue(
+        heapType.isArray(),
+        curr,
+        "array.new_{data, elem} type shoudl be an array reference")) {
+    return;
+  }
+  auto elemType = heapType.getArray().element.type;
+  switch (curr->op) {
+    case NewData:
+      shouldBeTrue(elemType.isNumber(),
+                   curr,
+                   "array.new_data result element type should be numeric");
+      break;
+    case NewElem:
+      shouldBeSubType(getModule()->elementSegments[curr->segment]->type,
+                      elemType,
+                      curr,
+                      "array.new_elem segment type should be a subtype of the "
+                      "result element type");
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected op");
   }
 }
 

@@ -1071,6 +1071,9 @@ BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
                                                     BinaryenExpressionRef init);
+
+// TODO: BinaryenArrayNewSeg
+
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayInit(BinaryenModuleRef module,
                   BinaryenHeapType type,

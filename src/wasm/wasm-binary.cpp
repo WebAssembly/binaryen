@@ -3122,12 +3122,15 @@ void WasmBinaryBuilder::readDataSegments() {
     }
     curr->setName(Name::fromInt(i), false);
     curr->isPassive = flags & BinaryConsts::IsPassive;
-    Index memIdx = 0;
-    if (flags & BinaryConsts::HasIndex) {
-      memIdx = getU32LEB();
-    }
-    memoryRefs[memIdx].push_back(&curr->memory);
-    if (!curr->isPassive) {
+    if (curr->isPassive) {
+      curr->memory = Name();
+      curr->offset = nullptr;
+    } else {
+      Index memIdx = 0;
+      if (flags & BinaryConsts::HasIndex) {
+        memIdx = getU32LEB();
+      }
+      memoryRefs[memIdx].push_back(&curr->memory);
       curr->offset = readExpression();
     }
     auto size = getU32LEB();
@@ -3971,6 +3974,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitArrayNew(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayNewSeg(curr, opcode)) {
         break;
       }
       if (maybeVisitArrayInit(curr, opcode)) {
@@ -7053,6 +7059,20 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
       init = popNonVoidExpression();
     }
     out = Builder(wasm).makeArrayNew(heapType, size, init);
+    return true;
+  }
+  return false;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
+  if (code == BinaryConsts::ArrayNewData ||
+      code == BinaryConsts::ArrayNewElem) {
+    auto op = code == BinaryConsts::ArrayNewData ? NewData : NewElem;
+    auto heapType = getIndexedHeapType();
+    auto seg = getU32LEB();
+    auto* size = popNonVoidExpression();
+    auto* offset = popNonVoidExpression();
+    out = Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
     return true;
   }
   return false;

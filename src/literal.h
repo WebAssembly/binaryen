@@ -197,6 +197,10 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+
+  static Literal makeFromMemory(void* p, Type type);
+  static Literal makeFromMemory(void* p, const Field& field);
+
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
       case Type::i32:

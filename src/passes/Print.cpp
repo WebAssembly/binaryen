@@ -2205,6 +2205,26 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
+    printMedium(o, "array.new_");
+    switch (curr->op) {
+      case NewData:
+        printMedium(o, "data");
+
+        break;
+      case NewElem:
+        printMedium(o, "elem");
+        break;
+      default:
+        WASM_UNREACHABLE("unexpected op");
+    }
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << ' ' << curr->segment;
+  }
   void visitArrayInit(ArrayInit* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
@@ -2787,6 +2807,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
   }
   void visitArrayNew(ArrayNew* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitArrayInit(ArrayInit* curr) {

@@ -573,6 +573,11 @@ enum RefAsOp {
   ExternExternalize,
 };
 
+enum ArrayNewSegOp {
+  NewData,
+  NewElem,
+};
+
 enum BrOnOp {
   BrOnNull,
   BrOnNonNull,
@@ -719,6 +724,7 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
+    ArrayNewSegId,
     ArrayInitId,
     ArrayGetId,
     ArraySetId,
@@ -1601,6 +1607,18 @@ public:
   Expression* size;
 
   bool isWithDefault() { return !init; }
+
+  void finalize();
+};
+
+class ArrayNewSeg : public SpecificExpression<Expression::ArrayNewSegId> {
+public:
+  ArrayNewSeg(MixedArena& allocator) {}
+
+  ArrayNewSegOp op;
+  Index segment;
+  Expression* offset;
+  Expression* size;
 
   void finalize();
 };

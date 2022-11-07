@@ -755,6 +755,11 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
+    void visitArrayNewSeg(ArrayNewSeg* curr) {
+      // Traps on out of bounds access to segments or access to dropped
+      // segments.
+      parent.implicitTrap = true;
+    }
     void visitArrayInit(ArrayInit* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       if (curr->ref->type.isNull()) {

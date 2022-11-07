@@ -2892,6 +2892,15 @@ Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
   return Builder(wasm).makeArrayNew(heapType, size, init);
 }
 
+Expression* SExpressionWasmBuilder::makeArrayNewSeg(Element& s,
+                                                    ArrayNewSegOp op) {
+  auto heapType = parseHeapType(*s[1]);
+  Index seg = parseIndex(*s[2]);
+  Expression* offset = parseExpression(*s[3]);
+  Expression* size = parseExpression(*s[4]);
+  return Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
+}
+
 Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
@@ -3292,9 +3301,6 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
 }
 
 void SExpressionWasmBuilder::parseData(Element& s) {
-  if (wasm.memories.empty()) {
-    throw ParseException("data but no memory", s.line, s.col);
-  }
   Index i = 1;
   Name name = Name::fromInt(dataCounter++);
   bool hasExplicitName = false;

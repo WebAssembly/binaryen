@@ -2132,6 +2132,22 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
+void BinaryInstWriter::visitArrayNewSeg(ArrayNewSeg* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case NewData:
+      o << U32LEB(BinaryConsts::ArrayNewData);
+      break;
+    case NewElem:
+      o << U32LEB(BinaryConsts::ArrayNewElem);
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected op");
+  }
+  parent.writeIndexedHeapType(curr->type.getHeapType());
+  o << U32LEB(curr->segment);
+}
+
 void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   o << U32LEB(BinaryConsts::ArrayInitStatic);

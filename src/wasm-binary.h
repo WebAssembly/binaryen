@@ -1107,6 +1107,7 @@ enum ASTNodes {
   StructSet = 0x06,
   StructNew = 0x07,
   StructNewDefault = 0x08,
+  ArrayNewElem = 0x10,
   ArrayGet = 0x13,
   ArrayGetS = 0x14,
   ArrayGetU = 0x15,
@@ -1117,6 +1118,7 @@ enum ASTNodes {
   ArrayInitStatic = 0x1a,
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
+  ArrayNewData = 0x1d,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
@@ -1706,6 +1708,7 @@ public:
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
   bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNewSeg(Expression*& out, uint32_t code);
   bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);

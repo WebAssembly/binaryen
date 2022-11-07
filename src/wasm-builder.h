@@ -935,6 +935,20 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayNewSeg* makeArrayNewSeg(ArrayNewSegOp op,
+                               HeapType type,
+                               Index seg,
+                               Expression* offset,
+                               Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayNewSeg>();
+    ret->op = op;
+    ret->segment = seg;
+    ret->offset = offset;
+    ret->size = size;
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
   ArrayInit* makeArrayInit(HeapType type,
                            const std::vector<Expression*>& values) {
     auto* ret = wasm.allocator.alloc<ArrayInit>();

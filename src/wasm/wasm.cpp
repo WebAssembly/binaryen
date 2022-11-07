@@ -1053,7 +1053,12 @@ void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
-    return;
+  }
+}
+
+void ArrayNewSeg::finalize() {
+  if (offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
