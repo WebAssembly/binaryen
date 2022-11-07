@@ -613,7 +613,7 @@
         (call $catch-pop)
       )
       (catch $tag
-        ;; A drop on the way to a trap cannot be removed. But the store can.
+        ;; A pop on the way to a trap cannot be removed. But the store can.
         (drop
           (pop i32)
         )
