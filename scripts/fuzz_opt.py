@@ -182,7 +182,7 @@ def randomize_fuzz_settings():
 def init_important_initial_contents():
     FIXED_IMPORTANT_INITIAL_CONTENTS = [
         # Perenially-important passes
-        os.path.join('lit', 'passes', 'optimize-instructions.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-mvp.wast'),
         os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
     ]
     MANUAL_RECENT_INITIAL_CONTENTS = [
