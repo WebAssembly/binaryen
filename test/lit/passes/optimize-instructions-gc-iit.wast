@@ -9,19 +9,19 @@
 
 (module
   ;; CHECK:      (type $parent (struct (field i32)))
-  ;; NOMNL:      (type $parent (struct_subtype (field i32) data))
-  ;; NOMNL-TNH:      (type $parent (struct_subtype (field i32) data))
+  ;; NOMNL:      (type $parent (struct (field i32)))
+  ;; NOMNL-TNH:      (type $parent (struct (field i32)))
   (type $parent (struct (field i32)))
-  ;; CHECK:      (type $child (struct (field i32) (field f64)))
+  ;; CHECK:      (type $child (struct_subtype (field i32) (field f64) $parent))
   ;; NOMNL:      (type $child (struct_subtype (field i32) (field f64) $parent))
   ;; NOMNL-TNH:      (type $child (struct_subtype (field i32) (field f64) $parent))
   (type $child (struct_subtype (field i32) (field f64) $parent))
   ;; CHECK:      (type $other (struct (field i64) (field f32)))
-  ;; NOMNL:      (type $other (struct_subtype (field i64) (field f32) data))
-  ;; NOMNL-TNH:      (type $other (struct_subtype (field i64) (field f32) data))
+  ;; NOMNL:      (type $other (struct (field i64) (field f32)))
+  ;; NOMNL-TNH:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $foo (type $none_=>_none)
@@ -33,7 +33,7 @@
   (func $foo)
 
 
-  ;; CHECK:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
+  ;; CHECK:      (func $ref-cast-iit (type $ref|$parent|_ref|$child|_ref|$other|_=>_none) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $parent)
   ;; CHECK-NEXT:  )
@@ -130,7 +130,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent))
+  ;; CHECK:      (func $ref-cast-iit-bad (type $ref|$parent|_=>_none) (param $parent (ref $parent))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $parent))
   ;; CHECK-NEXT:    (call $foo)
@@ -190,7 +190,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; CHECK:      (func $ref-eq-ref-cast (type $eqref_=>_none) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -217,7 +217,7 @@
     )
   )
 
-  ;; CHECK:      (func $set-of-as-non-null (param $x anyref)
+  ;; CHECK:      (func $set-of-as-non-null (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -243,24 +243,28 @@
 )
 
 (module
-  ;; CHECK:      (type $B (struct (field (ref null $A))))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct ))
+    ;; NOMNL:      (type $A (struct ))
+    ;; NOMNL-TNH:      (type $A (struct ))
+    (type $A (struct_subtype  data))
+    ;; CHECK:       (type $B (struct_subtype (field (ref null $A)) $A))
+    ;; NOMNL:      (type $B (struct_subtype (field (ref null $A)) $A))
+    ;; NOMNL-TNH:      (type $B (struct_subtype (field (ref null $A)) $A))
+    (type $B (struct_subtype (field (ref null $A)) $A))
+    ;; CHECK:       (type $C (struct_subtype (field (ref null $D)) $B))
+    ;; NOMNL:      (type $C (struct_subtype (field (ref null $D)) $B))
+    ;; NOMNL-TNH:      (type $C (struct_subtype (field (ref null $D)) $B))
+    (type $C (struct_subtype (field (ref null $D)) $B))
+    ;; CHECK:       (type $D (struct_subtype  $A))
+    ;; NOMNL:      (type $D (struct_subtype  $A))
+    ;; NOMNL-TNH:      (type $D (struct_subtype  $A))
+    (type $D (struct_subtype  $A))
+  )
 
-  ;; CHECK:      (type $A (struct ))
-  ;; NOMNL:      (type $A (struct_subtype  data))
-  ;; NOMNL-TNH:      (type $A (struct_subtype  data))
-  (type $A (struct_subtype  data))
-  ;; NOMNL:      (type $B (struct_subtype (field (ref null $A)) $A))
-  ;; NOMNL-TNH:      (type $B (struct_subtype (field (ref null $A)) $A))
-  (type $B (struct_subtype (field (ref null $A)) $A))
-  ;; NOMNL:      (type $C (struct_subtype (field (ref null $D)) $B))
-  ;; NOMNL-TNH:      (type $C (struct_subtype (field (ref null $D)) $B))
-  (type $C (struct_subtype (field (ref null $D)) $B))
-  ;; NOMNL:      (type $D (struct_subtype  $A))
-  ;; NOMNL-TNH:      (type $D (struct_subtype  $A))
-  (type $D (struct_subtype  $A))
-
-  ;; CHECK:      (func $test (param $C (ref $B)) (result anyref)
-  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK:      (func $test (type $ref|$C|_=>_anyref) (param $C (ref $C)) (result anyref)
+  ;; CHECK-NEXT:  (struct.get $C 0
   ;; CHECK-NEXT:   (local.get $C)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

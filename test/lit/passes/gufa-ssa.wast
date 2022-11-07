@@ -6,7 +6,7 @@
 
   ;; CHECK:      (export "test" (func $test))
 
-  ;; CHECK:      (func $test (param $x i32)
+  ;; CHECK:      (func $test (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)

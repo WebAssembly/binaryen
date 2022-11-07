@@ -7,20 +7,20 @@
   ;; The struct here has three fields, and the second of them has no struct.set
   ;; which means we can make it immutable.
 
-  ;; CHECK:      (type $struct (struct_subtype (field (mut funcref)) (field funcref) (field (mut funcref)) data))
+  ;; CHECK:      (type $struct (struct (field (mut funcref)) (field funcref) (field (mut funcref))))
   (type $struct (struct (field (mut funcref)) (field (mut funcref)) (field (mut funcref))))
 
-  ;; CHECK:      (type $two-params (func_subtype (param (ref $struct) (ref $struct)) func))
+  ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
   (type $two-params (func (param (ref $struct)) (param (ref $struct))))
 
   ;; Test that we update tag types properly.
   (table 0 funcref)
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_ref?|$struct| (func_subtype (result (ref null $struct)) func))
+  ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (table $0 0 funcref)
 
@@ -171,14 +171,14 @@
   ;; Test recursion between structs where we only modify one. Specifically $B
   ;; has no writes to either of its fields.
 
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $B))) (field (mut i32)) data))
+  ;; CHECK:      (type $A (struct (field (mut (ref null $B))) (field (mut i32))))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
-  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) (field f64) data))
+  ;; CHECK:      (type $B (struct (field (ref null $A)) (field f64)))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func_subtype (param (ref null $A) (ref null $B)) func))
+  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func (param (ref null $A) (ref null $B))))
 
   ;; CHECK:      (func $func (type $ref|$A|_=>_none) (param $x (ref $A))
   ;; CHECK-NEXT:  (struct.set $A 0
@@ -234,15 +234,15 @@
 (module
   ;; As before, but flipped so that $A's fields can become immutable.
 
-  ;; CHECK:      (type $B (struct_subtype (field (mut (ref null $A))) (field (mut f64)) data))
+  ;; CHECK:      (type $B (struct (field (mut (ref null $A))) (field (mut f64))))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
-  ;; CHECK:      (type $A (struct_subtype (field (ref null $B)) (field i32) data))
+  ;; CHECK:      (type $A (struct (field (ref null $B)) (field i32)))
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
-  ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+  ;; CHECK:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
-  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func_subtype (param (ref null $A) (ref null $B)) func))
+  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func (param (ref null $A) (ref null $B))))
 
   ;; CHECK:      (func $func (type $ref|$B|_=>_none) (param $x (ref $B))
   ;; CHECK-NEXT:  (struct.set $B 0
@@ -298,16 +298,16 @@
 (module
   ;; As before, but now one field in each can become immutable.
 
-  ;; CHECK:      (type $A (struct_subtype (field (mut (ref null $B))) (field i32) data))
+  ;; CHECK:      (type $A (struct (field (mut (ref null $B))) (field i32)))
 
-  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) (field (mut f64)) data))
+  ;; CHECK:      (type $B (struct (field (ref null $A)) (field (mut f64))))
   (type $B (struct (field (mut (ref null $A))) (field (mut f64)) ))
 
   (type $A (struct (field (mut (ref null $B))) (field (mut i32)) ))
 
-  ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func_subtype (param (ref $A) (ref $B)) func))
+  ;; CHECK:      (type $ref|$A|_ref|$B|_=>_none (func (param (ref $A) (ref $B))))
 
-  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func_subtype (param (ref null $A) (ref null $B)) func))
+  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_none (func (param (ref null $A) (ref null $B))))
 
   ;; CHECK:      (func $func (type $ref|$A|_ref|$B|_=>_none) (param $x (ref $A)) (param $y (ref $B))
   ;; CHECK-NEXT:  (struct.set $A 0
@@ -365,12 +365,12 @@
   ;; Field #1 is mutable and can become so.
   ;; Field #2 is mutable and must remain so.
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) (field i32) (field (mut i32)) data))
+  ;; CHECK:      (type $struct (struct (field i32) (field i32) (field (mut i32))))
   (type $struct (struct (field i32) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 2
@@ -413,14 +413,14 @@
   ;; Subtyping. Without a write in either supertype or subtype, we can
   ;; optimize the field to be immutable.
 
-  ;; CHECK:      (type $super (struct_subtype (field i32) data))
+  ;; CHECK:      (type $super (struct (field i32)))
   (type $super (struct (field (mut i32))))
   ;; CHECK:      (type $sub (struct_subtype (field i32) $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func_subtype (param (ref null $super) (ref null $sub)) func))
+  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func (param (ref null $super) (ref null $sub))))
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -469,14 +469,14 @@
 (module
   ;; As above, but add a write in the super, which prevents optimization.
 
-  ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $super (struct (field (mut i32))))
   (type $super (struct (field (mut i32))))
   ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
-  ;; CHECK:      (type $ref|$super|_=>_none (func_subtype (param (ref $super)) func))
+  ;; CHECK:      (type $ref|$super|_=>_none (func (param (ref $super))))
 
-  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func_subtype (param (ref null $super) (ref null $sub)) func))
+  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func (param (ref null $super) (ref null $sub))))
 
   ;; CHECK:      (func $func (type $ref|$super|_=>_none) (param $x (ref $super))
   ;; CHECK-NEXT:  (drop
@@ -534,14 +534,14 @@
   ;; As above, but add a write in the sub, which prevents optimization.
 
 
-  ;; CHECK:      (type $super (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $super (struct (field (mut i32))))
   (type $super (struct (field (mut i32))))
   ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
-  ;; CHECK:      (type $ref|$sub|_=>_none (func_subtype (param (ref $sub)) func))
+  ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))
 
-  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func_subtype (param (ref null $super) (ref null $sub)) func))
+  ;; CHECK:      (type $ref?|$super|_ref?|$sub|_=>_none (func (param (ref null $super) (ref null $sub))))
 
   ;; CHECK:      (func $func (type $ref|$sub|_=>_none) (param $x (ref $sub))
   ;; CHECK-NEXT:  (struct.set $sub 0

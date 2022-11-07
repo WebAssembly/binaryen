@@ -7,7 +7,7 @@
 
 (module
 
- ;; CHECK:      (type $array (array_subtype i8 data))
+ ;; CHECK:      (type $array (array i8))
  (type $array (array i8))
  (type $func (func (result i32)))
 

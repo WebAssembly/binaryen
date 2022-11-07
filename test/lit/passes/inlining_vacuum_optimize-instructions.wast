@@ -12,13 +12,12 @@
 ;; there.
 (module
  ;; CHECK:      (type $B (struct ))
-
- ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
+ (type $B (struct_subtype  data))
  ;; CHECK:      (type $A (struct (field (ref null $B))))
  (type $A (struct_subtype (field (ref null $B)) data))
- (type $B (struct_subtype  data))
- ;; CHECK:      (func $target (param $0 (ref null $A))
+ ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+ ;; CHECK:      (func $target (type $ref?|$A|_=>_none) (param $0 (ref null $A))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.cast_static $B
  ;; CHECK-NEXT:    (unreachable)
@@ -40,4 +39,3 @@
   (ref.null none)
  )
 )
-

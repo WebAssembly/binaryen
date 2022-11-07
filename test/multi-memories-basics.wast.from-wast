@@ -6,36 +6,36 @@
  (memory $memory2 1 800)
  (memory $memory3 1 400)
  (data (i32.const 0) "abcd")
- (func $memory.fill
+ (func $memory.fill (type $none_=>_none)
   (memory.fill $memory2
    (i32.const 0)
    (i32.const 1)
    (i32.const 2)
   )
  )
- (func $memory.copy
+ (func $memory.copy (type $none_=>_none)
   (memory.copy $memory2 $memory3
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
- (func $memory.init
+ (func $memory.init (type $none_=>_none)
   (memory.init $memory1 0
    (i32.const 0)
    (i32.const 0)
    (i32.const 45)
   )
  )
- (func $memory.grow (result i32)
+ (func $memory.grow (type $none_=>_i32) (result i32)
   (memory.grow $memory3
    (i32.const 10)
   )
  )
- (func $memory.size (result i32)
+ (func $memory.size (type $none_=>_i32) (result i32)
   (memory.size $memory3)
  )
- (func $loads
+ (func $loads (type $none_=>_none)
   (drop
    (i32.load $memory1
     (i32.const 12)
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $stores
+ (func $stores (type $none_=>_none)
   (i32.store $memory1
    (i32.const 12)
    (i32.const 115)

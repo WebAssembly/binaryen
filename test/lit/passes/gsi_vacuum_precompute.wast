@@ -20,21 +20,21 @@
 ;;           that could prevent later opts.
 
 (module
- ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
+ ;; CHECK:      (type $vtable (struct (field funcref)))
 
- ;; CHECK:      (type $itable1 (struct_subtype (field (ref $vtable)) data))
+ ;; CHECK:      (type $itable1 (struct (field (ref $vtable))))
  (type $itable1 (struct_subtype (field (ref $vtable)) data))
- ;; CHECK:      (type $itable2 (struct_subtype (field (ref $vtable)) data))
+ ;; CHECK:      (type $itable2 (struct (field (ref $vtable))))
  (type $itable2 (struct_subtype (field (ref $vtable)) data))
  (type $vtable (struct_subtype (field funcref) data))
 
  ;; Two $vtable instances are created, in separate enclosing objects.
 
- ;; CHECK:      (type $none_=>_none (func_subtype func))
+ ;; CHECK:      (type $none_=>_none (func))
 
- ;; CHECK:      (type $ref|$itable1|_=>_funcref (func_subtype (param (ref $itable1)) (result funcref) func))
+ ;; CHECK:      (type $ref|$itable1|_=>_funcref (func (param (ref $itable1)) (result funcref)))
 
- ;; CHECK:      (type $ref|$itable2|_=>_funcref (func_subtype (param (ref $itable2)) (result funcref) func))
+ ;; CHECK:      (type $ref|$itable2|_=>_funcref (func (param (ref $itable2)) (result funcref)))
 
  ;; CHECK:      (global $itable1 (ref $itable1) (struct.new $itable1
  ;; CHECK-NEXT:  (struct.new $vtable

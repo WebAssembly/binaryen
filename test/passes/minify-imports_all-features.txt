@@ -10013,10 +10013,10 @@ longname4880 => zza
  (export "foo1" (func $foo1))
  (export "foo2" (func $foo2))
  (export "tag1" (tag $tag1))
- (func $foo1
+ (func $foo1 (type $none_=>_none)
   (nop)
  )
- (func $foo2
+ (func $foo2 (type $none_=>_none)
   (nop)
  )
 )

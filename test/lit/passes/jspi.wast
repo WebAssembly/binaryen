@@ -41,7 +41,7 @@
   (export "import_and_export" (func $import_and_export))
 
 
-  ;; CHECK:      (func $update_state (param $param f64) (result i32)
+  ;; CHECK:      (func $update_state (type $f64_=>_i32) (param $param f64) (result i32)
   ;; CHECK-NEXT:  (call $compute_delta
   ;; CHECK-NEXT:   (f64.sub
   ;; CHECK-NEXT:    (f64.const 1.1)
@@ -53,7 +53,7 @@
     (call $compute_delta (f64.sub (f64.const 1.1) (local.get $param)))
   )
 
-  ;; CHECK:      (func $update_state_void (param $0 f64)
+  ;; CHECK:      (func $update_state_void (type $f64_=>_none) (param $0 f64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $compute_delta
   ;; CHECK-NEXT:    (f64.const 1.1)
@@ -66,7 +66,7 @@
     (drop (call $compute_delta (f64.const 1.1)))
   )
 
-  ;; CHECK:      (func $update_state_param_collision (param $susp f64) (result i32)
+  ;; CHECK:      (func $update_state_param_collision (type $f64_=>_i32) (param $susp f64) (result i32)
   ;; CHECK-NEXT:  (call $update_state_param_collision
   ;; CHECK-NEXT:   (f64.sub
   ;; CHECK-NEXT:    (f64.const 1.1)
@@ -78,7 +78,7 @@
     (call $update_state_param_collision (f64.sub (f64.const 1.1) (local.get $susp)))
   )
 )
-;; CHECK:      (func $export$update_state_void (param $susp externref) (param $0 f64) (result i32)
+;; CHECK:      (func $export$update_state_void (type $externref_f64_=>_i32) (param $susp externref) (param $0 f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
 ;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
@@ -88,7 +88,7 @@
 ;; CHECK-NEXT:  (i32.const 0)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$update_state (param $susp externref) (param $param f64) (result i32)
+;; CHECK:      (func $export$update_state (type $externref_f64_=>_i32) (param $susp externref) (param $param f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
 ;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
@@ -97,7 +97,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$update_state_param_collision (param $susp_0 externref) (param $susp f64) (result i32)
+;; CHECK:      (func $export$update_state_param_collision (type $externref_f64_=>_i32) (param $susp_0 externref) (param $susp f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
 ;; CHECK-NEXT:   (local.get $susp_0)
 ;; CHECK-NEXT:  )
@@ -106,7 +106,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$import_and_export (param $susp externref) (param $0 i32) (result i32)
+;; CHECK:      (func $export$import_and_export (type $externref_i32_=>_i32) (param $susp externref) (param $0 i32) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
 ;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
@@ -115,7 +115,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $compute_delta (param $0 f64) (result i32)
+;; CHECK:      (func $compute_delta (type $f64_=>_i32) (param $0 f64) (result i32)
 ;; CHECK-NEXT:  (local $1 externref)
 ;; CHECK-NEXT:  (local $2 i32)
 ;; CHECK-NEXT:  (local.set $1
@@ -133,7 +133,7 @@
 ;; CHECK-NEXT:  (local.get $2)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $import_and_export (param $0 i32) (result i32)
+;; CHECK:      (func $import_and_export (type $i32_=>_i32) (param $0 i32) (result i32)
 ;; CHECK-NEXT:  (local $1 externref)
 ;; CHECK-NEXT:  (local $2 i32)
 ;; CHECK-NEXT:  (local.set $1
@@ -151,7 +151,7 @@
 ;; CHECK-NEXT:  (local.get $2)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $import_void_return (param $0 i32)
+;; CHECK:      (func $import_void_return (type $i32_=>_none) (param $0 i32)
 ;; CHECK-NEXT:  (local $1 externref)
 ;; CHECK-NEXT:  (local.set $1
 ;; CHECK-NEXT:   (global.get $suspender)

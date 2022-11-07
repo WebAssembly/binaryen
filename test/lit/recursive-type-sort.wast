@@ -2,7 +2,7 @@
 ;; Regression test for a bug in TypeComparator that made it fail to properly
 ;; implement the C++ Compare requirements. See #3648.
 
-;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --roundtrip --structural -S -o - | filecheck %s
 ;; RUN: wasm-opt %s -all --roundtrip --nominal -S -o - | filecheck %s
 
 ;; Check that there's no crash.

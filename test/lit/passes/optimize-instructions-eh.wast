@@ -5,7 +5,7 @@
 (module
   ;; CHECK:      (tag $e (param i32))
 
-  ;; CHECK:      (func $dummy
+  ;; CHECK:      (func $dummy (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $dummy)
@@ -23,7 +23,7 @@
   ;; is guaranteed to contain a value equal to or less than 7.
 
 
-  ;; CHECK:      (func $getFallthrough-try-no-throw
+  ;; CHECK:      (func $getFallthrough-try-no-throw (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (try (result i32)
@@ -57,7 +57,7 @@
     (drop (i32.and (local.get $x) (i32.const 7)))
   )
 
-  ;; CHECK:      (func $getFallthrough-try-may-throw
+  ;; CHECK:      (func $getFallthrough-try-may-throw (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (try (result i32)
@@ -95,7 +95,7 @@
     (drop (i32.and (local.get $x) (i32.const 7)))
   )
 
-  ;; CHECK:      (func $getFallthrough-nested-try-0
+  ;; CHECK:      (func $getFallthrough-nested-try-0 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (try (result i32)
@@ -154,7 +154,7 @@
     (drop (i32.and (local.get $x) (i32.const 7)))
   )
 
-  ;; CHECK:      (func $getFallthrough-nested-try-1
+  ;; CHECK:      (func $getFallthrough-nested-try-1 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (try (result i32)
@@ -202,7 +202,7 @@
     (drop (i32.and (local.get $x) (i32.const 7)))
   )
 
-  ;; CHECK:      (func $getFallthrough-nested-try-2
+  ;; CHECK:      (func $getFallthrough-nested-try-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (try (result i32)

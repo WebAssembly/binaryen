@@ -34,6 +34,8 @@ v111
   default in all tools. This is in order to match llvm's defaults (See
   https://reviews.llvm.org/D125728).
 - Add a pass to lower sign-extension operations to MVP.
+- The isorecursive WasmGC type system (i.e. --hybrid) is now the default to
+  match the spec.
 
 v110
 ----

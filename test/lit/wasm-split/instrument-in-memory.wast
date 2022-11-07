@@ -1,8 +1,8 @@
-;; RUN: wasm-split %s --instrument --in-memory -all -S -o - | filecheck %s
+;; RUN: wasm-split %s --instrument --in-memory --enable-threads -S -o - | filecheck %s
 
 ;; Check that the output round trips and validates as well
-;; RUN: wasm-split %s --instrument --in-memory -all -g -o %t.wasm
-;; RUN: wasm-opt -all %t.wasm -S -o -
+;; RUN: wasm-split %s --instrument --in-memory --enable-threads -g -o %t.wasm
+;; RUN: wasm-opt %t.wasm --enable-threads -S -o -
 
 (module
   (import "env" "foo" (func $foo))

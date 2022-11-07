@@ -5,13 +5,13 @@
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
- ;; CHECK:      (func $0
+ ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $0
   (nop)
  )
- ;; CHECK:      (func $1
+ ;; CHECK:      (func $1 (type $none_=>_none)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:    (drop

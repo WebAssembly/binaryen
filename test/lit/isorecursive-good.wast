@@ -9,8 +9,8 @@
 
   (rec
     ;; HYBRID:      (rec
-    ;; HYBRID-NEXT:  (type $super-struct (struct_subtype (field i32) data))
-    ;; NOMINAL:      (type $super-struct (struct_subtype (field i32) data))
+    ;; HYBRID-NEXT:  (type $super-struct (struct (field i32)))
+    ;; NOMINAL:      (type $super-struct (struct (field i32)))
     (type $super-struct (struct i32))
     ;; HYBRID:       (type $sub-struct (struct_subtype (field i32) (field i64) $super-struct))
     ;; NOMINAL:      (type $sub-struct (struct_subtype (field i32) (field i64) $super-struct))
@@ -19,8 +19,8 @@
 
   (rec
     ;; HYBRID:      (rec
-    ;; HYBRID-NEXT:  (type $super-array (array_subtype (ref $super-struct) data))
-    ;; NOMINAL:      (type $super-array (array_subtype (ref $super-struct) data))
+    ;; HYBRID-NEXT:  (type $super-array (array (ref $super-struct)))
+    ;; NOMINAL:      (type $super-array (array (ref $super-struct)))
     (type $super-array (array (ref $super-struct)))
     ;; HYBRID:       (type $sub-array (array_subtype (ref $sub-struct) $super-array))
     ;; NOMINAL:      (type $sub-array (array_subtype (ref $sub-struct) $super-array))

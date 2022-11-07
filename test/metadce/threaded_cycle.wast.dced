@@ -8,16 +8,16 @@
  (export "wasm_func2" (func $wasm_func_2))
  (export "wasm_func3" (func $wasm_func_3))
  (export "wasm_func4" (func $wasm_func_4))
- (func $wasm_func_4
+ (func $wasm_func_4 (type $none_=>_none)
   (call $js_func_1)
  )
- (func $wasm_func_3
+ (func $wasm_func_3 (type $none_=>_none)
   (call $js_func_4)
  )
- (func $wasm_func_2
+ (func $wasm_func_2 (type $none_=>_none)
   (call $js_func_3)
  )
- (func $wasm_func_1
+ (func $wasm_func_1 (type $none_=>_none)
   (call $js_func_2)
  )
 )
