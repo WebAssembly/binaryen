@@ -3994,26 +3994,32 @@ private:
         Binary* add;
         Const* c1;
         Const* c2;
-        if ((matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-             matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+        if (matches(curr,
+                    binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
             !canOverflow(add)) {
-          if (c2->value.geU(c1->value).getInteger()) {
-            // This is the first line above, we turn into x > (C2-C1)
-            c2->value = c2->value.sub(c1->value);
-            curr->left = add->left;
-            return curr;
-          }
-          // This is the second line above, we turn into x + (C1-C2) > 0. Other
-          // optimizations can often kick in later. However, we must rule out
-          // the case where C2 is already 0 (as then we would not actually
-          // change anything, and we could infinite loop).
-          auto zero = Literal::makeZero(c2->type);
-          if (c2->value != zero) {
-            c1->value = c1->value.sub(c2->value);
-            c2->value = zero;
-            return curr;
+          // Also check for an overflow when doing C2-C1. We could check this in
+          // a way that considers whether the comparison is signed or unsigned,
+          // but for simplicity for now rule out all overflows in a simple way.
+          auto typeMaxBits = getBitsForType(add->type);
+          auto c1Bits = Bits::getMaxBits(c1, this);
+          auto c2Bits = Bits::getMaxBits(c2, this);
+          if (c1Bits + c2Bits < typeMaxBits) {
+            if (c2->value.geU(c1->value).getInteger()) {
+              // This is the first line above, we turn into x > (C2-C1)
+              c2->value = c2->value.sub(c1->value);
+              curr->left = add->left;
+              return curr;
+            }
+            // This is the second line above, we turn into x + (C1-C2) > 0.
+            // Other opts can often kick in later. However, we must rule out the
+            // case where C2 is already 0 (as then we would not actually change
+            // anything, and we could infinite loop).
+            auto zero = Literal::makeZero(c2->type);
+            if (c2->value != zero) {
+              c1->value = c1->value.sub(c2->value);
+              c2->value = zero;
+              return curr;
+            }
           }
         }
       }

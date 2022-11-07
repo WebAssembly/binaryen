@@ -16594,4 +16594,37 @@
       )
     )
   )
+
+  ;; CHECK:      (func $skip-added-constants-overflow (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -2147483648)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-overflow (result i32)
+    ;; If we subtracted 0x80000000 - 1 we'd get something that changes sign if
+    ;; the comparison is signed (as the sign bit is no longer set). To avoid
+    ;; that we skip optimizing cases where subtracting the constants might lead
+    ;; to an overflow.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
+      (i32.const 0x80000000)
+    )
+  )
 )
