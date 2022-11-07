@@ -1845,10 +1845,12 @@ bool SubTyper::isSubType(const Field& a, const Field& b) {
 }
 
 bool SubTyper::isSubType(const Signature& a, const Signature& b) {
-  // TODO: Implement proper signature subtyping, covariant in results and
-  // contravariant in params, once V8 implements it.
-  // return isSubType(b.params, a.params) && isSubType(a.results, b.results);
-  return a == b;
+  if (a == b) {
+    return true;
+  }
+
+  // Params are contravariant, and results are covariant.
+  return isSubType(b.params, a.params) && isSubType(a.results, b.results);
 }
 
 bool SubTyper::isSubType(const Struct& a, const Struct& b) {
