@@ -58,6 +58,22 @@ static Index getBitsForType(Type type) {
   return type.getByteSize() * 8;
 }
 
+static bool isSignedOp(BinaryOp op) {
+  switch (op) {
+    case LtSInt32:
+    case LeSInt32:
+    case GtSInt32:
+    case GeSInt32:
+    case LtSInt64:
+    case LeSInt64:
+    case GtSInt64:
+    case GeSInt64:
+      return true;
+    default:
+      return false;
+  }
+}
+
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
@@ -3997,13 +4013,21 @@ private:
         if (matches(curr,
                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
             !canOverflow(add)) {
-          // Also check for an overflow when doing C2-C1. We could check this in
-          // a way that considers whether the comparison is signed or unsigned,
-          // but for simplicity for now rule out all overflows in a simple way.
-          auto typeMaxBits = getBitsForType(add->type);
-          auto c1Bits = Bits::getMaxBits(c1, this);
-          auto c2Bits = Bits::getMaxBits(c2, this);
-          if (c1Bits + c2Bits < typeMaxBits) {
+          // Also check for an overflow when doing C2-C1. We subtract the
+          // smaller from the larger, which avoids unsigned overflows, but if
+          // the comparison is signed we need to also consider the sign bit.
+          // E.g. 0x80000000 - 1 = 0x7fffffff is fine as unsigned, but as a
+          // signed number the -1 turns a negative number into a positive one.
+          bool constsOverflow = false;
+          if (isSignedOp(curr)) {
+            auto typeMaxBits = getBitsForType(add->type);
+            auto c1Bits = Bits::getMaxBits(c1, this);
+            auto c2Bits = Bits::getMaxBits(c2, this);
+            if (c1Bits + c2Bits >= typeMaxBits) {
+              constsOverflow = true;
+            }
+          }
+          if (!constsOverflow) {
             if (c2->value.geU(c1->value).getInteger()) {
               // This is the first line above, we turn into x > (C2-C1)
               c2->value = c2->value.sub(c1->value);
