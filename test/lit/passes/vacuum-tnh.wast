@@ -6,10 +6,16 @@
 ;; RUN: wasm-opt %s --vacuum                      -all -S -o - | filecheck %s --check-prefix=NO_TNH
 
 (module
+  ;; YESTNH:      (type $struct (struct (field (mut i32))))
+
+  ;; YESTNH:      (tag $tag (param i32))
+  ;; NO_TNH:      (type $struct (struct (field (mut i32))))
+
+  ;; NO_TNH:      (tag $tag (param i32))
+  (tag $tag (param i32))
+
   (memory 1 1)
 
-  ;; YESTNH:      (type $struct (struct (field (mut i32))))
-  ;; NO_TNH:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
   ;; YESTNH:      (func $drop (param $x i32) (param $y anyref)
@@ -529,6 +535,91 @@
         (i32.store
           (i32.const 2)
           (i32.const 3)
+        )
+        (unreachable)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $block-unreachable-but-call
+  ;; YESTNH-NEXT:  (i32.store
+  ;; YESTNH-NEXT:   (i32.const 0)
+  ;; YESTNH-NEXT:   (i32.const 1)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (call $block-unreachable-but-call)
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $block-unreachable-but-call
+  ;; NO_TNH-NEXT:  (i32.store
+  ;; NO_TNH-NEXT:   (i32.const 0)
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (call $block-unreachable-but-call)
+  ;; NO_TNH-NEXT:  (i32.store
+  ;; NO_TNH-NEXT:   (i32.const 2)
+  ;; NO_TNH-NEXT:   (i32.const 3)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $block-unreachable-but-call
+    ;; A call cannot be removed, even if it leads to a trap, since it might
+    ;; throw or call an import. We can remove the store after it, though.
+    (i32.store
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (call $block-unreachable-but-call)
+    (i32.store
+      (i32.const 2)
+      (i32.const 3)
+    )
+    (unreachable)
+  )
+
+  ;; YESTNH:      (func $catch-pop
+  ;; YESTNH-NEXT:  (try $try
+  ;; YESTNH-NEXT:   (do
+  ;; YESTNH-NEXT:    (call $catch-pop)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:   (catch $tag
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (pop i32)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $catch-pop
+  ;; NO_TNH-NEXT:  (try $try
+  ;; NO_TNH-NEXT:   (do
+  ;; NO_TNH-NEXT:    (call $catch-pop)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (catch $tag
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (pop i32)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.store
+  ;; NO_TNH-NEXT:     (i32.const 0)
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $catch-pop
+    (try $try
+      (do
+        ;; Put a call here so the entire try-catch is not removed as trivial.
+        (call $catch-pop)
+      )
+      (catch $tag
+        ;; A drop on the way to a trap cannot be removed. But the store can.
+        (drop
+          (pop i32)
+        )
+        (i32.store
+          (i32.const 0)
+          (i32.const 1)
         )
         (unreachable)
       )

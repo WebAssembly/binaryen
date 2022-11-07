@@ -148,21 +148,35 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // remove, and an unreachable.
     if (getPassOptions().trapsNeverHappen && list.size() >= 2) {
       // Go backwards. When we find a trap, mark the things before it as heading
-      // to a trap, until we reach a possible control flow transfer.
+      // to a trap.
       auto headingToTrap = false;
       for (int i = list.size() - 1; i >= 0; i--) {
         if (list[i]->is<Unreachable>()) {
           headingToTrap = true;
-        } else if (EffectAnalyzer(getPassOptions(), *getModule(), list[i])
-                     .transfersControlFlow()) {
-          headingToTrap = false;
-          // XXX calls too?
-        } else if (headingToTrap) {
-          // This code can be removed. Turn it into a nop, and leave it for the
-          // loop after us to clean up.
-          typeUpdater.noteRecursiveRemoval(list[i]);
-          ExpressionManipulator::nop(list[i]);
+          continue;
         }
+
+        if (!headingToTrap) {
+          continue;
+        }
+
+        // Check if we may no longer be heading to a trap. Two situations count
+        // here: Control flow might branch, or we might call (since a call might
+        // reach an import; see notes on that in pass.h:trapsNeverHappen).
+        //
+        // We also cannot remove a pop as it is necessary for structural
+        // reasons.
+        EffectAnalyzer effects(getPassOptions(), *getModule(), list[i]);
+        if (effects.transfersControlFlow() || effects.calls ||
+            effects.danglingPop) {
+          headingToTrap = false;
+          continue;
+        }
+
+        // This code can be removed! Turn it into a nop, and leave it for the
+        // code lower down to finish cleaning up.
+        typeUpdater.noteRecursiveRemoval(list[i]);
+        ExpressionManipulator::nop(list[i]);
       }
     }
 
