@@ -102,19 +102,18 @@ struct JSPI : public Pass {
     // Wrap each exported function in a function that stores the suspender
     // and calls the original export.
     for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Function) {
+      if (ex->kind == ExternalKind::Function &&
+          canChangeState(ex->name.toString(), listedExports)) {
         auto* func = module->getFunction(ex->value);
-        if (canChangeState(func->name.toString(), listedExports)) {
-          Name wrapperName;
-          auto iter = wrappedExports.find(func->name);
-          if (iter == wrappedExports.end()) {
-            wrapperName = makeWrapperForExport(func, module, suspender);
-            wrappedExports[func->name] = wrapperName;
-          } else {
-            wrapperName = iter->second;
-          }
-          ex->value = wrapperName;
+        Name wrapperName;
+        auto iter = wrappedExports.find(func->name);
+        if (iter == wrappedExports.end()) {
+          wrapperName = makeWrapperForExport(func, module, suspender);
+          wrappedExports[func->name] = wrapperName;
+        } else {
+          wrapperName = iter->second;
         }
+        ex->value = wrapperName;
       }
     }
 
