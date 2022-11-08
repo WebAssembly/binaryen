@@ -285,7 +285,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     //
     // Ignore the case of an unreachable if, such as having both arms be
     // unreachable. In that case we'd need to fix up the IR to avoid changing
-    // the type; leave that for DCE to simplify first.
+    // the type; leave that for DCE to simplify first. After checking that
+    // curr->type != unreachable, we can assume that only one of the arms is
+    // unreachable (at most).
     if (getPassOptions().trapsNeverHappen && curr->type != Type::unreachable) {
       auto optimizeArm = [&](Expression* arm, Expression* otherArm) {
         if (!arm->is<Unreachable>()) {
