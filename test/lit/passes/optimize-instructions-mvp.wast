@@ -16628,6 +16628,17 @@
     )
   )
 
+  ;; CHECK:      (func $skip-added-constants-overflow-unsigned (result i32)
+  ;; CHECK-NEXT:  (i32.ge_u
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 2147483647)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $skip-added-constants-overflow-unsigned (result i32)
     ;; As above, but unsigned. This is ok for us to optimize.
     (i32.ge_u

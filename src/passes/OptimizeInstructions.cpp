@@ -4019,7 +4019,7 @@ private:
           // E.g. 0x80000000 - 1 = 0x7fffffff is fine as unsigned, but as a
           // signed number the -1 turns a negative number into a positive one.
           bool constsOverflow = false;
-          if (isSignedOp(curr)) {
+          if (isSignedOp(curr->op)) {
             auto typeMaxBits = getBitsForType(add->type);
             auto c1Bits = Bits::getMaxBits(c1, this);
             auto c2Bits = Bits::getMaxBits(c2, this);
