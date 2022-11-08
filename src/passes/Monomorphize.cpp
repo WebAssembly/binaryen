@@ -80,6 +80,10 @@ struct Monomorphize : public Pass {
   Name getRefinedTarget(Call* call, Module* module) {
     auto target = call->target;
     auto* func = module->getFunction(target);
+    if (func->imported()) {
+      // Nothing to do since this calls outside of the module.
+      return target;
+    }
     auto params = func->getParams();
     bool hasRefinedParam = false;
     for (Index i = 0; i < call->operands.size(); i++) {
@@ -89,7 +93,7 @@ struct Monomorphize : public Pass {
       }
     }
     if (!hasRefinedParam) {
-      // Nothing to do.
+      // Nothing to do since all params are fully refined already.
       return target;
     }
 
