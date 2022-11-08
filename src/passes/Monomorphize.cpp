@@ -41,7 +41,7 @@ namespace {
 
 struct Monomorphize : public Pass {
   // ???
-  //bool requiresNonNullableLocalFixups() override { return false; }
+  // bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
