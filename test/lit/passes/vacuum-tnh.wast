@@ -614,6 +614,9 @@
       )
       (catch $tag
         ;; A pop on the way to a trap cannot be removed. But the store can.
+        ;; TODO: The pop can actually be removed since it is valid per the spec
+        ;;       because of the unreachable afterwards. We need to fix our
+        ;;       validation rules to handle that though.
         (drop
           (pop i32)
         )
