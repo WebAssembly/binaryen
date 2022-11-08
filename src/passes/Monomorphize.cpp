@@ -111,8 +111,8 @@ struct Monomorphize : public Pass {
     // refined parameters.
     auto refinedName = Names::getValidFunctionName(*module, target);
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedName);
-    refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
+    refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
     funcParamMap[{target, refinedParams}] = refinedName;
     return refinedName;
   }

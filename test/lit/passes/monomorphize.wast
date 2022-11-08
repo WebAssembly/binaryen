@@ -73,8 +73,70 @@
     )
   )
 )
+
+;; As above, but now the refinable function uses the local in a way that
+;; requires a fixup.
 ;; CHECK:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (local.get $ref)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $A (struct_subtype  data))
+  (type $A (struct_subtype data))
+  ;; CHECK:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+
+  ;; CHECK:      (func $calls (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $refinable_0
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls
+    (call $refinable
+      (struct.new $B)
+    )
+  )
+
+  ;; CHECK:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; CHECK-NEXT:  (local $unref (ref $A))
+  ;; CHECK-NEXT:  (local.set $unref
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (local.get $unref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refinable (param $ref (ref $A))
+    (local $unref (ref $A))
+    (local.set $unref
+      (local.get $ref)
+    )
+    ;; If we refine $ref then this set will be invalid - we'd be setting a less-
+    ;; refined type into a local/param that is more refined. We should fix this
+    ;; up by using a temp local.
+    (local.set $ref
+      (local.get $unref)
+    )
+  )
+)
+;; CHECK:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; CHECK-NEXT:  (local $unref (ref $A))
+;; CHECK-NEXT:  (local $2 (ref $A))
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (local.get $ref)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (block
+;; CHECK-NEXT:   (local.set $unref
+;; CHECK-NEXT:    (local.get $2)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (local.set $2
+;; CHECK-NEXT:    (local.get $unref)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
