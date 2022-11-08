@@ -40,8 +40,8 @@ namespace wasm {
 namespace {
 
 struct Monomorphize : public Pass {
-  // Only modifies globals and global.get operations.
-  bool requiresNonNullableLocalFixups() override { return false; }
+  // ???
+  //bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
