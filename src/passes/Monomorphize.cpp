@@ -29,6 +29,7 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
@@ -93,7 +94,7 @@ struct Monomorphize : public Pass {
     }
 
     std::vector<Type> refinedTypes;
-    for (auto* operand : curr->operands) {
+    for (auto* operand : call->operands) {
       refinedTypes.push_back(operand->type);
     }
     auto refinedParams = Type(refinedTypes);
@@ -104,9 +105,9 @@ struct Monomorphize : public Pass {
 
     // This is the first time we see this situation. Create a new function with
     // refined parameters.
-    auto refinedName = getValidFunctionName(*module, target);
+    auto refinedName = Names::getValidFunctionName(*module, target);
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedName);
-    refinedFunc->type = Type(refinedParams, func->getResults());
+    refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
     funcParamMap[{target, refinedParams}] = refinedName;
     return refinedName;
