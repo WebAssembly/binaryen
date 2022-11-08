@@ -21,7 +21,7 @@
 // pass assumes that memory initialized by active segments is zero on
 // instantiation and therefore simply drops the zero ranges from the active
 // segments. For passive segments, we perform the same splitting, but we also
-// record how each segment was split and update all bulk memory operations
+// record how each segment was split and update all instructions that use it
 // accordingly. To preserve trapping semantics for memory.init instructions, it
 // is sometimes necessary to explicitly track whether input segments would have
 // been dropped in globals. We are careful to emit only as many of these globals
@@ -50,7 +50,7 @@ struct Range {
   size_t end;
 };
 
-// A function that produces the transformed bulk memory op. We need to use a
+// A function that produces the transformed instruction. We need to use a
 // function here instead of simple data because the replacement code sequence
 // may require allocating new locals, which in turn requires the enclosing
 // Function, which is only available in the parallelized instruction replacement
@@ -62,10 +62,10 @@ struct Range {
 // locals as necessary.
 using Replacement = std::function<Expression*(Function*)>;
 
-// Maps each bulk memory op to the replacement that must be applied to it.
+// Maps each instruction to the replacement that must be applied to it.
 using Replacements = std::unordered_map<Expression*, Replacement>;
 
-// A collection of bulk memory operations referring to a particular segment.
+// A collection of instructions referring to a particular segment.
 using Referrers = std::vector<Expression*>;
 
 // Map segment indices to referrers.
@@ -102,7 +102,7 @@ struct MemoryPacking : public Pass {
   void run(Module* module) override;
   bool canOptimize(std::vector<std::unique_ptr<Memory>>& memories,
                    std::vector<std::unique_ptr<DataSegment>>& dataSegments);
-  void optimizeBulkMemoryOps(Module* module);
+  void optimizeSegmentOps(Module* module);
   void getSegmentReferrers(Module* module, ReferrersMap& referrers);
   void dropUnusedSegments(Module* module,
                           std::vector<std::unique_ptr<DataSegment>>& segments,
@@ -122,7 +122,7 @@ struct MemoryPacking : public Pass {
                           const Referrers& referrers,
                           Replacements& replacements,
                           const Index segmentIndex);
-  void replaceBulkMemoryOps(Module* module, Replacements& replacements);
+  void replaceSegmentOps(Module* module, Replacements& replacements);
 };
 
 void MemoryPacking::run(Module* module) {
@@ -131,18 +131,21 @@ void MemoryPacking::run(Module* module) {
     return;
   }
 
+  bool canHaveSegmentReferrers =
+    module->features.hasBulkMemory() || module->features.hasGC();
+
   auto& segments = module->dataSegments;
 
-  // For each segment, a list of bulk memory instructions that refer to it
+  // For each segment, a list of instructions that refer to it
   ReferrersMap referrers;
 
-  if (module->features.hasBulkMemory()) {
+  if (canHaveSegmentReferrers) {
     // Optimize out memory.inits and data.drops that can be entirely replaced
     // with other instruction sequences. This can increase the number of unused
     // segments that can be dropped entirely and allows later replacement
     // creation to make more assumptions about what these instructions will look
     // like, such as memory.inits not having both zero offset and size.
-    optimizeBulkMemoryOps(module);
+    optimizeSegmentOps(module);
     getSegmentReferrers(module, referrers);
     dropUnusedSegments(module, segments, referrers);
   }
@@ -177,8 +180,8 @@ void MemoryPacking::run(Module* module) {
   segments.swap(packed);
   module->updateDataSegmentsMap();
 
-  if (module->features.hasBulkMemory()) {
-    replaceBulkMemoryOps(module, replacements);
+  if (canHaveSegmentReferrers) {
+    replaceSegmentOps(module, replacements);
   }
 }
 
@@ -263,20 +266,22 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
     return false;
   }
 
-  if (segment->isPassive) {
-    for (auto* referrer : referrers) {
-      if (auto* init = referrer->dynCast<MemoryInit>()) {
+  for (auto* referrer : referrers) {
+    if (auto* curr = referrer->dynCast<MemoryInit>()) {
+      if (segment->isPassive) {
         // Do not try to split if there is a nonconstant offset or size
-        if (!init->offset->is<Const>() || !init->size->is<Const>()) {
+        if (!curr->offset->is<Const>() || !curr->size->is<Const>()) {
           return false;
         }
       }
+    } else if (referrer->is<ArrayNewSeg>()) {
+      // TODO: Split segments referenced by array.new_data instructions.
+      return false;
     }
-    return true;
   }
 
   // Active segments can only be split if they have constant offsets
-  return segment->offset->is<Const>();
+  return segment->isPassive || segment->offset->is<Const>();
 }
 
 void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
@@ -374,7 +379,7 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
   std::swap(ranges, mergedRanges);
 }
 
-void MemoryPacking::optimizeBulkMemoryOps(Module* module) {
+void MemoryPacking::optimizeSegmentOps(Module* module) {
   struct Optimizer : WalkerPass<PostWalker<Optimizer>> {
     bool isFunctionParallel() override { return true; }
 
@@ -465,6 +470,11 @@ void MemoryPacking::getSegmentReferrers(Module* module,
       void visitDataDrop(DataDrop* curr) {
         referrers[curr->segment].push_back(curr);
       }
+      void visitArrayNewSeg(ArrayNewSeg* curr) {
+        if (curr->op == NewData) {
+          referrers[curr->segment].push_back(curr);
+        }
+      }
       void doWalkFunction(Function* func) {
         super::doWalkFunction(func);
       }
@@ -496,7 +506,7 @@ void MemoryPacking::dropUnusedSegments(
     if (segments[i]->isPassive) {
       if (hasReferrers) {
         for (auto* referrer : referrersIt->second) {
-          if (referrer->is<MemoryInit>()) {
+          if (!referrer->is<DataDrop>()) {
             used = true;
             break;
           }
@@ -593,12 +603,14 @@ void MemoryPacking::createReplacements(Module* module,
   if (ranges.size() == 1 && !ranges.front().isZero) {
     for (auto referrer : referrers) {
       replacements[referrer] = [referrer, segmentIndex](Function*) {
-        if (auto* init = referrer->dynCast<MemoryInit>()) {
-          init->segment = segmentIndex;
-        } else if (auto* drop = referrer->dynCast<DataDrop>()) {
-          drop->segment = segmentIndex;
+        if (auto* curr = referrer->dynCast<MemoryInit>()) {
+          curr->segment = segmentIndex;
+        } else if (auto* curr = referrer->dynCast<DataDrop>()) {
+          curr->segment = segmentIndex;
+        } else if (auto* curr = referrer->dynCast<ArrayNewSeg>()) {
+          curr->segment = segmentIndex;
         } else {
-          WASM_UNREACHABLE("Unexpected bulk memory operation");
+          WASM_UNREACHABLE("Unexpected segment operation");
         }
         return referrer;
       };
@@ -776,8 +788,8 @@ void MemoryPacking::createReplacements(Module* module,
   }
 }
 
-void MemoryPacking::replaceBulkMemoryOps(Module* module,
-                                         Replacements& replacements) {
+void MemoryPacking::replaceSegmentOps(Module* module,
+                                      Replacements& replacements) {
   struct Replacer : WalkerPass<PostWalker<Replacer>> {
     bool isFunctionParallel() override { return true; }
 
@@ -798,6 +810,12 @@ void MemoryPacking::replaceBulkMemoryOps(Module* module,
     }
 
     void visitDataDrop(DataDrop* curr) {
+      auto replacement = replacements.find(curr);
+      assert(replacement != replacements.end());
+      replaceCurrent(replacement->second(getFunction()));
+    }
+
+    void visitArrayNewSeg(ArrayNewSeg* curr) {
       auto replacement = replacements.find(curr);
       assert(replacement != replacements.end());
       replaceCurrent(replacement->second(getFunction()));
