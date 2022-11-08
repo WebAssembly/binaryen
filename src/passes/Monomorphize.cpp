@@ -121,6 +121,13 @@ struct Monomorphize : public Pass {
     // Optimize both functions.
     // TODO: limit how many times we try this? If we limit to the # of funcs in
     // the module, we'd at worst be doing -O1 on it all once.
+    // Note we keep changes to |func|. But that's ok.
+    // J2wasm: 620 => 698 with this, or without this check 742. So saves
+    // a big chunk of bloat.
+    // Dart:   140 => 165, or without this check           171. Saves only a
+    // little.
+    // TODO: does this invalidate the list of Calls?
+    // TODO: a version that does it regardless of the cost?
     doMinimalOpts(func);
     doMinimalOpts(refinedFunc);
 
