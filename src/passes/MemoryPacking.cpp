@@ -816,9 +816,11 @@ void MemoryPacking::replaceSegmentOps(Module* module,
     }
 
     void visitArrayNewSeg(ArrayNewSeg* curr) {
-      auto replacement = replacements.find(curr);
-      assert(replacement != replacements.end());
-      replaceCurrent(replacement->second(getFunction()));
+      if (curr->op == NewData) {
+        auto replacement = replacements.find(curr);
+        assert(replacement != replacements.end());
+        replaceCurrent(replacement->second(getFunction()));
+      }
     }
   } replacer(replacements);
   replacer.run(getPassRunner(), module);
