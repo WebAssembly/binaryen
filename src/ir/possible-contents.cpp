@@ -900,21 +900,23 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
-    auto heapType = curr->type.getHeapType();
-    switch (curr->op) {
-      case NewData: {
-        Type elemType = heapType.getArray().element.type;
-        addRoot(DataLocation{heapType, 0},
-                PossibleContents::fromType(elemType));
-        return;
-      }
-      case NewElem: {
-        Type segType = getModule()->elementSegments[curr->segment]->type;
-        addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
-        return;
-      }
-    }
-    WASM_UNREACHABLE("unexpected op");
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    // auto heapType = curr->type.getHeapType();
+    // switch (curr->op) {
+    //   case NewData: {
+    //     Type elemType = heapType.getArray().element.type;
+    //     addRoot(DataLocation{heapType, 0},
+    //             PossibleContents::fromType(elemType));
+    //     return;
+    //   }
+    //   case NewElem: {
+    //     Type segType = getModule()->elementSegments[curr->segment]->type;
+    //     addRoot(DataLocation{heapType, 0},
+    //             PossibleContents::fromType(segType));
+    //     return;
+    //   }
+    // }
+    // WASM_UNREACHABLE("unexpected op");
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
