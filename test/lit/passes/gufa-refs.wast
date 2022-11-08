@@ -5393,3 +5393,73 @@
     )
   )
 )
+
+
+;; Check that array.new_data and array.new_seg are handled properly.
+(module
+  ;; CHECK:      (type $array-i8 (array_subtype i8 data))
+  (type $array-i8 (array i8))
+  ;; CHECK:      (type $array-funcref (array_subtype funcref data))
+  (type $array-funcref (array funcref))
+  ;; CHECK:      (type $ref|$array-i8|_ref|$array-funcref|_=>_none (func_subtype (param (ref $array-i8) (ref $array-funcref)) func))
+
+  ;; CHECK:      (data "hello")
+  (data "hello")
+  ;; CHECK:      (elem func $test)
+  (elem func $test)
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $ref|$array-i8|_ref|$array-funcref|_=>_none) (param $array-i8 (ref $array-i8)) (param $array-funcref (ref $array-funcref))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_data $array-i8 0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $array-funcref 0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get_u $array-i8
+  ;; CHECK-NEXT:    (local.get $array-i8)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $array-funcref
+  ;; CHECK-NEXT:    (local.get $array-funcref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param $array-i8 (ref $array-i8)) (param $array-funcref (ref $array-funcref))
+    (drop
+      (array.new_data $array-i8 0
+        (i32.const 0)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_elem $array-funcref 0
+        (i32.const 0)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.get $array-i8
+        (local.get $array-i8)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (array.get $array-funcref
+        (local.get $array-funcref)
+        (i32.const 0)
+      )
+    )
+  )
+)
