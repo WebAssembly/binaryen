@@ -26,6 +26,7 @@
 // TODO: Not just direct calls? But updating vtables is complex.
 //
 
+#include "ir/cost.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -118,6 +119,8 @@ struct Monomorphize : public Pass {
     funcParamMap[{target, refinedParams}] = refinedTarget;
 
     // Optimize both functions.
+    // TODO: limit how many times we try this? If we limit to the # of funcs in
+    // the module, we'd at worst be doing -O1 on it all once.
     doMinimalOpts(func);
     doMinimalOpts(refinedFunc);
 
@@ -133,7 +136,7 @@ struct Monomorphize : public Pass {
 
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
-    runner.options.optLevel = 1;
+    runner.options.optimizeLevel = 1;
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
