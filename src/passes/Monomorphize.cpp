@@ -114,6 +114,9 @@ struct Monomorphize : public Pass {
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
     refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
     funcParamMap[{target, refinedParams}] = refinedName;
+
+    // TODO perhaps run -O1 and see if there are benefits, and if not then undo?
+
     return refinedName;
   }
 

@@ -125,6 +125,8 @@
     )
   )
 )
+
+;; Multiple refinings of the same function, and of different functions.
 ;; CHECK:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; CHECK-NEXT:  (local $unref (ref $A))
 ;; CHECK-NEXT:  (local $2 (ref $A))
@@ -138,5 +140,94 @@
 ;; CHECK-NEXT:   (local.set $2
 ;; CHECK-NEXT:    (local.get $unref)
 ;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $A (struct_subtype  data))
+  (type $A (struct_subtype data))
+  ;; CHECK:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $C (struct_subtype  $B))
+  (type $C (struct_subtype $B))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CHECK:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+
+  ;; CHECK:      (type $ref|$C|_=>_none (func_subtype (param (ref $C)) func))
+
+  ;; CHECK:      (func $calls1 (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $refinable1
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $refinable1_0
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls1
+    (call $refinable1
+      (struct.new $A)
+    )
+    (call $refinable1
+      (struct.new $B)
+    )
+  )
+
+  ;; CHECK:      (func $calls2 (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $refinable1_1
+  ;; CHECK-NEXT:   (struct.new_default $C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $refinable2_0
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls2
+    (call $refinable1
+      (struct.new $C)
+    )
+    (call $refinable2
+      (struct.new $B)
+    )
+  )
+
+  ;; CHECK:      (func $refinable1 (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refinable1 (param $ref (ref $A))
+    (drop
+      (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $refinable2 (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refinable2 (param $ref (ref $A))
+    (drop
+      (local.get $ref)
+    )
+  )
+)
+;; CHECK:      (func $refinable1_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (local.get $ref)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $refinable1_1 (type $ref|$C|_=>_none) (param $ref (ref $C))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (local.get $ref)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $refinable2_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (local.get $ref)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
