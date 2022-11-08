@@ -3516,6 +3516,7 @@ public:
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
     auto elemType = heapType.getArray().element.type;
+    WASM_UNUSED(elemType);
 
     Literals contents;
     contents.reserve(size);
