@@ -20,6 +20,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array-new-data (result (ref $array))
+    ;; The segment is referenced by array.new_data, so it should not be optimized out.
     (array.new_data $array 0
       (i32.const 0)
       (i32.const 5)
@@ -43,6 +44,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-drop-ends (result (ref $array))
+    ;; The referenced segment should not have its zeros trimmed.
     (array.new_data $array 0
       (i32.const 0)
       (i32.const 5)
@@ -69,6 +71,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-split (result (ref $array))
+    ;; The referenced segment should not be split.
     (array.new_data $array 0
       (i32.const 0)
       (i32.const 8)
@@ -96,6 +99,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-split-active (result (ref $array))
+    ;; The segment should still not be optimized, even though it is an active segment.
+    ;; TODO: We could optimize this better by realizing the array.new_data will trap.
     (array.new_data $array 0
       (i32.const 16)
       (i32.const 8)
@@ -129,6 +134,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $renumber-segment (result (ref $array))
+    ;; Segment 0 is optimized out, so the segment referenced here should be updated.
     (array.new_data $array 1
       (i32.const 0)
       (i32.const 7)
@@ -158,6 +164,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $renumber-segment (result (ref $array))
+    ;; Segment 0 is split in two, so the segment referenced here should be updated.
     (array.new_data $array 1
       (i32.const 0)
       (i32.const 7)
