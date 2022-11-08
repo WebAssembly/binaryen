@@ -107,17 +107,36 @@ struct Monomorphize : public Pass {
       return iter->second;
     }
 
-    // This is the first time we see this situation. Create a new function with
-    // refined parameters.
-    auto refinedName = Names::getValidFunctionName(*module, target);
-    auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedName);
+    // This is the first time we see this situation. Let's see if it is worth
+    // monomorphizing.
+
+    // Create a new function with refined parameters.
+    auto refinedTarget = Names::getValidFunctionName(*module, target);
+    auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
     refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
-    funcParamMap[{target, refinedParams}] = refinedName;
+    funcParamMap[{target, refinedParams}] = refinedTarget;
 
-    // TODO perhaps run -O1 and see if there are benefits, and if not then undo?
+    // Optimize both functions.
+    doMinimalOpts(func);
+    doMinimalOpts(refinedFunc);
 
-    return refinedName;
+    auto costBefore = CostAnalyzer(func->body).cost;
+    auto costAfter = CostAnalyzer(refinedFunc->body).cost;
+    if (costAfter < costBefore) {
+      return refinedTarget;
+    }
+
+    // Otherwise, we failed to improve, return the old function name.
+    return target;
+  }
+
+  void doMinimalOpts(Function* func) {
+    PassRunner runner(getPassRunner());
+    runner.options.optLevel = 1;
+    runner.addDefaultFunctionOptimizationPasses();
+    runner.setIsNested(true);
+    runner.runOnFunction(func);
   }
 
   // Maps [func name, param types] to the name of a new function whose params
