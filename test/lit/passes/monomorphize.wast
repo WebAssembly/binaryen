@@ -60,12 +60,21 @@
   )
 
   ;; CHECK:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $refinable (param $ref (ref $A))
-    ;; Helper function for the above
+    ;; Helper function for the above. Use the parameter to see we update types
+    ;; etc when we make a refined version of the function (if we didn't,
+    ;; validation would error).
+    (drop
+      (local.get $ref)
+    )
   )
 )
 ;; CHECK:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
-;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (local.get $ref)
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
