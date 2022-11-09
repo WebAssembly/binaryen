@@ -178,6 +178,10 @@ struct Monomorphize : public Pass {
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
+    // Local subtyping is not run in -O1, but we really do want it here since
+    // the entire point is that parameters now have more refined types, which
+    // can lead to locals reading them being refinable as well.
+    runner.add("local-subtyping");
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
