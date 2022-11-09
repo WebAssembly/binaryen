@@ -11,8 +11,21 @@
 ;; which is temporarily inconsistent. We must be careful to avoid confusion
 ;; there.
 (module
+ ;; CHECK:      (type $B (struct ))
+
+ ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+ ;; CHECK:      (type $A (struct (field (ref null $B))))
  (type $A (struct_subtype (field (ref null $B)) data))
  (type $B (struct_subtype  data))
+ ;; CHECK:      (func $target (param $0 (ref null $A))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast_static $B
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
  (func $target (param $0 (ref null $A))
   (drop
    (ref.cast_static $B
