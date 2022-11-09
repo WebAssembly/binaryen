@@ -59,6 +59,9 @@
   (func $calls
     ;; Two calls with $A, two with $B. The calls to $B should both go to the
     ;; same new function which has a refined parameter of $B.
+    ;;
+    ;; However, in CAREFUL mode we won't do that, as there is no helpful
+    ;; improvement in the target functions even with the refined types.
     (call $refinable
       (struct.new $A)
     )
@@ -102,20 +105,25 @@
     ;; Helper function for the above. Use the parameter to see we update types
     ;; etc when we make a refined version of the function (if we didn't,
     ;; validation would error).
+    ;;
+    ;; In CAREFUL mode we optimize to check if refined types help, which has the
+    ;; side effect of optimizing the body of this function into a nop.
     (drop
       (local.get $ref)
     )
   )
 )
 
-;; As above, but now the refinable function uses the local in a way that
-;; requires a fixup.
 ;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
+
 (module
+  ;; As above, but now the refinable function uses the local in a way that
+  ;; requires a fixup.
+
   ;; ALWAYS:      (type $A (struct_subtype  data))
   ;; CAREFUL:      (type $none_=>_none (func_subtype func))
 
@@ -177,7 +185,6 @@
   )
 )
 
-;; Multiple refinings of the same function, and of different functions.
 ;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (local $unref (ref $A))
 ;; ALWAYS-NEXT:  (local $2 (ref $A))
@@ -193,7 +200,10 @@
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
+
 (module
+  ;; Multiple refinings of the same function, and of different functions.
+
   ;; ALWAYS:      (type $A (struct_subtype  data))
   ;; CAREFUL:      (type $none_=>_none (func_subtype func))
 
