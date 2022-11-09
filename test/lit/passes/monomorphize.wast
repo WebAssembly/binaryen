@@ -424,6 +424,7 @@
     )
   )
 )
+
 ;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (call $import
 ;; ALWAYS-NEXT:   (ref.cast_static $B
@@ -437,3 +438,43 @@
 ;; CAREFUL-NEXT:   (local.get $0)
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT: )
+(module
+  ;; Test that we avoid recursive calls.
+
+  ;; ALWAYS:      (type $A (struct_subtype  data))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CAREFUL:      (type $A (struct_subtype  data))
+  (type $A (struct_subtype data))
+  ;; ALWAYS:      (type $B (struct_subtype  $A))
+  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+
+  ;; ALWAYS:      (func $calls (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS-NEXT:  (call $calls_0
+  ;; ALWAYS-NEXT:   (struct.new_default $B)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $calls (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL-NEXT:  (call $calls
+  ;; CAREFUL-NEXT:   (struct.new_default $B)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $calls (param $ref (ref $A))
+    ;; We should change nothing in this recursive call, even though we are
+    ;; sending a more refined type, so we could try to monomorphize in theory.
+    (call $calls
+      (struct.new $B)
+    )
+  )
+)
+;; ALWAYS:      (func $calls_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS-NEXT:  (call $calls
+;; ALWAYS-NEXT:   (struct.new_default $B)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
