@@ -97,7 +97,7 @@ struct Monomorphize : public Pass {
       for (auto* call : FindAll<Call>(func->body).list) {
         if (call->type == Type::unreachable) {
           // Ignore unreachable code.
-          // TODO: call_return?
+          // TODO: return_call?
           continue;
         }
 
