@@ -40,6 +40,9 @@
 //       pattern of incremental monomorphization. Doing it in the pass could be
 //       more efficient as later cycles can focus only on what was just
 //       optimized and changed.
+// TODO: Also run the result-refining part of SignatureRefining, as if we
+//       refine the result then callers of the function may benefit, even if
+//       there is no benefit in the function itself.
 // TODO: Not just direct calls? But updating vtables is complex.
 //
 
@@ -168,7 +171,8 @@ struct Monomorphize : public Pass {
       }
     }
 
-    // Mark the chosen target in the map, so we don't do this work again.
+    // Mark the chosen target in the map, so we don't do this work again: every
+    // pair of target and refinedParams is only considered once.
     funcParamMap[{target, refinedParams}] = chosenTarget;
 
     return chosenTarget;
@@ -189,6 +193,11 @@ struct Monomorphize : public Pass {
 
   // Maps [func name, param types] to the name of a new function whose params
   // have those types.
+  //
+  // Note that this can contain funcParamMap{A, types} = A, that is, that maps
+  // a function name to itself. That indicates we found no benefit from
+  // refining with those particular types, and saves us from computing it again
+  // later on.
   std::unordered_map<std::pair<Name, Type>, Name> funcParamMap;
 };
 
