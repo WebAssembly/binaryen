@@ -128,6 +128,7 @@ struct Monomorphize : public Pass {
 
     // Create a new function with refined parameters.
     auto refinedTarget = Names::getValidFunctionName(*module, target);
+    func->stackIR.reset(); // explain
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
     refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
@@ -167,7 +168,6 @@ struct Monomorphize : public Pass {
 
   // Run minimal function-level optimizations on a function.
   void doMinimalOpts(Function* func) {
-    func->stackIR.reset(); // explain
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
     runner.addDefaultFunctionOptimizationPasses();
