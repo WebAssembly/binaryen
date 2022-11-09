@@ -235,6 +235,9 @@
 ;; CHECK-NEXT:   --monomorphize                                creates specialized versions of
 ;; CHECK-NEXT:                                                 functions
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --monomorphize-always                         creates specialized versions of
+;; CHECK-NEXT:                                                 functions (even if unhelpful)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --multi-memory-lowering                       combines multiple memories into
 ;; CHECK-NEXT:                                                 a single memory
 ;; CHECK-NEXT:
