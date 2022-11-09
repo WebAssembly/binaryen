@@ -441,6 +441,8 @@
 (module
   ;; Test that we avoid recursive calls.
 
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
   ;; ALWAYS:      (type $A (struct_subtype  data))
   ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
 
@@ -451,16 +453,12 @@
   (type $B (struct_subtype $A))
 
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
-
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
-
   ;; ALWAYS:      (func $calls (type $ref|$A|_=>_none) (param $ref (ref $A))
-  ;; ALWAYS-NEXT:  (call $calls_0
+  ;; ALWAYS-NEXT:  (call $calls
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL:      (func $calls (type $ref|$A|_=>_none) (param $ref (ref $A))
   ;; CAREFUL-NEXT:  (call $calls
   ;; CAREFUL-NEXT:   (struct.new_default $B)
   ;; CAREFUL-NEXT:  )
@@ -473,8 +471,3 @@
     )
   )
 )
-;; ALWAYS:      (func $calls_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
-;; ALWAYS-NEXT:  (call $calls
-;; ALWAYS-NEXT:   (struct.new_default $B)
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT: )
