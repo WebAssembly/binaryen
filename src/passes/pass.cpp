@@ -275,6 +275,9 @@ void PassRegistry::registerPasses() {
   registerPass("monomorphize",
                "creates specialized versions of functions",
                createMonomorphizePass);
+  registerPass("monomorphize-always",
+               "creates specialized versions of functions (even if unhelpful)",
+               createMonomorphizeAlwaysPass);
   registerPass("multi-memory-lowering",
                "combines multiple memories into a single memory",
                createMultiMemoryLoweringPass);

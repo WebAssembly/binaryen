@@ -23,6 +23,17 @@
 // Inlining also monomorphizes in effect. What this pass does is handle the
 // cases where inlining cannot be done.
 //
+// To see when monomorphizing makes sense, this optimizes the target function
+// both with and without the more refined types. If the refined types help then
+// the version with might remove a cast, for example. Note that while doing so
+// we keep the optimization results of the version without - there is no reason
+// to forget them since we've gone to the trouble anyhow. So this pass may have
+// the side effect of performing minor optimizations on functions. There is also
+// a variant of the pass that always monomorphizes, even when it does not seem
+// helpful, which is useful for testing, and possibly in cases where we need
+// more than just local optimizations to see the benefit - for example, perhaps
+// GUFA ends up more powerful later on.
+//
 // TODO: Not just direct calls? But updating vtables is complex.
 //
 
@@ -41,30 +52,29 @@ namespace wasm {
 namespace {
 
 struct Monomorphize : public Pass {
-  // ???
-  // bool requiresNonNullableLocalFixups() override { return false; }
+  // If set, we run some opts to see if monomorphization helps, and skip it if
+  // not.
+  bool onlyWhenHelpful;
+
+  Monomorphize(bool onlyWhenHelpful) : onlyWhenHelpful(onlyWhenHelpful) {}
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
 
-    // First, find all the calls.
+    // Note the list of all functions. We'll be adding more, and do not want to
+    // operate on those.
+    std::vector<Name> funcNames;
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+      funcNames.push_back(func->name);
+    });
 
-    struct Info {
-      std::vector<Call*> calls;
-    };
-
-    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
-      *module, [&](Function* func, Info& info) {
-        if (func->imported()) {
-          return;
-        }
-        info.calls = std::move(FindAll<Call>(func->body).list);
-      });
-
-    for (auto& [_, info] : analysis.map) {
-      for (auto* call : info.calls) {
+    // Find the calls in each function and optimize where we can, changing them
+    // to call more refined targets.
+    for (auto name : funcNames) {
+      auto* func = module->getFunction(name);
+      for (auto* call : FindAll<Call>(func->body).list) {
         if (call->type == Type::unreachable) {
           // Ignore unreachable code.
           // TODO: call_return?
@@ -116,31 +126,41 @@ struct Monomorphize : public Pass {
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
     refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
-    funcParamMap[{target, refinedParams}] = refinedTarget;
 
-    // Optimize both functions.
-    // TODO: limit how many times we try this? If we limit to the # of funcs in
-    // the module, we'd at worst be doing -O1 on it all once.
-    // Note we keep changes to |func|. But that's ok.
-    // J2wasm: 620 => 698 with this, or without this check 742. So saves
-    // a big chunk of bloat.
-    // Dart:   140 => 165, or without this check           171. Saves only a
-    // little.
-    // TODO: does this invalidate the list of Calls?
-    // TODO: a version that does it regardless of the cost?
-    doMinimalOpts(func);
-    doMinimalOpts(refinedFunc);
+    // Assume we'll choose to use the refined target, but if we are being
+    // careful then we might change our mind.
+    auto chosenTarget = refinedTarget;
+    if (onlyWhenHelpful) {
+      // Optimize both functions using minimal opts, hopefully enough to see if
+      // there is a benefit to the refined types (such as the new types allowing
+      // a cast to be removed).
+      // TODO: Atm this can be done many times per function as it is once per
+      //       function and per set of types sent to it. Perhaps have some
+      //       total limit to avoid slow runtimes.
+      // J2wasm: 620 => 698 with this, or without this check 742. So saves
+      // a big chunk of bloat.
+      // Dart:   140 => 165, or without this check           171. Saves only a
+      // little.
+      doMinimalOpts(func);
+      doMinimalOpts(refinedFunc);
 
-    auto costBefore = CostAnalyzer(func->body).cost;
-    auto costAfter = CostAnalyzer(refinedFunc->body).cost;
-    if (costAfter < costBefore) {
-      return refinedTarget;
+      auto costBefore = CostAnalyzer(func->body).cost;
+      auto costAfter = CostAnalyzer(refinedFunc->body).cost;
+      if (costAfter >= costBefore) {
+        // We failed to improve. Remove the new function and return the old
+        // target.
+        module->removeFunction(refinedTarget);
+        chosenTarget = target;
+      }
     }
 
-    // Otherwise, we failed to improve, return the old function name.
-    return target;
+    // Mark the chosen target in the map, so we don't do this work again.
+    funcParamMap[{target, refinedParams}] = chosenTarget;
+
+    return chosenTarget;
   }
 
+  // Run minimal function-level optimizations on a function.
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
@@ -156,6 +176,8 @@ struct Monomorphize : public Pass {
 
 } // anonymous namespace
 
-Pass* createMonomorphizePass() { return new Monomorphize(); }
+Pass* createMonomorphizePass() { return new Monomorphize(true); }
+
+Pass* createMonomorphizeAlwaysPass() { return new Monomorphize(false); }
 
 } // namespace wasm
