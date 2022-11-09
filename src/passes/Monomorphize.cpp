@@ -167,7 +167,7 @@ struct Monomorphize : public Pass {
 
   // Run minimal function-level optimizations on a function.
   void doMinimalOpts(Function* func) {
-    func->stackIR.clear(); // explain
+    func->stackIR.reset(); // explain
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
     runner.addDefaultFunctionOptimizationPasses();
