@@ -39,7 +39,10 @@
 //       call to C, which it did not have before. This is in fact the expected
 //       pattern of incremental monomorphization. Doing it in the pass could be
 //       more efficient as later cycles can focus only on what was just
-//       optimized and changed.
+//       optimized and changed. Also, operating on functions just modified would
+//       help the case of A calls B and we end up optimizing A after we consider
+//       A->B, and the optimized version sends more refined types to B, which
+//       could unlock more potential.
 // TODO: Also run the result-refining part of SignatureRefining, as if we
 //       refine the result then callers of the function may benefit, even if
 //       there is no benefit in the function itself.
