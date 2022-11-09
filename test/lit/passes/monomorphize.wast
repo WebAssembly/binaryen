@@ -114,12 +114,12 @@
   )
 )
 
+
 ;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
-
 (module
   ;; As above, but now the refinable function uses the local in a way that
   ;; requires a fixup.
@@ -185,6 +185,7 @@
   )
 )
 
+
 ;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (local $unref (ref $A))
 ;; ALWAYS-NEXT:  (local $2 (ref $A))
@@ -200,7 +201,6 @@
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
-
 (module
   ;; Multiple refinings of the same function, and of different functions.
 
@@ -305,6 +305,7 @@
     )
   )
 )
+
 ;; ALWAYS:      (func $refinable1_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
@@ -322,3 +323,117 @@
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
+(module
+  ;; A case where even CAREFUL mode will monomorphize, as it helps the target
+  ;; function get optimized better.
+
+  ;; ALWAYS:      (type $A (struct_subtype  data))
+  ;; CAREFUL:      (type $A (struct_subtype  data))
+  (type $A (struct_subtype data))
+
+  ;; ALWAYS:      (type $B (struct_subtype  $A))
+  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+
+  ;; ALWAYS:      (type $none_=>_none (func_subtype func))
+
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; ALWAYS:      (import "a" "b" (func $import (param (ref $B))))
+  ;; CAREFUL:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+
+  ;; CAREFUL:      (type $none_=>_none (func_subtype func))
+
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+
+  ;; CAREFUL:      (import "a" "b" (func $import (param (ref $B))))
+  (import "a" "b" (func $import (param (ref $B))))
+
+  ;; ALWAYS:      (func $calls (type $none_=>_none)
+  ;; ALWAYS-NEXT:  (call $refinable
+  ;; ALWAYS-NEXT:   (struct.new_default $A)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $refinable
+  ;; ALWAYS-NEXT:   (struct.new_default $A)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $refinable_0
+  ;; ALWAYS-NEXT:   (struct.new_default $B)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $refinable_0
+  ;; ALWAYS-NEXT:   (struct.new_default $B)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $calls (type $none_=>_none)
+  ;; CAREFUL-NEXT:  (call $refinable
+  ;; CAREFUL-NEXT:   (struct.new_default $A)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $refinable
+  ;; CAREFUL-NEXT:   (struct.new_default $A)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $refinable_0
+  ;; CAREFUL-NEXT:   (struct.new_default $B)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $refinable_0
+  ;; CAREFUL-NEXT:   (struct.new_default $B)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $calls
+    ;; The calls sending $B will switch to calling a refined version, as the
+    ;; refined version is better, even in CAREFUL mode.
+    (call $refinable
+      (struct.new $A)
+    )
+    (call $refinable
+      (struct.new $A)
+    )
+    (call $refinable
+      (struct.new $B)
+    )
+    (call $refinable
+      (struct.new $B)
+    )
+  )
+
+  ;; ALWAYS:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS-NEXT:  (call $import
+  ;; ALWAYS-NEXT:   (ref.cast_static $B
+  ;; ALWAYS-NEXT:    (local.get $ref)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL-NEXT:  (call $import
+  ;; CAREFUL-NEXT:   (ref.cast_static $B
+  ;; CAREFUL-NEXT:    (local.get $0)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $refinable (param $ref (ref $A))
+    ;; The refined version of this function will not have the cast, since
+    ;; optimizations manage to remove it using the more refined type.
+    ;;
+    ;; (That is the case in CAREFUL mode, which optimizes; in ALWAYS mode the
+    ;; cast will remain since we monomorphize without bothering to optimize and
+    ;; see if there is any benefit.)
+    (call $import
+      (ref.cast_static $B
+        (local.get $ref)
+      )
+    )
+  )
+)
+;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS-NEXT:  (call $import
+;; ALWAYS-NEXT:   (ref.cast_static $B
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $refinable_0 (type $ref|$B|_=>_none) (param $0 (ref $B))
+;; CAREFUL-NEXT:  (call $import
+;; CAREFUL-NEXT:   (local.get $0)
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )
