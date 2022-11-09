@@ -34,6 +34,12 @@
 // more than just local optimizations to see the benefit - for example, perhaps
 // GUFA ends up more powerful later on.
 //
+// TODO: When we optimize we could run multiple cycles: A calls B calls C might
+//       end up with the refined+optimized B now having refined types in its
+//       call to C, which it did not have before. This is in fact the expected
+//       pattern of incremental monomorphization. Doing it in the pass could be
+//       more efficient as later cycles can focus only on what was just
+//       optimized and changed.
 // TODO: Not just direct calls? But updating vtables is complex.
 //
 
@@ -62,6 +68,8 @@ struct Monomorphize : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
+
+    // TODO: parallelize
 
     // Note the list of all functions. We'll be adding more, and do not want to
     // operate on those.
@@ -126,9 +134,13 @@ struct Monomorphize : public Pass {
     // This is the first time we see this situation. Let's see if it is worth
     // monomorphizing.
 
-    // Create a new function with refined parameters.
+    // Create a new function with refined parameters as a copy of the original.
+    // (Note we must clear stack IR on the original: atm we do not have the
+    // ability to copy stack IR, so we'd hit an internal error. But as we will
+    // be optimizing the function anyhow, we'd be throwing away stack IR later
+    // so this isn't a problem.)
+    func->stackIR.reset();
     auto refinedTarget = Names::getValidFunctionName(*module, target);
-    func->stackIR.reset(); // explain
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
     refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
