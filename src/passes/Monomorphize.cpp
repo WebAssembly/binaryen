@@ -77,7 +77,13 @@ struct Monomorphize : public Pass {
         if (call->type == Type::unreachable) {
           // Ignore unreachable code.
           // TODO: call_return?
-          return;
+          continue;
+        }
+
+        if (call->target == name) {
+          // Avoid recursion, which adds some complexity (as we'd be modifying
+          // ourselves if we apply optimizations).
+          continue;
         }
 
         call->target = getRefinedTarget(call, module);
