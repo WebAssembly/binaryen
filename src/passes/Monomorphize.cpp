@@ -155,10 +155,6 @@ struct Monomorphize : public Pass {
       // TODO: Atm this can be done many times per function as it is once per
       //       function and per set of types sent to it. Perhaps have some
       //       total limit to avoid slow runtimes.
-      // J2wasm: 620 => 698 with this, or without this check 742. So saves
-      // a big chunk of bloat.
-      // Dart:   140 => 165, or without this check           171. Saves only a
-      // little.
       doMinimalOpts(func);
       doMinimalOpts(refinedFunc);
 
