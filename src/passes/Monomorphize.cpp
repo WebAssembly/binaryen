@@ -43,9 +43,16 @@
 //       help the case of A calls B and we end up optimizing A after we consider
 //       A->B, and the optimized version sends more refined types to B, which
 //       could unlock more potential.
+// TODO: We could sort the functions so that we start from root functions and
+//       end on leaves. That would make it more likely for a single iteration to
+//       do more work, as if A->B->C then we'd do A->B and optimize B and only
+//       then look at B->C.
 // TODO: Also run the result-refining part of SignatureRefining, as if we
 //       refine the result then callers of the function may benefit, even if
 //       there is no benefit in the function itself.
+// TODO: If this is too slow, we could "group" things, for example we could
+//       compute the LUB of a bunch of calls to a target and then investigate
+//       that one case and use it in all those callers.
 // TODO: Not just direct calls? But updating vtables is complex.
 //
 
