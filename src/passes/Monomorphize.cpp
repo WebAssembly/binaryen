@@ -66,9 +66,8 @@ struct Monomorphize : public Pass {
     // Note the list of all functions. We'll be adding more, and do not want to
     // operate on those.
     std::vector<Name> funcNames;
-    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      funcNames.push_back(func->name);
-    });
+    ModuleUtils::iterDefinedFunctions(
+      *module, [&](Function* func) { funcNames.push_back(func->name); });
 
     // Find the calls in each function and optimize where we can, changing them
     // to call more refined targets.
