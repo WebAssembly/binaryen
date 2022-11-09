@@ -900,6 +900,7 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
+    addRoot(curr, PossibleContents::exactType(curr->type));
     auto heapType = curr->type.getHeapType();
     switch (curr->op) {
       case NewData: {
