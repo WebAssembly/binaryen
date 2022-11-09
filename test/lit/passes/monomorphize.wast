@@ -342,6 +342,8 @@
   ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
 
   ;; ALWAYS:      (import "a" "b" (func $import (param (ref $B))))
+
+  ;; ALWAYS:      (global $global (mut i32) (i32.const 1))
   ;; CAREFUL:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
 
   ;; CAREFUL:      (type $none_=>_none (func_subtype func))
@@ -349,6 +351,10 @@
   ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
 
   ;; CAREFUL:      (import "a" "b" (func $import (param (ref $B))))
+
+  ;; CAREFUL:      (global $global (mut i32) (i32.const 1))
+  (global $global (mut i32) (i32.const 1))
+
   (import "a" "b" (func $import (param (ref $B))))
 
   ;; ALWAYS:      (func $calls (type $none_=>_none)
@@ -397,6 +403,29 @@
   )
 
   ;; ALWAYS:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS-NEXT:  (local $x (ref $A))
+  ;; ALWAYS-NEXT:  (call $import
+  ;; ALWAYS-NEXT:   (ref.cast_static $B
+  ;; ALWAYS-NEXT:    (local.get $ref)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (local.set $x
+  ;; ALWAYS-NEXT:   (select (result (ref $A))
+  ;; ALWAYS-NEXT:    (local.get $ref)
+  ;; ALWAYS-NEXT:    (struct.new_default $B)
+  ;; ALWAYS-NEXT:    (global.get $global)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $import
+  ;; ALWAYS-NEXT:   (ref.cast_static $B
+  ;; ALWAYS-NEXT:    (local.get $x)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $import
+  ;; ALWAYS-NEXT:   (ref.cast_static $B
+  ;; ALWAYS-NEXT:    (local.get $x)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT:  (call $import
   ;; ALWAYS-NEXT:   (ref.cast_static $B
   ;; ALWAYS-NEXT:    (local.get $ref)
@@ -404,6 +433,28 @@
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL-NEXT:  (local $1 (ref $A))
+  ;; CAREFUL-NEXT:  (call $import
+  ;; CAREFUL-NEXT:   (ref.cast_static $B
+  ;; CAREFUL-NEXT:    (local.get $0)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $import
+  ;; CAREFUL-NEXT:   (ref.cast_static $B
+  ;; CAREFUL-NEXT:    (local.tee $1
+  ;; CAREFUL-NEXT:     (select (result (ref $A))
+  ;; CAREFUL-NEXT:      (local.get $0)
+  ;; CAREFUL-NEXT:      (struct.new_default $B)
+  ;; CAREFUL-NEXT:      (global.get $global)
+  ;; CAREFUL-NEXT:     )
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $import
+  ;; CAREFUL-NEXT:   (ref.cast_static $B
+  ;; CAREFUL-NEXT:    (local.get $1)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
   ;; CAREFUL-NEXT:   (ref.cast_static $B
   ;; CAREFUL-NEXT:    (local.get $0)
@@ -411,6 +462,7 @@
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $refinable (param $ref (ref $A))
+    (local $x (ref $A))
     ;; The refined version of this function will not have the cast, since
     ;; optimizations manage to remove it using the more refined type.
     ;;
@@ -422,10 +474,59 @@
         (local.get $ref)
       )
     )
+    ;; Also copy the param into a local. The local should get refined to $B in
+    ;; the refined function in CAREFUL mode.
+    (local.set $x
+      ;; Use a select here so optimizations don't just merge $x and $ref.
+      (select (result (ref $A))
+        (local.get $ref)
+        (struct.new $B)
+        (global.get $global)
+      )
+    )
+    (call $import
+      (ref.cast_static $B
+        (local.get $x)
+      )
+    )
+    (call $import
+      (ref.cast_static $B
+        (local.get $x)
+      )
+    )
+    ;; Another use of $ref, also to avoid opts merging $x and $ref.
+    (call $import
+      (ref.cast_static $B
+        (local.get $ref)
+      )
+    )
   )
 )
 
 ;; ALWAYS:      (func $refinable_0 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS-NEXT:  (local $x (ref $A))
+;; ALWAYS-NEXT:  (call $import
+;; ALWAYS-NEXT:   (ref.cast_static $B
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $x
+;; ALWAYS-NEXT:   (select (result (ref $B))
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:    (struct.new_default $B)
+;; ALWAYS-NEXT:    (global.get $global)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (call $import
+;; ALWAYS-NEXT:   (ref.cast_static $B
+;; ALWAYS-NEXT:    (local.get $x)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (call $import
+;; ALWAYS-NEXT:   (ref.cast_static $B
+;; ALWAYS-NEXT:    (local.get $x)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (call $import
 ;; ALWAYS-NEXT:   (ref.cast_static $B
 ;; ALWAYS-NEXT:    (local.get $ref)
@@ -434,6 +535,22 @@
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $refinable_0 (type $ref|$B|_=>_none) (param $0 (ref $B))
+;; CAREFUL-NEXT:  (local $1 (ref $B))
+;; CAREFUL-NEXT:  (call $import
+;; CAREFUL-NEXT:   (local.get $0)
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT:  (call $import
+;; CAREFUL-NEXT:   (local.tee $1
+;; CAREFUL-NEXT:    (select (result (ref $B))
+;; CAREFUL-NEXT:     (local.get $0)
+;; CAREFUL-NEXT:     (struct.new_default $B)
+;; CAREFUL-NEXT:     (global.get $global)
+;; CAREFUL-NEXT:    )
+;; CAREFUL-NEXT:   )
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT:  (call $import
+;; CAREFUL-NEXT:   (local.get $1)
+;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (local.get $0)
 ;; CAREFUL-NEXT:  )
