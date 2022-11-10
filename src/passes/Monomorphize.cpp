@@ -54,6 +54,9 @@
 //       compute the LUB of a bunch of calls to a target and then investigate
 //       that one case and use it in all those callers.
 // TODO: Not just direct calls? But updating vtables is complex.
+// TODO: Not just types? We could monomorphize using Literal values. E.g. for
+//       function references, if we monomorphized we'd end up specializing qsort
+//       for the particular functions it is given.
 //
 
 #include "ir/cost.h"
