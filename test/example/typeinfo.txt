@@ -11,31 +11,31 @@ eqref
 i31
 i31ref
 (ref i31)
-(func_subtype func)
-(struct_subtype data)
-(array_subtype i32 data)
+(func)
+(struct)
+(array i32)
 
 ;; Signature
-(func_subtype func)
+(func)
 (ref $func.0)
 (ref null $func.0)
-(func_subtype (param i32) (result f64) func)
+(func (param i32) (result f64))
 (ref $func.0)
 (ref null $func.0)
 
 ;; Struct
-(struct_subtype data)
+(struct)
 (ref $struct.0)
 (ref null $struct.0)
-(struct_subtype (field i32 i64 (mut f32) (mut f64)) data)
+(struct (field i32 i64 (mut f32) (mut f64)))
 (ref $struct.0)
 (ref null $struct.0)
 
 ;; Array
-(array_subtype i32 data)
+(array i32)
 (ref $array.0)
 (ref null $array.0)
-(array_subtype (mut i64) data)
+(array (mut i64))
 (ref $array.0)
 (ref null $array.0)
 
@@ -46,33 +46,33 @@ none
 (i32 f64)
 
 ;; Signature of references (param/result)
-(func_subtype (param (ref null $struct.0)) (result (ref $array.0)) func)
+(func (param (ref null $struct.0)) (result (ref $array.0)))
 
 ;; Signature of references (params/results)
-(func_subtype (param (ref null $struct.0) (ref $array.0)) (result (ref $struct.0) (ref null $array.1)) func)
+(func (param (ref null $struct.0) (ref $array.0)) (result (ref $struct.0) (ref null $array.1)))
 
 ;; Struct of references
-(struct_subtype (field (ref $func.0) (mut (ref $func.0)) (ref null $func.0) (mut (ref null $func.0))) data)
+(struct (field (ref $func.0) (mut (ref $func.0)) (ref null $func.0) (mut (ref null $func.0))))
 (ref $struct.0)
 (ref null $struct.0)
-(struct_subtype (field (ref $struct.0) (mut (ref $struct.0)) (ref null $struct.0) (mut (ref null $struct.0))) data)
+(struct (field (ref $struct.0) (mut (ref $struct.0)) (ref null $struct.0) (mut (ref null $struct.0))))
 (ref $struct.0)
 (ref null $struct.0)
-(struct_subtype (field (ref $array.0) (mut (ref $array.0)) (ref null $array.0) (mut (ref null $array.0))) data)
+(struct (field (ref $array.0) (mut (ref $array.0)) (ref null $array.0) (mut (ref null $array.0))))
 (ref $struct.0)
 (ref null $struct.0)
-(struct_subtype (field (mut i32) (mut (ref null $func.0)) (mut (ref null $struct.0)) (mut (ref null $array.0))) data)
+(struct (field (mut i32) (mut (ref null $func.0)) (mut (ref null $struct.0)) (mut (ref null $array.0))))
 (ref $struct.0)
 (ref null $struct.0)
 
 ;; Array of references
-(array_subtype (ref null $func.0) data)
+(array (ref null $func.0))
 (ref $array.0)
 (ref null $array.0)
-(array_subtype (mut (ref null $struct.0)) data)
+(array (mut (ref null $struct.0)))
 (ref $array.0)
 (ref null $array.0)
-(array_subtype (ref null $array.0) data)
+(array (ref null $array.0))
 (ref $array.0)
 (ref null $array.0)
 
@@ -81,7 +81,7 @@ none
 ((ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
 
 ;; Recursive (not really)
-(func_subtype (param (ref $func.0)) func)
+(func (param (ref $func.0)))
 (ref $func.0)
-(func_subtype (param (ref $array.0)) func)
+(func (param (ref $array.0)))
 (ref $func.0)

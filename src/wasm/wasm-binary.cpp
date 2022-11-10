@@ -232,12 +232,9 @@ void WasmBinaryWriter::writeTypes() {
   // MVP types are structural and do not use recursion groups.
   TypeSystem typeSystem = getTypeSystem();
   if (!wasm->features.hasGC()) {
-    typeSystem = TypeSystem::Equirecursive;
+    typeSystem = TypeSystem::Isorecursive;
   }
   switch (typeSystem) {
-    case TypeSystem::Equirecursive:
-      numGroups = indexedTypes.types.size();
-      break;
     case TypeSystem::Nominal:
       numGroups = 1;
       break;
@@ -2191,9 +2188,6 @@ void WasmBinaryBuilder::readTypes() {
     auto form = getS32LEB();
     if (form == BinaryConsts::EncodedType::Rec) {
       uint32_t groupSize = getU32LEB();
-      if (getTypeSystem() == TypeSystem::Equirecursive) {
-        throwError("Recursion groups not allowed with equirecursive typing");
-      }
       if (groupSize == 0u) {
         // TODO: Support groups of size zero by shrinking the builder.
         throwError("Recursion groups of size zero not supported");

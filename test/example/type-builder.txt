@@ -1,54 +1,54 @@
 ;; Test canonicalization
 ;; Test basic
 ;; Test recursive types
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $0)))
 
-(func_subtype (result (ref null $1)) func)
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $1)))
+(func (result (ref null $0)))
 
-(func_subtype (result (ref null $1)) func)
-(func_subtype (result (ref null $2)) func)
-(func_subtype (result (ref null $3)) func)
-(func_subtype (result (ref null $4)) func)
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $1)))
+(func (result (ref null $2)))
+(func (result (ref null $3)))
+(func (result (ref null $4)))
+(func (result (ref null $0)))
 
-(func_subtype func)
-(func_subtype func)
-(func_subtype (result (ref null $0) (ref null $2)) func)
-(func_subtype (result (ref null $0) (ref null $3)) func)
-(func_subtype (result (ref null $2)) func)
-(func_subtype (result (ref null $3)) func)
+(func)
+(func)
+(func (result (ref null $0) (ref null $2)))
+(func (result (ref null $0) (ref null $3)))
+(func (result (ref null $2)))
+(func (result (ref null $3)))
 
-(func_subtype (result (ref null $0)) func)
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $0)))
+(func (result (ref null $0)))
 
 any
-(func_subtype (param anyref) (result (ref null $1)) func)
+(func (param anyref) (result (ref null $1)))
 
 ;; Test canonicalization
 ;; Test basic
 ;; Test recursive types
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $0)))
 
-(func_subtype (result (ref null $1)) func)
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $1)))
+(func (result (ref null $0)))
 
-(func_subtype (result (ref null $1)) func)
-(func_subtype (result (ref null $2)) func)
-(func_subtype (result (ref null $3)) func)
-(func_subtype (result (ref null $4)) func)
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $1)))
+(func (result (ref null $2)))
+(func (result (ref null $3)))
+(func (result (ref null $4)))
+(func (result (ref null $0)))
 
-(func_subtype func)
-(func_subtype func)
-(func_subtype (result (ref null $0) (ref null $2)) func)
-(func_subtype (result (ref null $0) (ref null $3)) func)
-(func_subtype (result (ref null $2)) func)
-(func_subtype (result (ref null $3)) func)
+(func)
+(func)
+(func (result (ref null $0) (ref null $2)))
+(func (result (ref null $0) (ref null $3)))
+(func (result (ref null $2)))
+(func (result (ref null $3)))
 
-(func_subtype (result (ref null $0)) func)
-(func_subtype (result (ref null $0)) func)
+(func (result (ref null $0)))
+(func (result (ref null $0)))
 
 any
-(func_subtype (param anyref) (result (ref null $1)) func)
+(func (param anyref) (result (ref null $1)))
 

@@ -3034,9 +3034,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (currModule && currModule->features.hasGC() &&
-        (getTypeSystem() == TypeSystem::Nominal ||
-         getTypeSystem() == TypeSystem::Isorecursive)) {
+    if (currModule && currModule->features.hasGC()) {
       o << " (type ";
       printHeapType(o, curr->type, currModule) << ')';
     }

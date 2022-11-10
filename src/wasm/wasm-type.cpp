@@ -151,9 +151,6 @@ struct HeapTypeInfo {
 // Helper for coinductively checking whether a pair of Types or HeapTypes are in
 // a subtype relation.
 struct SubTyper {
-  // Set of HeapTypes we are assuming are equivalent as long as we cannot prove
-  // otherwise.
-  std::unordered_set<std::pair<HeapType, HeapType>> seen;
   bool isSubType(Type a, Type b);
   bool isSubType(HeapType a, HeapType b);
   bool isSubType(const Tuple& a, const Tuple& b);
@@ -164,36 +161,8 @@ struct SubTyper {
 };
 
 // Helper for finding the equirecursive least upper bound of two types.
-struct TypeBounder {
-  TypeBuilder builder;
-  // The indices in `builder` at which the LUB of each pair of HeapTypes are
-  // being constructed.
-  std::unordered_map<std::pair<HeapType, HeapType>, size_t> indices;
-
-  bool hasLeastUpperBound(Type a, Type b);
-  Type getLeastUpperBound(Type a, Type b);
-  std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
-
-private:
-  // Return the LUB iff a LUB was found. The HeapType and Struct overloads are
-  // exceptional because they are infallible; HeapType::any is an upper bound of
-  // all HeapTypes and the empty struct is an upper bound of all struct types.
-  // Note that these methods can return temporary types, so they should never be
-  // used directly.
-  std::optional<Type> lub(Type a, Type b);
-  std::optional<HeapType> lub(HeapType a, HeapType b);
-  std::optional<Tuple> lub(const Tuple& a, const Tuple& b);
-  std::optional<Field> lub(const Field& a, const Field& b);
-  std::optional<Signature> lub(const Signature& a, const Signature& b);
-  Struct lub(const Struct& a, const Struct& b);
-  std::optional<Array> lub(const Array& a, const Array& b);
-};
-
 // Helper for printing types.
 struct TypePrinter {
-  // Whether to print explicit supertypes.
-  bool printSupertypes;
-
   // The stream we are printing to.
   std::ostream& os;
 
@@ -204,8 +173,7 @@ struct TypePrinter {
   HeapTypeNameGenerator generator;
 
   TypePrinter(std::ostream& os, HeapTypeNameGenerator generator)
-    : printSupertypes(getTypeSystem() != TypeSystem::Equirecursive), os(os),
-      defaultGenerator(), generator(generator) {}
+    : os(os), defaultGenerator(), generator(generator) {}
   TypePrinter(std::ostream& os)
     : TypePrinter(
         os, [&](HeapType type) { return defaultGenerator->getNames(type); }) {
@@ -213,7 +181,6 @@ struct TypePrinter {
   }
 
   void printHeapTypeName(HeapType type);
-  void printSupertypeOr(std::optional<HeapType> super, std::string other);
 
   std::ostream& print(Type type);
   std::ostream& print(HeapType type);
@@ -225,54 +192,6 @@ struct TypePrinter {
                       std::optional<HeapType> super = std::nullopt);
   std::ostream& print(const Array& array,
                       std::optional<HeapType> super = std::nullopt);
-};
-
-// Helper for hashing the shapes of TypeInfos and HeapTypeInfos. Keeps track of
-// previously seen HeapTypes to avoid traversing them more than once. Infos
-// referring to different type IDs but sharing a finite shape will compare and
-// hash the same.
-struct FiniteShapeHasher {
-  bool topLevelOnly;
-  size_t currDepth = 0;
-  size_t currStep = 0;
-  std::unordered_map<HeapType, size_t> seen;
-
-  FiniteShapeHasher(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
-
-  size_t hash(Type type);
-  size_t hash(HeapType heapType);
-  size_t hash(const TypeInfo& info);
-  size_t hash(const HeapTypeInfo& info);
-  size_t hash(const Tuple& tuple);
-  size_t hash(const Field& field);
-  size_t hash(const Signature& sig);
-  size_t hash(const Struct& struct_);
-  size_t hash(const Array& array);
-};
-
-// Helper for comparing the shapes of TypeInfos and HeapTypeInfos for equality.
-// Like FiniteShapeHasher, keeps track of previously seen HeapTypes. Note that
-// this does not test for coinductive equality of the infinite expansion of the
-// type tree, but rather tests for equality of the finite shape of the graph. If
-// FiniteShapeEquator reports that two type shapes are equal, FiniteShapeHasher
-// should produce the same hash for them.
-struct FiniteShapeEquator {
-  bool topLevelOnly;
-  size_t currDepth = 0;
-  size_t currStep = 0;
-  std::unordered_map<HeapType, size_t> seenA, seenB;
-
-  FiniteShapeEquator(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
-
-  bool eq(Type a, Type b);
-  bool eq(HeapType a, HeapType b);
-  bool eq(const TypeInfo& a, const TypeInfo& b);
-  bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b);
-  bool eq(const Tuple& a, const Tuple& b);
-  bool eq(const Field& a, const Field& b);
-  bool eq(const Signature& a, const Signature& b);
-  bool eq(const Struct& a, const Struct& b);
-  bool eq(const Array& a, const Array& b);
 };
 
 struct RecGroupHasher {
@@ -733,7 +652,7 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  return FiniteShapeEquator().eq(*this, other);
+  return this == &other;
 }
 
 template<typename Info> struct Store {
@@ -1203,18 +1122,12 @@ std::vector<HeapType> Type::getHeapTypeChildren() {
 }
 
 bool Type::hasLeastUpperBound(Type a, Type b) {
-  if (getTypeSystem() == TypeSystem::Equirecursive) {
-    return TypeBounder().hasLeastUpperBound(a, b);
-  }
   return getLeastUpperBound(a, b) != Type::none;
 }
 
 Type Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
-  }
-  if (getTypeSystem() == TypeSystem::Equirecursive) {
-    return TypeBounder().getLeastUpperBound(a, b);
   }
   if (a == Type::unreachable) {
     return b;
@@ -1285,9 +1198,6 @@ HeapType::HeapType(Signature sig) {
       // signature to emulate structural behavior.
       new (this) HeapType(nominalSignatureCache.getType(sig));
       return;
-    case TypeSystem::Equirecursive:
-      new (this) HeapType(globalHeapTypeStore.insert(sig));
-      return;
     case TypeSystem::Isorecursive:
       new (this) HeapType(
         globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
@@ -1304,7 +1214,6 @@ HeapType::HeapType(const Struct& struct_) {
 #endif
   switch (getTypeSystem()) {
     case TypeSystem::Nominal:
-    case TypeSystem::Equirecursive:
       new (this) HeapType(globalHeapTypeStore.insert(struct_));
       return;
     case TypeSystem::Isorecursive:
@@ -1323,7 +1232,6 @@ HeapType::HeapType(Struct&& struct_) {
 #endif
   switch (getTypeSystem()) {
     case TypeSystem::Nominal:
-    case TypeSystem::Equirecursive:
       new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
       return;
     case TypeSystem::Isorecursive:
@@ -1338,7 +1246,6 @@ HeapType::HeapType(Array array) {
   assert(!isTemp(array.element.type) && "Leaking temporary type!");
   switch (getTypeSystem()) {
     case TypeSystem::Nominal:
-    case TypeSystem::Equirecursive:
       new (this) HeapType(globalHeapTypeStore.insert(array));
       return;
     case TypeSystem::Isorecursive:
@@ -1560,9 +1467,6 @@ std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
   }
   if (b.isBottom()) {
     return a;
-  }
-  if (getTypeSystem() == TypeSystem::Equirecursive) {
-    return TypeBounder().getLeastUpperBound(a, b);
   }
   if (a.isBasic() || b.isBasic()) {
     return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
@@ -1793,34 +1697,13 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // bottom types.
     return a == b.getBottom();
   }
-  if (typeSystem == TypeSystem::Nominal ||
-      typeSystem == TypeSystem::Isorecursive) {
-    // Subtyping must be declared in a nominal system, not derived from
-    // structure, so we will not recurse. TODO: optimize this search with some
-    // form of caching.
-    HeapTypeInfo* curr = getHeapTypeInfo(a);
-    while ((curr = curr->supertype)) {
-      if (curr == getHeapTypeInfo(b)) {
-        return true;
-      }
+  // Subtyping must be declared rather than derived from structure, so we will
+  // not recurse. TODO: optimize this search with some form of caching.
+  HeapTypeInfo* curr = getHeapTypeInfo(a);
+  while ((curr = curr->supertype)) {
+    if (curr == getHeapTypeInfo(b)) {
+      return true;
     }
-    return false;
-  }
-  // As we recurse, we will coinductively assume that a == b unless proven
-  // otherwise.
-  if (!seen.insert({a, b}).second) {
-    // We weren't able to disprove that a == b since we last saw them, so the
-    // relation holds coinductively.
-    return true;
-  }
-  if (a.isSignature() && b.isSignature()) {
-    return isSubType(a.getSignature(), b.getSignature());
-  }
-  if (a.isArray() && b.isArray()) {
-    return isSubType(a.getArray(), b.getArray());
-  }
-  if (a.isStruct() && b.isStruct()) {
-    return isSubType(a.getStruct(), b.getStruct());
   }
   return false;
 }
@@ -1870,227 +1753,12 @@ bool SubTyper::isSubType(const Array& a, const Array& b) {
   return isSubType(a.element, b.element);
 }
 
-bool TypeBounder::hasLeastUpperBound(Type a, Type b) { return bool(lub(a, b)); }
-
-Type TypeBounder::getLeastUpperBound(Type a, Type b) {
-  auto tempLUB = lub(a, b);
-  if (!tempLUB) {
-    return Type::none;
-  }
-  if (!isTemp(*tempLUB)) {
-    // The LUB is already canonical, so we're done.
-    return *tempLUB;
-  }
-  // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
-  // returns HeapTypes rather than Types, create a new HeapType definition meant
-  // only to get `tempLUB` canonicalized in a known location. The use of an
-  // Array is arbitrary; it might as well have been a Struct.
-  builder.grow(1);
-  builder[builder.size() - 1] = Array(Field(*tempLUB, Mutable));
-  std::vector<HeapType> built = *builder.build();
-  return built.back().getArray().element.type;
-}
-
-std::optional<HeapType> TypeBounder::getLeastUpperBound(HeapType a,
-                                                        HeapType b) {
-  auto maybeLub = lub(a, b);
-  if (!maybeLub) {
-    return std::nullopt;
-  }
-  HeapType l = *maybeLub;
-  if (!isTemp(l)) {
-    // The LUB is already canonical, so we're done.
-    return l;
-  }
-  // Find the index corresponding to the LUB.
-  size_t index = 0;
-  while (l != builder[index]) {
-    ++index;
-  }
-  // Canonicalize and return the LUB.
-  return (*builder.build())[index];
-}
-
-std::optional<Type> TypeBounder::lub(Type a, Type b) {
-  if (a == b) {
-    return a;
-  }
-  if (a == Type::unreachable) {
-    return b;
-  }
-  if (b == Type::unreachable) {
-    return a;
-  }
-  if (a.isTuple() && b.isTuple()) {
-    auto tuple = lub(a.getTuple(), b.getTuple());
-    if (!tuple) {
-      return {};
-    }
-    return builder.getTempTupleType(*tuple);
-  } else if (a.isRef() && b.isRef()) {
-    if (auto heapType = lub(a.getHeapType(), b.getHeapType())) {
-      auto nullability =
-        (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
-      return builder.getTempRefType(*heapType, nullability);
-    }
-  }
-  return {};
-}
-
-std::optional<HeapType> TypeBounder::lub(HeapType a, HeapType b) {
-  if (a == b) {
-    return a;
-  }
-  if (a.getBottom() != b.getBottom()) {
-    return {};
-  }
-  if (a.isBottom()) {
-    return b;
-  }
-  if (b.isBottom()) {
-    return a;
-  }
-
-  if (a.isBasic() || b.isBasic()) {
-    return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
-                               getBasicHeapSupertype(b));
-  }
-
-  HeapTypeInfo* infoA = getHeapTypeInfo(a);
-  HeapTypeInfo* infoB = getHeapTypeInfo(b);
-
-  if (infoA->kind != infoB->kind) {
-    return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
-                               getBasicHeapSupertype(b));
-  }
-
-  assert(getTypeSystem() == TypeSystem::Equirecursive);
-
-  // Allocate a new slot to construct the LUB of this pair if we have not
-  // already seen it before. Canonicalize the pair to have the element with the
-  // smaller ID first since order does not matter.
-  auto pair =
-    a.getID() < b.getID() ? std::make_pair(a, b) : std::make_pair(b, a);
-  size_t index = builder.size();
-  auto result = indices.insert({pair, index});
-  if (!result.second) {
-    // We've seen this pair before; stop recursing and do not allocate.
-    return builder[result.first->second];
-  }
-
-  builder.grow(1);
-  switch (infoA->kind) {
-    case HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("unexpected kind");
-    case HeapTypeInfo::SignatureKind: {
-      if (auto sig = lub(infoA->signature, infoB->signature)) {
-        return builder[index] = *sig;
-      } else {
-        return builder[index] = HeapType::func;
-      }
-    }
-    case HeapTypeInfo::StructKind: {
-      return builder[index] = lub(infoA->struct_, infoB->struct_);
-    }
-    case HeapTypeInfo::ArrayKind: {
-      if (auto array = lub(infoA->array, infoB->array)) {
-        return builder[index] = *array;
-      } else {
-        return builder[index] = HeapType::data;
-      }
-    }
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-std::optional<Tuple> TypeBounder::lub(const Tuple& a, const Tuple& b) {
-  if (a.types.size() != b.types.size()) {
-    return {};
-  }
-  Tuple result;
-  result.types.resize(a.types.size());
-  for (size_t i = 0; i < a.types.size(); ++i) {
-    if (auto type = lub(a.types[i], b.types[i])) {
-      result.types[i] = *type;
-    } else {
-      return {};
-    }
-  }
-  return result;
-}
-
-std::optional<Field> TypeBounder::lub(const Field& a, const Field& b) {
-  if (a == b) {
-    return a;
-  }
-  // Mutable fields are invariant, so they would have had to be the same.
-  if (a.mutable_ == Mutable || b.mutable_ == Mutable) {
-    return {};
-  }
-  // Packed types must match.
-  if (a.isPacked() != b.isPacked() ||
-      (a.isPacked() && a.packedType != b.packedType)) {
-    return {};
-  }
-  // Either the packed types match or the types aren't packed.
-  Type type;
-  if (auto type = lub(a.type, b.type)) {
-    Field result = a;
-    result.type = *type;
-    return result;
-  } else {
-    return {};
-  }
-}
-
-std::optional<Signature> TypeBounder::lub(const Signature& a,
-                                          const Signature& b) {
-  // TODO: Implement proper signature subtyping, covariant in results and
-  // contravariant in params, once V8 implements it.
-  if (a != b) {
-    return {};
-  } else {
-    return a;
-  }
-}
-
-Struct TypeBounder::lub(const Struct& a, const Struct& b) {
-  Struct result;
-  size_t numFields = std::min(a.fields.size(), b.fields.size());
-  for (size_t i = 0; i < numFields; ++i) {
-    if (auto field = lub(a.fields[i], b.fields[i])) {
-      result.fields.push_back(*field);
-    } else {
-      // Stop at the common prefix and ignore the rest.
-      break;
-    }
-  }
-  return result;
-}
-
-std::optional<Array> TypeBounder::lub(const Array& a, const Array& b) {
-  if (auto elem = lub(a.element, b.element)) {
-    return Array{*elem};
-  } else {
-    return {};
-  }
-}
-
 void TypePrinter::printHeapTypeName(HeapType type) {
   if (type.isBasic()) {
     print(type);
     return;
   }
   os << '$' << generator(type).name;
-}
-
-void TypePrinter::printSupertypeOr(std::optional<HeapType> super,
-                                   std::string other) {
-  if (super) {
-    printHeapTypeName(*super);
-  } else {
-    os << other;
-  }
 }
 
 std::ostream& TypePrinter::print(Type type) {
@@ -2270,7 +1938,7 @@ std::ostream& TypePrinter::print(const Signature& sig,
   };
 
   os << "(func";
-  if (printSupertypes) {
+  if (super) {
     os << "_subtype";
   }
   if (sig.params.getID() != Type::none) {
@@ -2281,9 +1949,9 @@ std::ostream& TypePrinter::print(const Signature& sig,
     os << ' ';
     printPrefixed("result", sig.results);
   }
-  if (printSupertypes) {
+  if (super) {
     os << ' ';
-    printSupertypeOr(super, "func");
+    printHeapTypeName(*super);
   }
   return os << ')';
 }
@@ -2291,7 +1959,7 @@ std::ostream& TypePrinter::print(const Signature& sig,
 std::ostream& TypePrinter::print(const Struct& struct_,
                                  std::optional<HeapType> super) {
   os << "(struct";
-  if (printSupertypes) {
+  if (super) {
     os << "_subtype";
   }
   if (struct_.fields.size()) {
@@ -2304,9 +1972,9 @@ std::ostream& TypePrinter::print(const Struct& struct_,
   if (struct_.fields.size()) {
     os << ')';
   }
-  if (printSupertypes) {
+  if (super) {
     os << ' ';
-    printSupertypeOr(super, "data");
+    printHeapTypeName(*super);
   }
   return os << ')';
 }
@@ -2314,228 +1982,16 @@ std::ostream& TypePrinter::print(const Struct& struct_,
 std::ostream& TypePrinter::print(const Array& array,
                                  std::optional<HeapType> super) {
   os << "(array";
-  if (printSupertypes) {
+  if (super) {
     os << "_subtype";
   }
   os << ' ';
   print(array.element);
-  if (printSupertypes) {
+  if (super) {
     os << ' ';
-    printSupertypeOr(super, "data");
+    printHeapTypeName(*super);
   }
   return os << ')';
-}
-
-size_t FiniteShapeHasher::hash(Type type) {
-  size_t digest = wasm::hash(type.isBasic());
-  if (type.isBasic()) {
-    rehash(digest, type.getID());
-  } else {
-    hash_combine(digest, hash(*getTypeInfo(type)));
-  }
-  return digest;
-}
-
-size_t FiniteShapeHasher::hash(HeapType heapType) {
-  size_t digest = wasm::hash(heapType.isBasic());
-  if (heapType.isBasic()) {
-    rehash(digest, heapType.getID());
-    return digest;
-  }
-  if (topLevelOnly && currDepth > 0) {
-    return digest;
-  }
-  auto it = seen.find(heapType);
-  rehash(digest, it != seen.end());
-  if (it != seen.end()) {
-    rehash(digest, it->second);
-    return digest;
-  }
-  seen[heapType] = ++currStep;
-  ++currDepth;
-  hash_combine(digest, hash(*getHeapTypeInfo(heapType)));
-  --currDepth;
-  return digest;
-}
-
-size_t FiniteShapeHasher::hash(const TypeInfo& info) {
-  size_t digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case TypeInfo::TupleKind:
-      hash_combine(digest, hash(info.tuple));
-      return digest;
-    case TypeInfo::RefKind:
-      rehash(digest, info.ref.nullable);
-      hash_combine(digest, hash(info.ref.heapType));
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
-  if (getTypeSystem() == TypeSystem::Nominal ||
-      getTypeSystem() == TypeSystem::Isorecursive) {
-    return wasm::hash(uintptr_t(&info));
-  }
-  // If the HeapTypeInfo is not finalized, then it is mutable and its shape
-  // might change in the future. In that case, fall back to pointer identity to
-  // keep the hash consistent until all the TypeBuilder's types are finalized.
-  size_t digest = wasm::hash(info.isFinalized);
-  if (!info.isFinalized) {
-    rehash(digest, uintptr_t(&info));
-    return digest;
-  }
-  rehash(digest, info.kind);
-  switch (info.kind) {
-    case HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
-    case HeapTypeInfo::SignatureKind:
-      hash_combine(digest, hash(info.signature));
-      return digest;
-    case HeapTypeInfo::StructKind:
-      hash_combine(digest, hash(info.struct_));
-      return digest;
-    case HeapTypeInfo::ArrayKind:
-      hash_combine(digest, hash(info.array));
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-size_t FiniteShapeHasher::hash(const Tuple& tuple) {
-  size_t digest = wasm::hash(tuple.types.size());
-  for (auto type : tuple.types) {
-    hash_combine(digest, hash(type));
-  }
-  return digest;
-}
-
-size_t FiniteShapeHasher::hash(const Field& field) {
-  size_t digest = wasm::hash(field.packedType);
-  rehash(digest, field.mutable_);
-  hash_combine(digest, hash(field.type));
-  return digest;
-}
-
-size_t FiniteShapeHasher::hash(const Signature& sig) {
-  size_t digest = hash(sig.params);
-  hash_combine(digest, hash(sig.results));
-  return digest;
-}
-
-size_t FiniteShapeHasher::hash(const Struct& struct_) {
-  size_t digest = wasm::hash(struct_.fields.size());
-  for (const auto& field : struct_.fields) {
-    hash_combine(digest, hash(field));
-  }
-  return digest;
-}
-
-size_t FiniteShapeHasher::hash(const Array& array) {
-  return hash(array.element);
-}
-
-bool FiniteShapeEquator::eq(Type a, Type b) {
-  if (a.isBasic() != b.isBasic()) {
-    return false;
-  } else if (a.isBasic()) {
-    return a.getID() == b.getID();
-  } else {
-    return eq(*getTypeInfo(a), *getTypeInfo(b));
-  }
-}
-
-bool FiniteShapeEquator::eq(HeapType a, HeapType b) {
-  if (a.isBasic() != b.isBasic()) {
-    return false;
-  } else if (a.isBasic()) {
-    return a.getID() == b.getID();
-  }
-  if (topLevelOnly && currDepth > 0) {
-    return true;
-  }
-  auto itA = seenA.find(a);
-  auto itB = seenB.find(b);
-  if ((itA != seenA.end()) != (itB != seenB.end())) {
-    return false;
-  } else if (itA != seenA.end()) {
-    return itA->second == itB->second;
-  }
-  seenA[a] = seenB[b] = ++currStep;
-  ++currDepth;
-  bool ret = eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
-  --currDepth;
-  return ret;
-}
-
-bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
-  if (a.kind != b.kind) {
-    return false;
-  }
-  switch (a.kind) {
-    case TypeInfo::TupleKind:
-      return eq(a.tuple, b.tuple);
-    case TypeInfo::RefKind:
-      return a.ref.nullable == b.ref.nullable &&
-             eq(a.ref.heapType, b.ref.heapType);
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
-  if (getTypeSystem() == TypeSystem::Nominal ||
-      getTypeSystem() == TypeSystem::Isorecursive) {
-    return &a == &b;
-  }
-  if (a.isFinalized != b.isFinalized) {
-    return false;
-  } else if (!a.isFinalized) {
-    // See comment on corresponding FiniteShapeHasher method.
-    return &a == &b;
-  }
-  if (a.kind != b.kind) {
-    return false;
-  }
-  switch (a.kind) {
-    case HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
-    case HeapTypeInfo::SignatureKind:
-      return eq(a.signature, b.signature);
-    case HeapTypeInfo::StructKind:
-      return eq(a.struct_, b.struct_);
-    case HeapTypeInfo::ArrayKind:
-      return eq(a.array, b.array);
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool FiniteShapeEquator::eq(const Tuple& a, const Tuple& b) {
-  return std::equal(a.types.begin(),
-                    a.types.end(),
-                    b.types.begin(),
-                    b.types.end(),
-                    [&](const Type& x, const Type& y) { return eq(x, y); });
-}
-
-bool FiniteShapeEquator::eq(const Field& a, const Field& b) {
-  return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
-         eq(a.type, b.type);
-}
-
-bool FiniteShapeEquator::eq(const Signature& a, const Signature& b) {
-  return eq(a.params, b.params) && eq(a.results, b.results);
-}
-
-bool FiniteShapeEquator::eq(const Struct& a, const Struct& b) {
-  return std::equal(a.fields.begin(),
-                    a.fields.end(),
-                    b.fields.begin(),
-                    b.fields.end(),
-                    [&](const Field& x, const Field& y) { return eq(x, y); });
-}
-
-bool FiniteShapeEquator::eq(const Array& a, const Array& b) {
-  return eq(a.element, b.element);
 }
 
 size_t RecGroupHasher::operator()() const {
@@ -3125,480 +2581,6 @@ void CanonicalizationState::updateUses(ReplacementMap& replacements,
   }
 }
 
-// A wrapper around a HeapType that provides equality and hashing based only on
-// its top-level shape, up to but not including its closest HeapType
-// descendants. This is the shape that determines the most fine-grained initial
-// partitions for DFA minimization and also the shape that determines the
-// "alphabet" for transitioning to the child HeapTypes in the DFA view of the
-// type definition.
-struct ShallowHeapType {
-  HeapType heapType;
-
-  ShallowHeapType(HeapType heapType) : heapType(heapType) {}
-  bool operator==(const ShallowHeapType& other) const;
-};
-
-bool ShallowHeapType::operator==(const ShallowHeapType& other) const {
-  return FiniteShapeEquator(/*topLevelOnly=*/true)
-    .eq(this->heapType, other.heapType);
-}
-
-} // anonymous namespace
-} // namespace wasm
-
-namespace std {
-
-template<> class hash<wasm::ShallowHeapType> {
-public:
-  size_t operator()(const wasm::ShallowHeapType& type) const {
-    return wasm::FiniteShapeHasher(/*topLevelOnly=*/true).hash(type.heapType);
-  }
-};
-
-} // namespace std
-
-namespace wasm {
-namespace {
-
-// The Refined Partitions data structure used in Valmari-Lehtinen DFA
-// minimization. The translation from terms used in the Valmari-Lehtinen paper
-// to the more expanded terms used here is:
-//
-//   Block => Set
-//   elems => elements
-//   loc => elementIndices
-//   sidx => setIndices
-//   first => beginnings
-//   end => endings
-//   mid => pivots
-//
-struct Partitions {
-  // The number of sets.
-  size_t sets = 0;
-
-  // The partitioned elements. Elements in the same set are next to each other.
-  // Within each set, "marked" elements come first followed by "unmarked"
-  // elements.
-  std::vector<size_t> elements;
-
-  // Maps elements to their indices in `elements`.
-  std::vector<size_t> elementIndices;
-
-  // Maps elements to their sets, identified by an index.
-  std::vector<size_t> setIndices;
-
-  // Maps sets to the indices of their first elements in `elements`.
-  std::vector<size_t> beginnings;
-
-  // Maps sets to (one past) the indices of their ends in `elements`.
-  std::vector<size_t> endings;
-
-  // Maps sets to the indices of their first unmarked elements in `elements`.
-  std::vector<size_t> pivots;
-
-  Partitions() = default;
-
-  // Allocate space up front so we never need to re-allocate. The actual
-  // contents of all the vectors will need to be externally initialized,
-  // though.
-  Partitions(size_t size)
-    : elements(size), elementIndices(size), setIndices(size), beginnings(size),
-      endings(size), pivots(size) {}
-
-  struct Set {
-    using Iterator = std::vector<size_t>::iterator;
-
-    Partitions& partitions;
-    size_t index;
-
-    Set(Partitions& partitions, size_t index)
-      : partitions(partitions), index(index) {}
-
-    Iterator begin() {
-      return partitions.elements.begin() + partitions.beginnings[index];
-    }
-    Iterator end() {
-      return partitions.elements.begin() + partitions.endings[index];
-    }
-    size_t size() {
-      return partitions.endings[index] - partitions.beginnings[index];
-    }
-
-    bool hasMarks() {
-      return partitions.pivots[index] != partitions.beginnings[index];
-    }
-
-    // Split the set between marked and unmarked elements if there are both
-    // marked and unmarked elements. Unmark all elements of this set regardless.
-    // Return the index of the new partition or 0 if there was no split.
-    size_t split();
-  };
-
-  Set getSet(size_t index) { return {*this, index}; }
-
-  // Returns the set containing an element, which can be iterated upon. The set
-  // may be invalidated by calls to `mark` or `Set::split`.
-  Set getSetForElem(size_t element) { return getSet(setIndices[element]); }
-
-  void mark(size_t element) {
-    size_t index = elementIndices[element];
-    size_t set = setIndices[element];
-    size_t pivot = pivots[set];
-    if (index >= pivot) {
-      // Move the pivot element into the location of the newly marked element.
-      elements[index] = elements[pivot];
-      elementIndices[elements[index]] = index;
-      // Move the newly marked element into the pivot location.
-      elements[pivot] = element;
-      elementIndices[element] = pivot;
-      // Update the pivot index to mark the element.
-      ++pivots[set];
-    }
-  }
-};
-
-size_t Partitions::Set::split() {
-  size_t begin = partitions.beginnings[index];
-  size_t end = partitions.endings[index];
-  size_t pivot = partitions.pivots[index];
-  if (pivot == begin) {
-    // No elements marked, so there is nothing to do.
-    return 0;
-  }
-  if (pivot == end) {
-    // All elements were marked, so just unmark them.
-    partitions.pivots[index] = begin;
-    return 0;
-  }
-  // Create a new set covering the marked region.
-  size_t newIndex = partitions.sets++;
-  partitions.beginnings[newIndex] = begin;
-  partitions.pivots[newIndex] = begin;
-  partitions.endings[newIndex] = pivot;
-  for (size_t i = begin; i < pivot; ++i) {
-    partitions.setIndices[partitions.elements[i]] = newIndex;
-  }
-  // Update the old set. The end and pivot are already correct.
-  partitions.beginnings[index] = pivot;
-  return newIndex;
-}
-
-// Uses Valmari and Lehtinen's partial DFA minimization algorithm to construct a
-// minimal type definition graph from an input graph. See
-// https://arxiv.org/pdf/0802.2826.pdf.
-struct ShapeCanonicalizer {
-  // The results of shape canonicalization.
-  CanonicalizationState::ReplacementMap replacements;
-
-  ShapeCanonicalizer(std::vector<HeapType>& roots);
-
-private:
-  // Maps state indices to their underlying HeapTypes and vice versa.
-  std::vector<HeapType> heapTypes;
-  std::unordered_map<HeapType, size_t> states;
-
-  // A DFA transition into a state.
-  struct Transition {
-    size_t pred;
-    size_t label;
-  };
-
-  // The transitions arranged such that the transitions leading to state `q` are
-  // `transitions[transitionIndices[q] : transitionIndices[q+1]]`.
-  std::vector<Transition> transitions;
-  std::vector<size_t> transitionIndices;
-
-  // The state partitions.
-  Partitions partitions;
-
-  // The splitters, which are partitions of the input transitions.
-  Partitions splitters;
-
-  void initialize(std::vector<HeapType>& roots);
-  void createReplacements();
-
-  // Return pointers to the non-basic HeapType children of `ht`, including
-  // BasicKind children.
-  std::vector<HeapType*> getChildren(HeapType ht);
-
-#if TRACE_CANONICALIZATION
-  void dumpPartitions() {
-    for (size_t set = 0; set < partitions.sets; ++set) {
-      std::cerr << "Partition " << set << '\n';
-      std::cerr << "begin: " << partitions.beginnings[set]
-                << ", end: " << partitions.endings[set]
-                << ", pivot: " << partitions.pivots[set] << '\n';
-      for (size_t index : partitions.getSet(set)) {
-        assert(partitions.setIndices[index] == set);
-        std::cerr << heapTypes[index] << '\n';
-      }
-      std::cerr << '\n';
-    }
-  }
-#endif
-};
-
-ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
-#if TRACE_CANONICALIZATION
-  std::cerr << "Root HeapTypes:\n";
-  for (auto root : roots) {
-    std::cerr << root << '\n';
-  }
-  std::cerr << '\n';
-#endif
-
-  initialize(roots);
-
-#if TRACE_CANONICALIZATION
-  std::cerr << "Initial partitions:\n";
-  dumpPartitions();
-#endif
-
-  // The list of splitter partitions that might be able to split states in some
-  // state partition. Starts out containing all splitter partitions.
-  std::vector<size_t> potentialSplitters;
-  potentialSplitters.reserve(splitters.sets);
-  for (size_t i = 0; i < splitters.sets; ++i) {
-    potentialSplitters.push_back(i);
-  }
-
-  while (!potentialSplitters.empty()) {
-    size_t potentialSplitter = potentialSplitters.back();
-    potentialSplitters.pop_back();
-
-    // The partitions that may be able to be split.
-    std::vector<size_t> markedPartitions;
-
-    // Mark states that are predecessors via this splitter partition.
-    for (size_t transition : splitters.getSet(potentialSplitter)) {
-      size_t state = transitions[transition].pred;
-      auto partition = partitions.getSetForElem(state);
-      if (!partition.hasMarks()) {
-        markedPartitions.push_back(partition.index);
-      }
-      partitions.mark(state);
-    }
-
-    // Try to split each partition with marked states.
-    for (size_t partition : markedPartitions) {
-      size_t newPartition = partitions.getSet(partition).split();
-      if (!newPartition) {
-        // There was nothing to split.
-        continue;
-      }
-
-      // We only want to keep using the smaller of the two split partitions.
-      if (partitions.getSet(newPartition).size() <
-          partitions.getSet(partition).size()) {
-        newPartition = partition;
-      }
-
-      // The splitter partitions that may need to be split to match the new
-      // split of the state partitions.
-      std::vector<size_t> markedSplitters;
-
-      // Mark transitions that lead to the newly split off states.
-      for (size_t state : partitions.getSet(newPartition)) {
-        for (size_t t = transitionIndices[state],
-                    end = transitionIndices[state + 1];
-             t < end;
-             ++t) {
-          auto splitter = splitters.getSetForElem(t);
-          if (!splitter.hasMarks()) {
-            markedSplitters.push_back(splitter.index);
-          }
-          splitters.mark(t);
-        }
-      }
-
-      // Split the splitters and update `potentialSplitters`.
-      for (size_t splitter : markedSplitters) {
-        size_t newSplitter = splitters.getSet(splitter).split();
-        if (newSplitter) {
-          potentialSplitters.push_back(newSplitter);
-        }
-      }
-    }
-  }
-
-#if TRACE_CANONICALIZATION
-  std::cerr << "Final partitions:\n";
-  dumpPartitions();
-#endif
-
-  createReplacements();
-}
-
-void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
-  struct Initializer : HeapTypeGraphWalker<Initializer> {
-    ShapeCanonicalizer& canonicalizer;
-
-    // Maps shallow HeapType shapes to corresponding HeapType indices.
-    InsertOrderedMap<ShallowHeapType, std::vector<size_t>> initialPartitions;
-
-    // Maps `dest` HeapType indices to their input transitions.
-    std::map<size_t, std::vector<Transition>> transitions;
-    size_t numTransitions = 0;
-
-    Initializer(ShapeCanonicalizer& canonicalizer)
-      : canonicalizer(canonicalizer) {}
-
-    size_t getIndex(HeapType type) {
-      // Allocate an index for the HeapType if it doesn't already have one.
-      auto inserted =
-        canonicalizer.states.insert({type, canonicalizer.states.size()});
-      if (inserted.second) {
-        canonicalizer.heapTypes.push_back(type);
-      }
-      return inserted.first->second;
-    }
-
-    void noteHeapType(HeapType type) {
-      size_t index = getIndex(type);
-
-      // Allocate an initial partition for this HeapType's shallow shape if one
-      // does not already exist, then append the HeapType to the partition.
-      initialPartitions[ShallowHeapType(type)].push_back(index);
-
-      // Traverse the non-basic children to collect graph edges, i.e.
-      // transitions in the DFA.
-      struct TransitionInitializer
-        : HeapTypeChildWalker<TransitionInitializer> {
-        Initializer& initializer;
-        size_t parent;
-        size_t label = 0;
-        TransitionInitializer(Initializer& initializer, size_t parent)
-          : initializer(initializer), parent(parent) {}
-        void noteChild(HeapType* childType) {
-          if (childType->isBasic()) {
-            return;
-          }
-          // Record the transition from parent to child.
-          size_t child = initializer.getIndex(*childType);
-          initializer.transitions[child].push_back({parent, label++});
-          ++initializer.numTransitions;
-        }
-      };
-      TransitionInitializer(*this, index).walkRoot(&type);
-    }
-  };
-
-  Initializer initializer(*this);
-  for (HeapType& root : roots) {
-    initializer.walkRoot(&root);
-  }
-
-  // Now that we have initialized maps containing all the necessary data, use
-  // them to initialize the flattened vector-based data structures that we will
-  // use to efficiently run the minimization algorithm.
-
-  // Initialize `partitions`.
-  partitions = Partitions(heapTypes.size());
-  size_t elementIndex = 0;
-  for (auto pair : initializer.initialPartitions) {
-    size_t set = partitions.sets++;
-    partitions.beginnings[set] = elementIndex;
-    partitions.pivots[set] = elementIndex;
-    for (size_t elem : pair.second) {
-      partitions.elements[elementIndex] = elem;
-      partitions.elementIndices[elem] = elementIndex;
-      partitions.setIndices[elem] = set;
-      ++elementIndex;
-    }
-    partitions.endings[set] = elementIndex;
-  }
-
-  // Initialize `transitions` and `transitionIndices`.
-  transitions.reserve(initializer.numTransitions);
-  transitionIndices.resize(heapTypes.size() + 1);
-  for (size_t dest = 0; dest < heapTypes.size(); ++dest) {
-    // Record the first index of transitions leading to `dest`.
-    transitionIndices[dest] = transitions.size();
-    auto it = initializer.transitions.find(dest);
-    if (it != initializer.transitions.end()) {
-      transitions.insert(
-        transitions.end(), it->second.begin(), it->second.end());
-    }
-  }
-  // Record one-past the end of the transitions leading to the final `dest`.
-  transitionIndices[heapTypes.size()] = transitions.size();
-
-  // Initialize `splitters`. The initial sets are partitioned by destination
-  // state partition and transition label.
-  splitters = Partitions(transitions.size());
-  elementIndex = 0;
-  for (size_t statePartition = 0; statePartition < partitions.sets;
-       ++statePartition) {
-    // The in-transitions leading to states in the current partition, organized
-    // by transition label.
-    std::map<size_t, std::vector<size_t>> currTransitions;
-    for (size_t state : partitions.getSet(statePartition)) {
-      for (size_t transition = transitionIndices[state],
-                  end = transitionIndices[state + 1];
-           transition < end;
-           ++transition) {
-        currTransitions[transitions[transition].label].push_back(transition);
-      }
-    }
-    // Create a splitter partition for each in-transition label leading to the
-    // current state partition.
-    for (auto& pair : currTransitions) {
-      size_t set = splitters.sets++;
-      splitters.beginnings[set] = elementIndex;
-      splitters.pivots[set] = elementIndex;
-      for (size_t transition : pair.second) {
-        splitters.elements[elementIndex] = transition;
-        splitters.elementIndices[transition] = elementIndex;
-        splitters.setIndices[transition] = set;
-        ++elementIndex;
-      }
-      splitters.endings[set] = elementIndex;
-    }
-  }
-}
-
-void ShapeCanonicalizer::createReplacements() {
-  // Create a single new HeapTypeInfo for each partition. Initialize each new
-  // HeapTypeInfo as a copy of a representative HeapTypeInfo from its partition,
-  // then patch all the children of the new HeapTypeInfos to refer to other new
-  // HeapTypeInfos rather than the original HeapTypeInfos. This newly formed
-  // graph will have a shape coinductively equivalent to the original graph's
-  // shape, but each type definition will be minimal and distinct.
-  //
-  // However, for partitions that already contain globally canonical types, find
-  // and use the corresponding HeapTypeInfo directly without copying. Since the
-  // partitions reachable from a globally canonical type will also contain a
-  // globally canonical type, no temporary types will end up being patched into
-  // the globally canonical types and we can skip patching the children of those
-  // types.
-  for (size_t p = 0; p < partitions.sets; ++p) {
-    auto partition = partitions.getSet(p);
-    auto it = std::find_if(partition.begin(),
-                           partition.end(),
-                           [this](size_t i) { return !isTemp(heapTypes[i]); });
-    HeapType newType;
-    auto partitionIt = partition.begin();
-    if (it != partition.end()) {
-      newType = heapTypes[*it];
-    } else {
-      // We do not already know about a globally canonical type for this
-      // partition. Create a copy and a replacement that owns it.
-      HeapType oldType = heapTypes[*partitionIt++];
-      const auto& representative = *getHeapTypeInfo(oldType);
-      auto info = std::make_unique<HeapTypeInfo>(representative);
-      info->isTemp = true;
-      newType = asHeapType(info);
-      replacements.insert({oldType, std::move(info)});
-    }
-    // Create replacements for all the other types in the partition.
-    for (; partitionIt != partition.end(); ++partitionIt) {
-      if (partitionIt != it) {
-        replacements.insert({heapTypes[*partitionIt], newType});
-      }
-    }
-  }
-}
-
 // Replaces temporary types and heap types in a type definition graph with their
 // globally canonical versions to prevent temporary types or heap type from
 // leaking into the global stores.
@@ -3682,24 +2664,8 @@ void globallyCanonicalize(CanonicalizationState& state) {
 #endif
 }
 
-void canonicalizeEquirecursive(CanonicalizationState& state) {
-  // Equirecursive types always have null supertypes and recursion groups.
-  for (auto& info : state.newInfos) {
-    info->recGroup = nullptr;
-    info->supertype = nullptr;
-  }
-
-  // Canonicalize the shape of the type definition graph.
-  ShapeCanonicalizer minimized(state.results);
-  state.update(minimized.replacements);
-}
-
 std::optional<TypeBuilder::Error>
 validateSubtyping(const std::vector<HeapType>& types) {
-  if (getTypeSystem() == TypeSystem::Equirecursive) {
-    // Subtyping is not explicitly declared, so nothing to check.
-    return {};
-  }
   for (size_t i = 0; i < types.size(); ++i) {
     HeapType type = types[i];
     if (type.isBasic()) {
@@ -3966,9 +2932,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 #endif
 
   switch (typeSystem) {
-    case TypeSystem::Equirecursive:
-      canonicalizeEquirecursive(state);
-      break;
     case TypeSystem::Nominal:
       if (auto error = canonicalizeNominal(state)) {
         return {*error};
@@ -4091,7 +3054,7 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
 
 size_t
 hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
-  return wasm::FiniteShapeHasher().hash(info);
+  return wasm::hash(uintptr_t(&info));
 }
 
 } // namespace std

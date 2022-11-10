@@ -1293,9 +1293,10 @@ int main(int argc, const char* argv[]) {
   }
   if (getTypeSystem() == TypeSystem::Nominal) {
     extraFlags += " --nominal";
-  }
-  if (getTypeSystem() == TypeSystem::Isorecursive) {
+  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
     extraFlags += " --hybrid";
+  } else {
+    WASM_UNREACHABLE("unexpected type system");
   }
 
   if (test.size() == 0) {

@@ -41,9 +41,8 @@
 namespace wasm {
 
 enum class TypeSystem {
-  Equirecursive,
-  Nominal,
   Isorecursive,
+  Nominal,
 };
 
 // This should only ever be called before any Types or HeapTypes have been
