@@ -168,6 +168,14 @@ struct Monomorphize : public Pass {
       // TODO: Atm this can be done many times per function as it is once per
       //       function and per set of types sent to it. Perhaps have some
       //       total limit to avoid slow runtimes.
+      // TODO: We can end up optimizing |func| more than once. It may be
+      //       different each time if the previous optimization helped, but
+      //       often it will be identical. We could save the original version
+      //       and use that as the starting point here (and cache the optimized
+      //       version), but then we'd be throwing away optimization results. Or
+      //       we could see if later optimizations do not further decrease the
+      //       cost, and if so, use a cached value for the cost on such
+      //       "already maximally optimized" functions.
       doMinimalOpts(func);
       doMinimalOpts(refinedFunc);
 
