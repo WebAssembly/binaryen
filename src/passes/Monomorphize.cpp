@@ -82,7 +82,7 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // TODO: parallelize
+    // TODO: parallelize, see comments below
 
     // Note the list of all functions. We'll be adding more, and do not want to
     // operate on those.
@@ -175,7 +175,13 @@ struct Monomorphize : public Pass {
       //       version), but then we'd be throwing away optimization results. Or
       //       we could see if later optimizations do not further decrease the
       //       cost, and if so, use a cached value for the cost on such
-      //       "already maximally optimized" functions.
+      //       "already maximally optimized" functions. The former approach is
+      //       more amenable to parallelization, as it avoids path dependence -
+      //       the other approaches are deterministic but they depend on the
+      //       order in which we see things. But it does require saving a copy
+      //       of the function, which uses memory, which is avoided if we just
+      //       keep optimizing from the current contents as we go. It's not
+      //       obvious which approach is best here.
       doMinimalOpts(func);
       doMinimalOpts(refinedFunc);
 
@@ -196,7 +202,15 @@ struct Monomorphize : public Pass {
     return chosenTarget;
   }
 
-  // Run minimal function-level optimizations on a function.
+  // Run minimal function-level optimizations on a function. This optimizes at
+  // -O1 which is very fast and runs in linear time basically, and so it should
+  // be reasonable to run as part of this pass: -O1 is several times faster than
+  // a full -O2, in particular, and so if we run this as part of -O2 we should
+  // not be making it much slower overall.
+  // TODO: Perhaps we don't need all of -O1, and can focus on specific things we
+  //       expect to help. That would be faster, but we'd always run the risk of
+  //       missing things, especially as new passes are added later and we don't
+  //       think to add them here.
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
