@@ -51,9 +51,7 @@ struct CodeScanner
   : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
   Counts& counts;
 
-  CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
-    setModule(&wasm);
-  }
+  CodeScanner(Counts& counts) : counts(counts) {}
 
   void visitExpression(Expression* curr) {
     if (auto* call = curr->dynCast<CallIndirect>()) {
@@ -108,7 +106,7 @@ struct CodeScanner
 Counts getHeapTypeCounts(Module& wasm) {
   // Collect module-level info.
   Counts counts;
-  CodeScanner(wasm, counts).walkModuleCode(&wasm);
+  CodeScanner(counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.globals) {
     counts.note(curr->type);
   }
@@ -124,13 +122,13 @@ Counts getHeapTypeCounts(Module& wasm) {
 
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<Counts, Immutable, InsertOrderedMap>
-    analysis(wasm, [&](Function* func, Counts& counts) {
+    analysis(wasm, [](Function* func, Counts& counts) {
       counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
       }
       if (!func->imported()) {
-        CodeScanner(wasm, counts).walk(func->body);
+        CodeScanner(counts).walk(func->body);
       }
     });
 
@@ -189,6 +187,10 @@ Counts getHeapTypeCounts(Module& wasm) {
     }
   }
 
+  std::cerr << "counts:\n";
+  for (auto& [type, count] : counts) {
+    std::cerr << ((type.getID() << 2) % 997) << ", count: " << count << "\n";
+  }
   return counts;
 }
 
@@ -324,7 +326,18 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
 
     void pushPredecessors(RecGroup group) {
+      std::cerr << "Visiting group: ";
+      for (auto type : group) {
+        std::cerr << ((type.getID() << 2) % 997) << " ";
+      }
+      std::cerr << "\n";
+
       for (auto pred : groupInfos.at(group).sortedPreds) {
+        std::cerr << "  pushing pred: ";
+        for (auto type : pred) {
+          std::cerr << "  " << ((type.getID() << 2) % 997) << " ";
+        }
+        std::cerr << "\n";
         push(pred);
       }
     }
@@ -339,6 +352,12 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
   setIndices(indexedTypes);
+
+  std::cerr << "optimized types:\n";
+  for (auto type : indexedTypes.types) {
+    std::cerr << ((type.getID() << 2) % 997) << "\n";
+  }
+
   return indexedTypes;
 }
 
