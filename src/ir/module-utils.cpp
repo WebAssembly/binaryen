@@ -187,9 +187,9 @@ Counts getHeapTypeCounts(Module& wasm) {
     }
   }
 
-  std::cerr << "counts:\n";
+  std::cout << "counts:\n";
   for (auto& [type, count] : counts) {
-    std::cerr << ((type.getID() << 2) % 997) << ", count: " << count << "\n";
+    std::cout << ((type.getID() << 2) % 997) << ", count: " << count << "\n";
   }
   return counts;
 }
@@ -326,18 +326,18 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
 
     void pushPredecessors(RecGroup group) {
-      std::cerr << "Visiting group: ";
+      std::cout << "Visiting group: ";
       for (auto type : group) {
-        std::cerr << ((type.getID() << 2) % 997) << " ";
+        std::cout << ((type.getID() << 2) % 997) << " ";
       }
-      std::cerr << "\n";
+      std::cout << "\n";
 
       for (auto pred : groupInfos.at(group).sortedPreds) {
-        std::cerr << "  pushing pred: ";
+        std::cout << "  pushing pred: ";
         for (auto type : pred) {
-          std::cerr << "  " << ((type.getID() << 2) % 997) << " ";
+          std::cout << "  " << ((type.getID() << 2) % 997) << " ";
         }
-        std::cerr << "\n";
+        std::cout << "\n";
         push(pred);
       }
     }
@@ -353,9 +353,9 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   }
   setIndices(indexedTypes);
 
-  std::cerr << "optimized types:\n";
+  std::cout << "optimized types:\n";
   for (auto type : indexedTypes.types) {
-    std::cerr << ((type.getID() << 2) % 997) << "\n";
+    std::cout << ((type.getID() << 2) % 997) << "\n";
   }
 
   return indexedTypes;
