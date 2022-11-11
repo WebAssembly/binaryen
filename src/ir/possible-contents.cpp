@@ -1341,7 +1341,8 @@ private:
 #ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
   InsertOrderedSet<LocationIndex> workQueue;
 #else
-  std::unordered_set<LocationIndex> workQueue;
+  //std::unordered_set<LocationIndex> workQueue;
+  UniqueDeferredQueue<LocationIndex> workQueue;
 #endif
 
   // All existing links in the graph. We keep this to know when a link we want
@@ -1634,9 +1635,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
     }
 #endif
 
-    auto iter = workQueue.begin();
-    auto locationIndex = *iter;
-    workQueue.erase(iter);
+    auto locationIndex = workQueue.pop();
 
     flowAfterUpdate(locationIndex);
   }
@@ -1734,7 +1733,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
 #endif
 
   // Add a work item if there isn't already.
-  workQueue.insert(locationIndex);
+  workQueue.push(locationIndex);
 
   return worthSendingMore;
 }

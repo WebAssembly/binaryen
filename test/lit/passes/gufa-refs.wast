@@ -358,6 +358,37 @@
       (local.get $z)
     )
   )
+
+  (func $nondeterminism (result funcref)
+    ;; This block is sent an i31 and a null. The null is compatible with the
+    ;; type and the i31 is not. The order in which we process this matters:
+    ;;
+    ;;  * If the i31 arrives first, we'll filter it out as incompatible with the
+    ;;    type of the block. Then the null arrives and the final result is that
+    ;;    null, which we can then optimize the block to return.
+    ;;  * Or, if the null arrives first, then when the i31 arrives the
+    ;;    combination of nullfunc + i31 is Many (since the types are
+    ;;    incompatible). We then filter that to the block's type, ending up with
+    ;;    a cone of funcref. We cannot optimize in that case, unlike before.
+    ;;
+    ;; Ideally we'd optimize here, but at minimum we should be deterministic in
+    ;; how we handle this.
+    ;;
+    ;; TODO: Ensure we optimize by filtering contents before sending them, or
+    ;;       something like that? But out operations on sets are imprecise, so
+    ;;       it seems impossible to ensure the transitive property, so the order
+    ;;       can end up mattering.
+    (block $label$1 (result funcref)
+      (drop
+        (br_on_func $label$1
+          (i31.new
+            (i32.const 1337)
+          )
+        )
+      )
+      (ref.null nofunc)
+    )
+  )
 )
 
 (module
