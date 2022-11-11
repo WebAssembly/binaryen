@@ -62,6 +62,7 @@ set(passes_SOURCES
   MergeLocals.cpp
   Metrics.cpp
   MinifyImportsAndExports.cpp
+  Monomorphize.cpp
   MultiMemoryLowering.cpp
   NameList.cpp
   NameTypes.cpp
