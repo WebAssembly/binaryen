@@ -5,10 +5,10 @@
 ;; RUN: foreach %s %t wasm-opt --memory-packing --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
-
   ;; CHECK:      (type $array (array i8))
   (type $array (array i8))
+
+  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
 
   ;; CHECK:      (data "hello")
   (data "hello")
@@ -29,10 +29,10 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
-
   ;; CHECK:      (type $array (array i8))
   (type $array (array i8))
+
+  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
 
   ;; CHECK:      (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hello\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hello\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
@@ -53,10 +53,10 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
-
   ;; CHECK:      (type $array (array i8))
   (type $array (array i8))
+
+  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
 
   ;; CHECK:      (memory $mem 1 1)
   (memory $mem 1 1)
@@ -80,10 +80,10 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
-
   ;; CHECK:      (type $array (array i8))
   (type $array (array i8))
+
+  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
 
   ;; CHECK:      (memory $mem 1 1)
   (memory $mem 1 1)
@@ -109,12 +109,12 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
-
   ;; CHECK:      (type $array (array i8))
   (type $array (array i8))
 
   (data (i32.const 0) "optimize\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00me")
+
+  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
 
   ;; CHECK:      (memory $mem 1 1)
 
@@ -143,12 +143,12 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
-
   ;; CHECK:      (type $array (array i8))
   (type $array (array i8))
 
   (data "dead\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00segment")
+
+  ;; CHECK:      (type $none_=>_ref|$array| (func (result (ref $array))))
 
   ;; CHECK:      (memory $mem 1 1)
 

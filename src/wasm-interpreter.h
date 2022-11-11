@@ -3519,7 +3519,6 @@ public:
     WASM_UNUSED(elemType);
 
     Literals contents;
-    contents.reserve(size);
 
     switch (curr->op) {
       case NewData: {
@@ -3532,6 +3531,7 @@ public:
             end > seg.data.size()) {
           trap("out of bounds segment access in array.new_data");
         }
+        contents.reserve(size);
         for (Index i = offset; i < end; i += elemBytes) {
           auto addr = (void*)&seg.data[i];
           contents.push_back(Literal::makeFromMemory(addr, element));
@@ -3546,6 +3546,7 @@ public:
         if (end > seg.data.size()) {
           trap("out of bounds segment access in array.new_elem");
         }
+        contents.reserve(size);
         for (Index i = offset; i < end; ++i) {
           auto val = self()->visit(seg.data[i]).getSingleValue();
           contents.push_back(val);

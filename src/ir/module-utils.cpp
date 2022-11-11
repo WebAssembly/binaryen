@@ -66,6 +66,8 @@ struct CodeScanner
       counts.note(curr->type);
     } else if (curr->is<ArrayNew>()) {
       counts.note(curr->type);
+    } else if (curr->is<ArrayNewSeg>()) {
+      counts.note(curr->type);
     } else if (curr->is<ArrayInit>()) {
       counts.note(curr->type);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
