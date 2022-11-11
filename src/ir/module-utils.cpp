@@ -24,9 +24,12 @@ namespace {
 
 // Helper for collecting HeapTypes and their frequencies.
 struct Counts : public InsertOrderedMap<HeapType, size_t> {
+  int notes = 0;
+  int includes = 0;
   void note(HeapType type) {
     if (!type.isBasic()) {
       (*this)[type]++;
+      notes++;
     }
   }
   void note(Type type) {
@@ -38,6 +41,7 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
   void include(HeapType type) {
     if (!type.isBasic()) {
       (*this)[type];
+      includes++;
     }
   }
   void include(Type type) {
@@ -137,6 +141,8 @@ Counts getHeapTypeCounts(Module& wasm) {
     for (auto& [sig, count] : functionCounts) {
       counts[sig] += count;
     }
+    counts.notes += functionCounts.notes;
+    counts.includes += functionCounts.includes;
   }
 
   // Recursively traverse each reference type, which may have a child type that
@@ -191,6 +197,8 @@ Counts getHeapTypeCounts(Module& wasm) {
   for (auto& [type, count] : counts) {
     std::cout << ((type.getID() << 2) % 997) << ", count: " << count << "\n";
   }
+  std::cout << "total notes: " << counts.notes
+            << ", includes: " << counts.includes << "\n";
   return counts;
 }
 
