@@ -314,8 +314,7 @@ struct MultiMemoryLowering : public Pass {
           builder.makeMemoryGrow(
             builder.makeLocalGet(0, pointerType), combinedMemory, memoryInfo),
           builder.makeConst(-1)),
-        builder.makeReturn(builder.makeConst(-1)),
-        nullptr));
+        builder.makeReturn(builder.makeConst(-1))));
 
     // If we are not growing the last memory, then we need to copy data,
     // shifting it over to accomodate the increase from page_delta
