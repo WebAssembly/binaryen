@@ -256,6 +256,10 @@ jobs:
   build-emscripten:
     name: emscripten
     runs-on: ubuntu-latest
+    env:
+      # Set this environment variable to test a specific Emscripten branch.
+      # Format: https://github.com/<fork>/emscripten/tree/<refspec>
+      EMSCRIPTEN_REPO: ""
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -272,6 +276,12 @@ jobs:
         $HOME/emsdk/emsdk update-tags
         $HOME/emsdk/emsdk install tot
         $HOME/emsdk/emsdk activate tot
+    - name: override emscripten repository
+      if: ${{ env.EMSCRIPTEN_REPO != '' }}
+      run: |
+        $HOME/emsdk/emsdk install emscripten-main-64bit \
+          --override-repository emscripten-main-64bit@$EMSCRIPTEN_REPO
+        $HOME/emsdk/emsdk activate emscripten-main-64bit
     - name: update path
       run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
     - name: emcc-tests
