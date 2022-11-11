@@ -12,6 +12,15 @@
 (module
  ;; CHECK:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
 
+ ;; CHECK:      (type $byte-array (array (mut i8)))
+ ;; ROUNDTRIP:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
+
+ ;; ROUNDTRIP:      (type $byte-array (array (mut i8)))
+ (type $byte-array (array (mut i8)))
+ ;; CHECK:      (type $func-array (array (mut funcref)))
+ ;; ROUNDTRIP:      (type $func-array (array (mut funcref)))
+ (type $func-array (array (mut funcref)))
+
  ;; CHECK:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
  ;; CHECK:      (type $nullref_=>_i32 (func (param nullref) (result i32)))
@@ -20,9 +29,7 @@
 
  ;; CHECK:      (type $none_=>_ref|$func-array| (func (result (ref $func-array))))
 
- ;; CHECK:      (type $byte-array (array (mut i8)))
- ;; ROUNDTRIP:      (type $arrayref_=>_i32 (func (param arrayref) (result i32)))
-
+ ;; CHECK:      (data "hello")
  ;; ROUNDTRIP:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
  ;; ROUNDTRIP:      (type $nullref_=>_i32 (func (param nullref) (result i32)))
@@ -31,13 +38,6 @@
 
  ;; ROUNDTRIP:      (type $none_=>_ref|$func-array| (func (result (ref $func-array))))
 
- ;; ROUNDTRIP:      (type $byte-array (array (mut i8)))
- (type $byte-array (array (mut i8)))
- ;; CHECK:      (type $func-array (array (mut funcref)))
- ;; ROUNDTRIP:      (type $func-array (array (mut funcref)))
- (type $func-array (array (mut funcref)))
-
- ;; CHECK:      (data "hello")
  ;; ROUNDTRIP:      (data "hello")
  (data "hello")
  ;; CHECK:      (elem func $len $impossible-len $unreachable-len)
