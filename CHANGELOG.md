@@ -16,7 +16,8 @@ Current Trunk
 -------------
 
 - The isorecursive WasmGC type system (i.e. --hybrid) is now the default to
-  match the spec.
+  match the spec and the old default equirecursive (i.e. --structural) system
+  has been removed.
 
 v111
 ----
