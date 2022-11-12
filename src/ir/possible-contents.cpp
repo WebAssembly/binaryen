@@ -655,9 +655,7 @@ struct InfoCollector
     addRoot(curr);
   }
 
-  void visitRefCast(RefCast* curr) {
-    receiveChildValue(curr->ref, curr);
-  }
+  void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
