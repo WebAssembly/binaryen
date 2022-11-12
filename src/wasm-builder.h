@@ -1342,35 +1342,6 @@ public:
     }
     return makeBrOn(op, name, ref);
   }
-
-  template<typename T>
-  Expression* validateAndMakeCallRef(Expression* target,
-                                     const T& args,
-                                     bool isReturn = false) {
-    if (target->type != Type::unreachable && !target->type.isRef()) {
-      throw ParseException("Non-reference type for a call_ref", line, col);
-    }
-    // TODO: This won't be necessary once type annotations are mandatory on
-    // call_ref.
-    if (target->type == Type::unreachable ||
-        target->type.getHeapType() == HeapType::nofunc) {
-      // An unreachable target is not supported. Similiar to br_on_cast, just
-      // emit an unreachable sequence, since we don't have enough information
-      // to create a full call_ref.
-      std::vector<Expression*> children;
-      for (auto* arg : args) {
-        children.push_back(makeDrop(arg));
-      }
-      children.push_back(makeDrop(target));
-      children.push_back(makeUnreachable());
-      return makeBlock(children, Type::unreachable);
-    }
-    auto heapType = target->type.getHeapType();
-    if (!heapType.isSignature()) {
-      throw ParseException("Invalid reference type for a call_ref", line, col);
-    }
-    return makeCallRef(target, args, heapType.getSignature().results, isReturn);
-  }
 };
 
 } // namespace wasm

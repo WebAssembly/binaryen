@@ -23,7 +23,7 @@
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -38,12 +38,12 @@
     (drop
       (ref.func $target-B)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     ;; Verify that we do not crash on an unreachable call_ref, which has no
     ;; heap type for us to analyze.
-    (call_ref
+    (call_ref $A
       (unreachable)
     )
   )
@@ -85,7 +85,7 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
@@ -96,7 +96,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (export "foo")
-    (call_ref
+    (call_ref $A
       (ref.null $A)
     )
     (drop
@@ -143,13 +143,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (export "foo") (param $A (ref null $A))
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     (drop
       (ref.func $target-A-1)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     (drop
@@ -207,13 +207,13 @@
     (drop
       (ref.func $target-A-1)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     (drop
       (ref.func $target-A-2)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
   )

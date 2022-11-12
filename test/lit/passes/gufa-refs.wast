@@ -842,7 +842,7 @@
       (local.get $y)
     )
     ;; Send a non-null value only to the second param.
-    (call_ref
+    (call_ref $two-params
       (ref.as_non_null
         (ref.null $struct)
       )
@@ -4546,19 +4546,19 @@
     ;; Call $i1 twice with the same value, and $i2 twice with different values.
     ;; Note that structurally the types are identical, but we still
     ;; differentiate them, allowing us to optimize.
-    (call_ref
+    (call_ref $i1
       (i32.const 42)
       (ref.func $reffed1)
     )
-    (call_ref
+    (call_ref $i1
       (i32.const 42)
       (ref.func $reffed1)
     )
-    (call_ref
+    (call_ref $i2
       (i32.const 1337)
       (ref.func $reffed2)
     )
-    (call_ref
+    (call_ref $i2
       (i32.const 99999)
       (ref.func $reffed2)
     )
