@@ -32,6 +32,7 @@
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
+#include "param-utils.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -49,6 +50,28 @@ struct SignatureRefining : public Pass {
   // an update of the types. If a type has no improvement that we can find, it
   // will not appear in this map.
   std::unordered_map<HeapType, Signature> newSignatures;
+
+  struct Info {
+    // The calls and call_refs.
+    std::vector<Call*> calls;
+    std::vector<CallRef*> callRefs;
+
+    // The relevant drops. In the initial scan we collect all drops, and then
+    // when we merge the information we'll note the drops for each call. We
+    // list pointers to the drops so that we can replace them (we won't need
+    // the drop if we remove all returned values).
+    std::vector<Expression**> drops;
+
+    // A possibly improved LUB for the results.
+    LUBFinder resultsLUB;
+
+    // Normally we can optimize, but some cases prevent a particular signature
+    // type from being changed at all, see below.
+    bool canModify = true;
+
+    // Sometimes we can modify the signature as a whole, but not the results.
+    bool canModifyResults = true;
+  };
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -69,20 +92,7 @@ struct SignatureRefining : public Pass {
 
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
-
-    struct Info {
-      // The calls and call_refs.
-      std::vector<Call*> calls;
-      std::vector<CallRef*> callRefs;
-
-      // A possibly improved LUB for the results.
-      LUBFinder resultsLUB;
-
-      // Normally we can optimize, but some cases prevent a particular signature
-      // type from being changed at all, see below.
-      bool canModify = true;
-    };
-
+    //
     // This analysis also modifies the wasm as it goes, as the getResultsLUB()
     // operation has side effects (see comment on header declaration).
     ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
@@ -96,7 +106,23 @@ struct SignatureRefining : public Pass {
         }
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
+        info.drops = std::move(FindAllPointers<Drop>(func->body).list);
         info.resultsLUB = LUB::getResultsLUB(func, *module);
+
+        // If this function contains a return_call then we can't modify the
+        // results, as the results must continue to match the return_call.
+        for (auto* call : info.calls) {
+          if (call->isReturn) {
+            info.canModifyResults = false;
+            break;
+          }
+        }
+        for (auto* call : info.callRefs) {
+          if (call->isReturn) {
+            info.canModifyResults = false;
+            break;
+          }
+        }
       });
 
     // A map of types to all the information combined over all the functions
@@ -108,7 +134,14 @@ struct SignatureRefining : public Pass {
       // For direct calls, add each call to the type of the function being
       // called.
       for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+        auto type = module->getFunction(call->target)->type;
+        allInfo[type].calls.push_back(call);
+        // If a function is return_call'd then we can't modify the results, as
+        // the results must continue to match the function the return_call is
+        // inside.
+        if (call->isReturn) {
+          allInfo[type].canModifyResults = false;
+        }
       }
 
       // For indirect calls, add each call_ref to the type the call_ref uses.
@@ -116,6 +149,24 @@ struct SignatureRefining : public Pass {
         auto calledType = callRef->target->type;
         if (calledType != Type::unreachable) {
           allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
+        }
+        // See comment above on return_call.
+        if (callRef->isReturn) {
+          allInfo[calledType.getHeapType()].canModifyResults = false;
+        }
+      }
+
+      // Find drops of calls and place them in the relevant location.
+      for (auto** dropp : info.drops) {
+        auto* drop = (*dropp)->cast<Drop>();
+        if (auto* call = drop->value->dynCast<Call>()) {
+          allInfo[module->getFunction(call->target)->type].drops.push_back(
+            dropp);
+        } else if (auto* callRef = drop->value->dynCast<CallRef>()) {
+          auto calledType = callRef->target->type;
+          if (calledType != Type::unreachable) {
+            allInfo[calledType.getHeapType()].drops.push_back(dropp);
+          }
         }
       }
 
@@ -126,6 +177,9 @@ struct SignatureRefining : public Pass {
       // If one function cannot be modified, that entire type cannot be.
       if (!info.canModify) {
         allInfo[func->type].canModify = false;
+      }
+      if (!info.canModifyResults) {
+        allInfo[func->type].canModifyResults = false;
       }
     }
 
@@ -195,13 +249,28 @@ struct SignatureRefining : public Pass {
       }
 
       auto& resultsLUB = info.resultsLUB;
-      Type newResults;
-      if (!resultsLUB.noted()) {
-        // We did not have type information to calculate a LUB (no returned
-        // value, or it can return a value but traps instead etc.).
-        newResults = func->getResults();
-      } else {
-        newResults = resultsLUB.getBestPossible();
+      Type newResults = func->getResults();
+      if (info.canModifyResults) {
+        // If we had enough information to infer a LUB for the results, we can
+        // use that. (We couldn't if there was no returned value or it can
+        // return a value but traps instead etc.)
+        if (resultsLUB.noted()) {
+          newResults = resultsLUB.getBestPossible();
+        }
+
+        // If calls to this type are always dropped, we do not need the results.
+        if (func->getResults() != Type::none) {
+          auto numCalls = info.calls.size() + info.callRefs.size();
+          auto numDroppedCalls = info.drops.size();
+          assert(numDroppedCalls <= numCalls);
+          // Check that all calls are dropped, but also that there are calls at
+          // all - it would be wasted work to do anything to a type that is
+          // effectively unreachable. Leave that for other passes.
+          if (numDroppedCalls == numCalls && numCalls > 0) {
+            removeResults(type, info, module);
+            newResults = Type::none;
+          }
+        }
       }
 
       if (newParams == func->getParams() && newResults == func->getResults()) {
@@ -287,6 +356,21 @@ struct SignatureRefining : public Pass {
       // TODO: we could do this only in relevant functions perhaps
       ReFinalize().run(getPassRunner(), module);
     }
+  }
+
+  void removeResults(HeapType type, const Info& info, Module* module) {
+    // Replace all drops of calls with the call itself.
+    for (auto** dropp : info.drops) {
+      auto* drop = (*dropp)->cast<Drop>();
+      (*dropp) = drop->value;
+    }
+
+    // Remove returns inside the functions.
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+      if (func->type == type) {
+        ParamUtils::removeReturns(func, module);
+      }
+    });
   }
 };
 
