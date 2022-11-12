@@ -22,13 +22,8 @@
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
-#include "wasm.h"
-
-#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
-// Use an insert-ordered set for easier debugging with deterministic queue
-// ordering.
 #include "support/insert_ordered.h"
-#endif
+#include "wasm.h"
 
 namespace std {
 
@@ -1338,11 +1333,19 @@ private:
   // possible is helpful as anything reading them meanwhile (before we get to
   // their work item in the queue) will see the newer value, possibly avoiding
   // flowing an old value that would later be overwritten.
-#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
+  //
+  // This must be ordered to avoid nondeterminism. The problem is that our
+  // operations are imprecise and so the transitive property does not hold:
+  // (AvB)vC may differ from Av(BvC). Likewise (AvB)^C may differ from
+  // (A^C)v(B^C). An example of the latter is if a location is sent a null func
+  // and an i31, and the location can only contain funcref. If the null func
+  // arrives first, then later we'd merge null func + i31 which ends up as Many,
+  // and then we filter that to funcref and get funcref. But if the i31 arrived
+  // first, we'd filter it into nothing, and then the null func that arrives
+  // later would be the final result. This would not happen if our operations
+  // were precise, but we only make approximations here to avoid unacceptable
+  // overhead, such as cone types but not arbitrary unions, etc.
   InsertOrderedSet<LocationIndex> workQueue;
-#else
-  std::unordered_set<LocationIndex> workQueue;
-#endif
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
