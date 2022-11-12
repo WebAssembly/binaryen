@@ -49,6 +49,14 @@
 
   ;; CHECK:      (type $none_=>_i32_i64 (func_subtype (result i32 i64) func))
 
+  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+
+  ;; CHECK:      (type $eqref_=>_i32 (func_subtype (param eqref) (result i32) func))
+
+  ;; CHECK:      (type $i32_=>_i31ref (func_subtype (param i32) (result i31ref) func))
+
+  ;; CHECK:      (type $i31ref_=>_none (func_subtype (param i31ref) func))
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
   (type $s0 (sub (struct)))
@@ -1178,6 +1186,86 @@
   local.get 0
   unreachable
   return
+ )
+
+ ;; CHECK:      (func $ref-is (type $anyref_=>_none) (param $0 anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.is_null
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.is_func
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.is_data
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.is_i31
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-is (param anyref)
+  local.get 0
+  ref.is_null
+  drop
+  local.get 0
+  ref.is_func
+  drop
+  local.get 0
+  ref.is_data
+  drop
+  local.get 0
+  ref.is_i31
+  drop
+ )
+
+ ;; CHECK:      (func $ref-eq (type $eqref_=>_i32) (param $0 eqref) (result i32)
+ ;; CHECK-NEXT:  (ref.eq
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-eq (param eqref) (result i32)
+  local.get 0
+  local.get 0
+  ref.eq
+ )
+
+ ;; CHECK:      (func $i31-new (type $i32_=>_i31ref) (param $0 i32) (result i31ref)
+ ;; CHECK-NEXT:  (i31.new
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $i31-new (param i32) (result i31ref)
+  local.get 0
+  i31.new
+ )
+
+ ;; CHECK:      (func $i31-get (type $i31ref_=>_none) (param $0 i31ref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.get_s
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i31.get_u
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $i31-get (param i31ref)
+  local.get 0
+  i31.get_s
+  drop
+  local.get 0
+  i31.get_u
+  drop
  )
 
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
