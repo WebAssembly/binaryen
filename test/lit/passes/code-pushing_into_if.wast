@@ -812,7 +812,57 @@
     (i32.const 0) ;; this line was added.
   )
 
-  ;; CHECK:      (func $no-sink-call-4 (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-call-3 (param $p i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (call $call.without.effects
+  ;; CHECK-NEXT:      (i32.const 1234)
+  ;; CHECK-NEXT:      (ref.func $no-sink-call-3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $sink-call-3 (param $p i32) (result i32)
+    (local $temp i32)
+
+    ;; As above, but stop reading the relevant local after the if, keeping the
+    ;; number of other items unchanged. This verifies the presence of multiple
+    ;; items is not a problem and we can optimize.
+    (local.set $temp
+      (call $call.without.effects
+        (i32.const 1234)
+        (ref.func $no-sink-call-3)
+      )
+    )
+    (if
+      (local.get $p)
+      (return
+        (local.get $temp)
+      )
+    )
+    (nop)
+    (drop
+      (local.get $p) ;; this get now reads $p
+    )
+    (nop)
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $no-sink-call-sub (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $other i32)
   ;; CHECK-NEXT:  (local.set $temp
@@ -831,7 +881,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $no-sink-call-4 (param $p i32) (result i32)
+  (func $no-sink-call-sub (param $p i32) (result i32)
     (local $temp i32)
     (local $other i32)
 
