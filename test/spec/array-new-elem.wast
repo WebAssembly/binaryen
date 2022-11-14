@@ -46,3 +46,15 @@
 (assert_return (invoke "get" (i32.const 1)) (i32.const 2))
 (assert_return (invoke "set_get" (i32.const 0) (i32.const 2)) (i32.const 3))
 (assert_return (invoke "len") (i32.const 3))
+
+(module
+  (type $vec (array funcref))
+
+  (elem func)
+
+  (func $new-huge (export "new-huge") (result (ref $vec))
+    (array.new_elem $vec 0 (i32.const 1) (i32.const -1))
+  )
+)
+
+(assert_trap (invoke "new-huge") "out of bounds segment access in array.new_data")

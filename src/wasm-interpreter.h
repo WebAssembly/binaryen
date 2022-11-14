@@ -3510,8 +3510,8 @@ public:
       return sizeFlow;
     }
 
-    auto offset = offsetFlow.getSingleValue().geti32();
-    auto size = sizeFlow.getSingleValue().geti32();
+    uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
+    uint64_t size = sizeFlow.getSingleValue().getUnsigned();
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
@@ -3526,7 +3526,7 @@ public:
         assert(elemType.isNumber());
         const auto& seg = *wasm.dataSegments[curr->segment];
         auto elemBytes = element.getByteSize();
-        auto end = (uint64_t)offset + size * elemBytes;
+        auto end = offset + size * elemBytes;
         if ((size != 0ull && droppedSegments.count(curr->segment)) ||
             end > seg.data.size()) {
           trap("out of bounds segment access in array.new_data");
@@ -3541,7 +3541,7 @@ public:
       case NewElem: {
         assert(curr->segment < wasm.elementSegments.size());
         const auto& seg = *wasm.elementSegments[curr->segment];
-        auto end = (uint64_t)offset + size;
+        auto end = offset + size;
         // TODO: Handle dropped element segments once we support those.
         if (end > seg.data.size()) {
           trap("out of bounds segment access in array.new_elem");
