@@ -227,8 +227,7 @@ struct GlobalStructInference : public Pass {
           Builder builder(wasm);
           curr->ref = builder.makeSequence(
             builder.makeDrop(curr->ref),
-            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type))
-          ;
+            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
           return;
         }
 
