@@ -729,6 +729,12 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return {};
   }
+  InstrT makeRefIs(Index, RefIsOp) { return Ok{}; }
+
+  InstrT makeRefEq(Index) { return Ok{}; }
+
+  InstrT makeI31New(Index) { return Ok{}; }
+  InstrT makeI31Get(Index, bool) { return Ok{}; }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -1764,6 +1770,32 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<> makeRefNull(Index pos, HeapType type) {
     return push(pos, builder.makeRefNull(type));
   }
+
+  Result<> makeRefIs(Index pos, RefIsOp op) {
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    return push(pos, builder.makeRefIs(op, *ref));
+  }
+
+  Result<> makeRefEq(Index pos) {
+    auto rhs = pop(pos);
+    CHECK_ERR(rhs);
+    auto lhs = pop(pos);
+    CHECK_ERR(lhs);
+    return push(pos, builder.makeRefEq(*lhs, *rhs));
+  }
+
+  Result<> makeI31New(Index pos) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeI31New(*val));
+  }
+
+  Result<> makeI31Get(Index pos, bool signed_) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeI31Get(*val, signed_));
+  }
 };
 
 // ================
@@ -2757,7 +2789,7 @@ Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, Index pos, RefIsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefIs(pos, op);
 }
 
 template<typename Ctx>
@@ -2767,7 +2799,7 @@ Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefEq(pos);
 }
 
 template<typename Ctx>
@@ -2828,12 +2860,12 @@ Result<typename Ctx::InstrT> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31New(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeI31New(pos);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeI31Get(pos, signed_);
 }
 
 template<typename Ctx>
