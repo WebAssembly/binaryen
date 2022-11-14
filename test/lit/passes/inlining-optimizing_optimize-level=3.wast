@@ -7917,16 +7917,6 @@
  ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                             )
  ;; CHECK-NEXT:                             (block $do-once99
- ;; CHECK-NEXT:                              (local.set $20
- ;; CHECK-NEXT:                               (select
- ;; CHECK-NEXT:                                (local.get $11)
- ;; CHECK-NEXT:                                (i32.add
- ;; CHECK-NEXT:                                 (local.get $12)
- ;; CHECK-NEXT:                                 (i32.const 4)
- ;; CHECK-NEXT:                                )
- ;; CHECK-NEXT:                                (local.get $26)
- ;; CHECK-NEXT:                               )
- ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                              (call $_pad
  ;; CHECK-NEXT:                               (local.get $0)
  ;; CHECK-NEXT:                               (i32.const 48)
@@ -7937,6 +7927,16 @@
  ;; CHECK-NEXT:                                  (i32.const 0)
  ;; CHECK-NEXT:                                 )
  ;; CHECK-NEXT:                                 (block (result i32)
+ ;; CHECK-NEXT:                                  (local.set $20
+ ;; CHECK-NEXT:                                   (select
+ ;; CHECK-NEXT:                                    (local.get $11)
+ ;; CHECK-NEXT:                                    (i32.add
+ ;; CHECK-NEXT:                                     (local.get $12)
+ ;; CHECK-NEXT:                                     (i32.const 4)
+ ;; CHECK-NEXT:                                    )
+ ;; CHECK-NEXT:                                    (local.get $26)
+ ;; CHECK-NEXT:                                   )
+ ;; CHECK-NEXT:                                  )
  ;; CHECK-NEXT:                                  (local.set $18
  ;; CHECK-NEXT:                                   (i32.eqz
  ;; CHECK-NEXT:                                    (local.get $18)
