@@ -81,10 +81,10 @@
 (module
   (type $vec (array i32))
 
-  (data "\01\00\00\00\02\00\00\00\03\00\00\00\04\00\00\00")
+  (data "")
 
   (func $new-huge (export "new-huge") (result (ref $vec))
-    (array.new_data $vec 0 (i32.const 1) (i32.const -1))
+    (array.new_data $vec 0 (i32.const 4) (i32.const -1))
   )
 )
 

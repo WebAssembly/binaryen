@@ -364,8 +364,7 @@ struct RemoveUnusedModuleElements : public Pass {
                ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return curr->data.empty() ||
-             analyzer.reachable.count(ModuleElement(
+      return analyzer.reachable.count(ModuleElement(
                ModuleElementKind::ElementSegment, curr->name)) == 0;
     });
     // Since we've removed all empty element segments, here we mark all tables
