@@ -51,7 +51,7 @@
 
   ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $eqref_=>_i32 (func_subtype (param eqref) (result i32) func))
+  ;; CHECK:      (type $eqref_eqref_=>_i32 (func_subtype (param eqref eqref) (result i32) func))
 
   ;; CHECK:      (type $i32_=>_i31ref (func_subtype (param i32) (result i31ref) func))
 
@@ -1225,15 +1225,15 @@
   drop
  )
 
- ;; CHECK:      (func $ref-eq (type $eqref_=>_i32) (param $0 eqref) (result i32)
+ ;; CHECK:      (func $ref-eq (type $eqref_eqref_=>_i32) (param $0 eqref) (param $1 eqref) (result i32)
  ;; CHECK-NEXT:  (ref.eq
  ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $ref-eq (param eqref) (result i32)
+ (func $ref-eq (param eqref eqref) (result i32)
   local.get 0
-  local.get 0
+  local.get 1
   ref.eq
  )
 
