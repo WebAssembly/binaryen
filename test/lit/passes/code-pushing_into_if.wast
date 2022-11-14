@@ -811,4 +811,46 @@
     (nop) ;; this line was added;
     (i32.const 0) ;; this line was added.
   )
+
+  ;; CHECK:      (func $no-sink-call-4 (param $p i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $other i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (call $call.without.effects
+  ;; CHECK-NEXT:    (local.tee $other
+  ;; CHECK-NEXT:     (i32.const 1234)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $no-sink-call)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $p)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $no-sink-call-4 (param $p i32) (result i32)
+    (local $temp i32)
+    (local $other i32)
+
+    ;; The call has no effects, but one of the arguments to it does, so we
+    ;; cannot optimize.
+    (local.set $temp
+      (call $call.without.effects
+        (local.tee $other ;; an effect
+          (i32.const 1234)
+        )
+        (ref.func $no-sink-call)
+      )
+    )
+    (if
+      (local.get $p)
+      (return
+        (local.get $temp)
+      )
+    )
+    (i32.const 0)
+  )
 )
