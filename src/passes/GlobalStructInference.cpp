@@ -222,7 +222,8 @@ struct GlobalStructInference : public Pass {
 
         if (globals.size() == 1) {
           // Leave it to other passes to infer the constant value of the field,
-          // if there is one: just change the reference to the global.
+          // if there is one: just change the reference to the global, which
+          // will unlock those other optimizations.
           auto global = globals[0];
           Builder builder(wasm);
           curr->ref = builder.makeSequence(
@@ -250,9 +251,6 @@ struct GlobalStructInference : public Pass {
         //   (i32.const 1337)
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
-        if (globals.size() > 2) {
-          return;
-        }
 
         // Find the constant values and which globals correspond to them.
         // TODO: SmallVectors?
@@ -298,6 +296,8 @@ struct GlobalStructInference : public Pass {
         // value. And we have already exited if we have more than 2, so that
         // only leaves 1 and 2. We are looking for the case of 2 here, since
         // other passes (ConstantFieldPropagation) can handle 1.
+        // TODO: We can perhaps do better than CFP, as we know the structs are
+        //       created in globals.
         if (values.size() == 1) {
           return;
         }
