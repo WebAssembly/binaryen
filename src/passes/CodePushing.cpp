@@ -293,7 +293,7 @@ private:
     // if we can push or not.
     EffectAnalyzer postIfEffects(passOptions, module);
     for (Index i = pushPoint + 1; i < list.size(); i++) {
-      postIfEffects.walk(list[pushPoint]);
+      postIfEffects.walk(list[i]);
     }
 
     // Start at the instruction right before the push point, and go back from
