@@ -127,7 +127,9 @@ struct MultiMemoryLowering : public Pass {
         }
         Expression* replacement;
         Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
-        Expression *ptrSet = builder.makeLocalSet(ptrIdx, builder.makeBinary(
+        Expression* ptrSet = builder.makeLocalSet(
+          ptrIdx,
+          builder.makeBinary(
             Abstract::getBinary(parent.pointerType, Abstract::Add),
             builder.makeGlobalGet(global, parent.pointerType),
             curr->ptr));
@@ -161,7 +163,9 @@ struct MultiMemoryLowering : public Pass {
         }
         Expression* replacement;
         Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
-        Expression *ptrSet = builder.makeLocalSet(ptrIdx, builder.makeBinary(
+        Expression* ptrSet = builder.makeLocalSet(
+          ptrIdx,
+          builder.makeBinary(
             Abstract::getBinary(parent.pointerType, Abstract::Add),
             builder.makeGlobalGet(global, parent.pointerType),
             curr->ptr));
