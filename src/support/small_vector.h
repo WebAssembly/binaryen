@@ -148,9 +148,9 @@ public:
   // iteration
 
   template<typename Parent, typename Iterator> struct IteratorBase {
-    typedef T value_type;
-    typedef long difference_type;
-    typedef T& reference;
+    using value_type = T;
+    using difference_type = long;
+    using reference = T&;
 
     Parent* parent;
     size_t index;

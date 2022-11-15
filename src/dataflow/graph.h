@@ -84,7 +84,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // When we are in unreachable code (i.e., a path that does not
   // need to be merged in anywhere), we set the length of this
   // vector to 0 to indicate that.
-  typedef std::vector<Node*> Locals;
+  using Locals = std::vector<Node*>;
 
   // The current local state in the control flow path being emitted.
   Locals locals;

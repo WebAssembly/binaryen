@@ -32,7 +32,7 @@ template<typename T> struct InsertOrderedSet {
   std::unordered_map<T, typename std::list<T>::iterator> Map;
   std::list<T> List;
 
-  typedef typename std::list<T>::iterator iterator;
+  using iterator = typename std::list<T>::iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
 
@@ -87,7 +87,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
     Map;
   std::list<std::pair<const Key, T>> List;
 
-  typedef typename std::list<std::pair<const Key, T>>::iterator iterator;
+  using iterator = typename std::list<std::pair<const Key, T>>::iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
 

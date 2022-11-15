@@ -488,7 +488,7 @@ struct LocationUpdater {
   // Map start of line tables in the debug_line section to their new locations.
   std::unordered_map<BinaryLocation, BinaryLocation> debugLineMap;
 
-  typedef std::pair<BinaryLocation, BinaryLocation> OldToNew;
+  using OldToNew = std::pair<BinaryLocation, BinaryLocation>;
 
   // Map of compile unit index => old and new base offsets (i.e., in the
   // original binary and in the new one).

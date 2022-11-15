@@ -41,7 +41,7 @@ struct LoopInvariantCodeMotion
     return std::make_unique<LoopInvariantCodeMotion>();
   }
 
-  typedef std::unordered_set<LocalSet*> LoopSets;
+  using LoopSets = std::unordered_set<LocalSet*>;
 
   // main entry point
 

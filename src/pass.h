@@ -36,7 +36,7 @@ struct PassRegistry {
 
   static PassRegistry* get();
 
-  typedef std::function<Pass*()> Creator;
+  using Creator = std::function<Pass*()>;
 
   void registerPass(const char* name, const char* description, Creator create);
   // Register a pass that's used for internal testing. These passes do not show
@@ -446,7 +446,7 @@ template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
 
 protected:
-  typedef WalkerPass<WalkerType> super;
+  using super = WalkerPass<WalkerType>;
 
 public:
   void run(Module* module) override {

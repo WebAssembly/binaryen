@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-typedef std::vector<Literal> Loggings;
+using Loggings = std::vector<Literal>;
 
 // Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {

@@ -35,7 +35,7 @@ namespace wasm {
 // TODO: Add data segment, multiple memories (#5224)
 enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
-typedef std::pair<ModuleElementKind, Name> ModuleElement;
+using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 // Finds reachabilities
 // TODO: use Effects to determine if a memory is used

@@ -31,7 +31,7 @@ struct Strip : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   // A function that returns true if the method should be removed.
-  typedef std::function<bool(UserSection&)> Decider;
+  using Decider = std::function<bool(UserSection&)>;
   Decider decider;
 
   Strip(Decider decider) : decider(decider) {}
