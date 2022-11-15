@@ -368,12 +368,16 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         auto& gets = iter->second;
         for (auto* get : gets) {
           get->index = var;
+          get->type = curr->type;
         }
       }
     };
 
     FindingApplier applier(finder);
     applier.walkFunction(func);
+
+    // LocalGet type changes must be propagated.
+    ReFinalize().walkFunctionInModule(func, getModule());
   }
 };
 
