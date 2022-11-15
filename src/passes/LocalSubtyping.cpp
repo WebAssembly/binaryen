@@ -375,7 +375,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         }
 
         // Replace ourselves with a tee.
-        replaceCurrent(Builder(*getModule()).makeLocalTee(var, curr, curr->type));
+        replaceCurrent(
+          Builder(*getModule()).makeLocalTee(var, curr, curr->type));
       }
     };
 
