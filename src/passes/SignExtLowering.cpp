@@ -15,8 +15,7 @@
  */
 
 //
-// Lowers unaligned loads and stores into aligned loads and stores
-// that are smaller. This leaves only aligned operations.
+// Lowers sign-ext operations into wasm MVP operations.
 //
 
 #include "pass.h"
