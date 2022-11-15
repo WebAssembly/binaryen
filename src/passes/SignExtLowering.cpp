@@ -27,7 +27,10 @@ namespace wasm {
 
 struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
   template<typename T>
-  void lowerToShifts(Expression* value, BinaryOp leftShift, BinaryOp rightShift, T originalBits) {
+  void lowerToShifts(Expression* value,
+                     BinaryOp leftShift,
+                     BinaryOp rightShift,
+                     T originalBits) {
     // To sign-extend, we shift all the way left so the effective sign bit is
     // where the actual sign bit is. For example, when sign-extending i8, the
     // effective sign bit is at bit 8, and we shift it to the actual place of
@@ -38,12 +41,10 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
     //   0x000000ff =(shift left)=> 0xff000000 =(shift right)=> 0xffffffff
     //
     auto shiftBits = (sizeof(T) * 8) - originalBits;
-    replaceCurrent(
-      builder.makeBinary(rightShift,
-        builder.makeBinary(leftShift, curr->value, builder.makeConst(shiftBits)),
-        builder.makeConst(shiftBits)
-      )
-    );
+    replaceCurrent(builder.makeBinary(
+      rightShift,
+      builder.makeBinary(leftShift, curr->value, builder.makeConst(shiftBits)),
+      builder.makeConst(shiftBits)));
   }
 
   void visitUnary(Unary* curr) {
@@ -64,10 +65,11 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
       case ExtendS32Int64:
         lowerToShifts(curr->value, ShlInt64, ShrSInt64, int64_t(32));
         break;
-      default: {}
-  }
-};
+      default: {
+      }
+    }
+  };
 
-Pass* createSignExtLoweringPass() { return new SignExtLowering(); }
+  Pass* createSignExtLoweringPass() { return new SignExtLowering(); }
 
 } // namespace wasm
