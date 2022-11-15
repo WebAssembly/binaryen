@@ -16,7 +16,7 @@
 
 //
 // Finds types which are only created in assignments to immutable globals. For
-// such types we can replace a struct.get a global.get when there is a single
+// such types we can replace a struct.get with a global.get when there is a single
 // possible global, or if there are two then with this pattern:
 //
 //  (struct.get $foo i
