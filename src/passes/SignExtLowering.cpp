@@ -38,9 +38,9 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
     // shift in the other direction, which fills with the proper bit all the
     // way back, so e.g.
     //
-    //   0x000000ff =(shift left)=> 0xff000000 =(shift right)=> 0xffffffff
+    //  0x000000ff  =(shift left)=>  0xff000000  =(shift right)=>  0xffffffff
     //
-    auto shiftBits = (sizeof(T) * 8) - originalBits;
+    T shiftBits = (sizeof(T) * 8) - originalBits;
     Builder builder(*getModule());
     replaceCurrent(builder.makeBinary(
       rightShift,
