@@ -293,6 +293,9 @@ void PassRegistry::registerPasses() {
                "optimizes added constants into load/store offsets, propagating "
                "them across locals too",
                createOptimizeAddedConstantsPropagatePass);
+  registerPass("optimize-casts",
+               "eliminate and reuse casts",
+               createOptimizeCastsPass);
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
