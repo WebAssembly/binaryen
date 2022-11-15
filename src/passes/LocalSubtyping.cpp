@@ -274,6 +274,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   // |this|, we can use the cast value for the itable get, which may then lead
   // to removing the vtable cast after we refine the itable type. And that can
   // lead to devirtualization later.
+  //
+  // TODO: Move casts earlier in a basic block as well, at least in traps-never-
+  //       happen mode where we can assume they don't happen.
   void refineLocalUses(Function* func) {
     // TODO: Look past individual basic blocks?
     struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
@@ -337,7 +340,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     BestSourceFinder finder;
     finder.setModule(getModule());
     finder.options = getPassOptions();
-    finder.walkFunction(func);
+    finder.walkFunctionInModule(func, getModule());
 
     if (finder.requestMap.empty()) {
       return;
@@ -370,11 +373,14 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           get->index = var;
           get->type = curr->type;
         }
+
+        // Replace ourselves with a tee.
+        replaceCurrent(Builder(*getModule()).makeLocalTee(var, curr, curr->type));
       }
     };
 
     FindingApplier applier(finder);
-    applier.walkFunction(func);
+    applier.walkFunctionInModule(func, getModule());
 
     // LocalGet type changes must be propagated.
     ReFinalize().walkFunctionInModule(func, getModule());

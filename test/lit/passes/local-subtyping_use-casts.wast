@@ -3,10 +3,32 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $A (struct ))
   (type $A (struct_subtype data))
 
   (type $B (struct_subtype $A))
 
+  ;; CHECK:      (func $ref.as (param $x (ref null $A))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $ref.as (param $x (ref null $A))
     ;; After the first ref.as, we can use the cast value in later gets, which is
     ;; more refined.
@@ -21,6 +43,8 @@
     (drop
       (local.get $x)
     )
+    ;; In this case we don't really need the last ref.as here, but we leave that
+    ;; for later opts.
     (drop
       (ref.as_non_null
         (local.get $x)
@@ -28,6 +52,24 @@
     )
   )
 
+  ;; CHECK:      (func $ref.as-no (param $x (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $ref.as-no (param $x (ref $A))
     ;; As above, but the param is now non-nullable anyhow, so we should do
     ;; nothing.
@@ -49,6 +91,22 @@
     )
   )
 
+  ;; CHECK:      (func $ref.cast (param $x (ref data))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $ref.cast (param $x (ref data))
     ;; As $ref.as but with ref.casts: we should use the cast value after it has
     ;; been computed, in both gets.
@@ -65,6 +123,25 @@
     )
   )
 
+  ;; CHECK:      (func $not-past-set (param $x (ref data))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (call $get)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $not-past-set (param $x (ref data))
     (drop
       (ref.cast_static $A
@@ -83,6 +160,27 @@
     )
   )
 
+  ;; CHECK:      (func $best (param $x (ref data))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $best (param $x (ref data))
     (drop
       (ref.cast_static $A
@@ -94,7 +192,7 @@
       (local.get $x)
     )
     (drop
-      (ref.cast_static $B
+      (ref.cast_static $B ;; BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
         (local.get $x)
       )
     )
@@ -104,11 +202,32 @@
     )
   )
 
+  ;; CHECK:      (func $best-2 (param $x (ref data))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $best-2 (param $x (ref data))
     ;; As above, but with the casts reversed. Now we should use $B in both
     ;; gets.
     (drop
-      (ref.cast_static $B
+      (ref.cast_static $B ;; BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
         (local.get $x)
       )
     )
@@ -125,6 +244,21 @@
     )
   )
 
+  ;; CHECK:      (func $fallthrough (param $x (ref data))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (block (result (ref data))
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $fallthrough (param $x (ref data))
     (drop
       (ref.cast_static $A
@@ -139,6 +273,9 @@
     )
   )
 
+  ;; CHECK:      (func $get (result (ref data))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $get (result (ref data))
     ;; Helper for the above.
     (unreachable)
