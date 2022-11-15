@@ -276,8 +276,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   // lead to devirtualization later.
   void refineLocalUses(Function* func) {
     // TODO: Look past individual basic blocks?
-    struct BestSourceFinder
-      : public LinearExecutionWalker<BestSourceFinder> {
+    struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
 
       // A map of the best local.get for a particular index: the local.get that
       // has the most refined type.
@@ -287,8 +286,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // value instead of themselves (as it is more refined).
       std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
 
-      static void doNoteNonLinear(BestSourceFinder* self,
-                                  Expression** currp) {
+      static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
         bestSourceForIndexMap.clear();
       }
 
@@ -310,16 +308,13 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         }
       }
 
-      void visitRefAs(RefAs* curr) {
-        handleRefinement(curr);
-      }
+      void visitRefAs(RefAs* curr) { handleRefinement(curr); }
 
-      void visitRefCast(RefCast* curr) {
-        handleRefinement(curr);
-      }
+      void visitRefCast(RefCast* curr) { handleRefinement(curr); }
 
       void handleRefinement(Expression* curr) {
-        auto* fallthrough = Properties::getFallthrough(curr, getPassOptions(), *getModule());
+        auto* fallthrough =
+          Properties::getFallthrough(curr, getPassOptions(), *getModule());
         if (auto* get = fallthrough->dynCast<LocalGet>()) {
           auto*& bestSource = bestSourceForIndexMap[get->index];
           if (!bestSource) {
@@ -355,13 +350,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
       FindingApplier(BestSourceFinder& finder) : finder(finder) {}
 
-      void visitRefAs(RefAs* curr) {
-        handleRefinement(curr);
-      }
+      void visitRefAs(RefAs* curr) { handleRefinement(curr); }
 
-      void visitRefCast(RefCast* curr) {
-        handleRefinement(curr);
-      }
+      void visitRefCast(RefCast* curr) { handleRefinement(curr); }
 
       void handleRefinement(Expression* curr) {
         auto iter = finder.requestMap.find(curr);
