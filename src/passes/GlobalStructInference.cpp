@@ -301,7 +301,7 @@ struct GlobalStructInference : public Pass {
           // otherwise return the value.
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeConstantExpression(values[0]))));
+            builder.makeConstantExpression(values[0])));
           return;
         }
         assert(values.size() == 2);
