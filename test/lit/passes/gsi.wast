@@ -121,7 +121,9 @@
   ;; CHECK-NEXT:   (struct.get $struct1 0
   ;; CHECK-NEXT:    (block (result (ref $struct1))
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $struct1)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $struct1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (global.get $global1)
   ;; CHECK-NEXT:    )
@@ -131,7 +133,9 @@
   ;; CHECK-NEXT:   (struct.get $struct2 0
   ;; CHECK-NEXT:    (block (result (ref $struct2))
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $struct2)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (global.get $global2)
   ;; CHECK-NEXT:    )
@@ -846,7 +850,9 @@
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (block (result (ref $struct))
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $struct)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (global.get $global2)
   ;; CHECK-NEXT:    )
@@ -975,7 +981,9 @@
   ;; CHECK-NEXT:   (struct.get $struct1 0
   ;; CHECK-NEXT:    (block (result (ref $struct1))
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $struct1)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $struct1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (global.get $global1)
   ;; CHECK-NEXT:    )
@@ -985,7 +993,9 @@
   ;; CHECK-NEXT:   (struct.get $struct2 0
   ;; CHECK-NEXT:    (block (result (ref $struct2))
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $struct2)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (global.get $global2)
   ;; CHECK-NEXT:    )
@@ -1119,6 +1129,49 @@
     (drop
       (struct.get $struct2 0
         (local.get $struct2)
+      )
+    )
+  )
+)
+
+;; Multiple globals, but all the same value, so we do not even need a select and
+;; can just apply the value.
+(module
+  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
       )
     )
   )

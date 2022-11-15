@@ -219,15 +219,16 @@ struct GlobalStructInference : public Pass {
         }
 
         auto& wasm = *getModule();
+        Builder builder(wasm);
 
         if (globals.size() == 1) {
           // Leave it to other passes to infer the constant value of the field,
           // if there is one: just change the reference to the global, which
-          // will unlock those other optimizations.
+          // will unlock those other optimizations. Note we must trap if the ref
+          // is null, so add RefAsNonNull here.
           auto global = globals[0];
-          Builder builder(wasm);
           curr->ref = builder.makeSequence(
-            builder.makeDrop(curr->ref),
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
             builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
           return;
         }
@@ -293,12 +294,14 @@ struct GlobalStructInference : public Pass {
         }
 
         // We have some globals (at least 2), and so must have at least one
-        // value. And we have already exited if we have more than 2, so that
-        // only leaves 1 and 2. We are looking for the case of 2 here, since
-        // other passes (ConstantFieldPropagation) can handle 1.
-        // TODO: We can perhaps do better than CFP, as we know the structs are
-        //       created in globals.
+        // value. And we have already exited if we have more than 2 values (see
+        // the early return above) so that only leaves 1 and 2.
         if (values.size() == 1) {
+          // The case of 1 value is simple: trap if the ref is null, and
+          // otherwise return the value.
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeConstantExpression(values[0])));
           return;
         }
         assert(values.size() == 2);
@@ -321,7 +324,6 @@ struct GlobalStructInference : public Pass {
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
         auto checkGlobal = globalsForValue[0][0];
-        Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(
