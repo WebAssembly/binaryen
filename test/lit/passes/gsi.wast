@@ -88,31 +88,70 @@
   )
 )
 
-;; Just one global. We do not optimize here - we let other passes do that.
+;; Just one global.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
-  (type $struct (struct i32))
+  ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
+  (type $struct1 (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $struct2 (struct_subtype (field i32) data))
+  (type $struct2 (struct i32))
 
-  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+
+  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_=>_none (func_subtype (param (ref null $struct1) (ref null $struct2)) func))
+
+  ;; CHECK:      (import "a" "b" (global $imported i32))
+  (import "a" "b" (global $imported i32))
+
+  ;; CHECK:      (global $global1 (ref $struct1) (struct.new $struct1
+  ;; CHECK-NEXT:  (global.get $imported)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct1) (struct.new $struct1
+    (global.get $imported)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct2) (struct.new $struct2
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
-  (global $global1 (ref $struct) (struct.new $struct
+  (global $global2 (ref $struct2) (struct.new $struct2
     (i32.const 42)
   ))
 
-  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK:      (func $test1 (type $ref?|$struct1|_ref?|$struct2|_=>_none) (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (block (result (ref $struct1))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $struct1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (block (result (ref $struct2))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $struct (ref null $struct))
+  (func $test1 (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2))
+    ;; We can infer that this get must reference $global1 and make the reference
+    ;; point to that. Note that we do not infer the value of 42 here, but leave
+    ;; it for other passes to do.
     (drop
-      (struct.get $struct 0
-        (local.get $struct)
+      (struct.get $struct1 0
+        (local.get $struct1)
+      )
+    )
+    ;; Even though the value here is not known at compile time - it reads an
+    ;; imported global - we can still infer that we are reading from $global2.
+    (drop
+      (struct.get $struct2 0
+        (local.get $struct2)
       )
     )
   )
@@ -805,7 +844,12 @@
   ;; CHECK:      (func $test (type $ref?|$struct|_ref?|$super-struct|_=>_none) (param $struct (ref null $struct)) (param $super-struct (ref null $super-struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:    (block (result (ref $struct))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -822,9 +866,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $struct (ref null $struct)) (param $super-struct (ref null $super-struct))
-    ;; We cannot optimize the first - it has just one global - but the second
-    ;; will consider the struct and sub-struct, find 2 possible values, and
-    ;; optimize.
+    ;; The first has just one global, which we switch the reference to, while
+    ;; the second will consider the struct and sub-struct, find 2 possible
+    ;; values, and optimize.
     (drop
       (struct.get $struct 0
         (local.get $struct)
@@ -929,12 +973,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct1 0
-  ;; CHECK-NEXT:    (local.get $struct1)
+  ;; CHECK-NEXT:    (block (result (ref $struct1))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $struct1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct2 0
-  ;; CHECK-NEXT:    (local.get $struct2)
+  ;; CHECK-NEXT:    (block (result (ref $struct2))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -946,7 +1000,8 @@
         (local.get $super-struct)
       )
     )
-    ;; These each have one possible value, so we also do not optimize.
+    ;; These each have one possible value, which we can switch the references
+    ;; to.
     (drop
       (struct.get $struct1 0
         (local.get $struct1)
