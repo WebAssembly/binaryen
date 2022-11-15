@@ -252,6 +252,28 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   // This change adds a local but it switches some local.gets to use a local of
   // a more refined type. That can help other optimizations later, and can also
   // help refine types of other locals in the rest of this pass.
+  //
+  // An example of an important pattern this handles are itable calls:
+  //
+  //  (call_ref
+  //    (ref.cast $actual.type
+  //      (local.get $object)
+  //    )
+  //    (struct.get $vtable ..
+  //      (ref.cast $vtable
+  //        (struct.get $itable ..
+  //          (local.get $object)
+  //        )
+  //      )
+  //    )
+  //  )
+  //
+  // We cast to the actual type for the |this| parameter, but we technically do
+  // not need to do so for reading its itable - since the itable may be of a
+  // generic type, and we cast the vtable afterwards anyhow. But since we cast
+  // |this|, we can use the cast value for the itable get, which may then lead
+  // to removing the vtable cast after we refine the itable type. And that can
+  // lead to devirtualization later.
   void refineLocalUses(Function* func) {
     // TODO: Look past individual basic blocks?
     struct BestSourceFinder
@@ -320,10 +342,45 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     finder.setPassOptions(getPassOptions());
     finder.walk(func);
 
-    // Apply the findings. We need to do this in a subsequent pass as altering
+    if (finder.requestMap.empty()) {
+      return;
+    }
+
+    // Apply the requests. We need to do this in a subsequent pass as altering
     // pointers to things we've already walked past can have interesting corner
     // cases with removing a pointer to something inside something that is also
     // going away.
+    struct FindingApplier : public PostWalker<FindingApplier> {
+      BestSourceFinder& finder;
+
+      FindingApplier(BestSourceFinder& finder) : finder(finder) {}
+
+      void visitRefAs(RefAs* curr) {
+        handleRefinement(curr);
+      }
+
+      void visitRefCast(RefCast* curr) {
+        handleRefinement(curr);
+      }
+
+      void handleRefinement(Expression* curr) {
+        auto iter = finder.requestMap.find(curr);
+        if (iter == finder.requestMap.end()) {
+          return;
+        }
+
+        // This expression was the best source for some gets. Add a new local
+        // to store this value, then use it for the gets.
+        auto var = Builder::addVar(getFunction(), curr->type);
+        auto& gets = iter->second;
+        for (auto* get : gets) {
+          get->index = var;
+        }
+      }
+    };
+
+    FindingApplier applier(finder);
+    applier.walk(func);
   }
 };
 
