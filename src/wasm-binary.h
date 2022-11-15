@@ -1094,8 +1094,7 @@ enum ASTNodes {
 
   // typed function references opcodes
 
-  CallRefUnannotated = 0x14,
-  CallRef = 0x17,
+  CallRef = 0x14,
   RetCallRef = 0x15,
 
   // gc opcodes
@@ -1743,8 +1742,7 @@ public:
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitCallRef(CallRef* curr,
-                    std::optional<HeapType> maybeType = std::nullopt);
+  void visitCallRef(CallRef* curr);
   void visitRefAs(RefAs* curr, uint8_t code);
 
   [[noreturn]] void throwError(std::string text);

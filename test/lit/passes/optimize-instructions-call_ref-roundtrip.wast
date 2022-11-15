@@ -69,17 +69,17 @@
  (func $call-table-get (param $x i32)
   ;; The heap type of the call_indirects that we emit here should be the
   ;; identical one as on the table that they correspond to.
-  (call_ref
+  (call_ref $v1
    (table.get $table-1
     (local.get $x)
    )
   )
-  (call_ref
+  (call_ref $v2
    (table.get $table-2
     (local.get $x)
    )
   )
-  (call_ref
+  (call_ref $v3
    (table.get $table-3
     (local.get $x)
    )

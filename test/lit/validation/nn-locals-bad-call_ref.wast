@@ -6,11 +6,12 @@
 
 (module
   (tag $tag (param i32))
+  (type $void (func))
   (func $func
     (local $0 (ref any))
     (try
       (do
-        (call_ref
+        (call_ref $void
           (ref.func $func)
         )
       )
