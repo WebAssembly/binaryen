@@ -27,6 +27,7 @@
 #include <ir/local-graph.h>
 #include <ir/local-structural-dominance.h>
 #include <ir/lubs.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -49,6 +50,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     if (!getModule()->features.hasGC()) {
       return;
     }
+
+    // First, refine local uses as much as possible, before we refine types.
+    refineLocalUses(func);
 
     auto numLocals = func->getNumLocals();
 
@@ -227,6 +231,99 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // Also update their parents.
       ReFinalize().walkFunctionInModule(func, getModule());
     }
+  }
+
+  // Refine uses of locals where possible. For example, consider this:
+  //
+  //  (some.operation
+  //    (ref.cast .. (local.get $ref))
+  //    (local.get $ref)
+  //  )
+  //
+  // The second use might as well use the refined/cast value as well:
+  //
+  //  (some.operation
+  //    (local.tee $temp
+  //      (ref.cast .. (local.get $ref))
+  //    )
+  //    (local.get $temp)
+  //  )
+  //
+  // This change adds a local but it switches some local.gets to use a local of
+  // a more refined type. That can help other optimizations later, and can also
+  // help refine types of other locals in the rest of this pass.
+  void refineLocalUses(Function* func) {
+    // TODO: Look past individual basic blocks?
+    struct BestSourceFinder
+      : public LinearExecutionWalker<BestSourceFinder> {
+
+      // A map of the best local.get for a particular index: the local.get that
+      // has the most refined type.
+      std::unordered_map<Index, Expression*> bestSourceForIndexMap;
+
+      // For each expression, a vector of local.gets that would like to use its
+      // value instead of themselves (as it is more refined).
+      std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
+
+      static void doNoteNonLinear(BestSourceFinder* self,
+                                  Expression** currp) {
+        bestSourceForIndexMap.clear();
+      }
+
+      void visitLocalSet(LocalSet* curr) {
+        // Clear any information about this local; it has a new value here.
+        bestSourceForIndexMap.erase(curr->index);
+      }
+
+      void visitLocalGet(LocalGet* curr) {
+        auto iter = bestSourceForIndexMap.find(curr->index);
+        if (iter != bestSourceForIndexMap.end()) {
+          auto* bestSource = iter->second;
+          if (curr->type != bestSource->type &&
+              Type::isSubType(bestSource->type, curr->type)) {
+            // The best source has a more refined type, note that we want to use
+            // it.
+            requestMap[bestSource].push_back(curr);
+          }
+        }
+      }
+
+      void visitRefAs(RefAs* curr) {
+        handleRefinement(curr);
+      }
+
+      void visitRefCast(RefCast* curr) {
+        handleRefinement(curr);
+      }
+
+      void handleRefinement(Expression* curr) {
+        auto* fallthrough = Properties::getFallthrough(curr, getPassOptions(), *getModule());
+        if (auto* get = fallthrough->dynCast<LocalGet>()) {
+          auto*& bestSource = bestSourceForIndexMap[get->index];
+          if (!bestSource) {
+            // This is the first.
+            bestSource = curr;
+            return;
+          }
+
+          // See if we are better than the current source.
+          if (curr->type != bestSource->type &&
+              Type::isSubType(curr->type, bestSource->type)) {
+            bestSource = curr;
+          }
+        }
+      }
+    };
+
+    BestSourceFinder finder;
+    finder.setModule(getModule());
+    finder.setPassOptions(getPassOptions());
+    finder.walk(func);
+
+    // Apply the findings. We need to do this in a subsequent pass as altering
+    // pointers to things we've already walked past can have interesting corner
+    // cases with removing a pointer to something inside something that is also
+    // going away.
   }
 };
 
