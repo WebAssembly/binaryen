@@ -196,7 +196,7 @@
       (local.get $x)
     )
     (drop
-      (ref.cast_static $B ;; BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+      (ref.cast_static $B
         (local.get $x)
       )
     )
@@ -231,7 +231,7 @@
     ;; As above, but with the casts reversed. Now we should use $B in both
     ;; gets.
     (drop
-      (ref.cast_static $B ;; BUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+      (ref.cast_static $B
         (local.get $x)
       )
     )
