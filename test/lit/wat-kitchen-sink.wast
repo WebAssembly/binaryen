@@ -5,6 +5,8 @@
 (module $parse
  ;; types
 
+ ;; CHECK:      (type $pair (struct_subtype (field (mut i32)) (field (mut i64)) data))
+
  ;; CHECK:      (type $void (func_subtype func))
 
  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
@@ -57,6 +59,18 @@
 
   ;; CHECK:      (type $i31ref_=>_none (func_subtype (param i31ref) func))
 
+  ;; CHECK:      (type $i32_i64_=>_ref|$pair| (func_subtype (param i32 i64) (result (ref $pair)) func))
+
+  ;; CHECK:      (type $none_=>_ref|$pair| (func_subtype (result (ref $pair)) func))
+
+  ;; CHECK:      (type $ref|$pair|_=>_i32 (func_subtype (param (ref $pair)) (result i32) func))
+
+  ;; CHECK:      (type $ref|$pair|_=>_i64 (func_subtype (param (ref $pair)) (result i64) func))
+
+  ;; CHECK:      (type $ref|$pair|_i32_=>_none (func_subtype (param (ref $pair) i32) func))
+
+  ;; CHECK:      (type $ref|$pair|_i64_=>_none (func_subtype (param (ref $pair) i64) func))
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
   (type $s0 (sub (struct)))
@@ -89,6 +103,8 @@
  (type $a2 (array (mut f32)))
  ;; CHECK:      (type $a3 (array_subtype (mut f64) data))
  (type $a3 (array (field $x (mut f64))))
+
+ (type $pair (struct (mut i32) (mut i64)))
 
  (rec
    (type $void (func))
@@ -182,7 +198,7 @@
  ;; CHECK-NEXT:  (local $l f32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- (func $f4 (type 14) (local i32 i64) (local $l f32))
+ (func $f4 (type 15) (local i32 i64) (local $l f32))
  (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
 
  ;; CHECK:      (func $nop-skate (type $void)
@@ -1266,6 +1282,69 @@
   local.get 0
   i31.get_u
   drop
+ )
+
+ ;; CHECK:      (func $struct-new (type $i32_i64_=>_ref|$pair|) (param $0 i32) (param $1 i64) (result (ref $pair))
+ ;; CHECK-NEXT:  (struct.new $pair
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-new (param i32 i64) (result (ref $pair))
+  local.get 0
+  local.get 1
+  struct.new $pair
+ )
+
+ ;; CHECK:      (func $struct-new-default (type $none_=>_ref|$pair|) (result (ref $pair))
+ ;; CHECK-NEXT:  (struct.new_default $pair)
+ ;; CHECK-NEXT: )
+ (func $struct-new-default (result (ref $pair))
+  struct.new_default $pair
+ )
+
+ ;; CHECK:      (func $struct-get-0 (type $ref|$pair|_=>_i32) (param $0 (ref $pair)) (result i32)
+ ;; CHECK-NEXT:  (struct.get $pair 0
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-0 (param (ref $pair)) (result i32)
+  local.get 0
+  struct.get $pair 0
+ )
+
+ ;; CHECK:      (func $struct-get-1 (type $ref|$pair|_=>_i64) (param $0 (ref $pair)) (result i64)
+ ;; CHECK-NEXT:  (struct.get $pair 1
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-1 (param (ref $pair)) (result i64)
+  local.get 0
+  struct.get $pair 1
+ )
+
+ ;; CHECK:      (func $struct-set-0 (type $ref|$pair|_i32_=>_none) (param $0 (ref $pair)) (param $1 i32)
+ ;; CHECK-NEXT:  (struct.set $pair 0
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-set-0 (param (ref $pair) i32)
+  local.get 0
+  local.get 1
+  struct.set $pair 0
+ )
+
+ ;; CHECK:      (func $struct-set-1 (type $ref|$pair|_i64_=>_none) (param $0 (ref $pair)) (param $1 i64)
+ ;; CHECK-NEXT:  (struct.set $pair 1
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-set-1 (param (ref $pair) i64)
+  local.get 0
+  local.get 1
+  struct.set $pair 1
  )
 
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
