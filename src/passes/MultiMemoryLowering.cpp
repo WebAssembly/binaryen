@@ -126,10 +126,12 @@ struct MultiMemoryLowering : public Pass {
           return;
         }
         Expression* replacement;
-        curr->ptr = builder.makeBinary(
-          Abstract::getBinary(parent.pointerType, Abstract::Add),
-          builder.makeGlobalGet(global, parent.pointerType),
-          curr->ptr);
+        Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Expression *ptrSet = builder.makeLocalSet(ptrIdx, builder.makeBinary(
+            Abstract::getBinary(parent.pointerType, Abstract::Add),
+            builder.makeGlobalGet(global, parent.pointerType),
+            curr->ptr));
+        curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
         Expression* boundsCheck = builder.makeIf(
           builder.makeBinary(
             Abstract::getBinary(parent.pointerType, Abstract::GtU),
@@ -140,20 +142,13 @@ struct MultiMemoryLowering : public Pass {
               Abstract::getBinary(parent.pointerType, Abstract::Add),
               builder.makeBinary(
                 Abstract::getBinary(parent.pointerType, Abstract::Add),
-                curr->ptr,
+                builder.makeLocalGet(ptrIdx, parent.pointerType),
                 builder.makeConstPtr(curr->offset, parent.pointerType)),
               builder.makeConstPtr(curr->bytes, parent.pointerType)),
             builder.makeCall(
               parent.memorySizeNames[idx], {}, parent.pointerType)),
           builder.makeUnreachable());
-        Expression* load = builder.makeLoad(curr->bytes,
-                                            curr->signed_,
-                                            curr->offset,
-                                            curr->align,
-                                            curr->ptr,
-                                            curr->type,
-                                            curr->memory);
-        replacement = builder.makeBlock({boundsCheck, load});
+        replacement = builder.makeBlock({ptrSet, boundsCheck, curr});
         replaceCurrent(replacement);
       }
 
@@ -165,10 +160,12 @@ struct MultiMemoryLowering : public Pass {
           return;
         }
         Expression* replacement;
-        curr->ptr = builder.makeBinary(
-          Abstract::getBinary(parent.pointerType, Abstract::Add),
-          builder.makeGlobalGet(global, parent.pointerType),
-          curr->ptr);
+        Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Expression *ptrSet = builder.makeLocalSet(ptrIdx, builder.makeBinary(
+            Abstract::getBinary(parent.pointerType, Abstract::Add),
+            builder.makeGlobalGet(global, parent.pointerType),
+            curr->ptr));
+        curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
         Expression* boundsCheck = builder.makeIf(
           builder.makeBinary(
             Abstract::getBinary(parent.pointerType, Abstract::GtU),
@@ -179,20 +176,13 @@ struct MultiMemoryLowering : public Pass {
               Abstract::getBinary(parent.pointerType, Abstract::Add),
               builder.makeBinary(
                 Abstract::getBinary(parent.pointerType, Abstract::Add),
-                curr->ptr,
+                builder.makeLocalGet(ptrIdx, parent.pointerType),
                 builder.makeConstPtr(curr->offset, parent.pointerType)),
               builder.makeConstPtr(curr->bytes, parent.pointerType)),
             builder.makeCall(
               parent.memorySizeNames[idx], {}, parent.pointerType)),
           builder.makeUnreachable());
-        Expression* store = builder.makeStore(curr->bytes,
-                                              curr->offset,
-                                              curr->align,
-                                              curr->ptr,
-                                              curr->value,
-                                              parent.pointerType,
-                                              curr->memory);
-        replacement = builder.makeBlock({boundsCheck, store});
+        replacement = builder.makeBlock({ptrSet, boundsCheck, curr});
         replaceCurrent(replacement);
       }
     };
