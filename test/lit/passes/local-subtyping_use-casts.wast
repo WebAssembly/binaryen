@@ -273,6 +273,37 @@
     )
   )
 
+  ;; CHECK:      (func $past-basic-block (param $x (ref data))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $past-basic-block (param $x (ref data))
+    (drop
+      (ref.cast_static $A
+        (local.get $x)
+      )
+    )
+    ;; The if means the later get is in another basic block. We do not handle
+    ;; this atm.
+    (if
+      (i32.const 0)
+      (return)
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
   ;; CHECK:      (func $get (result (ref data))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
