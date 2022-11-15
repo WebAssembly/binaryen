@@ -31,6 +31,7 @@ Current Trunk
 - The `sign-extension` and `mutable-globals` features are now both enabled by
   default in all tools. This is in order to match llvm's defaults (See
   https://reviews.llvm.org/D125728).
+- Add a pass to lower sign-extension operations to MVP.
 
 v110
 ----

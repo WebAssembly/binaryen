@@ -83,6 +83,7 @@ set(passes_SOURCES
   StackIR.cpp
   SignaturePruning.cpp
   SignatureRefining.cpp
+  SignExtLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp

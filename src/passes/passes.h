@@ -125,6 +125,7 @@ Pass* createSafeHeapPass();
 Pass* createSetGlobalsPass();
 Pass* createSignaturePruningPass();
 Pass* createSignatureRefiningPass();
+Pass* createSignExtLoweringPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyGlobalsPass();
 Pass* createSimplifyGlobalsOptimizingPass();
