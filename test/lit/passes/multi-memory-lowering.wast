@@ -33,18 +33,54 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (global.get $memory2_byte_offset)
-  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (i32.add
+  ;; CHECK-NEXT:         (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:         (i32.const 11)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $memory2_size)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:      (i32.const 11)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (global.get $memory3_byte_offset)
-  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.gt_u
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (i32.add
+  ;; CHECK-NEXT:         (global.get $memory3_byte_offset)
+  ;; CHECK-NEXT:         (i32.const 12)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $memory3_size)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (global.get $memory3_byte_offset)
+  ;; CHECK-NEXT:      (i32.const 12)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -71,19 +107,55 @@
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (i32.const 115)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (global.get $memory2_byte_offset)
-  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:        (i32.const 11)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $memory2_size)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 115)
+  ;; CHECK-NEXT:   (i32.store
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 115)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.store
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (global.get $memory3_byte_offset)
-  ;; CHECK-NEXT:    (i32.const 12)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.gt_u
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (global.get $memory3_byte_offset)
+  ;; CHECK-NEXT:        (i32.const 12)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $memory3_size)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 115)
+  ;; CHECK-NEXT:   (i32.store
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (global.get $memory3_byte_offset)
+  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 115)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $stores

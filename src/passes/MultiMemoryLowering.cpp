@@ -118,7 +118,6 @@ struct MultiMemoryLowering : public Pass {
         replaceCurrent(builder.makeCall(funcName, {}, curr->type));
       }
 
-      // TODO: Add an option to add bounds checks.
       void visitLoad(Load* curr) {
         auto idx = parent.memoryIdxMap.at(curr->memory);
         auto global = parent.getOffsetGlobal(idx);
@@ -126,16 +125,32 @@ struct MultiMemoryLowering : public Pass {
         if (!global) {
           return;
         }
+        Expression *replacement;
         curr->ptr = builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::Add),
           builder.makeGlobalGet(global, parent.pointerType),
           curr->ptr);
+        Expression *boundsCheck =
+        builder.makeIf(
+          builder.makeBinary(
+            Abstract::getBinary(parent.pointerType, Abstract::GtU),
+            builder.makeBinary(
+              // ptr + offset (ea from wasm spec) + bit width
+              // two builder Adds, we'll add the first two operands in the first add
+              // and then add the third operand in the second add
+              Abstract::getBinary(parent.pointerType, Abstract::Add),
+              builder.makeBinary(
+                Abstract::getBinary(parent.pointerType, Abstract::Add),
+                curr->ptr,
+                builder.makeConstPtr(curr->offset, parent.pointerType)),
+              builder.makeConstPtr(curr->bytes, parent.pointerType)),
+            builder.makeCall(parent.memorySizeNames[idx], {}, parent.pointerType)),
+          builder.makeUnreachable());
+        Expression *load = builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, curr->ptr, curr->type, curr->memory);
+        replacement = builder.makeBlock({boundsCheck, load});
+        replaceCurrent(replacement);
       }
 
-      // We diverge from the spec here and are not trapping if the offset + type
-      // / 8 is larger than the length of the memory's data. Warning,
-      // out-of-bounds loads and stores can read junk out of or corrupt other
-      // memories instead of trapping
       void visitStore(Store* curr) {
         auto idx = parent.memoryIdxMap.at(curr->memory);
         auto global = parent.getOffsetGlobal(idx);
@@ -143,10 +158,30 @@ struct MultiMemoryLowering : public Pass {
         if (!global) {
           return;
         }
+        Expression *replacement;
         curr->ptr = builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::Add),
           builder.makeGlobalGet(global, parent.pointerType),
           curr->ptr);
+        Expression *boundsCheck =
+        builder.makeIf(
+          builder.makeBinary(
+            Abstract::getBinary(parent.pointerType, Abstract::GtU),
+            builder.makeBinary(
+              // ptr + offset (ea from wasm spec) + bit width
+              // two builder Adds, we'll add the first two operands in the first add
+              // and then add the third operand in the second add
+              Abstract::getBinary(parent.pointerType, Abstract::Add),
+              builder.makeBinary(
+                Abstract::getBinary(parent.pointerType, Abstract::Add),
+                curr->ptr,
+                builder.makeConstPtr(curr->offset, parent.pointerType)),
+              builder.makeConstPtr(curr->bytes, parent.pointerType)),
+            builder.makeCall(parent.memorySizeNames[idx], {}, parent.pointerType)),
+          builder.makeUnreachable());
+        Expression *store = builder.makeStore(curr->bytes, curr->offset, curr->align, curr->ptr, curr->value, parent.pointerType, curr->memory);
+        replacement = builder.makeBlock({boundsCheck, store});
+        replaceCurrent(replacement);
       }
     };
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
