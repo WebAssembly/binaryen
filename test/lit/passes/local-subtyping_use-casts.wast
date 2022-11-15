@@ -129,7 +129,7 @@
     (drop
       (ref.cast_static $A
         ;; We look through the block, and optimize.
-        (block
+        (block (result (ref data))
           (local.get $x)
         )
       )

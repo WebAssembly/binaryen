@@ -433,31 +433,29 @@
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
-  ;; CAREFUL-NEXT:  (local $1 (ref $A))
+  ;; CAREFUL-NEXT:  (local $1 (ref null $B))
   ;; CAREFUL-NEXT:  (call $import
   ;; CAREFUL-NEXT:   (ref.cast_static $B
   ;; CAREFUL-NEXT:    (local.get $0)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast_static $B
-  ;; CAREFUL-NEXT:    (local.tee $1
-  ;; CAREFUL-NEXT:     (select (result (ref $A))
-  ;; CAREFUL-NEXT:      (local.get $0)
-  ;; CAREFUL-NEXT:      (struct.new_default $B)
-  ;; CAREFUL-NEXT:      (global.get $global)
-  ;; CAREFUL-NEXT:     )
+  ;; CAREFUL-NEXT:   (select (result (ref $B))
+  ;; CAREFUL-NEXT:    (ref.as_non_null
+  ;; CAREFUL-NEXT:     (local.get $1)
   ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (struct.new_default $B)
+  ;; CAREFUL-NEXT:    (global.get $global)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast_static $B
+  ;; CAREFUL-NEXT:   (ref.as_non_null
   ;; CAREFUL-NEXT:    (local.get $1)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast_static $B
-  ;; CAREFUL-NEXT:    (local.get $0)
+  ;; CAREFUL-NEXT:   (ref.as_non_null
+  ;; CAREFUL-NEXT:    (local.get $1)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
@@ -535,21 +533,21 @@
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $refinable_0 (type $ref|$B|_=>_none) (param $0 (ref $B))
-;; CAREFUL-NEXT:  (local $1 (ref $B))
+;; CAREFUL-NEXT:  (local $1 (ref null $B))
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (local.get $0)
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT:  (call $import
-;; CAREFUL-NEXT:   (local.tee $1
-;; CAREFUL-NEXT:    (select (result (ref $B))
-;; CAREFUL-NEXT:     (local.get $0)
-;; CAREFUL-NEXT:     (struct.new_default $B)
-;; CAREFUL-NEXT:     (global.get $global)
-;; CAREFUL-NEXT:    )
+;; CAREFUL-NEXT:   (select (result (ref $B))
+;; CAREFUL-NEXT:    (local.get $0)
+;; CAREFUL-NEXT:    (struct.new_default $B)
+;; CAREFUL-NEXT:    (global.get $global)
 ;; CAREFUL-NEXT:   )
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT:  (call $import
-;; CAREFUL-NEXT:   (local.get $1)
+;; CAREFUL-NEXT:   (ref.as_non_null
+;; CAREFUL-NEXT:    (local.get $1)
+;; CAREFUL-NEXT:   )
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (local.get $0)
