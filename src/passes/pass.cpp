@@ -548,6 +548,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    addIfNoDWARFIssues("optimize-casts");
     // Coalescing may prevent subtyping (as a coalesced local must have the
     // supertype of all those combined into it), so subtype first.
     // TODO: when optimizing for size, maybe the order should reverse?
