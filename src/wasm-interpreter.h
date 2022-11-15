@@ -1967,7 +1967,7 @@ public:
   // Flags indicating special requirements, for example whether we are just
   // evaluating (default), also going to replace the expression afterwards or
   // executing in a function-parallel scenario. See FlagValues.
-  typedef uint32_t Flags;
+  using Flags = uint32_t;
 
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;

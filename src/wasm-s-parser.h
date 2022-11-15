@@ -42,7 +42,7 @@ public:
 // An element in an S-Expression: a list or a string
 //
 class Element {
-  typedef ArenaVector<Element*> List;
+  using List = ArenaVector<Element*>;
 
   bool isList_ = true;
   List list_;

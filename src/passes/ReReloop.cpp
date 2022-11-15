@@ -102,7 +102,7 @@ struct ReReloop final : public Pass {
     virtual void run() { WASM_UNREACHABLE("unimpl"); }
   };
 
-  typedef std::shared_ptr<Task> TaskPtr;
+  using TaskPtr = std::shared_ptr<Task>;
   std::vector<TaskPtr> stack;
 
   struct TriageTask final : public Task {

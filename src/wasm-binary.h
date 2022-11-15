@@ -110,7 +110,7 @@ template<typename T, typename MiniT> struct LEB {
       byte = get();
       bool last = !(byte & 128);
       T payload = byte & 127;
-      typedef typename std::make_unsigned<T>::type mask_type;
+      using mask_type = typename std::make_unsigned<T>::type;
       auto shift_mask = 0 == shift
                           ? ~mask_type(0)
                           : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
@@ -147,10 +147,10 @@ template<typename T, typename MiniT> struct LEB {
   }
 };
 
-typedef LEB<uint32_t, uint8_t> U32LEB;
-typedef LEB<uint64_t, uint8_t> U64LEB;
-typedef LEB<int32_t, int8_t> S32LEB;
-typedef LEB<int64_t, int8_t> S64LEB;
+using U32LEB = LEB<uint32_t, uint8_t>;
+using U64LEB = LEB<uint64_t, uint8_t>;
+using S32LEB = LEB<int32_t, int8_t>;
+using S64LEB = LEB<int64_t, int8_t>;
 
 //
 // We mostly stream into a buffer as we create the binary format, however,

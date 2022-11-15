@@ -69,7 +69,7 @@ struct MetaDCEGraph {
   // be imported twice, for example. So we don't map a DCE node to an Import,
   // but rather the module.base pair ("id") for the import.
   // TODO: implement this in a safer way, not a string with a magic separator
-  typedef Name ImportId;
+  using ImportId = Name;
 
   ImportId getImportId(Name module, Name base) {
     if (module == "GOT.func" || module == "GOT.mem") {

@@ -124,8 +124,8 @@ struct Branch {
   Render(RelooperBuilder& Builder, Block* Target, bool SetLabel);
 };
 
-typedef wasm::InsertOrderedSet<Block*> BlockSet;
-typedef wasm::InsertOrderedMap<Block*, Branch*> BlockBranchMap;
+using BlockSet = wasm::InsertOrderedSet<Block*>;
+using BlockBranchMap = wasm::InsertOrderedMap<Block*, Branch*>;
 
 // Represents a basic block of code - some instructions that end with a
 // control flow modifier (a branch, return or throw).
@@ -241,7 +241,7 @@ struct SimpleShape : public Shape {
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) override;
 };
 
-typedef std::map<int, Shape*> IdShapeMap;
+using IdShapeMap = std::map<int, Shape*>;
 
 struct MultipleShape : public Shape {
   IdShapeMap InnerMap; // entry block ID -> shape
@@ -313,7 +313,7 @@ struct Relooper {
   void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
 };
 
-typedef wasm::InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
+using BlockBlockSetMap = wasm::InsertOrderedMap<Block*, BlockSet>;
 
 #ifdef RELOOPER_DEBUG
 struct Debugging {

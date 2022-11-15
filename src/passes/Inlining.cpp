@@ -133,7 +133,7 @@ static bool canHandleParams(Function* func) {
   return true;
 }
 
-typedef std::unordered_map<Name, FunctionInfo> NameInfoMap;
+using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
 
 struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {

@@ -460,7 +460,7 @@ public:
   HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
-typedef std::vector<Type> TypeList;
+using TypeList = std::vector<Type>;
 
 // Passed by reference rather than by value because it can own an unbounded
 // amount of data.
@@ -531,7 +531,7 @@ struct Field {
   unsigned getByteSize() const;
 };
 
-typedef std::vector<Field> FieldList;
+using FieldList = std::vector<Field>;
 
 // Passed by reference rather than by value because it can own an unbounded
 // amount of data.

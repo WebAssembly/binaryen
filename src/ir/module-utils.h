@@ -368,10 +368,10 @@ template<typename T,
 struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef MapT<Function*, T> Map;
+  using Map = MapT<Function*, T>;
   Map map;
 
-  typedef std::function<void(Function*, T&)> Func;
+  using Func = std::function<void(Function*, T&)>;
 
   ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
     // Fill in map, as we operate on it in parallel (each function to its own
@@ -438,10 +438,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
     bool hasNonDirectCall = false;
   };
 
-  typedef std::map<Function*, T> Map;
+  using Map = std::map<Function*, T>;
   Map map;
 
-  typedef std::function<void(Function*, T&)> Func;
+  using Func = std::function<void(Function*, T&)>;
 
   CallGraphPropertyAnalysis(Module& wasm, Func work) : wasm(wasm) {
     ParallelFunctionAnalysis<T> analysis(wasm, [&](Function* func, T& info) {

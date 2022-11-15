@@ -520,7 +520,7 @@ class ModuleAnalyzer {
     bool addedFromList = false;
   };
 
-  typedef std::map<Function*, Info> Map;
+  using Map = std::map<Function*, Info>;
   Map map;
 
 public:
