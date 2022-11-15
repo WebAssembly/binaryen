@@ -41,14 +41,14 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
     //   0x000000ff =(shift left)=> 0xff000000 =(shift right)=> 0xffffffff
     //
     auto shiftBits = (sizeof(T) * 8) - originalBits;
+    Builder builder(*getModule());
     replaceCurrent(builder.makeBinary(
       rightShift,
-      builder.makeBinary(leftShift, curr->value, builder.makeConst(shiftBits)),
+      builder.makeBinary(leftShift, value, builder.makeConst(shiftBits)),
       builder.makeConst(shiftBits)));
   }
 
   void visitUnary(Unary* curr) {
-    Builder builder(*getModule());
     switch (curr->op) {
       case ExtendS8Int32:
         lowerToShifts(curr->value, ShlInt32, ShrSInt32, int32_t(8));
@@ -68,8 +68,9 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
       default: {
       }
     }
-  };
+  }
+};
 
-  Pass* createSignExtLoweringPass() { return new SignExtLowering(); }
+Pass* createSignExtLoweringPass() { return new SignExtLowering(); }
 
 } // namespace wasm
