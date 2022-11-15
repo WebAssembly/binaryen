@@ -278,6 +278,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     // TODO: Look past individual basic blocks?
     struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
 
+      PassOptions options;
+
       // A map of the best local.get for a particular index: the local.get that
       // has the most refined type.
       std::unordered_map<Index, Expression*> bestSourceForIndexMap;
@@ -287,7 +289,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
 
       static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
-        bestSourceForIndexMap.clear();
+        self->bestSourceForIndexMap.clear();
       }
 
       void visitLocalSet(LocalSet* curr) {
@@ -314,7 +316,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
       void handleRefinement(Expression* curr) {
         auto* fallthrough =
-          Properties::getFallthrough(curr, getPassOptions(), *getModule());
+          Properties::getFallthrough(curr, options, *getModule());
         if (auto* get = fallthrough->dynCast<LocalGet>()) {
           auto*& bestSource = bestSourceForIndexMap[get->index];
           if (!bestSource) {
@@ -334,8 +336,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
     BestSourceFinder finder;
     finder.setModule(getModule());
-    finder.setPassOptions(getPassOptions());
-    finder.walk(func);
+    finder.options = getPassOptions();
+    finder.walkFunction(func);
 
     if (finder.requestMap.empty()) {
       return;
@@ -371,7 +373,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     };
 
     FindingApplier applier(finder);
-    applier.walk(func);
+    applier.walkFunction(func);
   }
 };
 
