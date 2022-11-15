@@ -1880,9 +1880,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStructSet(Index pos, HeapType type, Index field) {
     assert(type.isStruct());
-    const auto& fields = type.getStruct().fields;
-    WASM_UNUSED(fields);
-    assert(fields.size() > field);
+    assert(type.getStruct().fields.size() > field);
     auto val = pop(pos);
     CHECK_ERR(val);
     auto ref = pop(pos);
