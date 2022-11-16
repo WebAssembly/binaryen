@@ -103,6 +103,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls
+    ;; In each triple, we can merge the first two but not the last so we'll see
+    ;; calls to 1,1,3.
+
     (call $A-1)
     (call $A-2)
     (call $A-3)
