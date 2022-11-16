@@ -51,7 +51,7 @@
  ;; CHECK-NEXT: )
  (func $call_ref-to-direct (param $x i32) (param $y i32)
   ;; This call_ref should become a direct call.
-  (call_ref $i32_i32_=>_none
+  (call_ref
    (local.get $x)
    (local.get $y)
    (ref.func $foo)
@@ -84,7 +84,7 @@
   ;; This call_ref should become a direct call, even though it doesn't have a
   ;; simple ref.func as the target - we need to look into the fallthrough, and
   ;; handle things with locals.
-  (call_ref $i32_i32_=>_none
+  (call_ref
    ;; Write to $x before the block, and write to it in the block; we should not
    ;; reorder these things as the side effects could alter what value appears
    ;; in the get of $x. (There is a risk of reordering here if we naively moved
@@ -116,7 +116,7 @@
  (func $fallthrough-no-params (result i32)
   ;; A fallthrough appears here, but there are no operands so this is easier to
   ;; optimize: we can just drop the call_ref's target before the call.
-  (call_ref $none_=>_i32
+  (call_ref
    (block (result (ref $none_=>_i32))
     (nop)
     (ref.func $fallthrough-no-params)
@@ -148,7 +148,7 @@
   ;; nullable, which means we must be careful when we create a temp local for
   ;; it: the local should be nullable, and gets of it should use a
   ;; ref.as_non_null so that we validate.
-  (call_ref $data_=>_none
+  (call_ref
    (local.get $x)
    (block (result (ref $data_=>_none))
     (nop)
@@ -174,7 +174,7 @@
   ;; emit non-validating code here, which would happen if we replace the
   ;; call_ref that returns nothing with a call that returns an i32. In fact, we
   ;; end up optimizing the cast into an unreachable.
-  (call_ref $none_=>_i32
+  (call_ref
    (ref.cast_static $none_=>_i32
     (ref.func $return-nothing)
    )
@@ -199,7 +199,7 @@
  ;; CHECK-NEXT: )
  (func $fallthrough-unreachable
   ;; If the call is not reached, do not optimize it.
-  (call_ref $i32_i32_=>_none
+  (call_ref
    (unreachable)
    (unreachable)
    (block (result (ref $i32_i32_=>_none))
@@ -210,16 +210,14 @@
  )
 
  ;; CHECK:      (func $ignore-unreachable
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $ignore-unreachable
   ;; Ignore an unreachable call_ref target entirely.
-  (call_ref $i32_i32_=>_none
+  (call_ref
    (unreachable)
   )
  )
@@ -232,7 +230,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-table-get (param $x i32)
-  (call_ref $i32_i32_=>_none
+  (call_ref
    (i32.const 1)
    (i32.const 2)
    (table.get $table-1
@@ -275,7 +273,7 @@
  ;; CHECK-NEXT: )
  (func $call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
   ;; This call_ref should become an if over two direct calls.
-  (call_ref $i32_i32_=>_none
+  (call_ref
    (local.get $x)
    (local.get $y)
    (select
@@ -286,7 +284,7 @@
   )
 
   ;; But here one arm is not constant, so we do not optimize.
-  (call_ref $i32_i32_=>_none
+  (call_ref
    (local.get $x)
    (local.get $y)
    (select

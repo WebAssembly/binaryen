@@ -2744,20 +2744,35 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
-  HeapType sigType = parseHeapType(*s[1]);
+  Index operandsStart = 1;
+  std::optional<HeapType> sigType;
+  try {
+    sigType = parseHeapType(*s[1]);
+    operandsStart = 2;
+  } catch (ParseException& p) {
+    // The type annotation is required for return_call_ref but temporarily
+    // optional for call_ref.
+    if (isReturn) {
+      throw;
+    }
+  }
   std::vector<Expression*> operands;
-  parseOperands(s, 2, s.size() - 1, operands);
+  parseOperands(s, operandsStart, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
 
-  if (!sigType.isSignature()) {
-    throw ParseException(
-      std::string(isReturn ? "return_call_ref" : "call_ref") +
-        " type annotation should be a signature",
-      s.line,
-      s.col);
+  if (sigType) {
+    if (!sigType->isSignature()) {
+      throw ParseException(
+        std::string(isReturn ? "return_call_ref" : "call_ref") +
+          " type annotation should be a signature",
+        s.line,
+        s.col);
+    }
+    return Builder(wasm).makeCallRef(
+      target, operands, sigType->getSignature().results, isReturn);
   }
-  return Builder(wasm).makeCallRef(
-    target, operands, sigType.getSignature().results, isReturn);
+  return ValidatingBuilder(wasm, s.line, s.col)
+    .validateAndMakeCallRef(target, operands, isReturn);
 }
 
 Expression* SExpressionWasmBuilder::makeI31New(Element& s) {

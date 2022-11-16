@@ -32,7 +32,7 @@
   ;; unreachable.)
   (call $0)
   (drop
-   (call_ref $none_=>_i32
+   (call_ref
     (ref.cast_static $none_=>_i32
      (ref.func $0)
     )
