@@ -214,14 +214,15 @@ struct Monomorphize : public Pass {
   //       expect to help. That would be faster, but we'd always run the risk of
   //       missing things, especially as new passes are added later and we don't
   //       think to add them here.
+  //       Alternatively, perhaps we should have a mode that does use -O1 or
+  //       even -O2 or above, as in theory any optimization could end up
+  //       mattering a lot here.
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
-    // Local subtyping and cast optimizations are not run in -O1, but we really
-    // do want then here since the entire point is that parameters now have more
-    // refined types, which can lead to locals reading them being refinable,
-    // which can then remove casts and so forth.
-    runner.add("optimize-casts");
+    // Local subtyping is not run in -O1, but we really do want it here since
+    // the entire point is that parameters now have more refined types, which
+    // can lead to locals reading them being refinable as well.
     runner.add("local-subtyping");
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
