@@ -2,7 +2,7 @@
 
 ;; RUN: foreach %s %t wasm-opt --nominal --monomorphize-always --gufa -all -S -o - | filecheck %s
 
-;; Monomorphize will generate a version of the function $foo that calls a null
+;; Monomorphize will generate a version of the function $main that calls a null
 ;; type. Gufa should not crash on that. (We must run both passes in sequence, as
 ;; either text or binary parsing will turn a call_ref of null into an
 ;; unreachable, which would avoid the issue.)
