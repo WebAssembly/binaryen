@@ -1198,7 +1198,7 @@
   (drop
    ;; Read from the local, checking whether precompute set a value there (it
    ;; should not, as the cast fails).
-   (call_ref
+   (call_ref $func-return-i32
     (local.get $temp)
    )
   )

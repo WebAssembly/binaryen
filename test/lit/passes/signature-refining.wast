@@ -60,7 +60,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
-    (call_ref
+    (call_ref $sig
       (struct.new $struct)
       (ref.func $func)
     )
@@ -107,7 +107,7 @@
       ;; Use a local to avoid a ref.null being updated.
       (local.get $struct)
     )
-    (call_ref
+    (call_ref $sig
       (ref.as_data
         (struct.new $struct)
       )
@@ -298,7 +298,7 @@
     (call $func
       (struct.new $struct)
     )
-    (call_ref
+    (call_ref $sig
       (unreachable)
       (ref.func $func)
     )
@@ -331,7 +331,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
-    (call_ref
+    (call_ref $sig
       (unreachable)
       (ref.func $func)
     )
@@ -420,7 +420,7 @@
       (struct.new $struct)
       (struct.new $struct)
     )
-    (call_ref
+    (call_ref $sig-2
       (local.get $i31)
       (struct.new $struct)
       (ref.func $func-2)
@@ -573,7 +573,7 @@
     (drop
       (if (result anyref)
         (i32.const 1)
-        (call_ref
+        (call_ref $sig-can-refine
           (ref.func $func-can-refine)
         )
         (unreachable)

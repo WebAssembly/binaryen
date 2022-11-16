@@ -2,7 +2,7 @@
   (type $ii (func (param i32) (result i32)))
 
   (func $apply (param $f (ref $ii)) (param $x i32) (result i32)
-    (call_ref (local.get $x) (local.get $f))
+    (call_ref $ii (local.get $x) (local.get $f))
   )
 
   (func $f (type $ii) (i32.mul (local.get 0) (local.get 0)))
@@ -15,11 +15,11 @@
     (local $rg (ref null $ii))
     (local.set $rf (ref.func $f))
     (local.set $rg (ref.func $g))
-    (call_ref (call_ref (local.get $x) (local.get $rf)) (local.get $rg))
+    (call_ref $ii (call_ref $ii (local.get $x) (local.get $rf)) (local.get $rg))
   )
 
   (func (export "null") (result i32)
-    (call_ref (i32.const 1) (ref.null $ii))
+    (call_ref $ii (i32.const 1) (ref.null $ii))
   )
 
   ;; Recursion
@@ -36,7 +36,7 @@
       (else
         (i64.mul
           (local.get 0)
-          (call_ref (i64.sub (local.get 0) (i64.const 1)) (global.get $fac))
+          (call_ref $ll (i64.sub (local.get 0) (i64.const 1)) (global.get $fac))
         )
       )
     )
@@ -49,7 +49,7 @@
     (if (result i64) (i64.eqz (local.get 0))
       (then (local.get 1))
       (else
-        (call_ref
+        (call_ref $lll
           (i64.sub (local.get 0) (i64.const 1))
           (i64.mul (local.get 0) (local.get 1))
           (global.get $fac-acc)
@@ -66,8 +66,8 @@
       (then (i64.const 1))
       (else
         (i64.add
-          (call_ref (i64.sub (local.get 0) (i64.const 2)) (global.get $fib))
-          (call_ref (i64.sub (local.get 0) (i64.const 1)) (global.get $fib))
+          (call_ref $ll (i64.sub (local.get 0) (i64.const 2)) (global.get $fib))
+          (call_ref $ll (i64.sub (local.get 0) (i64.const 1)) (global.get $fib))
         )
       )
     )
@@ -80,13 +80,13 @@
   (func $even (export "even") (type $ll)
     (if (result i64) (i64.eqz (local.get 0))
       (then (i64.const 44))
-      (else (call_ref (i64.sub (local.get 0) (i64.const 1)) (global.get $odd)))
+      (else (call_ref $ll (i64.sub (local.get 0) (i64.const 1)) (global.get $odd)))
     )
   )
   (func $odd (export "odd") (type $ll)
     (if (result i64) (i64.eqz (local.get 0))
       (then (i64.const 99))
-      (else (call_ref (i64.sub (local.get 0) (i64.const 1)) (global.get $even)))
+      (else (call_ref $ll (i64.sub (local.get 0) (i64.const 1)) (global.get $even)))
     )
   )
 )
@@ -127,8 +127,9 @@
 
 (assert_invalid
   (module
+    (type $t (func))
     (func $f (param $r externref)
-      (call_ref (local.get $r))
+      (call_ref $t (local.get $r))
     )
   )
   "type mismatch"

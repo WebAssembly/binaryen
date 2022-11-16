@@ -56,7 +56,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -120,7 +120,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -194,7 +194,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -263,7 +263,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (block (result i32)
         (call $caller)
         (i32.const 4)
@@ -312,7 +312,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -515,11 +515,11 @@
     (call $bar
       (i32.const 1)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 2)
       (ref.func $foo)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 2)
       (ref.func $bar)
     )
@@ -536,7 +536,7 @@
     (call $bar
       (i32.const 1)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 2)
       (ref.func $foo)
     )
