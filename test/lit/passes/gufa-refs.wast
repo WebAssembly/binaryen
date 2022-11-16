@@ -4504,9 +4504,9 @@
   ;; CHECK:      (type $i2 (func_subtype (param i32) func))
   (type $i2 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
-
   ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -4607,6 +4607,26 @@
     (call_ref $i2
       (i32.const 99999)
       (ref.func $reffed2)
+    )
+  )
+
+  ;; CHECK:      (func $call_ref-nofunc (type $none_=>_none)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call_ref-nofunc
+    ;; Test a call_ref of something of type nofunc. That has a heap type, but it
+    ;; is not a signature type. We should not crash on that.
+    (call_ref $i1
+      (i32.const 1)
+      (ref.null nofunc)
     )
   )
 )

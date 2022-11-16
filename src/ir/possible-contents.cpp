@@ -763,6 +763,12 @@ struct InfoCollector
       });
   }
   template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
+    // If the heap type is not a signature, which is the case for a bottom type
+    // (null) then nothing can be called.
+    if (!targetType.isSignature()) {
+      assert(targetType.isBottom());
+      return;
+    }
     handleCall(
       curr,
       [&](Index i) {
