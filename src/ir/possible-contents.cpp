@@ -775,9 +775,9 @@ struct InfoCollector
       });
   }
   template<typename T> void handleIndirectCall(T* curr, Type targetType) {
-    // If the type is unreachable, nothing can be called (and there is no heap
-    // type to get).
-    if (targetType != Type::unreachable) {
+    // If the type is unreachable, or null, then nothing will be called (and
+    // there is no heap or signature type to use anyhow).
+    if (targetType != Type::unreachable && !targetType.isNull()) {
       handleIndirectCall(curr, targetType.getHeapType());
     }
   }
