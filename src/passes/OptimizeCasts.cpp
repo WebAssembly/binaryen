@@ -197,7 +197,6 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
 
     // First, find the best sources that we want to use.
     BestSourceFinder finder;
-    finder.setModule(getModule());
     finder.options = getPassOptions();
     finder.walkFunctionInModule(func, getModule());
 
