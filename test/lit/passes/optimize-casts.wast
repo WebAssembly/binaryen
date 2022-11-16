@@ -308,6 +308,86 @@
     )
   )
 
+  ;; CHECK:      (func $multiple (type $ref|data|_ref|data|_=>_none) (param $x (ref data)) (param $y (ref data))
+  ;; CHECK-NEXT:  (local $a (ref data))
+  ;; CHECK-NEXT:  (local $b (ref data))
+  ;; CHECK-NEXT:  (local $4 (ref $A))
+  ;; CHECK-NEXT:  (local $5 (ref $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $b
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $4
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $5
+  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $b
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multiple (param $x (ref data)) (param $y (ref data))
+    (local $a (ref data))
+    (local $b (ref data))
+    ;; Two different locals, with overlapping lives.
+    (local.set $a
+      (local.get $x)
+    )
+    (local.set $b
+      (local.get $y)
+    )
+    (drop
+      (ref.cast_static $A
+        (local.get $a)
+      )
+    )
+    (drop
+      (ref.cast_static $A
+        (local.get $b)
+      )
+    )
+    ;; These two can be optimized.
+    (drop
+      (local.get $a)
+    )
+    (drop
+      (local.get $b)
+    )
+    (local.set $b
+      (local.get $x)
+    )
+    ;; Now only the first can be, since $b changed.
+    (drop
+      (local.get $a)
+    )
+    (drop
+      (local.get $b)
+    )
+  )
+
   ;; CHECK:      (func $get (type $none_=>_ref|data|) (result (ref data))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
