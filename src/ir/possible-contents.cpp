@@ -763,6 +763,12 @@ struct InfoCollector
       });
   }
   template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
+    // If the heap type is not a signature, which is the case for a bottom type
+    // (null) then nothing can be called.
+    if (!targetType.isSignature()) {
+      assert(targetType.isBottom());
+      return;
+    }
     handleCall(
       curr,
       [&](Index i) {
@@ -775,9 +781,9 @@ struct InfoCollector
       });
   }
   template<typename T> void handleIndirectCall(T* curr, Type targetType) {
-    // If the type is unreachable, or null, then nothing will be called (and
-    // there is no heap or signature type to use anyhow).
-    if (targetType != Type::unreachable && !targetType.isNull()) {
+    // If the type is unreachable, nothing can be called (and there is no heap
+    // type to get).
+    if (targetType != Type::unreachable) {
       handleIndirectCall(curr, targetType.getHeapType());
     }
   }
