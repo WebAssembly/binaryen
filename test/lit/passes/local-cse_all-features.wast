@@ -4,8 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --local-cse --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $f (func (param i32) (result i32)))
-  (type $f (func (param i32) (result i32)))
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -13,13 +12,13 @@
 
   ;; CHECK:      (func $calls (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_ref $f
+  ;; CHECK-NEXT:   (call_ref $i32_=>_i32
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (ref.func $calls)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_ref $f
+  ;; CHECK-NEXT:   (call_ref $i32_=>_i32
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (ref.func $calls)
   ;; CHECK-NEXT:   )
@@ -29,10 +28,10 @@
   (func $calls (param $x i32) (result i32)
     ;; The side effects of calls prevent optimization.
     (drop
-      (call_ref $f (i32.const 10) (ref.func $calls))
+      (call_ref (i32.const 10) (ref.func $calls))
     )
     (drop
-      (call_ref $f (i32.const 10) (ref.func $calls))
+      (call_ref (i32.const 10) (ref.func $calls))
     )
     (i32.const 20)
   )

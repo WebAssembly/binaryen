@@ -510,7 +510,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $1
-  (call_ref $i64
+  (call_ref
    (i64.const 0)
    (global.get $global$0)
   )

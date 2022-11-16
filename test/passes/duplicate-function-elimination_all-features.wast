@@ -34,7 +34,7 @@
   (unreachable)
  )
  (func "export" (result i32)
-  (call_ref $func
+  (call_ref
    (global.get $global$0)
   )
  )
