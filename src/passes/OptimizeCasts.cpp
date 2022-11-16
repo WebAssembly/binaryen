@@ -86,6 +86,105 @@
 
 namespace wasm {
 
+namespace {
+
+// Find the best sources for local.gets: other locals with the same value, but
+// cast to a more refined type.
+struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
+
+  PassOptions options;
+
+  // A map of the best local.get for a particular index: the local.get that has
+  // the most refined type.
+  std::unordered_map<Index, Expression*> bestSourceForIndexMap;
+
+  // For each expression, a vector of local.gets that would like to use its
+  // value instead of themselves (as it is more refined).
+  std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
+
+  static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
+    self->bestSourceForIndexMap.clear();
+  }
+
+  void visitLocalSet(LocalSet* curr) {
+    // Clear any information about this local; it has a new value here.
+    bestSourceForIndexMap.erase(curr->index);
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    auto iter = bestSourceForIndexMap.find(curr->index);
+    if (iter != bestSourceForIndexMap.end()) {
+      auto* bestSource = iter->second;
+      if (curr->type != bestSource->type &&
+          Type::isSubType(bestSource->type, curr->type)) {
+        // The best source has a more refined type, note that we want to use it.
+        requestMap[bestSource].push_back(curr);
+      }
+    }
+  }
+
+  void visitRefAs(RefAs* curr) { handleRefinement(curr); }
+
+  void visitRefCast(RefCast* curr) { handleRefinement(curr); }
+
+  void handleRefinement(Expression* curr) {
+    auto* fallthrough =
+      Properties::getFallthrough(curr, options, *getModule());
+    if (auto* get = fallthrough->dynCast<LocalGet>()) {
+      auto*& bestSource = bestSourceForIndexMap[get->index];
+      if (!bestSource) {
+        // This is the first.
+        bestSource = curr;
+        return;
+      }
+
+      // See if we are better than the current source.
+      if (curr->type != bestSource->type &&
+          Type::isSubType(curr->type, bestSource->type)) {
+        bestSource = curr;
+      }
+    }
+  }
+};
+
+// Given a set of best sources, apply them: save each best source in a local and
+// use it in the places that want to.
+//
+// It is simpler to do this in another pass after BestSourceFinder so that we do
+// not need to worry about corner cases with invalidation of pointers in things
+// we've already walked past.
+struct FindingApplier : public PostWalker<FindingApplier> {
+  BestSourceFinder& finder;
+
+  FindingApplier(BestSourceFinder& finder) : finder(finder) {}
+
+  void visitRefAs(RefAs* curr) { handleRefinement(curr); }
+
+  void visitRefCast(RefCast* curr) { handleRefinement(curr); }
+
+  void handleRefinement(Expression* curr) {
+    auto iter = finder.requestMap.find(curr);
+    if (iter == finder.requestMap.end()) {
+      return;
+    }
+
+    // This expression was the best source for some gets. Add a new local to
+    // store this value, then use it for the gets.
+    auto var = Builder::addVar(getFunction(), curr->type);
+    auto& gets = iter->second;
+    for (auto* get : gets) {
+      get->index = var;
+      get->type = curr->type;
+    }
+
+    // Replace ourselves with a tee.
+    replaceCurrent(
+      Builder(*getModule()).makeLocalTee(var, curr, curr->type));
+  }
+};
+
+} // anonymous namespace
+
 struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
   bool isFunctionParallel() override { return true; }
 
@@ -98,107 +197,18 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
       return;
     }
 
-    struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
-
-      PassOptions options;
-
-      // A map of the best local.get for a particular index: the local.get that
-      // has the most refined type.
-      std::unordered_map<Index, Expression*> bestSourceForIndexMap;
-
-      // For each expression, a vector of local.gets that would like to use its
-      // value instead of themselves (as it is more refined).
-      std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
-
-      static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
-        self->bestSourceForIndexMap.clear();
-      }
-
-      void visitLocalSet(LocalSet* curr) {
-        // Clear any information about this local; it has a new value here.
-        bestSourceForIndexMap.erase(curr->index);
-      }
-
-      void visitLocalGet(LocalGet* curr) {
-        auto iter = bestSourceForIndexMap.find(curr->index);
-        if (iter != bestSourceForIndexMap.end()) {
-          auto* bestSource = iter->second;
-          if (curr->type != bestSource->type &&
-              Type::isSubType(bestSource->type, curr->type)) {
-            // The best source has a more refined type, note that we want to use
-            // it.
-            requestMap[bestSource].push_back(curr);
-          }
-        }
-      }
-
-      void visitRefAs(RefAs* curr) { handleRefinement(curr); }
-
-      void visitRefCast(RefCast* curr) { handleRefinement(curr); }
-
-      void handleRefinement(Expression* curr) {
-        auto* fallthrough =
-          Properties::getFallthrough(curr, options, *getModule());
-        if (auto* get = fallthrough->dynCast<LocalGet>()) {
-          auto*& bestSource = bestSourceForIndexMap[get->index];
-          if (!bestSource) {
-            // This is the first.
-            bestSource = curr;
-            return;
-          }
-
-          // See if we are better than the current source.
-          if (curr->type != bestSource->type &&
-              Type::isSubType(curr->type, bestSource->type)) {
-            bestSource = curr;
-          }
-        }
-      }
-    };
-
+    // First, find the best sources that we want to use.
     BestSourceFinder finder;
     finder.setModule(getModule());
     finder.options = getPassOptions();
     finder.walkFunctionInModule(func, getModule());
 
     if (finder.requestMap.empty()) {
+      // Nothing to do.
       return;
     }
 
-    // Apply the requests. We need to do this in a subsequent pass as altering
-    // pointers to things we've already walked past can have interesting corner
-    // cases with removing a pointer to something inside something that is also
-    // going away.
-    struct FindingApplier : public PostWalker<FindingApplier> {
-      BestSourceFinder& finder;
-
-      FindingApplier(BestSourceFinder& finder) : finder(finder) {}
-
-      void visitRefAs(RefAs* curr) { handleRefinement(curr); }
-
-      void visitRefCast(RefCast* curr) { handleRefinement(curr); }
-
-      void handleRefinement(Expression* curr) {
-        auto iter = finder.requestMap.find(curr);
-        if (iter == finder.requestMap.end()) {
-          return;
-        }
-
-        // This expression was the best source for some gets. Add a new local
-        // to store this value, then use it for the gets.
-        auto var = Builder::addVar(getFunction(), curr->type);
-        auto& gets = iter->second;
-        for (auto* get : gets) {
-          get->index = var;
-          get->type = curr->type;
-        }
-
-        // Replace ourselves with a tee.
-        replaceCurrent(
-          Builder(*getModule()).makeLocalTee(var, curr, curr->type));
-      }
-    };
-
+    // Apply the requests: use the best sources.
     FindingApplier applier(finder);
     applier.walkFunctionInModule(func, getModule());
 
