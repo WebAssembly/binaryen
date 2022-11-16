@@ -128,8 +128,7 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   void visitRefCast(RefCast* curr) { handleRefinement(curr); }
 
   void handleRefinement(Expression* curr) {
-    auto* fallthrough =
-      Properties::getFallthrough(curr, options, *getModule());
+    auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
       auto*& bestSource = bestSourceForIndexMap[get->index];
       if (!bestSource) {
@@ -178,8 +177,7 @@ struct FindingApplier : public PostWalker<FindingApplier> {
     }
 
     // Replace ourselves with a tee.
-    replaceCurrent(
-      Builder(*getModule()).makeLocalTee(var, curr, curr->type));
+    replaceCurrent(Builder(*getModule()).makeLocalTee(var, curr, curr->type));
   }
 };
 
