@@ -32,8 +32,7 @@
 //  )
 //
 // This change adds a local but it switches some local.gets to use a local of a
-// more refined type. That can help other optimizations later, and can also help
-// refine types of other locals in the rest of this pass.
+// more refined type. That can help other optimizations later.
 //
 // An example of an important pattern this handles are itable calls:
 //
@@ -56,6 +55,22 @@
 // |this|, we can use the cast value for the itable get, which may then lead to
 // removing the vtable cast after we refine the itable type. And that can lead
 // to devirtualization later.
+//
+// Closely related things appear in other passes:
+//
+//  * SimplifyLocals will find locals already containing a more refined type and
+//    switch to them. RedundantSetElimination does the same across basic blocks.
+//    In theory one of them could be extended to also add new locals, and then
+//    they would be doing something similar to this pass.
+//  * LocalCSE finds repeated expressions and stores them in locals for use
+//    later. In theory that pass could be extended to look not for exact copies
+//    but for equivalent things through a cast, and then it would be doing
+//    something similar to this pass.
+//
+// However, while those other passes could be extended to cover what this pass
+// does, we will have further cast-specific optimizations to add, which make
+// sense in new pass anyhow, and things should be simpler overall to keep such
+// casts all in one pass, here.
 //
 // TODO: Move casts earlier in a basic block as well, at least in traps-never-
 //       happen mode where we can assume they don't happen.
