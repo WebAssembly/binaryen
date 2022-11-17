@@ -97,8 +97,7 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   // Map local indices to the most refined downcastings of local.gets from those indices.
   std::unordered_map<Index, Expression*> bestSourceForIndexMap;
 
-  // For each expression, a vector of local.gets that would like to use its
-  // value instead of themselves (as it is more refined).
+  // For each most-downcasted local.get, a vector of other local.gets that could be replaced with gets of the downcasted value.
   std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
 
   static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
