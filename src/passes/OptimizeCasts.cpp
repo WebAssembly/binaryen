@@ -73,7 +73,7 @@
 // casts all in one pass, here.
 //
 // TODO: Move casts earlier in a basic block as well, at least in traps-never-
-//       happen mode where we can assume they don't happen.
+//       happen mode where we can assume they never fail.
 // TODO: Look past individual basic blocks?
 //
 
