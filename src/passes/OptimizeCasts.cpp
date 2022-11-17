@@ -156,8 +156,8 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
   }
 };
 
-// Given a set of best castss, apply them: save each best cast in a local and
-// use it in the places that want to.
+// Given a set of best casts, apply them: save each best cast in a local and use
+// it in the places that want to.
 //
 // It is simpler to do this in another pass after BestCastFinder so that we do
 // not need to worry about corner cases with invalidation of pointers in things
