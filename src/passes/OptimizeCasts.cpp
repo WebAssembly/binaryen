@@ -94,8 +94,7 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
 
   PassOptions options;
 
-  // A map of the best local.get for a particular index: the local.get that has
-  // the most refined type.
+  // Map local indices to the most refined downcastings of local.gets from those indices.
   std::unordered_map<Index, Expression*> bestSourceForIndexMap;
 
   // For each expression, a vector of local.gets that would like to use its
