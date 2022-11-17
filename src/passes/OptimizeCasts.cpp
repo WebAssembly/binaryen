@@ -92,7 +92,7 @@ namespace wasm {
 
 namespace {
 
-// Find the best casted verisons of local.gets: other locals with the same
+// Find the best casted verisons of local.gets: other local.gets with the same
 // value, but cast to a more refined type.
 struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
 
