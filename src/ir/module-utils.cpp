@@ -24,12 +24,9 @@ namespace {
 
 // Helper for collecting HeapTypes and their frequencies.
 struct Counts : public InsertOrderedMap<HeapType, size_t> {
-  int notes = 0;
-  int includes = 0;
   void note(HeapType type) {
     if (!type.isBasic()) {
       (*this)[type]++;
-      notes++;
     }
   }
   void note(Type type) {
@@ -41,7 +38,6 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
   void include(HeapType type) {
     if (!type.isBasic()) {
       (*this)[type];
-      includes++;
     }
   }
   void include(Type type) {
@@ -55,7 +51,9 @@ struct CodeScanner
   : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
   Counts& counts;
 
-  CodeScanner(Counts& counts) : counts(counts) {}
+  CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+    setModule(&wasm);
+  }
 
   void visitExpression(Expression* curr) {
     if (auto* call = curr->dynCast<CallIndirect>()) {
@@ -110,7 +108,7 @@ struct CodeScanner
 Counts getHeapTypeCounts(Module& wasm) {
   // Collect module-level info.
   Counts counts;
-  CodeScanner(counts).walkModuleCode(&wasm);
+  CodeScanner(wasm, counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.globals) {
     counts.note(curr->type);
   }
@@ -126,13 +124,13 @@ Counts getHeapTypeCounts(Module& wasm) {
 
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<Counts, Immutable, InsertOrderedMap>
-    analysis(wasm, [](Function* func, Counts& counts) {
+    analysis(wasm, [&](Function* func, Counts& counts) {
       counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
       }
       if (!func->imported()) {
-        CodeScanner(counts).walk(func->body);
+        CodeScanner(wasm, counts).walk(func->body);
       }
     });
 
@@ -141,8 +139,6 @@ Counts getHeapTypeCounts(Module& wasm) {
     for (auto& [sig, count] : functionCounts) {
       counts[sig] += count;
     }
-    counts.notes += functionCounts.notes;
-    counts.includes += functionCounts.includes;
   }
 
   // Recursively traverse each reference type, which may have a child type that
@@ -193,12 +189,6 @@ Counts getHeapTypeCounts(Module& wasm) {
     }
   }
 
-  std::cout << "counts:\n";
-  for (auto& [type, count] : counts) {
-    std::cout << ((type.getID() << 2) % 997) << ", count: " << count << "\n";
-  }
-  std::cout << "total notes: " << counts.notes
-            << ", includes: " << counts.includes << "\n";
   return counts;
 }
 
@@ -334,18 +324,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
 
     void pushPredecessors(RecGroup group) {
-      std::cout << "Visiting group: ";
-      for (auto type : group) {
-        std::cout << ((type.getID() << 2) % 997) << " ";
-      }
-      std::cout << "\n";
-
       for (auto pred : groupInfos.at(group).sortedPreds) {
-        std::cout << "  pushing pred: ";
-        for (auto type : pred) {
-          std::cout << "  " << ((type.getID() << 2) % 997) << " ";
-        }
-        std::cout << "\n";
         push(pred);
       }
     }
@@ -360,12 +339,6 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
   setIndices(indexedTypes);
-
-  std::cout << "optimized types:\n";
-  for (auto type : indexedTypes.types) {
-    std::cout << ((type.getID() << 2) % 997) << "\n";
-  }
-
   return indexedTypes;
 }
 

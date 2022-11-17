@@ -2543,7 +2543,6 @@ size_t RecGroupHasher::operator()() const {
   for (auto type : group) {
     hash_combine(digest, topLevelHash(type));
   }
-  std::cout << "    group hash: " << digest << "\n";
   return digest;
 }
 
@@ -2554,7 +2553,6 @@ size_t RecGroupHasher::topLevelHash(HeapType type) const {
   } else {
     hash_combine(digest, hash(*getHeapTypeInfo(type)));
   }
-  std::cout << "    top level type hash: " << digest << "\n";
   return digest;
 }
 
@@ -2565,7 +2563,6 @@ size_t RecGroupHasher::hash(Type type) const {
   } else {
     hash_combine(digest, hash(*getTypeInfo(type)));
   }
-  std::cout << "    type hash: " << digest << "\n";
   return digest;
 }
 
@@ -2584,7 +2581,6 @@ size_t RecGroupHasher::hash(HeapType type) const {
   if (currGroup != group) {
     wasm::rehash(digest, currGroup.getID());
   }
-  std::cout << "    heap type hash: " << digest << "\n";
   return digest;
 }
 
@@ -2593,12 +2589,10 @@ size_t RecGroupHasher::hash(const TypeInfo& info) const {
   switch (info.kind) {
     case TypeInfo::TupleKind:
       hash_combine(digest, hash(info.tuple));
-      std::cout << "    tuple info hash: " << digest << "\n";
       return digest;
     case TypeInfo::RefKind:
       rehash(digest, info.ref.nullable);
       hash_combine(digest, hash(info.ref.heapType));
-      std::cout << "    ref info hash: " << digest << "\n";
       return digest;
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -2616,15 +2610,12 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
       WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
     case HeapTypeInfo::SignatureKind:
       hash_combine(digest, hash(info.signature));
-      std::cout << "    sig info hash: " << digest << "\n";
       return digest;
     case HeapTypeInfo::StructKind:
       hash_combine(digest, hash(info.struct_));
-      std::cout << "    struct info hash: " << digest << "\n";
       return digest;
     case HeapTypeInfo::ArrayKind:
       hash_combine(digest, hash(info.array));
-      std::cout << "    array info hash: " << digest << "\n";
       return digest;
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -2635,7 +2626,6 @@ size_t RecGroupHasher::hash(const Tuple& tuple) const {
   for (auto type : tuple.types) {
     hash_combine(digest, hash(type));
   }
-  std::cout << "    tuple hash: " << digest << "\n";
   return digest;
 }
 
@@ -2643,14 +2633,12 @@ size_t RecGroupHasher::hash(const Field& field) const {
   size_t digest = wasm::hash(field.packedType);
   rehash(digest, field.mutable_);
   hash_combine(digest, hash(field.type));
-  std::cout << "    field hash: " << digest << "\n";
   return digest;
 }
 
 size_t RecGroupHasher::hash(const Signature& sig) const {
   size_t digest = hash(sig.params);
   hash_combine(digest, hash(sig.results));
-  std::cout << "    sig hash: " << digest << "\n";
   return digest;
 }
 
@@ -2659,14 +2647,11 @@ size_t RecGroupHasher::hash(const Struct& struct_) const {
   for (const auto& field : struct_.fields) {
     hash_combine(digest, hash(field));
   }
-  std::cout << "    struct hash: " << digest << "\n";
   return digest;
 }
 
 size_t RecGroupHasher::hash(const Array& array) const {
-  auto digest = hash(array.element);
-  std::cout << "    array hash: " << digest << "\n";
-  return digest;
+  return hash(array.element);
 }
 
 bool RecGroupEquator::operator()() const {
@@ -3872,8 +3857,6 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
     std::lock_guard<std::mutex> lock(globalRecGroupStore.mutex);
     groupStart = 0;
     for (auto group : groups) {
-      std::cout << "canonicalizing group of size " << group.size() << " at "
-                << groupStart << "\n";
       size_t size = group.size();
       for (size_t i = 0; i < size; ++i) {
         state.updateUses(replacements, state.newInfos[groupStart + i]);
@@ -3891,16 +3874,11 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
         canonical = globalRecGroupStore.insert(group);
       }
       if (group != canonical) {
-        std::cout << "  replacing group with existing canonical group ("
-                  << (canonical.getID() % 997) << ")\n";
         // Replace the non-canonical types with their canonical equivalents.
         assert(canonical.size() == size);
         for (size_t i = 0; i < size; ++i) {
           replacements.insert({group[i], canonical[i]});
         }
-      } else {
-        std::cout << "  group is canonical (" << (canonical.getID() % 997)
-                  << ")\n";
       }
     }
   }
