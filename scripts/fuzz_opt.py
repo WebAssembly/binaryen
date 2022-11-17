@@ -1297,6 +1297,7 @@ opt_choices = [
     ['--monomorphize'],
     ['--monomorphize-always'],
     ['--once-reduction'],
+    ["--optimize-casts"],
     ["--optimize-instructions"],
     ["--optimize-stack-ir"],
     ["--generate-stack-ir", "--optimize-stack-ir"],

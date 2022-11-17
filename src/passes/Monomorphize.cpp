@@ -214,6 +214,9 @@ struct Monomorphize : public Pass {
   //       expect to help. That would be faster, but we'd always run the risk of
   //       missing things, especially as new passes are added later and we don't
   //       think to add them here.
+  //       Alternatively, perhaps we should have a mode that does use -O1 or
+  //       even -O2 or above, as in theory any optimization could end up
+  //       mattering a lot here.
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
     runner.options.optimizeLevel = 1;
