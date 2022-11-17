@@ -208,8 +208,7 @@ struct Directize : public Pass {
 
     // TODO: consider a per-table option here
     auto initialContentsImmutable =
-      getPassOptions().getArgumentOrDefault(
-        "directize-initial-contents-immutable", "") != "";
+      getPassOptions().hasArgument("directize-initial-contents-immutable");
 
     // Set up the initial info.
     TableInfoMap tables;

@@ -62,13 +62,9 @@ struct LegalizeJSInterface : public Pass {
     setTempRet0 = nullptr;
     getTempRet0 = nullptr;
     auto exportOriginals =
-      !getPassOptions()
-         .getArgumentOrDefault("legalize-js-interface-export-originals", "")
-         .empty();
+      getPassOptions().hasArgument("legalize-js-interface-export-originals");
     exportedHelpers =
-      !getPassOptions()
-         .getArgumentOrDefault("legalize-js-interface-exported-helpers", "")
-         .empty();
+      getPassOptions().hasArgument("legalize-js-interface-exported-helpers");
     // for each illegal export, we must export a legalized stub instead
     std::vector<std::unique_ptr<Export>> newExports;
     for (auto& ex : module->exports) {

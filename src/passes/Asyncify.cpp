@@ -1537,7 +1537,7 @@ struct Asyncify : public Pass {
     // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
     // to false.
     auto canIndirectChangeState =
-      options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
+      !options.hasArgument("asyncify-ignore-indirect");
     std::string removeListInput =
       options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
@@ -1558,12 +1558,10 @@ struct Asyncify : public Pass {
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts = options.getArgumentOrDefault("asyncify-asserts", "") != "";
-    auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
-    auto relocatable =
-      options.getArgumentOrDefault("asyncify-relocatable", "") != "";
-    auto secondaryMemory =
-      options.getArgumentOrDefault("asyncify-in-secondary-memory", "") != "";
+    auto asserts = options.hasArgument("asyncify-asserts");
+    auto verbose = options.hasArgument("asyncify-verbose");
+    auto relocatable = options.hasArgument("asyncify-relocatable");
+    auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
