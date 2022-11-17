@@ -107,7 +107,7 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
   // For each most-downcasted local.get, a vector of other local.gets that could
   // be replaced with gets of the downcasted value.
   //
-  // This is tracked til the end of the entire function, and contains the
+  // This is tracked until the end of the entire function, and contains the
   // information we need to optimize later. That is, entries here are things we
   // want to apply.
   std::unordered_map<Expression*, std::vector<LocalGet*>> lessCastedGets;
