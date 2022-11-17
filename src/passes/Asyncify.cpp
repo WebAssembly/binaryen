@@ -1534,9 +1534,9 @@ struct Asyncify : public Pass {
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
-    // TODO: consider renaming asyncify-ignore-indirect to
-    //       asyncify-ignore-nondirect, but that could break users.
-    auto ignoreNonDirect =
+    // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
+    // to false.
+    auto canIndirectChangeState =
       options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
     std::string removeListInput =
       options.getArgumentOrDefault("asyncify-removelist", "");
@@ -1603,7 +1603,7 @@ struct Asyncify : public Pass {
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
-                            ignoreNonDirect,
+                            canIndirectChangeState,
                             removeList,
                             addList,
                             onlyList,
