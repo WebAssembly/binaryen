@@ -2676,11 +2676,8 @@ bool RecGroupEquator::topLevelEq(HeapType a, HeapType b) const {
 }
 
 bool RecGroupEquator::eq(Type a, Type b) const {
-  if (a == b) {
-    return true;
-  }
   if (a.isBasic() || b.isBasic()) {
-    return false;
+    return a == b;
   }
   return eq(*getTypeInfo(a), *getTypeInfo(b));
 }
@@ -2699,7 +2696,9 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   }
   auto groupA = a.getRecGroup();
   auto groupB = b.getRecGroup();
-  return groupA == groupB || (groupA == newGroup && groupB == otherGroup);
+  bool selfRefA = groupA == newGroup;
+  bool selfRefB = groupB == otherGroup;
+  return (selfRefA && selfRefB) || (!selfRefA && !selfRefB && groupA == groupB);
 }
 
 bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
