@@ -75,6 +75,10 @@
 // TODO: Move casts earlier in a basic block as well, at least in traps-never-
 //       happen mode where we can assume they never fail.
 // TODO: Look past individual basic blocks?
+// TODO: Look at LocalSet as well and not just Get. That would add some overlap
+//       with the other passes mentioned above, but once we do things like
+//       moving casts earlier as in the other TODO, we'd be doing uniquely
+//       useful things with LocalSet here.
 //
 
 #include "ir/linear-execution.h"
