@@ -92,9 +92,9 @@ namespace wasm {
 
 namespace {
 
-// Find the best sources for local.gets: other locals with the same value, but
-// cast to a more refined type.
-struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
+// Find the best casted verisons of local.gets: other locals with the same
+// value, but cast to a more refined type.
+struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
 
   PassOptions options;
 
@@ -106,7 +106,7 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   // be replaced with gets of the downcasted value.
   std::unordered_map<Expression*, std::vector<LocalGet*>> lessCastedGets;
 
-  static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
+  static void doNoteNonLinear(BestCastFinder* self, Expression** currp) {
     self->mostCastedGets.clear();
   }
 
@@ -118,11 +118,11 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   void visitLocalGet(LocalGet* curr) {
     auto iter = mostCastedGets.find(curr->index);
     if (iter != mostCastedGets.end()) {
-      auto* bestSource = iter->second;
-      if (curr->type != bestSource->type &&
-          Type::isSubType(bestSource->type, curr->type)) {
-        // The best source has a more refined type, note that we want to use it.
-        lessCastedGets[bestSource].push_back(curr);
+      auto* bestCast = iter->second;
+      if (curr->type != bestCast->type &&
+          Type::isSubType(bestCast->type, curr->type)) {
+        // The best cast has a more refined type, note that we want to use it.
+        lessCastedGets[bestCast].push_back(curr);
       }
     }
   }
@@ -134,32 +134,32 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   void handleRefinement(Expression* curr) {
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto*& bestSource = mostCastedGets[get->index];
-      if (!bestSource) {
+      auto*& bestCast = mostCastedGets[get->index];
+      if (!bestCast) {
         // This is the first.
-        bestSource = curr;
+        bestCast = curr;
         return;
       }
 
-      // See if we are better than the current source.
-      if (curr->type != bestSource->type &&
-          Type::isSubType(curr->type, bestSource->type)) {
-        bestSource = curr;
+      // See if we are better than the current best.
+      if (curr->type != bestCast->type &&
+          Type::isSubType(curr->type, bestCast->type)) {
+        bestCast = curr;
       }
     }
   }
 };
 
-// Given a set of best sources, apply them: save each best source in a local and
+// Given a set of best castss, apply them: save each best cast in a local and
 // use it in the places that want to.
 //
-// It is simpler to do this in another pass after BestSourceFinder so that we do
+// It is simpler to do this in another pass after BestCastFinder so that we do
 // not need to worry about corner cases with invalidation of pointers in things
 // we've already walked past.
 struct FindingApplier : public PostWalker<FindingApplier> {
-  BestSourceFinder& finder;
+  BestCastFinder& finder;
 
-  FindingApplier(BestSourceFinder& finder) : finder(finder) {}
+  FindingApplier(BestCastFinder& finder) : finder(finder) {}
 
   void visitRefAs(RefAs* curr) { handleRefinement(curr); }
 
@@ -171,7 +171,7 @@ struct FindingApplier : public PostWalker<FindingApplier> {
       return;
     }
 
-    // This expression was the best source for some gets. Add a new local to
+    // This expression was the best cast for some gets. Add a new local to
     // store this value, then use it for the gets.
     auto var = Builder::addVar(getFunction(), curr->type);
     auto& gets = iter->second;
@@ -199,8 +199,8 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
       return;
     }
 
-    // First, find the best sources that we want to use.
-    BestSourceFinder finder;
+    // First, find the best casts that we want to use.
+    BestCastFinder finder;
     finder.options = getPassOptions();
     finder.walkFunctionInModule(func, getModule());
 
@@ -209,7 +209,7 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
       return;
     }
 
-    // Apply the requests: use the best sources.
+    // Apply the requests: use the best casts.
     FindingApplier applier(finder);
     applier.walkFunctionInModule(func, getModule());
 
