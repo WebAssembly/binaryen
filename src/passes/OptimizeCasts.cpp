@@ -99,28 +99,28 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   PassOptions options;
 
   // Map local indices to the most refined downcastings of local.gets from those indices.
-  std::unordered_map<Index, Expression*> bestSourceForIndexMap;
+  std::unordered_map<Index, Expression*> mostCastedGets;
 
   // For each most-downcasted local.get, a vector of other local.gets that could be replaced with gets of the downcasted value.
-  std::unordered_map<Expression*, std::vector<LocalGet*>> requestMap;
+  std::unordered_map<Expression*, std::vector<LocalGet*>> lessCastedGets;
 
   static void doNoteNonLinear(BestSourceFinder* self, Expression** currp) {
-    self->bestSourceForIndexMap.clear();
+    self->mostCastedGets.clear();
   }
 
   void visitLocalSet(LocalSet* curr) {
     // Clear any information about this local; it has a new value here.
-    bestSourceForIndexMap.erase(curr->index);
+    mostCastedGets.erase(curr->index);
   }
 
   void visitLocalGet(LocalGet* curr) {
-    auto iter = bestSourceForIndexMap.find(curr->index);
-    if (iter != bestSourceForIndexMap.end()) {
+    auto iter = mostCastedGets.find(curr->index);
+    if (iter != mostCastedGets.end()) {
       auto* bestSource = iter->second;
       if (curr->type != bestSource->type &&
           Type::isSubType(bestSource->type, curr->type)) {
         // The best source has a more refined type, note that we want to use it.
-        requestMap[bestSource].push_back(curr);
+        lessCastedGets[bestSource].push_back(curr);
       }
     }
   }
@@ -132,7 +132,7 @@ struct BestSourceFinder : public LinearExecutionWalker<BestSourceFinder> {
   void handleRefinement(Expression* curr) {
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto*& bestSource = bestSourceForIndexMap[get->index];
+      auto*& bestSource = mostCastedGets[get->index];
       if (!bestSource) {
         // This is the first.
         bestSource = curr;
@@ -164,8 +164,8 @@ struct FindingApplier : public PostWalker<FindingApplier> {
   void visitRefCast(RefCast* curr) { handleRefinement(curr); }
 
   void handleRefinement(Expression* curr) {
-    auto iter = finder.requestMap.find(curr);
-    if (iter == finder.requestMap.end()) {
+    auto iter = finder.lessCastedGets.find(curr);
+    if (iter == finder.lessCastedGets.end()) {
       return;
     }
 
@@ -202,7 +202,7 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
     finder.options = getPassOptions();
     finder.walkFunctionInModule(func, getModule());
 
-    if (finder.requestMap.empty()) {
+    if (finder.lessCastedGets.empty()) {
       // Nothing to do.
       return;
     }
