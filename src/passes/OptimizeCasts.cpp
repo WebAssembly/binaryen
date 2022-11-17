@@ -100,10 +100,16 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
 
   // Map local indices to the most refined downcastings of local.gets from those
   // indices.
+  //
+  // This is tracked in each basic block, and cleared between them.
   std::unordered_map<Index, Expression*> mostCastedGets;
 
   // For each most-downcasted local.get, a vector of other local.gets that could
   // be replaced with gets of the downcasted value.
+  //
+  // This is tracked til the end of the entire function, and contains the
+  // information we need to optimize later. That is, entries here are things we
+  // want to apply.
   std::unordered_map<Expression*, std::vector<LocalGet*>> lessCastedGets;
 
   static void doNoteNonLinear(BestCastFinder* self, Expression** currp) {
