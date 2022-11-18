@@ -202,9 +202,7 @@ NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
 NODEJS = os.getenv('NODE', which('node') or which('nodejs'))
 MOZJS = which('mozjs') or which('spidermonkey')
 
-# TODO: Remove the specific v8 version once we implement structref and can run
-# on recent v8.
-V8 = which('v8-10.8.104') or which('v8') or which('d8')
+V8 = which('v8') or which('d8')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
