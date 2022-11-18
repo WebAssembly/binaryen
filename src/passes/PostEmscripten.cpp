@@ -214,12 +214,19 @@ struct PostEmscripten : public Pass {
     std::vector<Address> segmentOffsets; // segment index => address offset
     calcSegmentOffsets(module, segmentOffsets);
 
-    removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
+    auto& options = getPassOptions();
+    auto sideModule = options.hasArgument("post-emscripten-side-module");
+    if (!sideModule) {
+      // Side modules read EM_ASM data from the module based on these exports
+      // so we need to keep them around in that case.
+      removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
+      module.removeExport("__start_em_asm");
+      module.removeExport("__stop_em_asm");
+    }
+
     removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
     removeData(
       module, segmentOffsets, "__start_em_lib_deps", "__stop_em_lib_deps");
-    module.removeExport("__start_em_asm");
-    module.removeExport("__stop_em_asm");
     module.removeExport("__start_em_js");
     module.removeExport("__stop_em_js");
     module.removeExport("__start_em_lib_deps");
