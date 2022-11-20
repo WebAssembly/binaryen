@@ -17,5 +17,6 @@ binaryen_add_executable(wasm-dis wasm-dis.cpp)
 binaryen_add_executable(wasm-ctor-eval wasm-ctor-eval.cpp)
 binaryen_add_executable(wasm-reduce wasm-reduce.cpp)
 binaryen_add_executable(wasm-fuzz-types "${fuzzing_SOURCES};wasm-fuzz-types.cpp")
+binaryen_add_executable(wasm-analyze wasm-analyze.cpp)
 
 add_subdirectory(wasm-split)

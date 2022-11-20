@@ -355,6 +355,22 @@ def run_gtest():
     shared.with_pass_debug(run)
 
 
+def run_wasm_analyze_tests():
+    print('\n[ checking wasm-analyze testcases... ]\n')
+
+    test_dir = os.path.join(shared.options.binaryen_root, 'test', 'analyze')
+    for t in sorted(os.listdir(test_dir)):
+        if t.endswith('.wast'):
+            print('..', t)
+            wast = os.path.join(test_dir, t)
+            cmd = [os.path.join(shared.options.binaryen_bin, 'wasm-analyze'),
+                   wast,
+                   '--show-already-optimizable']
+            actual = subprocess.check_output(cmd, stderr=None)
+            out = wast.replace('.wast', '.txt')
+            shared.fail_if_not_identical_to_file(actual, out)
+
+
 TEST_SUITES = OrderedDict([
     ('version', run_version_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
@@ -374,6 +390,7 @@ TEST_SUITES = OrderedDict([
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
     ('gtest', run_gtest),
+    ('wasm-analyze', run_wasm_analyze_tests),
 ])
 
 
