@@ -323,6 +323,26 @@ private:
       assert(i > 0);
       i--;
       auto* pushable = isPushable(list[i]);
+      if (pushable && pushable->type == Type::unreachable) {
+        // Don't try to push something unreachable. If we did, then we'd need to
+        // refinalize the block we are moving it from:
+        //
+        //  (block $unreachable
+        //    (local.set $x (unreachable))
+        //    (if (..)
+        //      (.. (local.get $x))
+        //  )
+        //
+        // The block should not be unreachable if the local.set is moved into
+        // the if arm (the if arm may not execute, so the if itself will not
+        // change type). It is simpler to avoid this complexity and leave this
+        // to DCE to simplify first.
+        //
+        // (Note that the side effect of trapping will normally prevent us from
+        // trying to push something unreachable, but in traps-never-happen mode
+        // we are allowed to ignore that, and so we need this check.)
+        pushable = nullptr;
+      }
       if (!pushable) {
         // Something that is staying where it is, so anything we push later must
         // move past it. Note the effects and continue.
