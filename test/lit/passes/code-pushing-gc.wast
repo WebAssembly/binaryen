@@ -77,19 +77,4 @@
       (local.get $x)
     )
   )
-
-  (func $unreachable-value
-    (local $x i32)
-    ;; We should not push this into the if. (If we did, we'd need to refinalize
-    ;; the block, or we'd error; instead, leave this to DCE.)
-    (local.set $x
-      (unreachable)
-    )
-    (if
-      (i32.const 0)
-      (drop
-        (local.get $x)
-      )
-    )
-  )
 )
