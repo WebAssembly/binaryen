@@ -256,6 +256,10 @@ jobs:
   build-emscripten:
     name: emscripten
     runs-on: ubuntu-latest
+    env:
+      # Set this environment variable to test a specific Emscripten branch.
+      # Format: https://github.com/<fork>/emscripten/tree/<refspec>
+      EMSCRIPTEN_REPO: ""
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -266,14 +270,18 @@ jobs:
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
-      # TODO: Go back to tot once problem with
-      # https://github.com/emscripten-core/emscripten/pull/17948 is resolved.
       run: |
         mkdir $HOME/emsdk
         git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
         $HOME/emsdk/emsdk update-tags
-        $HOME/emsdk/emsdk install latest
-        $HOME/emsdk/emsdk activate latest
+        $HOME/emsdk/emsdk install tot
+        $HOME/emsdk/emsdk activate tot
+    - name: override emscripten repository
+      if: ${{ env.EMSCRIPTEN_REPO != '' }}
+      run: |
+        $HOME/emsdk/emsdk install emscripten-main-64bit \
+          --override-repository emscripten-main-64bit@$EMSCRIPTEN_REPO
+        $HOME/emsdk/emsdk activate emscripten-main-64bit
     - name: update path
       run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
     - name: emcc-tests
