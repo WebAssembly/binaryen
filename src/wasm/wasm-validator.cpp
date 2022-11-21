@@ -2903,6 +2903,9 @@ void FunctionValidator::visitFunction(Function* curr) {
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
+  // Check for things like having a rec group with GC enabled.
+  features |=
+    (Type(curr->type, Nullable).getFeatures() & ~FeatureSet::ReferenceTypes);
   for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
@@ -3461,25 +3464,6 @@ static void validateTags(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateTypes(Module& module, ValidationInfo& info) {
-  for (auto type : ModuleUtils::collectHeapTypes(module)) {
-    if (type.getRecGroup().size() > 1) {
-      info.shouldBeTrue(module.features.hasGC() &&
-                          getTypeSystem() == TypeSystem::Isorecursive,
-                        type,
-                        "Recursion groups require GC [--enable-gc] and "
-                        "isorecursive types [--hybrid]");
-    }
-
-    if (!module.features.hasGC()) {
-      info.shouldBeTrue(
-        !type.isStruct(), type, "Struct types require GC [--enable-gc]");
-      info.shouldBeTrue(
-        !type.isArray(), type, "Array types require GC [--enable-gc]");
-    }
-  }
-}
-
 static void validateModule(Module& module, ValidationInfo& info) {
   // start
   if (module.start.is()) {
@@ -3524,7 +3508,6 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateDataSegments(module, info);
     validateTables(module, info);
     validateTags(module, info);
-    validateTypes(module, info);
     validateModule(module, info);
     validateFeatures(module, info);
   }

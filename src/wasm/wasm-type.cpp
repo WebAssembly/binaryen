@@ -1087,9 +1087,6 @@ FeatureSet Type::getFeatures() const {
       // A reference type implies we need that feature. Some also require more,
       // such as GC or exceptions.
       auto heapType = t.getHeapType();
-      if (heapType.isStruct() || heapType.isArray()) {
-        return FeatureSet::ReferenceTypes | FeatureSet::GC;
-      }
       if (heapType.isBasic()) {
         switch (heapType.getBasic()) {
           case HeapType::ext:
@@ -1114,11 +1111,16 @@ FeatureSet Type::getFeatures() const {
             return FeatureSet::ReferenceTypes;
         }
       }
-      // Note: Technically typed function references also require the typed
-      // function references feature, however, we use these types internally
-      // regardless of the presence of features (in particular, since during
-      // load of the wasm we don't know the features yet, so we apply the more
-      // refined types), so we don't add that in any case here.
+      if (heapType.isStruct() || heapType.isArray() ||
+          heapType.getRecGroup().size() > 1) {
+        return FeatureSet::ReferenceTypes | FeatureSet::GC;
+      }
+      // Note: Technically typed function references also require GC, however,
+      // we use these types internally regardless of the presence of GC (in
+      // particular, since during load of the wasm we don't know the features
+      // yet, so we apply the more refined types), so we don't add that in any
+      // case here.
+      assert(heapType.isSignature());
       return FeatureSet::ReferenceTypes;
     }
     TODO_SINGLE_COMPOUND(t);
