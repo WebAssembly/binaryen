@@ -314,7 +314,7 @@ namespace BinaryConsts {
 enum Meta { Magic = 0x6d736100, Version = 0x01 };
 
 enum Section {
-  User = 0,
+  Custom = 0,
   Type = 1,
   Import = 2,
   Function = 3,
@@ -423,7 +423,7 @@ enum EncodedHeapType {
   none = -0x1b,   // 0x65
 };
 
-namespace UserSections {
+namespace CustomSections {
 extern const char* Name;
 extern const char* SourceMapUrl;
 extern const char* Dylink;
@@ -470,7 +470,7 @@ enum Subsection {
   DylinkNeeded = 2,
 };
 
-} // namespace UserSections
+} // namespace CustomSections
 
 enum ASTNodes {
   Unreachable = 0x00,
@@ -1300,7 +1300,7 @@ public:
     Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
-  int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
+  int32_t startSubsection(BinaryConsts::CustomSections::Subsection code);
   void finishSubsection(int32_t start);
   void writeStart();
   void writeMemories();
@@ -1330,8 +1330,8 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeLateUserSections();
-  void writeUserSection(const UserSection& section);
+  void writeLateCustomSections();
+  void writeCustomSection(const CustomSection& section);
   void writeFeaturesSection();
   void writeDylinkSection();
   void writeLegacyDylinkSection();
@@ -1451,7 +1451,7 @@ public:
     skipFunctionBodies = skipFunctionBodies_;
   }
   void read();
-  void readUserSection(size_t payloadLen);
+  void readCustomSection(size_t payloadLen);
 
   bool more() { return pos < input.size(); }
 
