@@ -270,8 +270,6 @@ jobs:
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: emsdk install
-      # TODO: Go back to tot once problem with
-      # https://github.com/emscripten-core/emscripten/pull/17948 is resolved.
       run: |
         mkdir $HOME/emsdk
         git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
