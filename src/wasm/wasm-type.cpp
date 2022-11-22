@@ -1112,7 +1112,7 @@ FeatureSet Type::getFeatures() const {
         }
       }
       if (heapType.isStruct() || heapType.isArray() ||
-          heapType.getRecGroup().size() > 1) {
+          heapType.getRecGroup().size() > 1 || heapType.getSuperType()) {
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       }
       // Note: Technically typed function references also require GC, however,
