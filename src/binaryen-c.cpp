@@ -6062,10 +6062,10 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
                               const char* name,
                               const char* contents,
                               BinaryenIndex contentsSize) {
-  wasm::UserSection customSection;
+  wasm::CustomSection customSection;
   customSection.name = name;
   customSection.data = std::vector<char>(contents, contents + contentsSize);
-  ((Module*)module)->userSections.push_back(customSection);
+  ((Module*)module)->customSections.push_back(customSection);
 }
 
 //

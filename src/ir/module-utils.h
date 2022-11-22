@@ -160,7 +160,7 @@ inline void copyModule(const Module& in, Module& out) {
     copyDataSegment(curr.get(), out);
   }
   out.start = in.start;
-  out.userSections = in.userSections;
+  out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
   out.features = in.features;
   out.typeNames = in.typeNames;
