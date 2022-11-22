@@ -8,8 +8,16 @@
 ;; testcases.
 
 (module
+ ;; CHECK:      (type $A (struct (field dataref)))
+
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
+
+ (type $A (struct_subtype (field (ref null data)) data))
+
+ ;; CHECK:      (type $B (struct (field (ref data))))
+ (type $B (struct_subtype (field (ref data)) $A))
+
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
@@ -163,6 +171,49 @@
   )
   (drop
    (local.get $null-i31)
+  )
+ )
+
+ ;; CHECK:      (func $remove-tee-refinalize (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK-NEXT:  (struct.get $A 0
+ ;; CHECK-NEXT:   (block (result (ref null $A))
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $remove-tee-refinalize
+  (param $a (ref null $A))
+  (param $b (ref null $B))
+  (result (ref null data))
+  ;; The local.tee receives a $B and flows out an $A. We want to avoid changing
+  ;; types here, so we'll wrap it in a block, and leave further improvements
+  ;; for other passes.
+  (struct.get $A 0
+   (local.tee $a
+    (local.get $b)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $remove-tee-refinalize-2 (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK-NEXT:  (struct.get $A 0
+ ;; CHECK-NEXT:   (block (result (ref null $A))
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $remove-tee-refinalize-2
+  (param $a (ref null $A))
+  (param $b (ref null $B))
+  (result (ref null data))
+  ;; As above, but with an extra tee in the middle. The result should be the
+  ;; same.
+  (struct.get $A 0
+   (local.tee $a
+    (local.tee $a
+     (local.get $b)
+    )
+   )
   )
  )
 )
