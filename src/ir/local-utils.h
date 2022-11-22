@@ -19,6 +19,7 @@
 
 #include <ir/effects.h>
 #include <ir/manipulation.h>
+#include <ir/utils.h>
 
 namespace wasm {
 
@@ -61,9 +62,14 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
     : passOptions(passOptions), localGetCounter(&localGetCounter),
       module(module) {
     walk(func->body);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, &module);
+    }
   }
 
   bool removed = false;
+  bool refinalize = false;
 
   void visitLocalSet(LocalSet* curr) {
     // If no possible uses, remove.
@@ -94,6 +100,10 @@ struct UnneededSetRemover : public PostWalker<UnneededSetRemover> {
     auto* value = set->value;
     if (set->isTee()) {
       replaceCurrent(value);
+      if (value->type != set->type) {
+        // The value is more refined, so we'll need to refinalize.
+        refinalize = true;
+      }
     } else if (EffectAnalyzer(passOptions, module, set->value)
                  .hasSideEffects()) {
       Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);

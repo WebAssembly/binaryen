@@ -5,19 +5,19 @@
 ;; RUN:   | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) data))
-  (type $struct (struct (field (mut i32))))
-
   ;; CHECK:      (type $B (struct (field (ref data))))
 
-  ;; CHECK:      (type $A (struct (field dataref)))
-
-  ;; CHECK:      (type $struct-immutable (struct (field i32)))
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
   ;; NOMNL:      (type $A (struct_subtype (field dataref) data))
 
   ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
 
+  ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (struct (field (mut i32))))
+
+  ;; CHECK:      (type $A (struct (field dataref)))
+
+  ;; CHECK:      (type $struct-immutable (struct (field i32)))
   ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
   (type $struct-immutable (struct (field i32)))
 
@@ -701,5 +701,30 @@
   ;; NOMNL-NEXT: )
   (func $use-any (param $any anyref)
     ;; Helper function for the above.
+  )
+
+  ;; CHECK:      (func $remove-tee-refinalize (param $a (ref null $A)) (param $b (ref null $B)) (result dataref)
+  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $a (ref null $A)) (param $b (ref null $B)) (result dataref)
+  ;; NOMNL-NEXT:  (struct.get $B 0
+  ;; NOMNL-NEXT:   (local.get $b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $remove-tee-refinalize
+    (param $a (ref null $A))
+    (param $b (ref null $B))
+    (result (ref null data))
+
+    ;; The local.tee receives a $B and flows out an $A. After we remove it (it is
+    ;; obviously unnecessary), the struct.get will be reading from the more
+    ;; refined type $B.
+    (struct.get $A 0
+      (local.tee $a
+        (local.get $b)
+      )
+    )
   )
 )
