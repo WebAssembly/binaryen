@@ -2903,6 +2903,9 @@ void FunctionValidator::visitFunction(Function* curr) {
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
+  // Check for things like having a rec group with GC enabled.
+  features |=
+    (Type(curr->type, Nullable).getFeatures() & ~FeatureSet::ReferenceTypes);
   for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
