@@ -68,16 +68,17 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
     return InsertResult::NoError;
   }
 
-  void erase(const T& x) {
+  size_t erase(const T& x) {
     for (size_t i = 0; i < this->used; i++) {
       if (this->storage[i] == x) {
         // We found the item; erase it by moving the final item to replace it
         // and truncating the size.
         this->used--;
         this->storage[i] = this->storage[this->used];
-        return;
+        return 1;
       }
     }
+    return 0;
   }
 };
 
@@ -114,7 +115,7 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
     return InsertResult::NoError;
   }
 
-  void erase(const T& x) {
+  size_t erase(const T& x) {
     for (size_t i = 0; i < this->used; i++) {
       if (this->storage[i] == x) {
         // We found the item; move things backwards and shrink.
@@ -122,9 +123,10 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
           this->storage[j - 1] = this->storage[j];
         }
         this->used--;
-        return;
+        return 1;
       }
     }
+    return 0;
   }
 };
 
@@ -182,11 +184,11 @@ public:
     }
   }
 
-  void erase(const T& x) {
+  size_t erase(const T& x) {
     if (usingFixed()) {
-      fixed.erase(x);
+      return fixed.erase(x);
     } else {
-      flexible->erase(x);
+      return flexible->erase(x);
     }
   }
 
