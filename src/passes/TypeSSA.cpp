@@ -119,6 +119,18 @@ struct TypeSSA : public Pass {
   void processNews(const News& news) {
     for (auto* curr : news.structNews) {
       if (isInteresting(curr)) {
+        // This is interesting; create a new type and use it. The new type is
+        // identical to the existing one, and a subtype of it, so the only
+        // difference between them is nominal - which is enough for optimization
+        // passes to learn different things about the two.
+        auto oldType = curr->type.getHeapType();
+        TypeBuilder builder(1);
+        builder.setHeapType(0, oldType.getStruct());
+        builder.setSubType(0, oldType);
+        auto result = builder.build();
+        assert(!result.getError());
+        auto newType = (*result)[0];
+        curr->type = newType;
       }
     }
     // TODO: arrays
