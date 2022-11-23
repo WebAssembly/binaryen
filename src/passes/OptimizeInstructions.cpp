@@ -4060,7 +4060,7 @@ private:
           auto doC1SubC2 = false;
           auto doC2SubC1 = false;
           // Ignore the case of C1 or C2 being zero, as then C2-C1 or C1-C2
-          // does not change anything (and we don't want the optimize to think
+          // does not change anything (and we don't want the optimizer to think
           // we improved anything, or we could infinite loop on the mirage of
           // progress).
           if (C1 != zero && C2 != zero) {
@@ -4070,14 +4070,15 @@ private:
                 // rule
                 //   (a)    x + C1   > C2
                 //   (b')   x (+ 0)  > (C2-C1)
-                // As the constants on both sides change in the same way.
+                // That is, subtracting C1 from both sides is ok; the constants
+                // on both sides change in the same manner.
                 doC2SubC1 = true;
               } else if (C1SubC2.leS(C1).getInteger() &&
                          zero.leS(C2).getInteger()) {
                 // N.B. this code path is not tested atm as other optimizations
-                // will canonicalize x + C .. into x - C, and so we would need
-                // to implement the TODO above on subtraction and not only
-                // support addition here.
+                // will canonicalize x + C into x - C, and so we would need to
+                // implement the TODO above on subtraction and not only support
+                // addition here.
                 doC1SubC2 = true;
               }
             } else {
@@ -4094,7 +4095,7 @@ private:
             }
           }
           if (doC2SubC1) {
-            // This is the first line above, we turn into x > (C2-C1)
+            // This is the first line above, we turn into x > (C2-C1).
             c2->value = C2SubC1;
             curr->left = add->left;
             return curr;
