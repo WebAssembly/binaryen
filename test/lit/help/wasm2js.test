@@ -416,6 +416,9 @@
 ;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
 ;; CHECK-NEXT:                                                 js semantics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-merging                                merge types to their supertypes
+;; CHECK-NEXT:                                                 where possible
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
 ;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:
