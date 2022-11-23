@@ -98,12 +98,12 @@
 (module
   ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
   (type $A (struct_subtype (field (ref null $A)) data))
+  (type $B (struct_subtype (field (ref null $A)) $A))
+  ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type $C (struct_subtype (field (ref null $B)) $A))
-
-  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
-  (type $B (struct_subtype (field (ref null $A)) $A))
+  ;; CHECK:      (type $C (struct_subtype (field (ref null $A)) $A))
   (type $C (struct_subtype (field (ref null $B)) $A))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
@@ -128,16 +128,12 @@
 (module
   ;; CHECK:      (type $A (struct_subtype  data))
   (type $A (struct))
-  ;; CHECK:      (type $none_=>_ref?|$A| (func_subtype (result (ref null $A)) func))
-
-  ;; CHECK:      (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
-
-  ;; CHECK:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
+
+  ;; CHECK:      (type $none_=>_ref?|$A| (func_subtype (result (ref null $A)) func))
 
   ;; CHECK:      (func $returner (type $none_=>_ref?|$A|) (result (ref null $A))
   ;; CHECK-NEXT:  (local $local (ref null $A))
-  ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (local.get $local)
   ;; CHECK-NEXT: )
   (func $returner (result (ref null $B))
