@@ -191,15 +191,18 @@ struct TypeMerging : public Pass {
       newSignatures[type] = sig;
     }
 
-//    typeRewriter.updateSignatures(newSignatures, *module);
+    //    typeRewriter.updateSignatures(newSignatures, *module);
 
     class TypeInternalsUpdater : public GlobalTypeRewriter {
       const TypeUpdates& updates;
       const SignatureUpdates& signatureUpdates;
 
     public:
-      TypeInternalsUpdater(Module& wasm, const TypeUpdates& updates, const SignatureUpdates& signatureUpdates)
-        : GlobalTypeRewriter(wasm), updates(updates), signatureUpdates(signatureUpdates) {
+      TypeInternalsUpdater(Module& wasm,
+                           const TypeUpdates& updates,
+                           const SignatureUpdates& signatureUpdates)
+        : GlobalTypeRewriter(wasm), updates(updates),
+          signatureUpdates(signatureUpdates) {
         update();
       }
 
