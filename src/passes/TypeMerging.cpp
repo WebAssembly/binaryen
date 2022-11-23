@@ -133,7 +133,23 @@ struct TypeMerging : public Pass {
     // We found things to optimize! Rewrite types in the module to apply those
     // changes.
 
-    // TODO: close over the map, to apply X=>Y=>Z into X=>Z
+    // First, close over the map, so if X can be merged into Y and Y into Z then
+    // we map X into Z.
+    for (auto type : types) {
+      if (!merges.count(type)) {
+        continue;
+      }
+
+      auto newType = merges[type];
+      while (1) {
+        if (merges.count(newType)) {
+          newType = merges[newType];
+          continue;
+        }
+        break;
+      }
+      merges[type] = newType;
+    }
 
     GlobalTypeRewriter typeRewriter(*module);
     typeRewriter.mapTypes(merges);

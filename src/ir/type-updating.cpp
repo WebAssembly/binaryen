@@ -103,6 +103,13 @@ void GlobalTypeRewriter::update() {
   }
 
   mapTypes(oldToNewTypes);
+
+  // Update type names.
+  for (auto& [old, new_] : oldToNewTypes) {
+    if (wasm.typeNames.count(old)) {
+      wasm.typeNames[new_] = wasm.typeNames[old];
+    }
+  }
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
@@ -233,13 +240,6 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   }
   for (auto& tag : wasm.tags) {
     tag->sig = updater.getNew(tag->sig);
-  }
-
-  // Update type names.
-  for (auto& [old, new_] : oldToNewTypes) {
-    if (wasm.typeNames.count(old)) {
-      wasm.typeNames[new_] = wasm.typeNames[old];
-    }
   }
 }
 
