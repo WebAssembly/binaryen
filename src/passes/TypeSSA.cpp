@@ -107,11 +107,11 @@ struct TypeSSA : public Pass {
 
     // Also find news in the module scope.
     NewFinder moduleFinder;
-    moduleFinder.runOnModuleCode(getPassRunner(), module);
+    moduleFinder.walkModuleCode(module);
 
     // Process all the news. Note that we must do so in a deterministic order.
     ModuleUtils::iterImportedFunctions(*module, [&](Function* func) {
-      processNews(analysis.map[func].news);
+      processNews(analysis.map[func]);
     });
     processNews(moduleFinder.news);
   }
@@ -130,7 +130,7 @@ struct TypeSSA : public Pass {
         auto result = builder.build();
         assert(!result.getError());
         auto newType = (*result)[0];
-        curr->type = newType;
+        curr->type = Type(newType, NonNullable);
       }
     }
     // TODO: arrays
@@ -152,7 +152,7 @@ struct TypeSSA : public Pass {
     }
 
     // Look for at least one interesting operand.
-    auto& fields = curr->type.getStruct().fields;
+    auto& fields = curr->type.getHeapType().getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
       assert(i <= curr->operands.size());
       auto* operand = curr->operands[i];
