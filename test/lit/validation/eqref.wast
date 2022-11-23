@@ -6,7 +6,7 @@
 
 ;; NO-GC: all used types should be allowed
 
-;; GC:   (func $foo (param $x eqref)
+;; GC:   (func $foo (type $eqref_=>_none) (param $x eqref)
 
 (module
   (func $foo (param $x eqref)

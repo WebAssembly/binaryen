@@ -3,10 +3,10 @@
 ;; RUN: foreach %s %t wasm-opt --precompute-propagate -all --nominal -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct-imm (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct-imm (struct (field i32)))
   (type $struct-imm (struct_subtype i32 data))
 
-  ;; CHECK:      (type $struct-mut (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $struct-mut (struct (field (mut i32))))
   (type $struct-mut (struct_subtype (mut i32) data))
 
   ;; CHECK:      (func $propagate (type $none_=>_none)
@@ -358,7 +358,7 @@
 (module
   ;; One field is immutable, the other is not, so we can only propagate the
   ;; former.
-  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) (field i32) data))
+  ;; CHECK:      (type $struct (struct (field (mut i32)) (field i32)))
   (type $struct (struct_subtype (mut i32) i32 data))
 
   ;; CHECK:      (func $propagate (type $none_=>_none)
@@ -410,9 +410,9 @@
   ;; Create an immutable vtable in an immutable field, which lets us read from
   ;; it.
 
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
 
-  ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $vtable (struct (field funcref)))
   (type $vtable (struct_subtype funcref data))
   (type $object (struct_subtype (ref $vtable) data))
 
@@ -458,9 +458,9 @@
 (module
   ;; As above, but make $vtable not immutable, which prevents optimization.
 
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
 
-  ;; CHECK:      (type $vtable (struct_subtype (field (mut funcref)) data))
+  ;; CHECK:      (type $vtable (struct (field (mut funcref))))
   (type $vtable (struct_subtype (mut funcref) data))
   (type $object (struct_subtype (ref $vtable) data))
 
@@ -511,9 +511,9 @@
 (module
   ;; As above, but make $object not immutable, which prevents optimization.
 
-  ;; CHECK:      (type $object (struct_subtype (field (mut (ref $vtable))) data))
+  ;; CHECK:      (type $object (struct (field (mut (ref $vtable)))))
 
-  ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $vtable (struct (field funcref)))
   (type $vtable (struct_subtype funcref data))
   (type $object (struct_subtype (mut (ref $vtable)) data))
 
@@ -562,9 +562,9 @@
   ;; Create an immutable vtable in an immutable global, which we can optimize
   ;; with.
 
-  ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $vtable (struct (field funcref)))
   (type $vtable (struct_subtype funcref data))
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
   (type $object (struct_subtype (ref $vtable) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
@@ -613,9 +613,9 @@
   ;; Create an immutable vtable in an mutable global, whose mutability prevents
   ;; optimization.
 
-  ;; CHECK:      (type $vtable (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $vtable (struct (field funcref)))
   (type $vtable (struct_subtype funcref data))
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
   (type $object (struct_subtype (ref $vtable) data))
 
   ;; CHECK:      (global $vtable (mut (ref $vtable)) (struct.new $vtable
@@ -668,9 +668,9 @@
   ;; Create an immutable vtable in an immutable global, but using an array
   ;; instead of a struct.
 
-  ;; CHECK:      (type $vtable (array_subtype funcref data))
+  ;; CHECK:      (type $vtable (array funcref))
   (type $vtable (array_subtype funcref data))
-  ;; CHECK:      (type $object (struct_subtype (field (ref $vtable)) data))
+  ;; CHECK:      (type $object (struct (field (ref $vtable))))
   (type $object (struct_subtype (ref $vtable) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (array.init_static $vtable
@@ -739,16 +739,16 @@
   ;; data that is filled with vtables of different types. On usage, we do a
   ;; cast of the vtable type.
 
-  ;; CHECK:      (type $itable (array_subtype dataref data))
+  ;; CHECK:      (type $itable (array dataref))
   (type $itable (array_subtype (ref null data) data))
 
-  ;; CHECK:      (type $object (struct_subtype (field (ref $itable)) data))
+  ;; CHECK:      (type $object (struct (field (ref $itable))))
   (type $object (struct_subtype (ref $itable) data))
 
-  ;; CHECK:      (type $vtable-0 (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $vtable-0 (struct (field funcref)))
   (type $vtable-0 (struct_subtype funcref data))
 
-  ;; CHECK:      (type $vtable-1 (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $vtable-1 (struct (field funcref)))
   (type $vtable-1 (struct_subtype funcref data))
 
   ;; CHECK:      (global $itable (ref $itable) (array.init_static $itable

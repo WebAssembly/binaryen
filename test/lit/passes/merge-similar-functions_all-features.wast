@@ -5,13 +5,13 @@
   ;; CHECK:      (type $[i8] (array i8))
   (type $[i8] (array i8))
 
-  ;; CHECK:      (func $take-ref-null-data (param $0 dataref)
+  ;; CHECK:      (func $take-ref-null-data (type $dataref_=>_none) (param $0 dataref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $take-ref-null-data (param (ref null data))
     (unreachable)
   )
-  ;; CHECK:      (func $take-ref-eq (param $0 (ref eq))
+  ;; CHECK:      (func $take-ref-eq (type $ref|eq|_=>_none) (param $0 (ref eq))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $take-ref-eq (param (ref eq))
@@ -24,7 +24,7 @@
   ;; But in general, type B and C don't have a common subtype, so
   ;; we can't merge call instructions of func X and Y.
 
-  ;; CHECK:      (func $no-call-subtyping-same-operand-0
+  ;; CHECK:      (func $no-call-subtyping-same-operand-0 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
@@ -55,7 +55,7 @@
       (array.init_static $[i8])
     )
   )
-  ;; CHECK:      (func $no-call-subtyping-same-operand-1
+  ;; CHECK:      (func $no-call-subtyping-same-operand-1 (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)

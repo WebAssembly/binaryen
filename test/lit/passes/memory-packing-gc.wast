@@ -13,7 +13,7 @@
   ;; CHECK:      (data "hello")
   (data "hello")
 
-  ;; CHECK:      (func $array-new-data (result (ref $array))
+  ;; CHECK:      (func $array-new-data (type $none_=>_ref|$array|) (result (ref $array))
   ;; CHECK-NEXT:  (array.new_data $array 0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 5)
@@ -37,7 +37,7 @@
   ;; CHECK:      (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hello\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hello\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
 
-  ;; CHECK:      (func $no-drop-ends (result (ref $array))
+  ;; CHECK:      (func $no-drop-ends (type $none_=>_ref|$array|) (result (ref $array))
   ;; CHECK-NEXT:  (array.new_data $array 0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 5)
@@ -64,7 +64,7 @@
   ;; CHECK:      (data "optimize\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00me")
   (data "optimize\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00me")
 
-  ;; CHECK:      (func $no-split (result (ref $array))
+  ;; CHECK:      (func $no-split (type $none_=>_ref|$array|) (result (ref $array))
   ;; CHECK-NEXT:  (array.new_data $array 0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 8)
@@ -92,7 +92,7 @@
 
   ;; CHECK:      (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00optimize\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00me\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
 
-  ;; CHECK:      (func $no-split-active (result (ref $array))
+  ;; CHECK:      (func $no-split-active (type $none_=>_ref|$array|) (result (ref $array))
   ;; CHECK-NEXT:  (array.new_data $array 0
   ;; CHECK-NEXT:   (i32.const 16)
   ;; CHECK-NEXT:   (i32.const 8)
@@ -127,7 +127,7 @@
 
   (memory $mem 1 1)
 
-  ;; CHECK:      (func $renumber-segment (result (ref $array))
+  ;; CHECK:      (func $renumber-segment (type $none_=>_ref|$array|) (result (ref $array))
   ;; CHECK-NEXT:  (array.new_data $array 2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 7)
@@ -157,7 +157,7 @@
 
   (memory $mem 1 1)
 
-  ;; CHECK:      (func $renumber-segment (result (ref $array))
+  ;; CHECK:      (func $renumber-segment (type $none_=>_ref|$array|) (result (ref $array))
   ;; CHECK-NEXT:  (array.new_data $array 0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 7)

@@ -10,32 +10,32 @@
  (export "other1" (func $other1))
  (export "other2" (func $other2))
  (start $start)
- (func $start
+ (func $start (type $0)
   (call $called0)
  )
- (func $called0
+ (func $called0 (type $0)
   (call $called1)
  )
- (func $called1
+ (func $called1 (type $0)
   (nop)
  )
- (func $called_indirect
+ (func $called_indirect (type $0)
   (nop)
  )
- (func $exported
+ (func $exported (type $0)
   (call $called2)
  )
- (func $called2
+ (func $called2 (type $0)
   (call $called2)
   (call $called3)
  )
- (func $called3
+ (func $called3 (type $0)
   (call $called4)
  )
- (func $called4
+ (func $called4 (type $0)
   (call $called3)
  )
- (func $other1 (param $0 i32)
+ (func $other1 (type $1) (param $0 i32)
   (call_indirect $0 (type $0)
    (i32.const 0)
   )
@@ -75,7 +75,7 @@
    )
   )
  )
- (func $other2 (param $0 i32)
+ (func $other2 (type $1) (param $0 i32)
   (unreachable)
  )
 )
@@ -87,7 +87,7 @@
  (type $none_=>_none (func))
  (import "env" "table2" (table $1 1 1 funcref))
  (elem (i32.const 0) $f)
- (func $f
+ (func $f (type $none_=>_none)
   (nop)
  )
 )
@@ -107,7 +107,7 @@
  (import "env" "table" (table $timport$0 1 funcref))
  (data (i32.const 1) "hello, world!")
  (elem (i32.const 0) $waka)
- (func $waka
+ (func $waka (type $none_=>_none)
   (nop)
  )
 )
@@ -116,7 +116,7 @@
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table $timport$0 0 funcref))
  (export "user" (func $user))
- (func $user
+ (func $user (type $0)
   (drop
    (i32.load
     (i32.const 0)
@@ -131,7 +131,7 @@
  (type $none_=>_none (func))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user
+ (func $user (type $none_=>_none)
   (i32.store
    (i32.const 0)
    (i32.const 0)
@@ -142,7 +142,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (result i32)
+ (func $user (type $none_=>_i32) (result i32)
   (i32.atomic.rmw.add
    (i32.const 0)
    (i32.const 0)
@@ -153,7 +153,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (result i32)
+ (func $user (type $none_=>_i32) (result i32)
   (i32.atomic.rmw8.cmpxchg_u
    (i32.const 0)
    (i32.const 0)
@@ -165,7 +165,7 @@
  (type $none_=>_none (func))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user
+ (func $user (type $none_=>_none)
   (local $0 i32)
   (local $1 i64)
   (drop
@@ -181,7 +181,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 23 256))
  (export "user" (func $user))
- (func $user (result i32)
+ (func $user (type $none_=>_i32) (result i32)
   (memory.atomic.notify
    (i32.const 0)
    (i32.const 0)
@@ -192,7 +192,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 23 256)
  (export "user" (func $user))
- (func $user (result i32)
+ (func $user (type $none_=>_i32) (result i32)
   (memory.grow
    (i32.const 0)
   )
@@ -202,7 +202,7 @@
  (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $0 256))
  (export "user" (func $user))
- (func $user (result i32)
+ (func $user (type $none_=>_i32) (result i32)
   (memory.grow
    (i32.const 0)
   )
@@ -212,7 +212,7 @@
  (type $none_=>_i32 (func (result i32)))
  (memory $0 23 256)
  (export "user" (func $user))
- (func $user (result i32)
+ (func $user (type $none_=>_i32) (result i32)
   (memory.size)
  )
 )
@@ -224,7 +224,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (data (global.get $memoryBase) "hello, world!")
  (elem (global.get $tableBase) $waka)
- (func $waka
+ (func $waka (type $none_=>_none)
   (nop)
  )
 )
@@ -240,16 +240,16 @@
  (export "one" (func $one))
  (export "three" (func $three))
  (export "exp_glob" (global $exp_glob))
- (func $one (result i32)
+ (func $one (type $none_=>_i32) (result i32)
   (call $two)
  )
- (func $two (result i32)
+ (func $two (type $none_=>_i32) (result i32)
   (global.get $int)
  )
- (func $three
+ (func $three (type $none_=>_none)
   (call $four)
  )
- (func $four
+ (func $four (type $none_=>_none)
   (global.set $set
    (i32.const 200)
   )
@@ -265,7 +265,7 @@
 (module
  (type $none_=>_none (func))
  (start $starter)
- (func $starter
+ (func $starter (type $none_=>_none)
   (drop
    (i32.const 0)
   )
@@ -284,7 +284,7 @@
  (type $0 (func (param f64) (result f64)))
  (import "env" "table" (table $timport$0 6 6 funcref))
  (elem (i32.const 0) $0)
- (func $0 (param $var$0 f64) (result f64)
+ (func $0 (type $0) (param $var$0 f64) (result f64)
   (if (result f64)
    (f64.eq
     (f64.const 1)

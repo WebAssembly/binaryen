@@ -150,7 +150,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
  (start $starter)
- (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (block $the-body (result i32)
    (block $the-nothing
@@ -2228,7 +2228,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
    (i32.const 42)
   )
  )
- (func $starter
+ (func $starter (type $none_=>_none)
   (nop)
  )
 )
@@ -2254,7 +2254,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
  (start $starter)
- (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (block $the-body (result i32)
    (block $the-nothing
@@ -4332,7 +4332,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
    (i32.const 42)
   )
  )
- (func $starter
+ (func $starter (type $none_=>_none)
   (nop)
  )
 )
@@ -4813,7 +4813,7 @@ module loaded from binary form:
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32 i32))
- (func $adder (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4855,7 +4855,7 @@ test_parsing text:
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32))
- (func $adder (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4869,7 +4869,7 @@ module loaded from text form:
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32))
- (func $ADD_ER (param $0 i32) (param $1 i32) (result i32)
+ (func $ADD_ER (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)

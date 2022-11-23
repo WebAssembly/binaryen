@@ -13,7 +13,7 @@
 
   ;; CHECK:      (elem declare func $helper)
 
-  ;; CHECK:      (func $no-uses
+  ;; CHECK:      (func $no-uses (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -22,7 +22,7 @@
     (local $x (ref func))
   )
 
-  ;; CHECK:      (func $func-scope
+  ;; CHECK:      (func $func-scope (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $helper)
@@ -42,7 +42,7 @@
     )
   )
 
-  ;; CHECK:      (func $inner-scope
+  ;; CHECK:      (func $inner-scope (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (block $b
   ;; CHECK-NEXT:   (local.set $x
@@ -66,7 +66,7 @@
     )
   )
 
-  ;; CHECK:      (func $func-to-inner
+  ;; CHECK:      (func $func-to-inner (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $helper)
@@ -90,7 +90,7 @@
     )
   )
 
-  ;; CHECK:      (func $inner-to-func
+  ;; CHECK:      (func $inner-to-func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x funcref)
   ;; CHECK-NEXT:  (block $b
   ;; CHECK-NEXT:   (local.set $x
@@ -115,7 +115,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-condition
+  ;; CHECK:      (func $if-condition (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $helper2
@@ -149,7 +149,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-without-set-but-param (param $x (ref func))
+  ;; CHECK:      (func $get-without-set-but-param (type $ref|func|_=>_none) (param $x (ref func))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -162,12 +162,12 @@
     )
   )
 
-  ;; CHECK:      (func $helper
+  ;; CHECK:      (func $helper (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper)
 
-  ;; CHECK:      (func $helper2 (param $0 funcref) (result i32)
+  ;; CHECK:      (func $helper2 (type $funcref_=>_i32) (param $0 funcref) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper2 (param funcref) (result i32)

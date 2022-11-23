@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- The isorecursive WasmGC type system (i.e. --hybrid) is now the default to
+  match the spec.
+
 v111
 ----
 

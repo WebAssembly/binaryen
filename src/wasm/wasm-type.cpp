@@ -44,7 +44,7 @@
 
 namespace wasm {
 
-static TypeSystem typeSystem = TypeSystem::Equirecursive;
+static TypeSystem typeSystem = TypeSystem::Isorecursive;
 
 void setTypeSystem(TypeSystem system) { typeSystem = system; }
 

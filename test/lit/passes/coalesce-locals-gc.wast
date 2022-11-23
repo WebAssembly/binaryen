@@ -15,13 +15,13 @@
 
  (type $A (struct_subtype (field (ref null data)) data))
 
- ;; CHECK:      (type $B (struct (field (ref data))))
+ ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
  (type $B (struct_subtype (field (ref data)) $A))
 
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (func $test-dead-get-non-nullable (param $0 (ref data))
+ ;; CHECK:      (func $test-dead-get-non-nullable (type $ref|data|_=>_none) (param $0 (ref data))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref data))
@@ -39,7 +39,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (param $0 (ref null $array)) (result (ref null $array))
+ ;; CHECK:      (func $br_on_null (type $ref?|$array|_=>_ref?|$array|) (param $0 (ref null $array)) (result (ref null $array))
  ;; CHECK-NEXT:  (block $label$1 (result (ref null $array))
  ;; CHECK-NEXT:   (block $label$2
  ;; CHECK-NEXT:    (br $label$1
@@ -75,7 +75,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead
+ ;; CHECK:      (func $nn-dead (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -114,7 +114,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead-nameless
+ ;; CHECK:      (func $nn-dead-nameless (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -145,7 +145,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-null
+ ;; CHECK:      (func $unreachable-get-null (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 anyref)
  ;; CHECK-NEXT:  (local $1 i31ref)
  ;; CHECK-NEXT:  (unreachable)
@@ -174,7 +174,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)
@@ -195,7 +195,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize-2 (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK:      (func $remove-tee-refinalize-2 (type $ref?|$A|_ref?|$B|_=>_dataref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)

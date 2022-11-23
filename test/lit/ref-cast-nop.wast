@@ -5,7 +5,7 @@
 (module
  ;; CHECK:      (type $struct (struct (field i32)))
  (type $struct (struct i32))
- ;; CHECK:      (func $ref.cast_nop_static (param $x (ref any)) (result (ref $struct))
+ ;; CHECK:      (func $ref.cast_nop_static (type $ref|any|_=>_ref|$struct|) (param $x (ref any)) (result (ref $struct))
  ;; CHECK-NEXT:  (ref.cast_nop_static $struct
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )

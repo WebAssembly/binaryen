@@ -15,7 +15,7 @@
 
  ;; CHECK:      (export "int" (func $extern.internalize))
 
- ;; CHECK:      (func $extern.externalize (param $0 (ref any)) (result (ref extern))
+ ;; CHECK:      (func $extern.externalize (type $ref|any|_=>_ref|extern|) (param $0 (ref any)) (result (ref extern))
  ;; CHECK-NEXT:  (extern.externalize
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -26,7 +26,7 @@
   )
  )
 
- ;; CHECK:      (func $extern.internalize (param $0 externref) (result anyref)
+ ;; CHECK:      (func $extern.internalize (type $externref_=>_anyref) (param $0 externref) (result anyref)
  ;; CHECK-NEXT:  (extern.internalize
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )

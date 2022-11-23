@@ -2,11 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --nominal -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
-  ;; CHECK:      (type $B (func_subtype func))
+  ;; CHECK:      (type $B (func))
   (type $B (func))
 
   ;; CHECK:      (elem declare func $target-A $target-B)
@@ -76,7 +76,7 @@
 
 ;; As above, but reverse the order inside $foo, so we see the CallRef first.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
   (type $B (func))
 
@@ -118,11 +118,11 @@
 
 ;; As above, but interleave CallRefs with RefFuncs.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
@@ -179,11 +179,11 @@
 ;; As above, with the order reversed inside $foo. The results should be the
 ;; same.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
@@ -240,10 +240,10 @@
 ;; The call.without.effects intrinsic does a call to the reference given to it,
 ;; but for now other imports do not (until we add a flag for closed-world).
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func_subtype (param funcref) func))
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
@@ -293,12 +293,12 @@
 ;; As above, but now the call to the intrinsic does not let us see the exact
 ;; function being called.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func_subtype (param funcref) func))
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"

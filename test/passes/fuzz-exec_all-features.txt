@@ -16,27 +16,27 @@
  (export "c" (func $c))
  (export "d" (func $d))
  (export "e" (func $e))
- (func $a (result i32)
+ (func $a (type $none_=>_i32) (result i32)
   (i32.extend8_s
    (i32.const 187)
   )
  )
- (func $b (result i32)
+ (func $b (type $none_=>_i32) (result i32)
   (i32.extend16_s
    (i32.const 33768)
   )
  )
- (func $c (result i64)
+ (func $c (type $none_=>_i64) (result i64)
   (i64.extend8_s
    (i64.const 187)
   )
  )
- (func $d (result i64)
+ (func $d (type $none_=>_i64) (result i64)
   (i64.extend16_s
    (i64.const 33768)
   )
  )
- (func $e (result i64)
+ (func $e (type $none_=>_i64) (result i64)
   (i64.extend32_s
    (i64.const 2148318184)
   )
@@ -82,28 +82,28 @@
  (export "unaligned_notify" (func $3))
  (export "wrap_cmpxchg" (func $4))
  (export "oob_notify" (func $5))
- (func $0 (result i32)
+ (func $0 (type $none_=>_i32) (result i32)
   (i32.atomic.load
    (i32.const 1)
   )
  )
- (func $1 (result i32)
+ (func $1 (type $none_=>_i32) (result i32)
   (i32.atomic.load offset=1
    (i32.const 0)
   )
  )
- (func $2 (result i32)
+ (func $2 (type $none_=>_i32) (result i32)
   (i32.atomic.load16_u offset=2
    (i32.const 0)
   )
  )
- (func $3 (result i32)
+ (func $3 (type $none_=>_i32) (result i32)
   (memory.atomic.notify
    (i32.const 1)
    (i32.const 1)
   )
  )
- (func $4 (param $0 i32) (param $1 i32)
+ (func $4 (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
   (drop
    (i32.atomic.rmw8.cmpxchg_u
     (i32.const 0)
@@ -117,7 +117,7 @@
    )
   )
  )
- (func $5
+ (func $5 (type $none_=>_none)
   (drop
    (memory.atomic.notify offset=22
     (i32.const -104)
@@ -151,7 +151,7 @@
  (memory $0 (shared 1 1))
  (data (i32.const 0) "\ff\ff")
  (export "unsigned_2_bytes" (func $0))
- (func $0 (result i32)
+ (func $0 (type $none_=>_i32) (result i32)
   (i32.atomic.rmw16.xor_u
    (i32.const 0)
    (i32.const 0)
@@ -169,7 +169,7 @@
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "rmw-reads-modifies-and-writes" (func $0))
- (func $0
+ (func $0 (type $none_=>_none)
   (drop
    (i64.atomic.rmw16.and_u offset=4
     (i32.const 0)
@@ -194,7 +194,7 @@
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
  (memory $0 (shared 1 1))
  (export "rmw-reads-modifies-and-writes-asymmetrical" (func $0))
- (func $0
+ (func $0 (type $none_=>_none)
   (drop
    (i32.atomic.rmw8.sub_u
     (i32.const 3)
@@ -217,7 +217,7 @@
  (type $none_=>_funcref (func (result funcref)))
  (elem declare func $func)
  (export "func" (func $func))
- (func $func (result funcref)
+ (func $func (type $none_=>_funcref) (result funcref)
   (ref.func $func)
  )
 )

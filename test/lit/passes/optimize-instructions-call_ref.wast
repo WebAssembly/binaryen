@@ -29,21 +29,21 @@
 
  ;; CHECK:      (elem declare func $bar $fallthrough-no-params $fallthrough-non-nullable $return-nothing)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
 
- ;; CHECK:      (func $bar (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $bar (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $bar (param i32) (param i32)
   (unreachable)
  )
 
- ;; CHECK:      (func $call_ref-to-direct (param $x i32) (param $y i32)
+ ;; CHECK:      (func $call_ref-to-direct (type $i32_i32_=>_none) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -58,7 +58,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough (param $x i32)
+ ;; CHECK:      (func $fallthrough (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.tee $x
@@ -104,7 +104,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-no-params (result i32)
+ ;; CHECK:      (func $fallthrough-no-params (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (nop)
@@ -124,7 +124,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-non-nullable (param $x (ref data))
+ ;; CHECK:      (func $fallthrough-non-nullable (type $data_=>_none) (param $x (ref data))
  ;; CHECK-NEXT:  (local $1 dataref)
  ;; CHECK-NEXT:  (call $fallthrough-non-nullable
  ;; CHECK-NEXT:   (block (result (ref data))
@@ -157,7 +157,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-bad-type (result i32)
+ ;; CHECK:      (func $fallthrough-bad-type (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (call_ref $none_=>_i32
  ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (drop
@@ -182,12 +182,12 @@
  )
 
  ;; Helper function for the above test.
- ;; CHECK:      (func $return-nothing
+ ;; CHECK:      (func $return-nothing (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $return-nothing)
 
- ;; CHECK:      (func $fallthrough-unreachable
+ ;; CHECK:      (func $fallthrough-unreachable (type $none_=>_none)
  ;; CHECK-NEXT:  (call_ref $i32_i32_=>_none
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
@@ -209,7 +209,7 @@
   )
  )
 
- ;; CHECK:      (func $ignore-unreachable
+ ;; CHECK:      (func $ignore-unreachable (type $none_=>_none)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
@@ -224,7 +224,7 @@
   )
  )
 
- ;; CHECK:      (func $call-table-get (param $x i32)
+ ;; CHECK:      (func $call-table-get (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (call_indirect $table-1 (type $i32_i32_=>_none)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const 2)
@@ -241,7 +241,7 @@
   )
  )
 
- ;; CHECK:      (func $call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+ ;; CHECK:      (func $call_ref-to-select (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none) (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local $5 i32)
  ;; CHECK-NEXT:  (block
@@ -297,7 +297,7 @@
   )
  )
 
- ;; CHECK:      (func $return_call_ref-to-select (param $x i32) (param $y i32)
+ ;; CHECK:      (func $return_call_ref-to-select (type $i32_i32_=>_none) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local.set $2
@@ -332,7 +332,7 @@
   )
  )
 
- ;; CHECK:      (func $get-i32 (result i32)
+ ;; CHECK:      (func $get-i32 (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: )
  (func $get-i32 (result i32)

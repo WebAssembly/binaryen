@@ -5,103 +5,103 @@
 (module $parse
  ;; types
 
- ;; CHECK:      (type $pair (struct_subtype (field (mut i32)) (field (mut i64)) data))
+ ;; CHECK:      (type $pair (struct (field (mut i32)) (field (mut i64))))
 
- ;; CHECK:      (type $void (func_subtype func))
+ ;; CHECK:      (type $void (func))
 
- ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
- ;; CHECK:      (type $ret2 (func_subtype (result i32 i32) func))
+ ;; CHECK:      (type $ret2 (func (result i32 i32)))
  (type $ret2 (func (result i32 i32)))
 
  (rec
-  ;; CHECK:      (type $i32_i64_=>_none (func_subtype (param i32 i64) func))
+  ;; CHECK:      (type $i32_i64_=>_none (func (param i32 i64)))
 
-  ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
-  ;; CHECK:      (type $v128_i32_=>_v128 (func_subtype (param v128 i32) (result v128) func))
+  ;; CHECK:      (type $v128_i32_=>_v128 (func (param v128 i32) (result v128)))
 
-  ;; CHECK:      (type $many (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) func))
+  ;; CHECK:      (type $many (func (param i32 i64 f32 f64) (result anyref (ref func))))
 
-  ;; CHECK:      (type $i32_i32_=>_none (func_subtype (param i32 i32) func))
+  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
 
-  ;; CHECK:      (type $i32_i32_f64_f64_=>_none (func_subtype (param i32 i32 f64 f64) func))
+  ;; CHECK:      (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
 
-  ;; CHECK:      (type $i64_=>_none (func_subtype (param i64) func))
+  ;; CHECK:      (type $i64_=>_none (func (param i64)))
 
-  ;; CHECK:      (type $i32_i32_i32_=>_none (func_subtype (param i32 i32 i32) func))
+  ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
 
-  ;; CHECK:      (type $v128_=>_i32 (func_subtype (param v128) (result i32) func))
+  ;; CHECK:      (type $v128_=>_i32 (func (param v128) (result i32)))
 
-  ;; CHECK:      (type $v128_v128_=>_v128 (func_subtype (param v128 v128) (result v128) func))
+  ;; CHECK:      (type $v128_v128_=>_v128 (func (param v128 v128) (result v128)))
 
-  ;; CHECK:      (type $v128_v128_v128_=>_v128 (func_subtype (param v128 v128 v128) (result v128) func))
+  ;; CHECK:      (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
 
-  ;; CHECK:      (type $i32_i64_v128_=>_none (func_subtype (param i32 i64 v128) func))
+  ;; CHECK:      (type $i32_i64_v128_=>_none (func (param i32 i64 v128)))
 
-  ;; CHECK:      (type $i32_i32_i64_i64_=>_none (func_subtype (param i32 i32 i64 i64) func))
+  ;; CHECK:      (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i64_=>_i32_i64 (func_subtype (param i32 i64) (result i32 i64) func))
+  ;; CHECK:      (type $i32_i64_=>_i32_i64 (func (param i32 i64) (result i32 i64)))
 
-  ;; CHECK:      (type $i64_=>_i32_i64 (func_subtype (param i64) (result i32 i64) func))
+  ;; CHECK:      (type $i64_=>_i32_i64 (func (param i64) (result i32 i64)))
 
-  ;; CHECK:      (type $i32_=>_i32_i64 (func_subtype (param i32) (result i32 i64) func))
+  ;; CHECK:      (type $i32_=>_i32_i64 (func (param i32) (result i32 i64)))
 
-  ;; CHECK:      (type $none_=>_i32_i64 (func_subtype (result i32 i64) func))
+  ;; CHECK:      (type $none_=>_i32_i64 (func (result i32 i64)))
 
-  ;; CHECK:      (type $anyref_=>_none (func_subtype (param anyref) func))
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
-  ;; CHECK:      (type $eqref_eqref_=>_i32 (func_subtype (param eqref eqref) (result i32) func))
+  ;; CHECK:      (type $eqref_eqref_=>_i32 (func (param eqref eqref) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i31ref (func_subtype (param i32) (result i31ref) func))
+  ;; CHECK:      (type $i32_=>_i31ref (func (param i32) (result i31ref)))
 
-  ;; CHECK:      (type $i31ref_=>_none (func_subtype (param i31ref) func))
+  ;; CHECK:      (type $i31ref_=>_none (func (param i31ref)))
 
-  ;; CHECK:      (type $i32_i64_=>_ref|$pair| (func_subtype (param i32 i64) (result (ref $pair)) func))
+  ;; CHECK:      (type $i32_i64_=>_ref|$pair| (func (param i32 i64) (result (ref $pair))))
 
-  ;; CHECK:      (type $none_=>_ref|$pair| (func_subtype (result (ref $pair)) func))
+  ;; CHECK:      (type $none_=>_ref|$pair| (func (result (ref $pair))))
 
-  ;; CHECK:      (type $ref|$pair|_=>_i32 (func_subtype (param (ref $pair)) (result i32) func))
+  ;; CHECK:      (type $ref|$pair|_=>_i32 (func (param (ref $pair)) (result i32)))
 
-  ;; CHECK:      (type $ref|$pair|_=>_i64 (func_subtype (param (ref $pair)) (result i64) func))
+  ;; CHECK:      (type $ref|$pair|_=>_i64 (func (param (ref $pair)) (result i64)))
 
-  ;; CHECK:      (type $ref|$pair|_i32_=>_none (func_subtype (param (ref $pair) i32) func))
+  ;; CHECK:      (type $ref|$pair|_i32_=>_none (func (param (ref $pair) i32)))
 
-  ;; CHECK:      (type $ref|$pair|_i64_=>_none (func_subtype (param (ref $pair) i64) func))
+  ;; CHECK:      (type $ref|$pair|_i64_=>_none (func (param (ref $pair) i64)))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $s0 (struct_subtype  data))
+  ;; CHECK-NEXT:  (type $s0 (struct ))
   (type $s0 (sub (struct)))
-  ;; CHECK:       (type $s1 (struct_subtype  data))
+  ;; CHECK:       (type $s1 (struct ))
   (type $s1 (struct (field)))
  )
 
  (rec)
 
- ;; CHECK:      (type $s2 (struct_subtype (field i32) data))
+ ;; CHECK:      (type $s2 (struct (field i32)))
  (type $s2 (struct i32))
- ;; CHECK:      (type $s3 (struct_subtype (field i64) data))
+ ;; CHECK:      (type $s3 (struct (field i64)))
  (type $s3 (struct (field i64)))
- ;; CHECK:      (type $s4 (struct_subtype (field $x f32) data))
+ ;; CHECK:      (type $s4 (struct (field $x f32)))
  (type $s4 (struct (field $x f32)))
- ;; CHECK:      (type $s5 (struct_subtype (field i32) (field i64) data))
+ ;; CHECK:      (type $s5 (struct (field i32) (field i64)))
  (type $s5 (struct i32 i64))
- ;; CHECK:      (type $s6 (struct_subtype (field i64) (field f32) data))
+ ;; CHECK:      (type $s6 (struct (field i64) (field f32)))
  (type $s6 (struct (field i64 f32)))
- ;; CHECK:      (type $s7 (struct_subtype (field $x f32) (field $y f64) data))
+ ;; CHECK:      (type $s7 (struct (field $x f32) (field $y f64)))
  (type $s7 (struct (field $x f32) (field $y f64)))
- ;; CHECK:      (type $s8 (struct_subtype (field i32) (field i64) (field $z f32) (field f64) (field (mut i32)) data))
+ ;; CHECK:      (type $s8 (struct (field i32) (field i64) (field $z f32) (field f64) (field (mut i32))))
  (type $s8 (struct i32 (field) i64 (field $z f32) (field f64 (mut i32))))
 
- ;; CHECK:      (type $a0 (array_subtype i32 data))
+ ;; CHECK:      (type $a0 (array i32))
  (type $a0 (array i32))
- ;; CHECK:      (type $a1 (array_subtype i64 data))
+ ;; CHECK:      (type $a1 (array i64))
  (type $a1 (array (field i64)))
- ;; CHECK:      (type $a2 (array_subtype (mut f32) data))
+ ;; CHECK:      (type $a2 (array (mut f32)))
  (type $a2 (array (mut f32)))
- ;; CHECK:      (type $a3 (array_subtype (mut f64) data))
+ ;; CHECK:      (type $a3 (array (mut f64)))
  (type $a3 (array (field $x (mut f64))))
 
  (type $pair (struct (mut i32) (mut i64)))
@@ -126,7 +126,7 @@
  (global (import "mod" "") (ref null $many))
 
  (global (mut i32) i32.const 0)
- ;; CHECK:      (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none (func_subtype (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany)) func))
+ ;; CHECK:      (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$1 0))
 

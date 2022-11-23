@@ -8,7 +8,7 @@
 
 (module
   ;; CHECK:      (type $A (struct (field (mut i32))))
-  ;; NOMNL:      (type $A (struct_subtype (field (mut i32)) data))
+  ;; NOMNL:      (type $A (struct (field (mut i32))))
   (type $A (struct
     (field (mut i32))
   ))
@@ -24,7 +24,7 @@
   ;;   a.0 = 10
   ;;   return a.0
   ;;
-  ;; CHECK:      (func $test (param $x (ref null $A)) (result i32)
+  ;; CHECK:      (func $test (type $ref?|$A|_=>_i32) (param $x (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (struct.get $A 0
