@@ -4077,7 +4077,7 @@ private:
               }
             } else {
               // Unsigned.
-              if (C2SubC1.leU(C2) && zero.leU(C1)) {
+              if (C2SubC1.leU(C2).getInteger() && zero.leU(C1).getInteger()) {
                 doC2SubC1 = true;
               } else if (C1SubC2.leU(C1).getInteger() &&
                          zero.leU(C2).getInteger()) {
