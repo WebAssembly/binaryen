@@ -8,18 +8,24 @@
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
-  ;; CHECK:      (type ${i32} (struct_subtype (field i32) $struct))
+  ;; CHECK:      (type $struct$4 (struct_subtype (field i32) $struct))
 
-  ;; CHECK:      (type ${i32} (struct_subtype (field i32) $struct))
+  ;; CHECK:      (type $struct$5 (struct_subtype (field i32) $struct))
 
-  ;; CHECK:      (global $g (ref $struct) (struct.new ${i32}
+  ;; CHECK:      (type $struct$1 (struct_subtype (field i32) $struct))
+
+  ;; CHECK:      (type $struct$2 (struct_subtype (field i32) $struct))
+
+  ;; CHECK:      (type $struct$3 (struct_subtype (field i32) $struct))
+
+  ;; CHECK:      (global $g (ref $struct) (struct.new $struct$4
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
   (global $g (ref $struct) (struct.new $struct
     (i32.const 42)
   ))
 
-  ;; CHECK:      (global $h (ref $struct) (struct.new ${i32}
+  ;; CHECK:      (global $h (ref $struct) (struct.new $struct$5
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
   (global $h (ref $struct) (struct.new $struct
@@ -28,10 +34,10 @@
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (struct.new_default $struct$1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:   (struct.new $struct$2
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -49,7 +55,7 @@
 
   ;; CHECK:      (func $another-func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:   (struct.new $struct$3
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -63,4 +69,74 @@
   )
 )
 
-;; TODO test uninteresting cases which do not get new types.
+;; Some of these are uninteresting and should not get a new type.
+(module
+  ;; CHECK:      (type $anyref_dataref_=>_none (func_subtype (param anyref dataref) func))
+
+  ;; CHECK:      (type $struct (struct_subtype (field anyref) data))
+  (type $struct (struct_subtype (field (ref null any)) data))
+
+  ;; CHECK:      (type $struct$1 (struct_subtype (field anyref) $struct))
+
+  ;; CHECK:      (type $struct$2 (struct_subtype (field anyref) $struct))
+
+  ;; CHECK:      (type $struct$3 (struct_subtype (field anyref) $struct))
+
+  ;; CHECK:      (func $foo (type $anyref_dataref_=>_none) (param $any anyref) (param $data dataref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct$1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct$2
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct$3
+  ;; CHECK-NEXT:    (local.get $data)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (param $any (ref null any)) (param $data (ref null data))
+    ;; A null is interesting.
+    (drop
+      (struct.new_default $struct)
+    )
+    (drop
+      (struct.new $struct
+        (ref.null none)
+      )
+    )
+    ;; An unknown value of the same type is uninteresting.
+    (drop
+      (struct.new $struct
+        (local.get $any)
+      )
+    )
+    ;; But a more refined type piques our interest.
+    (drop
+      (struct.new $struct
+        (local.get $data)
+      )
+    )
+    ;; An unreachable is boring.
+    (drop
+      (struct.new $struct
+        (unreachable)
+      )
+    )
+  )
+)

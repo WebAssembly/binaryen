@@ -117,9 +117,11 @@ struct TypeSSA : public Pass {
     processNews(moduleFinder.news);
   }
 
+  // As we generate new names, use a consistent index.
+  Index nameCounter = 0;
+
   void processNews(const News& news) {
     // We'll generate nice names as we go, if we can.
-    Index nameCounter = 0;
     std::unordered_set<Name> existingTypeNames;
     auto& typeNames = module->typeNames;
     for (auto& [type, info] : typeNames) {
