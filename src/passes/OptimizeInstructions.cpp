@@ -4064,21 +4064,21 @@ private:
           // progress).
           if (C1 != zero && C2 != zero) {
             if (isSignedOp(curr->op)) {
-              if (C2SubC1.leS(C2) && zero.leS(C1)) {
+              if (C2SubC1.leS(C2).getInteger() && zero.leS(C1).getInteger()) {
                 // C2=>C2-C1 and C1=>0 both decrease, which means we can do the
                 // rule
                 //   (a)    x + C1   > C2
                 //   (b')   x (+ 0)  > (C2-C1)
                 // As the constants on both sides change in the same way.
                 doC2SubC1 = true;
-              } else if (C1SubC2.leS(C1) && zero.leS(C2)) {
+              } else if (C1SubC2.leS(C1).getInteger() && zero.leS(C2).getInteger()) {
                 doC1SubC2 = true;
               }
             } else {
               // Unsigned.
               if (C2SubC1.leU(C2) && zero.leU(C1)) {
                 doC2SubC1 = true;
-              } else if (C1SubC2.leU(C1) && zero.leU(C2)) {
+              } else if (C1SubC2.leU(C1).getInteger() && zero.leU(C2).getInteger()) {
                 doC1SubC2 = true;
               }
               // For unsigned, one of the cases must work out, as there are no
