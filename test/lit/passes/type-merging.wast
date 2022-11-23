@@ -103,3 +103,32 @@
     (local $g (ref null $G))
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+  (type $A (struct_subtype (field (ref null $A)) data))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref null $B)) $A))
+
+  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
+  (type $B (struct_subtype (field (ref null $A)) $A))
+
+  (type $C (struct_subtype (field (ref null $B)) $A))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; $A will remain the same.
+    (local $a (ref null $A))
+    ;; $B can be merged into $A.
+    (local $b (ref null $B))
+    ;; $C refines the field, so it cannot be merged.
+    (local $c (ref null $C))
+  )
+)
