@@ -15,7 +15,7 @@
 
  (type $A (struct_subtype (field (ref null data)) data))
 
- ;; CHECK:      (type $B (struct (field (ref data))))
+ ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
  (type $B (struct_subtype (field (ref data)) $A))
 
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
@@ -174,7 +174,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)
@@ -195,7 +195,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize-2 (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK:      (func $remove-tee-refinalize-2 (type $ref?|$A|_ref?|$B|_=>_dataref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)

@@ -5,20 +5,20 @@
 ;; RUN:   | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $B (struct (field (ref data))))
+  ;; CHECK:      (type $A (struct (field dataref)))
+
+  ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
 
   ;; CHECK:      (type $struct (struct (field (mut i32))))
-  ;; NOMNL:      (type $A (struct_subtype (field dataref) data))
+  ;; NOMNL:      (type $A (struct (field dataref)))
 
   ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
 
-  ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) data))
+  ;; NOMNL:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $A (struct (field dataref)))
-
   ;; CHECK:      (type $struct-immutable (struct (field i32)))
-  ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
+  ;; NOMNL:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
   (type $A (struct_subtype (field (ref null data)) data))
@@ -703,7 +703,7 @@
     ;; Helper function for the above.
   )
 
-  ;; CHECK:      (func $remove-tee-refinalize (param $a (ref null $A)) (param $b (ref null $B)) (result dataref)
+  ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $a (ref null $A)) (param $b (ref null $B)) (result dataref)
   ;; CHECK-NEXT:  (struct.get $B 0
   ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
