@@ -16654,4 +16654,153 @@
       (i32.const 0x80000000)
     )
   )
+
+  ;; CHECK:      (func $skip-added-constants-zero (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-zero (result i32)
+    ;; A zero in either constant means we should not optimize using an added
+    ;; constant. However, other optimizations kick in here, as adding zero does
+    ;; nothing.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 0)
+      )
+      (i32.const 0x80000000)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-zero-a (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-zero-a (result i32)
+    ;; A zero in the last constant means we should not optimize.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-zero-b (result i32)
+  ;; CHECK-NEXT:  (i32.ge_u
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-zero-b (result i32)
+    ;; parallel case to the above, with a zero in the added constant.
+    (i32.ge_u
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-negative (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-negative (result i32)
+    ;; Reasonable negative constants can be optimized.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const -10)
+      )
+      (i32.const -20)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-negative-flip (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-negative-flip (result i32)
+    ;; As above, but flipped.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const -20)
+      )
+      (i32.const -10)
+    )
+  )
 )
