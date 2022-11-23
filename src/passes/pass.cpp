@@ -461,6 +461,9 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("type-ssa",
+               "create new nominal types to help other optimizations",
+               createTypeSSAPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
