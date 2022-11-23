@@ -191,37 +191,49 @@ struct TypeMerging : public Pass {
       newSignatures[type] = sig;
     }
 
-    typeRewriter.updateSignatures(newSignatures, *module);
+//    typeRewriter.updateSignatures(newSignatures, *module);
 
     class TypeInternalsUpdater : public GlobalTypeRewriter {
       const TypeUpdates& updates;
+      const SignatureUpdates& signatureUpdates;
 
     public:
-      TypeInternalsUpdater(Module& wasm, const TypeUpdates& updates)
-        : GlobalTypeRewriter(wasm), updates(updates) {
+      TypeInternalsUpdater(Module& wasm, const TypeUpdates& updates, const SignatureUpdates& signatureUpdates)
+        : GlobalTypeRewriter(wasm), updates(updates), signatureUpdates(signatureUpdates) {
         update();
       }
 
-      void updateType(Type& type) {
+      Type getNewType(Type type) {
         if (!type.isRef()) {
-          return;
+          return type;
         }
         auto heapType = type.getHeapType();
         auto iter = updates.find(heapType);
         if (iter != updates.end()) {
-          type = Type(iter->second, type.getNullability());
+          return Type(iter->second, type.getNullability());
         }
+        return type;
       }
 
       void modifyStruct(HeapType oldType, Struct& struct_) override {
-        for (auto& field : struct_.fields) {
-          updateType(field.type);
+        auto& oldFields = oldType.getStruct().fields;
+        for (Index i = 0; i < oldFields.size(); i++) {
+          auto& oldField = oldFields[i];
+          auto& newField = struct_.fields[i];
+          newField.type = getNewType(oldField.type);
         }
       }
       void modifyArray(HeapType oldType, Array& array) override {
-        updateType(array.element.type);
+        array.element.type = getNewType(oldType.getArray().element.type);
       }
-    } rewriter(*module, merges);
+      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
+        auto iter = signatureUpdates.find(oldSignatureType);
+        if (iter != signatureUpdates.end()) {
+          sig.params = getTempType(iter->second.params);
+          sig.results = getTempType(iter->second.results);
+        }
+      }
+    } rewriter(*module, merges, newSignatures);
 
     // Propagate type changes outwards.
     ReFinalize().run(getPassRunner(), module);
