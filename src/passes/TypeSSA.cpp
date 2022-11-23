@@ -47,6 +47,7 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/possible-constant.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -78,7 +79,11 @@ struct TypeSSA : public Pass {
   // them. If a global is not present here, it cannot be optimized.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
-  void run(Module* module) override {
+  Module* module;
+
+  void run(Module* module_) override {
+    module = module_;
+
     if (!module->features.hasGC()) {
       return;
     }
@@ -113,13 +118,55 @@ struct TypeSSA : public Pass {
 
   void processNews(const News& news) {
     for (auto* curr : news.structNews) {
-  bool isInteresting() {
-    // Must be a more refined type than the default, or a literal, or (if we
-    // add GUFA) be an ExactType.
-  }
+      if (isInteresting(curr)) {
+      }
     }
     // TODO: arrays
   }
+
+  // An interesting StructNew, which we think is worth creating a new type for,
+  // is one that can be optimized better with a new type. That means it must
+  // have something interesting for optimizations to work with.
+  bool isInteresting(StructNew* curr) {
+    if (curr->type == Type::unreachable) {
+      // This is dead code anyhow.
+      return false;
+    }
+
+    if (curr->isWithDefault()) {
+      // This starts with all default values, and so it is unlikely that much
+      // can be done. TODO perhaps all other sets have refined types, though?
+      return false;
+    }
+
+    // Look for at least one interesting operand.
+    auto& fields = curr->type.getStruct().fields;
+    for (Index i = 0; i < fields.size(); i++) {
+      assert(i <= curr->operands.size());
+      auto* operand = curr->operands[i];
+      if (operand->type != fields[i].type) {
+        // Excellent, this field has an interesting type - more refined than the
+        // declared type, and which optimizations might benefit from.
+        //
+        // TODO: If we add GUFA integration, we could check for an exact type
+        //       here - even if the type is not more refined, but it is more
+        //       precise, that is interesting.
+        return true;
+      }
+
+      // TODO: fallthrough
+      PossibleConstantValues value;
+      value.note(operand, *module);
+      if (value.isConstantLiteral() || value.isConstantGlobal()) {
+        // This is a constant that passes may benefit from.
+        return true;
+      }
+    }
+
+    // Nothing interesting.
+    return false;
+  }
+
 };
 
 } // anonymous namespace
