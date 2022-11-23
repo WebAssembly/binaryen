@@ -74,10 +74,6 @@ struct TypeSSA : public Pass {
   // Only modifies struct/array.new types.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  // Maps optimizable struct types to the globals whose init is a struct.new of
-  // them. If a global is not present here, it cannot be optimized.
-  std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
-
   Module* module;
 
   void run(Module* module_) override {

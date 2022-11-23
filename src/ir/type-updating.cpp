@@ -103,6 +103,11 @@ void GlobalTypeRewriter::update() {
     oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
   }
 
+  mapTypes(oldToNewTypes);
+}
+
+void GlobalTypeUpdater::mapTypes(const TypeMap& oldToNewTypes) {
+
   // Replace all the old types in the module with the new ones.
   struct CodeUpdater
     : public WalkerPass<
