@@ -30,6 +30,7 @@
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
+#include "support/small_set.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -42,12 +43,12 @@ namespace {
 // distinguishable.
 
 // Most functions do no casts, or perhaps cast |this| and perhaps a few others.
-using CastTypes = SmallSet<HeapType, 5>;
+using CastTypes = SmallUnorderedSet<HeapType, 5>;
 
 struct CastFinder : public PostWalker<CastFinder> {
   CastTypes castTypes;
 
-  void visitRefCast(RefCast* curr) { castTypes.insert(intendedType); }
+  void visitRefCast(RefCast* curr) { castTypes.insert(curr->intendedType); }
 };
 
 struct TypeMerging : public Pass {
@@ -92,7 +93,9 @@ struct TypeMerging : public Pass {
     // Accumulate all the castTypes.
     auto& allCastTypes = moduleFinder.castTypes;
     for (auto& [k, castTypes] : analysis.map) {
-      allCastTypes.insert(castTypes.begin(), castTypes.end());
+      for (auto type : castTypes) {
+        allCastTypes.insert(type);
+      }
     }
 
     // Find all the heap types.
@@ -104,7 +107,7 @@ struct TypeMerging : public Pass {
         continue;
       }
 
-      auto super = type.getSuper();
+      auto super = type.getSuperType();
       if (!super) {
         // This has no supertype, so there is nothing to merge it into.
         continue;
@@ -120,7 +123,7 @@ struct TypeMerging : public Pass {
 
       // We can merge! This is identical structurally to the super, and also not
       // distinguishable nominally.
-      merges.insert(type);
+      merges[type] = *super;
     }
 
     if (merges.empty()) {

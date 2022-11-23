@@ -97,8 +97,7 @@ void GlobalTypeRewriter::update() {
   // Map the old types to the new ones. This uses the fact that type indices
   // are the same in the old and new types, that is, we have not added or
   // removed types, just modified them.
-  using OldToNewTypes = std::unordered_map<HeapType, HeapType>;
-  OldToNewTypes oldToNewTypes;
+  TypeMap oldToNewTypes;
   for (Index i = 0; i < indexedTypes.types.size(); i++) {
     oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
   }
@@ -106,7 +105,7 @@ void GlobalTypeRewriter::update() {
   mapTypes(oldToNewTypes);
 }
 
-void GlobalTypeUpdater::mapTypes(const TypeMap& oldToNewTypes) {
+void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 
   // Replace all the old types in the module with the new ones.
   struct CodeUpdater
@@ -114,9 +113,9 @@ void GlobalTypeUpdater::mapTypes(const TypeMap& oldToNewTypes) {
         PostWalker<CodeUpdater, UnifiedExpressionVisitor<CodeUpdater>>> {
     bool isFunctionParallel() override { return true; }
 
-    OldToNewTypes& oldToNewTypes;
+    const TypeMap& oldToNewTypes;
 
-    CodeUpdater(OldToNewTypes& oldToNewTypes) : oldToNewTypes(oldToNewTypes) {}
+    CodeUpdater(const TypeMap& oldToNewTypes) : oldToNewTypes(oldToNewTypes) {}
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<CodeUpdater>(oldToNewTypes);
@@ -141,8 +140,7 @@ void GlobalTypeUpdater::mapTypes(const TypeMap& oldToNewTypes) {
         return type;
       }
       if (type.isFunction() || type.isData()) {
-        assert(oldToNewTypes.count(type));
-        return oldToNewTypes[type];
+        return oldToNewTypes.at(type);
       }
       return type;
     }
