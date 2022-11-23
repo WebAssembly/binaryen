@@ -47,6 +47,7 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/possible-constant.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -142,8 +143,12 @@ struct TypeSSA : public Pass {
 
         // If the old type has a nice name, make a nice name for the new one.
         if (typeNames.count(oldType)) {
-          auto newName = Names::getValidName(typeNames[oldType].name.toString() + '$' + std::to_string(++nameCounter), existingTypeNames);
-          typeNames[newType] = newName;
+          auto intendedName = typeNames[oldType].name.toString() + '$' + std::to_string(++nameCounter);
+          auto newName = Names::getValidNameGivenExisting(intendedName, existingTypeNames);
+          // Copy the old field names; only change the type's name itself.
+          auto info = typeNames[oldType];
+          info.name = newName;
+          typeNames[newType] = info;
           existingTypeNames.insert(newName);
         }
       }
