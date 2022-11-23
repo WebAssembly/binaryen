@@ -16669,7 +16669,7 @@
   (func $skip-added-constants-zero (result i32)
     ;; A zero in either constant means we should not optimize using an added
     ;; constant. However, other optimizations kick in here, as adding zero does
-    ;; nothing.
+    ;; nothing, and we end up with [max 31 bits] >=_s MIN_INT which is true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
@@ -16729,7 +16729,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $skip-added-constants-zero-b (result i32)
-    ;; parallel case to the above, with a zero in the added constant.
+    ;; Parallel case to the above, with a zero in the added constant. We do not
+    ;; optimize.
     (i32.ge_u
       (i32.add
         (i32.shr_u
@@ -16759,7 +16760,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $skip-added-constants-negative (result i32)
-    ;; Reasonable negative constants can be optimized.
+    ;; Reasonable negative constants can be optimized. But the add is
+    ;; canoncalized into a sub, and atm we do not optimize such added constants.
     (i32.ge_s
       (i32.add
         (i32.shr_u
@@ -16789,7 +16791,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $skip-added-constants-negative-flip (result i32)
-    ;; As above, but flipped.
+    ;; As above, but flipped. The add is canoncalized into a sub, and atm we do
+    ;; not optimize such added constants.
     (i32.ge_s
       (i32.add
         (i32.shr_u
@@ -16816,7 +16819,8 @@
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix (result i32)
-    ;; A case of one negative and one positive constant. We can optimize.
+    ;; A case of one negative and one positive constant. Here we have
+    ;; [max 31 bits] + 10 >=_s -20 which is always true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
@@ -16846,7 +16850,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix-flip (result i32)
-    ;; As above, but with sign flipped.
+    ;; As above, but with sign flipped. The add is canoncalized into a sub, and
+    ;; atm we do not optimize such added constants.
     (i32.ge_s
       (i32.add
         (i32.shr_u
@@ -16874,7 +16879,7 @@
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix-flip-other (result i32)
     ;; As above, but with the sign the same while the absolute values are
-    ;; flipped.
+    ;; flipped. Here we have [max 31 bits] + 20 >=_s -10 which is always true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
