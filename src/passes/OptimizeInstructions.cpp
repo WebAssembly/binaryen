@@ -4074,6 +4074,7 @@ private:
               } else if (C1SubC2.leS(C1).getInteger() &&
                          zero.leS(C2).getInteger()) {
                 doC1SubC2 = true;
+// TODO test
               }
             } else {
               // Unsigned.
@@ -4090,13 +4091,13 @@ private:
           }
           if (doC2SubC1) {
             // This is the first line above, we turn into x > (C2-C1)
-            c2->value = c2->value.sub(c1->value);
+            c2->value = C2SubC1;
             curr->left = add->left;
             return curr;
           }
           // This is the second line above, we turn into x + (C1-C2) > 0.
           if (doC1SubC2) {
-            c1->value = c1->value.sub(c2->value);
+            c1->value = C1SubC2;
             c2->value = zero;
             return curr;
           }
