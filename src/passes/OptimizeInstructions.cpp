@@ -4071,14 +4071,16 @@ private:
                 //   (b')   x (+ 0)  > (C2-C1)
                 // As the constants on both sides change in the same way.
                 doC2SubC1 = true;
-              } else if (C1SubC2.leS(C1).getInteger() && zero.leS(C2).getInteger()) {
+              } else if (C1SubC2.leS(C1).getInteger() &&
+                         zero.leS(C2).getInteger()) {
                 doC1SubC2 = true;
               }
             } else {
               // Unsigned.
               if (C2SubC1.leU(C2) && zero.leU(C1)) {
                 doC2SubC1 = true;
-              } else if (C1SubC2.leU(C1).getInteger() && zero.leU(C2).getInteger()) {
+              } else if (C1SubC2.leU(C1).getInteger() &&
+                         zero.leU(C2).getInteger()) {
                 doC1SubC2 = true;
               }
               // For unsigned, one of the cases must work out, as there are no
