@@ -3,31 +3,28 @@
 ;; RUN: wasm-opt %s -all --dae --nominal -S -o - | filecheck %s --check-prefix NOMNL
 
 (module
+
  ;; CHECK:      (type ${} (struct ))
+ ;; NOMNL:      (type ${} (struct ))
+ (type ${} (struct))
 
- ;; CHECK:      (type ${i32} (struct (field i32)))
- ;; NOMNL:      (type ${} (struct_subtype  data))
-
+ ;; CHECK:      (type ${i32} (struct_subtype (field i32) ${}))
  ;; NOMNL:      (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32} (struct_subtype (field i32) ${}))
 
- (type ${} (struct))
-
- ;; CHECK:      (type ${f64} (struct (field f64)))
-
- ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
+ ;; CHECK:      (type ${f64} (struct_subtype (field f64) ${}))
  ;; NOMNL:      (type ${f64} (struct_subtype (field f64) ${}))
-
- ;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
- (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
-
  (type ${f64} (struct_subtype (field f64) ${}))
 
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+;; CHECK:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+;; NOMNL:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+(type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+
+ ;; CHECK:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  ;; NOMNL:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
- ;; CHECK:      (func $call-various-params-no
+ ;; CHECK:      (func $call-various-params-no (type $none_=>_none)
  ;; CHECK-NEXT:  (call $various-params-no
  ;; CHECK-NEXT:   (call $get_{})
  ;; CHECK-NEXT:   (call $get_{i32})
@@ -63,7 +60,7 @@
  )
  ;; This function is called in ways that do not allow us to alter the types of
  ;; its parameters (see last function).
- ;; CHECK:      (func $various-params-no (param $x (ref null ${})) (param $y (ref null ${}))
+ ;; CHECK:      (func $various-params-no (type $ref?|${}|_ref?|${}|_=>_none) (param $x (ref null ${})) (param $y (ref null ${}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -85,7 +82,7 @@
   (drop (local.get $y))
  )
 
- ;; CHECK:      (func $get_{} (result (ref null ${}))
+ ;; CHECK:      (func $get_{} (type $none_=>_ref?|${}|) (result (ref null ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get_{} (type $none_=>_ref?|${}|) (result (ref null ${}))
@@ -94,7 +91,7 @@
  (func $get_{} (result (ref null ${}))
   (unreachable)
  )
- ;; CHECK:      (func $get_{i32} (result (ref null ${i32}))
+ ;; CHECK:      (func $get_{i32} (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get_{i32} (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
@@ -103,7 +100,7 @@
  (func $get_{i32} (result (ref null ${i32}))
   (unreachable)
  )
- ;; CHECK:      (func $get_{f64} (result (ref null ${f64}))
+ ;; CHECK:      (func $get_{f64} (type $none_=>_ref?|${f64}|) (result (ref null ${f64}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get_{f64} (type $none_=>_ref?|${f64}|) (result (ref null ${f64}))
@@ -113,7 +110,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $call-various-params-yes
+ ;; CHECK:      (func $call-various-params-yes (type $none_=>_none)
  ;; CHECK-NEXT:  (call $various-params-yes
  ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:   (i32.const 0)
@@ -154,7 +151,7 @@
  )
  ;; This function is called in ways that *do* allow us to alter the types of
  ;; its parameters (see last function).
- ;; CHECK:      (func $various-params-yes (param $x (ref null ${i32})) (param $i i32) (param $y (ref null ${i32}))
+ ;; CHECK:      (func $various-params-yes (type $ref?|${i32}|_i32_ref?|${i32}|_=>_none) (param $x (ref null ${i32})) (param $i i32) (param $y (ref null ${i32}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -183,7 +180,7 @@
   (drop (local.get $y))
  )
 
- ;; CHECK:      (func $call-various-params-set
+ ;; CHECK:      (func $call-various-params-set (type $none_=>_none)
  ;; CHECK-NEXT:  (call $various-params-set
  ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:   (call $get_null_{i32})
@@ -218,7 +215,7 @@
  ;; This function is called in ways that *do* allow us to alter the types of
  ;; its parameters (see last function), however, we reuse the parameters by
  ;; writing to them, which causes problems in one case.
- ;; CHECK:      (func $various-params-set (param $x (ref null ${i32})) (param $y (ref null ${i32}))
+ ;; CHECK:      (func $various-params-set (type $ref?|${i32}|_ref?|${i32}|_=>_none) (param $x (ref null ${i32})) (param $y (ref null ${i32}))
  ;; CHECK-NEXT:  (local $2 (ref null ${}))
  ;; CHECK-NEXT:  (local.set $2
  ;; CHECK-NEXT:   (local.get $x)
@@ -290,7 +287,7 @@
   )
  )
 
- ;; CHECK:      (func $call-various-params-tee
+ ;; CHECK:      (func $call-various-params-tee (type $none_=>_none)
  ;; CHECK-NEXT:  (call $various-params-tee
  ;; CHECK-NEXT:   (call $get_null_{i32})
  ;; CHECK-NEXT:  )
@@ -306,7 +303,7 @@
    (call $get_null_{i32})
   )
  )
- ;; CHECK:      (func $various-params-tee (param $x (ref null ${i32}))
+ ;; CHECK:      (func $various-params-tee (type $ref?|${i32}|_=>_none) (param $x (ref null ${i32}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -343,7 +340,7 @@
   )
  )
 
- ;; CHECK:      (func $call-various-params-null
+ ;; CHECK:      (func $call-various-params-null (type $none_=>_none)
  ;; CHECK-NEXT:  (call $various-params-null
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (ref.null none)
@@ -389,7 +386,7 @@
  )
  ;; This function is called in ways that allow us to make the first parameter
  ;; non-nullable.
- ;; CHECK:      (func $various-params-null (param $x (ref none)) (param $y (ref null ${i32}))
+ ;; CHECK:      (func $various-params-null (type $ref|none|_ref?|${i32}|_=>_none) (param $x (ref none)) (param $y (ref null ${i32}))
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
@@ -425,7 +422,7 @@
   (local.set $temp (local.get $temp))
  )
 
- ;; CHECK:      (func $call-various-params-middle
+ ;; CHECK:      (func $call-various-params-middle (type $none_=>_none)
  ;; CHECK-NEXT:  (call $various-params-middle
  ;; CHECK-NEXT:   (call $get_null_{i32_i64})
  ;; CHECK-NEXT:  )
@@ -451,7 +448,7 @@
    (call $get_null_{i32_f32})
   )
  )
- ;; CHECK:      (func $various-params-middle (param $x (ref null ${i32}))
+ ;; CHECK:      (func $various-params-middle (type $ref?|${i32}|_=>_none) (param $x (ref null ${i32}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -466,7 +463,7 @@
   (drop (local.get $x))
  )
 
- ;; CHECK:      (func $unused-and-refinable
+ ;; CHECK:      (func $unused-and-refinable (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 dataref)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
@@ -486,7 +483,7 @@
   ;; local).
  )
 
- ;; CHECK:      (func $call-unused-and-refinable
+ ;; CHECK:      (func $call-unused-and-refinable (type $none_=>_none)
  ;; CHECK-NEXT:  (call $unused-and-refinable)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $call-unused-and-refinable (type $none_=>_none)
@@ -498,7 +495,7 @@
   )
  )
 
- ;; CHECK:      (func $non-nullable-fixup (param $0 (ref ${}))
+ ;; CHECK:      (func $non-nullable-fixup (type $ref|${}|_=>_none) (param $0 (ref ${}))
  ;; CHECK-NEXT:  (local $1 dataref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (local.get $0)
@@ -525,7 +522,7 @@
   )
  )
 
- ;; CHECK:      (func $call-non-nullable-fixup
+ ;; CHECK:      (func $call-non-nullable-fixup (type $none_=>_none)
  ;; CHECK-NEXT:  (call $non-nullable-fixup
  ;; CHECK-NEXT:   (struct.new_default ${})
  ;; CHECK-NEXT:  )
@@ -541,7 +538,7 @@
   )
  )
 
- ;; CHECK:      (func $call-update-null
+ ;; CHECK:      (func $call-update-null (type $none_=>_none)
  ;; CHECK-NEXT:  (call $update-null
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
@@ -568,7 +565,7 @@
   )
  )
 
- ;; CHECK:      (func $update-null (param $x (ref null ${}))
+ ;; CHECK:      (func $update-null (type $ref?|${}|_=>_none) (param $x (ref null ${}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -585,7 +582,7 @@
   (drop (local.get $x))
  )
 
- ;; CHECK:      (func $get_null_{i32} (result (ref null ${i32}))
+ ;; CHECK:      (func $get_null_{i32} (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get_null_{i32} (type $none_=>_ref?|${i32}|) (result (ref null ${i32}))
@@ -597,7 +594,7 @@
   (ref.null ${i32})
  )
 
- ;; CHECK:      (func $get_null_{i32_i64} (result (ref null ${i32_i64}))
+ ;; CHECK:      (func $get_null_{i32_i64} (type $none_=>_ref?|${i32_i64}|) (result (ref null ${i32_i64}))
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get_null_{i32_i64} (type $none_=>_ref?|${i32_i64}|) (result (ref null ${i32_i64}))
@@ -607,7 +604,7 @@
   (ref.null ${i32_i64})
  )
 
- ;; CHECK:      (func $get_null_{i32_f32} (result (ref null ${i32_f32}))
+ ;; CHECK:      (func $get_null_{i32_f32} (type $none_=>_ref?|${i32_f32}|) (result (ref null ${i32_f32}))
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $get_null_{i32_f32} (type $none_=>_ref?|${i32_f32}|) (result (ref null ${i32_f32}))

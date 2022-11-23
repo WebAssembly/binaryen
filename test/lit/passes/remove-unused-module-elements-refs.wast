@@ -2,11 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements --nominal -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
-  ;; CHECK:      (type $B (func_subtype func))
+  ;; CHECK:      (type $B (func))
   (type $B (func))
 
   ;; CHECK:      (elem declare func $target-A $target-B)
@@ -23,7 +23,7 @@
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -38,12 +38,12 @@
     (drop
       (ref.func $target-B)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     ;; Verify that we do not crash on an unreachable call_ref, which has no
     ;; heap type for us to analyze.
-    (call_ref
+    (call_ref $A
       (unreachable)
     )
   )
@@ -76,7 +76,7 @@
 
 ;; As above, but reverse the order inside $foo, so we see the CallRef first.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
   (type $B (func))
 
@@ -85,7 +85,7 @@
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
@@ -96,7 +96,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (export "foo")
-    (call_ref
+    (call_ref $A
       (ref.null $A)
     )
     (drop
@@ -118,11 +118,11 @@
 
 ;; As above, but interleave CallRefs with RefFuncs.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
@@ -143,13 +143,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (export "foo") (param $A (ref null $A))
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     (drop
       (ref.func $target-A-1)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     (drop
@@ -179,11 +179,11 @@
 ;; As above, with the order reversed inside $foo. The results should be the
 ;; same.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
@@ -207,13 +207,13 @@
     (drop
       (ref.func $target-A-1)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
     (drop
       (ref.func $target-A-2)
     )
-    (call_ref
+    (call_ref $A
       (local.get $A)
     )
   )
@@ -240,10 +240,10 @@
 ;; The call.without.effects intrinsic does a call to the reference given to it,
 ;; but for now other imports do not (until we add a flag for closed-world).
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func_subtype (param funcref) func))
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
@@ -293,12 +293,12 @@
 ;; As above, but now the call to the intrinsic does not let us see the exact
 ;; function being called.
 (module
-  ;; CHECK:      (type $A (func_subtype func))
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func_subtype (param funcref) func))
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func_subtype (param (ref null $A)) func))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"

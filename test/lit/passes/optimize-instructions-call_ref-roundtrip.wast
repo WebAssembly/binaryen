@@ -10,16 +10,16 @@
  ;; distinct nominally. The three tables will use different ones, and the
  ;; emitted call_indirects should use the corresponding ones.
 
- ;; CHECK:      (type $v1 (func_subtype func))
+ ;; CHECK:      (type $v1 (func))
  (type $v1 (func))
 
- ;; CHECK:      (type $v2 (func_subtype func))
+ ;; CHECK:      (type $v2 (func))
  (type $v2 (func))
 
- ;; CHECK:      (type $v3 (func_subtype func))
+ ;; CHECK:      (type $v3 (func))
  (type $v3 (func))
 
- ;; CHECK:      (type $i32_=>_none (func_subtype (param i32) func))
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
  ;; CHECK:      (table $table-1 10 (ref null $v1))
  (table $table-1 10 (ref null $v1))
@@ -69,17 +69,17 @@
  (func $call-table-get (param $x i32)
   ;; The heap type of the call_indirects that we emit here should be the
   ;; identical one as on the table that they correspond to.
-  (call_ref
+  (call_ref $v1
    (table.get $table-1
     (local.get $x)
    )
   )
-  (call_ref
+  (call_ref $v2
    (table.get $table-2
     (local.get $x)
    )
   )
-  (call_ref
+  (call_ref $v3
    (table.get $table-3
     (local.get $x)
    )

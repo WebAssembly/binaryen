@@ -4,7 +4,7 @@
  (data (i32.const 0) "__________")
  (data (i32.const 20) "__________")
  (export "test1" (func $0))
- (func $0
+ (func $0 (type $none_=>_none)
   (i32.store8
    (i32.const 4)
    (i32.const 100)

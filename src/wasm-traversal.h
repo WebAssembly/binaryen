@@ -280,7 +280,7 @@ struct Walker : public VisitorType {
   // nested.
 
   // Tasks receive the this pointer and a pointer to the pointer to operate on
-  typedef void (*TaskFunc)(SubType*, Expression**);
+  using TaskFunc = void (*)(SubType*, Expression**);
 
   struct Task {
     TaskFunc func;
@@ -381,7 +381,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 // Stacks of expressions tend to be limited in size (although, sometimes
 // super-nested blocks exist for br_table).
-typedef SmallVector<Expression*, 10> ExpressionStack;
+using ExpressionStack = SmallVector<Expression*, 10>;
 
 // Traversal with a control-flow stack.
 

@@ -11,7 +11,7 @@
  (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_0))
  (global $global3 (ref $struct) (global.get $ctor-eval$global_0))
  (export "keepalive" (func $1))
- (func $1 (result i32)
+ (func $1 (type $none_=>_i32) (result i32)
   (select
    (struct.get $struct 0
     (ref.cast_static $struct

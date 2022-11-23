@@ -27,7 +27,7 @@ Name RETURN_FLOW("*return:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 
 namespace BinaryConsts {
-namespace UserSections {
+namespace CustomSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
@@ -51,7 +51,7 @@ const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoriesFeature = "multi-memories";
-} // namespace UserSections
+} // namespace CustomSections
 } // namespace BinaryConsts
 
 Name STACK_POINTER("__stack_pointer");

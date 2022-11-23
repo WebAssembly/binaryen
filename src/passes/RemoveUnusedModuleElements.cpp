@@ -35,7 +35,7 @@ namespace wasm {
 // TODO: Add data segment, multiple memories (#5224)
 enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
-typedef std::pair<ModuleElementKind, Name> ModuleElement;
+using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 // Finds reachabilities
 // TODO: use Effects to determine if a memory is used
@@ -364,8 +364,7 @@ struct RemoveUnusedModuleElements : public Pass {
                ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return curr->data.empty() ||
-             analyzer.reachable.count(ModuleElement(
+      return analyzer.reachable.count(ModuleElement(
                ModuleElementKind::ElementSegment, curr->name)) == 0;
     });
     // Since we've removed all empty element segments, here we mark all tables

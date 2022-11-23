@@ -36,7 +36,7 @@ struct PassRegistry {
 
   static PassRegistry* get();
 
-  typedef std::function<Pass*()> Creator;
+  using Creator = std::function<Pass*()>;
 
   void registerPass(const char* name, const char* description, Creator create);
   // Register a pass that's used for internal testing. These passes do not show
@@ -188,7 +188,7 @@ struct PassOptions {
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
-  std::map<std::string, std::string> arguments;
+  std::unordered_map<std::string, std::string> arguments;
 
   // Effect info computed for functions. One pass can generate this and then
   // other passes later can benefit from it. It is up to the sequence of passes
@@ -217,15 +217,17 @@ struct PassOptions {
     return PassOptions(); // defaults are to not optimize
   }
 
+  bool hasArgument(std::string key) { return arguments.count(key) > 0; }
+
   std::string getArgument(std::string key, std::string errorTextIfMissing) {
-    if (arguments.count(key) == 0) {
+    if (!hasArgument(key)) {
       Fatal() << errorTextIfMissing;
     }
     return arguments[key];
   }
 
   std::string getArgumentOrDefault(std::string key, std::string default_) {
-    if (arguments.count(key) == 0) {
+    if (!hasArgument(key)) {
       return default_;
     }
     return arguments[key];
@@ -446,7 +448,7 @@ template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
 
 protected:
-  typedef WalkerPass<WalkerType> super;
+  using super = WalkerPass<WalkerType>;
 
 public:
   void run(Module* module) override {

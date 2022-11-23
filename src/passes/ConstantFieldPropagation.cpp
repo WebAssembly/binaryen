@@ -187,10 +187,6 @@ struct ConstantFieldPropagation : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "CFP requires nominal/isorecursive typing";
-    }
 
     // Find and analyze all writes inside each function.
     PCVFunctionStructValuesMap functionNewInfos(*module),

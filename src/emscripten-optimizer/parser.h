@@ -426,7 +426,7 @@ template<class NodeRef, class Builder> class Parser {
   // This is a list of the current stack of node-operator-node-operator-etc.
   // this works by each parseExpression call appending to the vector; then
   // recursing out, and the toplevel sorts it all
-  typedef std::vector<ExpressionElement> ExpressionParts;
+  using ExpressionParts = std::vector<ExpressionElement>;
   std::vector<ExpressionParts> expressionPartsStack;
 
   // Parses an element in a list of such elements, e.g. list of statements in a

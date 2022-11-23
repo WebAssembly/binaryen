@@ -36,7 +36,7 @@ namespace wasm {
 // may be a great many potential elements but actual sets
 // may be fairly small. Specifically, we use a sorted
 // vector.
-typedef SortedVector SetOfLocals;
+using SetOfLocals = SortedVector;
 
 // A liveness-relevant action. Supports a get, a set, or an
 // "other" which can be used for other purposes, to mark

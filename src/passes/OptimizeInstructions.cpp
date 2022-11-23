@@ -1785,7 +1785,13 @@ struct OptimizeInstructions
   }
 
   void visitRefCast(RefCast* curr) {
-    if (curr->type == Type::unreachable) {
+    // Note we must check the ref's type here and not our own, since we only
+    // refinalize at the end, which means our type may not have been updated yet
+    // after a change in the child.
+    // TODO: we could update unreachability up the stack perhaps, or just move
+    //       all patterns that can add unreachability to a pass that does so
+    //       already like vacuum or dce.
+    if (curr->ref->type == Type::unreachable) {
       return;
     }
 

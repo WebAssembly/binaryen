@@ -3,11 +3,11 @@
 (module
  ;; The type $A should not be emitted at all (see below).
  ;; CHECK-NOT: (type $A
- (type $A (struct_subtype (field (mut (ref null $A))) data))
+ (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      (type $ref|none|_=>_none (func_subtype (param (ref none)) func))
+ ;; CHECK:      (type $ref|none|_=>_none (func (param (ref none))))
 
- ;; CHECK:      (type $funcref_i32_=>_none (func_subtype (param funcref i32) func))
+ ;; CHECK:      (type $funcref_i32_=>_none (func (param funcref i32)))
 
  ;; CHECK:      (func $struct.get (type $ref|none|_=>_none) (param $0 (ref none))
  ;; CHECK-NEXT:  (drop

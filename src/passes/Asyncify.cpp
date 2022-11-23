@@ -520,7 +520,7 @@ class ModuleAnalyzer {
     bool addedFromList = false;
   };
 
-  typedef std::map<Function*, Info> Map;
+  using Map = std::map<Function*, Info>;
   Map map;
 
 public:
@@ -1534,10 +1534,10 @@ struct Asyncify : public Pass {
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
-    // TODO: consider renaming asyncify-ignore-indirect to
-    //       asyncify-ignore-nondirect, but that could break users.
-    auto ignoreNonDirect =
-      options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
+    // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
+    // to false.
+    auto canIndirectChangeState =
+      !options.hasArgument("asyncify-ignore-indirect");
     std::string removeListInput =
       options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
@@ -1558,12 +1558,10 @@ struct Asyncify : public Pass {
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts = options.getArgumentOrDefault("asyncify-asserts", "") != "";
-    auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
-    auto relocatable =
-      options.getArgumentOrDefault("asyncify-relocatable", "") != "";
-    auto secondaryMemory =
-      options.getArgumentOrDefault("asyncify-in-secondary-memory", "") != "";
+    auto asserts = options.hasArgument("asyncify-asserts");
+    auto verbose = options.hasArgument("asyncify-verbose");
+    auto relocatable = options.hasArgument("asyncify-relocatable");
+    auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
@@ -1603,7 +1601,7 @@ struct Asyncify : public Pass {
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
-                            ignoreNonDirect,
+                            canIndirectChangeState,
                             removeList,
                             addList,
                             onlyList,

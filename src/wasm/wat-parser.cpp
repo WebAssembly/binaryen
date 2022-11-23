@@ -659,6 +659,7 @@ struct NullInstrParserCtx {
   using InstrsT = Ok;
   using ExprT = Ok;
 
+  using FieldIdxT = Ok;
   using LocalT = Ok;
   using GlobalT = Ok;
   using MemoryT = Ok;
@@ -671,6 +672,12 @@ struct NullInstrParserCtx {
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
 
+  template<typename HeapTypeT> FieldIdxT getFieldFromIdx(HeapTypeT, uint32_t) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> FieldIdxT getFieldFromName(HeapTypeT, Name) {
+    return Ok{};
+  }
   LocalT getLocalFromIdx(uint32_t) { return Ok{}; }
   LocalT getLocalFromName(Name) { return Ok{}; }
   GlobalT getGlobalFromIdx(uint32_t) { return Ok{}; }
@@ -727,7 +734,28 @@ struct NullInstrParserCtx {
 
   InstrT makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
-    return {};
+    return Ok{};
+  }
+  InstrT makeRefIs(Index, RefIsOp) { return Ok{}; }
+
+  InstrT makeRefEq(Index) { return Ok{}; }
+
+  InstrT makeI31New(Index) { return Ok{}; }
+  InstrT makeI31Get(Index, bool) { return Ok{}; }
+
+  template<typename HeapTypeT> InstrT makeStructNew(Index, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> InstrT makeStructNewDefault(Index, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  InstrT makeStructGet(Index, HeapTypeT, FieldIdxT, bool) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  InstrT makeStructSet(Index, HeapTypeT, FieldIdxT) {
+    return Ok{};
   }
 };
 
@@ -810,7 +838,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    std::optional<InstrsT>,
                    Index pos) {
     if (import && hasNonImport) {
-      return in.err("import after non-import");
+      return in.err(pos, "import after non-import");
     }
     auto f = addFuncDecl(pos, name, import);
     CHECK_ERR(f);
@@ -1084,8 +1112,11 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    TypeUse type,
                    std::optional<LocalsT> locals,
                    std::optional<InstrsT>,
-                   Index) {
+                   Index pos) {
     auto& f = wasm.functions[index];
+    if (!type.type.isSignature()) {
+      return in.err(pos, "expected signature type");
+    }
     f->type = type.type;
     for (Index i = 0; i < type.names.size(); ++i) {
       if (type.names[i].is()) {
@@ -1134,6 +1165,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using InstrsT = std::vector<Expression*>;
   using ExprT = Expression*;
 
+  using FieldIdxT = Index;
   using LocalT = Index;
   using GlobalT = Name;
   using MemoryT = Name;
@@ -1290,6 +1322,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return types[idx];
   }
 
+  Result<Index> getFieldFromIdx(HeapType type, uint32_t idx) {
+    if (!type.isStruct()) {
+      return in.err("expected struct type");
+    }
+    if (idx >= type.getStruct().fields.size()) {
+      return in.err("struct index out of bounds");
+    }
+    return idx;
+  }
+
+  Result<Index> getFieldFromName(HeapType type, Name name) {
+    // TODO: Field names
+    return in.err("symbolic field names note yet supported");
+  }
+
   Result<Index> getLocalFromIdx(uint32_t idx) {
     if (!func) {
       return in.err("cannot access locals outside of a funcion");
@@ -1429,6 +1476,17 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
+
+  Result<> validateTypeAnnotation(Index pos, HeapType type, Expression* child) {
+    if (child->type == Type::unreachable) {
+      return Ok{};
+    }
+    if (!child->type.isRef() ||
+        !HeapType::isSubType(child->type.getHeapType(), type)) {
+      return in.err(pos, "invalid reference type on stack");
+    }
+    return Ok{};
+  }
 
   Result<Name> getMemory(Index pos, Name* mem) {
     if (mem) {
@@ -1764,6 +1822,72 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<> makeRefNull(Index pos, HeapType type) {
     return push(pos, builder.makeRefNull(type));
   }
+
+  Result<> makeRefIs(Index pos, RefIsOp op) {
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    return push(pos, builder.makeRefIs(op, *ref));
+  }
+
+  Result<> makeRefEq(Index pos) {
+    auto rhs = pop(pos);
+    CHECK_ERR(rhs);
+    auto lhs = pop(pos);
+    CHECK_ERR(lhs);
+    return push(pos, builder.makeRefEq(*lhs, *rhs));
+  }
+
+  Result<> makeI31New(Index pos) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeI31New(*val));
+  }
+
+  Result<> makeI31Get(Index pos, bool signed_) {
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeI31Get(*val, signed_));
+  }
+
+  Result<> makeStructNew(Index pos, HeapType type) {
+    if (!type.isStruct()) {
+      return in.err(pos, "expected struct type annotation");
+    }
+    size_t numOps = type.getStruct().fields.size();
+    std::vector<Expression*> ops(numOps);
+    for (size_t i = 0; i < numOps; ++i) {
+      auto op = pop(pos);
+      CHECK_ERR(op);
+      ops[numOps - i - 1] = *op;
+    }
+    return push(pos, builder.makeStructNew(type, ops));
+  }
+
+  Result<> makeStructNewDefault(Index pos, HeapType type) {
+    return push(pos, builder.makeStructNew(type, std::array<Expression*, 0>{}));
+  }
+
+  Result<> makeStructGet(Index pos, HeapType type, Index field, bool signed_) {
+    assert(type.isStruct());
+    const auto& fields = type.getStruct().fields;
+    assert(fields.size() > field);
+    auto fieldType = fields[field].type;
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
+    return push(pos, builder.makeStructGet(field, *ref, fieldType, signed_));
+  }
+
+  Result<> makeStructSet(Index pos, HeapType type, Index field) {
+    assert(type.isStruct());
+    assert(type.getStruct().fields.size() > field);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
+    return push(pos, builder.makeStructSet(field, *ref, *val));
+  }
 };
 
 // ================
@@ -1948,6 +2072,8 @@ Result<typename Ctx::InstrT> makeStringSliceIter(Ctx&, Index);
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryT> memidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx&);
@@ -2757,7 +2883,7 @@ Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, Index pos, RefIsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefIs(pos, op);
 }
 
 template<typename Ctx>
@@ -2767,7 +2893,7 @@ Result<typename Ctx::InstrT> makeRefFunc(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefEq(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefEq(pos);
 }
 
 template<typename Ctx>
@@ -2828,12 +2954,12 @@ Result<typename Ctx::InstrT> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31New(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeI31New(pos);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeI31Get(pos, signed_);
 }
 
 template<typename Ctx>
@@ -2874,17 +3000,30 @@ Result<typename Ctx::InstrT> makeBrOnStatic(Ctx& ctx, Index pos, BrOnOp op) {
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeStructNewStatic(Ctx& ctx, Index pos, bool default_) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  if (default_) {
+    return ctx.makeStructNewDefault(pos, *type);
+  }
+  return ctx.makeStructNew(pos, *type);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStructGet(Ctx& ctx, Index pos, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructGet(pos, *type, *field, signed_);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructSet(pos, *type, *field);
 }
 
 template<typename Ctx>
@@ -3024,6 +3163,20 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
     return ctx.getHeapTypeFromIdx(*idx);
   }
   return ctx.in.err("expected type index or identifier");
+}
+
+// fieldidx_t ::= x:u32 => x
+//              | v:id  => x (if t.fields[x] = v)
+template<typename Ctx>
+Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
+                                         typename Ctx::HeapTypeT type) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getFieldFromIdx(type, *x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getFieldFromName(type, *id);
+  }
+  return ctx.in.err("expected field index or identifier");
 }
 
 // memidx ::= x:u32 => x
@@ -3295,7 +3448,6 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
     return ctx.in.err("expected end of function");
   }
 
-  // TODO: Use `pos` instead of `in` for error position.
   CHECK_ERR(
     ctx.addFunc(name, *exports, import.getPtr(), *type, localVars, insts, pos));
   return Ok{};

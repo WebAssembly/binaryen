@@ -10,7 +10,7 @@
 
 
  (rec
-  ;; CHECK:      (type $singleton (struct_subtype  data))
+  ;; CHECK:      (type $singleton (struct ))
   (type $singleton (struct_subtype data))
  )
 

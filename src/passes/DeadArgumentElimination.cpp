@@ -84,7 +84,7 @@ struct DAEFunctionInfo {
   DAEFunctionInfo() { hasUnseenCalls = false; }
 };
 
-typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
+using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
 
 struct DAEScanner
   : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {

@@ -19,7 +19,6 @@
 
 #include "simple_ast.h"
 
-using namespace cashew;
 using IString = wasm::IString;
 
 extern IString JS_FLOAT_ZERO;
@@ -51,8 +50,8 @@ enum JsSign {
   JS_NONSIGNED,
 };
 
-Ref makeJsCoercedZero(JsType type);
-Ref makeJsCoercion(Ref node, JsType type);
-Ref makeSigning(Ref node, JsSign sign);
+cashew::Ref makeJsCoercedZero(JsType type);
+cashew::Ref makeJsCoercion(cashew::Ref node, JsType type);
+cashew::Ref makeSigning(cashew::Ref node, JsSign sign);
 
 #endif // wasm_optimizer_h

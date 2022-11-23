@@ -1967,7 +1967,7 @@ public:
   // Flags indicating special requirements, for example whether we are just
   // evaluating (default), also going to replace the expression afterwards or
   // executing in a function-parallel scenario. See FlagValues.
-  typedef uint32_t Flags;
+  using Flags = uint32_t;
 
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -3510,15 +3510,15 @@ public:
       return sizeFlow;
     }
 
-    auto offset = offsetFlow.getSingleValue().geti32();
-    auto size = sizeFlow.getSingleValue().geti32();
+    uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
+    uint64_t size = sizeFlow.getSingleValue().getUnsigned();
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
     auto elemType = heapType.getArray().element.type;
+    WASM_UNUSED(elemType);
 
     Literals contents;
-    contents.reserve(size);
 
     switch (curr->op) {
       case NewData: {
@@ -3526,11 +3526,12 @@ public:
         assert(elemType.isNumber());
         const auto& seg = *wasm.dataSegments[curr->segment];
         auto elemBytes = element.getByteSize();
-        auto end = (uint64_t)offset + size * elemBytes;
+        auto end = offset + size * elemBytes;
         if ((size != 0ull && droppedSegments.count(curr->segment)) ||
             end > seg.data.size()) {
           trap("out of bounds segment access in array.new_data");
         }
+        contents.reserve(size);
         for (Index i = offset; i < end; i += elemBytes) {
           auto addr = (void*)&seg.data[i];
           contents.push_back(Literal::makeFromMemory(addr, element));
@@ -3540,11 +3541,12 @@ public:
       case NewElem: {
         assert(curr->segment < wasm.elementSegments.size());
         const auto& seg = *wasm.elementSegments[curr->segment];
-        auto end = (uint64_t)offset + size;
+        auto end = offset + size;
         // TODO: Handle dropped element segments once we support those.
         if (end > seg.data.size()) {
           trap("out of bounds segment access in array.new_elem");
         }
+        contents.reserve(size);
         for (Index i = offset; i < end; ++i) {
           auto val = self()->visit(seg.data[i]).getSingleValue();
           contents.push_back(val);

@@ -31,7 +31,7 @@
   ;; DISCARD:      (tag $tag (param))
   (tag $tag)
 
-  ;; WITHOUT:      (func $main
+  ;; WITHOUT:      (func $main (type $none_=>_none)
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT:  (call $unreachable)
   ;; WITHOUT-NEXT:  (call $call-nop)
@@ -40,12 +40,12 @@
   ;; WITHOUT-NEXT:   (call $unimportant-effects)
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $main
+  ;; INCLUDE:      (func $main (type $none_=>_none)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT:  (call $call-nop)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $main
+  ;; DISCARD:      (func $main (type $none_=>_none)
   ;; DISCARD-NEXT:  (call $nop)
   ;; DISCARD-NEXT:  (call $unreachable)
   ;; DISCARD-NEXT:  (call $call-nop)
@@ -73,13 +73,13 @@
     )
   )
 
-  ;; WITHOUT:      (func $cycle
+  ;; WITHOUT:      (func $cycle (type $none_=>_none)
   ;; WITHOUT-NEXT:  (call $cycle)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $cycle
+  ;; INCLUDE:      (func $cycle (type $none_=>_none)
   ;; INCLUDE-NEXT:  (call $cycle)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $cycle
+  ;; DISCARD:      (func $cycle (type $none_=>_none)
   ;; DISCARD-NEXT:  (call $cycle)
   ;; DISCARD-NEXT: )
   (func $cycle
@@ -88,39 +88,39 @@
     (call $cycle)
   )
 
-  ;; WITHOUT:      (func $nop
+  ;; WITHOUT:      (func $nop (type $none_=>_none)
   ;; WITHOUT-NEXT:  (nop)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $nop
+  ;; INCLUDE:      (func $nop (type $none_=>_none)
   ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $nop
+  ;; DISCARD:      (func $nop (type $none_=>_none)
   ;; DISCARD-NEXT:  (nop)
   ;; DISCARD-NEXT: )
   (func $nop
     (nop)
   )
 
-  ;; WITHOUT:      (func $unreachable
+  ;; WITHOUT:      (func $unreachable (type $none_=>_none)
   ;; WITHOUT-NEXT:  (unreachable)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $unreachable
+  ;; INCLUDE:      (func $unreachable (type $none_=>_none)
   ;; INCLUDE-NEXT:  (unreachable)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $unreachable
+  ;; DISCARD:      (func $unreachable (type $none_=>_none)
   ;; DISCARD-NEXT:  (unreachable)
   ;; DISCARD-NEXT: )
   (func $unreachable
     (unreachable)
   )
 
-  ;; WITHOUT:      (func $call-nop
+  ;; WITHOUT:      (func $call-nop (type $none_=>_none)
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-nop
+  ;; INCLUDE:      (func $call-nop (type $none_=>_none)
   ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $call-nop
+  ;; DISCARD:      (func $call-nop (type $none_=>_none)
   ;; DISCARD-NEXT:  (call $nop)
   ;; DISCARD-NEXT: )
   (func $call-nop
@@ -128,20 +128,20 @@
     (call $nop)
   )
 
-  ;; WITHOUT:      (func $call-unreachable
+  ;; WITHOUT:      (func $call-unreachable (type $none_=>_none)
   ;; WITHOUT-NEXT:  (call $unreachable)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-unreachable
+  ;; INCLUDE:      (func $call-unreachable (type $none_=>_none)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $call-unreachable
+  ;; DISCARD:      (func $call-unreachable (type $none_=>_none)
   ;; DISCARD-NEXT:  (call $unreachable)
   ;; DISCARD-NEXT: )
   (func $call-unreachable
     (call $unreachable)
   )
 
-  ;; WITHOUT:      (func $unimportant-effects (result i32)
+  ;; WITHOUT:      (func $unimportant-effects (type $none_=>_i32) (result i32)
   ;; WITHOUT-NEXT:  (local $x i32)
   ;; WITHOUT-NEXT:  (local.set $x
   ;; WITHOUT-NEXT:   (i32.const 100)
@@ -150,7 +150,7 @@
   ;; WITHOUT-NEXT:   (local.get $x)
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $unimportant-effects (result i32)
+  ;; INCLUDE:      (func $unimportant-effects (type $none_=>_i32) (result i32)
   ;; INCLUDE-NEXT:  (local $x i32)
   ;; INCLUDE-NEXT:  (local.set $x
   ;; INCLUDE-NEXT:   (i32.const 100)
@@ -159,7 +159,7 @@
   ;; INCLUDE-NEXT:   (local.get $x)
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $unimportant-effects (result i32)
+  ;; DISCARD:      (func $unimportant-effects (type $none_=>_i32) (result i32)
   ;; DISCARD-NEXT:  (local $x i32)
   ;; DISCARD-NEXT:  (local.set $x
   ;; DISCARD-NEXT:   (i32.const 100)
@@ -181,7 +181,7 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-throw-and-catch
+  ;; WITHOUT:      (func $call-throw-and-catch (type $none_=>_none)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw)
@@ -191,10 +191,10 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-throw-and-catch
+  ;; INCLUDE:      (func $call-throw-and-catch (type $none_=>_none)
   ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $call-throw-and-catch
+  ;; DISCARD:      (func $call-throw-and-catch (type $none_=>_none)
   ;; DISCARD-NEXT:  (try $try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $throw)
@@ -216,7 +216,7 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-unreachable-and-catch
+  ;; WITHOUT:      (func $call-unreachable-and-catch (type $none_=>_none)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $unreachable)
@@ -226,10 +226,10 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-unreachable-and-catch
+  ;; INCLUDE:      (func $call-unreachable-and-catch (type $none_=>_none)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $call-unreachable-and-catch
+  ;; DISCARD:      (func $call-unreachable-and-catch (type $none_=>_none)
   ;; DISCARD-NEXT:  (try $try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $unreachable)
@@ -251,7 +251,7 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (param $x i32)
+  ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (type $i32_=>_none) (param $x i32)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (if
@@ -265,7 +265,7 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (param $x i32)
+  ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (type $i32_=>_none) (param $x i32)
   ;; INCLUDE-NEXT:  (try $try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (if
@@ -279,7 +279,7 @@
   ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $call-throw-or-unreachable-and-catch (param $x i32)
+  ;; DISCARD:      (func $call-throw-or-unreachable-and-catch (type $i32_=>_none) (param $x i32)
   ;; DISCARD-NEXT:  (try $try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (if
@@ -308,13 +308,13 @@
     )
   )
 
-  ;; WITHOUT:      (func $throw
+  ;; WITHOUT:      (func $throw (type $none_=>_none)
   ;; WITHOUT-NEXT:  (throw $tag)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $throw
+  ;; INCLUDE:      (func $throw (type $none_=>_none)
   ;; INCLUDE-NEXT:  (throw $tag)
   ;; INCLUDE-NEXT: )
-  ;; DISCARD:      (func $throw
+  ;; DISCARD:      (func $throw (type $none_=>_none)
   ;; DISCARD-NEXT:  (throw $tag)
   ;; DISCARD-NEXT: )
   (func $throw

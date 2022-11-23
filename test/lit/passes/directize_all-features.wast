@@ -16,12 +16,12 @@
 
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
@@ -29,13 +29,13 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -70,35 +70,35 @@
 
  ;; CHECK:      (elem $1 (table $1) (i32.const 1) func $f)
 
- ;; CHECK:      (func $dummy (param $0 i32) (result i32)
+ ;; CHECK:      (func $dummy (type $i32_=>_i32) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (local.get $0)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem $0 (table $0) (i32.const 1) func $dummy)
 
  ;; IMMUT:      (elem $1 (table $1) (i32.const 1) func $f)
 
- ;; IMMUT:      (func $dummy (param $0 i32) (result i32)
+ ;; IMMUT:      (func $dummy (type $i32_=>_i32) (param $0 i32) (result i32)
  ;; IMMUT-NEXT:  (local.get $0)
  ;; IMMUT-NEXT: )
  (func $dummy (param i32) (result i32)
   (local.get 0)
  )
- ;; CHECK:      (func $f (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $f (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $f (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $f (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $f (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $g (param $x i32) (param $y i32)
+ ;; CHECK:      (func $g (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $f
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $g (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $g (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $f
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -127,24 +127,24 @@
  (elem (table $1) (i32.const 4) func $foo)
  ;; CHECK:      (elem (table $1) (i32.const 4) func $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (table $1) (i32.const 4) func $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -169,24 +169,24 @@
  (elem (i32.const 0) $foo)
  ;; CHECK:      (elem (i32.const 0) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 0) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -217,26 +217,26 @@
 
  ;; CHECK:      (elem $1 (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem $0 (table $0) (i32.const 0) func $foo $foo $foo $foo $foo)
 
  ;; IMMUT:      (elem $1 (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -262,25 +262,25 @@
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call_indirect $table (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -294,14 +294,14 @@
   )
  )
 
- ;; CHECK:      (func $out-of-bounds (param $x i32) (param $y i32)
+ ;; CHECK:      (func $out-of-bounds (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call_indirect $table (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (i32.const 999)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $out-of-bounds (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $out-of-bounds (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call_indirect $table (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -336,23 +336,23 @@
  ;; IMMUT:      (export "tab" (table $0))
  (export "tab" (table $0))
  (elem (i32.const 1) $foo)
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -383,25 +383,25 @@
  (elem (global.get $g) $foo)
  ;; CHECK:      (elem (global.get $g) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (global.get $g) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -435,25 +435,25 @@
  (elem (table $1) (global.get $g) func $foo)
  ;; CHECK:      (elem (table $1) (global.get $g) func $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (table $1) (global.get $g) func $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call_indirect $1 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (call_indirect $1 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -484,25 +484,25 @@
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $bar (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (local.get $z)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $bar (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -529,18 +529,18 @@
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -551,7 +551,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (block
  ;; IMMUT-NEXT:   (drop
  ;; IMMUT-NEXT:    (local.get $x)
@@ -582,18 +582,18 @@
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -604,7 +604,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (block
  ;; IMMUT-NEXT:   (drop
  ;; IMMUT-NEXT:    (local.get $x)
@@ -639,18 +639,18 @@
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32)
+ ;; CHECK:      (func $foo (type $i32_=>_none) (param $0 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32)
+ ;; IMMUT:      (func $foo (type $i32_=>_none) (param $0 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -661,7 +661,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (block
  ;; IMMUT-NEXT:   (drop
  ;; IMMUT-NEXT:    (local.get $x)
@@ -685,12 +685,12 @@
 (module
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
- ;; CHECK:      (func $foo (param $0 i32)
+ ;; CHECK:      (func $foo (type $i32_=>_none) (param $0 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (type $i32_=>_none (func (param i32)))
 
- ;; IMMUT:      (func $foo (param $0 i32)
+ ;; IMMUT:      (func $foo (type $i32_=>_none) (param $0 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32)
@@ -708,7 +708,7 @@
 
  ;; IMMUT:      (table $0 8 8 funcref)
  (table $0 8 8 funcref)
- ;; CHECK:      (func $0
+ ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (block
@@ -716,7 +716,7 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $0
+ ;; IMMUT:      (func $0 (type $none_=>_none)
  ;; IMMUT-NEXT:  (nop)
  ;; IMMUT-NEXT:  (block
  ;; IMMUT-NEXT:   (block
@@ -744,24 +744,24 @@
  (elem (i32.const 1) $foo)
  ;; CHECK:      (elem (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo)
 
- ;; IMMUT:      (func $foo (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (return_call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (return_call $foo
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -797,27 +797,27 @@
  (elem (i32.const 1) $foo1 $foo2)
  ;; CHECK:      (elem (i32.const 1) $foo1 $foo2)
 
- ;; CHECK:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 1) $foo1 $foo2)
 
- ;; IMMUT:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo1 (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo2 (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $select (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local.set $3
@@ -838,7 +838,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (local $3 i32)
  ;; IMMUT-NEXT:  (local $4 i32)
  ;; IMMUT-NEXT:  (local.set $3
@@ -872,7 +872,7 @@
    )
   )
  )
- ;; CHECK:      (func $select-bad-1 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-bad-1 (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -883,7 +883,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-bad-1 (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select-bad-1 (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -906,7 +906,7 @@
    )
   )
  )
- ;; CHECK:      (func $select-bad-2 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-bad-2 (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -917,7 +917,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-bad-2 (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select-bad-2 (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -940,7 +940,7 @@
    )
   )
  )
- ;; CHECK:      (func $select-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-out-of-range (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local.set $3
@@ -958,7 +958,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select-out-of-range (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (local $3 i32)
  ;; IMMUT-NEXT:  (local $4 i32)
  ;; IMMUT-NEXT:  (local.set $3
@@ -989,7 +989,7 @@
    )
   )
  )
- ;; CHECK:      (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-both-out-of-range (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local.set $3
@@ -1004,7 +1004,7 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select-both-out-of-range (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (local $3 i32)
  ;; IMMUT-NEXT:  (local $4 i32)
  ;; IMMUT-NEXT:  (local.set $3
@@ -1031,7 +1031,7 @@
    )
   )
  )
- ;; CHECK:      (func $select-unreachable-operand (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-unreachable-operand (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -1042,7 +1042,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-unreachable-operand (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select-unreachable-operand (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -1065,7 +1065,7 @@
    )
   )
  )
- ;; CHECK:      (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK:      (func $select-unreachable-condition (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -1076,7 +1076,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-unreachable-condition (param $x i32) (param $y i32) (param $z i32)
+ ;; IMMUT:      (func $select-unreachable-condition (type $i32_i32_i32_=>_none) (param $x i32) (param $y i32) (param $z i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
@@ -1100,14 +1100,14 @@
    )
   )
  )
- ;; CHECK:      (func $select-bad-type (param $z i32)
+ ;; CHECK:      (func $select-bad-type (type $i32_=>_none) (param $z i32)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-bad-type (param $z i32)
+ ;; IMMUT:      (func $select-bad-type (type $i32_=>_none) (param $z i32)
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $z)
  ;; IMMUT-NEXT:   (unreachable)
@@ -1150,14 +1150,14 @@
 
  ;; CHECK:      (elem declare func $select-non-nullable)
 
- ;; CHECK:      (func $foo-ref (param $0 (ref func))
+ ;; CHECK:      (func $foo-ref (type $F) (param $0 (ref func))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem (i32.const 10) $foo-ref $foo-ref)
 
  ;; IMMUT:      (elem declare func $select-non-nullable)
 
- ;; IMMUT:      (func $foo-ref (param $0 (ref func))
+ ;; IMMUT:      (func $foo-ref (type $F) (param $0 (ref func))
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo-ref (param (ref func))
@@ -1165,7 +1165,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $select-non-nullable (param $x i32)
+ ;; CHECK:      (func $select-non-nullable (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (local $1 (ref $i32_=>_none))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
@@ -1180,7 +1180,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-non-nullable (param $x i32)
+ ;; IMMUT:      (func $select-non-nullable (type $i32_=>_none) (param $x i32)
  ;; IMMUT-NEXT:  (local $1 (ref $i32_=>_none))
  ;; IMMUT-NEXT:  (local.set $1
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
@@ -1209,7 +1209,7 @@
   )
  )
 
- ;; CHECK:      (func $select-non-nullable-unreachable-condition
+ ;; CHECK:      (func $select-non-nullable-unreachable-condition (type $none_=>_none)
  ;; CHECK-NEXT:  (call_indirect $0 (type $F)
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
  ;; CHECK-NEXT:   (select
@@ -1219,7 +1219,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-non-nullable-unreachable-condition
+ ;; IMMUT:      (func $select-non-nullable-unreachable-condition (type $none_=>_none)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
  ;; IMMUT-NEXT:   (select
@@ -1242,7 +1242,7 @@
   )
  )
 
- ;; CHECK:      (func $select-non-nullable-unreachable-arm
+ ;; CHECK:      (func $select-non-nullable-unreachable-arm (type $none_=>_none)
  ;; CHECK-NEXT:  (call_indirect $0 (type $F)
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
  ;; CHECK-NEXT:   (select
@@ -1252,7 +1252,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-non-nullable-unreachable-arm
+ ;; IMMUT:      (func $select-non-nullable-unreachable-arm (type $none_=>_none)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
  ;; IMMUT-NEXT:   (select
@@ -1278,7 +1278,7 @@
   )
  )
 
- ;; CHECK:      (func $select-non-nullable-unreachable-arg (param $x i32)
+ ;; CHECK:      (func $select-non-nullable-unreachable-arg (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (call_indirect $0 (type $F)
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (select
@@ -1288,7 +1288,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $select-non-nullable-unreachable-arg (param $x i32)
+ ;; IMMUT:      (func $select-non-nullable-unreachable-arg (type $i32_=>_none) (param $x i32)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
  ;; IMMUT-NEXT:   (unreachable)
  ;; IMMUT-NEXT:   (select
@@ -1334,13 +1334,13 @@
  ;; IMMUT:      (elem $1 (table $no-set) (i32.const 1) func $foo)
  (elem $1 (table $no-set) (i32.const 1) $foo)
 
- ;; CHECK:      (func $foo
+ ;; CHECK:      (func $foo (type $v)
  ;; CHECK-NEXT:  (table.set $has-set
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (ref.func $foo)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $foo
+ ;; IMMUT:      (func $foo (type $v)
  ;; IMMUT-NEXT:  (table.set $has-set
  ;; IMMUT-NEXT:   (i32.const 1)
  ;; IMMUT-NEXT:   (ref.func $foo)
@@ -1355,13 +1355,13 @@
   )
  )
 
- ;; CHECK:      (func $bar
+ ;; CHECK:      (func $bar (type $v)
  ;; CHECK-NEXT:  (call_indirect $has-set (type $v)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $foo)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar
+ ;; IMMUT:      (func $bar (type $v)
  ;; IMMUT-NEXT:  (call $foo)
  ;; IMMUT-NEXT:  (call $foo)
  ;; IMMUT-NEXT: )
@@ -1393,30 +1393,30 @@
 
  ;; CHECK:      (elem $1 (i32.const 3) $foo2)
 
- ;; CHECK:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem $0 (i32.const 1) $foo1)
 
  ;; IMMUT:      (elem $1 (i32.const 3) $foo2)
 
- ;; IMMUT:      (func $foo1 (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo1 (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $foo2 (param $0 i32) (param $1 i32)
+ ;; IMMUT:      (func $foo2 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $foo2 (param i32) (param i32)
   (unreachable)
  )
 
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call_indirect $table (type $ii)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -1443,7 +1443,7 @@
  ;; CHECK-NEXT:   (i32.const 4)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; IMMUT:      (func $bar (param $x i32) (param $y i32)
+ ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
  ;; IMMUT-NEXT:  (block
  ;; IMMUT-NEXT:   (block
  ;; IMMUT-NEXT:    (drop

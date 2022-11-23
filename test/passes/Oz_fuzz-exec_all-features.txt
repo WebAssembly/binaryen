@@ -63,19 +63,23 @@
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
 [fuzz-exec] calling static-br_on_cast
 [LoggingExternalInterface logging 3]
 [fuzz-exec] calling static-br_on_cast_fail
 [LoggingExternalInterface logging -2]
 (module
- (type $bytes (array (mut i8)))
- (type $void_func (func))
- (type $struct (struct (field (mut i32))))
- (type $i32_=>_none (func (param i32)))
- (type $extendedstruct (struct (field (mut i32)) (field f64)))
- (type $anyref_=>_none (func (param anyref)))
- (type $int_func (func (result i32)))
+ (rec
+  (type $bytes (array (mut i8)))
+  (type $struct (struct (field (mut i32))))
+  (type $void_func (func))
+  (type $extendedstruct (struct ))
+  (type $int_func (func (result i32)))
+  (type $i32_=>_none (func (param i32)))
+  (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  (type $anyref_=>_none (func (param anyref)))
+  (type $none_=>_none (func))
+ )
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "structs" (func $0))
  (export "arrays" (func $1))
@@ -103,7 +107,7 @@
  (export "static-casts" (func $26))
  (export "static-br_on_cast" (func $2))
  (export "static-br_on_cast_fail" (func $28))
- (func $0 (; has Stack IR ;)
+ (func $0 (type $void_func) (; has Stack IR ;)
   (local $0 i32)
   (call $log
    (i32.const 0)
@@ -120,7 +124,7 @@
    (i32.const 100)
   )
  )
- (func $1 (; has Stack IR ;)
+ (func $1 (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
   (call $log
    (array.len
@@ -162,12 +166,12 @@
    )
   )
  )
- (func $2 (; has Stack IR ;)
+ (func $2 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 3)
   )
  )
- (func $3 (; has Stack IR ;)
+ (func $3 (type $void_func) (; has Stack IR ;)
   (local $0 (ref $struct))
   (local.set $0
    (struct.new_default $struct)
@@ -189,7 +193,7 @@
    )
   )
  )
- (func $4 (; has Stack IR ;)
+ (func $4 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 1)
   )
@@ -197,12 +201,12 @@
    (i32.const 999)
   )
  )
- (func $5 (; has Stack IR ;)
+ (func $5 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
  )
- (func $7 (; has Stack IR ;) (param $0 anyref)
+ (func $7 (type $anyref_=>_none) (; has Stack IR ;) (param $0 anyref)
   (drop
    (block $data (result (ref data))
     (drop
@@ -217,15 +221,15 @@
    )
   )
  )
- (func $8 (; has Stack IR ;)
+ (func $8 (type $void_func) (; has Stack IR ;)
   (nop)
  )
- (func $9 (; has Stack IR ;)
+ (func $9 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 1)
   )
  )
- (func $12 (; has Stack IR ;)
+ (func $12 (type $void_func) (; has Stack IR ;)
   (drop
    (block
     (call $log
@@ -235,12 +239,12 @@
    )
   )
  )
- (func $13 (; has Stack IR ;)
+ (func $13 (type $void_func) (; has Stack IR ;)
   (drop
    (unreachable)
   )
  )
- (func $18 (; has Stack IR ;)
+ (func $18 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
@@ -252,7 +256,7 @@
   )
   (unreachable)
  )
- (func $20 (; has Stack IR ;) (result i32)
+ (func $20 (type $int_func) (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new $bytes
     (i32.const -43)
@@ -261,7 +265,7 @@
    (i32.const 10)
   )
  )
- (func $23 (; has Stack IR ;)
+ (func $23 (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
   (local $1 (ref $bytes))
   (array.set $bytes
@@ -316,7 +320,7 @@
    )
   )
  )
- (func $24 (; has Stack IR ;)
+ (func $24 (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
   (call $log
    (array.len
@@ -341,7 +345,7 @@
    )
   )
  )
- (func $25 (; has Stack IR ;)
+ (func $25 (type $void_func) (; has Stack IR ;)
   (call $log
    (array.get_u $bytes
     (array.init_static $bytes
@@ -351,7 +355,7 @@
    )
   )
  )
- (func $26 (; has Stack IR ;)
+ (func $26 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 1)
   )
@@ -368,10 +372,10 @@
    (i32.const 0)
   )
   (call $log
-   (i32.const 1)
+   (i32.const 0)
   )
  )
- (func $28 (; has Stack IR ;)
+ (func $28 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const -2)
   )
@@ -441,7 +445,7 @@
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
-[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
 [fuzz-exec] calling static-br_on_cast
 [LoggingExternalInterface logging 3]
 [fuzz-exec] calling static-br_on_cast_fail
@@ -450,9 +454,12 @@ ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]
 (module
- (type $none_=>_i32 (func (result i32)))
+ (rec
+  (type $none_=>_i32 (func (result i32)))
+  (type $[mut:i8] (array (mut i8)))
+ )
  (export "foo" (func $0))
- (func $0 (; has Stack IR ;) (result i32)
+ (func $0 (type $none_=>_i32) (; has Stack IR ;) (result i32)
   (i32.const 0)
  )
 )

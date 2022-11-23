@@ -1,10 +1,10 @@
 (module
   (type $t0  (struct))
-  (type $t1  (struct (field i32)))
-  (type $t1' (struct (field i32)))
-  (type $t2  (struct (field i32) (field i32)))
-  (type $t2' (struct (field i32) (field i32)))
-  (type $t3  (struct (field i32) (field i32)))
+  (type $t1  (struct_subtype (field i32) $t0))
+  (type $t1' (struct_subtype (field i32) $t1))
+  (type $t2  (struct_subtype (field i32) (field i32) $t1))
+  (type $t2' (struct_subtype (field i32) (field i32) $t2))
+  (type $t3  (struct_subtype (field i32) (field i32) $t2))
 
   (global $tab.0  (mut (ref null data)) (ref.null data))
   (global $tab.1  (mut (ref null data)) (ref.null data))
@@ -56,13 +56,8 @@
     (drop (ref.cast_static $t0 (global.get $tab.11)))
     (drop (ref.cast_static $t0 (global.get $tab.12)))
 
-    (drop (ref.cast_static $t1' (global.get $tab.1)))
-    (drop (ref.cast_static $t1' (global.get $tab.2)))
-
     (drop (ref.cast_static $t1 (global.get $tab.11)))
     (drop (ref.cast_static $t1 (global.get $tab.12)))
-
-    (drop (ref.cast_static $t2' (global.get $tab.2)))
 
     (drop (ref.cast_static $t2 (global.get $tab.12)))
   )

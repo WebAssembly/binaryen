@@ -11,9 +11,9 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; NOMNL:      (type $struct.B (struct_subtype (field i32) data))
+  ;; NOMNL:      (type $struct.B (struct (field i32)))
   (type $struct.B (struct i32))
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test_static $struct.A
   ;; CHECK-NEXT:    (ref.null none)
@@ -37,9 +37,9 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; NOMNL:      (type $struct.B (struct_subtype (field i32) data))
+  ;; NOMNL:      (type $struct.B (struct (field i32)))
   (type $struct.B (struct i32))
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast_static $struct.A
   ;; CHECK-NEXT:    (ref.null none)
@@ -62,9 +62,9 @@
 
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
-  ;; NOMNL:      (type $struct.A (struct_subtype (field i32) data))
+  ;; NOMNL:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
   ;; CHECK-NEXT:  )
@@ -83,9 +83,9 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array_subtype (mut f64) data))
+  ;; NOMNL:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new $vector
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -113,9 +113,9 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array_subtype (mut f64) data))
+  ;; NOMNL:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.init_static $vector
   ;; CHECK-NEXT:    (f64.const 1)

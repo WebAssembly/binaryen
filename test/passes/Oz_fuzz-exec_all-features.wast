@@ -275,12 +275,12 @@
  (func "cast-on-func"
   (call $log (i32.const 0))
   ;; a valid cast
-  (call_ref
+  (call_ref $void_func
    (ref.cast_static $void_func (ref.func $a-void-func))
   )
   (call $log (i32.const 1))
   ;; an invalid cast
-  (drop (call_ref
+  (drop (call_ref $int_func
    (ref.cast_static $int_func (ref.func $a-void-func))
   ))
   ;; will never be reached
