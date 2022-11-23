@@ -115,6 +115,7 @@ struct TypeMerging : public Pass {
         continue;
       }
 
+      // TODO: arrays + testing
       auto& fields = type.getStruct().fields;
       auto& superFields = super->getStruct().fields;
       if (fields != superFields) {
