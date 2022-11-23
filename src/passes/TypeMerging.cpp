@@ -60,7 +60,8 @@ struct TypeMerging : public Pass {
 
   // The types we can merge. We map each such type to merge with the type we
   // want to merge it with.
-  std::unordered_map<HeapType, HeapType> merges;
+  using TypeUpdates = std::unordered_map<HeapType, HeapType>;
+  TypeUpdates merges;
 
   void run(Module* module_) override {
     module = module_;
@@ -194,27 +195,42 @@ std::cout << "gUTL " << vec.size() << " : " << Type(vec).size() << '\n';
 std::cout << "new sig for " << type << " => " << sig << '\n';
     }
 
-    // We also need to modify types themselves, as struct fields must refer to
-    // the new types as well.
-    class SignatureRewriter : public GlobalTypeRewriter {
-      const SignatureUpdates& updates;
+    typeRewriter.updateSignatures(newSignatures, *module);
+
+std::cout << "A3 " << *module << '\n';
+
+    class TypeInternalsUpdater : public GlobalTypeRewriter {
+      const TypeUpdates& updates;
 
     public:
-      SignatureRewriter(Module& wasm, const SignatureUpdates& updates)
+      TypeInternalsUpdater(Module& wasm, const TypeUpdates& updates)
         : GlobalTypeRewriter(wasm), updates(updates) {
         update();
       }
 
-      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = updates.find(oldSignatureType);
+      void updateType(Type& type) {
+        if (!type.isRef()) {
+          return;
+        }
+        auto heapType = type.getHeapType();
+        auto iter = updates.find(heapType);
         if (iter != updates.end()) {
-          sig.params = getTempType(iter->second.params);
-          sig.results = getTempType(iter->second.results);
+          type = Type(iter->second, type.getNullability());
         }
       }
-    } rewriter(*module, newSignatures);
 
-std::cout << "A3 " << *module << '\n';
+      void modifyStruct(HeapType oldType, Struct& struct_) override {
+        for (auto& field : struct_.fields) {
+          updateType(field.type);
+        }
+      }
+      void modifyArray(HeapType oldType, Array& array) override {
+        updateType(array.element.type);
+      }
+    } rewriter(*module, merges);
+
+
+std::cout << "A4 " << *module << '\n';
 
     // Propagate type changes outwards.
     ReFinalize().run(getPassRunner(), module);

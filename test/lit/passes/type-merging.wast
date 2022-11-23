@@ -5,16 +5,41 @@
   ;; CHECK:      (type $A (struct_subtype (field i32) data))
   (type $A (struct_subtype (field i32) data))
 
-  (type $B (struct_subtype (field i32) $A))
-
   ;; CHECK:      (type $D (struct_subtype (field i32) $A))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
+  ;; CHECK:      (type $B (struct_subtype (field i32) $A))
+  (type $B (struct_subtype (field i32) $A))
+
   ;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field f64) $A))
 
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast_static $D
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+  ;; CHECK:      (type $D (struct_subtype (field i32) $A))
   (type $D (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $A))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
@@ -58,22 +83,163 @@
 )
 
 ;; Multiple levels of merging.
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $D (struct_subtype (field i32) $A))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast_static $A
+;; CHECK-NEXT:    (local.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast_static $D
+;; CHECK-NEXT:    (local.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $D (struct_subtype (field i32) $A))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast_static $A
+;; CHECK-NEXT:    (local.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast_static $D
+;; CHECK-NEXT:    (local.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $D (struct_subtype (field i32) $A))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast_static $A
+;; CHECK-NEXT:    (local.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast_static $D
+;; CHECK-NEXT:    (local.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $B (struct_subtype (field i32) $A))
+
+;; CHECK:      (type $C (struct_subtype (field i32) $B))
+
+;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (type $E (struct_subtype (field i32) (field f64) $D))
+
+;; CHECK:      (type $F (struct_subtype (field i32) (field f64) $E))
+
+;; CHECK:      (type $G (struct_subtype (field i32) (field f64) $F))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $B))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (local $e (ref null $E))
+;; CHECK-NEXT:  (local $f (ref null $F))
+;; CHECK-NEXT:  (local $g (ref null $G))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $A))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (local $e (ref null $D))
+;; CHECK-NEXT:  (local $f (ref null $D))
+;; CHECK-NEXT:  (local $g (ref null $D))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $A))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (local $e (ref null $D))
+;; CHECK-NEXT:  (local $f (ref null $D))
+;; CHECK-NEXT:  (local $g (ref null $D))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field i32) data))
+
+;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $A))
+;; CHECK-NEXT:  (local $d (ref null $D))
+;; CHECK-NEXT:  (local $e (ref null $D))
+;; CHECK-NEXT:  (local $f (ref null $D))
+;; CHECK-NEXT:  (local $g (ref null $D))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
 (module
   ;; CHECK:      (type $A (struct_subtype (field i32) data))
   (type $A (struct_subtype (field i32) data))
 
-  (type $B (struct_subtype (field i32) $A))
-
-  (type $C (struct_subtype (field i32) $B))
-
   ;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
-  (type $D (struct_subtype (field i32) (field f64) $A))
-
-  (type $E (struct_subtype (field i32) (field f64) $D))
-
-  (type $F (struct_subtype (field i32) (field f64) $E))
-
-  (type $G (struct_subtype (field i32) (field f64) $F))
 
   ;; CHECK:      (type $none_=>_none (func_subtype func))
 
@@ -85,6 +251,31 @@
   ;; CHECK-NEXT:  (local $e (ref null $D))
   ;; CHECK-NEXT:  (local $f (ref null $D))
   ;; CHECK-NEXT:  (local $g (ref null $D))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+
+  ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
+  (type $B (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (type $none_=>_none (func_subtype func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref null $B)) $A))
+  (type $C (struct_subtype (field i32) $B))
+
+  (type $D (struct_subtype (field i32) (field f64) $A))
+
+  (type $E (struct_subtype (field i32) (field f64) $D))
+
+  (type $F (struct_subtype (field i32) (field f64) $E))
+
+  (type $G (struct_subtype (field i32) (field f64) $F))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -104,6 +295,50 @@
   )
 )
 
+;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $C (struct_subtype (field (ref null $B)) $A))
+
+;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $C (struct_subtype (field (ref null $B)) $A))
+
+;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+
+;; CHECK:      (type $none_=>_none (func_subtype func))
+
+;; CHECK:      (type $C (struct_subtype (field (ref null $B)) $A))
+
+;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
+
+;; CHECK:      (func $foo (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref null $A))
+;; CHECK-NEXT:  (local $b (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
 (module
   ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
   (type $A (struct_subtype (field (ref null $A)) data))
@@ -115,14 +350,22 @@
   ;; CHECK:      (type $B (struct_subtype (field (ref null $A)) $A))
   (type $B (struct_subtype (field (ref null $A)) $A))
 
-  (type $C (struct_subtype (field (ref null $B)) $A))
-
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
+
+  ;; CHECK:      (type $A (struct_subtype  data))
+
+  ;; CHECK:      (type $B (struct_subtype  $A))
+
+  ;; CHECK:      (type $none_=>_ref?|$B| (func_subtype (result (ref null $B)) func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
+  (type $C (struct_subtype (field (ref null $B)) $A))
+
   (func $foo
     ;; $A will remain the same.
     (local $a (ref null $A))
@@ -134,12 +377,74 @@
 )
 
 ;; Check that we refinalize properly.
+;; CHECK:      (func $returner (type $none_=>_ref?|$B|) (result (ref null $B))
+;; CHECK-NEXT:  (local $local (ref null $B))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local.get $local)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype  data))
+
+;; CHECK:      (type $B (struct_subtype  $A))
+
+;; CHECK:      (type $none_=>_ref?|$B| (func_subtype (result (ref null $B)) func))
+
+;; CHECK:      (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
+
+;; CHECK:      (func $returner (type $none_=>_ref?|$B|) (result (ref null $B))
+;; CHECK-NEXT:  (local $local (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local.get $local)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype  data))
+
+;; CHECK:      (type $none_=>_ref?|$A| (func_subtype (result (ref null $A)) func))
+
+;; CHECK:      (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
+
+;; CHECK:      (type $B (struct_subtype  $A))
+
+;; CHECK:      (func $returner (type $none_=>_ref?|$A|) (result (ref null $A))
+;; CHECK-NEXT:  (local $local (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local.get $local)
+;; CHECK-NEXT: )
+
+;; CHECK:      (type $A (struct_subtype  data))
+
+;; CHECK:      (type $none_=>_ref?|$A| (func_subtype (result (ref null $A)) func))
+
+;; CHECK:      (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
+
+;; CHECK:      (type $B (struct_subtype  $A))
+
+;; CHECK:      (func $returner (type $none_=>_ref?|$A|) (result (ref null $A))
+;; CHECK-NEXT:  (local $local (ref null $A))
+;; CHECK-NEXT:  (local $c (ref null $C))
+;; CHECK-NEXT:  (local.get $local)
+;; CHECK-NEXT: )
 (module
+  ;; CHECK:      (type $A (struct_subtype  data))
   (type $A (struct))
+  ;; CHECK:      (type $none_=>_ref?|$A| (func_subtype (result (ref null $A)) func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
+
+  ;; CHECK:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
+  (type $C (struct_subtype (field (ref null $A)) (field (ref null $B)) data))
+
+  ;; CHECK:      (func $returner (type $none_=>_ref?|$A|) (result (ref null $A))
+  ;; CHECK-NEXT:  (local $local (ref null $A))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local.get $local)
+  ;; CHECK-NEXT: )
   (func $returner (result (ref null $B))
     (local $local (ref null $B))
+    (local $c (ref null $C))
+
     ;; After we change the local to use type $A, we need to update the local.get's
     ;; type as well, or we will error.
     (local.get $local)
