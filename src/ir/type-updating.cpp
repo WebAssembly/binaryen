@@ -140,7 +140,10 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
         return type;
       }
       if (type.isFunction() || type.isData()) {
-        return oldToNewTypes.at(type);
+        auto iter = oldToNewTypes.find(type);
+        if (iter != oldToNewTypes.end()) {
+          return iter->second;
+        }
       }
       return type;
     }

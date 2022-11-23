@@ -2,28 +2,27 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --type-merging -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct_subtype (field i32) data))
   (type $A (struct_subtype (field i32) data))
 
-  ;; CHECK:      (type $D (struct_subtype (field i32) data))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
-
   ;; CHECK:      (type $B (struct_subtype (field i32) data))
-  (type $B (struct_subtype (field i32) data))
+  (type $B (struct_subtype (field i32) $A))
 
-  ;; CHECK:      (type $C (struct_subtype (field i32) (field f64) data))
-  (type $C (struct_subtype (field i32) (field f64) data))
+  ;; CHECK:      (type $D (struct_subtype (field i32) $B))
 
-  (type $D (struct_subtype (field i32) data))
+  ;; CHECK:      (type $(null Name) (func_subtype func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $B))
+  (type $C (struct_subtype (field i32) (field f64) $A))
+
+  (type $D (struct_subtype (field i32) $A))
+
+  ;; CHECK:      (func $foo (type $(null Name))
+  ;; CHECK-NEXT:  (local $a (ref null $B))
   ;; CHECK-NEXT:  (local $b (ref null $B))
   ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (local $d (ref null $D))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:   (ref.cast_static $B
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
