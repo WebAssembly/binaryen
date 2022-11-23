@@ -110,13 +110,21 @@ struct TypeSSA : public Pass {
     moduleFinder.walkModuleCode(module);
 
     // Process all the news. Note that we must do so in a deterministic order.
-    ModuleUtils::iterImportedFunctions(*module, [&](Function* func) {
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       processNews(analysis.map[func]);
     });
     processNews(moduleFinder.news);
   }
 
   void processNews(const News& news) {
+    // We'll generate nice names as we go, if we can.
+    Index nameCounter = 0;
+    std::unordered_set<Name> existingTypeNames;
+    auto& typeNames = module->typeNames;
+    for (auto& [type, info] : typeNames) {
+      existingTypeNames.insert(info.name);
+    }
+
     for (auto* curr : news.structNews) {
       if (isInteresting(curr)) {
         // This is interesting; create a new type and use it. The new type is
@@ -131,8 +139,13 @@ struct TypeSSA : public Pass {
         assert(!result.getError());
         auto newType = (*result)[0];
         curr->type = Type(newType, NonNullable);
-        // TODO: If the old type has a nice name, make a nice name for the new
-        //       one.
+
+        // If the old type has a nice name, make a nice name for the new one.
+        if (typeNames.count(oldType)) {
+          auto newName = Names::getValidName(typeNames[oldType].name.toString() + '$' + std::to_string(++nameCounter), existingTypeNames);
+          typeNames[newType] = newName;
+          existingTypeNames.insert(newName);
+        }
       }
     }
     // TODO: arrays
