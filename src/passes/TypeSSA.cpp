@@ -131,6 +131,8 @@ struct TypeSSA : public Pass {
         assert(!result.getError());
         auto newType = (*result)[0];
         curr->type = Type(newType, NonNullable);
+        // TODO: If the old type has a nice name, make a nice name for the new
+        //       one.
       }
     }
     // TODO: arrays
@@ -146,9 +148,9 @@ struct TypeSSA : public Pass {
     }
 
     if (curr->isWithDefault()) {
-      // This starts with all default values, and so it is unlikely that much
-      // can be done. TODO perhaps all other sets have refined types, though?
-      return false;
+      // This starts with all default values - zeros and nulls - and that might
+      // be useful.
+      return true;
     }
 
     // Look for at least one interesting operand.
