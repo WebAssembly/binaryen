@@ -132,3 +132,17 @@
     (local $c (ref null $C))
   )
 )
+
+;; Check that we refinalize properly.
+(module
+  (type $A (struct))
+  (type $B (struct_subtype $A))
+
+  (func $returner (result (ref null $B))
+    (local $local (ref null $B))
+    ;; After we change the local to use type $A, we need to update the local.get's
+    ;; type as well, or we will error.
+    (local.get $local)
+  )
+)
+

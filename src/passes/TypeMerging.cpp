@@ -29,6 +29,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/small_set.h"
 #include "wasm-builder.h"
@@ -151,8 +152,72 @@ struct TypeMerging : public Pass {
       merges[type] = newType;
     }
 
+std::cout << "A1 " << *module << '\n';
+    // Map types, making locals refer to the new types and so forth.
     GlobalTypeRewriter typeRewriter(*module);
     typeRewriter.mapTypes(merges);
+std::cout << "A2 " << *module << '\n';
+
+    std::unordered_map<HeapType, Signature> newSignatures;
+
+    for (auto type : types) {
+      if (!type.isSignature()) {
+        continue;
+      }
+
+      auto updateType = [&](Type& type) {
+        if (!type.isRef()) {
+          return;
+        }
+        auto heapType = type.getHeapType();
+        auto iter = merges.find(heapType);
+        if (iter != merges.end()) {
+          type = Type(iter->second, type.getNullability());
+        }
+      };
+
+      auto getUpdatedTypeList = [&](Type type) {
+        std::vector<Type> vec;
+        for (auto t : type) {
+          updateType(t);
+          vec.push_back(t);
+        }
+std::cout << "gUTL " << vec.size() << " : " << Type(vec).size() << '\n';
+        return Type(vec);
+      };
+
+      auto oldSig = type.getSignature();
+      Signature sig;
+      sig.params = getUpdatedTypeList(oldSig.params);
+      sig.results = getUpdatedTypeList(oldSig.results);
+      newSignatures[type] = sig;
+std::cout << "new sig for " << type << " => " << sig << '\n';
+    }
+
+    // We also need to modify types themselves, as struct fields must refer to
+    // the new types as well.
+    class SignatureRewriter : public GlobalTypeRewriter {
+      const SignatureUpdates& updates;
+
+    public:
+      SignatureRewriter(Module& wasm, const SignatureUpdates& updates)
+        : GlobalTypeRewriter(wasm), updates(updates) {
+        update();
+      }
+
+      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
+        auto iter = updates.find(oldSignatureType);
+        if (iter != updates.end()) {
+          sig.params = getTempType(iter->second.params);
+          sig.results = getTempType(iter->second.results);
+        }
+      }
+    } rewriter(*module, newSignatures);
+
+std::cout << "A3 " << *module << '\n';
+
+    // Propagate type changes outwards.
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 

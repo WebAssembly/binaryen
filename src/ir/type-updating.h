@@ -389,6 +389,63 @@ public:
     } rewriter(wasm, updates);
   }
 
+  using TypeUpdates = std::unordered_map<HeapType, HeapType>;
+
+  // Helper for the pattern of just mapping some types to other types, using a
+  // map of old heap type => new heap type.
+  static void updateTypes(const TypeUpdates& updates, Module& wasm) {
+    if (updates.empty()) {
+      return;
+    }
+
+    class TypeRewriter : public GlobalTypeRewriter {
+      const TypeUpdates& updates;
+
+    public:
+      TypeRewriter(Module& wasm, const TypeUpdates& updates)
+        : GlobalTypeRewriter(wasm), updates(updates) {
+        update();
+      }
+
+      void updateType(Type& type) {
+        if (!type.isRef()) {
+          return;
+        }
+        auto heapType = type.getHeapType();
+        auto iter = updates.find(heapType);
+        if (iter != updates.end()) {
+          type = Type(iter->second, type.getNullability());
+        }
+      }
+
+      void modifyStruct(HeapType oldType, Struct& struct_) override {
+        for (auto& field : struct_.fields) {
+          updateType(field.type);
+        }
+      }
+      void modifyArray(HeapType oldType, Array& array) override {
+        updateType(array.element.type);
+      }
+      void modifySignature(HeapType oldSignatureType, Signature& sig) override {
+        auto getUpdatedTypeList = [&](Type type) {
+          std::vector<Type> vec;
+          for (auto t : type) {
+            //updateType(t);
+            vec.push_back(t);
+          }
+          std::cout << "old  " << type << "\n";
+          std::cout << "new  " << Tuple(vec) << "\n";
+          std::cout << "neww " << Type(vec) << "\n";
+          std::cout << "eq?  " << int(type == Tuple(vec)) << '\n';
+          return getTempType(Tuple(vec));
+        };
+
+        sig.params = getUpdatedTypeList(sig.params);
+        sig.results = getUpdatedTypeList(sig.results);
+      }
+    } rewriter(wasm, updates);
+  }
+
 private:
   TypeBuilder typeBuilder;
 
