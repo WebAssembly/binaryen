@@ -16860,4 +16860,32 @@
       (i32.const 10)
     )
   )
+
+  ;; CHECK:      (func $skip-added-constants-mix-flip-other (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-mix-flip-other (result i32)
+    ;; As above, but with the sign the same while the absolute values are
+    ;; flipped.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 20)
+      )
+      (i32.const -10)
+    )
+  )
 )

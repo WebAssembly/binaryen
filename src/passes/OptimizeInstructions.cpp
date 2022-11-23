@@ -4012,6 +4012,7 @@ private:
       // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
       // And similarly for other relational operations on integers with a "+"
       // on the left.
+      // TODO: support - and not just +
       {
         Binary* add;
         Const* c1;
@@ -4073,8 +4074,11 @@ private:
                 doC2SubC1 = true;
               } else if (C1SubC2.leS(C1).getInteger() &&
                          zero.leS(C2).getInteger()) {
+                // N.B. this code path is not tested atm as other optimizations
+                // will canonicalize x + C .. into x - C, and so we would need
+                // to implement the TODO above on subtraction and not only
+                // support addition here.
                 doC1SubC2 = true;
-// TODO test
               }
             } else {
               // Unsigned.
