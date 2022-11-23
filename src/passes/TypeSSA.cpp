@@ -65,9 +65,7 @@ struct News {
 struct NewFinder : public PostWalker<NewFinder> {
   News news;
 
-  void visitStructNew(StructNew* curr) {
-    news.structNews.push_back(curr);
-  }
+  void visitStructNew(StructNew* curr) { news.structNews.push_back(curr); }
 
   // TODO arrays
 };
@@ -111,9 +109,8 @@ struct TypeSSA : public Pass {
     moduleFinder.walkModuleCode(module);
 
     // Process all the news. Note that we must do so in a deterministic order.
-    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      processNews(analysis.map[func]);
-    });
+    ModuleUtils::iterDefinedFunctions(
+      *module, [&](Function* func) { processNews(analysis.map[func]); });
     processNews(moduleFinder.news);
   }
 
@@ -145,8 +142,10 @@ struct TypeSSA : public Pass {
 
         // If the old type has a nice name, make a nice name for the new one.
         if (typeNames.count(oldType)) {
-          auto intendedName = typeNames[oldType].name.toString() + '$' + std::to_string(++nameCounter);
-          auto newName = Names::getValidNameGivenExisting(intendedName, existingTypeNames);
+          auto intendedName = typeNames[oldType].name.toString() + '$' +
+                              std::to_string(++nameCounter);
+          auto newName =
+            Names::getValidNameGivenExisting(intendedName, existingTypeNames);
           // Copy the old field names; only change the type's name itself.
           auto info = typeNames[oldType];
           info.name = newName;
@@ -200,7 +199,6 @@ struct TypeSSA : public Pass {
     // Nothing interesting.
     return false;
   }
-
 };
 
 } // anonymous namespace
