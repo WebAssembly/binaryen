@@ -153,11 +153,9 @@ struct TypeMerging : public Pass {
       merges[type] = newType;
     }
 
-std::cout << "A1 " << *module << '\n';
     // Map types, making locals refer to the new types and so forth.
     GlobalTypeRewriter typeRewriter(*module);
     typeRewriter.mapTypes(merges);
-std::cout << "A2 " << *module << '\n';
 
     std::unordered_map<HeapType, Signature> newSignatures;
 
@@ -183,7 +181,6 @@ std::cout << "A2 " << *module << '\n';
           updateType(t);
           vec.push_back(t);
         }
-std::cout << "gUTL " << vec.size() << " : " << Type(vec).size() << '\n';
         return Type(vec);
       };
 
@@ -192,12 +189,9 @@ std::cout << "gUTL " << vec.size() << " : " << Type(vec).size() << '\n';
       sig.params = getUpdatedTypeList(oldSig.params);
       sig.results = getUpdatedTypeList(oldSig.results);
       newSignatures[type] = sig;
-std::cout << "new sig for " << type << " => " << sig << '\n';
     }
 
     typeRewriter.updateSignatures(newSignatures, *module);
-
-std::cout << "A3 " << *module << '\n';
 
     class TypeInternalsUpdater : public GlobalTypeRewriter {
       const TypeUpdates& updates;
@@ -228,9 +222,6 @@ std::cout << "A3 " << *module << '\n';
         updateType(array.element.type);
       }
     } rewriter(*module, merges);
-
-
-std::cout << "A4 " << *module << '\n';
 
     // Propagate type changes outwards.
     ReFinalize().run(getPassRunner(), module);
