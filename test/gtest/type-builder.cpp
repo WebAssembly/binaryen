@@ -103,22 +103,22 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 
   std::stringstream stream;
   stream << print(built[0]);
-  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $array1)) data)");
+  EXPECT_EQ(stream.str(), "(struct (field (ref null $array1)))");
 
   stream.str("");
   stream << print(built[1]);
-  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $struct0)) data)");
+  EXPECT_EQ(stream.str(), "(struct (field (ref null $struct0)))");
 
   stream.str("");
   stream << print(built[2]);
-  EXPECT_EQ(stream.str(), "(array_subtype (ref null $struct1) data)");
+  EXPECT_EQ(stream.str(), "(array (ref null $struct1))");
 
   stream.str("");
   stream << print(built[3]);
-  EXPECT_EQ(stream.str(), "(array_subtype (ref null $array0) data)");
+  EXPECT_EQ(stream.str(), "(array (ref null $array0))");
 }
 
-TEST_F(EquirecursiveTest, Basics) {
+TEST_F(IsorecursiveTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
@@ -138,6 +138,8 @@ TEST_F(EquirecursiveTest, Basics) {
   builder[0] = sig;
   builder[1] = struct_;
   builder[2] = array;
+
+  builder.createRecGroup(0, 3);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -470,7 +472,7 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
   EXPECT_TRUE(result);
 }
 
-static void testCanonicalizeBasicTypes() {
+TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
   TypeBuilder builder(5);
 
   Type anyref = builder.getTempRefType(builder[0], Nullable);
@@ -490,13 +492,6 @@ static void testCanonicalizeBasicTypes() {
 
   EXPECT_EQ(built[1], built[2]);
   EXPECT_EQ(built[3], built[4]);
-}
-
-TEST_F(EquirecursiveTest, CanonicalizeBasicTypes) {
-  testCanonicalizeBasicTypes();
-}
-TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
-  testCanonicalizeBasicTypes();
 }
 
 TEST_F(IsorecursiveTest, TestHeapTypeRelations) {

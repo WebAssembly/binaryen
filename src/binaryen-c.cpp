@@ -408,9 +408,6 @@ BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
 
 // TypeSystem
 
-BinaryenTypeSystem BinaryenTypeSystemEquirecursive() {
-  return static_cast<BinaryenTypeSystem>(TypeSystem::Equirecursive);
-}
 BinaryenTypeSystem BinaryenTypeSystemNominal() {
   return static_cast<BinaryenTypeSystem>(TypeSystem::Nominal);
 }

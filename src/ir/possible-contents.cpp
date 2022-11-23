@@ -488,12 +488,6 @@ struct InfoCollector
         }
       }
     }
-    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      // We need explicit supers in the SubTyping helper class. Without that,
-      // cannot handle refs, and consider them irrelevant.
-      return false;
-    }
     return true;
   }
 
@@ -1582,11 +1576,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "struct phase\n";
 #endif
 
-  if (getTypeSystem() == TypeSystem::Nominal ||
-      getTypeSystem() == TypeSystem::Isorecursive) {
-    subTypes = std::make_unique<SubTypes>(wasm);
-    maxDepths = subTypes->getMaxDepths();
-  }
+  subTypes = std::make_unique<SubTypes>(wasm);
+  maxDepths = subTypes->getMaxDepths();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "Link-targets phase\n";
