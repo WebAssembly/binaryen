@@ -188,22 +188,10 @@ struct TypeMerging : public Pass {
             continue;
           }
 
-          auto updateType = [&](Type& type) {
-            if (!type.isRef()) {
-              return;
-            }
-            auto heapType = type.getHeapType();
-            auto iter = merges.find(heapType);
-            if (iter != merges.end()) {
-              type = Type(iter->second, type.getNullability());
-            }
-          };
-
           auto getUpdatedTypeList = [&](Type type) {
             std::vector<Type> vec;
             for (auto t : type) {
-              updateType(t);
-              vec.push_back(t);
+              vec.push_back(getNewType(t));
             }
             return Type(vec);
           };
