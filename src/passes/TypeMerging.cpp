@@ -159,8 +159,6 @@ struct TypeMerging : public Pass {
     }
 
     // Map types, making locals refer to the new types and so forth.
-    GlobalTypeRewriter typeRewriter(*module);
-    typeRewriter.mapTypes(merges);
 
     std::unordered_map<HeapType, Signature> newSignatures;
 
@@ -196,8 +194,6 @@ struct TypeMerging : public Pass {
       newSignatures[type] = sig;
     }
 
-    //    typeRewriter.updateSignatures(newSignatures, *module);
-
     class TypeInternalsUpdater : public GlobalTypeRewriter {
       const TypeUpdates& updates;
       const SignatureUpdates& signatureUpdates;
@@ -208,6 +204,11 @@ struct TypeMerging : public Pass {
                            const SignatureUpdates& signatureUpdates)
         : GlobalTypeRewriter(wasm), updates(updates),
           signatureUpdates(signatureUpdates) {
+
+        // Map locals etc. to refer to the merged types.
+        mapTypes(updates);
+
+        // Update the internals of types to refer to the merged types.
         update();
       }
 
