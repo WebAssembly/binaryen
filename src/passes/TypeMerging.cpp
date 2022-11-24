@@ -170,8 +170,7 @@ struct TypeMerging : public Pass {
       TypeInternalsUpdater(Module& wasm,
                            const TypeUpdates& merges,
                            const std::vector<HeapType>& types)
-        : GlobalTypeRewriter(wasm), merges(merges),
-          types(types) {
+        : GlobalTypeRewriter(wasm), merges(merges), types(types) {
 
         computeNewSignatures();
 
