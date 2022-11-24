@@ -160,56 +160,60 @@ struct TypeMerging : public Pass {
 
     // Map types, making locals refer to the new types and so forth.
 
-    std::unordered_map<HeapType, Signature> newSignatures;
-
-    for (auto type : types) {
-      if (!type.isSignature()) {
-        continue;
-      }
-
-      auto updateType = [&](Type& type) {
-        if (!type.isRef()) {
-          return;
-        }
-        auto heapType = type.getHeapType();
-        auto iter = merges.find(heapType);
-        if (iter != merges.end()) {
-          type = Type(iter->second, type.getNullability());
-        }
-      };
-
-      auto getUpdatedTypeList = [&](Type type) {
-        std::vector<Type> vec;
-        for (auto t : type) {
-          updateType(t);
-          vec.push_back(t);
-        }
-        return Type(vec);
-      };
-
-      auto oldSig = type.getSignature();
-      Signature sig;
-      sig.params = getUpdatedTypeList(oldSig.params);
-      sig.results = getUpdatedTypeList(oldSig.results);
-      newSignatures[type] = sig;
-    }
-
     class TypeInternalsUpdater : public GlobalTypeRewriter {
-      const TypeUpdates& updates;
-      const SignatureUpdates& signatureUpdates;
+      const TypeUpdates& merges;
+      const std::vector<HeapType>& types;
+
+      std::unordered_map<HeapType, Signature> newSignatures;
 
     public:
       TypeInternalsUpdater(Module& wasm,
-                           const TypeUpdates& updates,
-                           const SignatureUpdates& signatureUpdates)
-        : GlobalTypeRewriter(wasm), updates(updates),
-          signatureUpdates(signatureUpdates) {
+                           const TypeUpdates& merges,
+                           const std::vector<HeapType>& types)
+        : GlobalTypeRewriter(wasm), merges(merges),
+          types(types) {
+
+        computeNewSignatures();
 
         // Map locals etc. to refer to the merged types.
-        mapTypes(updates);
+        mapTypes(merges);
 
         // Update the internals of types to refer to the merged types.
         update();
+      }
+
+      void computeNewSignatures() {
+        for (auto type : types) {
+          if (!type.isSignature()) {
+            continue;
+          }
+
+          auto updateType = [&](Type& type) {
+            if (!type.isRef()) {
+              return;
+            }
+            auto heapType = type.getHeapType();
+            auto iter = merges.find(heapType);
+            if (iter != merges.end()) {
+              type = Type(iter->second, type.getNullability());
+            }
+          };
+
+          auto getUpdatedTypeList = [&](Type type) {
+            std::vector<Type> vec;
+            for (auto t : type) {
+              updateType(t);
+              vec.push_back(t);
+            }
+            return Type(vec);
+          };
+
+          auto oldSig = type.getSignature();
+          Signature sig;
+          sig.params = getUpdatedTypeList(oldSig.params);
+          sig.results = getUpdatedTypeList(oldSig.results);
+          newSignatures[type] = sig;
+        }
       }
 
       Type getNewType(Type type) {
@@ -217,8 +221,8 @@ struct TypeMerging : public Pass {
           return type;
         }
         auto heapType = type.getHeapType();
-        auto iter = updates.find(heapType);
-        if (iter != updates.end()) {
+        auto iter = merges.find(heapType);
+        if (iter != merges.end()) {
           return Type(iter->second, type.getNullability());
         }
         return type;
@@ -236,13 +240,13 @@ struct TypeMerging : public Pass {
         array.element.type = getNewType(oldType.getArray().element.type);
       }
       void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = signatureUpdates.find(oldSignatureType);
-        if (iter != signatureUpdates.end()) {
+        auto iter = newSignatures.find(oldSignatureType);
+        if (iter != newSignatures.end()) {
           sig.params = getTempType(iter->second.params);
           sig.results = getTempType(iter->second.results);
         }
       }
-    } rewriter(*module, merges, newSignatures);
+    } rewriter(*module, merges, types);
 
     // Propagate type changes outwards.
     ReFinalize().run(getPassRunner(), module);

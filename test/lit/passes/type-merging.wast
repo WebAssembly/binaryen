@@ -144,3 +144,31 @@
     (local.get $local)
   )
 )
+
+(;; TODO
+(module
+ (type $type$2 (array (mut (ref null $type$5))))
+ (type $type$5 (struct (field (mut i32))))
+ (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
+ (type $type$4 (struct_subtype (field (mut i32)) (field (mut i32)) $type$6))
+ (type $type$0 (struct_subtype (field (mut i32)) (field (mut i32)) $type$4))
+ (type $type$0$2 (struct_subtype (field (mut i32)) (field (mut i32)) $type$0))
+ (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
+ (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) $type$6))
+ (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
+ (type $type$3$1 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$3))
+ (global $global$0 (ref $type$0) (struct.new $type$0$2
+  (i32.const 1705)
+  (i32.const 0)
+ ))
+ (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
+  (struct.new $type$3$1
+   (i32.const 1685)
+   (i32.const 0)
+   (global.get $global$0)
+   (i64.const 0)
+   (array.init_static $type$2)
+  )
+ )
+)
+;;)
