@@ -848,6 +848,38 @@ public:
   }
 };
 
+// Proxy that runs wrapped pass for instrumented functions only
+struct InstrumentedProxy : public Pass {
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<InstrumentedProxy>(analyzer, passName);
+  }
+
+  InstrumentedProxy(ModuleAnalyzer* analyzer, const std::string& passName)
+    : analyzer(analyzer), passName(passName),
+      pass(PassRegistry::get()->createPass(passName)) {}
+
+  bool isFunctionParallel() override { return pass->isFunctionParallel(); }
+
+  void runOnFunction(Module* module, Function* func) override {
+    if (analyzer->needsInstrumentation(func)) {
+      pass->runOnFunction(module, func);
+    }
+  }
+
+  bool modifiesBinaryenIR() override { return pass->modifiesBinaryenIR(); }
+
+  bool invalidatesDWARF() override { return pass->invalidatesDWARF(); }
+
+  bool requiresNonNullableLocalFixups() override {
+    return pass->requiresNonNullableLocalFixups();
+  }
+
+private:
+  ModuleAnalyzer* analyzer;
+  std::string passName;
+  std::unique_ptr<Pass> pass;
+};
+
 // Instrument control flow, around calls and adding skips for rewinding.
 struct AsyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
@@ -1617,7 +1649,7 @@ struct Asyncify : public Pass {
     // anything else.
     {
       PassRunner runner(module);
-      runner.add("flatten");
+      runner.add(make_unique<InstrumentedProxy>(&analyzer, "flatten"));
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
       // unreachable code here.
@@ -1627,13 +1659,17 @@ struct Asyncify : public Pass {
         // because the flow changes add many branches, break up if-elses, etc.,
         // all of which extend the live ranges of locals. In other words, it is
         // not possible to coalesce well afterwards.
-        runner.add("remove-unused-names");
-        runner.add("simplify-locals-nonesting");
-        runner.add("reorder-locals");
-        runner.add("coalesce-locals");
-        runner.add("simplify-locals-nonesting");
-        runner.add("reorder-locals");
-        runner.add("merge-blocks");
+        runner.add(
+          make_unique<InstrumentedProxy>(&analyzer, "remove-unused-names"));
+        runner.add(make_unique<InstrumentedProxy>(&analyzer,
+                                                  "simplify-locals-nonesting"));
+        runner.add(make_unique<InstrumentedProxy>(&analyzer, "reorder-locals"));
+        runner.add(
+          make_unique<InstrumentedProxy>(&analyzer, "coalesce-locals"));
+        runner.add(make_unique<InstrumentedProxy>(&analyzer,
+                                                  "simplify-locals-nonesting"));
+        runner.add(make_unique<InstrumentedProxy>(&analyzer, "reorder-locals"));
+        runner.add(make_unique<InstrumentedProxy>(&analyzer, "merge-blocks"));
       }
       runner.add(
         make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
