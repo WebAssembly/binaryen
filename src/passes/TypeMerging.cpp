@@ -246,7 +246,7 @@ struct TypeMerging : public Pass {
 
     // Propagate type changes outwards.
 
-//    ReFinalize().run(getPassRunner(), module);
+    //    ReFinalize().run(getPassRunner(), module);
   }
 };
 

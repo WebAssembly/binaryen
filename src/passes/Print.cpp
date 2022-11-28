@@ -440,7 +440,7 @@ void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
     }
   }
 
-// getID
+  // getID
 
   // No luck with a name, just print the test as best we can.
   o << type;

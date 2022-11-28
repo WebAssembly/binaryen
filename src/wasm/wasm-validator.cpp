@@ -2587,7 +2587,10 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
       // All the fields must have the proper type.
       for (Index i = 0; i < fields.size(); i++) {
         if (!Type::isSubType(curr->operands[i]->type, fields[i].type)) {
-          info.fail("struct.new operand " + std::to_string(i) + " must have proper type", curr, getFunction());
+          info.fail("struct.new operand " + std::to_string(i) +
+                      " must have proper type",
+                    curr,
+                    getFunction());
         }
       }
     }
