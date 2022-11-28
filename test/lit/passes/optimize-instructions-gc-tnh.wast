@@ -3,8 +3,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions                      -all --nominal -S -o - | filecheck %s --check-prefix NO_TNH
 
 (module
-  ;; TNH:      (type $struct (struct_subtype  data))
-  ;; NO_TNH:      (type $struct (struct_subtype  data))
+  ;; TNH:      (type $struct (struct ))
+  ;; NO_TNH:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)

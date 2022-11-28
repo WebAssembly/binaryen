@@ -11,7 +11,7 @@
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
 
-  ;; CHECK:      (func $used (result i32)
+  ;; CHECK:      (func $used (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -29,7 +29,7 @@
     (local.get $i32)
   )
 
-  ;; CHECK:      (func $unused
+  ;; CHECK:      (func $unused (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused
@@ -39,7 +39,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fj
+  ;; CHECK:      (func $unused-fj (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-fj
@@ -49,7 +49,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fj-side-effects (result f32)
+  ;; CHECK:      (func $unused-fj-side-effects (type $none_=>_f32) (result f32)
   ;; CHECK-NEXT:  (local $f32 f32)
   ;; CHECK-NEXT:  (local.set $f32
   ;; CHECK-NEXT:   (f32.const 2.718280076980591)
@@ -71,7 +71,7 @@
     (local.get $f32)
   )
 
-  ;; CHECK:      (func $unused-unreachable
+  ;; CHECK:      (func $unused-unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $call.without.effects-fj
   ;; CHECK-NEXT:    (unreachable)
@@ -87,7 +87,7 @@
     )
   )
 
-  ;; CHECK:      (func $used-fallthrough
+  ;; CHECK:      (func $used-fallthrough (type $none_=>_none)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (if (result i32)
@@ -136,7 +136,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fallthrough
+  ;; CHECK:      (func $unused-fallthrough (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (block $condition (result i32)
@@ -177,7 +177,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fallthrough-bad-type
+  ;; CHECK:      (func $unused-fallthrough-bad-type (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref any))
   ;; CHECK-NEXT:    (call $i)
@@ -202,7 +202,7 @@
     )
   )
 
-  ;; CHECK:      (func $i (result i32)
+  ;; CHECK:      (func $i (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i (result i32)
@@ -210,7 +210,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $fj (param $0 f32) (result i64)
+  ;; CHECK:      (func $fj (type $f32_=>_i64) (param $0 f32) (result i64)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $fj (param f32) (result i64)
@@ -218,7 +218,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $ref (result (ref any))
+  ;; CHECK:      (func $ref (type $none_=>_ref|any|) (result (ref any))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $ref (result (ref any))
@@ -227,7 +227,7 @@
   )
 
 
-  ;; CHECK:      (func $nop
+  ;; CHECK:      (func $nop (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $nop

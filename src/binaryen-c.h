@@ -192,7 +192,6 @@ BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
 
 typedef uint32_t BinaryenTypeSystem;
 
-BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemEquirecursive(void);
 BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemNominal(void);
 BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemIsorecursive(void);
 BINARYEN_API BinaryenTypeSystem BinaryenGetTypeSystem(void);

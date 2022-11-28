@@ -103,22 +103,22 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 
   std::stringstream stream;
   stream << print(built[0]);
-  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $array1)) data)");
+  EXPECT_EQ(stream.str(), "(struct (field (ref null $array1)))");
 
   stream.str("");
   stream << print(built[1]);
-  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $struct0)) data)");
+  EXPECT_EQ(stream.str(), "(struct (field (ref null $struct0)))");
 
   stream.str("");
   stream << print(built[2]);
-  EXPECT_EQ(stream.str(), "(array_subtype (ref null $struct1) data)");
+  EXPECT_EQ(stream.str(), "(array (ref null $struct1))");
 
   stream.str("");
   stream << print(built[3]);
-  EXPECT_EQ(stream.str(), "(array_subtype (ref null $array0) data)");
+  EXPECT_EQ(stream.str(), "(array (ref null $array0))");
 }
 
-TEST_F(EquirecursiveTest, Basics) {
+TEST_F(IsorecursiveTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
@@ -138,6 +138,8 @@ TEST_F(EquirecursiveTest, Basics) {
   builder[0] = sig;
   builder[1] = struct_;
   builder[2] = array;
+
+  builder.createRecGroup(0, 3);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -470,7 +472,7 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
   EXPECT_TRUE(result);
 }
 
-static void testCanonicalizeBasicTypes() {
+TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
   TypeBuilder builder(5);
 
   Type anyref = builder.getTempRefType(builder[0], Nullable);
@@ -492,14 +494,7 @@ static void testCanonicalizeBasicTypes() {
   EXPECT_EQ(built[3], built[4]);
 }
 
-TEST_F(EquirecursiveTest, CanonicalizeBasicTypes) {
-  testCanonicalizeBasicTypes();
-}
-TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
-  testCanonicalizeBasicTypes();
-}
-
-TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
+TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   HeapType ext = HeapType::ext;
   HeapType func = HeapType::func;
   HeapType any = HeapType::any;
@@ -715,6 +710,127 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(defStruct, defArray, data);
 
   assertLUB(defArray, defArray, defArray);
+
+  Type anyref = Type(any, Nullable);
+  Type eqref = Type(eq, Nullable);
+
+  {
+    // Nullable and non-nullable references.
+    Type nonNullable(any, NonNullable);
+    EXPECT_TRUE(Type::isSubType(nonNullable, anyref));
+    EXPECT_FALSE(Type::isSubType(anyref, nonNullable));
+    EXPECT_TRUE(Type::hasLeastUpperBound(anyref, nonNullable));
+    EXPECT_EQ(Type::getLeastUpperBound(anyref, nonNullable), anyref);
+  }
+
+  {
+    // Immutable array fields are covariant.
+    TypeBuilder builder(2);
+    builder[0] = Array(Field(anyref, Immutable));
+    builder[1] = Array(Field(eqref, Immutable));
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+
+  {
+    // Depth subtyping
+    TypeBuilder builder(2);
+    builder[0] = Struct({Field(anyref, Immutable)});
+    builder[1] = Struct({Field(eqref, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+
+  {
+    // Width subtyping
+    TypeBuilder builder(2);
+    builder[0] = Struct({Field(anyref, Immutable)});
+    builder[1] = Struct({Field(anyref, Immutable), Field(anyref, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+
+  {
+    // Nested structs
+    TypeBuilder builder(4);
+    auto ref0 = builder.getTempRefType(builder[0], Nullable);
+    auto ref1 = builder.getTempRefType(builder[1], Nullable);
+    builder[0] = Struct({Field(anyref, Immutable)});
+    builder[1] = Struct({Field(eqref, Immutable)});
+    builder[2] = Struct({Field(ref0, Immutable)});
+    builder[3] = Struct({Field(ref1, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    builder[3].subTypeOf(builder[2]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[3], built[2]));
+  }
+
+  {
+    // Recursive structs
+    TypeBuilder builder(2);
+    auto ref0 = builder.getTempRefType(builder[0], Nullable);
+    auto ref1 = builder.getTempRefType(builder[1], Nullable);
+    builder[0] = Struct({Field(ref0, Immutable)});
+    builder[1] = Struct({Field(ref1, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+}
+
+TEST_F(IsorecursiveTest, TestSubtypeErrors) {
+  Type anyref = Type(HeapType::any, Nullable);
+  Type eqref = Type(HeapType::eq, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
+
+  {
+    // Incompatible signatures.
+    TypeBuilder builder(2);
+    builder[0] = Signature(Type::none, anyref);
+    builder[1] = Signature(anyref, Type::none);
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
+
+  {
+    // Signatures incompatible in tuple size.
+    TypeBuilder builder(2);
+    builder[0] = Signature(Type::none, {anyref, anyref});
+    builder[1] = Signature(Type::none, {anyref, anyref, anyref});
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
+
+  {
+    // Mutable array fields are invariant.
+    TypeBuilder builder(2);
+    builder[0] = Array(Field(anyref, Mutable));
+    builder[1] = Array(Field(eqref, Mutable));
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
+
+  {
+    // Incompatible struct prefixes
+    TypeBuilder builder(2);
+    builder[0] = Struct({Field(anyref, Immutable), Field(anyref, Immutable)});
+    builder[1] = Struct({Field(funcref, Immutable), Field(anyref, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
 }
 
 // Test SubTypes utility code.

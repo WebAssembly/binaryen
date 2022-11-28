@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct_subtype  data))
+  ;; CHECK:      (type $A (struct ))
   (type $A (struct_subtype data))
 
   ;; CHECK:      (type $B (struct_subtype  $A))

@@ -408,9 +408,6 @@ BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
 
 // TypeSystem
 
-BinaryenTypeSystem BinaryenTypeSystemEquirecursive() {
-  return static_cast<BinaryenTypeSystem>(TypeSystem::Equirecursive);
-}
 BinaryenTypeSystem BinaryenTypeSystemNominal() {
   return static_cast<BinaryenTypeSystem>(TypeSystem::Nominal);
 }
@@ -6062,10 +6059,10 @@ void BinaryenAddCustomSection(BinaryenModuleRef module,
                               const char* name,
                               const char* contents,
                               BinaryenIndex contentsSize) {
-  wasm::UserSection customSection;
+  wasm::CustomSection customSection;
   customSection.name = name;
   customSection.data = std::vector<char>(contents, contents + contentsSize);
-  ((Module*)module)->userSections.push_back(customSection);
+  ((Module*)module)->customSections.push_back(customSection);
 }
 
 //

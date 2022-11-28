@@ -1,8 +1,8 @@
-;; RUN: wasm-split %s --instrument --in-secondary-memory -all -S -o - | filecheck %s
+;; RUN: wasm-split %s --instrument --in-secondary-memory --enable-threads --enable-multi-memories -S -o - | filecheck %s
 
 ;; Check that the output round trips and validates as well
-;; RUN: wasm-split %s --instrument --in-secondary-memory -all -g -o %t.wasm
-;; RUN: wasm-opt -all %t.wasm -S -o -
+;; RUN: wasm-split %s --instrument --in-secondary-memory --enable-threads --enable-multi-memories -g -o %t.wasm
+;; RUN: wasm-opt --enable-threads --enable-multi-memories %t.wasm -S -o -
 
 (module
   (import "env" "foo" (func $foo))

@@ -2832,9 +2832,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    bool hasSupertype =
-      !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
-                     getTypeSystem() == TypeSystem::Isorecursive);
+    bool hasSupertype = !name.is() && !!curr.getSuperType();
     if (hasSupertype) {
       o << "(func_subtype";
     } else {
@@ -2891,8 +2889,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = !!curr.getSuperType();
     if (hasSupertype) {
       o << "(array_subtype ";
     } else {
@@ -2906,8 +2903,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << ')';
   }
   void handleStruct(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = !!curr.getSuperType();
     const auto& fields = curr.getStruct().fields;
     if (hasSupertype) {
       o << "(struct_subtype ";
@@ -3038,8 +3034,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (getTypeSystem() == TypeSystem::Nominal ||
-        getTypeSystem() == TypeSystem::Isorecursive) {
+    if (currModule && currModule->features.hasGC()) {
       o << " (type ";
       printHeapType(o, curr->type, currModule) << ')';
     }
@@ -3370,7 +3365,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->dylinkSection) {
       printDylinkSection(curr->dylinkSection);
     }
-    for (auto& section : curr->userSections) {
+    for (auto& section : curr->customSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "
         << section.data.size();

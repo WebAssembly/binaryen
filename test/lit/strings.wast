@@ -40,7 +40,7 @@
 
   ;; CHECK:      (memory $0 10 10)
 
-  ;; CHECK:      (func $string.new (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
+  ;; CHECK:      (func $string.new (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8 utf8
   ;; CHECK-NEXT:    (i32.const 1)
@@ -105,7 +105,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.const
+  ;; CHECK:      (func $string.const (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.const "foo")
   ;; CHECK-NEXT:  )
@@ -128,7 +128,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.measure (param $ref stringref)
+  ;; CHECK:      (func $string.measure (type $stringref_=>_none) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.measure_wtf8 wtf8
@@ -167,7 +167,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.encode (param $ref stringref)
+  ;; CHECK:      (func $string.encode (type $stringref_=>_none) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.encode_wtf8 wtf8
@@ -212,7 +212,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.concat (param $a stringref) (param $b stringref)
+  ;; CHECK:      (func $string.concat (type $stringref_stringref_=>_none) (param $a stringref) (param $b stringref)
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (string.concat
   ;; CHECK-NEXT:    (local.get $a)
@@ -229,7 +229,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.eq (param $a stringref) (param $b stringref)
+  ;; CHECK:      (func $string.eq (type $stringref_stringref_=>_none) (param $a stringref) (param $b stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.eq
@@ -250,7 +250,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.is_usv_sequence (param $ref stringref)
+  ;; CHECK:      (func $string.is_usv_sequence (type $stringref_=>_none) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.is_usv_sequence
@@ -269,7 +269,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.as (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
+  ;; CHECK:      (func $string.as (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
   ;; CHECK-NEXT:  (local.set $b
   ;; CHECK-NEXT:   (string.as_wtf8
   ;; CHECK-NEXT:    (local.get $a)
@@ -308,7 +308,7 @@
     )
   )
 
-  ;; CHECK:      (func $stringview-access (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
+  ;; CHECK:      (func $stringview-access (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (stringview_wtf8.advance
@@ -378,7 +378,7 @@
       )
     )
   )
-  ;; CHECK:      (func $stringview-slice (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
+  ;; CHECK:      (func $stringview-slice (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (stringview_wtf8.slice
   ;; CHECK-NEXT:    (local.get $b)
@@ -427,7 +427,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.length (param $ref stringview_wtf16)
+  ;; CHECK:      (func $string.length (type $stringview_wtf16_=>_none) (param $ref stringview_wtf16)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (stringview_wtf16.length
@@ -446,7 +446,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.new.gc (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $string.new.gc (type $ref|$array|_ref|$array16|_=>_none) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf8_array utf8
   ;; CHECK-NEXT:    (local.get $array)
@@ -507,7 +507,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.encode.gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $string.encode.gc (type $stringref_ref|$array|_ref|$array16|_=>_none) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.encode_wtf8_array wtf8

@@ -4,7 +4,7 @@
 (module
  ;; CHECK:      (type $none (func))
  (type $none (func))
- ;; CHECK:      (func $foo
+ ;; CHECK:      (func $foo (type $none)
  ;; CHECK-NEXT:  (local $0 (funcref (ref null $none)))
  ;; CHECK-NEXT:  (local $1 funcref)
  ;; CHECK-NEXT:  (local.set $0

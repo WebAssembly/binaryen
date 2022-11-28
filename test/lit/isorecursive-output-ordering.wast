@@ -9,22 +9,22 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $unused-6 (struct_subtype  data))
+  ;; CHECK-NEXT:  (type $unused-6 (struct ))
 
-  ;; CHECK:       (type $used-a-bit (struct_subtype  data))
+  ;; CHECK:       (type $used-a-bit (struct ))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $unused-1 (struct_subtype  data))
+  ;; CHECK-NEXT:  (type $unused-1 (struct ))
   (type $unused-1 (struct_subtype data))
-  ;; CHECK:       (type $unused-2 (struct_subtype  data))
+  ;; CHECK:       (type $unused-2 (struct ))
   (type $unused-2 (struct_subtype data))
-  ;; CHECK:       (type $unused-3 (struct_subtype  data))
+  ;; CHECK:       (type $unused-3 (struct ))
   (type $unused-3 (struct_subtype data))
-  ;; CHECK:       (type $unused-4 (struct_subtype  data))
+  ;; CHECK:       (type $unused-4 (struct ))
   (type $unused-4 (struct_subtype data))
-  ;; CHECK:       (type $used-a-lot (struct_subtype  data))
+  ;; CHECK:       (type $used-a-lot (struct ))
   (type $used-a-lot (struct_subtype data))
-  ;; CHECK:       (type $unused-5 (struct_subtype  data))
+  ;; CHECK:       (type $unused-5 (struct ))
   (type $unused-5 (struct_subtype data))
  )
 
@@ -47,9 +47,9 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $leaf (struct_subtype  data))
+  ;; CHECK-NEXT:  (type $leaf (struct ))
   (type $leaf (struct_subtype data))
-  ;; CHECK:       (type $unused (struct_subtype  data))
+  ;; CHECK:       (type $unused (struct ))
   (type $unused (struct_subtype data))
  )
 
@@ -57,12 +57,12 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $shrub (struct_subtype  $leaf))
 
-  ;; CHECK:       (type $used-a-ton (struct_subtype  data))
+  ;; CHECK:       (type $used-a-ton (struct ))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $twig (struct_subtype  data))
+  ;; CHECK-NEXT:  (type $twig (struct ))
   (type $twig (struct_subtype data))
-  ;; CHECK:       (type $used-a-bit (struct_subtype (field (ref $leaf)) data))
+  ;; CHECK:       (type $used-a-bit (struct (field (ref $leaf))))
   (type $used-a-bit (struct_subtype (ref $leaf) data))
  )
 
@@ -73,7 +73,7 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $root (struct_subtype  data))
+  ;; CHECK-NEXT:  (type $root (struct ))
   (type $root (struct_subtype data))
   ;; CHECK:       (type $used-a-lot (struct_subtype  $twig))
   (type $used-a-lot (struct_subtype $twig))
@@ -99,7 +99,7 @@
  ;; Test that basic heap type children do not trigger assertions.
 
  (rec
-  ;; CHECK:      (type $contains-basic (struct_subtype (field (ref any)) data))
+  ;; CHECK:      (type $contains-basic (struct (field (ref any))))
   (type $contains-basic (struct_subtype (ref any) data))
  )
 

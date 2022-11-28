@@ -7,7 +7,7 @@
 ;; types.
 
 (module
-  ;; CHECK:      (type $root (struct_subtype  data))
+  ;; CHECK:      (type $root (struct ))
 
   ;; CHECK:      (type $trunk (struct_subtype (field i32) $root))
 

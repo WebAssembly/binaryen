@@ -11,9 +11,9 @@
   ;; CHECK:      (elem declare func $foo)
 
   ;; CHECK:      (export "ref_func_test" (func $ref_func_test))
-  ;; NOMNL:      (type $none_=>_none (func_subtype func))
+  ;; NOMNL:      (type $none_=>_none (func))
 
-  ;; NOMNL:      (type $none_=>_funcref (func_subtype (result funcref) func))
+  ;; NOMNL:      (type $none_=>_funcref (func (result funcref)))
 
   ;; NOMNL:      (elem declare func $foo)
 
@@ -22,7 +22,7 @@
 
   ;; $foo should not be removed after being inlined, because there is 'ref.func'
   ;; instruction that refers to it
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $foo (type $none_=>_none)
@@ -30,7 +30,7 @@
   ;; NOMNL-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $ref_func_test (result funcref)
+  ;; CHECK:      (func $ref_func_test (type $none_=>_funcref) (result funcref)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$foo
   ;; CHECK-NEXT:    (nop)
@@ -58,12 +58,12 @@
  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
  ;; CHECK:      (global $global$0 (mut funcref) (ref.func $0))
- ;; NOMNL:      (type $none_=>_i32 (func_subtype (result i32) func))
+ ;; NOMNL:      (type $none_=>_i32 (func (result i32)))
 
  ;; NOMNL:      (global $global$0 (mut funcref) (ref.func $0))
  (global $global$0 (mut funcref) (ref.func $0))
 
- ;; CHECK:      (func $0 (result i32)
+ ;; CHECK:      (func $0 (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $0 (type $none_=>_i32) (result i32)
@@ -73,7 +73,7 @@
   (i32.const 1337)
  )
 
- ;; CHECK:      (func $1 (result i32)
+ ;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block $__inlined_func$0 (result i32)
  ;; CHECK-NEXT:   (i32.const 1337)
  ;; CHECK-NEXT:  )
@@ -94,12 +94,12 @@
  ;; CHECK:      (type $none_=>_none (func))
 
  ;; CHECK:      (start $0)
- ;; NOMNL:      (type $none_=>_none (func_subtype func))
+ ;; NOMNL:      (type $none_=>_none (func))
 
  ;; NOMNL:      (start $0)
  (start $0)
 
- ;; CHECK:      (func $0
+ ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $0 (type $none_=>_none)
@@ -109,7 +109,7 @@
   (nop)
  )
 
- ;; CHECK:      (func $1
+ ;; CHECK:      (func $1 (type $none_=>_none)
  ;; CHECK-NEXT:  (block $__inlined_func$0
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
@@ -127,7 +127,7 @@
 ;; inline a return_call_ref
 (module
  ;; CHECK:      (type $none_=>_none (func))
- ;; NOMNL:      (type $none_=>_none (func_subtype func))
+ ;; NOMNL:      (type $none_=>_none (func))
  (type $none_=>_none (func))
 
  ;; CHECK:      (export "func_36_invoker" (func $1))
@@ -139,7 +139,7 @@
    (ref.null $none_=>_none)
   )
  )
- ;; CHECK:      (func $1
+ ;; CHECK:      (func $1 (type $none_=>_none)
  ;; CHECK-NEXT:  (block $__inlined_func$0
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (br $__inlined_func$0)
@@ -166,7 +166,7 @@
 
  ;; CHECK:      (elem declare func $1)
 
- ;; CHECK:      (func $1 (result (ref func))
+ ;; CHECK:      (func $1 (type $none_=>_ref|func|) (result (ref func))
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; CHECK-NEXT:   (local.set $0
@@ -175,7 +175,7 @@
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; NOMNL:      (type $none_=>_ref|func| (func_subtype (result (ref func)) func))
+ ;; NOMNL:      (type $none_=>_ref|func| (func (result (ref func))))
 
  ;; NOMNL:      (elem declare func $1)
 

@@ -667,11 +667,6 @@
 ;; CHECK-NEXT:   --nominal                                     Force all GC type definitions to
 ;; CHECK-NEXT:                                                 be parsed as nominal.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --structural                                  Force all GC type definitions to
-;; CHECK-NEXT:                                                 be parsed as structural (i.e.
-;; CHECK-NEXT:                                                 equirecursive). This is the
-;; CHECK-NEXT:                                                 default.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --hybrid                                      Force all GC type definitions to
 ;; CHECK-NEXT:                                                 be parsed using the isorecursive
 ;; CHECK-NEXT:                                                 hybrid type system.

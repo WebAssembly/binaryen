@@ -6,14 +6,14 @@
 (module
   ;; CHECK:      (tag $e (param))
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
   (tag $e)
 
 
-  ;; CHECK:      (func $try_unreachable
+  ;; CHECK:      (func $try_unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (unreachable)
@@ -34,7 +34,7 @@
     (call $foo) ;; shouldn't be dce'd
   )
 
-  ;; CHECK:      (func $catch_unreachable
+  ;; CHECK:      (func $catch_unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -55,7 +55,7 @@
     (call $foo) ;; shouldn't be dce'd
   )
 
-  ;; CHECK:      (func $both_unreachable
+  ;; CHECK:      (func $both_unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (unreachable)
@@ -77,7 +77,7 @@
     (call $foo) ;; should be dce'd
   )
 
-  ;; CHECK:      (func $throw
+  ;; CHECK:      (func $throw (type $none_=>_none)
   ;; CHECK-NEXT:  (block $label$0
   ;; CHECK-NEXT:   (block $label$1
   ;; CHECK-NEXT:    (throw $e)
@@ -101,7 +101,7 @@
     )
   )
 
-  ;; CHECK:      (func $rethrow
+  ;; CHECK:      (func $rethrow (type $none_=>_none)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)

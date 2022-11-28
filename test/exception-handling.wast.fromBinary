@@ -9,13 +9,13 @@
  (tag $e-i32-i64 (param i32 i64))
  (tag $e-eqref (param eqref))
  (tag $e-empty (param))
- (func $foo
+ (func $foo (type $none_=>_none)
   (nop)
  )
- (func $bar
+ (func $bar (type $none_=>_none)
   (nop)
  )
- (func $eh-test
+ (func $eh-test (type $none_=>_none)
   (local $x i32)
   (local $1 i64)
   (local $2 (i32 i64))
@@ -205,7 +205,7 @@
    )
   )
  )
- (func $delegate-test
+ (func $delegate-test (type $none_=>_none)
   (try $label$9
    (do
     (block $label$1
@@ -276,7 +276,7 @@
    )
   )
  )
- (func $rethrow-test
+ (func $rethrow-test (type $none_=>_none)
   (try $label$3
    (do
     (call $foo)
@@ -382,7 +382,7 @@
    )
   )
  )
- (func $pop-test
+ (func $pop-test (type $none_=>_none)
   (try $label$5
    (do
     (nop)
@@ -408,7 +408,7 @@
    )
   )
  )
- (func $catchless-try-with-inner-delegate
+ (func $catchless-try-with-inner-delegate (type $none_=>_none)
   (try $label$6
    (do
     (block $label$1
@@ -424,7 +424,7 @@
    )
   )
  )
- (func $nested-block-and-try
+ (func $nested-block-and-try (type $none_=>_none)
   (block $label$1
    (block $label$2
    )

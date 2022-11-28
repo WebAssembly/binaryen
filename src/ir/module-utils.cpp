@@ -214,24 +214,6 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   TypeSystem system = getTypeSystem();
   Counts counts = getHeapTypeCounts(wasm);
 
-  if (system == TypeSystem::Equirecursive) {
-    // Sort by frequency and then original insertion order.
-    std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
-                                                    counts.end());
-    std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-      return a.second > b.second;
-    });
-
-    // Collect the results.
-    IndexedHeapTypes indexedTypes;
-    for (Index i = 0; i < sorted.size(); ++i) {
-      indexedTypes.types.push_back(sorted[i].first);
-    }
-
-    setIndices(indexedTypes);
-    return indexedTypes;
-  }
-
   // Types have to be arranged into topologically ordered recursion groups.
   // Under isorecrsive typing, the topological sort has to take all referenced
   // rec groups into account but under nominal typing it only has to take
@@ -285,9 +267,6 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
           info.preds.insert(super->getRecGroup());
         }
         break;
-      case TypeSystem::Equirecursive:
-        WASM_UNREACHABLE(
-          "Equirecursive types should already have been handled");
     }
   }
 

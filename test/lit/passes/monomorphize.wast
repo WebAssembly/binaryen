@@ -7,23 +7,23 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
-  ;; ALWAYS:      (type $A (struct_subtype  data))
-  ;; CAREFUL:      (type $A (struct_subtype  data))
+  ;; ALWAYS:      (type $A (struct ))
+  ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (struct_subtype  $A))
   ;; CAREFUL:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $none_=>_none (func_subtype func))
+  ;; ALWAYS:      (type $none_=>_none (func))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
   ;; ALWAYS:      (import "a" "b" (func $import (param (ref $A))))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; CAREFUL:      (type $none_=>_none (func_subtype func))
+  ;; CAREFUL:      (type $none_=>_none (func))
 
   ;; CAREFUL:      (import "a" "b" (func $import (param (ref $A))))
   (import "a" "b" (func $import (param (ref $A))))
@@ -124,10 +124,10 @@
   ;; As above, but now the refinable function uses the local in a way that
   ;; requires a fixup.
 
-  ;; ALWAYS:      (type $A (struct_subtype  data))
-  ;; CAREFUL:      (type $none_=>_none (func_subtype func))
+  ;; ALWAYS:      (type $A (struct ))
+  ;; CAREFUL:      (type $none_=>_none (func))
 
-  ;; CAREFUL:      (type $A (struct_subtype  data))
+  ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (struct_subtype  $A))
   ;; CAREFUL:      (type $B (struct_subtype  $A))
@@ -135,18 +135,18 @@
 
 
 
-  ;; ALWAYS:      (type $none_=>_none (func_subtype func))
+  ;; ALWAYS:      (type $none_=>_none (func))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
   ;; ALWAYS:      (func $calls (type $none_=>_none)
   ;; ALWAYS-NEXT:  (call $refinable_0
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; CAREFUL:      (func $calls (type $none_=>_none)
   ;; CAREFUL-NEXT:  (call $refinable
@@ -204,28 +204,28 @@
 (module
   ;; Multiple refinings of the same function, and of different functions.
 
-  ;; ALWAYS:      (type $A (struct_subtype  data))
-  ;; CAREFUL:      (type $none_=>_none (func_subtype func))
+  ;; ALWAYS:      (type $A (struct ))
+  ;; CAREFUL:      (type $none_=>_none (func))
 
-  ;; CAREFUL:      (type $A (struct_subtype  data))
+  ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (struct_subtype  $A))
   ;; CAREFUL:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; ALWAYS:      (type $none_=>_none (func_subtype func))
+  ;; ALWAYS:      (type $none_=>_none (func))
 
   ;; ALWAYS:      (type $C (struct_subtype  $B))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; CAREFUL:      (type $C (struct_subtype  $B))
   (type $C (struct_subtype $B))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
-  ;; ALWAYS:      (type $ref|$C|_=>_none (func_subtype (param (ref $C)) func))
+  ;; ALWAYS:      (type $ref|$C|_=>_none (func (param (ref $C))))
 
   ;; ALWAYS:      (func $calls1 (type $none_=>_none)
   ;; ALWAYS-NEXT:  (call $refinable1
@@ -327,28 +327,28 @@
   ;; A case where even CAREFUL mode will monomorphize, as it helps the target
   ;; function get optimized better.
 
-  ;; ALWAYS:      (type $A (struct_subtype  data))
-  ;; CAREFUL:      (type $A (struct_subtype  data))
+  ;; ALWAYS:      (type $A (struct ))
+  ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
 
   ;; ALWAYS:      (type $B (struct_subtype  $A))
   ;; CAREFUL:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
-  ;; ALWAYS:      (type $none_=>_none (func_subtype func))
+  ;; ALWAYS:      (type $none_=>_none (func))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; ALWAYS:      (import "a" "b" (func $import (param (ref $B))))
 
   ;; ALWAYS:      (global $global (mut i32) (i32.const 1))
-  ;; CAREFUL:      (type $ref|$B|_=>_none (func_subtype (param (ref $B)) func))
+  ;; CAREFUL:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
-  ;; CAREFUL:      (type $none_=>_none (func_subtype func))
+  ;; CAREFUL:      (type $none_=>_none (func))
 
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; CAREFUL:      (import "a" "b" (func $import (param (ref $B))))
 
@@ -558,12 +558,12 @@
 (module
   ;; Test that we avoid recursive calls.
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $A (struct_subtype  data))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func_subtype (param (ref $A)) func))
+  ;; ALWAYS:      (type $A (struct ))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; CAREFUL:      (type $A (struct_subtype  data))
+  ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (struct_subtype  $A))
   ;; CAREFUL:      (type $B (struct_subtype  $A))

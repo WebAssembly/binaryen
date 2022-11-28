@@ -30,8 +30,8 @@
   (type $words (array (mut i32)))
 
   (type $parent (struct))
-  (type $child (struct i32))
-  (type $grandchild (struct i32 i64))
+  (type $child (struct_subtype i32 $parent))
+  (type $grandchild (struct_subtype i32 i64 $child))
 
   (type $nested-child-struct (struct (field (mut (ref $child)))))
   (type $nested-child-array (array (mut (ref $child))))

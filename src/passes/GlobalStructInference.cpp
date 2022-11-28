@@ -71,10 +71,6 @@ struct GlobalStructInference : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "GlobalStructInference requires nominal/isorecursive typing";
-    }
 
     // First, find all the information we need. We need to know which struct
     // types are created in functions, because we will not be able to optimize

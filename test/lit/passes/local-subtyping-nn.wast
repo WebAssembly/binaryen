@@ -11,7 +11,7 @@
   ;; NOMNL:      (import "out" "i32" (func $i32 (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
 
-  ;; CHECK:      (func $non-nullable
+  ;; CHECK:      (func $non-nullable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref none))
   ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local.set $x
@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $uses-default (param $i i32)
+  ;; CHECK:      (func $uses-default (type $i32_=>_none) (param $i i32)
   ;; CHECK-NEXT:  (local $x nullref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)

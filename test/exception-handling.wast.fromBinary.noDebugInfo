@@ -9,13 +9,13 @@
  (tag $tag$2 (param i32 i64))
  (tag $tag$3 (param eqref))
  (tag $tag$4 (param))
- (func $0
+ (func $0 (type $none_=>_none)
   (nop)
  )
- (func $1
+ (func $1 (type $none_=>_none)
   (nop)
  )
- (func $2
+ (func $2 (type $none_=>_none)
   (local $0 i32)
   (local $1 i64)
   (local $2 (i32 i64))
@@ -205,7 +205,7 @@
    )
   )
  )
- (func $3
+ (func $3 (type $none_=>_none)
   (try $label$9
    (do
     (block $label$1
@@ -276,7 +276,7 @@
    )
   )
  )
- (func $4
+ (func $4 (type $none_=>_none)
   (try $label$3
    (do
     (call $0)
@@ -382,7 +382,7 @@
    )
   )
  )
- (func $5
+ (func $5 (type $none_=>_none)
   (try $label$5
    (do
     (nop)
@@ -408,7 +408,7 @@
    )
   )
  )
- (func $6
+ (func $6 (type $none_=>_none)
   (try $label$6
    (do
     (block $label$1
@@ -424,7 +424,7 @@
    )
   )
  )
- (func $7
+ (func $7 (type $none_=>_none)
   (block $label$1
    (block $label$2
    )

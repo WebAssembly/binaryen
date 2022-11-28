@@ -517,25 +517,17 @@ int main(int argc, const char* argv[]) {
               Options::Arguments::Zero,
               [&](Options*, const std::string& arg) { verbose = true; });
 
-  TypeSystem system = TypeSystem::Nominal;
+  TypeSystem system = TypeSystem::Isorecursive;
   options.add(
     "--nominal",
     "",
-    "Use the nominal type system (default)",
+    "Use the nominal type system",
     WasmFuzzTypesOption,
     Options::Arguments::Zero,
     [&](Options*, const std::string& arg) { system = TypeSystem::Nominal; });
-  options.add("--structural",
-              "",
-              "Use the equirecursive type system",
-              WasmFuzzTypesOption,
-              Options::Arguments::Zero,
-              [&](Options*, const std::string& arg) {
-                system = TypeSystem::Equirecursive;
-              });
   options.add("--hybrid",
               "",
-              "Use the isorecursive hybrid type system",
+              "Use the isorecursive hybrid type system (default)",
               WasmFuzzTypesOption,
               Options::Arguments::Zero,
               [&](Options*, const std::string& arg) {
