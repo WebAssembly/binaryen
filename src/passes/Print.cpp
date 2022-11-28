@@ -440,8 +440,6 @@ void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
     }
   }
 
-  // getID
-
   // No luck with a name, just print the test as best we can.
   o << type;
 }
@@ -2621,7 +2619,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       stack.push_back(curr);
       if (full) {
+        o << "[";
         printTypeOrName(curr->type, o, currModule);
+        o << "]";
       }
       o << '(';
       printExpressionContents(curr);
