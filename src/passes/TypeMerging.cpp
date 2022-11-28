@@ -24,7 +24,16 @@
 // Note that such "redundant" types may help the optimizer, so merging them can
 // have a negative effect later. For that reason this may be best run at the
 // very end of the optimization pipeline, when nothing else is expected to do
-// type-based optimizations later.
+// type-based optimizations later. However, you also do not want to merge at the
+// very end, as e.g. type merging may open up function merging opportunities.
+// One possible pipeline:
+//
+//   --type-ssa -Os --type-merging -Os
+//
+// That is, running TypeSSA early makes sense, as it provides more type info.
+// Then we hope the optimizer benefits from that, and after that we merge types
+// and then optimize a final time. You can experiment with more optimization
+// passes in between.
 //
 
 #include "ir/module-utils.h"

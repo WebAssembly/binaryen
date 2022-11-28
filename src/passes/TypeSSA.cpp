@@ -44,6 +44,8 @@
 // then we do nothing atm. We could create a phi there, but in general that
 // would require multiple inheritance. TODO think more on that
 //
+// This pass works well with TypeMerging. See notes there for more.
+//
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
