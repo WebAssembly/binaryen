@@ -2,12 +2,12 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --type-merging -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) $A))
   ;; CHECK:      (type $D (struct_subtype (field i32) $A))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $C (struct_subtype (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field f64) $A))
@@ -56,7 +56,7 @@
 
 ;; Multiple levels of merging.
 (module
-  ;; CHECK:      (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) $A))
   (type $C (struct_subtype (field i32) $B))
@@ -66,7 +66,7 @@
   (type $F (struct_subtype (field i32) (field f64) $E))
   (type $G (struct_subtype (field i32) (field f64) $F))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
@@ -96,12 +96,10 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
+  ;; CHECK:      (type $A (struct (field (ref null $A))))
   (type $A (struct_subtype (field (ref null $A)) data))
   (type $B (struct_subtype (field (ref null $A)) $A))
-  ;; CHECK:      (type $A (struct_subtype (field (ref null $A)) data))
-
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $C (struct_subtype (field (ref null $A)) $A))
   (type $C (struct_subtype (field (ref null $B)) $A))
@@ -126,11 +124,11 @@
 
 ;; Check that we refinalize properly.
 (module
-  ;; CHECK:      (type $A (struct_subtype  data))
+  ;; CHECK:      (type $A (struct ))
   (type $A (struct))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:      (type $none_=>_ref?|$A| (func_subtype (result (ref null $A)) func))
+  ;; CHECK:      (type $none_=>_ref?|$A| (func (result (ref null $A))))
 
   ;; CHECK:      (func $returner (type $none_=>_ref?|$A|) (result (ref null $A))
   ;; CHECK-NEXT:  (local $local (ref null $A))
@@ -145,30 +143,53 @@
   )
 )
 
-(;; TODO
+;; Test some real-world patterns. Here we will merge $3$1 into $3, and $0$2 into
+;; $6. While doing so we must update the fields and the expressions that they
+;; appear in, and not error.
 (module
- (type $type$2 (array (mut (ref null $type$5))))
- (type $type$5 (struct (field (mut i32))))
- (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
- (type $type$4 (struct_subtype (field (mut i32)) (field (mut i32)) $type$6))
- (type $type$0 (struct_subtype (field (mut i32)) (field (mut i32)) $type$4))
- (type $type$0$2 (struct_subtype (field (mut i32)) (field (mut i32)) $type$0))
- (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
- (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) $type$6))
- (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
- (type $type$3$1 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$3))
- (global $global$0 (ref $type$0) (struct.new $type$0$2
-  (i32.const 1705)
-  (i32.const 0)
- ))
- (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
-  (struct.new $type$3$1
-   (i32.const 1685)
-   (i32.const 0)
-   (global.get $global$0)
-   (i64.const 0)
-   (array.init_static $type$2)
+  ;; CHECK:      (type $type$5 (struct (field (mut i32))))
+
+  ;; CHECK:      (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
+
+  ;; CHECK:      (type $type$2 (array (mut (ref null $type$5))))
+  (type $type$2 (array (mut (ref null $type$5))))
+  (type $type$5 (struct (field (mut i32))))
+  (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
+  (type $type$4 (struct_subtype (field (mut i32)) (field (mut i32)) $type$6))
+  (type $type$0 (struct_subtype (field (mut i32)) (field (mut i32)) $type$4))
+  (type $type$0$2 (struct_subtype (field (mut i32)) (field (mut i32)) $type$0))
+  ;; CHECK:      (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
+  (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
+  ;; CHECK:      (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$6))) $type$6))
+  (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) $type$6))
+  ;; CHECK:      (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$6))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
+  (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
+  (type $type$3$1 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$3))
+
+  ;; CHECK:      (global $global$0 (ref $type$6) (struct.new $type$6
+  ;; CHECK-NEXT:  (i32.const 1705)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $global$0 (ref $type$0) (struct.new $type$0$2
+    (i32.const 1705)
+    (i32.const 0)
+  ))
+  ;; CHECK:      (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
+  ;; CHECK-NEXT:  (struct.new $type$3
+  ;; CHECK-NEXT:   (i32.const 1685)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (global.get $global$0)
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (array.init_static $type$2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
+    (struct.new $type$3$1
+      (i32.const 1685)
+      (i32.const 0)
+      (global.get $global$0)
+      (i64.const 0)
+      (array.init_static $type$2)
+    )
   )
- )
 )
-;;)
