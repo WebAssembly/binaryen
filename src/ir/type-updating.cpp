@@ -182,9 +182,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       }
 
       // Update the type to the new one.
-std::cout << "pre \n" << ModuleExpression(*getModule(), curr) << '\n';
       curr->type = getNew(curr->type);
-std::cout << "post\n" << ModuleExpression(*getModule(), curr) << '\n';
 
       // Update any other type fields as well.
 
