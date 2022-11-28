@@ -102,14 +102,15 @@ void GlobalTypeRewriter::update() {
     oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
   }
 
-  mapTypes(oldToNewTypes);
-
-  // Update type names.
+  // Update type names (doing it before mapTypes can help debugging there, but
+  // has no other effect; mapTypes does not look at type names).
   for (auto& [old, new_] : oldToNewTypes) {
     if (wasm.typeNames.count(old)) {
       wasm.typeNames[new_] = wasm.typeNames[old];
     }
   }
+
+  mapTypes(oldToNewTypes);
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
@@ -181,7 +182,9 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       }
 
       // Update the type to the new one.
+std::cout << "pre \n" << ModuleExpression(*getModule(), curr) << '\n';
       curr->type = getNew(curr->type);
+std::cout << "post\n" << ModuleExpression(*getModule(), curr) << '\n';
 
       // Update any other type fields as well.
 

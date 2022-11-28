@@ -156,9 +156,15 @@ struct TypeMerging : public Pass {
         break;
       }
       merges[type] = newType;
+std::cout << "merging " << module->typeNames[type].name << " => " << module->typeNames[newType].name <<'\n';
     }
 
     // Map types, making locals refer to the new types and so forth.
+std::cout << "0typeses\n";
+    for (auto& [k, v] : module->typeNames) {
+      std::cout << "  type with name " << v.name << '\n';
+    }
+
 
     class TypeInternalsUpdater : public GlobalTypeRewriter {
       const TypeUpdates& merges;
@@ -174,11 +180,26 @@ struct TypeMerging : public Pass {
 
         computeNewSignatures();
 
-        // Map locals etc. to refer to the merged types.
+std::cout << "1typeses\n";
+    for (auto& [k, v] : wasm.typeNames) {
+      std::cout << "  type with name " << v.name << '\n';
+    }
+
+        // Map the types of expressions (curr->type etc.) to their merged types.
+std::cout << "\n\nMARGE\n\n";
         mapTypes(merges);
+
+std::cout << "2typeses\n";
+    for (auto& [k, v] : wasm.typeNames) {
+      std::cout << "  type with name " << v.name << '\n';
+    }
+
+std::cout << "\n\nAFTER MARGE\n" << wasm << "\n";
 
         // Update the internals of types to refer to the merged types.
         update();
+
+std::cout << "\n\nAFTER updat\n" << wasm << "\n";
       }
 
       void computeNewSignatures() {
@@ -210,17 +231,22 @@ struct TypeMerging : public Pass {
         auto heapType = type.getHeapType();
         auto iter = merges.find(heapType);
         if (iter != merges.end()) {
-          return Type(iter->second, type.getNullability());
+          return getTempType(Type(iter->second, type.getNullability()));
         }
-        return type;
+        return getTempType(type);
       }
 
       void modifyStruct(HeapType oldType, Struct& struct_) override {
         auto& oldFields = oldType.getStruct().fields;
+std::cout << "mod struct " << oldType.getID() << '\n';
         for (Index i = 0; i < oldFields.size(); i++) {
+std::cout << "  " << i << '\n';
           auto& oldField = oldFields[i];
           auto& newField = struct_.fields[i];
           newField.type = getNewType(oldField.type);
+if (oldField.type.isRef()) {
+  std::cout << "    chang " << oldField.type.getHeapType().getID() << " => " << newField.type.getHeapType().getID() << '\n';
+}
         }
       }
       void modifyArray(HeapType oldType, Array& array) override {
@@ -236,7 +262,14 @@ struct TypeMerging : public Pass {
     } rewriter(*module, merges, types);
 
     // Propagate type changes outwards.
-    ReFinalize().run(getPassRunner(), module);
+
+//    ReFinalize().run(getPassRunner(), module);
+
+std::cout << "3typeses\n";
+    for (auto& [k, v] : module->typeNames) {
+      std::cout << "  type with name " << v.name << '\n';
+    }
+
   }
 };
 

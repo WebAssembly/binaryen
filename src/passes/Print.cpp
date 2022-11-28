@@ -216,7 +216,7 @@ void TypeNamePrinter::print(HeapType type) {
   // other's. To check for that, if (first) we could assert at the very end of
   // this function that the automatic name is not present in the given names.
   if (wasm && wasm->typeNames.count(type)) {
-    os << '$' << wasm->typeNames[type].name;
+    os << '$' << wasm->typeNames[type].name << ' ' << type.getID();
     return;
   }
   // If we have seen this HeapType before, just print its relative depth instead
@@ -433,12 +433,15 @@ void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
     auto iter = wasm->typeNames.find(heapType);
     if (iter != wasm->typeNames.end()) {
       o << "typename: " << iter->second.name;
+      o << " " << heapType.getID();
       if (type.isNullable()) {
         o << " null";
       }
       return;
     }
   }
+
+// getID
 
   // No luck with a name, just print the test as best we can.
   o << type;
@@ -2619,7 +2622,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       stack.push_back(curr);
       if (full) {
-        o << "[" << curr->type << "] ";
+        printTypeOrName(curr->type, o, currModule);
       }
       o << '(';
       printExpressionContents(curr);
