@@ -216,7 +216,7 @@ void TypeNamePrinter::print(HeapType type) {
   // other's. To check for that, if (first) we could assert at the very end of
   // this function that the automatic name is not present in the given names.
   if (wasm && wasm->typeNames.count(type)) {
-    os << '$' << wasm->typeNames[type].name << ' ' << type.getID();
+    os << '$' << wasm->typeNames[type].name;
     return;
   }
   // If we have seen this HeapType before, just print its relative depth instead
@@ -432,8 +432,7 @@ void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
     auto heapType = type.getHeapType();
     auto iter = wasm->typeNames.find(heapType);
     if (iter != wasm->typeNames.end()) {
-      o << "typename: " << iter->second.name;
-      o << " " << heapType.getID();
+      o << iter->second.name;
       if (type.isNullable()) {
         o << " null";
       }
