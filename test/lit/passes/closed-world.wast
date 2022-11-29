@@ -207,3 +207,71 @@
   )
 )
 
+;; --gsi: In closed world we can emit a select between the 2 possible globals.
+(module
+  ;; OPEN_WORLD:      (type $struct (struct (field i32)))
+  ;; CLOSED_WORLD:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; OPEN_WORLD:      (type $ref?|$struct|_=>_i32 (func (param (ref null $struct)) (result i32)))
+
+  ;; OPEN_WORLD:      (global $global1 (ref $struct) (struct.new $struct
+  ;; OPEN_WORLD-NEXT:  (i32.const 42)
+  ;; OPEN_WORLD-NEXT: ))
+
+  ;; OPEN_WORLD:      (global $global2 (ref $struct) (struct.new $struct
+  ;; OPEN_WORLD-NEXT:  (i32.const 1337)
+  ;; OPEN_WORLD-NEXT: ))
+
+  ;; OPEN_WORLD:      (export "a" (global $global1))
+  ;; CLOSED_WORLD:      (type $ref?|$struct|_=>_i32 (func (param (ref null $struct)) (result i32)))
+
+  ;; CLOSED_WORLD:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CLOSED_WORLD-NEXT:  (i32.const 42)
+  ;; CLOSED_WORLD-NEXT: ))
+
+  ;; CLOSED_WORLD:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CLOSED_WORLD-NEXT:  (i32.const 1337)
+  ;; CLOSED_WORLD-NEXT: ))
+
+  ;; CLOSED_WORLD:      (export "a" (global $global1))
+  (export "a" (global $global1))
+  ;; OPEN_WORLD:      (export "b" (global $global2))
+  ;; CLOSED_WORLD:      (export "b" (global $global2))
+  (export "b" (global $global2))
+
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; OPEN_WORLD:      (export "test" (func $test))
+
+  ;; OPEN_WORLD:      (func $test (type $ref?|$struct|_=>_i32) (; has Stack IR ;) (param $0 (ref null $struct)) (result i32)
+  ;; OPEN_WORLD-NEXT:  (struct.get $struct 0
+  ;; OPEN_WORLD-NEXT:   (local.get $0)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (export "test" (func $test))
+
+  ;; CLOSED_WORLD:      (func $test (type $ref?|$struct|_=>_i32) (; has Stack IR ;) (param $0 (ref null $struct)) (result i32)
+  ;; CLOSED_WORLD-NEXT:  (select
+  ;; CLOSED_WORLD-NEXT:   (i32.const 42)
+  ;; CLOSED_WORLD-NEXT:   (i32.const 1337)
+  ;; CLOSED_WORLD-NEXT:   (ref.eq
+  ;; CLOSED_WORLD-NEXT:    (ref.as_non_null
+  ;; CLOSED_WORLD-NEXT:     (local.get $0)
+  ;; CLOSED_WORLD-NEXT:    )
+  ;; CLOSED_WORLD-NEXT:    (global.get $global1)
+  ;; CLOSED_WORLD-NEXT:   )
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT: )
+  (func $test (export "test") (param $struct (ref null $struct)) (result i32)
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
