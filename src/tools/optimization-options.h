@@ -250,7 +250,7 @@ struct OptimizationOptions : public ToolOptions {
         "contents or call them.",
         OptimizationOptionsCategory,
         Options::Arguments::Zero,
-        [this](Options*, const std::string&) {
+        [](Options*, const std::string&) {
           // TODO: Implement this.
         })
       .add("--zero-filled-memory",
