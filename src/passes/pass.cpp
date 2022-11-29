@@ -594,18 +594,24 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     addIfNoDWARFIssues("once-reduction");
   }
   if (wasm->features.hasGC() && options.optimizeLevel >= 2) {
-    addIfNoDWARFIssues("type-refining");
-    addIfNoDWARFIssues("signature-pruning");
-    addIfNoDWARFIssues("signature-refining");
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("type-refining");
+      addIfNoDWARFIssues("signature-pruning");
+      addIfNoDWARFIssues("signature-refining");
+    }
     addIfNoDWARFIssues("global-refining");
     // Global type optimization can remove fields that are not needed, which can
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
     // constant field propagation can be more effective.
-    addIfNoDWARFIssues("gto");
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("gto");
+    }
     addIfNoDWARFIssues("remove-unused-module-elements");
-    addIfNoDWARFIssues("cfp");
-    addIfNoDWARFIssues("gsi");
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("cfp");
+      addIfNoDWARFIssues("gsi");
+    }
   }
   // TODO: generate-global-effects here, right before function passes, then
   //       discard in addDefaultGlobalOptimizationPostPasses? the benefit seems

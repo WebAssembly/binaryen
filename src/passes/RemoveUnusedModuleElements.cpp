@@ -63,9 +63,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // we'll have that type in calledSignatures, and so this contains only
   // RefFuncs that we have not seen a call for yet, hence "uncalledRefFuncMap."
   //
-  // TODO: We assume a closed world in the GC space atm, but eventually should
-  //       have a flag for that, and when the world is not closed we'd need to
-  //       check for RefFuncs that flow out to exports or imports
+  // We can only do this when assuming a closed world. TODO: In an open world we
+  // could carefully track which types actually escape out to exports or
+  // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
@@ -319,22 +319,27 @@ struct RemoveUnusedModuleElements : public Pass {
     // function, since then (ref.func $foo) would not validate. But if we know
     // it is never called, at least the contents do not matter, so we can
     // empty it out.
+    //
+    // We can only do this in a closed world, as otherwise function references
+    // may be called outside of the module (if they escape, which we could in
+    // principle track, so the TODO earlier in this file).
     std::unordered_set<Name> uncalledRefFuncs;
-    for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
-      for (auto target : targets) {
-        uncalledRefFuncs.insert(target);
+    if (options.closedWorld) {
+      for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
+        for (auto target : targets) {
+          uncalledRefFuncs.insert(target);
+        }
+
+        // We cannot have a type in both this map and calledSignatures.
+        assert(analyzer.calledSignatures.count(type) == 0);
       }
 
-      // We cannot have a type in both this map and calledSignatures.
-      assert(analyzer.calledSignatures.count(type) == 0);
-    }
-
 #ifndef NDEBUG
-    for (auto type : analyzer.calledSignatures) {
-      assert(analyzer.uncalledRefFuncMap.count(type) == 0);
-    }
+      for (auto type : analyzer.calledSignatures) {
+        assert(analyzer.uncalledRefFuncMap.count(type) == 0);
+      }
 #endif
-
+    }
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
       if (analyzer.reachable.count(
