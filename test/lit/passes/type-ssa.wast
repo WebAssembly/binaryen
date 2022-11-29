@@ -3,10 +3,10 @@
 
 ;; Every struct.new here should get a new type.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct_subtype (field i32) data))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct$4 (struct_subtype (field i32) $struct))
 
@@ -71,9 +71,9 @@
 
 ;; Some of these are uninteresting and should not get a new type.
 (module
-  ;; CHECK:      (type $anyref_dataref_=>_none (func_subtype (param anyref dataref) func))
+  ;; CHECK:      (type $anyref_dataref_=>_none (func (param anyref dataref)))
 
-  ;; CHECK:      (type $struct (struct_subtype (field anyref) data))
+  ;; CHECK:      (type $struct (struct (field anyref)))
   (type $struct (struct_subtype (field (ref null any)) data))
 
   ;; CHECK:      (type $struct$1 (struct_subtype (field anyref) $struct))
