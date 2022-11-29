@@ -43,6 +43,8 @@ using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
+  bool closedWorld;
+
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
   bool usesMemory = false;
@@ -68,8 +70,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
-  ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
-    : module(module) {
+  ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots, bool closedWorld)
+    : module(module), closedWorld(closedWorld) {
     queue = roots;
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->dataSegments) {
@@ -205,6 +207,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
+    if (!closedWorld) {
+      // The world is open, so assume the worst and something (inside or outside
+      // of the module) can call this).
+      maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+      return;
+    }
     auto type = curr->type.getHeapType();
     if (calledSignatures.count(type)) {
       // We must not have a type in both calledSignatures and
@@ -313,7 +321,8 @@ struct RemoveUnusedModuleElements : public Pass {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
     // Compute reachability starting from the root set.
-    ReachabilityAnalyzer analyzer(module, roots);
+    auto closedWorld = getPassOptions().closedWorld;
+    ReachabilityAnalyzer analyzer(module, roots, closedWorld);
 
     // RefFuncs that are never called are a special case: We cannot remove the
     // function, since then (ref.func $foo) would not validate. But if we know
@@ -324,7 +333,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // may be called outside of the module (if they escape, which we could in
     // principle track, so the TODO earlier in this file).
     std::unordered_set<Name> uncalledRefFuncs;
-    if (getPassOptions().closedWorld) {
+    if (closedWorld) {
       for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
         for (auto target : targets) {
           uncalledRefFuncs.insert(target);
