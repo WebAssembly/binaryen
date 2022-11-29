@@ -51,3 +51,66 @@
   )
 )
 
+;; --signature-pruning: In a closed world we can remove the argument.
+(module
+  ;; OPEN_WORLD:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CLOSED_WORLD:      (type $i32_=>_i32 (func (result i32)))
+  (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; OPEN_WORLD:      (type $none_=>_funcref (func (result funcref)))
+
+  ;; OPEN_WORLD:      (elem declare func $work)
+
+  ;; OPEN_WORLD:      (export "caller" (func $caller))
+
+  ;; OPEN_WORLD:      (func $work (type $i32_=>_i32) (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call $caller)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (i32.const 0)
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (type $none_=>_funcref (func (result funcref)))
+
+  ;; CLOSED_WORLD:      (elem declare func $work)
+
+  ;; CLOSED_WORLD:      (export "caller" (func $caller))
+
+  ;; CLOSED_WORLD:      (func $work (type $i32_=>_i32) (; has Stack IR ;) (result i32)
+  ;; CLOSED_WORLD-NEXT:  (drop
+  ;; CLOSED_WORLD-NEXT:   (call $caller)
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT:  (i32.const 0)
+  ;; CLOSED_WORLD-NEXT: )
+  (func $work (type $i32_=>_i32) (param i32) (result i32)
+    ;; Avoid this function being inlined.
+    (drop
+      (call $caller)
+    )
+    (i32.const 0)
+  )
+
+  ;; OPEN_WORLD:      (func $caller (type $none_=>_funcref) (; has Stack IR ;) (result funcref)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call $work
+  ;; OPEN_WORLD-NEXT:    (i32.const 42)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (ref.func $work)
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (func $caller (type $none_=>_funcref) (; has Stack IR ;) (result funcref)
+  ;; CLOSED_WORLD-NEXT:  (drop
+  ;; CLOSED_WORLD-NEXT:   (call $work)
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT:  (ref.func $work)
+  ;; CLOSED_WORLD-NEXT: )
+  (func $caller (export "caller") (result funcref)
+    (drop
+      (call_ref $i32_=>_i32
+        (i32.const 42)
+        (ref.func $work)
+      )
+    )
+    (ref.func $work)
+  )
+)
+
