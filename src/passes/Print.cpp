@@ -425,6 +425,25 @@ std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
   return os << '"';
 }
 
+// Print a name from the type section, if available. Otherwise print the type
+// normally.
+void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
+  if (type.isRef() && wasm) {
+    auto heapType = type.getHeapType();
+    auto iter = wasm->typeNames.find(heapType);
+    if (iter != wasm->typeNames.end()) {
+      o << iter->second.name;
+      if (type.isNullable()) {
+        o << " null";
+      }
+      return;
+    }
+  }
+
+  // No luck with a name, just print the test as best we can.
+  o << type;
+}
+
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -2551,7 +2570,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       doIndent(o, indent);
     }
     if (full) {
-      o << "[" << expression->type << "] ";
+      o << "[";
+      printTypeOrName(expression->type, o, currModule);
+      o << "] ";
     }
     visit(expression);
     o << maybeNewLine;
@@ -2598,7 +2619,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       stack.push_back(curr);
       if (full) {
-        o << "[" << curr->type << "] ";
+        o << "[";
+        printTypeOrName(curr->type, o, currModule);
+        o << "]";
       }
       o << '(';
       printExpressionContents(curr);
@@ -3487,7 +3510,9 @@ static std::ostream& printExpression(Expression* expression,
   print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[" << expression->type << "] ";
+    o << "[";
+    printTypeOrName(expression->type, o, wasm);
+    o << "] ";
   }
   print.visit(expression);
   return o;
