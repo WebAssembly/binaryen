@@ -3072,8 +3072,11 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         bool validControlFlowStructureChange =
           Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
           newType == Type::unreachable;
-        if (!Type::isSubType(newType, oldType) &&
-            !validControlFlowStructureChange) {
+        // It's ok in general for types to get refined as long as they don't
+        // become unreachable.
+        bool validRefinement =
+          Type::isSubType(newType, oldType) && newType != Type::unreachable;
+        if (!validRefinement && !validControlFlowStructureChange) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
              << "\n(marked as " << oldType << ", should be " << newType
