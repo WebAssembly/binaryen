@@ -114,3 +114,96 @@
   )
 )
 
+;; --signature-refining: In a closed world we can refine the argument.
+(module
+  ;; OPEN_WORLD:      (type $func (func (param funcref) (result funcref)))
+  ;; CLOSED_WORLD:      (type $func (func (param (ref $func)) (result funcref)))
+  (type $func (func (param funcref) (result funcref)))
+
+  ;; OPEN_WORLD:      (type $i32_=>_funcref (func (param i32) (result funcref)))
+
+  ;; OPEN_WORLD:      (elem declare func $other $work)
+
+  ;; OPEN_WORLD:      (export "caller" (func $caller))
+
+  ;; OPEN_WORLD:      (func $work (type $func) (; has Stack IR ;) (param $0 funcref) (result funcref)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call $caller
+  ;; OPEN_WORLD-NEXT:    (i32.const 42)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (local.get $0)
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (type $i32_=>_funcref (func (param i32) (result funcref)))
+
+  ;; CLOSED_WORLD:      (elem declare func $other $work)
+
+  ;; CLOSED_WORLD:      (export "caller" (func $caller))
+
+  ;; CLOSED_WORLD:      (func $work (type $func) (; has Stack IR ;) (param $0 (ref $func)) (result funcref)
+  ;; CLOSED_WORLD-NEXT:  (drop
+  ;; CLOSED_WORLD-NEXT:   (call $caller
+  ;; CLOSED_WORLD-NEXT:    (i32.const 42)
+  ;; CLOSED_WORLD-NEXT:   )
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT:  (local.get $0)
+  ;; CLOSED_WORLD-NEXT: )
+  (func $work (type $func) (param $func funcref) (result funcref)
+    ;; Avoid this function being inlined.
+    (drop
+      (call $caller
+        (i32.const 42)
+      )
+    )
+    (local.get $func)
+  )
+
+  ;; OPEN_WORLD:      (func $other (type $func) (; has Stack IR ;) (param $0 funcref) (result funcref)
+  ;; OPEN_WORLD-NEXT:  (local.get $0)
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (func $other (type $func) (; has Stack IR ;) (param $0 (ref $func)) (result funcref)
+  ;; CLOSED_WORLD-NEXT:  (unreachable)
+  ;; CLOSED_WORLD-NEXT: )
+  (func $other (type $func) (param $func funcref) (result funcref)
+    (local.get $func)
+  )
+
+  ;; OPEN_WORLD:      (func $caller (type $i32_=>_funcref) (; has Stack IR ;) (param $0 i32) (result funcref)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (call $work
+  ;; OPEN_WORLD-NEXT:    (select (result (ref $func))
+  ;; OPEN_WORLD-NEXT:     (ref.func $work)
+  ;; OPEN_WORLD-NEXT:     (ref.func $other)
+  ;; OPEN_WORLD-NEXT:     (local.get $0)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (ref.func $work)
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (func $caller (type $i32_=>_funcref) (; has Stack IR ;) (param $0 i32) (result funcref)
+  ;; CLOSED_WORLD-NEXT:  (drop
+  ;; CLOSED_WORLD-NEXT:   (call $work
+  ;; CLOSED_WORLD-NEXT:    (select (result (ref $func))
+  ;; CLOSED_WORLD-NEXT:     (ref.func $work)
+  ;; CLOSED_WORLD-NEXT:     (ref.func $other)
+  ;; CLOSED_WORLD-NEXT:     (local.get $0)
+  ;; CLOSED_WORLD-NEXT:    )
+  ;; CLOSED_WORLD-NEXT:   )
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT:  (ref.func $work)
+  ;; CLOSED_WORLD-NEXT: )
+  (func $caller (export "caller") (param $x i32) (result funcref)
+    (drop
+      (call_ref $func
+        (select (result (ref $func))
+          (ref.func $work)
+          (ref.func $other)
+          (local.get $x)
+        )
+        (ref.func $work)
+      )
+    )
+    (ref.func $work)
+  )
+)
+
