@@ -7,13 +7,13 @@
   ;; heap type's definition as well as the types of the parameters as printed
   ;; on the function (which are derived from the heap type).
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func (param (ref $struct))))
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
@@ -36,14 +36,14 @@
 (module
   ;; As above, but the call is via call_ref.
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func (param (ref $struct))))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -72,14 +72,14 @@
   ;; call uses a nullable $struct, the other a non-nullable dataref, so the LUB
   ;; is a nullable dataref.
 
-  ;; CHECK:      (type $sig (func_subtype (param dataref) func))
+  ;; CHECK:      (type $sig (func (param dataref)))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -120,12 +120,12 @@
   ;; Multiple functions with the same heap type. Again, the LUB is in the
   ;; middle, this time the parent $struct and not a subtype.
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func (param (ref $struct))))
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
 
   ;; CHECK:      (type $struct-sub1 (struct_subtype  $struct))
   (type $struct-sub1 (struct_subtype $struct))
@@ -169,13 +169,13 @@
   ;; As above, but now only one of the functions is called. The other is still
   ;; updated, though, as they share a heap type.
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func (param (ref $struct))))
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
@@ -205,13 +205,13 @@
   ;; Define a field in the struct of the signature type that will be updated,
   ;; to check for proper validation after the update.
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct) (ref $sig)) func))
+  ;; CHECK:      (type $sig (func (param (ref $struct) (ref $sig))))
   (type $sig (func_subtype (param anyref funcref) func))
 
-  ;; CHECK:      (type $struct (struct_subtype (field (ref $sig)) data))
+  ;; CHECK:      (type $struct (struct (field (ref $sig))))
   (type $struct (struct_subtype (field (ref $sig)) data))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -268,14 +268,14 @@
   ;; An unreachable value does not prevent optimization: we will update the
   ;; param to be $struct.
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $sig (func (param (ref $struct))))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -311,10 +311,10 @@
 
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func (param anyref)))
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -344,7 +344,7 @@
 
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func (param anyref)))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
@@ -356,16 +356,16 @@
 
 (module
   ;; Test multiple fields in multiple types.
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $sig-2 (func_subtype (param eqref (ref $struct)) func))
+  ;; CHECK:      (type $sig-2 (func (param eqref (ref $struct))))
 
-  ;; CHECK:      (type $sig-1 (func_subtype (param dataref anyref) func))
+  ;; CHECK:      (type $sig-1 (func (param dataref anyref)))
   (type $sig-1 (func_subtype (param anyref) (param anyref) func))
   (type $sig-2 (func_subtype (param anyref) (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func-2)
 
@@ -431,12 +431,12 @@
 (module
   ;; The presence of a table prevents us from doing any optimizations.
 
-  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func (param anyref)))
   (type $sig (func_subtype (param anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   (table 1 1 anyref)
@@ -465,14 +465,14 @@
   ;; Pass a null in one call to the function. The null can be updated which
   ;; allows us to refine (but the new type must be nullable).
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
 
-  ;; CHECK:      (type $sig (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $sig (func (param (ref null $struct))))
   (type $sig (func_subtype (param anyref) func))
 
   (type $struct (struct_subtype data))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (nop)
@@ -499,23 +499,23 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   ;; This signature has a single function using it, which returns a more
   ;; refined type, and we can refine to that.
-  ;; CHECK:      (type $sig-can-refine (func_subtype (result (ref $struct)) func))
+  ;; CHECK:      (type $sig-can-refine (func (result (ref $struct))))
   (type $sig-can-refine (func_subtype (result anyref) func))
 
   ;; Also a single function, but no refinement is possible.
-  ;; CHECK:      (type $sig-cannot-refine (func_subtype (result anyref) func))
+  ;; CHECK:      (type $sig-cannot-refine (func (result anyref)))
   (type $sig-cannot-refine (func_subtype (result anyref) func))
 
   ;; The single function never returns, so no refinement is possible.
-  ;; CHECK:      (type $sig-unreachable (func_subtype (result anyref) func))
+  ;; CHECK:      (type $sig-unreachable (func (result anyref)))
   (type $sig-unreachable (func_subtype (result anyref) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $func-can-refine)
 
@@ -583,9 +583,9 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (result (ref null $struct)) func))
+  ;; CHECK:      (type $sig (func (result (ref null $struct))))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   ;; This signature has multiple functions using it, and some of them have nulls
@@ -635,11 +635,11 @@
 
 ;; Exports prevent optimization, so $func's type will not change here.
 (module
-  ;; CHECK:      (type $sig (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig (func (param anyref)))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   (type $sig (func_subtype (param anyref) func))
@@ -665,7 +665,7 @@
 )
 
 (module
-  ;; CHECK:      (type $A (func_subtype (param i32) func))
+  ;; CHECK:      (type $A (func (param i32)))
   (type $A (func_subtype (param i32) func))
   ;; CHECK:      (type $B (func_subtype (param i32) $A))
   (type $B (func_subtype (param i32) $A))
@@ -683,9 +683,9 @@
 )
 
 (module
-  ;; CHECK:      (type $ref|${}|_i32_=>_none (func_subtype (param (ref ${}) i32) func))
+  ;; CHECK:      (type $ref|${}|_i32_=>_none (func (param (ref ${}) i32)))
 
-  ;; CHECK:      (type ${} (struct_subtype  data))
+  ;; CHECK:      (type ${} (struct ))
   (type ${} (struct_subtype data))
 
   ;; CHECK:      (func $foo (type $ref|${}|_i32_=>_none) (param $ref (ref ${})) (param $i32 i32)
@@ -731,11 +731,11 @@
 ;; Do not modify the types used on imported functions (until the spec and VM
 ;; support becomes stable).
 (module
-  ;; CHECK:      (type $dataref_=>_none (func_subtype (param dataref) func))
+  ;; CHECK:      (type $dataref_=>_none (func (param dataref)))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype data))
 
   ;; CHECK:      (import "a" "b" (func $import (param dataref)))

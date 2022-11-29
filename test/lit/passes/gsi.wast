@@ -2,10 +2,10 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --gsi -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -53,10 +53,10 @@
 
 ;; As above, but now the field is mutable, so we cannot optimize.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field (mut i32)) data))
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -90,14 +90,13 @@
 
 ;; Just one global.
 (module
-  ;; CHECK:      (type $struct1 (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct1 (struct (field i32)))
   (type $struct1 (struct i32))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct2 (struct (field i32)))
   (type $struct2 (struct i32))
 
-
-  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_=>_none (func_subtype (param (ref null $struct1) (ref null $struct2)) func))
+  ;; CHECK:      (type $ref?|$struct1|_ref?|$struct2|_=>_none (func (param (ref null $struct1) (ref null $struct2))))
 
   ;; CHECK:      (import "a" "b" (global $imported i32))
   (import "a" "b" (global $imported i32))
@@ -163,10 +162,10 @@
 
 ;; Three globals. For now, we do not optimize here.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -208,10 +207,10 @@
 ;; Three globals, as above, but now two agree on their values. We can optimize
 ;; by comparing to the one that has a single value.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -259,10 +258,10 @@
 
 ;; As above, but move the different value of the three to the middle.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 1337)
@@ -310,10 +309,10 @@
 
 ;; As above, but move the different value of the three to the end.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 1337)
@@ -361,10 +360,10 @@
 
 ;; Four values, two pairs of equal ones. We do not optimize this.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -413,10 +412,10 @@
 ;; Four values, three equal and one unique. We can optimize this with a single
 ;; comparison on the unique one.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -471,10 +470,10 @@
 
 ;; A struct.new inside a function stops us from optimizing.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -519,10 +518,10 @@
 ;; We ignore imports, as we assume a closed world, but that might change in the
 ;; future. For now, we will optimize here.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (import "a" "b" (global $global-import (ref $struct)))
   (import "a" "b" (global $global-import (ref $struct)))
@@ -567,13 +566,13 @@
 ;; A struct.new in a non-toplevel position in a global stops us from
 ;; optimizing.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $tuple (struct_subtype (field anyref) (field anyref) data))
+  ;; CHECK:      (type $tuple (struct (field anyref) (field anyref)))
   (type $tuple (struct anyref anyref))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -621,13 +620,13 @@
 ;; As above, but remove the struct.new in a nested position, while keeping all
 ;; the other stuff in the above test. Now we should optimize.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $tuple (struct_subtype (field anyref) (field anyref) data))
+  ;; CHECK:      (type $tuple (struct (field anyref) (field anyref)))
   (type $tuple (struct anyref anyref))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -677,10 +676,10 @@
 
 ;; When one of the globals is mutable, we cannot optimize.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -714,10 +713,10 @@
 
 ;; A subtype is not optimizable, which prevents $struct from being optimized.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct_subtype i32 data))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (type $sub-struct (struct_subtype (field i32) $struct))
   (type $sub-struct (struct_subtype i32 $struct))
@@ -765,13 +764,13 @@
 ;; A *super*-type is not optimizable, but that does not block us, and we can
 ;; optimize.
 (module
-  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct (struct_subtype (field i32) $super-struct))
   (type $struct (struct_subtype i32 $super-struct))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -823,13 +822,13 @@
 ;; One global for each of the type and the subtype. The optimization will pick
 ;; between their 2 values.
 (module
-  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct (struct_subtype (field i32) $super-struct))
   (type $struct (struct_subtype i32 $super-struct))
 
-  ;; CHECK:      (type $ref?|$struct|_ref?|$super-struct|_=>_none (func_subtype (param (ref null $struct) (ref null $super-struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_ref?|$super-struct|_=>_none (func (param (ref null $struct) (ref null $super-struct))))
 
   ;; CHECK:      (global $global1 (ref $super-struct) (struct.new $super-struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -890,10 +889,10 @@
 
 ;; One global has a non-constant field, so we cannot optimize.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.add
@@ -934,7 +933,7 @@
 ;; One global each for two subtypes of a common supertype, and one for the
 ;; supertype.
 (module
-  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field f32) $super-struct))
@@ -944,7 +943,7 @@
   (type $struct2 (struct_subtype i32 f64 $super-struct))
 
 
-  ;; CHECK:      (type $ref?|$super-struct|_ref?|$struct1|_ref?|$struct2|_=>_none (func_subtype (param (ref null $super-struct) (ref null $struct1) (ref null $struct2)) func))
+  ;; CHECK:      (type $ref?|$super-struct|_ref?|$struct1|_ref?|$struct2|_=>_none (func (param (ref null $super-struct) (ref null $struct1) (ref null $struct2))))
 
   ;; CHECK:      (global $global0 (ref $super-struct) (struct.new $super-struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -1027,7 +1026,7 @@
 
 ;; As above, but now the subtypes each have 2 values, and we can optimize.
 (module
-  ;; CHECK:      (type $super-struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field f32) $super-struct))
@@ -1037,7 +1036,7 @@
   (type $struct2 (struct_subtype i32 f64 $super-struct))
 
 
-  ;; CHECK:      (type $ref?|$super-struct|_ref?|$struct1|_ref?|$struct2|_=>_none (func_subtype (param (ref null $super-struct) (ref null $struct1) (ref null $struct2)) func))
+  ;; CHECK:      (type $ref?|$super-struct|_ref?|$struct1|_ref?|$struct2|_=>_none (func (param (ref null $super-struct) (ref null $struct1) (ref null $struct2))))
 
   ;; CHECK:      (global $global0 (ref $super-struct) (struct.new $super-struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -1137,10 +1136,10 @@
 ;; Multiple globals, but all the same value, so we do not even need a select and
 ;; can just apply the value.
 (module
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func_subtype (param (ref null $struct)) func))
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)

@@ -6,7 +6,7 @@
   ;; a null, so we have nothing concrete to improve with (though we could use
   ;; the type of the null perhaps, TODO). The second is a ref.func which lets
   ;; us refine.
-  ;; CHECK:      (type $foo_t (func_subtype func))
+  ;; CHECK:      (type $foo_t (func))
   (type $foo_t (func))
 
   ;; CHECK:      (global $func-null-init (mut funcref) (ref.null nofunc))
@@ -23,7 +23,7 @@
   ;; Globals with later assignments of null. The global with a function in its
   ;; init will update the null to allow it to refine.
 
-  ;; CHECK:      (type $foo_t (func_subtype func))
+  ;; CHECK:      (type $foo_t (func))
   (type $foo_t (func))
 
   ;; CHECK:      (global $func-null-init (mut funcref) (ref.null nofunc))
@@ -49,7 +49,7 @@
   ;; Globals with later assignments of something non-null. Both can be refined,
   ;; and the one with a non-null initial value can even become non-nullable.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null func))
@@ -76,9 +76,9 @@
   ;; A global with multiple later assignments. The refined type is more
   ;; specific than the original, but less than each of the non-null values.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
   (type $array (array i8))
 

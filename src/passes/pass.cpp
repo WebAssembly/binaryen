@@ -596,10 +596,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("once-reduction");
   }
-  if (wasm->features.hasGC() &&
-      (getTypeSystem() == TypeSystem::Nominal ||
-       getTypeSystem() == TypeSystem::Isorecursive) &&
-      options.optimizeLevel >= 2) {
+  if (wasm->features.hasGC() && options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("type-refining");
     addIfNoDWARFIssues("signature-pruning");
     addIfNoDWARFIssues("signature-refining");
@@ -655,7 +652,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
 }
 
-static void dumpWast(Name name, Module* wasm) {
+static void dumpWasm(Name name, Module* wasm) {
   // write out the wat
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
@@ -670,7 +667,6 @@ static void dumpWast(Name name, Module* wasm) {
   fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
   ModuleWriter writer;
-  writer.writeText(*wasm, fullName + ".wast");
   writer.writeBinary(*wasm, fullName + ".wasm");
 }
 
@@ -699,7 +695,7 @@ void PassRunner::run() {
       padding = std::max(padding, pass->name.size());
     }
     if (passDebug >= 3 && !isNested) {
-      dumpWast("before", wasm);
+      dumpWasm("before", wasm);
     }
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
@@ -743,7 +739,7 @@ void PassRunner::run() {
         }
       }
       if (passDebug >= 3) {
-        dumpWast(pass->name, wasm);
+        dumpWasm(pass->name, wasm);
       }
     }
     std::cerr << "[PassRunner] " << what << " took " << totalTime.count()

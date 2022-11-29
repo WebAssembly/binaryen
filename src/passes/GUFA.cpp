@@ -110,13 +110,6 @@ struct GUFAOptimizer
       return;
     }
 
-    if (type.isRef() && (getTypeSystem() != TypeSystem::Nominal &&
-                         getTypeSystem() != TypeSystem::Isorecursive)) {
-      // Without type info we can't analyze subtypes, so we cannot infer
-      // anything about refs.
-      return;
-    }
-
     // Ok, this is an interesting location that we might optimize. See what the
     // oracle says is possible there.
     auto contents = getContents(curr);

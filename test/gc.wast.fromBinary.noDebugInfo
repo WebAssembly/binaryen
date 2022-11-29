@@ -13,7 +13,7 @@
  (global $global$5 (mut eqref) (i31.new
   (i32.const 0)
  ))
- (func $0 (param $0 i31ref) (param $1 dataref)
+ (func $0 (type $i31ref_dataref_=>_none) (param $0 i31ref) (param $1 dataref)
   (local $2 i32)
   (local $3 anyref)
   (local $4 eqref)
@@ -148,7 +148,7 @@
    )
   )
  )
- (func $1 (param $0 i31ref) (param $1 (ref i31)) (param $2 dataref) (param $3 (ref data))
+ (func $1 (type $i31ref_ref|i31|_dataref_ref|data|_=>_none) (param $0 i31ref) (param $1 (ref i31)) (param $2 dataref) (param $3 (ref data))
   (nop)
  )
 )

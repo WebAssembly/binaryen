@@ -7,9 +7,9 @@
   ;; A struct with a field that is never read or written, so it can be
   ;; removed.
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
@@ -22,10 +22,10 @@
 (module
   ;; A write does not keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -52,10 +52,10 @@
 (module
   ;; A new does not keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -75,10 +75,10 @@
 (module
   ;; A new_default does not keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct_subtype  data))
+  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -97,10 +97,10 @@
 (module
   ;; A read *does* keep a field from being removed.
 
-  ;; CHECK:      (type $struct (struct_subtype (field funcref) data))
+  ;; CHECK:      (type $struct (struct (field funcref)))
   (type $struct (struct_subtype (field (mut funcref)) data))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func_subtype (param (ref $struct)) func))
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -124,17 +124,17 @@
   ;; of removing with the immutability inference that --gto does.)
 
   ;; A struct with all fields marked mutable.
-  ;; CHECK:      (type $mut-struct (struct_subtype (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32)) data))
+  ;; CHECK:      (type $mut-struct (struct (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32))))
   (type $mut-struct (struct_subtype (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32)) (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32)) data))
 
   ;; A similar struct but with all fields marked immutable, and the only
   ;; writes are from during creation (so all fields are at least writeable).
-  ;; CHECK:      (type $imm-struct (struct_subtype (field $rw i32) (field $rw-2 i32) data))
+  ;; CHECK:      (type $imm-struct (struct (field $rw i32) (field $rw-2 i32)))
   (type $imm-struct (struct_subtype (field $w i32) (field $rw i32) (field $w-2 i32) (field $rw-2 i32) data))
 
-  ;; CHECK:      (type $ref|$mut-struct|_=>_none (func_subtype (param (ref $mut-struct)) func))
+  ;; CHECK:      (type $ref|$mut-struct|_=>_none (func (param (ref $mut-struct))))
 
-  ;; CHECK:      (type $ref|$imm-struct|_=>_none (func_subtype (param (ref $imm-struct)) func))
+  ;; CHECK:      (type $ref|$imm-struct|_=>_none (func (param (ref $imm-struct))))
 
   ;; CHECK:      (func $func-mut (type $ref|$mut-struct|_=>_none) (param $x (ref $mut-struct))
   ;; CHECK-NEXT:  (drop
@@ -275,9 +275,9 @@
   ;; A vtable-like structure created in a global location. Only some of the
   ;; fields are accessed.
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $vtable (struct_subtype (field $v1 funcref) (field $v2 funcref) data))
+  ;; CHECK:      (type $vtable (struct (field $v1 funcref) (field $v2 funcref)))
   (type $vtable (struct_subtype (field $v0 funcref) (field $v1 funcref) (field $v2 funcref) (field $v3 funcref) (field $v4 funcref) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
@@ -349,10 +349,10 @@
   ;; by coincidence.
 
 
-  ;; CHECK:      (type $vtable (struct_subtype (field $v1 i64) (field $v2 f32) data))
+  ;; CHECK:      (type $vtable (struct (field $v1 i64) (field $v2 f32)))
   (type $vtable (struct_subtype (field $v0 i32) (field $v1 i64) (field $v2 f32) (field $v3 f64) (field $v4 anyref) data))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (i64.const 1)
@@ -399,21 +399,21 @@
 (module
   ;; A new with side effects
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32 f64 (ref any)))
 
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $ref|any|_ref?|$struct|_=>_none (func_subtype (param (ref any) (ref null $struct)) func))
+  ;; CHECK:      (type $ref|any|_ref?|$struct|_=>_none (func (param (ref any) (ref null $struct))))
 
-  ;; CHECK:      (type $ref|any|_=>_none (func_subtype (param (ref any)) func))
+  ;; CHECK:      (type $ref|any|_=>_none (func (param (ref any))))
 
-  ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_f64 (func_subtype (param i32) (result f64) func))
+  ;; CHECK:      (type $i32_=>_f64 (func (param i32) (result f64)))
 
-  ;; CHECK:      (type $i32_=>_ref|any| (func_subtype (param i32) (result (ref any)) func))
+  ;; CHECK:      (type $i32_=>_ref|any| (func (param i32) (result (ref any))))
 
   ;; CHECK:      (global $imm-i32 i32 (i32.const 1234))
   (global $imm-i32 i32 (i32.const 1234))
@@ -626,14 +626,14 @@
 ;; We can remove fields from the end if they are only used in subtypes, because
 ;; the subtypes can always add fields at the end (and only at the end).
 (module
-  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) data))
+  ;; CHECK:      (type $parent (struct (field i32) (field i64)))
 
   ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
   (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
 
   (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
 
-  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func (param (ref $parent) (ref $child))))
 
   ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
   ;; CHECK-NEXT:  (drop
@@ -676,14 +676,14 @@
 )
 
 (module
-  ;; CHECK:      (type $parent (struct_subtype (field i32) (field i64) (field (mut f32)) data))
+  ;; CHECK:      (type $parent (struct (field i32) (field i64) (field (mut f32))))
 
   ;; CHECK:      (type $child (struct_subtype (field i32) (field i64) (field (mut f32)) (field f64) (field anyref) $parent))
   (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
 
   (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
 
-  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func_subtype (param (ref $parent) (ref $child)) func))
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_=>_none (func (param (ref $parent) (ref $child))))
 
   ;; CHECK:      (func $func (type $ref|$parent|_ref|$child|_=>_none) (param $x (ref $parent)) (param $y (ref $child))
   ;; CHECK-NEXT:  (struct.set $parent 2
@@ -733,9 +733,9 @@
 ;; reads might be of data of either child, of course (as a refernce to the
 ;; parent might point to them), so we cannot optimize here.
 (module
-  ;; CHECK:      (type $parent (struct_subtype (field i32) data))
+  ;; CHECK:      (type $parent (struct (field i32)))
   (type $parent (struct_subtype (field i32) data))
-  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func (param (ref $parent) (ref $child1) (ref $child2))))
 
   ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
   (type $child1 (struct_subtype (field i32) $parent))
@@ -757,13 +757,13 @@
 ;; As above, but now the read is just of one child. We can remove the field
 ;; from the parent and the other child.
 (module
-  ;; CHECK:      (type $parent (struct_subtype  data))
+  ;; CHECK:      (type $parent (struct ))
 
   ;; CHECK:      (type $child1 (struct_subtype (field i32) $parent))
   (type $child1 (struct_subtype (field i32) $parent))
 
   (type $parent (struct_subtype (field i32) data))
-  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func_subtype (param (ref $parent) (ref $child1) (ref $child2)) func))
+  ;; CHECK:      (type $ref|$parent|_ref|$child1|_ref|$child2|_=>_none (func (param (ref $parent) (ref $child1) (ref $child2))))
 
   ;; CHECK:      (type $child2 (struct_subtype  $parent))
   (type $child2 (struct_subtype (field i32) $parent))
@@ -781,16 +781,16 @@
 )
 
 (module
-  ;; CHECK:      (type ${mut:i8} (struct_subtype  data))
+  ;; CHECK:      (type ${mut:i8} (struct ))
   (type ${mut:i8} (struct_subtype (field (mut i8)) data))
 
-  ;; CHECK:      (type $ref?|${mut:i8}|_=>_none (func_subtype (param (ref null ${mut:i8})) func))
+  ;; CHECK:      (type $ref?|${mut:i8}|_=>_none (func (param (ref null ${mut:i8}))))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_ref|${mut:i8}| (func_subtype (result (ref ${mut:i8})) func))
+  ;; CHECK:      (type $none_=>_ref|${mut:i8}| (func (result (ref ${mut:i8}))))
 
   ;; CHECK:      (func $unreachable-set (type $ref?|${mut:i8}|_=>_none) (param ${mut:i8} (ref null ${mut:i8}))
   ;; CHECK-NEXT:  (drop

@@ -6,15 +6,15 @@
 
 (module
   ;; CHECK:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
-  ;; NOMNL:      (type $struct.A (struct_subtype (field (mut i32)) (field (mut f64)) data))
+  ;; NOMNL:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
   ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
   ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
-  ;; NOMNL:      (type $struct.recursive (struct_subtype (field (mut (ref null $struct.recursive))) data))
+  ;; NOMNL:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
-  ;; NOMNL:      (type $struct.packed (struct_subtype (field (mut i8)) data))
+  ;; NOMNL:      (type $struct.packed (struct (field (mut i8))))
   (type $struct.packed (struct (field (mut i8))))
 
   (type $struct.nondefaultable (struct (field (ref $struct.A))))
@@ -23,7 +23,7 @@
 
   (type $struct.nonnullable (struct (field (ref $struct.A))))
 
-  ;; CHECK:      (func $simple
+  ;; CHECK:      (func $simple (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
@@ -61,7 +61,7 @@
     )
   )
 
-  ;; CHECK:      (func $to-local
+  ;; CHECK:      (func $to-local (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -104,7 +104,7 @@
     )
   )
 
-  ;; CHECK:      (func $one-get
+  ;; CHECK:      (func $one-get (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
@@ -157,7 +157,7 @@
     )
   )
 
-  ;; CHECK:      (func $one-get-b
+  ;; CHECK:      (func $one-get-b (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
@@ -206,7 +206,7 @@
     )
   )
 
-  ;; CHECK:      (func $one-set
+  ;; CHECK:      (func $one-set (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
@@ -250,7 +250,7 @@
     )
   )
 
-  ;; CHECK:      (func $packed
+  ;; CHECK:      (func $packed (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get_u $struct.packed 0
   ;; CHECK-NEXT:    (struct.new_default $struct.packed)
@@ -273,7 +273,7 @@
     )
   )
 
-  ;; CHECK:      (func $with-init-values
+  ;; CHECK:      (func $with-init-values (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -342,7 +342,7 @@
     )
   )
 
-  ;; CHECK:      (func $ignore-unreachable
+  ;; CHECK:      (func $ignore-unreachable (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -391,7 +391,7 @@
     )
   )
 
-  ;; CHECK:      (func $nondefaultable
+  ;; CHECK:      (func $nondefaultable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 (ref $struct.A))
   ;; CHECK-NEXT:  (local $1 (ref $struct.A))
   ;; CHECK-NEXT:  (drop
@@ -442,7 +442,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-one-local-set
+  ;; CHECK:      (func $simple-one-local-set (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -504,7 +504,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-one-local-get (result f64)
+  ;; CHECK:      (func $simple-one-local-get (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -559,7 +559,7 @@
     )
   )
 
-  ;; CHECK:      (func $send-ref (param $0 (ref null $struct.A))
+  ;; CHECK:      (func $send-ref (type $ref?|$struct.A|_=>_none) (param $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $send-ref (type $ref?|$struct.A|_=>_none) (param $0 (ref null $struct.A))
@@ -568,7 +568,7 @@
   (func $send-ref (param (ref null $struct.A))
   )
 
-  ;; CHECK:      (func $safe-to-drop (result f64)
+  ;; CHECK:      (func $safe-to-drop (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -632,7 +632,7 @@
     )
   )
 
-  ;; CHECK:      (func $escape-via-call (result f64)
+  ;; CHECK:      (func $escape-via-call (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -670,7 +670,7 @@
     )
   )
 
-  ;; CHECK:      (func $safe-to-drop-multiflow (result f64)
+  ;; CHECK:      (func $safe-to-drop-multiflow (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -748,7 +748,7 @@
     )
   )
 
-  ;; CHECK:      (func $escape-after-multiflow (result f64)
+  ;; CHECK:      (func $escape-after-multiflow (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -800,7 +800,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exclusive-set (result f64)
+  ;; CHECK:      (func $non-exclusive-set (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (select (result (ref $struct.A))
@@ -842,7 +842,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-copies (result f64)
+  ;; CHECK:      (func $local-copies (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -906,7 +906,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-copies-2
+  ;; CHECK:      (func $local-copies-2 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $ref-2 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1001,7 +1001,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-copies-conditional (param $x i32) (result f64)
+  ;; CHECK:      (func $local-copies-conditional (type $i32_=>_f64) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
@@ -1075,7 +1075,7 @@
     )
   )
 
-  ;; CHECK:      (func $block-value (result f64)
+  ;; CHECK:      (func $block-value (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1146,7 +1146,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exclusive-get (param $x i32) (result f64)
+  ;; CHECK:      (func $non-exclusive-get (type $i32_=>_f64) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -1193,7 +1193,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee (result i32)
+  ;; CHECK:      (func $tee (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1237,7 +1237,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee-set
+  ;; CHECK:      (func $tee-set (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (drop
@@ -1278,7 +1278,7 @@
     )
   )
 
-  ;; CHECK:      (func $set-value (param $struct.recursive (ref null $struct.recursive))
+  ;; CHECK:      (func $set-value (type $ref?|$struct.recursive|_=>_none) (param $struct.recursive (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
   ;; CHECK-NEXT:  (struct.set $struct.recursive 0
   ;; CHECK-NEXT:   (local.get $struct.recursive)
@@ -1308,7 +1308,7 @@
     )
   )
 
-  ;; CHECK:      (func $initialize-with-reference
+  ;; CHECK:      (func $initialize-with-reference (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $2 (ref null $struct.recursive))
@@ -1378,7 +1378,7 @@
     )
   )
 
-  ;; CHECK:      (func $escape-flow-out (result anyref)
+  ;; CHECK:      (func $escape-flow-out (type $none_=>_anyref) (result anyref)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (struct.set $struct.A 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -1410,7 +1410,7 @@
     (local.get $ref)
   )
 
-  ;; CHECK:      (func $escape-return (result anyref)
+  ;; CHECK:      (func $escape-return (type $none_=>_anyref) (result anyref)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (struct.set $struct.A 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -1448,7 +1448,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-nullable (param $a (ref $struct.A))
+  ;; CHECK:      (func $non-nullable (type $ref|$struct.A|_=>_none) (param $a (ref $struct.A))
   ;; CHECK-NEXT:  (local $1 (ref $struct.A))
   ;; CHECK-NEXT:  (local $2 (ref $struct.A))
   ;; CHECK-NEXT:  (drop
@@ -1500,7 +1500,7 @@
     )
   )
 
-  ;; CHECK:      (func $before-loop-use-multi (param $x i32)
+  ;; CHECK:      (func $before-loop-use-multi (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
@@ -1745,7 +1745,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-separate
+  ;; CHECK:      (func $multi-separate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1876,7 +1876,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-separate-same-local-index
+  ;; CHECK:      (func $multi-separate-same-local-index (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1988,7 +1988,7 @@
     )
   )
 
-  ;; CHECK:      (func $multi-separate-different-local-index-overlapping-lifetimes
+  ;; CHECK:      (func $multi-separate-different-local-index-overlapping-lifetimes (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref1 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $ref2 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2103,7 +2103,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-through-block (result f64)
+  ;; CHECK:      (func $get-through-block (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -2159,7 +2159,7 @@
     )
   )
 
-  ;; CHECK:      (func $branch-to-block (result f64)
+  ;; CHECK:      (func $branch-to-block (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -2213,7 +2213,7 @@
     )
   )
 
-  ;; CHECK:      (func $branch-to-block-no-fallthrough (result f64)
+  ;; CHECK:      (func $branch-to-block-no-fallthrough (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -2298,7 +2298,7 @@
     )
   )
 
-  ;; CHECK:      (func $two-branches (result f64)
+  ;; CHECK:      (func $two-branches (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -2374,7 +2374,7 @@
     )
   )
 
-  ;; CHECK:      (func $two-branches-b (result f64)
+  ;; CHECK:      (func $two-branches-b (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -2451,7 +2451,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_if_flow (result f64)
+  ;; CHECK:      (func $br_if_flow (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -2510,7 +2510,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-as-non-null
+  ;; CHECK:      (func $ref-as-non-null (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -2590,7 +2590,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-as-non-null-through-local (result i32)
+  ;; CHECK:      (func $ref-as-non-null-through-local (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -2661,7 +2661,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_if-allocation (result f64)
+  ;; CHECK:      (func $br_if-allocation (type $none_=>_f64) (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -2751,7 +2751,7 @@
     )
   )
 
-  ;; CHECK:      (func $pass-through-loop
+  ;; CHECK:      (func $pass-through-loop (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -2809,7 +2809,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-nullable-local (result anyref)
+  ;; CHECK:      (func $non-nullable-local (type $none_=>_anyref) (result anyref)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)

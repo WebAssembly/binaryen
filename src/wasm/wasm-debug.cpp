@@ -34,7 +34,7 @@ namespace wasm::Debug {
 bool isDWARFSection(Name name) { return name.startsWith(".debug_"); }
 
 bool hasDWARFSections(const Module& wasm) {
-  for (auto& section : wasm.userSections) {
+  for (auto& section : wasm.customSections) {
     if (isDWARFSection(section.name)) {
       return true;
     }
@@ -53,7 +53,7 @@ struct BinaryenDWARFInfo {
 
   BinaryenDWARFInfo(const Module& wasm) {
     // Get debug sections from the wasm.
-    for (auto& section : wasm.userSections) {
+    for (auto& section : wasm.customSections) {
       if (Name(section.name).startsWith(".debug_") && section.data.data()) {
         // TODO: efficiency
         sections[section.name.substr(1)] = llvm::MemoryBuffer::getMemBufferCopy(
@@ -75,7 +75,7 @@ void dumpDWARF(const Module& wasm) {
   BinaryenDWARFInfo info(wasm);
   std::cout << "DWARF debug info\n";
   std::cout << "================\n\n";
-  for (auto& section : wasm.userSections) {
+  for (auto& section : wasm.customSections) {
     if (Name(section.name).startsWith(".debug_")) {
       std::cout << "Contains section " << section.name << " ("
                 << section.data.size() << " bytes)\n";
@@ -1085,7 +1085,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
 
   // Update the custom sections in the wasm.
   // TODO: efficiency
-  for (auto& section : wasm.userSections) {
+  for (auto& section : wasm.customSections) {
     if (Name(section.name).startsWith(".debug_")) {
       auto llvmName = section.name.substr(1);
       if (newSections.count(llvmName)) {

@@ -7,21 +7,26 @@
 ;; types already existed in the store.
 
 (module
- ;; CHECK:      (type $A (struct (field (ref $C))))
- ;; NOMNL:      (type $A (struct_subtype (field (ref $C)) data))
- (type $A (struct (field (ref $C))))
- ;; CHECK:      (type $C (struct (field (mut (ref $B)))))
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (struct (field (ref $C))))
+  ;; NOMNL:      (type $A (struct (field (ref $C))))
+  (type $A (struct (field (ref $C))))
+  ;; CHECK:       (type $B (func (param (ref $A)) (result (ref $B))))
+  ;; NOMNL:      (type $C (struct (field (mut (ref $B)))))
 
- ;; CHECK:      (type $B (func (param (ref $A)) (result (ref $B))))
- ;; NOMNL:      (type $C (struct_subtype (field (mut (ref $B))) data))
+  ;; NOMNL:      (type $B (func (param (ref $A)) (result (ref $B))))
+  (type $B (func (param (ref $A)) (result (ref $B))))
 
- ;; NOMNL:      (type $B (func_subtype (param (ref $A)) (result (ref $B)) func))
- (type $B (func (param (ref $A)) (result (ref $B))))
- (type $C (struct (field (mut (ref $B)))))
- ;; CHECK:      (type $D (struct (field (ref $C)) (field (ref $A))))
- ;; NOMNL:      (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
- (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
- ;; CHECK:      (func $use-types (param $0 (ref $A)) (param $1 (ref $D))
+  ;; CHECK:       (type $C (struct (field (mut (ref $B)))))
+  (type $C (struct (field (mut (ref $B)))))
+
+  ;; CHECK:       (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+  ;; NOMNL:      (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+  (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+ )
+
+ ;; CHECK:      (func $use-types (type $ref|$A|_ref|$D|_=>_none) (param $0 (ref $A)) (param $1 (ref $D))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $use-types (type $ref|$A|_ref|$D|_=>_none) (param $0 (ref $A)) (param $1 (ref $D))

@@ -10,10 +10,10 @@
  (data (global.get $from_segment) "abcd")
  (elem (global.get $from_segment_2) $table_func)
  (export "wasm_func" (func $a_wasm_func))
- (func $table_func
+ (func $table_func (type $none_=>_none)
   (nop)
  )
- (func $a_wasm_func
+ (func $a_wasm_func (type $none_=>_none)
   (call $a_js_func)
   (drop
    (global.get $__THREW__)

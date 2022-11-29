@@ -4,7 +4,7 @@
 (module
   (type ${} (struct))
 
-  ;; CHECK:      (func $drop-ref-as (param $x anyref)
+  ;; CHECK:      (func $drop-ref-as (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -51,7 +51,7 @@
     )
   )
 
-  ;; CHECK:      (func $vacuum-nonnull
+  ;; CHECK:      (func $vacuum-nonnull (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $vacuum-nonnull
@@ -72,7 +72,7 @@
     )
   )
 
-  ;; CHECK:      (func $drop-i31.get (param $ref i31ref) (param $ref-nn (ref i31))
+  ;; CHECK:      (func $drop-i31.get (type $i31ref_ref|i31|_=>_none) (param $ref i31ref) (param $ref-nn (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i31.get_s
   ;; CHECK-NEXT:    (local.get $ref)

@@ -434,13 +434,13 @@ file_names[  1]:
  (export "sideg" (func $sideg))
  (export "sidef" (func $sidef))
  (export "__dso_handle" (global $global$0))
- (func $__wasm_call_ctors
+ (func $__wasm_call_ctors (type $none_=>_none)
   ;; code offset: 0x3
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs
+ (func $__wasm_apply_relocs (type $none_=>_none)
  )
- (func $sideg (result i32)
+ (func $sideg (type $none_=>_i32) (result i32)
   (local $0 i32)
   ;; code offset: 0xf
   (local.set $0
@@ -453,7 +453,7 @@ file_names[  1]:
    (local.get $0)
   )
  )
- (func $sidef (result i32)
+ (func $sidef (type $none_=>_i32) (result i32)
   (local $0 i32)
   ;; code offset: 0x1b
   (local.set $0

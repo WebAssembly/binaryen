@@ -10,7 +10,7 @@
 
  ;; CHECK:      (data "")
  (data "")
- ;; CHECK:      (func $test (result (ref $vec))
+ ;; CHECK:      (func $test (type $none_=>_ref|$vec|) (result (ref $vec))
  ;; CHECK-NEXT:  (array.new_data $vec 0
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)

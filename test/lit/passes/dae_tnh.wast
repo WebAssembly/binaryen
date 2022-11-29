@@ -5,12 +5,12 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
-
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct_subtype (field i32) data))
 
-  ;; CHECK:      (func $target
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+
+  ;; CHECK:      (func $target (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -18,7 +18,7 @@
     (nop)
   )
 
-  ;; CHECK:      (func $caller (param $ref (ref null $struct))
+  ;; CHECK:      (func $caller (type $ref?|$struct|_=>_none) (param $ref (ref null $struct))
   ;; CHECK-NEXT:  (call $target)
   ;; CHECK-NEXT: )
   (func $caller (param $ref (ref null $struct))
@@ -38,7 +38,7 @@
 
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $target
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -52,7 +52,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (param $0 i32)
+  ;; CHECK:      (func $target (type $i32_=>_none) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
@@ -64,7 +64,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (return_call $target)
   ;; CHECK-NEXT: )
   (func $caller
@@ -73,7 +73,7 @@
     )
   )
 
-  ;; CHECK:      (func $target
+  ;; CHECK:      (func $target (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -86,7 +86,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (func $target (param $0 i32)
+  ;; CHECK:      (func $target (type $i32_=>_none) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (f64.const 4.2)
@@ -102,7 +102,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $target
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )

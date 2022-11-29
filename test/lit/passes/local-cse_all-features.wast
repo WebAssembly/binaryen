@@ -11,7 +11,7 @@
 
   ;; CHECK:      (elem declare func $calls $ref.func)
 
-  ;; CHECK:      (func $calls (param $x i32) (result i32)
+  ;; CHECK:      (func $calls (type $f) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call_ref $f
   ;; CHECK-NEXT:    (i32.const 10)
@@ -37,7 +37,7 @@
     (i32.const 20)
   )
 
-  ;; CHECK:      (func $ref.func
+  ;; CHECK:      (func $ref.func (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $ref.func)
   ;; CHECK-NEXT:  )
@@ -73,7 +73,7 @@
 
   ;; CHECK:      (type $ref?|$B|_ref|$A|_=>_none (func (param (ref null $B) (ref $A))))
 
-  ;; CHECK:      (func $struct-gets-nullable (param $ref (ref null $A))
+  ;; CHECK:      (func $struct-gets-nullable (type $ref?|$A|_=>_none) (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -110,7 +110,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-gets (param $ref (ref $A))
+  ;; CHECK:      (func $struct-gets (type $ref|$A|_=>_none) (param $ref (ref $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -148,7 +148,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-nullable-value (param $ref (ref $A))
+  ;; CHECK:      (func $non-nullable-value (type $ref|$A|_=>_none) (param $ref (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -182,7 +182,7 @@
     )
   )
 
-  ;; CHECK:      (func $creations
+  ;; CHECK:      (func $creations (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 1)
@@ -233,7 +233,7 @@
     )
   )
 
-  ;; CHECK:      (func $structs-and-arrays-do-not-alias (param $array (ref null $B)) (param $struct (ref $A))
+  ;; CHECK:      (func $structs-and-arrays-do-not-alias (type $ref?|$B|_ref|$A|_=>_none) (param $array (ref null $B)) (param $struct (ref $A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (array.set $B
   ;; CHECK-NEXT:   (local.get $array)
@@ -289,7 +289,7 @@
   ;; we can avoid repeating them.
   ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $div16_internal (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.tee $2

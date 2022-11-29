@@ -7,7 +7,7 @@
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
 
-  ;; CHECK:      (func $cannot-push-past-call
+  ;; CHECK:      (func $cannot-push-past-call (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -37,7 +37,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-throw
+  ;; CHECK:      (func $cannot-push-past-throw (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -70,7 +70,7 @@
     )
   )
 
-  ;; CHECK:      (func $can-push-past-try
+  ;; CHECK:      (func $can-push-past-try (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (try $try
@@ -115,12 +115,12 @@
     )
   )
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $cannot-push-past-try
+  ;; CHECK:      (func $cannot-push-past-try (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -167,7 +167,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-rethrow-within-catch
+  ;; CHECK:      (func $cannot-push-past-rethrow-within-catch (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -214,7 +214,7 @@
     )
   )
 
-  ;; CHECK:      (func $can-push-past-try-delegate
+  ;; CHECK:      (func $can-push-past-try-delegate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (try $l
@@ -269,7 +269,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-try-delegate
+  ;; CHECK:      (func $cannot-push-past-try-delegate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -324,7 +324,7 @@
     )
   )
 
-  ;; CHECK:      (func $can-push-past-conditional-throw (param $param i32)
+  ;; CHECK:      (func $can-push-past-conditional-throw (type $i32_=>_none) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (if
@@ -357,7 +357,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-conditional-throw-extra-use (param $param i32)
+  ;; CHECK:      (func $cannot-push-past-conditional-throw-extra-use (type $i32_=>_none) (param $param i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (local.set $x

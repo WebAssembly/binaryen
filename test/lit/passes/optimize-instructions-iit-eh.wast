@@ -8,7 +8,7 @@
   ;; CHECK:      (tag $e (param (ref null $struct.A)))
   (tag $e (param (ref null $struct.A)))
 
-  ;; CHECK:      (func $ref-cast-statically-removed
+  ;; CHECK:      (func $ref-cast-statically-removed (type $none_=>_none)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)

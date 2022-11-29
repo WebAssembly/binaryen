@@ -2121,7 +2121,7 @@ public:
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
 // May be parsed/handled by utility code elsewhere, but not in wasm.h
-class UserSection {
+class CustomSection {
 public:
   std::string name;
   std::vector<char> data;
@@ -2151,7 +2151,7 @@ public:
 
   Name start;
 
-  std::vector<UserSection> userSections;
+  std::vector<CustomSection> customSections;
 
   // Optional user section IR representation.
   std::unique_ptr<DylinkSection> dylinkSection;

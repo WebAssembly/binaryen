@@ -8,11 +8,11 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $make-super-t (func_subtype (result (ref $super)) func))
+  ;; CHECK-NEXT:  (type $make-super-t (func (result (ref $super))))
 
-  ;; CHECK:       (type $make-sub-t (func_subtype (result (ref $sub)) func))
+  ;; CHECK:       (type $make-sub-t (func (result (ref $sub))))
 
-  ;; CHECK:       (type $super (struct_subtype (field i32) data))
+  ;; CHECK:       (type $super (struct (field i32)))
   (type $super (struct i32))
   ;; CHECK:       (type $sub (struct_subtype (field i32) $super))
   (type $sub (struct_subtype i32 $super))
