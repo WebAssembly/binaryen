@@ -324,7 +324,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // may be called outside of the module (if they escape, which we could in
     // principle track, so the TODO earlier in this file).
     std::unordered_set<Name> uncalledRefFuncs;
-    if (options.closedWorld) {
+    if (getPassOptions().closedWorld) {
       for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
         for (auto target : targets) {
           uncalledRefFuncs.insert(target);
