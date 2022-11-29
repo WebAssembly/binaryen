@@ -189,9 +189,9 @@ private:
         //  y = y + 1
         //  load(x)
         //
-        // This example should not be optimized into
+        // This example should *not* be optimized into
         //
-        //  load(x, offset=10)
+        //  load(y, offset=10)
         //
         // If the other side is a get, we may be able to prove that we can just
         // use that same local, if both it and the pointer are in SSA form. In
