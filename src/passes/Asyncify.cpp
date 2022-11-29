@@ -851,12 +851,11 @@ public:
 // Proxy that runs wrapped pass for instrumented functions only
 struct InstrumentedProxy : public Pass {
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<InstrumentedProxy>(analyzer, passName);
+    return std::make_unique<InstrumentedProxy>(analyzer, pass->create());
   }
 
-  InstrumentedProxy(ModuleAnalyzer* analyzer, const std::string& passName)
-    : analyzer(analyzer), passName(passName),
-      pass(PassRegistry::get()->createPass(passName)) {}
+  InstrumentedProxy(ModuleAnalyzer* analyzer, std::unique_ptr<Pass> pass)
+    : analyzer(analyzer), pass(std::move(pass)) {}
 
   bool isFunctionParallel() override { return pass->isFunctionParallel(); }
 
@@ -874,10 +873,28 @@ struct InstrumentedProxy : public Pass {
     return pass->requiresNonNullableLocalFixups();
   }
 
+  PassRunner* getPassRunner() override { return pass->getPassRunner(); }
+  void setPassRunner(PassRunner* runner_) override {
+    pass->setPassRunner(runner_);
+  }
+
 private:
   ModuleAnalyzer* analyzer;
-  std::string passName;
   std::unique_ptr<Pass> pass;
+};
+
+struct InstrumentedPassRunner : public PassRunner {
+  InstrumentedPassRunner(Module* wasm, ModuleAnalyzer* analyzer)
+    : PassRunner(wasm), analyzer(analyzer) {}
+
+protected:
+  void doAdd(std::unique_ptr<Pass> pass) override {
+    PassRunner::doAdd(
+      std::unique_ptr<Pass>(new InstrumentedProxy(analyzer, std::move(pass))));
+  }
+
+private:
+  ModuleAnalyzer* analyzer;
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
@@ -1648,8 +1665,8 @@ struct Asyncify : public Pass {
     // practical to add code around each call, without affecting
     // anything else.
     {
-      PassRunner runner(module);
-      runner.add(make_unique<InstrumentedProxy>(&analyzer, "flatten"));
+      InstrumentedPassRunner runner(module, &analyzer);
+      runner.add("flatten");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
       // unreachable code here.
@@ -1659,17 +1676,13 @@ struct Asyncify : public Pass {
         // because the flow changes add many branches, break up if-elses, etc.,
         // all of which extend the live ranges of locals. In other words, it is
         // not possible to coalesce well afterwards.
-        runner.add(
-          make_unique<InstrumentedProxy>(&analyzer, "remove-unused-names"));
-        runner.add(make_unique<InstrumentedProxy>(&analyzer,
-                                                  "simplify-locals-nonesting"));
-        runner.add(make_unique<InstrumentedProxy>(&analyzer, "reorder-locals"));
-        runner.add(
-          make_unique<InstrumentedProxy>(&analyzer, "coalesce-locals"));
-        runner.add(make_unique<InstrumentedProxy>(&analyzer,
-                                                  "simplify-locals-nonesting"));
-        runner.add(make_unique<InstrumentedProxy>(&analyzer, "reorder-locals"));
-        runner.add(make_unique<InstrumentedProxy>(&analyzer, "merge-blocks"));
+        runner.add("remove-unused-names");
+        runner.add("simplify-locals-nonesting");
+        runner.add("reorder-locals");
+        runner.add("coalesce-locals");
+        runner.add("simplify-locals-nonesting");
+        runner.add("reorder-locals");
+        runner.add("merge-blocks");
       }
       runner.add(
         make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
@@ -1683,7 +1696,7 @@ struct Asyncify : public Pass {
     // restore those locals). We also and optimize after as well to simplify
     // the code as much as possible.
     {
-      PassRunner runner(module);
+      InstrumentedPassRunner runner(module, &analyzer);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

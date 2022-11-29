@@ -251,6 +251,8 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
+  virtual ~PassRunner() = default;
+
   // But we can make it easy to create a nested runner
   // TODO: Go through and use this in more places
   explicit PassRunner(const PassRunner* runner)
@@ -333,6 +335,9 @@ struct PassRunner {
   // Returns whether a pass by that name will remove debug info.
   static bool passRemovesDebugInfo(const std::string& name);
 
+protected:
+  virtual void doAdd(std::unique_ptr<Pass> pass);
+
 private:
   // Whether this is a nested pass runner.
   bool isNested = false;
@@ -343,8 +348,6 @@ private:
 
   // Whether this pass runner has run. A pass runner should only be run once.
   bool ran = false;
-
-  void doAdd(std::unique_ptr<Pass> pass);
 
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
@@ -426,8 +429,8 @@ public:
 
   std::string name;
 
-  PassRunner* getPassRunner() { return runner; }
-  void setPassRunner(PassRunner* runner_) {
+  virtual PassRunner* getPassRunner() { return runner; }
+  virtual void setPassRunner(PassRunner* runner_) {
     assert((!runner || runner == runner_) && "Pass already had a runner");
     runner = runner_;
   }
