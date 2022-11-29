@@ -22,11 +22,11 @@
 // when it has no extra fields, no refined fields, and no casts.
 //
 // Note that such "redundant" types may help the optimizer, so merging them can
-// have a negative effect later. For that reason this may be best run at the
+// have a negative effect later. For that reason this may be best run near the
 // very end of the optimization pipeline, when nothing else is expected to do
 // type-based optimizations later. However, you also do not want to merge at the
 // very end, as e.g. type merging may open up function merging opportunities.
-// One possible pipeline:
+// One possible sequence:
 //
 //   --type-ssa -Os --type-merging -Os
 //
@@ -38,7 +38,6 @@
 
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
 #include "support/small_set.h"
 #include "wasm-builder.h"
@@ -167,7 +166,7 @@ struct TypeMerging : public Pass {
       merges[type] = newType;
     }
 
-    // Map types, making locals refer to the new types and so forth.
+    // Apply the merges.
 
     class TypeInternalsUpdater : public GlobalTypeRewriter {
       const TypeUpdates& merges;
@@ -183,10 +182,12 @@ struct TypeMerging : public Pass {
 
         computeNewSignatures();
 
-        // Map the types of expressions (curr->type etc.) to their merged types.
+        // Map the types of expressions (curr->type, etc.) to their merged
+        // types.
         mapTypes(merges);
 
-        // Update the internals of types to refer to the merged types.
+        // Update the internals of types (struct fields, etc.) to refer to the
+        // merged types.
         update();
       }
 
@@ -243,10 +244,6 @@ struct TypeMerging : public Pass {
         }
       }
     } rewriter(*module, merges, types);
-
-    // Propagate type changes outwards.
-
-    //    ReFinalize().run(getPassRunner(), module);
   }
 };
 
