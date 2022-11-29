@@ -70,7 +70,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
-  ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots, bool closedWorld)
+  ReachabilityAnalyzer(Module* module,
+                       const std::vector<ModuleElement>& roots,
+                       bool closedWorld)
     : module(module), closedWorld(closedWorld) {
     queue = roots;
     // Globals used in memory/table init expressions are also roots
