@@ -48,17 +48,14 @@ struct LUBFinder {
   // safe ways if doing so would allow us to get a better lub. The specific
   // optimization possible here involves nulls, see the top comment.
   void noteUpdatableExpression(Expression* curr) {
-    if (auto* null = curr->dynCast<RefNull>()) {
-      nulls.insert(null);
+    if (curr->is<RefNull>()) {
+      hasNull = true;
     } else {
       note(curr->type);
     }
   }
 
-  void noteNullDefault() {
-    // A default value is indicated by a null pointer.
-    nulls.insert(nullptr);
-  }
+  void noteNullDefault() { hasNull = true; }
 
   // Returns whether we noted any (reachable) value. This ignores nulls, as they
   // do not contribute type information - we do not try to find a lub based on
@@ -69,36 +66,14 @@ struct LUBFinder {
   // mentioned above, since they will not limit us, aside from making the type
   // nullable if nulls exist. This does not update the nulls.
   Type getBestPossible() {
-    if (lub == Type::unreachable) {
-      // Perhaps if we have seen nulls we could compute a lub on them, but it's
-      // not clear that is helpful.
-      return lub;
-    }
-
-    // We have a lub. Make it nullable if we need to.
-    if (!lub.isNullable() && !nulls.empty()) {
+    if (lub.isNonNullable() && hasNull) {
       return Type(lub.getHeapType(), Nullable);
-    } else {
-      return lub;
     }
+    return lub;
   }
 
   // Update the nulls for the best possible LUB, if we found one.
-  void updateNulls() {
-    auto newType = getBestPossible();
-    if (newType != Type::unreachable) {
-      for (auto* null : nulls) {
-        // Default null values (represented as nullptr here) do not need to be
-        // updated. Aside from that, if this null is already of a more specific
-        // type, also do not update it - it's never worth making a type less
-        // specific. What we care about here is making sure the nulls are all
-        // specific enough given the LUB that is being applied.
-        if (null && !Type::isSubType(null->type, newType)) {
-          null->finalize(newType);
-        }
-      }
-    }
-  }
+  void updateNulls() {}
 
   // Combines the information in another LUBFinder into this one, and returns
   // whether we changed anything.
@@ -106,26 +81,15 @@ struct LUBFinder {
     // Check if the lub was changed.
     auto old = lub;
     note(other.lub);
-    bool changed = old != lub;
-
-    // Check if we added new updatable nulls.
-    for (auto* null : other.nulls) {
-      if (nulls.insert(null).second) {
-        changed = true;
-      }
-    }
-
-    return changed;
+    hasNull = hasNull || other.hasNull;
+    return old != lub;
   }
 
 private:
   // The least upper bound. As we go this always contains the latest value based
   // on everything we've seen so far, except for nulls.
+  bool hasNull = false;
   Type lub = Type::unreachable;
-
-  // Nulls that we can update. A nullptr here indicates an "implicit" null, that
-  // is, a null default value.
-  std::unordered_set<RefNull*> nulls;
 };
 
 namespace LUB {
