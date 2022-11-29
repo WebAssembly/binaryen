@@ -207,14 +207,7 @@ struct SignatureRefining : public Pass {
       // We found an improvement!
       newSignatures[type] = Signature(newParams, newResults);
 
-      // Update nulls as necessary, now that we are changing things.
-      if (newParams != func->getParams()) {
-        for (auto& lub : paramLUBs) {
-          lub.updateNulls();
-        }
-      }
       if (newResults != func->getResults()) {
-        resultsLUB.updateNulls();
         refinedResults = true;
 
         // Update the types of calls using the signature.

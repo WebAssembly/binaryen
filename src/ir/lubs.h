@@ -72,9 +72,6 @@ struct LUBFinder {
     return lub;
   }
 
-  // Update the nulls for the best possible LUB, if we found one.
-  void updateNulls() {}
-
   // Combines the information in another LUBFinder into this one, and returns
   // whether we changed anything.
   bool combine(const LUBFinder& other) {

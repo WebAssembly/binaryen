@@ -165,7 +165,6 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           func->vars[i - varBase] = newType;
           more = true;
           optimized = true;
-          lub.updateNulls();
 
           // Update gets and tees.
           for (auto* get : getsForLocal[i]) {

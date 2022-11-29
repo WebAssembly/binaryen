@@ -405,12 +405,7 @@ private:
     // We can do this!
     TypeUpdating::updateParamTypes(func, newParamTypes, *module);
 
-    // Update anything the lubs need to update.
-    for (auto& lub : lubs) {
-      lub.updateNulls();
-    }
-
-    // Also update the function's type.
+    // Update the function's type.
     func->setParams(newParams);
   }
 
@@ -438,7 +433,6 @@ private:
     }
     auto newType = lub.getBestPossible();
     if (newType != func->getResults()) {
-      lub.updateNulls();
       func->setResults(newType);
       for (auto* call : calls) {
         if (call->type != Type::unreachable) {

@@ -88,7 +88,6 @@ struct GlobalRefining : public Pass {
         // We found an improvement!
         assert(Type::isSubType(newType, oldType));
         global->type = newType;
-        lub.updateNulls();
         optimized = true;
       }
     }

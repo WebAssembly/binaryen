@@ -213,7 +213,6 @@ struct TypeRefining : public Pass {
         auto newType = lub.getBestPossible();
         if (newType != oldType) {
           canOptimize = true;
-          lub.updateNulls();
         }
       }
 
