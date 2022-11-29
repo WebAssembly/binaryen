@@ -7,19 +7,46 @@
 ;; in this test, which verifies we don't run them in an open world. Each test
 ;; verifies a particular pass is run or not run in -O2 and above.
 
-;; --type-refining
+;; --type-refining: In a closed world we can refine the field from anyref to
+;; ref $struct.
 (module
+  ;; OPEN_WORLD:      (type $struct (struct (field (mut anyref))))
+  ;; CLOSED_WORLD:      (type $struct (struct (field (mut (ref $struct)))))
   (type $struct (struct_subtype (field (mut anyref)) data))
 
-  (func $work (param $struct (ref $struct))
+  ;; OPEN_WORLD:      (type $ref|$struct|_=>_anyref (func (param (ref $struct)) (result anyref)))
+
+  ;; OPEN_WORLD:      (export "work" (func $work))
+
+  ;; OPEN_WORLD:      (func $work (type $ref|$struct|_=>_anyref) (; has Stack IR ;) (param $0 (ref $struct)) (result anyref)
+  ;; OPEN_WORLD-NEXT:  (struct.set $struct 0
+  ;; OPEN_WORLD-NEXT:   (local.get $0)
+  ;; OPEN_WORLD-NEXT:   (local.get $0)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (struct.get $struct 0
+  ;; OPEN_WORLD-NEXT:   (local.get $0)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  ;; CLOSED_WORLD:      (type $ref|$struct|_=>_anyref (func (param (ref $struct)) (result anyref)))
+
+  ;; CLOSED_WORLD:      (export "work" (func $work))
+
+  ;; CLOSED_WORLD:      (func $work (type $ref|$struct|_=>_anyref) (; has Stack IR ;) (param $0 (ref $struct)) (result anyref)
+  ;; CLOSED_WORLD-NEXT:  (struct.set $struct 0
+  ;; CLOSED_WORLD-NEXT:   (local.get $0)
+  ;; CLOSED_WORLD-NEXT:   (local.get $0)
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT:  (struct.get $struct 0
+  ;; CLOSED_WORLD-NEXT:   (local.get $0)
+  ;; CLOSED_WORLD-NEXT:  )
+  ;; CLOSED_WORLD-NEXT: )
+  (func $work (export "work") (param $struct (ref $struct)) (result anyref)
     (struct.set $struct 0
       (local.get $struct)
-      (ref.null none)
+      (local.get $struct)
     )
-    (drop
-      (struct.get $struct 0
-        (local.get $struct)
-      )
+    (struct.get $struct 0
+      (local.get $struct)
     )
   )
 )
