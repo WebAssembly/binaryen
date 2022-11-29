@@ -211,7 +211,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitRefFunc(RefFunc* curr) {
     if (!closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
-      // of the module) can call this).
+      // of the module) can call this.
       maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
       return;
     }
