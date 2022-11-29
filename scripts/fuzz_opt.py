@@ -1378,6 +1378,9 @@ def randomize_opt_flags():
     # wasm limitation on function body size which is 128K)
     if random.random() < 0.5:
         ret += ['-fimfs=99999999']
+    # test both closed and open world
+    if random.random() < 0.5:
+        ret += ['--closed-world']
     assert ret.count('--flatten') <= 1
     return ret
 
