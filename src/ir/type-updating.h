@@ -337,6 +337,16 @@ public:
   // the module.
   void update();
 
+  using TypeMap = std::unordered_map<HeapType, HeapType>;
+
+  // Given a map of old type => new type to use instead, this rewrites all type
+  // uses in the module to apply that map. This is used internally in update()
+  // but may be useful by itself as well.
+  //
+  // The input map does not need to contain all the types. Whenever a type does
+  // not appear, it is mapped to itself.
+  void mapTypes(const TypeMap& oldToNewTypes);
+
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
   // are the hooks to apply changes through. The methods receive as input the
