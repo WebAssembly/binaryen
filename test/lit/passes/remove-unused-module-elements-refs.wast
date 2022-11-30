@@ -108,6 +108,10 @@
     ;; Note that we cannot remove the function, as the RefFunc must refer to
     ;; something in order to validate. But we can clear out the body of this
     ;; function with an unreachable.
+    ;;
+    ;; As mentioned above, in an open world we cannot optimize here, so the
+    ;; function body will remain empty as a nop, and not turn into an
+    ;; unreachable.
   )
 )
 
@@ -420,6 +424,7 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $target-drop (type $A)
+    ;; In a closed world we can turn this body into unreachable.
   )
 )
 
