@@ -333,7 +333,7 @@ struct RemoveUnusedModuleElements : public Pass {
     //
     // We can only do this in a closed world, as otherwise function references
     // may be called outside of the module (if they escape, which we could in
-    // principle track, so the TODO earlier in this file).
+    // principle track, see the TODO earlier in this file).
     std::unordered_set<Name> uncalledRefFuncs;
     if (closedWorld) {
       for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
