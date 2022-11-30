@@ -82,10 +82,6 @@ struct TypeSSA : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "TypeSSA requires nominal/isorecursive typing";
-    }
 
     // First, find all the struct/array.news.
 
