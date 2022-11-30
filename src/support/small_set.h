@@ -90,7 +90,8 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
     while (i < this->used && this->storage[i] < x) {
       i++;
     }
-    if (this->storage[i] == x) {
+    if (i < this->used && this->storage[i] == x) {
+      // The item already exists.
       return InsertResult::NoError;
     }
     // |i| is now the location where x should be placed.
