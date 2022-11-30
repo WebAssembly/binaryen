@@ -454,10 +454,7 @@ ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]
 (module
- (rec
-  (type $none_=>_i32 (func (result i32)))
-  (type $[mut:i8] (array (mut i8)))
- )
+ (type $none_=>_i32 (func (result i32)))
  (export "foo" (func $0))
  (func $0 (type $none_=>_i32) (; has Stack IR ;) (result i32)
   (i32.const 0)
