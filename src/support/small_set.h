@@ -39,12 +39,12 @@ template<typename T, size_t N> struct FixedStorageBase {
   std::array<T, N> storage;
 
   enum InsertResult {
-    // We inserted a new item.
-    Inserted,
-    // The item already existed; we had nothing to insert.
-    AlreadyExists,
+    // Either we inserted a new item, or the item already existed, so no error
+    // occurred.
+    NoError,
     // We needed to insert (the item did not exist), but we were already at full
-    // size, so we did not insert.
+    // size, so we could not insert, which is an error condition that the caller
+    // must handle.
     CouldNotInsert
   };
 };
@@ -56,7 +56,7 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
   InsertResult insert(const T& x) {
     for (size_t i = 0; i < this->used; i++) {
       if (this->storage[i] == x) {
-        return InsertResult::AlreadyExists;
+        return InsertResult::NoError;
       }
     }
     assert(this->used <= N);
@@ -64,7 +64,7 @@ struct UnorderedFixedStorage : public FixedStorageBase<T, N> {
       return InsertResult::CouldNotInsert;
     }
     this->storage[this->used++] = x;
-    return InsertResult::Inserted;
+    return InsertResult::NoError;
   }
 
   void erase(const T& x) {
@@ -91,7 +91,7 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
       i++;
     }
     if (this->storage[i] == x) {
-      return InsertResult::AlreadyExists;
+      return InsertResult::NoError;
     }
     // |i| is now the location where x should be placed.
 
@@ -109,7 +109,7 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
 
     this->storage[i] = x;
     this->used++;
-    return InsertResult::Inserted;
+    return InsertResult::NoError;
   }
 
   void erase(const T& x) {
