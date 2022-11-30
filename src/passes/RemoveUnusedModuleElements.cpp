@@ -333,24 +333,27 @@ struct RemoveUnusedModuleElements : public Pass {
     //
     // We can only do this in a closed world, as otherwise function references
     // may be called outside of the module (if they escape, which we could in
-    // principle track, see the TODO earlier in this file).
+    // principle track, see the TODO earlier in this file). So in the case of an
+    // open world we should not have noted anything in uncalledRefFuncMap
+    // earlier and not do any related optimizations there.
+    if (!closedWorld) {
+      assert(analyzer.uncalledRefFuncMap.empty());
+    }
     std::unordered_set<Name> uncalledRefFuncs;
-    if (closedWorld) {
-      for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
-        for (auto target : targets) {
-          uncalledRefFuncs.insert(target);
-        }
-
-        // We cannot have a type in both this map and calledSignatures.
-        assert(analyzer.calledSignatures.count(type) == 0);
+    for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
+      for (auto target : targets) {
+        uncalledRefFuncs.insert(target);
       }
+
+      // We cannot have a type in both this map and calledSignatures.
+      assert(analyzer.calledSignatures.count(type) == 0);
+    }
 
 #ifndef NDEBUG
-      for (auto type : analyzer.calledSignatures) {
-        assert(analyzer.uncalledRefFuncMap.count(type) == 0);
-      }
-#endif
+    for (auto type : analyzer.calledSignatures) {
+      assert(analyzer.uncalledRefFuncMap.count(type) == 0);
     }
+#endif
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
       if (analyzer.reachable.count(
