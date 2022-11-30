@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add `--closed-world` flag. This enables more optimizations in GC mode as it
+  lets us assume that we can change types inside the module.
 - The isorecursive WasmGC type system (i.e. --hybrid) is now the default to
   match the spec and the old default equirecursive (i.e. --structural) system
   has been removed.
