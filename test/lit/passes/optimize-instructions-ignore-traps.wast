@@ -12,7 +12,7 @@
 
   (import "a" "b" (func $get-i32 (result i32)))
 
-  ;; CHECK:      (func $conditionals (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $conditionals (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -181,7 +181,7 @@
       (local.get $5)
     )
   )
-  ;; CHECK:      (func $side-effect (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $side-effect (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -350,7 +350,7 @@
       (local.get $5)
     )
   )
-  ;; CHECK:      (func $flip (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $flip (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -516,7 +516,7 @@
       (local.get $5)
     )
   )
-  ;; CHECK:      (func $invalidate-conditionalizeExpensiveOnBitwise (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $invalidate-conditionalizeExpensiveOnBitwise (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.and
@@ -580,7 +580,7 @@
    )
    (return (local.get $1))
   )
-  ;; CHECK:      (func $invalidate-conditionalizeExpensiveOnBitwise-ok (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK:      (func $invalidate-conditionalizeExpensiveOnBitwise-ok (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (if (result i32)
@@ -643,7 +643,7 @@
    (return (local.get $1))
   )
 
- ;; CHECK:      (func $conditionalize-if-type-change (result f64)
+ ;; CHECK:      (func $conditionalize-if-type-change (type $none_=>_f64) (result f64)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (loop $label$1 (result f32)
@@ -717,7 +717,7 @@
   )
   (f64.const -nan:0xfffffffffffff)
  )
- ;; CHECK:      (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+ ;; CHECK:      (func $optimize-bulk-memory-copy (type $i32_i32_i32_=>_none) (param $dst i32) (param $src i32) (param $sz i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $dst)
@@ -775,7 +775,7 @@
   )
  )
 
- ;; CHECK:      (func $optimize-bulk-memory-fill (param $dst i32) (param $val i32) (param $sz i32)
+ ;; CHECK:      (func $optimize-bulk-memory-fill (type $i32_i32_i32_=>_none) (param $dst i32) (param $val i32) (param $sz i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $dst)

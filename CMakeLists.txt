@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 110)
+project(binaryen LANGUAGES C CXX VERSION 111)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -413,7 +413,6 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack")
   target_link_libraries(binaryen_wasm "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  target_link_libraries(binaryen_wasm "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   target_link_libraries(binaryen_wasm "-msign-ext")
   target_link_libraries(binaryen_wasm "-mbulk-memory")
   target_link_libraries(binaryen_wasm optimized "--closure=1")
@@ -455,8 +454,6 @@ if(EMSCRIPTEN)
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
     target_link_libraries(binaryen_js "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
-  else()
-    target_link_libraries(binaryen_js "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-extern-pre.js")
   endif()
   target_link_libraries(binaryen_js optimized "--closure=1")
   # Currently, js_of_ocaml can only process ES5 code

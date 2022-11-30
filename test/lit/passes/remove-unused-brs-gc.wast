@@ -6,7 +6,7 @@
  ;; CHECK:      (type $struct (struct ))
  (type $struct (struct ))
 
- ;; CHECK:      (func $br_on_non_data-1
+ ;; CHECK:      (func $br_on_non_data-1 (type $none_=>_none)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result i31ref)
  ;; CHECK-NEXT:    (drop
@@ -33,7 +33,7 @@
    )
   )
  )
- ;; CHECK:      (func $br_on_non_data-2 (param $data (ref data))
+ ;; CHECK:      (func $br_on_non_data-2 (type $ref|data|_=>_none) (param $data (ref data))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result nullref)
  ;; CHECK-NEXT:    (drop
@@ -57,7 +57,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on-if (param $0 (ref data))
+ ;; CHECK:      (func $br_on-if (type $ref|data|_=>_none) (param $0 (ref data))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref data))
@@ -88,7 +88,7 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on (result dataref)
+ ;; CHECK:      (func $nested_br_on (type $none_=>_dataref) (result dataref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -114,7 +114,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_static (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast_static (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -139,7 +139,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_static_no (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast_static_no (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -163,7 +163,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_static (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast_fail_static (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
@@ -186,7 +186,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)

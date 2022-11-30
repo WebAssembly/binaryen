@@ -26,7 +26,7 @@
     )
   )
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (export "main" (func $main))
 

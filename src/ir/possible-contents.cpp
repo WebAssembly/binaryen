@@ -22,13 +22,8 @@
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
-#include "wasm.h"
-
-#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
-// Use an insert-ordered set for easier debugging with deterministic queue
-// ordering.
 #include "support/insert_ordered.h"
-#endif
+#include "wasm.h"
 
 namespace std {
 
@@ -493,12 +488,6 @@ struct InfoCollector
         }
       }
     }
-    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      // We need explicit supers in the SubTyping helper class. Without that,
-      // cannot handle refs, and consider them irrelevant.
-      return false;
-    }
     return true;
   }
 
@@ -660,9 +649,7 @@ struct InfoCollector
     addRoot(curr);
   }
 
-  void visitRefCast(RefCast* curr) {
-    addChildParentLink(curr->ref, curr);
-  }
+  void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
@@ -770,6 +757,12 @@ struct InfoCollector
       });
   }
   template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
+    // If the heap type is not a signature, which is the case for a bottom type
+    // (null) then nothing can be called.
+    if (!targetType.isSignature()) {
+      assert(targetType.isBottom());
+      return;
+    }
     handleCall(
       curr,
       [&](Index i) {
@@ -817,7 +810,7 @@ struct InfoCollector
       // We can't see where this goes. We must be pessimistic and assume it
       // can call anything of the proper type, the same as a CallRef. (We could
       // look at the possible contents of |target| during the flow, but that
-      // would require special logic like we have for RefCast etc., and the
+      // would require special logic like we have for StructGet etc., and the
       // intrinsics will be lowered away anyhow, so just running after that is
       // a workaround.)
       handleIndirectCall(curr, target->type);
@@ -895,6 +888,27 @@ struct InfoCollector
         {getNullLocation(type.getArray().element.type), DataLocation{type, 0}});
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
+  }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    auto heapType = curr->type.getHeapType();
+    switch (curr->op) {
+      case NewData: {
+        Type elemType = heapType.getArray().element.type;
+        addRoot(DataLocation{heapType, 0},
+                PossibleContents::fromType(elemType));
+        return;
+      }
+      case NewElem: {
+        Type segType = getModule()->elementSegments[curr->segment]->type;
+        addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
+        return;
+      }
+    }
+    WASM_UNREACHABLE("unexpected op");
   }
   void visitArrayInit(ArrayInit* curr) {
     if (curr->type == Type::unreachable) {
@@ -1317,11 +1331,19 @@ private:
   // possible is helpful as anything reading them meanwhile (before we get to
   // their work item in the queue) will see the newer value, possibly avoiding
   // flowing an old value that would later be overwritten.
-#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
+  //
+  // This must be ordered to avoid nondeterminism. The problem is that our
+  // operations are imprecise and so the transitive property does not hold:
+  // (AvB)vC may differ from Av(BvC). Likewise (AvB)^C may differ from
+  // (A^C)v(B^C). An example of the latter is if a location is sent a null func
+  // and an i31, and the location can only contain funcref. If the null func
+  // arrives first, then later we'd merge null func + i31 which ends up as Many,
+  // and then we filter that to funcref and get funcref. But if the i31 arrived
+  // first, we'd filter it into nothing, and then the null func that arrives
+  // later would be the final result. This would not happen if our operations
+  // were precise, but we only make approximations here to avoid unacceptable
+  // overhead, such as cone types but not arbitrary unions, etc.
   InsertOrderedSet<LocationIndex> workQueue;
-#else
-  std::unordered_set<LocationIndex> workQueue;
-#endif
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
@@ -1383,10 +1405,6 @@ private:
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
   void writeToData(Expression* ref, Expression* value, Index fieldIndex);
-
-  // Special handling for RefCast during the flow: RefCast only admits valid
-  // values to flow through it.
-  void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1558,11 +1576,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "struct phase\n";
 #endif
 
-  if (getTypeSystem() == TypeSystem::Nominal ||
-      getTypeSystem() == TypeSystem::Isorecursive) {
-    subTypes = std::make_unique<SubTypes>(wasm);
-    maxDepths = subTypes->getMaxDepths();
-  }
+  subTypes = std::make_unique<SubTypes>(wasm);
+  maxDepths = subTypes->getMaxDepths();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "Link-targets phase\n";
@@ -1679,9 +1694,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   bool filtered = false;
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     // TODO: Replace this with specific filterFoo or flowBar methods like we
-    //       have for flowRefCast and filterGlobalContents. That could save a
-    //       little wasted work here. Might be best to do that after the spec is
-    //       fully stable.
+    //       have for filterGlobalContents. That could save a little wasted work
+    //       here. Might be best to do that after the spec is fully stable.
     filterExpressionContents(contents, *exprLoc, worthSendingMore);
     filtered = true;
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
@@ -1774,9 +1788,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
-    } else if (auto* cast = parent->dynCast<RefCast>()) {
-      assert(cast->ref == child);
-      flowRefCast(contents, cast);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -2069,25 +2080,6 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
     });
-}
-
-void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
-  // RefCast only allows valid values to go through: nulls and things of the
-  // cast type. Filter anything else out.
-  // TODO: Remove this method, as it just filters by the type, which we do
-  //       automatically now in filterExpressionContents.
-  auto intendedCone =
-    PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
-  PossibleContents filtered = contents;
-  filtered.intersectWithFullCone(intendedCone);
-  if (!filtered.isNone()) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "    ref.cast passing through\n";
-    filtered.dump(std::cout);
-    std::cout << '\n';
-#endif
-    updateContents(ExpressionLocation{cast, 0}, filtered);
-  }
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2

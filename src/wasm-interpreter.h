@@ -1700,6 +1700,7 @@ public:
     return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
                    curr->type.getHeapType());
   }
+  Flow visitArrayNewSeg(ArrayNewSeg* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
     Index num = curr->values.size();
@@ -1966,7 +1967,7 @@ public:
   // Flags indicating special requirements, for example whether we are just
   // evaluating (default), also going to replace the expression afterwards or
   // executing in a function-parallel scenario. See FlagValues.
-  typedef uint32_t Flags;
+  using Flags = uint32_t;
 
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -2185,6 +2186,10 @@ public:
   }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     NOTE_ENTER("SIMDLoadStoreLane");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayNewSeg(ArrayNewSeg* curr) {
+    NOTE_ENTER("ArrayNewSeg");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitPop(Pop* curr) {
@@ -3493,6 +3498,65 @@ public:
         info.name);
     }
     return {};
+  }
+  Flow visitArrayNewSeg(ArrayNewSeg* curr) {
+    NOTE_ENTER("ArrayNewSeg");
+    auto offsetFlow = self()->visit(curr->offset);
+    if (offsetFlow.breaking()) {
+      return offsetFlow;
+    }
+    auto sizeFlow = self()->visit(curr->size);
+    if (sizeFlow.breaking()) {
+      return sizeFlow;
+    }
+
+    uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
+    uint64_t size = sizeFlow.getSingleValue().getUnsigned();
+
+    auto heapType = curr->type.getHeapType();
+    const auto& element = heapType.getArray().element;
+    auto elemType = heapType.getArray().element.type;
+    WASM_UNUSED(elemType);
+
+    Literals contents;
+
+    switch (curr->op) {
+      case NewData: {
+        assert(curr->segment < wasm.dataSegments.size());
+        assert(elemType.isNumber());
+        const auto& seg = *wasm.dataSegments[curr->segment];
+        auto elemBytes = element.getByteSize();
+        auto end = offset + size * elemBytes;
+        if ((size != 0ull && droppedSegments.count(curr->segment)) ||
+            end > seg.data.size()) {
+          trap("out of bounds segment access in array.new_data");
+        }
+        contents.reserve(size);
+        for (Index i = offset; i < end; i += elemBytes) {
+          auto addr = (void*)&seg.data[i];
+          contents.push_back(Literal::makeFromMemory(addr, element));
+        }
+        break;
+      }
+      case NewElem: {
+        assert(curr->segment < wasm.elementSegments.size());
+        const auto& seg = *wasm.elementSegments[curr->segment];
+        auto end = offset + size;
+        // TODO: Handle dropped element segments once we support those.
+        if (end > seg.data.size()) {
+          trap("out of bounds segment access in array.new_elem");
+        }
+        contents.reserve(size);
+        for (Index i = offset; i < end; ++i) {
+          auto val = self()->visit(seg.data[i]).getSingleValue();
+          contents.push_back(val);
+        }
+        break;
+      }
+      default:
+        WASM_UNREACHABLE("unexpected op");
+    }
+    return Literal(std::make_shared<GCData>(heapType, contents), heapType);
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");

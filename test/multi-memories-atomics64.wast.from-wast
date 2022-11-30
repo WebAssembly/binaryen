@@ -3,7 +3,7 @@
  (memory $appMemory (shared i64 23 256))
  (memory $dataMemory (shared i64 23 256))
  (memory $instrumentMemory (shared i64 23 256))
- (func $atomic-loadstore
+ (func $atomic-loadstore (type $0)
   (local $0 i64)
   (local $1 i64)
   (local $2 i32)
@@ -134,7 +134,7 @@
    (local.get $1)
   )
  )
- (func $atomic-rmw
+ (func $atomic-rmw (type $0)
   (local $0 i64)
   (local $1 i64)
   (local $2 i32)
@@ -199,7 +199,7 @@
    )
   )
  )
- (func $atomic-cmpxchg
+ (func $atomic-cmpxchg (type $0)
   (local $0 i64)
   (local $1 i64)
   (local $2 i32)
@@ -260,7 +260,7 @@
    )
   )
  )
- (func $atomic-wait-notify
+ (func $atomic-wait-notify (type $0)
   (local $0 i64)
   (local $1 i64)
   (local $2 i32)
@@ -345,7 +345,7 @@
    )
   )
  )
- (func $atomic-fence
+ (func $atomic-fence (type $0)
   (atomic.fence)
  )
 )

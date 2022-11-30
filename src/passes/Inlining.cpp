@@ -133,7 +133,7 @@ static bool canHandleParams(Function* func) {
   return true;
 }
 
-typedef std::unordered_map<Name, FunctionInfo> NameInfoMap;
+using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
 
 struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
@@ -275,7 +275,9 @@ struct Updater : public PostWalker<Updater> {
     }
     curr->isReturn = false;
     curr->type = results;
-    if (curr->type.isConcrete()) {
+    // There might still be unreachable children causing this to be unreachable.
+    curr->finalize();
+    if (results.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
       replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));

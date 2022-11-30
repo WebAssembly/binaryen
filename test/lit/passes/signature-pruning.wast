@@ -2,12 +2,12 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --signature-pruning -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i32 f64) func))
+  ;; CHECK:      (type $sig (func (param i32 f64)))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -56,7 +56,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -67,12 +67,12 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i64 f32) func))
+  ;; CHECK:      (type $sig (func (param i64 f32)))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -120,7 +120,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -131,12 +131,12 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i32 i64 f32) func))
+  ;; CHECK:      (type $sig (func (param i32 i64 f32)))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -194,7 +194,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -207,12 +207,12 @@
 ;; As above, but with the effects on a call_ref. Once more, we can only optimize
 ;; away the very last param.
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i32 i64 f32) func))
+  ;; CHECK:      (type $sig (func (param i32 i64 f32)))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -263,7 +263,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (block (result i32)
         (call $caller)
         (i32.const 4)
@@ -277,12 +277,12 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype func))
+  ;; CHECK:      (type $sig (func))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -312,7 +312,7 @@
       (f32.const 2)
       (f64.const 3)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 4)
       (i64.const 5)
       (f32.const 6)
@@ -323,12 +323,12 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype func))
+  ;; CHECK:      (type $sig (func))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -369,7 +369,7 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype func))
+  ;; CHECK:      (type $sig (func))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -387,7 +387,7 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (func (param i32)))
   (type $sig (func_subtype (param i32) func))
 
   ;; As above, but now an import also uses this signature, which prevents us
@@ -407,7 +407,7 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (func (param i32)))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -437,10 +437,10 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype func))
+  ;; CHECK:      (type $sig (func))
   (type $sig (func_subtype (param i32) func))
 
-  ;; CHECK:      (type $sig2 (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig2 (func (param i32)))
   (type $sig2 (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -471,12 +471,12 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func_subtype func))
+  ;; CHECK:      (type $sig (func))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (memory $0 1 1)
 
@@ -515,11 +515,11 @@
     (call $bar
       (i32.const 1)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 2)
       (ref.func $foo)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 2)
       (ref.func $bar)
     )
@@ -536,7 +536,7 @@
     (call $bar
       (i32.const 1)
     )
-    (call_ref
+    (call_ref $sig
       (i32.const 2)
       (ref.func $foo)
     )
@@ -547,7 +547,7 @@
   ;; The presence of a table prevents us from doing any optimizations.
   (table 1 1 anyref)
 
-  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (func (param i32)))
   (type $sig (func_subtype (param i32) func))
 
   ;; CHECK:      (table $0 1 1 anyref)
@@ -562,10 +562,10 @@
 ;; Exports cannot be optimized in any way: we cannot remove parameters from
 ;; them, and also we cannot apply constant parameter values either.
 (module
-  ;; CHECK:      (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (func (param i32)))
   (type $sig (func_subtype (param i32) func))
 
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -600,9 +600,9 @@
 ;; *not* have the same type, however: the type should be different nominally
 ;; even though after the pruning they are identical structurally.
 (module
-  ;; CHECK:      (type $sig1 (func_subtype func))
+  ;; CHECK:      (type $sig1 (func))
   (type $sig1 (func_subtype (param i32) func))
-  ;; CHECK:      (type $sig2 (func_subtype func))
+  ;; CHECK:      (type $sig2 (func))
   (type $sig2 (func_subtype (param f64) func))
 
   ;; CHECK:      (func $foo1 (type $sig1)
@@ -621,9 +621,9 @@
 )
 
 (module
-  ;; CHECK:      (type $sig-foo (func_subtype func))
+  ;; CHECK:      (type $sig-foo (func))
   (type $sig-foo (func_subtype (param i32) func))
-  ;; CHECK:      (type $sig-bar (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig-bar (func (param i32)))
   (type $sig-bar (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -685,9 +685,9 @@
 ;; value that we can optimize in the case of $foo (but not $bar, again, as $bar
 ;; is not always sent a constant value).
 (module
-  ;; CHECK:      (type $sig-foo (func_subtype func))
+  ;; CHECK:      (type $sig-foo (func))
   (type $sig-foo (func_subtype (param funcref) func))
-  ;; CHECK:      (type $sig-bar (func_subtype (param funcref) func))
+  ;; CHECK:      (type $sig-bar (func (param funcref)))
   (type $sig-bar (func_subtype (param funcref) func))
 
   (memory 1 1)
@@ -738,9 +738,9 @@
 ;; As above, but the values are now ref.nulls. All nulls compare equal, so we
 ;; can still optimize even though the types differ.
 (module
-  ;; CHECK:      (type $sig-foo (func_subtype func))
+  ;; CHECK:      (type $sig-foo (func))
   (type $sig-foo (func_subtype (param anyref) func))
-  ;; CHECK:      (type $sig-bar (func_subtype (param anyref) func))
+  ;; CHECK:      (type $sig-bar (func (param anyref)))
   (type $sig-bar (func_subtype (param anyref) func))
 
   (memory 1 1)
@@ -788,9 +788,9 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func_subtype func))
+  ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $A (struct_subtype  data))
+  ;; CHECK:      (type $A (struct ))
   (type $A (struct_subtype data))
   ;; CHECK:      (func $0 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 f32)
@@ -813,11 +813,11 @@
 
 ;; Do not prune signatures used in the call.without.effects intrinsic.
 (module
-  ;; CHECK:      (type $i32_funcref_=>_i32 (func_subtype (param i32 funcref) (result i32) func))
+  ;; CHECK:      (type $i32_funcref_=>_i32 (func (param i32 funcref) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func_subtype (param i32) (result i32) func))
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func_subtype (result i32) func))
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))

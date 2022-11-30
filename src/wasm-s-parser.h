@@ -42,7 +42,7 @@ public:
 // An element in an S-Expression: a list or a string
 //
 class Element {
-  typedef ArenaVector<Element*> List;
+  using List = ArenaVector<Element*>;
 
   bool isList_ = true;
   List list_;
@@ -293,6 +293,7 @@ private:
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNewStatic(Element& s, bool default_);
+  Expression* makeArrayNewSeg(Element& s, ArrayNewSegOp op);
   Expression* makeArrayInitStatic(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);

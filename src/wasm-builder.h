@@ -935,6 +935,20 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayNewSeg* makeArrayNewSeg(ArrayNewSegOp op,
+                               HeapType type,
+                               Index seg,
+                               Expression* offset,
+                               Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayNewSeg>();
+    ret->op = op;
+    ret->segment = seg;
+    ret->offset = offset;
+    ret->size = size;
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
   ArrayInit* makeArrayInit(HeapType type,
                            const std::vector<Expression*>& values) {
     auto* ret = wasm.allocator.alloc<ArrayInit>();
@@ -1327,35 +1341,6 @@ public:
       }
     }
     return makeBrOn(op, name, ref);
-  }
-
-  template<typename T>
-  Expression* validateAndMakeCallRef(Expression* target,
-                                     const T& args,
-                                     bool isReturn = false) {
-    if (target->type != Type::unreachable && !target->type.isRef()) {
-      throw ParseException("Non-reference type for a call_ref", line, col);
-    }
-    // TODO: This won't be necessary once type annotations are mandatory on
-    // call_ref.
-    if (target->type == Type::unreachable ||
-        target->type.getHeapType() == HeapType::nofunc) {
-      // An unreachable target is not supported. Similiar to br_on_cast, just
-      // emit an unreachable sequence, since we don't have enough information
-      // to create a full call_ref.
-      std::vector<Expression*> children;
-      for (auto* arg : args) {
-        children.push_back(makeDrop(arg));
-      }
-      children.push_back(makeDrop(target));
-      children.push_back(makeUnreachable());
-      return makeBlock(children, Type::unreachable);
-    }
-    auto heapType = target->type.getHeapType();
-    if (!heapType.isSignature()) {
-      throw ParseException("Invalid reference type for a call_ref", line, col);
-    }
-    return makeCallRef(target, args, heapType.getSignature().results, isReturn);
   }
 };
 

@@ -337,6 +337,16 @@ public:
   // the module.
   void update();
 
+  using TypeMap = std::unordered_map<HeapType, HeapType>;
+
+  // Given a map of old type => new type to use instead, this rewrites all type
+  // uses in the module to apply that map. This is used internally in update()
+  // but may be useful by itself as well.
+  //
+  // The input map does not need to contain all the types. Whenever a type does
+  // not appear, it is mapped to itself.
+  void mapTypes(const TypeMap& oldToNewTypes);
+
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
   // are the hooks to apply changes through. The methods receive as input the
@@ -409,12 +419,12 @@ Expression* fixLocalGet(LocalGet* get, Module& wasm);
 
 // Applies new types of parameters to a function. This does all the necessary
 // changes aside from altering the function type, which the caller is expected
-// to do (the caller might simply change the type, but in other cases the caller
-// might be rewriting the types and need to preserve their identity in terms of
-// nominal typing, so we don't change the type here). The specific things this
-// function does are to update the types of local.get/tee operations,
-// refinalize, etc., basically all operations necessary to ensure validation
-// with the new types.
+// to do after we run (the caller might simply change the type, but in other
+// cases the caller  might be rewriting the types and need to preserve their
+// identity in terms of nominal typing, so we don't change the type here). The
+// specific things this function does are to update the types of local.get/tee
+// operations, refinalize, etc., basically all operations necessary to ensure
+// validation with the new types.
 //
 // While doing so, we can either update or not update the types of local.get and
 // local.tee operations. (We do not update them here if we'll be doing an update

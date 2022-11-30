@@ -22,19 +22,52 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "shared-constants.h"
+#include "support/file.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 #include <utility>
 
 //
 // Convert a module to be compatible with JavaScript promise integration (JSPI).
-// All exports will be wrapped with a function that will handle storing
+// Promising exports will be wrapped with a function that will handle storing
 // the suspsender that is passed in as the first param from a "promising"
-// `WebAssembly.Function`. All imports will also be wrapped, but they will take
-// the stored suspender and pass it as the first param to the imported function
-// that should be created from a "suspending" `WebAssembly.Function`.
+// `WebAssembly.Function`. Suspending imports will also be wrapped, but they
+// will take the stored suspender and pass it as the first param to the imported
+// function that should be created from a "suspending" `WebAssembly.Function`.
 //
+// By default all imports and exports will be wrapped, but this can be
+// controlled with the following options:
+//
+//   --pass-arg=jspi-imports@module1.base1,module2.base2,module3.base3
+//
+//      Wrap each import in the comma-separated list. Wildcards and a separate
+//      files are supported. See `asyncify-imports` for more details.
+//
+//   --pass-arg=jspi-exports@function_one,function_two,function_three
+//
+//      Wrap each export in the comma-separated list. Similar to jspi-imports,
+//      wildcards and separate files are supported.
+//
+
 namespace wasm {
+
+static std::string getFullFunctionName(Name module, Name base) {
+  return std::string(module.str) + '.' + base.toString();
+}
+
+static bool canChangeState(std::string name, String::Split stateChangers) {
+  // When no state changers are given default to everything changes state.
+  if (stateChangers.empty()) {
+    return true;
+  }
+  for (auto& stateChanger : stateChangers) {
+    if (String::wildcardMatch(stateChanger, name)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 struct JSPI : public Pass {
 
@@ -42,6 +75,18 @@ struct JSPI : public Pass {
 
   void run(Module* module) override {
     Builder builder(*module);
+
+    auto& options = getPassOptions();
+    // Find which imports can suspend.
+    auto stateChangingImports = String::trim(read_possible_response_file(
+      options.getArgumentOrDefault("jspi-imports", "")));
+    String::Split listedImports(stateChangingImports, ",");
+
+    // Find which exports should create a promise.
+    auto stateChangingExports = String::trim(read_possible_response_file(
+      options.getArgumentOrDefault("jspi-exports", "")));
+    String::Split listedExports(stateChangingExports, ",");
+
     // Create a global to store the suspender that is passed into exported
     // functions and will then need to be passed out to the imported functions.
     Name suspender = Names::getValidGlobalName(*module, "suspender");
@@ -57,7 +102,8 @@ struct JSPI : public Pass {
     // Wrap each exported function in a function that stores the suspender
     // and calls the original export.
     for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Function) {
+      if (ex->kind == ExternalKind::Function &&
+          canChangeState(ex->name.toString(), listedExports)) {
         auto* func = module->getFunction(ex->value);
         Name wrapperName;
         auto iter = wrappedExports.find(func->name);
@@ -79,7 +125,9 @@ struct JSPI : public Pass {
     // Wrap each imported function in a function that gets the global suspender
     // and passes it on to the imported function.
     for (auto* im : originalFunctions) {
-      if (im->imported()) {
+      if (im->imported() &&
+          canChangeState(getFullFunctionName(im->module, im->base),
+                         listedImports)) {
         makeWrapperForImport(im, module, suspender);
       }
     }

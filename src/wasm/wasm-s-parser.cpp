@@ -2744,35 +2744,20 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
-  Index operandsStart = 1;
-  std::optional<HeapType> sigType;
-  try {
-    sigType = parseHeapType(*s[1]);
-    operandsStart = 2;
-  } catch (ParseException& p) {
-    // The type annotation is required for return_call_ref but temporarily
-    // optional for call_ref.
-    if (isReturn) {
-      throw;
-    }
-  }
+  HeapType sigType = parseHeapType(*s[1]);
   std::vector<Expression*> operands;
-  parseOperands(s, operandsStart, s.size() - 1, operands);
+  parseOperands(s, 2, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
 
-  if (sigType) {
-    if (!sigType->isSignature()) {
-      throw ParseException(
-        std::string(isReturn ? "return_call_ref" : "call_ref") +
-          " type annotation should be a signature",
-        s.line,
-        s.col);
-    }
-    return Builder(wasm).makeCallRef(
-      target, operands, sigType->getSignature().results, isReturn);
+  if (!sigType.isSignature()) {
+    throw ParseException(
+      std::string(isReturn ? "return_call_ref" : "call_ref") +
+        " type annotation should be a signature",
+      s.line,
+      s.col);
   }
-  return ValidatingBuilder(wasm, s.line, s.col)
-    .validateAndMakeCallRef(target, operands, isReturn);
+  return Builder(wasm).makeCallRef(
+    target, operands, sigType.getSignature().results, isReturn);
 }
 
 Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
@@ -2890,6 +2875,15 @@ Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
   }
   auto* size = parseExpression(*s[i++]);
   return Builder(wasm).makeArrayNew(heapType, size, init);
+}
+
+Expression* SExpressionWasmBuilder::makeArrayNewSeg(Element& s,
+                                                    ArrayNewSegOp op) {
+  auto heapType = parseHeapType(*s[1]);
+  Index seg = parseIndex(*s[2]);
+  Expression* offset = parseExpression(*s[3]);
+  Expression* size = parseExpression(*s[4]);
+  return Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
@@ -3292,9 +3286,6 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
 }
 
 void SExpressionWasmBuilder::parseData(Element& s) {
-  if (wasm.memories.empty()) {
-    throw ParseException("data but no memory", s.line, s.col);
-  }
   Index i = 1;
   Name name = Name::fromInt(dataCounter++);
   bool hasExplicitName = false;

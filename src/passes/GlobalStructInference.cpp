@@ -16,7 +16,8 @@
 
 //
 // Finds types which are only created in assignments to immutable globals. For
-// such types we can replace a struct.get with this pattern:
+// such types we can replace a struct.get with a global.get when there is a
+// single possible global, or if there are two then with this pattern:
 //
 //  (struct.get $foo i
 //    (..ref..))
@@ -44,6 +45,8 @@
 // comparison. But we can compare structs, so if the function references are in
 // vtables, and the vtables follow the above pattern, then we can optimize.
 //
+// TODO: Only do the case with a select when shrinkLevel == 0?
+//
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
@@ -67,10 +70,6 @@ struct GlobalStructInference : public Pass {
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
-    }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "GlobalStructInference requires nominal/isorecursive typing";
     }
 
     // First, find all the information we need. We need to know which struct
@@ -210,6 +209,26 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
+        const auto& globals = iter->second;
+        if (globals.size() == 0) {
+          return;
+        }
+
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+
+        if (globals.size() == 1) {
+          // Leave it to other passes to infer the constant value of the field,
+          // if there is one: just change the reference to the global, which
+          // will unlock those other optimizations. Note we must trap if the ref
+          // is null, so add RefAsNonNull here.
+          auto global = globals[0];
+          curr->ref = builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
+          return;
+        }
+
         // We are looking for the case where we can pick between two values
         // using a single comparison. More than two values, or more than a
         // single comparison, add tradeoffs that may not be worth it, and a
@@ -229,10 +248,6 @@ struct GlobalStructInference : public Pass {
         //   (i32.const 1337)
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
-        const auto& globals = iter->second;
-        if (globals.size() < 2) {
-          return;
-        }
 
         // Find the constant values and which globals correspond to them.
         // TODO: SmallVectors?
@@ -240,7 +255,6 @@ struct GlobalStructInference : public Pass {
         std::vector<std::vector<Name>> globalsForValue;
 
         // Check if the relevant fields contain constants.
-        auto& wasm = *getModule();
         auto fieldType = field.type;
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
@@ -276,10 +290,14 @@ struct GlobalStructInference : public Pass {
         }
 
         // We have some globals (at least 2), and so must have at least one
-        // value. And we have already exited if we have more than 2, so that
-        // only leaves 1 and 2. We are looking for the case of 2 here, since
-        // other passes (ConstantFieldPropagation) can handle 1.
+        // value. And we have already exited if we have more than 2 values (see
+        // the early return above) so that only leaves 1 and 2.
         if (values.size() == 1) {
+          // The case of 1 value is simple: trap if the ref is null, and
+          // otherwise return the value.
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeConstantExpression(values[0])));
           return;
         }
         assert(values.size() == 2);
@@ -302,7 +320,6 @@ struct GlobalStructInference : public Pass {
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
         auto checkGlobal = globalsForValue[0][0];
-        Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(

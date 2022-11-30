@@ -71,7 +71,7 @@ struct SpillPointers
   }
 
   // map pointers to their offset in the spill area
-  typedef std::unordered_map<Index, Index> PointerMap;
+  using PointerMap = std::unordered_map<Index, Index>;
 
   Type pointerType;
 

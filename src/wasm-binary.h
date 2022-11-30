@@ -110,7 +110,7 @@ template<typename T, typename MiniT> struct LEB {
       byte = get();
       bool last = !(byte & 128);
       T payload = byte & 127;
-      typedef typename std::make_unsigned<T>::type mask_type;
+      using mask_type = typename std::make_unsigned<T>::type;
       auto shift_mask = 0 == shift
                           ? ~mask_type(0)
                           : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
@@ -147,10 +147,10 @@ template<typename T, typename MiniT> struct LEB {
   }
 };
 
-typedef LEB<uint32_t, uint8_t> U32LEB;
-typedef LEB<uint64_t, uint8_t> U64LEB;
-typedef LEB<int32_t, int8_t> S32LEB;
-typedef LEB<int64_t, int8_t> S64LEB;
+using U32LEB = LEB<uint32_t, uint8_t>;
+using U64LEB = LEB<uint64_t, uint8_t>;
+using S32LEB = LEB<int32_t, int8_t>;
+using S64LEB = LEB<int64_t, int8_t>;
 
 //
 // We mostly stream into a buffer as we create the binary format, however,
@@ -314,7 +314,7 @@ namespace BinaryConsts {
 enum Meta { Magic = 0x6d736100, Version = 0x01 };
 
 enum Section {
-  User = 0,
+  Custom = 0,
   Type = 1,
   Import = 2,
   Function = 3,
@@ -423,7 +423,7 @@ enum EncodedHeapType {
   none = -0x1b,   // 0x65
 };
 
-namespace UserSections {
+namespace CustomSections {
 extern const char* Name;
 extern const char* SourceMapUrl;
 extern const char* Dylink;
@@ -470,7 +470,7 @@ enum Subsection {
   DylinkNeeded = 2,
 };
 
-} // namespace UserSections
+} // namespace CustomSections
 
 enum ASTNodes {
   Unreachable = 0x00,
@@ -1094,8 +1094,7 @@ enum ASTNodes {
 
   // typed function references opcodes
 
-  CallRefUnannotated = 0x14,
-  CallRef = 0x17,
+  CallRef = 0x14,
   RetCallRef = 0x15,
 
   // gc opcodes
@@ -1107,6 +1106,7 @@ enum ASTNodes {
   StructSet = 0x06,
   StructNew = 0x07,
   StructNewDefault = 0x08,
+  ArrayNewElem = 0x10,
   ArrayGet = 0x13,
   ArrayGetS = 0x14,
   ArrayGetU = 0x15,
@@ -1117,6 +1117,7 @@ enum ASTNodes {
   ArrayInitStatic = 0x1a,
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
+  ArrayNewData = 0x1d,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
@@ -1299,7 +1300,7 @@ public:
     Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
-  int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
+  int32_t startSubsection(BinaryConsts::CustomSections::Subsection code);
   void finishSubsection(int32_t start);
   void writeStart();
   void writeMemories();
@@ -1329,8 +1330,8 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeLateUserSections();
-  void writeUserSection(const UserSection& section);
+  void writeLateCustomSections();
+  void writeCustomSection(const CustomSection& section);
   void writeFeaturesSection();
   void writeDylinkSection();
   void writeLegacyDylinkSection();
@@ -1450,7 +1451,7 @@ public:
     skipFunctionBodies = skipFunctionBodies_;
   }
   void read();
-  void readUserSection(size_t payloadLen);
+  void readCustomSection(size_t payloadLen);
 
   bool more() { return pos < input.size(); }
 
@@ -1706,6 +1707,7 @@ public:
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
   bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNewSeg(Expression*& out, uint32_t code);
   bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
@@ -1740,8 +1742,7 @@ public:
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitCallRef(CallRef* curr,
-                    std::optional<HeapType> maybeType = std::nullopt);
+  void visitCallRef(CallRef* curr);
   void visitRefAs(RefAs* curr, uint8_t code);
 
   [[noreturn]] void throwError(std::string text);

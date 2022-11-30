@@ -451,6 +451,7 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
+  void visitArrayNewSeg(ArrayNewSeg* curr);
   void visitArrayInit(ArrayInit* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
@@ -2585,10 +2586,12 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                       "struct.new must have the right number of operands")) {
       // All the fields must have the proper type.
       for (Index i = 0; i < fields.size(); i++) {
-        shouldBeSubType(curr->operands[i]->type,
-                        fields[i].type,
-                        curr,
-                        "struct.new operand must have proper type");
+        if (!Type::isSubType(curr->operands[i]->type, fields[i].type)) {
+          info.fail("struct.new operand " + std::to_string(i) +
+                      " must have proper type",
+                    curr,
+                    getFunction());
+        }
       }
     }
   }
@@ -2680,6 +2683,73 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
                     element.type,
                     curr,
                     "array.new init must have proper type");
+  }
+}
+
+void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.new_{data, elem} requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type,
+    Type(Type::i32),
+    curr,
+    "array.new_{data, elem} offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type,
+    Type(Type::i32),
+    curr,
+    "array.new_{data, elem} size must be an i32");
+  switch (curr->op) {
+    case NewData:
+      if (!shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+                        curr,
+                        "array.new_data segment index out of bounds")) {
+        return;
+      }
+      break;
+    case NewElem:
+      if (!shouldBeTrue(curr->segment < getModule()->elementSegments.size(),
+                        curr,
+                        "array.new_elem segment index out of bounds")) {
+        return;
+      }
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected op");
+  }
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->type.isRef(),
+        curr,
+        "array.new_{data, elem} type should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->type.getHeapType();
+  if (!shouldBeTrue(
+        heapType.isArray(),
+        curr,
+        "array.new_{data, elem} type shoudl be an array reference")) {
+    return;
+  }
+  auto elemType = heapType.getArray().element.type;
+  switch (curr->op) {
+    case NewData:
+      shouldBeTrue(elemType.isNumber(),
+                   curr,
+                   "array.new_data result element type should be numeric");
+      break;
+    case NewElem:
+      shouldBeSubType(getModule()->elementSegments[curr->segment]->type,
+                      elemType,
+                      curr,
+                      "array.new_elem segment type should be a subtype of the "
+                      "result element type");
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected op");
   }
 }
 
@@ -2835,6 +2905,11 @@ void FunctionValidator::visitFunction(Function* curr) {
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
+  // Check for things like having a rec group with GC enabled. The type we're
+  // checking is a reference type even if this an MVP function type, so ignore
+  // the reference types feature here.
+  features |=
+    (Type(curr->type, Nullable).getFeatures() & ~FeatureSet::ReferenceTypes);
   for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
@@ -2999,8 +3074,11 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         bool validControlFlowStructureChange =
           Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
           newType == Type::unreachable;
-        if (!Type::isSubType(newType, oldType) &&
-            !validControlFlowStructureChange) {
+        // It's ok in general for types to get refined as long as they don't
+        // become unreachable.
+        bool validRefinement =
+          Type::isSubType(newType, oldType) && newType != Type::unreachable;
+        if (!validRefinement && !validControlFlowStructureChange) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
              << "\n(marked as " << oldType << ", should be " << newType

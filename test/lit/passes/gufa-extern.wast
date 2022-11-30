@@ -2,7 +2,7 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa --nominal -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $externref_anyref_=>_none (func_subtype (param externref anyref) func))
+  ;; CHECK:      (type $externref_anyref_=>_none (func (param externref anyref)))
 
   ;; CHECK:      (export "externals" (func $externals))
 

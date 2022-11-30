@@ -170,8 +170,8 @@ void getFunctionsToKeepAndSplit(Module& wasm,
   ProfileData profile = readProfile(profileFile);
   if (profile.hash != wasmHash) {
     Fatal() << "error: checksum in profile does not match module checksum. "
-            << "The split module must be the original module that was "
-            << "instrumented to generate the profile.";
+            << "The module to split must be the original, uninstrumented "
+               "module, not the module used to generate the profile.";
   }
 
   size_t i = 0;

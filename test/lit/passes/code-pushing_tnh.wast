@@ -6,6 +6,8 @@
 (module
   ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
 
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (func $div (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (block $block
@@ -44,5 +46,31 @@
       )
     )
   )
-)
 
+  ;; CHECK:      (func $unreachable-value
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.tee $x
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-value
+    (local $x i32)
+    ;; We should not push this into the if. (If we did, we'd need to refinalize
+    ;; the block, or we'd error; instead, leave this to DCE.)
+    (local.set $x
+      (unreachable)
+    )
+    (if
+      (i32.const 0)
+      (drop
+        (local.get $x)
+      )
+    )
+  )
+)

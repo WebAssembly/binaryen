@@ -192,7 +192,6 @@ BINARYEN_API BinaryenType BinaryenTypeFromHeapType(BinaryenHeapType heapType,
 
 typedef uint32_t BinaryenTypeSystem;
 
-BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemEquirecursive(void);
 BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemNominal(void);
 BINARYEN_API BinaryenTypeSystem BinaryenTypeSystemIsorecursive(void);
 BINARYEN_API BinaryenTypeSystem BinaryenGetTypeSystem(void);
@@ -1071,6 +1070,9 @@ BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
                                                     BinaryenExpressionRef init);
+
+// TODO: BinaryenArrayNewSeg
+
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayInit(BinaryenModuleRef module,
                   BinaryenHeapType type,

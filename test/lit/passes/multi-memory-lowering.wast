@@ -147,9 +147,15 @@
 ;; CHECK-NEXT:  (local.set $memory_size
 ;; CHECK-NEXT:   (memory.size)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (memory.grow
-;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.eq
+;; CHECK-NEXT:    (memory.grow
+;; CHECK-NEXT:     (local.get $page_delta)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (return
+;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (memory.copy
@@ -199,9 +205,15 @@
 ;; CHECK-NEXT:  (local.set $memory_size
 ;; CHECK-NEXT:   (memory.size)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (memory.grow
-;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.eq
+;; CHECK-NEXT:    (memory.grow
+;; CHECK-NEXT:     (local.get $page_delta)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (return
+;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (memory.copy
@@ -238,9 +250,15 @@
 ;; CHECK-NEXT:  (local.set $return_size
 ;; CHECK-NEXT:   (call $memory3_size)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (memory.grow
-;; CHECK-NEXT:    (local.get $page_delta)
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.eq
+;; CHECK-NEXT:    (memory.grow
+;; CHECK-NEXT:     (local.get $page_delta)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (return
+;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (local.get $return_size)

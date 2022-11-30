@@ -16,7 +16,7 @@
   ;; CHECK:      (tag $tag$f32 (param f32))
   (tag $tag$f32 (param f32))
 
-  ;; CHECK:      (func $test
+  ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (try $try
@@ -76,7 +76,7 @@
     )
   )
 
-  ;; CHECK:      (func $bar (result i32)
+  ;; CHECK:      (func $bar (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (try $try (result i32)
   ;; CHECK-NEXT:    (do

@@ -7,7 +7,7 @@
 (module
  ;; CHECK:      (export "foo" (func $foo))
  (export "foo" (func $foo))
- ;; CHECK:      (func $foo (result funcref)
+ ;; CHECK:      (func $foo (type $none_=>_funcref) (result funcref)
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (local $1 (ref $none_=>_funcref))
  ;; CHECK-NEXT:  (local $2 (ref $none_=>_funcref))

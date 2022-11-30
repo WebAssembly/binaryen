@@ -590,6 +590,8 @@ instructions = [
     ("struct.set",           "makeStructSet(s)"),
     ("array.new",            "makeArrayNewStatic(s, false)"),
     ("array.new_default",    "makeArrayNewStatic(s, true)"),
+    ("array.new_data",       "makeArrayNewSeg(s, NewData)"),
+    ("array.new_elem",       "makeArrayNewSeg(s, NewElem)"),
     ("array.init_static",    "makeArrayInitStatic(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),

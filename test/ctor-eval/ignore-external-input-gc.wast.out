@@ -5,12 +5,12 @@
  (global $global2 (mut i32) (i32.const 20))
  (export "test2" (func $1))
  (export "keepalive" (func $2))
- (func $1 (param $any (ref any))
+ (func $1 (type $ref|any|_=>_none) (param $any (ref any))
   (global.set $global2
    (i32.const 22)
   )
  )
- (func $2 (result i32)
+ (func $2 (type $none_=>_i32) (result i32)
   (i32.add
    (global.get $global1)
    (global.get $global2)

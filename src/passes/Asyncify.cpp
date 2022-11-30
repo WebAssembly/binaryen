@@ -150,7 +150,7 @@
 //    which means it will keep unwinding in a meaningless way.
 //
 //  * asyncify_start_rewind(data : iPTR): call this to start rewinding the
-//    stack vack up to the location stored in the provided data. This prepares
+//    stack back up to the location stored in the provided data. This prepares
 //    for the rewind; to start it, you must call the first function in the
 //    call stack to be unwound.
 //
@@ -234,7 +234,7 @@
 //
 //   --pass-arg=asyncify-asserts
 //
-//      This enables extra asserts in the output, like checking if we in
+//      This enables extra asserts in the output, like checking if we put in
 //      an unwind/rewind in an invalid place (this can be helpful for manual
 //      tweaking of the only-list / remove-list, see later).
 //
@@ -311,6 +311,7 @@
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/file.h"
@@ -519,7 +520,7 @@ class ModuleAnalyzer {
     bool addedFromList = false;
   };
 
-  typedef std::map<Function*, Info> Map;
+  using Map = std::map<Function*, Info>;
   Map map;
 
 public:
@@ -803,9 +804,11 @@ class AsyncifyBuilder : public Builder {
 public:
   Module& wasm;
   Type pointerType;
+  Name asyncifyMemory;
 
-  AsyncifyBuilder(Module& wasm)
-    : Builder(wasm), wasm(wasm), pointerType(wasm.memories[0]->indexType) {}
+  AsyncifyBuilder(Module& wasm, Type pointerType, Name asyncifyMemory)
+    : Builder(wasm), wasm(wasm), pointerType(pointerType),
+      asyncifyMemory(asyncifyMemory) {}
 
   Expression* makeGetStackPos() {
     return makeLoad(pointerType.getByteSize(),
@@ -814,7 +817,7 @@ public:
                     pointerType.getByteSize(),
                     makeGlobalGet(ASYNCIFY_DATA, pointerType),
                     pointerType,
-                    wasm.memories[0]->name);
+                    asyncifyMemory);
   }
 
   Expression* makeIncStackPos(int32_t by) {
@@ -830,7 +833,7 @@ public:
                                 makeGetStackPos(),
                                 makeConst(literal)),
                      pointerType,
-                     wasm.memories[0]->name);
+                     asyncifyMemory);
   }
 
   Expression* makeStateCheck(State value) {
@@ -850,17 +853,23 @@ struct AsyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
+  Type pointerType;
+  Name asyncifyMemory;
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<AsyncifyFlow>(analyzer);
+    return std::make_unique<AsyncifyFlow>(
+      analyzer, pointerType, asyncifyMemory);
   }
 
-  AsyncifyFlow(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
+  AsyncifyFlow(ModuleAnalyzer* analyzer, Type pointerType, Name asyncifyMemory)
+    : analyzer(analyzer), pointerType(pointerType),
+      asyncifyMemory(asyncifyMemory) {}
 
   void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
     func = func_;
-    builder = make_unique<AsyncifyBuilder>(*module);
+    builder =
+      make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
@@ -1225,12 +1234,19 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
   bool isFunctionParallel() override { return true; }
 
   ModuleAnalyzer* analyzer;
+  Type pointerType;
+  Name asyncifyMemory;
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<AsyncifyLocals>(analyzer);
+    return std::make_unique<AsyncifyLocals>(
+      analyzer, pointerType, asyncifyMemory);
   }
 
-  AsyncifyLocals(ModuleAnalyzer* analyzer) : analyzer(analyzer) {}
+  AsyncifyLocals(ModuleAnalyzer* analyzer,
+                 Type pointerType,
+                 Name asyncifyMemory)
+    : analyzer(analyzer), pointerType(pointerType),
+      asyncifyMemory(asyncifyMemory) {}
 
   void visitCall(Call* curr) {
     // Replace calls to the fake intrinsics.
@@ -1239,15 +1255,14 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     } else if (curr->target == ASYNCIFY_GET_CALL_INDEX) {
       replaceCurrent(builder->makeSequence(
         builder->makeIncStackPos(-4),
-        builder->makeLocalSet(
-          rewindIndex,
-          builder->makeLoad(4,
-                            false,
-                            0,
-                            4,
-                            builder->makeGetStackPos(),
-                            Type::i32,
-                            getModule()->memories[0]->name))));
+        builder->makeLocalSet(rewindIndex,
+                              builder->makeLoad(4,
+                                                false,
+                                                0,
+                                                4,
+                                                builder->makeGetStackPos(),
+                                                Type::i32,
+                                                asyncifyMemory))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
       replaceCurrent(builder->makeBinary(
         EqInt32,
@@ -1298,7 +1313,8 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     auto unwindIndex = builder->addVar(func, Type::i32);
     rewindIndex = builder->addVar(func, Type::i32);
     // Rewrite the function body.
-    builder = make_unique<AsyncifyBuilder>(*getModule());
+    builder =
+      make_unique<AsyncifyBuilder>(*getModule(), pointerType, asyncifyMemory);
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
@@ -1417,7 +1433,7 @@ private:
           STACK_ALIGN,
           builder->makeLocalGet(tempIndex, builder->pointerType),
           type,
-          getModule()->memories[0]->name));
+          asyncifyMemory));
         offset += size;
       }
       Expression* load;
@@ -1466,7 +1482,7 @@ private:
           builder->makeLocalGet(tempIndex, builder->pointerType),
           localGet,
           type,
-          getModule()->memories[0]->name));
+          asyncifyMemory));
         offset += size;
         ++j;
       }
@@ -1485,7 +1501,7 @@ private:
                          builder->makeGetStackPos(),
                          builder->makeLocalGet(tempIndex, Type::i32),
                          Type::i32,
-                         getModule()->memories[0]->name),
+                         asyncifyMemory),
       builder->makeIncStackPos(4));
   }
 
@@ -1509,11 +1525,6 @@ struct Asyncify : public Pass {
   void run(Module* module) override {
     auto& options = getPassOptions();
     bool optimize = options.optimizeLevel > 0;
-    is64 = module->memories.size() && module->memories[0]->is64();
-    pointerType = is64 ? Type::i64 : Type::i32;
-
-    // Ensure there is a memory, as we need it.
-    MemoryUtils::ensureExists(module);
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
@@ -1523,10 +1534,10 @@ struct Asyncify : public Pass {
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
-    // TODO: consider renaming asyncify-ignore-indirect to
-    //       asyncify-ignore-nondirect, but that could break users.
-    auto ignoreNonDirect =
-      options.getArgumentOrDefault("asyncify-ignore-indirect", "") == "";
+    // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
+    // to false.
+    auto canIndirectChangeState =
+      !options.hasArgument("asyncify-ignore-indirect");
     std::string removeListInput =
       options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
@@ -1547,10 +1558,23 @@ struct Asyncify : public Pass {
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)), ",");
-    auto asserts = options.getArgumentOrDefault("asyncify-asserts", "") != "";
-    auto verbose = options.getArgumentOrDefault("asyncify-verbose", "") != "";
-    auto relocatable =
-      options.getArgumentOrDefault("asyncify-relocatable", "") != "";
+    auto asserts = options.hasArgument("asyncify-asserts");
+    auto verbose = options.hasArgument("asyncify-verbose");
+    auto relocatable = options.hasArgument("asyncify-relocatable");
+    auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
+
+    // Ensure there is a memory, as we need it.
+    if (secondaryMemory) {
+      auto secondaryMemorySizeString =
+        options.getArgumentOrDefault("asyncify-secondary-memory-size", "1");
+      Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
+      asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
+    } else {
+      MemoryUtils::ensureExists(module);
+      asyncifyMemory = module->memories[0]->name;
+    }
+    pointerType =
+      module->getMemory(asyncifyMemory)->is64() ? Type::i64 : Type::i32;
 
     removeList = handleBracketingOperators(removeList);
     addList = handleBracketingOperators(addList);
@@ -1577,7 +1601,7 @@ struct Asyncify : public Pass {
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
-                            ignoreNonDirect,
+                            canIndirectChangeState,
                             removeList,
                             addList,
                             onlyList,
@@ -1611,7 +1635,8 @@ struct Asyncify : public Pass {
         runner.add("reorder-locals");
         runner.add("merge-blocks");
       }
-      runner.add(make_unique<AsyncifyFlow>(&analyzer));
+      runner.add(
+        make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1626,7 +1651,8 @@ struct Asyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      runner.add(make_unique<AsyncifyLocals>(&analyzer));
+      runner.add(
+        make_unique<AsyncifyLocals>(&analyzer, pointerType, asyncifyMemory));
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
@@ -1686,15 +1712,16 @@ private:
                          pointerType.getByteSize(),
                          builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
                          pointerType,
-                         module->memories[0]->name);
-      auto* stackEnd = builder.makeLoad(
-        pointerType.getByteSize(),
-        false,
-        int(is64 ? DataOffset::BStackEnd64 : DataOffset::BStackEnd),
-        pointerType.getByteSize(),
-        builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
-        pointerType,
-        module->memories[0]->name);
+                         asyncifyMemory);
+      auto* stackEnd =
+        builder.makeLoad(pointerType.getByteSize(),
+                         false,
+                         int(pointerType == Type::i64 ? DataOffset::BStackEnd64
+                                                      : DataOffset::BStackEnd),
+                         pointerType.getByteSize(),
+                         builder.makeGlobalGet(ASYNCIFY_DATA, pointerType),
+                         pointerType,
+                         asyncifyMemory);
       body->list.push_back(builder.makeIf(
         builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::GtU), stackPos, stackEnd),
@@ -1720,8 +1747,16 @@ private:
       ASYNCIFY_GET_STATE, ASYNCIFY_GET_STATE, ExternalKind::Function));
   }
 
-  bool is64;
+  Name createSecondaryMemory(Module* module, Address secondaryMemorySize) {
+    Name name = Names::getValidMemoryName(*module, "asyncify_memory");
+    auto secondaryMemory =
+      Builder::makeMemory(name, secondaryMemorySize, secondaryMemorySize);
+    module->addMemory(std::move(secondaryMemory));
+    return name;
+  }
+
   Type pointerType;
+  Name asyncifyMemory;
 };
 
 Pass* createAsyncifyPass() { return new Asyncify(); }

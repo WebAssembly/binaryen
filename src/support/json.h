@@ -65,8 +65,8 @@ struct Value {
 
   Type type = Null;
 
-  typedef std::vector<Ref> ArrayStorage;
-  typedef std::unordered_map<IString, Ref> ObjectStorage;
+  using ArrayStorage = std::vector<Ref>;
+  using ObjectStorage = std::unordered_map<IString, Ref>;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
@@ -403,7 +403,7 @@ struct Value {
   }
 };
 
-typedef Value::Ref Ref;
+using Ref = Value::Ref;
 
 } // namespace json
 

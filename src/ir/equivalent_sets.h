@@ -26,7 +26,7 @@ namespace wasm {
 //
 struct EquivalentSets {
   // A set of indexes. This is ordered for deterministic iteration.
-  typedef std::set<Index> Set;
+  using Set = std::set<Index>;
 
   std::unordered_map<Index, std::shared_ptr<Set>> indexSets;
 

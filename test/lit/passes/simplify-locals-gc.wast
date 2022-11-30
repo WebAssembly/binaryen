@@ -5,20 +5,20 @@
 ;; RUN:   | filecheck %s --check-prefix=NOMNL
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  ;; NOMNL:      (type $struct (struct_subtype (field (mut i32)) data))
-  (type $struct (struct (field (mut i32))))
-
-  ;; CHECK:      (type $B (struct (field (ref data))))
-
   ;; CHECK:      (type $A (struct (field dataref)))
 
-  ;; CHECK:      (type $struct-immutable (struct (field i32)))
-  ;; NOMNL:      (type $A (struct_subtype (field dataref) data))
+  ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
+
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  ;; NOMNL:      (type $A (struct (field dataref)))
 
   ;; NOMNL:      (type $B (struct_subtype (field (ref data)) $A))
 
-  ;; NOMNL:      (type $struct-immutable (struct_subtype (field i32) data))
+  ;; NOMNL:      (type $struct (struct (field (mut i32))))
+  (type $struct (struct (field (mut i32))))
+
+  ;; CHECK:      (type $struct-immutable (struct (field i32)))
+  ;; NOMNL:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
   (type $A (struct_subtype (field (ref null data)) data))
@@ -28,7 +28,7 @@
   (type $B (struct_subtype (field (ref data)) $A))
 
   ;; Writes to heap objects cannot be reordered with reads.
-  ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-reorder-past-write (type $ref|$struct|_=>_i32) (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (struct.get $struct 0
@@ -68,7 +68,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $reorder-past-write-if-immutable (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK:      (func $reorder-past-write-if-immutable (type $ref|$struct|_ref|$struct-immutable|_=>_i32) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -104,7 +104,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $unreachable-struct.get (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK:      (func $unreachable-struct.get (type $ref|$struct|_ref|$struct-immutable|_=>_i32) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.tee $temp
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
@@ -154,7 +154,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $no-block-values-if-br_on
+  ;; CHECK:      (func $no-block-values-if-br_on (type $none_=>_none)
   ;; CHECK-NEXT:  (local $temp anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
@@ -231,7 +231,7 @@
    )
   )
 
-  ;; CHECK:      (func $if-nnl
+  ;; CHECK:      (func $if-nnl (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
@@ -298,7 +298,7 @@
    )
   )
 
-  ;; CHECK:      (func $if-nnl-previous-set
+  ;; CHECK:      (func $if-nnl-previous-set (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $if-nnl)
@@ -361,7 +361,7 @@
    )
   )
 
-  ;; CHECK:      (func $helper (param $ref (ref func))
+  ;; CHECK:      (func $helper (type $ref|func|_=>_none) (param $ref (ref func))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $helper (type $ref|func|_=>_none) (param $ref (ref func))
@@ -370,7 +370,7 @@
   (func $helper (param $ref (ref func))
   )
 
-  ;; CHECK:      (func $needs-refinalize (param $b (ref $B)) (result anyref)
+  ;; CHECK:      (func $needs-refinalize (type $ref|$B|_=>_anyref) (param $b (ref $B)) (result anyref)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.get $B 0
@@ -397,7 +397,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-vs-mutable-read (param $0 (ref $struct)) (result i32)
+  ;; CHECK:      (func $call-vs-mutable-read (type $ref|$struct|_=>_i32) (param $0 (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $side-effect)
@@ -438,7 +438,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $side-effect (result i32)
+  ;; CHECK:      (func $side-effect (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $side-effect (type $none_=>_i32) (result i32)
@@ -449,7 +449,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $pick-refined (param $nn-any (ref any)) (result anyref)
+  ;; CHECK:      (func $pick-refined (type $ref|any|_=>_anyref) (param $nn-any (ref any)) (result anyref)
   ;; CHECK-NEXT:  (local $any anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $use-any
@@ -495,7 +495,7 @@
     (local.get $any)
   )
 
-  ;; CHECK:      (func $pick-casted (param $any anyref) (result anyref)
+  ;; CHECK:      (func $pick-casted (type $anyref_=>_anyref) (param $any anyref) (result anyref)
   ;; CHECK-NEXT:  (local $nn-any (ref any))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $use-any
@@ -549,7 +549,7 @@
     (local.get $any)
   )
 
-  ;; CHECK:      (func $pick-fallthrough (param $x i32)
+  ;; CHECK:      (func $pick-fallthrough (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -593,7 +593,7 @@
     )
   )
 
-  ;; CHECK:      (func $ignore-unrefined (param $A (ref $A))
+  ;; CHECK:      (func $ignore-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
   ;; CHECK-NEXT:  (local $B (ref null $B))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -683,7 +683,7 @@
     )
   )
 
-  ;; CHECK:      (func $use-nn-any (param $nn-any (ref any))
+  ;; CHECK:      (func $use-nn-any (type $ref|any|_=>_none) (param $nn-any (ref any))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $use-nn-any (type $ref|any|_=>_none) (param $nn-any (ref any))
@@ -693,7 +693,7 @@
     ;; Helper function for the above.
   )
 
-  ;; CHECK:      (func $use-any (param $any anyref)
+  ;; CHECK:      (func $use-any (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $use-any (type $anyref_=>_none) (param $any anyref)
@@ -701,5 +701,30 @@
   ;; NOMNL-NEXT: )
   (func $use-any (param $any anyref)
     ;; Helper function for the above.
+  )
+
+  ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $a (ref null $A)) (param $b (ref null $B)) (result dataref)
+  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $a (ref null $A)) (param $b (ref null $B)) (result dataref)
+  ;; NOMNL-NEXT:  (struct.get $B 0
+  ;; NOMNL-NEXT:   (local.get $b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $remove-tee-refinalize
+    (param $a (ref null $A))
+    (param $b (ref null $B))
+    (result (ref null data))
+
+    ;; The local.tee receives a $B and flows out an $A. After we remove it (it is
+    ;; obviously unnecessary), the struct.get will be reading from the more
+    ;; refined type $B.
+    (struct.get $A 0
+      (local.tee $a
+        (local.get $b)
+      )
+    )
   )
 )

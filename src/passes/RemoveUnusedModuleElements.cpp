@@ -32,9 +32,10 @@
 
 namespace wasm {
 
+// TODO: Add data segment, multiple memories (#5224)
 enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
-typedef std::pair<ModuleElementKind, Name> ModuleElement;
+using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 // Finds reachabilities
 // TODO: use Effects to determine if a memory is used
@@ -195,7 +196,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitAtomicNotify(AtomicNotify* curr) { usesMemory = true; }
   void visitAtomicFence(AtomicFence* curr) { usesMemory = true; }
   void visitMemoryInit(MemoryInit* curr) { usesMemory = true; }
-  void visitDataDrop(DataDrop* curr) { usesMemory = true; }
+  void visitDataDrop(DataDrop* curr) {
+    // TODO: Replace this with a use of a data segment (#5224).
+    usesMemory = true;
+  }
   void visitMemoryCopy(MemoryCopy* curr) { usesMemory = true; }
   void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
@@ -226,6 +230,19 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     for (auto tag : curr->catchTags) {
       maybeAdd(ModuleElement(ModuleElementKind::Tag, tag));
     }
+  }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    switch (curr->op) {
+      case NewData:
+        // TODO: Replace this with a use of the specific data segment (#5224).
+        usesMemory = true;
+        return;
+      case NewElem:
+        auto segment = module->elementSegments[curr->segment]->name;
+        maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment));
+        return;
+    }
+    WASM_UNREACHABLE("unexpected op");
   }
 };
 
@@ -347,8 +364,7 @@ struct RemoveUnusedModuleElements : public Pass {
                ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return curr->data.empty() ||
-             analyzer.reachable.count(ModuleElement(
+      return analyzer.reachable.count(ModuleElement(
                ModuleElementKind::ElementSegment, curr->name)) == 0;
     });
     // Since we've removed all empty element segments, here we mark all tables

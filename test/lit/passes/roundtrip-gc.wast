@@ -7,7 +7,7 @@
  ;; CHECK:      (export "export" (func $test))
  ;; NOMNL:      (export "export" (func $test))
  (export "export" (func $test))
- ;; CHECK:      (func $test
+ ;; CHECK:      (func $test (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 (ref $\7bi32\7d))
  ;; CHECK-NEXT:  (call $help
  ;; CHECK-NEXT:   (block (result (ref $\7bi32\7d))
@@ -46,7 +46,7 @@
    )
   )
  )
- ;; CHECK:      (func $help (param $3 (ref $\7bi32\7d)) (param $4 i32)
+ ;; CHECK:      (func $help (type $ref|$\7bi32\7d|_i32_=>_none) (param $3 (ref $\7bi32\7d)) (param $4 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $help (type $ref|$\7bi32\7d|_i32_=>_none) (param $3 (ref $\7bi32\7d)) (param $4 i32)

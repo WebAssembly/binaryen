@@ -123,7 +123,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   bool anotherCycle;
 
-  typedef std::vector<Expression**> Flows;
+  using Flows = std::vector<Expression**>;
 
   // list of breaks that are currently flowing. if they reach their target
   // without interference, they can be removed (or their value forwarded TODO)

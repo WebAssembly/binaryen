@@ -425,6 +425,25 @@ std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
   return os << '"';
 }
 
+// Print a name from the type section, if available. Otherwise print the type
+// normally.
+void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
+  if (type.isRef() && wasm) {
+    auto heapType = type.getHeapType();
+    auto iter = wasm->typeNames.find(heapType);
+    if (iter != wasm->typeNames.end()) {
+      o << iter->second.name;
+      if (type.isNullable()) {
+        o << " null";
+      }
+      return;
+    }
+  }
+
+  // No luck with a name, just print the test as best we can.
+  o << type;
+}
+
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -2205,6 +2224,26 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
+    printMedium(o, "array.new_");
+    switch (curr->op) {
+      case NewData:
+        printMedium(o, "data");
+
+        break;
+      case NewElem:
+        printMedium(o, "elem");
+        break;
+      default:
+        WASM_UNREACHABLE("unexpected op");
+    }
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << ' ' << curr->segment;
+  }
   void visitArrayInit(ArrayInit* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
@@ -2531,7 +2570,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       doIndent(o, indent);
     }
     if (full) {
-      o << "[" << expression->type << "] ";
+      o << "[";
+      printTypeOrName(expression->type, o, currModule);
+      o << "] ";
     }
     visit(expression);
     o << maybeNewLine;
@@ -2578,7 +2619,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       stack.push_back(curr);
       if (full) {
-        o << "[" << curr->type << "] ";
+        o << "[";
+        printTypeOrName(curr->type, o, currModule);
+        o << "]";
       }
       o << '(';
       printExpressionContents(curr);
@@ -2789,6 +2832,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayNew(ArrayNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
   void visitArrayInit(ArrayInit* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
@@ -2809,9 +2855,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    bool hasSupertype =
-      !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
-                     getTypeSystem() == TypeSystem::Isorecursive);
+    bool hasSupertype = !name.is() && !!curr.getSuperType();
     if (hasSupertype) {
       o << "(func_subtype";
     } else {
@@ -2868,8 +2912,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = !!curr.getSuperType();
     if (hasSupertype) {
       o << "(array_subtype ";
     } else {
@@ -2883,8 +2926,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << ')';
   }
   void handleStruct(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = !!curr.getSuperType();
     const auto& fields = curr.getStruct().fields;
     if (hasSupertype) {
       o << "(struct_subtype ";
@@ -3015,8 +3057,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (getTypeSystem() == TypeSystem::Nominal ||
-        getTypeSystem() == TypeSystem::Isorecursive) {
+    if (currModule && currModule->features.hasGC()) {
       o << " (type ";
       printHeapType(o, curr->type, currModule) << ')';
     }
@@ -3347,7 +3388,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->dylinkSection) {
       printDylinkSection(curr->dylinkSection);
     }
-    for (auto& section : curr->userSections) {
+    for (auto& section : curr->customSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "
         << section.data.size();
@@ -3469,7 +3510,9 @@ static std::ostream& printExpression(Expression* expression,
   print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[" << expression->type << "] ";
+    o << "[";
+    printTypeOrName(expression->type, o, wasm);
+    o << "] ";
   }
   print.visit(expression);
   return o;

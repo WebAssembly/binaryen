@@ -86,7 +86,7 @@ struct SimplifyLocals
   };
 
   // a list of sinkables in a linear execution trace
-  typedef std::map<Index, SinkableInfo> Sinkables;
+  using Sinkables = std::map<Index, SinkableInfo>;
 
   // locals in current linear execution trace, which we try to sink
   Sinkables sinkables;

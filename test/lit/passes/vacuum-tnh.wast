@@ -12,10 +12,10 @@
   ;; NO_TNH:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; YESTNH:      (func $drop (param $x i32) (param $y anyref)
+  ;; YESTNH:      (func $drop (type $i32_anyref_=>_none) (param $x i32) (param $y anyref)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $drop (param $x i32) (param $y anyref)
+  ;; NO_TNH:      (func $drop (type $i32_anyref_=>_none) (param $x i32) (param $y anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (i32.load
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -83,7 +83,7 @@
   )
 
   ;; Other side effects prevent us making any changes.
-  ;; YESTNH:      (func $other-side-effects (param $x i32) (result i32)
+  ;; YESTNH:      (func $other-side-effects (type $i32_=>_i32) (param $x i32) (result i32)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (call $other-side-effects
   ;; YESTNH-NEXT:    (i32.const 1)
@@ -94,7 +94,7 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (i32.const 1)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $other-side-effects (param $x i32) (result i32)
+  ;; NO_TNH:      (func $other-side-effects (type $i32_=>_i32) (param $x i32) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (call $other-side-effects
   ;; NO_TNH-NEXT:    (i32.const 1)
@@ -131,15 +131,15 @@
   )
 
   ;; A helper function for the above, that returns nothing.
-  ;; YESTNH:      (func $return-nothing
+  ;; YESTNH:      (func $return-nothing (type $none_=>_none)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $return-nothing
+  ;; NO_TNH:      (func $return-nothing (type $none_=>_none)
   ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
   (func $return-nothing)
 
-  ;; YESTNH:      (func $partial (param $x (ref $struct)) (result (ref null $struct))
+  ;; YESTNH:      (func $partial (type $ref|$struct|_=>_ref?|$struct|) (param $x (ref $struct)) (result (ref null $struct))
   ;; YESTNH-NEXT:  (local $y (ref null $struct))
   ;; YESTNH-NEXT:  (local.set $y
   ;; YESTNH-NEXT:   (local.get $x)
@@ -149,7 +149,7 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (local.get $y)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $partial (param $x (ref $struct)) (result (ref null $struct))
+  ;; NO_TNH:      (func $partial (type $ref|$struct|_=>_ref?|$struct|) (param $x (ref $struct)) (result (ref null $struct))
   ;; NO_TNH-NEXT:  (local $y (ref null $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.get $struct 0
@@ -193,10 +193,10 @@
     (local.get $y)
   )
 
-  ;; YESTNH:      (func $toplevel
+  ;; YESTNH:      (func $toplevel (type $none_=>_none)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $toplevel
+  ;; NO_TNH:      (func $toplevel (type $none_=>_none)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $toplevel
@@ -205,10 +205,10 @@
     (unreachable)
   )
 
-  ;; YESTNH:      (func $drop-loop
+  ;; YESTNH:      (func $drop-loop (type $none_=>_none)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $drop-loop
+  ;; NO_TNH:      (func $drop-loop (type $none_=>_none)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (loop $loop (result i32)
   ;; NO_TNH-NEXT:    (br_if $loop
@@ -231,7 +231,7 @@
     )
   )
 
-  ;; YESTNH:      (func $loop-effects
+  ;; YESTNH:      (func $loop-effects (type $none_=>_none)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (loop $loop (result i32)
   ;; YESTNH-NEXT:    (drop
@@ -246,7 +246,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $loop-effects
+  ;; NO_TNH:      (func $loop-effects (type $none_=>_none)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (loop $loop (result i32)
   ;; NO_TNH-NEXT:    (drop

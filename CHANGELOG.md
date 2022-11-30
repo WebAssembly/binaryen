@@ -15,11 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- The isorecursive WasmGC type system (i.e. --hybrid) is now the default to
+  match the spec and the old default equirecursive (i.e. --structural) system
+  has been removed.
+
+v111
+----
+
 - Add extra `memory64` argument for `BinaryenSetMemory` and new
   `BinaryenMemoryIs64` C-API method to determine 64-bit memory. (#4963)
 - `TypeBuilderSetSubType` now takes a supertype as the second argument.
-- `call_ref` can now take a signature type immediate in the text format. The
-  type immediate will become mandatory in the future.
+- `call_ref` now takes a mandatory signature type immediate.
 - If `THROW_ON_FATAL` is defined at compile-time, then fatal errors will throw a
   `std::runtime_error` instead of terminating the process. This may be used by
   embedders of Binaryen to recover from errors.
@@ -31,6 +37,7 @@ Current Trunk
 - The `sign-extension` and `mutable-globals` features are now both enabled by
   default in all tools. This is in order to match llvm's defaults (See
   https://reviews.llvm.org/D125728).
+- Add a pass to lower sign-extension operations to MVP.
 
 v110
 ----

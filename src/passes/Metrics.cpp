@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-typedef std::map<const char*, int> Counts;
+using Counts = std::map<const char*, int>;
 
 static Counts lastCounts;
 

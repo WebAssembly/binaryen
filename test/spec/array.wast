@@ -35,12 +35,15 @@
 ;; Binding structure
 
 (module
-  (type $s0 (array (ref $s1)))
-  (type $s1 (array (ref $s0)))
+  (rec
+    (type $s0 (array (ref $s1)))
+    (type $s1 (array (ref $s0)))
+  )
 
-  (func (param (ref $forward)))
-
-  (type $forward (array i32))
+  (rec
+    (func (param (ref $forward)))
+    (type $forward (array i32))
+  )
 )
 
 (assert_invalid

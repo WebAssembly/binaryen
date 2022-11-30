@@ -54,7 +54,7 @@ struct WasmValidator {
     Globally = 1 << 1,
     Quiet = 1 << 2
   };
-  typedef uint32_t Flags;
+  using Flags = uint32_t;
 
   // Validate an entire module.
   bool validate(Module& module, Flags flags = Globally);

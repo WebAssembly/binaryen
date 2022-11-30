@@ -29,21 +29,21 @@
 
  ;; CHECK:      (elem declare func $bar $fallthrough-no-params $fallthrough-non-nullable $return-nothing)
 
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $foo (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $foo (param i32) (param i32)
   (unreachable)
  )
 
- ;; CHECK:      (func $bar (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $bar (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $bar (param i32) (param i32)
   (unreachable)
  )
 
- ;; CHECK:      (func $call_ref-to-direct (param $x i32) (param $y i32)
+ ;; CHECK:      (func $call_ref-to-direct (type $i32_i32_=>_none) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
@@ -51,14 +51,14 @@
  ;; CHECK-NEXT: )
  (func $call_ref-to-direct (param $x i32) (param $y i32)
   ;; This call_ref should become a direct call.
-  (call_ref
+  (call_ref $i32_i32_=>_none
    (local.get $x)
    (local.get $y)
    (ref.func $foo)
   )
  )
 
- ;; CHECK:      (func $fallthrough (param $x i32)
+ ;; CHECK:      (func $fallthrough (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.tee $x
@@ -84,7 +84,7 @@
   ;; This call_ref should become a direct call, even though it doesn't have a
   ;; simple ref.func as the target - we need to look into the fallthrough, and
   ;; handle things with locals.
-  (call_ref
+  (call_ref $i32_i32_=>_none
    ;; Write to $x before the block, and write to it in the block; we should not
    ;; reorder these things as the side effects could alter what value appears
    ;; in the get of $x. (There is a risk of reordering here if we naively moved
@@ -104,7 +104,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-no-params (result i32)
+ ;; CHECK:      (func $fallthrough-no-params (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (nop)
@@ -116,7 +116,7 @@
  (func $fallthrough-no-params (result i32)
   ;; A fallthrough appears here, but there are no operands so this is easier to
   ;; optimize: we can just drop the call_ref's target before the call.
-  (call_ref
+  (call_ref $none_=>_i32
    (block (result (ref $none_=>_i32))
     (nop)
     (ref.func $fallthrough-no-params)
@@ -124,7 +124,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-non-nullable (param $x (ref data))
+ ;; CHECK:      (func $fallthrough-non-nullable (type $data_=>_none) (param $x (ref data))
  ;; CHECK-NEXT:  (local $1 dataref)
  ;; CHECK-NEXT:  (call $fallthrough-non-nullable
  ;; CHECK-NEXT:   (block (result (ref data))
@@ -148,7 +148,7 @@
   ;; nullable, which means we must be careful when we create a temp local for
   ;; it: the local should be nullable, and gets of it should use a
   ;; ref.as_non_null so that we validate.
-  (call_ref
+  (call_ref $data_=>_none
    (local.get $x)
    (block (result (ref $data_=>_none))
     (nop)
@@ -157,7 +157,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-bad-type (result i32)
+ ;; CHECK:      (func $fallthrough-bad-type (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (call_ref $none_=>_i32
  ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
  ;; CHECK-NEXT:    (drop
@@ -174,7 +174,7 @@
   ;; emit non-validating code here, which would happen if we replace the
   ;; call_ref that returns nothing with a call that returns an i32. In fact, we
   ;; end up optimizing the cast into an unreachable.
-  (call_ref
+  (call_ref $none_=>_i32
    (ref.cast_static $none_=>_i32
     (ref.func $return-nothing)
    )
@@ -182,12 +182,12 @@
  )
 
  ;; Helper function for the above test.
- ;; CHECK:      (func $return-nothing
+ ;; CHECK:      (func $return-nothing (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $return-nothing)
 
- ;; CHECK:      (func $fallthrough-unreachable
+ ;; CHECK:      (func $fallthrough-unreachable (type $none_=>_none)
  ;; CHECK-NEXT:  (call_ref $i32_i32_=>_none
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
@@ -199,7 +199,7 @@
  ;; CHECK-NEXT: )
  (func $fallthrough-unreachable
   ;; If the call is not reached, do not optimize it.
-  (call_ref
+  (call_ref $i32_i32_=>_none
    (unreachable)
    (unreachable)
    (block (result (ref $i32_i32_=>_none))
@@ -209,20 +209,22 @@
   )
  )
 
- ;; CHECK:      (func $ignore-unreachable
- ;; CHECK-NEXT:  (drop
+ ;; CHECK:      (func $ignore-unreachable (type $none_=>_none)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $ignore-unreachable
   ;; Ignore an unreachable call_ref target entirely.
-  (call_ref
+  (call_ref $i32_i32_=>_none
    (unreachable)
   )
  )
 
- ;; CHECK:      (func $call-table-get (param $x i32)
+ ;; CHECK:      (func $call-table-get (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (call_indirect $table-1 (type $i32_i32_=>_none)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const 2)
@@ -230,7 +232,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-table-get (param $x i32)
-  (call_ref
+  (call_ref $i32_i32_=>_none
    (i32.const 1)
    (i32.const 2)
    (table.get $table-1
@@ -239,7 +241,7 @@
   )
  )
 
- ;; CHECK:      (func $call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+ ;; CHECK:      (func $call_ref-to-select (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none) (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local $5 i32)
  ;; CHECK-NEXT:  (block
@@ -273,7 +275,7 @@
  ;; CHECK-NEXT: )
  (func $call_ref-to-select (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
   ;; This call_ref should become an if over two direct calls.
-  (call_ref
+  (call_ref $i32_i32_=>_none
    (local.get $x)
    (local.get $y)
    (select
@@ -284,7 +286,7 @@
   )
 
   ;; But here one arm is not constant, so we do not optimize.
-  (call_ref
+  (call_ref $i32_i32_=>_none
    (local.get $x)
    (local.get $y)
    (select
@@ -295,7 +297,7 @@
   )
  )
 
- ;; CHECK:      (func $return_call_ref-to-select (param $x i32) (param $y i32)
+ ;; CHECK:      (func $return_call_ref-to-select (type $i32_i32_=>_none) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local.set $2
@@ -330,7 +332,7 @@
   )
  )
 
- ;; CHECK:      (func $get-i32 (result i32)
+ ;; CHECK:      (func $get-i32 (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: )
  (func $get-i32 (result i32)
