@@ -219,18 +219,19 @@ struct LexFloatCtx : LexCtx {
   LexFloatCtx(std::string_view in) : LexCtx(in) {}
 
   std::optional<LexFloatResult> lexed() {
-    assert(!std::signbit(NAN) && "Expected NAN to be positive");
+    const double posNan = std::copysign(NAN, 1.0);
+    const double negNan = std::copysign(NAN, -1.0);
     auto basic = LexCtx::lexed();
     if (!basic) {
       return {};
     }
     if (nanPayload) {
-      double nan = basic->span[0] == '-' ? -NAN : NAN;
+      double nan = basic->span[0] == '-' ? negNan : posNan;
       return LexFloatResult{*basic, nanPayload, nan};
     }
     // strtod does not return -NAN for "-nan" on all platforms.
     if (basic->span == "-nan"sv) {
-      return LexFloatResult{*basic, nanPayload, -NAN};
+      return LexFloatResult{*basic, nanPayload, negNan};
     }
     // Do not try to implement fully general and precise float parsing
     // ourselves. Instead, call out to std::strtod to do our parsing. This means
