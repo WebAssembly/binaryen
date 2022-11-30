@@ -19,8 +19,6 @@
   ;; OPEN_WORLD:      (type $B (func))
   (type $B (func))
 
-
-
   ;; CHECK:      (elem declare func $target-A $target-B)
 
   ;; CHECK:      (export "foo" (func $foo))
@@ -120,8 +118,6 @@
   (type $A (func))
   (type $B (func))
 
-
-
   ;; CHECK:      (elem declare func $target-A)
 
   ;; CHECK:      (export "foo" (func $foo))
@@ -182,9 +178,6 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
   (type $B (func))
-
-
-
 
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
@@ -274,9 +267,6 @@
   (type $A (func))
   (type $B (func))
 
-
-
-
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
@@ -364,7 +354,6 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
@@ -378,8 +367,6 @@
   ;; OPEN_WORLD:      (import "other" "import" (func $other-import (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
-
-
 
   ;; CHECK:      (elem declare func $target-drop $target-keep)
 
@@ -443,8 +430,6 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-
-
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
@@ -462,8 +447,6 @@
   ;; OPEN_WORLD:      (import "other" "import" (func $other-import (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
-
-
 
   ;; CHECK:      (elem declare func $target-keep $target-keep-2)
 
