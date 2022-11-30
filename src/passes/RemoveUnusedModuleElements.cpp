@@ -336,9 +336,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // principle track, see the TODO earlier in this file). So in the case of an
     // open world we should not have noted anything in uncalledRefFuncMap
     // earlier and not do any related optimizations there.
-    if (!closedWorld) {
-      assert(analyzer.uncalledRefFuncMap.empty());
-    }
+    assert(closedWorld || analyzer.uncalledRefFuncMap.empty());
     std::unordered_set<Name> uncalledRefFuncs;
     for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
       for (auto target : targets) {
