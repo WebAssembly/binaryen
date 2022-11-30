@@ -87,11 +87,11 @@ struct OrderedFixedStorage : public FixedStorageBase<T, N> {
   InsertResult insert(const T& x) {
     // Find the insertion point |i| where x should be placed.
     size_t i = 0;
-    while (i < this->used && this->storage[i] <= x) {
-      if (this->storage[i] == x) {
-        return InsertResult::AlreadyExists;
-      }
+    while (i < this->used && this->storage[i] < x) {
       i++;
+    }
+    if (this->storage[i] == x) {
+      return InsertResult::AlreadyExists;
     }
     // |i| is now the location where x should be placed.
 
