@@ -243,7 +243,9 @@ struct GlobalTypeOptimization : public Pass {
     }
 
     // Update the types in the entire module.
-    updateTypes(*module);
+    if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty()) {
+      updateTypes(*module);
+    }
   }
 
   void updateTypes(Module& wasm) {
