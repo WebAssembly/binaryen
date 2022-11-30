@@ -122,39 +122,37 @@
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
   ;; CHECK:      (elem declare func $target-A)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null nofunc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
   ;; OPEN_WORLD:      (elem declare func $target-A)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $A)
-  ;; OPEN_WORLD-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; OPEN_WORLD-NEXT:   (drop
-  ;; OPEN_WORLD-NEXT:    (ref.null nofunc)
-  ;; OPEN_WORLD-NEXT:   )
-  ;; OPEN_WORLD-NEXT:   (unreachable)
+  ;; OPEN_WORLD:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; OPEN_WORLD-NEXT:  (call_ref $A
+  ;; OPEN_WORLD-NEXT:   (local.get $A)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     (call_ref $A
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-A)
@@ -162,7 +160,7 @@
   )
 
   ;; CHECK:      (func $target-A (type $A)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $target-A (type $A)
   ;; OPEN_WORLD-NEXT:  (nop)
