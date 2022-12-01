@@ -147,11 +147,9 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       if (type.isBasic()) {
         return type;
       }
-      if (type.isFunction() || type.isData()) {
-        auto iter = oldToNewTypes.find(type);
-        if (iter != oldToNewTypes.end()) {
-          return iter->second;
-        }
+      auto iter = oldToNewTypes.find(type);
+      if (iter != oldToNewTypes.end()) {
+        return iter->second;
       }
       return type;
     }

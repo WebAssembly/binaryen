@@ -43,6 +43,8 @@ using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
+  bool closedWorld;
+
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
   bool usesMemory = false;
@@ -63,13 +65,15 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // we'll have that type in calledSignatures, and so this contains only
   // RefFuncs that we have not seen a call for yet, hence "uncalledRefFuncMap."
   //
-  // TODO: We assume a closed world in the GC space atm, but eventually should
-  //       have a flag for that, and when the world is not closed we'd need to
-  //       check for RefFuncs that flow out to exports or imports
+  // We can only do this when assuming a closed world. TODO: In an open world we
+  // could carefully track which types actually escape out to exports or
+  // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
-  ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
-    : module(module) {
+  ReachabilityAnalyzer(Module* module,
+                       const std::vector<ModuleElement>& roots,
+                       bool closedWorld)
+    : module(module), closedWorld(closedWorld) {
     queue = roots;
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->dataSegments) {
@@ -205,6 +209,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
+    if (!closedWorld) {
+      // The world is open, so assume the worst and something (inside or outside
+      // of the module) can call this.
+      maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+      return;
+    }
     auto type = curr->type.getHeapType();
     if (calledSignatures.count(type)) {
       // We must not have a type in both calledSignatures and
@@ -313,12 +323,20 @@ struct RemoveUnusedModuleElements : public Pass {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
     // Compute reachability starting from the root set.
-    ReachabilityAnalyzer analyzer(module, roots);
+    auto closedWorld = getPassOptions().closedWorld;
+    ReachabilityAnalyzer analyzer(module, roots, closedWorld);
 
     // RefFuncs that are never called are a special case: We cannot remove the
     // function, since then (ref.func $foo) would not validate. But if we know
     // it is never called, at least the contents do not matter, so we can
     // empty it out.
+    //
+    // We can only do this in a closed world, as otherwise function references
+    // may be called outside of the module (if they escape, which we could in
+    // principle track, see the TODO earlier in this file). So in the case of an
+    // open world we should not have noted anything in uncalledRefFuncMap
+    // earlier and not do any related optimizations there.
+    assert(closedWorld || analyzer.uncalledRefFuncMap.empty());
     std::unordered_set<Name> uncalledRefFuncs;
     for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
       for (auto target : targets) {
@@ -334,7 +352,6 @@ struct RemoveUnusedModuleElements : public Pass {
       assert(analyzer.uncalledRefFuncMap.count(type) == 0);
     }
 #endif
-
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
       if (analyzer.reachable.count(

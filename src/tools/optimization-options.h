@@ -250,8 +250,8 @@ struct OptimizationOptions : public ToolOptions {
         "contents or call them.",
         OptimizationOptionsCategory,
         Options::Arguments::Zero,
-        [](Options*, const std::string&) {
-          // TODO: Implement this.
+        [this](Options*, const std::string&) {
+          passOptions.closedWorld = true;
         })
       .add("--zero-filled-memory",
            "-uim",

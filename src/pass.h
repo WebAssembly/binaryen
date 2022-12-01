@@ -184,6 +184,14 @@ struct PassOptions {
   // creates it and we know it is all zeros right before the active segments are
   // applied.)
   bool zeroFilledMemory = false;
+  // Assume code outside of the module does not inspect or interact with GC and
+  // function references, even if they are passed out. The outside may hold on
+  // to them and pass them back in, but not inspect their contents or call them.
+  // By default we do not make that assumption, and assume anything that escapes
+  // to the outside may be inspected in detail, which prevents us from e.g.
+  // changing a type that escapes (so we can't remove or refine fields on an
+  // escaping struct type, for example).
+  bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to
