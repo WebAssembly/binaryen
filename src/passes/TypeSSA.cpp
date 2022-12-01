@@ -115,7 +115,8 @@ struct TypeSSA : public Pass {
   News newsToModify;
 
   // All the types that are seen in struct.new etc. operations anywhere in the
-  // program. We use this below to check for an error condition regarding rec groups.
+  // program. We use this below to check for an error condition regarding rec
+  // groups.
   std::unordered_set<HeapType> allSeenTypes;
 
   // As we generate new names, use a consistent index.
