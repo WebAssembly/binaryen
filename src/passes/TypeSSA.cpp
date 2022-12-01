@@ -147,12 +147,13 @@ struct TypeSSA : public Pass {
 
     auto& structNews = newsToModify.structNews;
     TypeBuilder builder(structNews.size());
-    builder.createRecGroup(0, structNews.size());
-    for (auto* curr : structNews) {
+    for (Index i = 0; i < structNews.size(); i++) {
+      auto* curr = structNews[i];
       auto oldType = curr->type.getHeapType();
-      builder.setHeapType(0, oldType.getStruct());
-      builder.setSubType(0, oldType);
+      builder.setHeapType(i, oldType.getStruct());
+      builder.setSubType(i, oldType);
     }
+    builder.createRecGroup(0, structNews.size());
     auto result = builder.build();
     assert(!result.getError());
     auto newTypes = *result;
