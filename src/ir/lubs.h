@@ -50,9 +50,8 @@ struct LUBFinder {
   void noteUpdatableExpression(Expression* curr) {
     if (curr->is<RefNull>()) {
       hasNull = true;
-    } else {
-      note(curr->type);
     }
+    note(curr->type);
   }
 
   // Returns whether we noted any (reachable) value. This ignores nulls, as they
@@ -64,6 +63,7 @@ struct LUBFinder {
   // mentioned above, since they will not limit us, aside from making the type
   // nullable if nulls exist. This does not update the nulls.
   Type getBestPossible() {
+    // TODO: This can now be simplified.
     if (lub.isNonNullable() && hasNull) {
       return Type(lub.getHeapType(), Nullable);
     }
