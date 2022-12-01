@@ -2,14 +2,13 @@
 ;; RUN: foreach %s %t wasm-opt --nominal --global-refining -all -S -o - | filecheck %s
 
 (module
-  ;; Globals with no assignments aside from their initial values. The first is
-  ;; a null, so we have nothing concrete to improve with (though we could use
-  ;; the type of the null perhaps, TODO). The second is a ref.func which lets
-  ;; us refine.
+  ;; Globals with no assignments aside from their initial values. The first is a
+  ;; null, so we can optimize to a nullfuncref. The second is a ref.func which
+  ;; lets us refine to the specific function type.
   ;; CHECK:      (type $foo_t (func))
   (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null nofunc))
+  ;; CHECK:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
   ;; CHECK:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
@@ -26,7 +25,7 @@
   ;; CHECK:      (type $foo_t (func))
   (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut funcref) (ref.null nofunc))
+  ;; CHECK:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
   ;; CHECK:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))

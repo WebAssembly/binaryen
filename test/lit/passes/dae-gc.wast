@@ -157,7 +157,7 @@
  )
 
  ;; CHECK:      (func $bar (type $i31ref_=>_none) (param $0 i31ref)
- ;; CHECK-NEXT:  (local $1 anyref)
+ ;; CHECK-NEXT:  (local $1 nullref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
@@ -171,7 +171,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $bar (type $i31ref_=>_none) (param $0 i31ref)
- ;; NOMNL-NEXT:  (local $1 anyref)
+ ;; NOMNL-NEXT:  (local $1 nullref)
  ;; NOMNL-NEXT:  (local.set $1
  ;; NOMNL-NEXT:   (ref.null none)
  ;; NOMNL-NEXT:  )

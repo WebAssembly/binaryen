@@ -508,8 +508,8 @@
   (type $sig-can-refine (func_subtype (result anyref) func))
 
   ;; Also a single function, but no refinement is possible.
-  ;; CHECK:      (type $sig-cannot-refine (func (result anyref)))
-  (type $sig-cannot-refine (func_subtype (result anyref) func))
+  ;; CHECK:      (type $sig-cannot-refine (func (result (ref func))))
+  (type $sig-cannot-refine (func_subtype (result (ref func)) func))
 
   ;; The single function never returns, so no refinement is possible.
   ;; CHECK:      (type $sig-unreachable (func (result anyref)))
@@ -517,7 +517,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (elem declare func $func-can-refine)
+  ;; CHECK:      (elem declare func $func-can-refine $func-cannot-refine)
 
   ;; CHECK:      (func $func-can-refine (type $sig-can-refine) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
@@ -526,11 +526,19 @@
     (struct.new $struct)
   )
 
-  ;; CHECK:      (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
-  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK:      (func $func-cannot-refine (type $sig-cannot-refine) (result (ref func))
+  ;; CHECK-NEXT:  (select (result (ref func))
+  ;; CHECK-NEXT:   (ref.func $func-can-refine)
+  ;; CHECK-NEXT:   (ref.func $func-cannot-refine)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func-cannot-refine (type $sig-cannot-refine) (result anyref)
-    (ref.null any)
+  (func $func-cannot-refine (type $sig-cannot-refine) (result (ref func))
+    (select
+      (ref.func $func-can-refine)
+      (ref.func $func-cannot-refine)
+      (i32.const 0)
+    )
   )
 
   ;; CHECK:      (func $func-unreachable (type $sig-unreachable) (result anyref)
