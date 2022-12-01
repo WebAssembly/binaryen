@@ -509,7 +509,7 @@
 
   ;; Also a single function, but no refinement is possible.
   ;; CHECK:      (type $sig-cannot-refine (func (result (ref func))))
-  (type $sig-cannot-refine (func_subtype (result funcref) func))
+  (type $sig-cannot-refine (func_subtype (result (ref func)) func))
 
   ;; The single function never returns, so no refinement is possible.
   ;; CHECK:      (type $sig-unreachable (func (result anyref)))
@@ -533,7 +533,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $func-cannot-refine (type $sig-cannot-refine) (result funcref)
+  (func $func-cannot-refine (type $sig-cannot-refine) (result (ref func))
     (select
       (ref.func $func-can-refine)
       (ref.func $func-cannot-refine)
