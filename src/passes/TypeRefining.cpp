@@ -61,7 +61,7 @@ struct FieldInfoScanner
     // Default values do not affect what the heap type of a field can be turned
     // into. Note them, however, as they force us to keep the type nullable.
     if (fieldType.isRef()) {
-      info.noteNullDefault();
+      info.note(Type(fieldType.getHeapType().getBottom(), Nullable));
     }
   }
 

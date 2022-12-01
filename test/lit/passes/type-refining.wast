@@ -655,7 +655,7 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut dataref))))
+  ;; CHECK:      (type $struct (struct (field (mut nullref))))
   (type $struct (struct_subtype (field (mut (ref null data))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
@@ -666,8 +666,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
-    ;; The only write to this struct is of a null default value. There is
-    ;; nothing to optimize here.
+    ;; The only write to this struct is of a null default value, so we can
+    ;; optimize to nullref.
     (drop
       (struct.new_default $struct)
     )

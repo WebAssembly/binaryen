@@ -55,8 +55,6 @@ struct LUBFinder {
     }
   }
 
-  void noteNullDefault() { hasNull = true; }
-
   // Returns whether we noted any (reachable) value. This ignores nulls, as they
   // do not contribute type information - we do not try to find a lub based on
   // them (rather we update them to the LUB).
