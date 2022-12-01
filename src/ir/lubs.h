@@ -25,16 +25,7 @@ namespace wasm {
 //
 // Helper to find a LUB of a series of expressions. This works incrementally so
 // that if we see we are not improving on an existing type then we can stop
-// early. It also notes null expressions that can be updated later, and if
-// updating them would allow a better LUB it can do so. That is, given this:
-//
-//   (ref.null any)  ;; an expression that we can update
-//   (.. something of type data ..)
-//
-// We can update that null to type (ref null data) which would allow setting
-// that as the LUB. This is important in cases where there is a null initial
-// value in a field, for example: we should not let the type there prevent us
-// from optimizing - after all, all nulls compare equally anyhow.
+// early.
 //
 struct LUBFinder {
   LUBFinder() {}
