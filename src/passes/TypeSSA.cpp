@@ -100,11 +100,23 @@ struct TypeSSA : public Pass {
     NewFinder moduleFinder;
     moduleFinder.walkModuleCode(module);
 
-    // Process all the news. Note that we must do so in a deterministic order.
+    // Process all the news to find the ones we want to modify, adding them to
+    // newsToModify. Note that we must do so in a deterministic order.
     ModuleUtils::iterDefinedFunctions(
       *module, [&](Function* func) { processNews(analysis.map[func]); });
     processNews(moduleFinder.news);
+
+    // Modify the ones we found are relevant. We must modify them all at once as
+    // in the isorecursive type system we want to create a single new rec group
+    // for them all (see below).
+    modifyNews();
   }
+
+  News newsToModify;
+
+  // All the types that are seen in struct.new etc. operations anywhere in the
+  // program. We use this below to check for an error condition regarding rec groups.
+  std::unordered_set<HeapType> allSeenTypes;
 
   // As we generate new names, use a consistent index.
   Index nameCounter = 0;
@@ -119,33 +131,74 @@ struct TypeSSA : public Pass {
 
     for (auto* curr : news.structNews) {
       if (isInteresting(curr)) {
-        // This is interesting; create a new type and use it. The new type is
-        // identical to the existing one, and a subtype of it, so the only
-        // difference between them is nominal - which is enough for optimization
-        // passes to learn different things about the two.
-        auto oldType = curr->type.getHeapType();
-        TypeBuilder builder(1);
-        builder.setHeapType(0, oldType.getStruct());
-        builder.setSubType(0, oldType);
-        auto result = builder.build();
-        assert(!result.getError());
-        auto newType = (*result)[0];
-        curr->type = Type(newType, NonNullable);
+        newsToModify.structNews.insert(curr);
+      }
+      allSeenTypes.insert(curr->type.getHeapType());
+    }
+  }
 
-        // If the old type has a nice name, make a nice name for the new one.
-        if (typeNames.count(oldType)) {
-          auto intendedName = typeNames[oldType].name.toString() + '$' +
-                              std::to_string(++nameCounter);
-          auto newName =
-            Names::getValidNameGivenExisting(intendedName, existingTypeNames);
-          // Copy the old field names; only change the type's name itself.
-          auto info = typeNames[oldType];
-          info.name = newName;
-          typeNames[newType] = info;
-          existingTypeNames.insert(newName);
-        }
+  void modifyNews() {
+    // We collected all the instructions we want to create new types for. Now we
+    // can create those new types, which we do all at once. It is important to
+    // do so in the isorecursive type system as if we create a new singleton rec
+    // group for each then all those will end up identical to each other, so
+    // instead we'll make a single big rec group for them all at once.
+    //
+    // Our goal is to create a completely new/fresh/private type for each
+    // instruction that we found. In the isorecursive type system there isn't an
+    // explicit way to do so, but at least if the new rec group is very large
+    // the risk of collision with another rec group in the program is small.
+    // Note that the risk of collision with things outside of this module is
+    // also a possibility, and so for that reason this pass is likely mostly
+    // useful in the closed-world scenario.
+
+    auto& structNews = newsToModify.structNews;
+    TypeBuilder builder(structNews.size());
+    builder.createRecGroup(0, structNews.size());
+    for (auto* curr : structNews) {
+      auto oldType = curr->type.getHeapType();
+      builder.setHeapType(0, oldType.getStruct());
+      builder.setSubType(0, oldType);
+    }
+    auto result = builder.build();
+    assert(!result.getError());
+    auto newTypes = *result;
+    assert(newTypes.size() == structNews.size());
+    
+    // The new types must not overlap with any existing ones. If they do, then
+    // it would be unsafe to apply this optimization (if casts exist to the
+    // existing types, the new types merged with them would now succeed on those
+    // casts). We could try to create a "weird" rec group to avoid this (e.g. we
+    // could make a rec group larger than any existing one, or with an initial
+    // member that is "random"), but hopefully this is rare, so just error for
+    // now.
+    for (auto newType : newTypes) {
+      if (allSeenTypes.count(newType)) {
+        Fatal() << "Rec group collision in TypeSSA! Please file a bug";
       }
     }
+
+    // Success: apply the new types.
+    for (Index i = 0; i < structNews.size(); i++) {
+      auto* curr = structNews[i];
+      auto oldType = curr->type.getHeapType();
+      auto newType = newTypes[i];
+      curr->type = Type(newType, NonNullable);
+
+      // If the old type has a nice name, make a nice name for the new one.
+      if (typeNames.count(oldType)) {
+        auto intendedName = typeNames[oldType].name.toString() + '$' +
+                            std::to_string(++nameCounter);
+        auto newName =
+          Names::getValidNameGivenExisting(intendedName, existingTypeNames);
+        // Copy the old field names; only change the type's name itself.
+        auto info = typeNames[oldType];
+        info.name = newName;
+        typeNames[newType] = info;
+        existingTypeNames.insert(newName);
+      }
+    }
+
     // TODO: arrays
   }
 
