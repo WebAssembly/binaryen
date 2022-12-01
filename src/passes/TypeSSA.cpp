@@ -125,8 +125,8 @@ struct TypeSSA : public Pass {
     for (auto* curr : news.structNews) {
       if (isInteresting(curr)) {
         newsToModify.structNews.push_back(curr);
+        allSeenTypes.insert(curr->type.getHeapType());
       }
-      allSeenTypes.insert(curr->type.getHeapType());
     }
   }
 
