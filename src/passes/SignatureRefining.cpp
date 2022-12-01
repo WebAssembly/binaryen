@@ -161,7 +161,7 @@ struct SignatureRefining : public Pass {
 
       auto updateLUBs = [&](const ExpressionList& operands) {
         for (Index i = 0; i < numParams; i++) {
-          paramLUBs[i].noteUpdatableExpression(operands[i]);
+          paramLUBs[i].note(operands[i]->type);
         }
       };
 

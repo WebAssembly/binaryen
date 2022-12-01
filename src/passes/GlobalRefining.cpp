@@ -59,7 +59,7 @@ struct GlobalRefining : public Pass {
     // Combine all the information we gathered and compute lubs.
     for (auto& [func, info] : analysis.map) {
       for (auto* set : info.sets) {
-        lubs[set->name].noteUpdatableExpression(set->value);
+        lubs[set->name].note(set->value->type);
       }
     }
 
@@ -73,7 +73,7 @@ struct GlobalRefining : public Pass {
       auto& lub = lubs[global->name];
 
       // Note the initial value.
-      lub.noteUpdatableExpression(global->init);
+      lub.note(global->init->type);
 
       // The initial value cannot be unreachable, but it might be null, and all
       // other values might be too. In that case, we've noted nothing useful

@@ -53,7 +53,7 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    info.noteUpdatableExpression(expr);
+    info.note(expr->type);
   }
 
   void

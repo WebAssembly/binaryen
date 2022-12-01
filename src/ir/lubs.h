@@ -44,31 +44,11 @@ struct LUBFinder {
   // Note another type to take into account in the lub.
   void note(Type type) { lub = Type::getLeastUpperBound(lub, type); }
 
-  // Note an expression that can be updated, that is, that we can modify in
-  // safe ways if doing so would allow us to get a better lub. The specific
-  // optimization possible here involves nulls, see the top comment.
-  void noteUpdatableExpression(Expression* curr) {
-    if (curr->is<RefNull>()) {
-      hasNull = true;
-    }
-    note(curr->type);
-  }
-
-  // Returns whether we noted any (reachable) value. This ignores nulls, as they
-  // do not contribute type information - we do not try to find a lub based on
-  // them (rather we update them to the LUB).
+  // Returns whether we noted any (reachable) value.
   bool noted() { return lub != Type::unreachable; }
 
-  // Returns the best possible lub. This ignores updatable nulls for the reasons
-  // mentioned above, since they will not limit us, aside from making the type
-  // nullable if nulls exist. This does not update the nulls.
-  Type getBestPossible() {
-    // TODO: This can now be simplified.
-    if (lub.isNonNullable() && hasNull) {
-      return Type(lub.getHeapType(), Nullable);
-    }
-    return lub;
-  }
+  // Returns the lub.
+  Type getBestPossible() { return lub; }
 
   // Combines the information in another LUBFinder into this one, and returns
   // whether we changed anything.
@@ -76,14 +56,12 @@ struct LUBFinder {
     // Check if the lub was changed.
     auto old = lub;
     note(other.lub);
-    hasNull = hasNull || other.hasNull;
     return old != lub;
   }
 
 private:
   // The least upper bound. As we go this always contains the latest value based
   // on everything we've seen so far, except for nulls.
-  bool hasNull = false;
   Type lub = Type::unreachable;
 };
 

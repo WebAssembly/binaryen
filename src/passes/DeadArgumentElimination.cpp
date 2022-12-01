@@ -381,7 +381,7 @@ private:
       auto& lub = lubs[i];
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        lub.noteUpdatableExpression(operand);
+        lub.note(operand->type);
         if (lub.getBestPossible() == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;

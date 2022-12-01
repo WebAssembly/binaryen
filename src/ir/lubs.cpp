@@ -45,14 +45,14 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
   //  )
   ReFinalize().walkFunctionInModule(func, &wasm);
 
-  lub.noteUpdatableExpression(func->body);
+  lub.note(func->body->type);
   if (lub.getBestPossible() == originalType) {
     return lub;
   }
 
   // Scan the body and look at the returns. First, return expressions.
   for (auto* ret : FindAll<Return>(func->body).list) {
-    lub.noteUpdatableExpression(ret->value);
+    lub.note(ret->value->type);
     if (lub.getBestPossible() == originalType) {
       return lub;
     }
