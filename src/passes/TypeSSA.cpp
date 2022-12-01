@@ -122,16 +122,9 @@ struct TypeSSA : public Pass {
   Index nameCounter = 0;
 
   void processNews(const News& news) {
-    // We'll generate nice names as we go, if we can.
-    std::unordered_set<Name> existingTypeNames;
-    auto& typeNames = module->typeNames;
-    for (auto& [type, info] : typeNames) {
-      existingTypeNames.insert(info.name);
-    }
-
     for (auto* curr : news.structNews) {
       if (isInteresting(curr)) {
-        newsToModify.structNews.insert(curr);
+        newsToModify.structNews.push_back(curr);
       }
       allSeenTypes.insert(curr->type.getHeapType());
     }
@@ -164,7 +157,7 @@ struct TypeSSA : public Pass {
     assert(!result.getError());
     auto newTypes = *result;
     assert(newTypes.size() == structNews.size());
-    
+
     // The new types must not overlap with any existing ones. If they do, then
     // it would be unsafe to apply this optimization (if casts exist to the
     // existing types, the new types merged with them would now succeed on those
@@ -178,7 +171,16 @@ struct TypeSSA : public Pass {
       }
     }
 
-    // Success: apply the new types.
+    // Success: we can apply the new types.
+
+    // We'll generate nice names as we go, if we can, so first scan existing
+    // ones to avoid collisions.
+    std::unordered_set<Name> existingTypeNames;
+    auto& typeNames = module->typeNames;
+    for (auto& [type, info] : typeNames) {
+      existingTypeNames.insert(info.name);
+    }
+
     for (Index i = 0; i < structNews.size(); i++) {
       auto* curr = structNews[i];
       auto oldType = curr->type.getHeapType();
