@@ -83,7 +83,7 @@ struct GlobalRefining : public Pass {
       }
 
       auto oldType = global->type;
-      auto newType = lub.getBestPossible();
+      auto newType = lub.getLUB();
       if (newType != oldType) {
         // We found an improvement!
         assert(Type::isSubType(newType, oldType));

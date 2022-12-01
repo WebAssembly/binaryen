@@ -382,7 +382,7 @@ private:
       for (auto* call : calls) {
         auto* operand = call->operands[i];
         lub.note(operand->type);
-        if (lub.getBestPossible() == originalType) {
+        if (lub.getLUB() == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
@@ -392,7 +392,7 @@ private:
       if (!lub.noted()) {
         return;
       }
-      newParamTypes.push_back(lub.getBestPossible());
+      newParamTypes.push_back(lub.getLUB());
     }
 
     // Check if we are able to optimize here before we do the work to scan the
@@ -431,7 +431,7 @@ private:
     if (!lub.noted()) {
       return false;
     }
-    auto newType = lub.getBestPossible();
+    auto newType = lub.getLUB();
     if (newType != func->getResults()) {
       func->setResults(newType);
       for (auto* call : calls) {

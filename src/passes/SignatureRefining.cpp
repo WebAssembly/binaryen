@@ -178,7 +178,7 @@ struct SignatureRefining : public Pass {
         if (!lub.noted()) {
           break;
         }
-        newParamsTypes.push_back(lub.getBestPossible());
+        newParamsTypes.push_back(lub.getLUB());
       }
       Type newParams;
       if (newParamsTypes.size() < numParams) {
@@ -197,7 +197,7 @@ struct SignatureRefining : public Pass {
         // value, or it can return a value but traps instead etc.).
         newResults = func->getResults();
       } else {
-        newResults = resultsLUB.getBestPossible();
+        newResults = resultsLUB.getLUB();
       }
 
       if (newParams == func->getParams() && newResults == func->getResults()) {

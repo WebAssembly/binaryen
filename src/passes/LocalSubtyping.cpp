@@ -135,7 +135,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         LUBFinder lub;
         for (auto* set : setsForLocal[i]) {
           lub.note(set->value->type);
-          if (lub.getBestPossible() == oldType) {
+          if (lub.getLUB() == oldType) {
             break;
           }
         }
@@ -144,7 +144,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           continue;
         }
 
-        auto newType = lub.getBestPossible();
+        auto newType = lub.getLUB();
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
         // Remove non-nullability if we disallow that in locals.

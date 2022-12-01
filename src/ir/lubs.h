@@ -48,7 +48,7 @@ struct LUBFinder {
   bool noted() { return lub != Type::unreachable; }
 
   // Returns the lub.
-  Type getBestPossible() { return lub; }
+  Type getLUB() { return lub; }
 
   // Combines the information in another LUBFinder into this one, and returns
   // whether we changed anything.

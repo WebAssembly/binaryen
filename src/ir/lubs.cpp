@@ -46,14 +46,14 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
   ReFinalize().walkFunctionInModule(func, &wasm);
 
   lub.note(func->body->type);
-  if (lub.getBestPossible() == originalType) {
+  if (lub.getLUB() == originalType) {
     return lub;
   }
 
   // Scan the body and look at the returns. First, return expressions.
   for (auto* ret : FindAll<Return>(func->body).list) {
     lub.note(ret->value->type);
-    if (lub.getBestPossible() == originalType) {
+    if (lub.getLUB() == originalType) {
       return lub;
     }
   }
@@ -64,7 +64,7 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
     // Return whether we still look ok to do the optimization. If this is
     // false then we can stop here.
     lub.note(type);
-    return lub.getBestPossible() != originalType;
+    return lub.getLUB() != originalType;
   };
 
   for (auto* call : FindAll<Call>(func->body).list) {
