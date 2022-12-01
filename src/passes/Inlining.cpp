@@ -275,7 +275,9 @@ struct Updater : public PostWalker<Updater> {
     }
     curr->isReturn = false;
     curr->type = results;
-    if (curr->type.isConcrete()) {
+    // There might still be unreachable children causing this to be unreachable.
+    curr->finalize();
+    if (results.isConcrete()) {
       replaceCurrent(builder->makeBreak(returnName, curr));
     } else {
       replaceCurrent(builder->blockify(curr, builder->makeBreak(returnName)));
