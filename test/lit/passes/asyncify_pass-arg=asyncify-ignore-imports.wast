@@ -45,24 +45,16 @@
     (call $import)
   )
   ;; CHECK:      (func $calls-import2-drop
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (call $import2)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (call $import2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-import2-drop
     (drop (call $import2))
   )
   ;; CHECK:      (func $calls-import2-if-else (param $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (call $import3
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )

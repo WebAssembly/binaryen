@@ -37,18 +37,10 @@
   ;; CHECK:      (export "asyncify_get_state" (func $asyncify_get_state))
 
   ;; CHECK:      (func $do_sleep
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (global.get $sleeping)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (global.get $sleeping)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (global.set $sleeping
   ;; CHECK-NEXT:     (i32.const 1)
@@ -834,14 +826,10 @@
     (drop (call $import2))
   )
   ;; CHECK:      (func $calls-nothing
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 17)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-nothing
