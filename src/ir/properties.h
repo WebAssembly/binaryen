@@ -339,9 +339,7 @@ inline Index getNumChildren(Expression* curr) {
 
 #define DELEGATE_ID curr->_id
 
-#define DELEGATE_START(id)                                                     \
-  auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast);
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 

@@ -193,7 +193,7 @@ protected:
   }
 
   void parseAssertTrap(Element& s) {
-    bool trapped = false;
+    [[maybe_unused]] bool trapped = false;
     auto& inner = *s[1];
     if (inner[0]->str() == MODULE) {
       return parseModuleAssertion(s);
@@ -207,7 +207,6 @@ protected:
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       trapped = true;
     }
-    WASM_UNUSED(trapped);
     assert(trapped);
   }
 
@@ -218,7 +217,7 @@ protected:
       expected = getLiteralsFromConstExpression(
         builders[lastModule]->parseExpression(*s[2]));
     }
-    bool trapped = false;
+    [[maybe_unused]] bool trapped = false;
     try {
       actual = parseOperation(*s[1]);
     } catch (const TrapException&) {
@@ -227,7 +226,6 @@ protected:
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       trapped = true;
     }
-    WASM_UNUSED(trapped);
     assert(!trapped);
     std::cerr << "seen " << actual << ", expected " << expected << '\n';
     if (expected != actual) {

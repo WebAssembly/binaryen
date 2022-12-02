@@ -5,15 +5,17 @@
   ;; A struct with three fields. The first will have no writes, the second one
   ;; write of the same type, and the last a write of a subtype, which will allow
   ;; us to specialize that one.
-  ;; CHECK:      (type $struct (struct (field (mut anyref)) (field (mut anyref)) (field (mut (ref i31)))))
-  (type $struct (struct_subtype (field (mut anyref)) (field (mut anyref)) (field (mut anyref)) data))
+  ;; CHECK:      (type $struct (struct (field (mut anyref)) (field (mut (ref i31))) (field (mut (ref i31)))))
+  (type $struct (struct_subtype (field (mut anyref)) (field (mut (ref i31))) (field (mut anyref)) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
   ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 1
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $struct)
@@ -30,7 +32,7 @@
   (func $work (param $struct (ref $struct))
     (struct.set $struct 1
       (local.get $struct)
-      (ref.null any)
+      (i31.new (i32.const 0))
     )
     (struct.set $struct 2
       (local.get $struct)
@@ -655,7 +657,7 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut dataref))))
+  ;; CHECK:      (type $struct (struct (field (mut nullref))))
   (type $struct (struct_subtype (field (mut (ref null data))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
@@ -666,8 +668,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
-    ;; The only write to this struct is of a null default value. There is
-    ;; nothing to optimize here.
+    ;; The only write to this struct is of a null default value, so we can
+    ;; optimize to nullref.
     (drop
       (struct.new_default $struct)
     )

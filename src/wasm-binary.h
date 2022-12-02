@@ -203,8 +203,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(U32LEB x) {
-    size_t before = -1;
-    WASM_UNUSED(before);
+    [[maybe_unused]] size_t before = -1;
     BYN_DEBUG(before = size(); std::cerr << "writeU32LEB: " << x.value
                                          << " (at " << before << ")"
                                          << std::endl;);
@@ -215,8 +214,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(U64LEB x) {
-    size_t before = -1;
-    WASM_UNUSED(before);
+    [[maybe_unused]] size_t before = -1;
     BYN_DEBUG(before = size(); std::cerr << "writeU64LEB: " << x.value
                                          << " (at " << before << ")"
                                          << std::endl;);
@@ -227,8 +225,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(S32LEB x) {
-    size_t before = -1;
-    WASM_UNUSED(before);
+    [[maybe_unused]] size_t before = -1;
     BYN_DEBUG(before = size(); std::cerr << "writeS32LEB: " << x.value
                                          << " (at " << before << ")"
                                          << std::endl;);
@@ -239,8 +236,7 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(S64LEB x) {
-    size_t before = -1;
-    WASM_UNUSED(before);
+    [[maybe_unused]] size_t before = -1;
     BYN_DEBUG(before = size(); std::cerr << "writeS64LEB: " << x.value
                                          << " (at " << before << ")"
                                          << std::endl;);

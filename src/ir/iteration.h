@@ -84,9 +84,7 @@ public:
 
 #define DELEGATE_ID parent->_id
 
-#define DELEGATE_START(id)                                                     \
-  auto* cast = parent->cast<id>();                                             \
-  WASM_UNUSED(cast);
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = parent->cast<id>();
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 

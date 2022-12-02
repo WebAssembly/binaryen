@@ -5,12 +5,12 @@
  ;; The types should be refined to a set of three mutually recursive types.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $0 (struct (field anyref) (field (ref $1))))
- (type $0 (struct_subtype (ref null any) anyref data))
- ;; CHECK:       (type $1 (struct (field eqref) (field (ref $2))))
- (type $1 (struct_subtype (ref null eq) anyref data))
- ;; CHECK:       (type $2 (struct (field i31ref) (field (ref $0))))
- (type $2 (struct_subtype (ref null i31) anyref data))
+ ;; CHECK-NEXT:  (type $0 (struct (field nullref) (field (ref $1))))
+ (type $0 (struct_subtype nullref anyref data))
+ ;; CHECK:       (type $1 (struct (field nullfuncref) (field (ref $2))))
+ (type $1 (struct_subtype nullfuncref anyref data))
+ ;; CHECK:       (type $2 (struct (field nullexternref) (field (ref $0))))
+ (type $2 (struct_subtype nullexternref anyref data))
 
  ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func (param (ref $0) (ref $1) (ref $2))))
 
@@ -23,13 +23,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $1
- ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (ref.null nofunc)
  ;; CHECK-NEXT:    (local.get $z)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $2
- ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (ref.null noextern)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -37,19 +37,19 @@
  (func $foo (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
   (drop
    (struct.new $0
-    (ref.null any)
+    (ref.null none)
     (local.get $y)
    )
   )
   (drop
    (struct.new $1
-    (ref.null eq)
+    (ref.null nofunc)
     (local.get $z)
    )
   )
   (drop
    (struct.new $2
-    (ref.null i31)
+    (ref.null noextern)
     (local.get $x)
    )
   )
@@ -65,12 +65,12 @@
  ;; CHECK-NEXT:  (type $all (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2))))
  (type $all (struct_subtype i32 anyref anyref anyref data))
 
- ;; CHECK:       (type $0 (struct (field anyref) (field (ref null $all)) (field (ref $0))))
- (type $0 (struct_subtype (ref null any) anyref anyref data))
- ;; CHECK:       (type $1 (struct_subtype (field eqref) (field (ref null $all)) (field (ref $0)) $0))
- (type $1 (struct_subtype (ref null eq) anyref anyref $0))
- ;; CHECK:       (type $2 (struct_subtype (field i31ref) (field (ref null $all)) (field (ref $0)) $1))
- (type $2 (struct_subtype (ref null i31) anyref anyref $1))
+ ;; CHECK:       (type $0 (struct (field (ref null $all)) (field (ref $0))))
+ (type $0 (struct_subtype anyref anyref data))
+ ;; CHECK:       (type $1 (struct_subtype (field (ref null $all)) (field (ref $0)) $0))
+ (type $1 (struct_subtype anyref anyref $0))
+ ;; CHECK:       (type $2 (struct_subtype (field (ref null $all)) (field (ref $0)) $1))
+ (type $2 (struct_subtype anyref anyref $1))
 
  ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func (param (ref $0) (ref $1) (ref $2))))
 
@@ -86,21 +86,18 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $0
- ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (local.get $all)
  ;; CHECK-NEXT:    (local.get $y)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $1
- ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (local.get $all)
  ;; CHECK-NEXT:    (local.get $z)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $2
- ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (local.get $all)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
@@ -118,21 +115,18 @@
   )
   (drop
    (struct.new $0
-    (ref.null any)
     (local.get $all)
     (local.get $y)
    )
   )
   (drop
    (struct.new $1
-    (ref.null eq)
     (local.get $all)
     (local.get $z)
    )
   )
   (drop
    (struct.new $2
-    (ref.null i31)
     (local.get $all)
     (local.get $x)
    )

@@ -381,8 +381,8 @@ private:
       auto& lub = lubs[i];
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        lub.noteUpdatableExpression(operand);
-        if (lub.getBestPossible() == originalType) {
+        lub.note(operand->type);
+        if (lub.getLUB() == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
@@ -392,7 +392,7 @@ private:
       if (!lub.noted()) {
         return;
       }
-      newParamTypes.push_back(lub.getBestPossible());
+      newParamTypes.push_back(lub.getLUB());
     }
 
     // Check if we are able to optimize here before we do the work to scan the
@@ -405,12 +405,7 @@ private:
     // We can do this!
     TypeUpdating::updateParamTypes(func, newParamTypes, *module);
 
-    // Update anything the lubs need to update.
-    for (auto& lub : lubs) {
-      lub.updateNulls();
-    }
-
-    // Also update the function's type.
+    // Update the function's type.
     func->setParams(newParams);
   }
 
@@ -436,9 +431,8 @@ private:
     if (!lub.noted()) {
       return false;
     }
-    auto newType = lub.getBestPossible();
+    auto newType = lub.getLUB();
     if (newType != func->getResults()) {
-      lub.updateNulls();
       func->setResults(newType);
       for (auto* call : calls) {
         if (call->type != Type::unreachable) {
