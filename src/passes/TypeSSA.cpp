@@ -114,11 +114,6 @@ struct TypeSSA : public Pass {
 
   News newsToModify;
 
-  // All the types that are seen in struct.new etc. operations anywhere in the
-  // program. We use this below to check for an error condition regarding rec
-  // groups.
-  std::unordered_set<HeapType> allSeenTypes;
-
   // As we generate new names, use a consistent index.
   Index nameCounter = 0;
 
@@ -126,7 +121,6 @@ struct TypeSSA : public Pass {
     for (auto* curr : news.structNews) {
       if (isInteresting(curr)) {
         newsToModify.structNews.push_back(curr);
-        allSeenTypes.insert(curr->type.getHeapType());
       }
     }
   }
@@ -167,8 +161,10 @@ struct TypeSSA : public Pass {
     // could make a rec group larger than any existing one, or with an initial
     // member that is "random"), but hopefully this is rare, so just error for
     // now.
+    std::vector<HeapType> typesVec = ModuleUtils::collectHeapTypes(*module);
+    std::unordered_set<HeapType> typesSet(typesVec.begin(), typesVec.end());
     for (auto newType : newTypes) {
-      if (allSeenTypes.count(newType)) {
+      if (typesSet.count(newType)) {
         Fatal() << "Rec group collision in TypeSSA! Please file a bug";
       }
     }
