@@ -143,7 +143,8 @@
   )
 )
 
-;; Test some real-world patterns. Here we will merge $3$1 into $3, and $0$2 into
+;; Test some real-world patterns. Here we will merge $type$3$to-merge into
+;; $type$3, and $0$2 into
 ;; $6. While doing so we must update the fields and the expressions that they
 ;; appear in, and not error.
 (module
@@ -157,20 +158,20 @@
   (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
   (type $type$4 (struct_subtype (field (mut i32)) (field (mut i32)) $type$6))
   (type $type$0 (struct_subtype (field (mut i32)) (field (mut i32)) $type$4))
-  (type $type$0$2 (struct_subtype (field (mut i32)) (field (mut i32)) $type$0))
+  (type $type$6$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) $type$0))
   ;; CHECK:      (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
   (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
   ;; CHECK:      (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$6))) $type$6))
   (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) $type$6))
   ;; CHECK:      (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$6))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
   (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
-  (type $type$3$1 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$3))
+  (type $type$3$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$3))
 
   ;; CHECK:      (global $global$0 (ref $type$6) (struct.new $type$6
   ;; CHECK-NEXT:  (i32.const 1705)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: ))
-  (global $global$0 (ref $type$0) (struct.new $type$0$2
+  (global $global$0 (ref $type$0) (struct.new $type$6$to-merge
     (i32.const 1705)
     (i32.const 0)
   ))
@@ -184,7 +185,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
-    (struct.new $type$3$1
+    (struct.new $type$3$to-merge
       (i32.const 1685)
       (i32.const 0)
       (global.get $global$0)
