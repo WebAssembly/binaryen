@@ -177,7 +177,7 @@ struct TypeSSA : public Pass {
 #ifndef NDEBUG
     // Verify the above assumption, just to be safe.
     for (auto newType : newTypes) {
-      asset(!typesSet.count(newType));
+      assert(!typesSet.count(newType));
     }
 #endif
 
