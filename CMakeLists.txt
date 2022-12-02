@@ -384,7 +384,7 @@ else()
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
 target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
-if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB))
+if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
