@@ -150,8 +150,8 @@ struct TypeSSA : public Pass {
     for (Index i = 0; i < num; i++) {
       auto* curr = structNews[i];
       auto oldType = curr->type.getHeapType();
-      builder.setHeapType(i, oldType.getStruct());
-      builder.setSubType(i, oldType);
+      builder[i] = oldType.getStruct();
+      builder[i].subTypeOf(oldType);
     }
     builder.createRecGroup(0, num);
     auto result = builder.build();
