@@ -217,6 +217,11 @@ struct TypeSSA : public Pass {
   // An interesting StructNew, which we think is worth creating a new type for,
   // is one that can be optimized better with a new type. That means it must
   // have something interesting for optimizations to work with.
+  //
+  // TODO: We may add new optimizations in the future that can benefit from more
+  //       things, so it may be interesting to experiment with considering all
+  //       news as "interesting" when we add major new type-based optimization
+  //       passes.
   bool isInteresting(StructNew* curr) {
     if (curr->type == Type::unreachable) {
       // This is dead code anyhow.
