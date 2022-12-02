@@ -231,6 +231,11 @@ struct TypeSSA : public Pass {
     if (curr->isWithDefault()) {
       // This starts with all default values - zeros and nulls - and that might
       // be useful.
+      //
+      // (A struct whose fields are all bottom types only has a single possible
+      // value in each field anyhow, so that is not interesting, but also
+      // unreasonable to occur in practice as other optimizations should handle
+      // it.)
       return true;
     }
 
