@@ -100,6 +100,7 @@ set(passes_SOURCES
   ReReloop.cpp
   TrapMode.cpp
   TypeRefining.cpp
+  TypeSSA.cpp
   SafeHeap.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp

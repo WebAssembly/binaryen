@@ -419,6 +419,9 @@
 ;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
 ;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
+;; CHECK-NEXT:                                                 other optimizations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets
 ;; CHECK-NEXT:
