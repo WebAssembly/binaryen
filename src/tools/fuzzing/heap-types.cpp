@@ -464,7 +464,7 @@ struct HeapTypeGeneratorImpl {
           if (rand.oneIn(5)) {
             return HeapType::eq;
           }
-        // fallthrough
+          [[fallthrough]];
         case HeapType::eq:
           switch (rand.upTo(4)) {
             case 0:
