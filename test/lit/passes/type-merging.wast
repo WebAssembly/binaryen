@@ -143,10 +143,12 @@
   )
 )
 
-;; Test some real-world patterns. Here we will merge $type$3$to-merge into
-;; $type$3, and $0$2 into
-;; $6. While doing so we must update the fields and the expressions that they
-;; appear in, and not error.
+;; Test some real-world patterns, including fields to ignore, links between
+;; merged types, etc.
+;;
+;; The result here is that we will merge $type$3$to-merge into $type$3, and
+;; $type$6$to-merge into $type$6. While doing so we must update the fields and
+;; the expressions that they appear in, and not error.
 (module
   ;; CHECK:      (type $type$5 (struct (field (mut i32))))
 

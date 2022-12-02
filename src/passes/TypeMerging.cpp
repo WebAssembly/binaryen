@@ -77,10 +77,6 @@ struct TypeMerging : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "TypeMerging requires nominal/isorecursive typing";
-    }
 
     // First, find all the cast types.
 
