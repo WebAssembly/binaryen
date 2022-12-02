@@ -9,7 +9,7 @@
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   ;; NOMNL:      (type $struct (struct (field i32)))
-  (type $struct (struct_subtype (field i32) array))
+  (type $struct (struct_subtype (field i32) data))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -118,7 +118,7 @@
   ;; NOMNL:      (type $anyref_arrayref_=>_none (func (param anyref arrayref)))
 
   ;; NOMNL:      (type $struct (struct (field anyref)))
-  (type $struct (struct_subtype (field (ref null any)) array))
+  (type $struct (struct_subtype (field (ref null any)) data))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct$1 (struct_subtype (field anyref) $struct))
