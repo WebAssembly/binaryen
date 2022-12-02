@@ -126,6 +126,7 @@ struct TypeSSA : public Pass {
   }
 
   void modifyNews() {
+    auto& structNews = newsToModify.structNews;
     auto num = structNews.size();
     if (num == 0) {
       return;
@@ -145,7 +146,6 @@ struct TypeSSA : public Pass {
     // also a possibility, and so for that reason this pass is likely mostly
     // useful in the closed-world scenario.
 
-    auto& structNews = newsToModify.structNews;
     TypeBuilder builder(num);
     for (Index i = 0; i < num; i++) {
       auto* curr = structNews[i];
