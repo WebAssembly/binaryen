@@ -40,6 +40,9 @@ option(BUILD_TOOLS "Build tools" ON)
 # Turn this off to install only tools and not static/dynamic libs
 option(INSTALL_LIBS "Install libraries" ON)
 
+# Turn this on to build only the subset of tools needed for emscripten
+option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
+
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
