@@ -37,6 +37,9 @@ option(BUILD_TESTS "Build GTest-based tests" ON)
 # Turn this off to build only the library.
 option(BUILD_TOOLS "Build tools" ON)
 
+# Turn this off to install only tools and not static/dynamic libs
+option(INSTALL_LIBS "Install libraries" ON)
+
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
@@ -381,13 +384,13 @@ else()
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
 target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
-if(NOT (BUILD_STATIC_LIB AND BYN_INSTALL_TOOLS_ONLY))
+if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB))
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-if(NOT BYN_INSTALL_TOOLS_ONLY)
+if(INSTALL_LIBS)
   install(FILES src/binaryen-c.h src/wasm-delegations.def DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
