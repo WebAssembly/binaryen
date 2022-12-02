@@ -185,31 +185,8 @@ struct TypeMerging : public Pass {
         mapTypes(merges);
 
         // Update the internals of types (struct fields, signatures, etc.) to
-        // refer to the merged types. First, compute signatures.
-if (0) {        computeNewSignatures(); }
+        // refer to the merged types.
         update();
-      }
-
-      void computeNewSignatures() {
-        for (auto type : types) {
-          if (!type.isSignature()) {
-            continue;
-          }
-
-          auto getUpdatedTypeList = [&](Type type) {
-            std::vector<Type> vec;
-            for (auto t : type) {
-              vec.push_back(getNewType(t));
-            }
-            return Type(vec);
-          };
-
-          auto oldSig = type.getSignature();
-          Signature sig;
-          sig.params = getUpdatedTypeList(oldSig.params);
-          sig.results = getUpdatedTypeList(oldSig.results);
-          newSignatures[type] = sig;
-        }
       }
 
       Type getNewType(Type type) {
@@ -222,8 +199,6 @@ if (0) {        computeNewSignatures(); }
           return getTempType(Type(iter->second, type.getNullability()));
         }
         return getTempType(type);
-
-
       }
 
       void modifyStruct(HeapType oldType, Struct& struct_) override {
@@ -238,7 +213,6 @@ if (0) {        computeNewSignatures(); }
         array.element.type = getNewType(oldType.getArray().element.type);
       }
       void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-
         auto getUpdatedTypeList = [&](Type type) {
           std::vector<Type> vec;
           for (auto t : type) {
