@@ -679,8 +679,7 @@ struct TypeBuilder {
       builder.setHeapType(index, array);
       return *this;
     }
-    Entry& subTypeOf(Entry other) {
-      assert(&builder == &other.builder);
+    Entry& subTypeOf(HeapType other) {
       builder.setSubType(index, other);
       return *this;
     }
