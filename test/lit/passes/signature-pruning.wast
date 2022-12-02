@@ -735,8 +735,7 @@
   )
 )
 
-;; As above, but the values are now ref.nulls. All nulls compare equal, so we
-;; can still optimize even though the types differ.
+;; As above, but the values are now ref.nulls.
 (module
   ;; CHECK:      (type $sig-foo (func))
   (type $sig-foo (func_subtype (param anyref) func))
@@ -762,8 +761,8 @@
   ;; CHECK-NEXT: )
   (func $foo (type $sig-foo) (param $anyref anyref)
     (drop (local.get $anyref))
-    (call $foo (ref.null any))
-    (call $foo (ref.null data))
+    (call $foo (ref.null none))
+    (call $foo (ref.null none))
   )
 
   ;; CHECK:      (func $bar (type $sig-bar) (param $anyref anyref)
@@ -783,7 +782,7 @@
     (drop (local.get $anyref))
     ;; Mixing a null with something else prevents optimization, of course.
     (call $bar (i31.new (i32.const 0)))
-    (call $bar (ref.null data))
+    (call $bar (ref.null none))
   )
 )
 
@@ -791,7 +790,7 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $A (struct ))
-  (type $A (struct_subtype data))
+  (type $A (struct))
   ;; CHECK:      (func $0 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 f32)
   ;; CHECK-NEXT:  (ref.cast_static $A

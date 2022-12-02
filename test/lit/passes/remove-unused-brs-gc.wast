@@ -6,50 +6,50 @@
  ;; CHECK:      (type $struct (struct ))
  (type $struct (struct ))
 
- ;; CHECK:      (func $br_on_non_data-1 (type $none_=>_none)
+ ;; CHECK:      (func $br_on_non_i31-1 (type $none_=>_none)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result i31ref)
+ ;; CHECK-NEXT:   (block $any (result (ref null $struct))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br $any
- ;; CHECK-NEXT:      (i31.new
- ;; CHECK-NEXT:       (i32.const 0)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (struct.new_default $struct)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_non_data-1
+ (func $br_on_non_i31-1
   (drop
    (block $any (result anyref)
     (drop
-     ;; An i31 is not data, and so we should branch.
-     (br_on_non_data $any
-      (i31.new (i32.const 0))
+     ;; An struct is not an i31, and so we should branch.
+     (br_on_non_i31 $any
+      (struct.new $struct)
      )
     )
     (ref.null any)
    )
   )
  )
- ;; CHECK:      (func $br_on_non_data-2 (type $ref|data|_=>_none) (param $data (ref data))
+ ;; CHECK:      (func $br_on_non_i31-2 (type $none_=>_none)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result nullref)
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $data)
+ ;; CHECK-NEXT:     (i31.new
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_non_data-2 (param $data (ref data))
+ (func $br_on_non_i31-2
   (drop
    (block $any (result anyref)
     (drop
-     ;; Data is provided here, and so we will not branch.
-     (br_on_non_data $any
-      (local.get $data)
+     ;; An i31 is provided here, and so we will not branch.
+     (br_on_non_i31 $any
+      (i31.new (i32.const 0))
      )
     )
     (ref.null any)
@@ -68,7 +68,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on-if (param $0 (ref data))
+ (func $br_on-if (param $0 (ref struct))
   (block $label
    (drop
     ;; This br is never taken, as the input is non-nullable, so we can remove
@@ -78,7 +78,7 @@
     (br_on_null $label
      ;; This if can also be turned into a select, separately from the above
      ;; (that is not specifically intended to be tested here).
-     (if (result (ref data))
+     (if (result (ref struct))
       (i32.const 0)
       (local.get $0)
       (local.get $0)
@@ -88,25 +88,27 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on (type $none_=>_dataref) (result dataref)
- ;; CHECK-NEXT:  (block $label$1 (result (ref $struct))
+ ;; CHECK:      (func $nested_br_on (type $none_=>_i31ref) (result i31ref)
+ ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
- ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:     (i31.new
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $nested_br_on (result dataref)
-  (block $label$1 (result dataref)
+ (func $nested_br_on (result i31ref)
+  (block $label$1 (result i31ref)
    (drop
-    ;; The inner br_on_data will become a direct br since the type proves it
+    ;; The inner br_on_i31 will become a direct br since the type proves it
     ;; is in fact data. That then becomes unreachable, and the parent must
     ;; handle that properly (do nothing without hitting an assertion).
-    (br_on_data $label$1
-     (br_on_data $label$1
-      (struct.new_default $struct)
+    (br_on_i31 $label$1
+     (br_on_i31 $label$1
+      (i31.new (i32.const 0))
      )
     )
    )

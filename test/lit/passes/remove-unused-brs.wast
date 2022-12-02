@@ -6,9 +6,11 @@
 (module
   ;; Regression test in which we need to calculate a proper LUB.
   ;; CHECK:      (func $selectify-fresh-lub (type $i32_=>_anyref) (param $x i32) (result anyref)
-  ;; CHECK-NEXT:  (select (result nullref)
+  ;; CHECK-NEXT:  (select (result i31ref)
   ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -16,10 +18,10 @@
     (if
       (local.get $x)
       (return
-        (ref.null i31)
+        (ref.null none)
       )
       (return
-        (ref.null data)
+        (i31.new (i32.const 0))
       )
     )
   )

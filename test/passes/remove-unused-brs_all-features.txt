@@ -83,26 +83,6 @@
    (i32.const 4)
   )
   (drop
-   (block $data (result (ref $vector))
-    (drop
-     (br $data
-      (array.new_default $vector
-       (i32.const 1)
-      )
-     )
-    )
-    (call $log
-     (i32.const 5)
-    )
-    (array.new_default $vector
-     (i32.const 2)
-    )
-   )
-  )
-  (call $log
-   (i32.const 6)
-  )
-  (drop
    (block $i31 (result (ref i31))
     (drop
      (br $i31
@@ -112,7 +92,7 @@
      )
     )
     (call $log
-     (i32.const 7)
+     (i32.const 5)
     )
     (i31.new
      (i32.const 1337)
@@ -120,7 +100,7 @@
    )
   )
   (call $log
-   (i32.const 8)
+   (i32.const 6)
   )
   (drop
    (block $non-null (result (ref $ref|func|_=>_none))
@@ -128,31 +108,13 @@
      (ref.func $br_on-to-br)
     )
     (call $log
-     (i32.const 9)
+     (i32.const 7)
     )
     (ref.func $br_on-to-br)
    )
   )
  )
  (func $br_on-to-flow (type $none_=>_none)
-  (drop
-   (block $data (result nullref)
-    (drop
-     (ref.func $br_on-to-flow)
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $datab (result nullref)
-    (drop
-     (i31.new
-      (i32.const 1337)
-     )
-    )
-    (ref.null none)
-   )
-  )
   (drop
    (block $func (result nullfuncref)
     (drop

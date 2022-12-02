@@ -8,7 +8,6 @@
 ;; testcases.
 
 (module
-  ;; CHECK:      (type ${} (struct ))
   (type ${} (struct_subtype data))
 
   (type ${i32} (struct_subtype (field i32) data))
@@ -89,7 +88,7 @@
     )
   )
 
-  ;; CHECK:      (func $locals-with-multiple-assignments (type $dataref_=>_none) (param $data dataref)
+  ;; CHECK:      (func $locals-with-multiple-assignments (type $dataref_=>_none) (param $struct dataref)
   ;; CHECK-NEXT:  (local $x eqref)
   ;; CHECK-NEXT:  (local $y (ref i31))
   ;; CHECK-NEXT:  (local $z dataref)
@@ -100,7 +99,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (i31.new
@@ -113,10 +112,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $w
   ;; CHECK-NEXT:   (ref.func $i32)
@@ -125,7 +124,7 @@
   ;; CHECK-NEXT:   (ref.func $i64)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $locals-with-multiple-assignments (param $data (ref null data))
+  (func $locals-with-multiple-assignments (param $struct (ref null struct))
     (local $x anyref)
     (local $y anyref)
     (local $z anyref)
@@ -135,7 +134,7 @@
       (i31.new (i32.const 0))
     )
     (local.set $x
-      (local.get $data)
+      (local.get $struct)
     )
     ;; y and z are assigned the same more specific type twice
     (local.set $y
@@ -145,10 +144,10 @@
       (i31.new (i32.const 1))
     )
     (local.set $z
-      (local.get $data)
+      (local.get $struct)
     )
     (local.set $z
-      (local.get $data)
+      (local.get $struct)
     )
     ;; w is assigned two different types *without* a new LUB heap type possible,
     ;; as it already had the optimal LUB heap type (but it can become non-
@@ -359,49 +358,6 @@
       (ref.null func)
     )
     (unreachable)
-  )
-
-  ;; CHECK:      (func $update-nulls (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $x (ref null ${}))
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (struct.new_default ${})
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $update-nulls
-    (local $x anyref)
-    (local.set $x (ref.null any))
-    (local.set $x (ref.null eq))
-    ;; All the nulls can be changed into other nulls here, for the new LUB,
-    ;; which will be ${}
-    (local.set $x (struct.new ${}))
-    (local.set $x (ref.null data))
-    ;; Note that this func null is even of a type that is incompatible with the
-    ;; new lub (array vs struct). Still, we can just update it along with the
-    ;; others.
-    (local.set $x (ref.null $array))
-    ;; This null is equal to the LUB we'll find, and will not change.
-    (local.set $x (ref.null ${}))
-    ;; This null is more specific than the LUB we'll find, and will not change,
-    ;; as there is no point to making something less specific in type.
-    (local.set $x (ref.null ${i32}))
   )
 
   ;; CHECK:      (func $become-non-nullable (type $none_=>_none)

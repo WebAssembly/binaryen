@@ -16,8 +16,8 @@
 
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
- ;; CHECK:      (type $data_=>_none (func (param (ref data))))
- (type $data_=>_none (func (param (ref data))))
+ ;; CHECK:      (type $struct_=>_none (func (param (ref data))))
+ (type $struct_=>_none (func (param (ref struct))))
 
  ;; CHECK:      (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none (func (param i32 i32 i32 (ref $i32_i32_=>_none))))
 
@@ -124,7 +124,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-non-nullable (type $data_=>_none) (param $x (ref data))
+ ;; CHECK:      (func $fallthrough-non-nullable (type $struct_=>_none) (param $x (ref data))
  ;; CHECK-NEXT:  (local $1 dataref)
  ;; CHECK-NEXT:  (call $fallthrough-non-nullable
  ;; CHECK-NEXT:   (block (result (ref data))
@@ -132,7 +132,7 @@
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block (result (ref $data_=>_none))
+ ;; CHECK-NEXT:     (block (result (ref $struct_=>_none))
  ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:      (ref.func $fallthrough-non-nullable)
  ;; CHECK-NEXT:     )
@@ -143,14 +143,14 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $fallthrough-non-nullable (param $x (ref data))
+ (func $fallthrough-non-nullable (param $x (ref struct))
   ;; A fallthrough appears here, and in addition the last operand is non-
   ;; nullable, which means we must be careful when we create a temp local for
   ;; it: the local should be nullable, and gets of it should use a
   ;; ref.as_non_null so that we validate.
-  (call_ref $data_=>_none
+  (call_ref $struct_=>_none
    (local.get $x)
-   (block (result (ref $data_=>_none))
+   (block (result (ref $struct_=>_none))
     (nop)
     (ref.func $fallthrough-non-nullable)
    )

@@ -9,10 +9,10 @@
 
   ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
-
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
 
@@ -1178,12 +1178,9 @@
 
   ;; CHECK:      (func $call-multi-if (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 anyref)
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 anyref)
-  ;; CHECK-NEXT:  (local $3 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$multi-if (result anyref)
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1192,19 +1189,17 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block $__inlined_func$byn-split-outlined-B$multi-if
-  ;; CHECK-NEXT:        (local.set $2
-  ;; CHECK-NEXT:         (local.get $0)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (ref.is_func
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_0
-  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       (loop $x
+  ;; CHECK-NEXT:        (call $import)
+  ;; CHECK-NEXT:        (br_if $x
+  ;; CHECK-NEXT:         (global.get $glob)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $0)
@@ -1212,76 +1207,11 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if0 (result anyref)
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result anyref)
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_null
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block $__inlined_func$byn-split-outlined-B$multi-if0
-  ;; CHECK-NEXT:        (local.set $3
-  ;; CHECK-NEXT:         (local.get $1)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_func
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_0
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-multi-if
-    (drop (call $multi-if (ref.null any)))
-    (drop (call $multi-if (ref.null data)))
+    (drop (call $multi-if (ref.null none)))
   )
 
-  ;; CHECK:      (func $too-many-ifs (type $anyref_=>_anyref) (param $x anyref) (result anyref)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $x)
-  ;; CHECK-NEXT: )
   (func $too-many-ifs (param $x anyref) (result anyref)
     ;; 5 ifs, which is too many.
     (if
@@ -1318,20 +1248,52 @@
   )
 
   ;; CHECK:      (func $call-too-many-ifs (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $too-many-ifs
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $too-many-ifs
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$too-many-ifs (result anyref)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-too-many-ifs
-    (drop (call $too-many-ifs (ref.null any)))
-    (drop (call $too-many-ifs (ref.null data)))
+    (drop (call $too-many-ifs (ref.null none)))
   )
 )
 
@@ -1401,15 +1363,6 @@
 ;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (type $anyref_=>_none) (param $x anyref)
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $byn-split-outlined-B$multi-if_0 (type $anyref_=>_none) (param $x anyref)
-;; CHECK-NEXT:  (loop $x
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br_if $x
-;; CHECK-NEXT:    (global.get $glob)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
   ;; CHECK:      (type $none_=>_none (func))
