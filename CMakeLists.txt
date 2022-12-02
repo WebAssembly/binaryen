@@ -209,6 +209,9 @@ if(MSVC)
   # Don't warn about using "strdup" as a reserved name.
   add_compile_flag("/D_CRT_NONSTDC_NO_DEPRECATE")
 
+  # We depend on NaN bits not changing unexpectedly in the parser.
+  add_compile_flag("/fp:precise")
+
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
