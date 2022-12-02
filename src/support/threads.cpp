@@ -216,8 +216,7 @@ void ThreadPool::notifyThreadIsReady() {
 
 void ThreadPool::resetThreadsAreReady() {
   DEBUG_POOL("reset threads are ready\n";)
-  auto old = ready.exchange(0);
-  WASM_UNUSED(old);
+  [[maybe_unused]] auto old = ready.exchange(0);
   assert(old == threads.size());
 }
 

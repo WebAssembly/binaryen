@@ -22,6 +22,7 @@
 #define wasm_support_threads_h
 
 #include <atomic>
+#include <cassert>
 #include <condition_variable>
 #include <functional>
 #include <memory>
@@ -125,8 +126,7 @@ public:
   OnlyOnce() { created.store(0); }
 
   void verify() {
-    auto before = created.fetch_add(1);
-    WASM_UNUSED(before);
+    [[maybe_unused]] auto before = created.fetch_add(1);
     assert(before == 0);
   }
 };

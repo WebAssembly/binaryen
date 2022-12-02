@@ -92,8 +92,7 @@ inline bool ensureLimitedSegments(Module& module) {
   // we'll merge constant segments if we must
   if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
     numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
-    auto num = numConstant + numDynamic;
-    WASM_UNUSED(num);
+    [[maybe_unused]] auto num = numConstant + numDynamic;
     assert(num == WebLimitations::MaxDataSegments - 1);
   }
 

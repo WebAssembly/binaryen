@@ -203,8 +203,7 @@ int main(int argc, char** argv) {
 
     // Emit the parameters (all 0s, like the other wrappers).
     bool first = true;
-    for (const auto& param : func->getParams()) {
-      WASM_UNUSED(param);
+    for ([[maybe_unused]] const auto& param : func->getParams()) {
       if (!first) {
         ret += ", ";
       }

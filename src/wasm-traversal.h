@@ -352,8 +352,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
 #define DELEGATE_START(id)                                                     \
   self->pushTask(SubType::doVisit##id, currp);                                 \
-  auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast);
+  [[maybe_unused]] auto* cast = curr->cast<id>();
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 

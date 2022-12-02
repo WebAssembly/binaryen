@@ -221,6 +221,8 @@ struct LexFloatCtx : LexCtx {
   std::optional<LexFloatResult> lexed() {
     const double posNan = std::copysign(NAN, 1.0);
     const double negNan = std::copysign(NAN, -1.0);
+    assert(!std::signbit(posNan) && "expected positive NaN to be positive");
+    assert(std::signbit(negNan) && "expected negative NaN to be negative");
     auto basic = LexCtx::lexed();
     if (!basic) {
       return {};
