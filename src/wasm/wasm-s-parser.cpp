@@ -1151,18 +1151,18 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
                                           bool prefix) {
   if (str.size() >= 3) {
     if (str[0] == 'i') {
-      if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
+      if (str[1] == '3' && str[2] == '2' && (prefix || str.size() == 3)) {
         return Type::i32;
       }
-      if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
+      if (str[1] == '6' && str[2] == '4' && (prefix || str.size() == 3)) {
         return Type::i64;
       }
     }
     if (str[0] == 'f') {
-      if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) {
+      if (str[1] == '3' && str[2] == '2' && (prefix || str.size() == 3)) {
         return Type::f32;
       }
-      if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) {
+      if (str[1] == '6' && str[2] == '4' && (prefix || str.size() == 3)) {
         return Type::f64;
       }
     }
@@ -1170,7 +1170,7 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.size() >= 4) {
     if (str[0] == 'v') {
       if (str[1] == '1' && str[2] == '2' && str[3] == '8' &&
-          (prefix || str[4] == 0)) {
+          (prefix || str.size() == 4)) {
         return Type::v128;
       }
     }
