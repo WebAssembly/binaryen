@@ -163,10 +163,8 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 
 // Create cast versions of it for later operations.
 #define DELEGATE_START(id)                                                     \
-  auto* castLeft = left->cast<id>();                                           \
-  WASM_UNUSED(castLeft);                                                       \
-  auto* castRight = right->cast<id>();                                         \
-  WASM_UNUSED(castRight);
+  [[maybe_unused]] auto* castLeft = left->cast<id>();                          \
+  [[maybe_unused]] auto* castRight = right->cast<id>();
 
 // Handle each type of field, comparing it appropriately.
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
@@ -304,9 +302,7 @@ struct Hasher {
 #define DELEGATE_ID curr->_id
 
 // Create cast versions of it for later operations.
-#define DELEGATE_START(id)                                                     \
-  auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast);
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
 
 // Handle each type of field, comparing it appropriately.
 #define DELEGATE_GET_FIELD(id, field) cast->field

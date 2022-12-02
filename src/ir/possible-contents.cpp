@@ -1765,8 +1765,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // This is indeed one of the special cases where it is the child of a
     // parent, and we need to do some special handling because of that child-
     // parent connection.
-    auto* child = exprLoc->expr;
-    WASM_UNUSED(child);
+    [[maybe_unused]] auto* child = exprLoc->expr;
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
@@ -2107,11 +2106,9 @@ void Flower::dump(Location location) {
   } else if (auto* loc = std::get_if<BreakTargetLocation>(&location)) {
     std::cout << "  branchloc " << loc->func->name << " : " << loc->target
               << " tupleIndex " << loc->tupleIndex << '\n';
-  } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
-    WASM_UNUSED(loc);
+  } else if (std::get_if<SignatureParamLocation>(&location)) {
     std::cout << "  sigparamloc " << '\n';
-  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
-    WASM_UNUSED(loc);
+  } else if (std::get_if<SignatureResultLocation>(&location)) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';

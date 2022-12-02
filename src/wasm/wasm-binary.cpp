@@ -3176,8 +3176,7 @@ void WasmBinaryBuilder::readElementSegments() {
     if (isDeclarative) {
       // Declared segments are needed in wasm text and binary, but not in
       // Binaryen IR; skip over the segment
-      auto type = getU32LEB();
-      WASM_UNUSED(type);
+      [[maybe_unused]] auto type = getU32LEB();
       auto num = getU32LEB();
       for (Index i = 0; i < num; i++) {
         getU32LEB();
