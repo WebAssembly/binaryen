@@ -236,9 +236,8 @@ void CoalesceLocals::calculateInterferences() {
       auto index = action.index;
       if (action.isGet()) {
         if (endsLiveRange[i]) {
-          bool erased = live.erase(action.index);
+          [[maybe_unused]] bool erased = live.erase(action.index);
           assert(erased);
-          WASM_UNUSED(erased);
         }
         continue;
       }
