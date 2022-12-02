@@ -126,6 +126,11 @@ struct TypeSSA : public Pass {
   }
 
   void modifyNews() {
+    auto num = structNews.size();
+    if (num == 0) {
+      return;
+    }
+
     // We collected all the instructions we want to create new types for. Now we
     // can create those new types, which we do all at once. It is important to
     // do so in the isorecursive type system as if we create a new singleton rec
@@ -141,18 +146,18 @@ struct TypeSSA : public Pass {
     // useful in the closed-world scenario.
 
     auto& structNews = newsToModify.structNews;
-    TypeBuilder builder(structNews.size());
-    for (Index i = 0; i < structNews.size(); i++) {
+    TypeBuilder builder(num);
+    for (Index i = 0; i < num; i++) {
       auto* curr = structNews[i];
       auto oldType = curr->type.getHeapType();
       builder[i] = oldType.getStruct();
       builder[i].subTypeOf(oldType);
     }
-    builder.createRecGroup(0, structNews.size());
+    builder.createRecGroup(0, num);
     auto result = builder.build();
     assert(!result.getError());
     auto newTypes = *result;
-    assert(newTypes.size() == structNews.size());
+    assert(newTypes.size() == num);
 
     // The new types must not overlap with any existing ones. If they do, then
     // it would be unsafe to apply this optimization (if casts exist to the
@@ -161,13 +166,20 @@ struct TypeSSA : public Pass {
     // could make a rec group larger than any existing one, or with an initial
     // member that is "random"), but hopefully this is rare, so just error for
     // now.
+    //
+    // Note that it is enough to check one of the types: either the entire rec
+    // group gets merged, so they are all merged, or not.
     std::vector<HeapType> typesVec = ModuleUtils::collectHeapTypes(*module);
     std::unordered_set<HeapType> typesSet(typesVec.begin(), typesVec.end());
-    for (auto newType : newTypes) {
-      if (typesSet.count(newType)) {
-        Fatal() << "Rec group collision in TypeSSA! Please file a bug";
-      }
+    if (typesSet.count(newTypes[0])) {
+      Fatal() << "Rec group collision in TypeSSA! Please file a bug";
     }
+#ifndef NDEBUG
+    // Verify the above assumption, just to be safe.
+    for (auto newType : newTypes) {
+      asset(!typesSet.count(newType));
+    }
+#endif
 
     // Success: we can apply the new types.
 
@@ -179,7 +191,7 @@ struct TypeSSA : public Pass {
       existingTypeNames.insert(info.name);
     }
 
-    for (Index i = 0; i < structNews.size(); i++) {
+    for (Index i = 0; i < num; i++) {
       auto* curr = structNews[i];
       auto oldType = curr->type.getHeapType();
       auto newType = newTypes[i];
