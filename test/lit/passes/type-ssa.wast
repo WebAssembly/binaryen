@@ -9,7 +9,7 @@
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   ;; NOMNL:      (type $struct (struct (field i32)))
-  (type $struct (struct_subtype (field i32) data))
+  (type $struct (struct_subtype (field i32) array))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -112,13 +112,13 @@
 
 ;; Some of these are uninteresting and should not get a new type.
 (module
-  ;; CHECK:      (type $anyref_dataref_=>_none (func (param anyref dataref)))
+  ;; CHECK:      (type $anyref_arrayref_=>_none (func (param anyref arrayref)))
 
   ;; CHECK:      (type $struct (struct (field anyref)))
-  ;; NOMNL:      (type $anyref_dataref_=>_none (func (param anyref dataref)))
+  ;; NOMNL:      (type $anyref_arrayref_=>_none (func (param anyref arrayref)))
 
   ;; NOMNL:      (type $struct (struct (field anyref)))
-  (type $struct (struct_subtype (field (ref null any)) data))
+  (type $struct (struct_subtype (field (ref null any)) array))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct$1 (struct_subtype (field anyref) $struct))
@@ -127,7 +127,7 @@
 
   ;; CHECK:       (type $struct$3 (struct_subtype (field anyref) $struct))
 
-  ;; CHECK:      (func $foo (type $anyref_dataref_=>_none) (param $any anyref) (param $data dataref)
+  ;; CHECK:      (func $foo (type $anyref_arrayref_=>_none) (param $any anyref) (param $array arrayref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct$1)
   ;; CHECK-NEXT:  )
@@ -143,7 +143,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct$3
-  ;; CHECK-NEXT:    (local.get $data)
+  ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -161,7 +161,7 @@
 
   ;; NOMNL:      (type $struct$3 (struct_subtype (field anyref) $struct))
 
-  ;; NOMNL:      (func $foo (type $anyref_dataref_=>_none) (param $any anyref) (param $data dataref)
+  ;; NOMNL:      (func $foo (type $anyref_arrayref_=>_none) (param $any anyref) (param $array arrayref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.new_default $struct$1)
   ;; NOMNL-NEXT:  )
@@ -177,7 +177,7 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.new $struct$3
-  ;; NOMNL-NEXT:    (local.get $data)
+  ;; NOMNL-NEXT:    (local.get $array)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -189,7 +189,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $foo (param $any (ref null any)) (param $data (ref null data))
+  (func $foo (param $any (ref null any)) (param $array (ref null array))
     ;; A null is interesting.
     (drop
       (struct.new_default $struct)
@@ -208,7 +208,7 @@
     ;; But a more refined type piques our interest.
     (drop
       (struct.new $struct
-        (local.get $data)
+        (local.get $array)
       )
     )
     ;; An unreachable is boring.
