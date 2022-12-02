@@ -227,12 +227,13 @@ struct LexFloatCtx : LexCtx {
     if (!basic) {
       return {};
     }
-    if (nanPayload) {
-      double nan = basic->span[0] == '-' ? negNan : posNan;
-      return LexFloatResult{*basic, nanPayload, nan};
+    // strtod does not return NaNs with the expected signs on all platforms.
+    // TODO: use starts_with once we have C++20.
+    if (basic->span.substr(0, 3) == "nan"sv ||
+        basic->span.substr(0, 4) == "+nan"sv) {
+      return LexFloatResult{*basic, nanPayload, posNan};
     }
-    // strtod does not return -NAN for "-nan" on all platforms.
-    if (basic->span == "-nan"sv) {
+    if (basic->span.substr(0, 4) == "-nan"sv) {
       return LexFloatResult{*basic, nanPayload, negNan};
     }
     // Do not try to implement fully general and precise float parsing
