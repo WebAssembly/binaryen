@@ -226,8 +226,10 @@ struct LexFloatCtx : LexCtx {
       return {};
     }
     if (nanPayload) {
-      double nan = basic->span[0] == '-' ? negNan : posNan;
-      return LexFloatResult{*basic, nanPayload, nan};
+      if (basic->span[0] == '-') {
+        return LexFloatResult{*basic, nanPayload, negNan};
+      }
+      return LexFloatResult{*basic, nanPayload, posNan};
     }
     // strtod does not return -NAN for "-nan" on all platforms.
     if (basic->span == "-nan"sv) {
