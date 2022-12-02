@@ -180,14 +180,13 @@ struct TypeMerging : public Pass {
                            const std::vector<HeapType>& types)
         : GlobalTypeRewriter(wasm), merges(merges), types(types) {
 
-        computeNewSignatures();
-
         // Map the types of expressions (curr->type, etc.) to their merged
         // types.
         mapTypes(merges);
 
-        // Update the internals of types (struct fields, etc.) to refer to the
-        // merged types.
+        // Update the internals of types (struct fields, signatures, etc.) to
+        // refer to the merged types. First, compute signatures.
+if (0) {        computeNewSignatures(); }
         update();
       }
 
@@ -223,6 +222,8 @@ struct TypeMerging : public Pass {
           return getTempType(Type(iter->second, type.getNullability()));
         }
         return getTempType(type);
+
+
       }
 
       void modifyStruct(HeapType oldType, Struct& struct_) override {
@@ -237,11 +238,18 @@ struct TypeMerging : public Pass {
         array.element.type = getNewType(oldType.getArray().element.type);
       }
       void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-        auto iter = newSignatures.find(oldSignatureType);
-        if (iter != newSignatures.end()) {
-          sig.params = getTempType(iter->second.params);
-          sig.results = getTempType(iter->second.results);
-        }
+
+        auto getUpdatedTypeList = [&](Type type) {
+          std::vector<Type> vec;
+          for (auto t : type) {
+            vec.push_back(getNewType(t));
+          }
+          return getTempTupleType(vec);
+        };
+
+        auto oldSig = oldSignatureType.getSignature();
+        sig.params = getUpdatedTypeList(oldSig.params);
+        sig.results = getUpdatedTypeList(oldSig.results);
       }
     } rewriter(*module, merges, types);
   }

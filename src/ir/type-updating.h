@@ -360,6 +360,7 @@ public:
   // so that they can use a proper temp type of the TypeBuilder while modifying
   // things.
   Type getTempType(Type type);
+  Type getTempTupleType(Tuple tuple);
 
   using SignatureUpdates = std::unordered_map<HeapType, Signature>;
 
