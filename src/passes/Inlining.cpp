@@ -344,8 +344,9 @@ static Expression* doInlining(Module* module,
       BranchUtils::BranchSeeker::has(call, block->name)) {
     auto fromNames = BranchUtils::getBranchTargets(from->body);
     auto callNames = BranchUtils::BranchAccumulator::get(call);
-    block->name = Names::getValidName(
-      block->name, [&](Name test) { return !fromNames.count(test) && !callNames.count(test); });
+    block->name = Names::getValidName(block->name, [&](Name test) {
+      return !fromNames.count(test) && !callNames.count(test);
+    });
   }
   if (call->isReturn) {
     if (retType.isConcrete()) {
