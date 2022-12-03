@@ -328,8 +328,9 @@ static Expression* doInlining(Module* module,
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.toString());
   // In the unlikely event that the function already has a branch target with
-  // this name, fix that up, as otherwise we can get unexpected capture of our
-  // branches, that is, we could end up with this:
+  // this name, or one of the call's parameters does, then fix that up, as
+  // otherwise we can get unexpected capture of our branches, that is, we could
+  // end up with this:
   //
   //  (block $X             ;; a new block we add as the target of returns
   //    (from's contents
@@ -339,10 +340,15 @@ static Expression* doInlining(Module* module,
   // Here the br wants to go to the very outermost block, to represent a
   // return from the inlined function's code, but it ends up captured by an
   // internal block.
-  if (BranchUtils::hasBranchTarget(from->body, block->name)) {
-    auto existingNames = BranchUtils::getBranchTargets(from->body);
+  if (BranchUtils::hasBranchTarget(from->body, block->name) ||
+      BranchUtils::BranchSeeker::has(call, block->name)) {
+    auto fromNames = BranchUtils::getBranchTargets(from->body);
+    BranchUtils::BranchAccumulator callBranches;
+    Expression* callExpression = call;
+    callBranches.walk(callExpression);
+    auto& callNames = callBranches.branches;
     block->name = Names::getValidName(
-      block->name, [&](Name test) { return !existingNames.count(test); });
+      block->name, [&](Name test) { return !fromNames.count(test) && !callNames.count(test); });
   }
   if (call->isReturn) {
     if (retType.isConcrete()) {

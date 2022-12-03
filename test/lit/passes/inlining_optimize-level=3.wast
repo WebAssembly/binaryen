@@ -451,3 +451,47 @@
   (call $bar)
  )
 )
+
+;; Similar to the above, but now the name collision happens due to a break in
+;; one of the call's params. We must emit a different, non-colliding name.
+(module
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (func $1
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (block $__inlined_func$0_0
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (block $__inlined_func$0_0_0 (result i32)
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (block (result i32)
+ ;; CHECK-NEXT:        (br_if $__inlined_func$0_0
+ ;; CHECK-NEXT:         (i32.const 10)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $1
+  (block $__inlined_func$0_0
+   (drop
+    (call $0_0
+     (block (result i32)
+      (br_if $__inlined_func$0_0
+       (i32.const 10)
+      )
+      (i32.const 0)
+     )
+    )
+   )
+  )
+ )
+ (func $0_0 (param $0 i32) (result i32)
+  (unreachable)
+ )
+)
