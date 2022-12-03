@@ -170,8 +170,7 @@ struct TypeMerging : public Pass {
       std::unordered_map<HeapType, Signature> newSignatures;
 
     public:
-      TypeInternalsUpdater(Module& wasm,
-                           const TypeUpdates& merges)
+      TypeInternalsUpdater(Module& wasm, const TypeUpdates& merges)
         : GlobalTypeRewriter(wasm), merges(merges) {
 
         // Map the types of expressions (curr->type, etc.) to their merged
