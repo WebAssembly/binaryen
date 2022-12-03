@@ -327,6 +327,12 @@ struct BranchAccumulator
     auto selfBranches = getUniqueTargets(curr);
     branches.insert(selfBranches.begin(), selfBranches.end());
   }
+
+  static NameSet get(Expression* tree) {
+    BranchAccumulator branches;
+    branches.walk(tree);
+    return branches.branches;
+  }
 };
 
 // A helper structure for the common case of post-walking some IR while querying

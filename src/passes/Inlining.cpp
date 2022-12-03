@@ -343,10 +343,7 @@ static Expression* doInlining(Module* module,
   if (BranchUtils::hasBranchTarget(from->body, block->name) ||
       BranchUtils::BranchSeeker::has(call, block->name)) {
     auto fromNames = BranchUtils::getBranchTargets(from->body);
-    BranchUtils::BranchAccumulator callBranches;
-    Expression* callExpression = call;
-    callBranches.walk(callExpression);
-    auto& callNames = callBranches.branches;
+    auto callNames = BranchUtils::BranchAccumulator::get(call);
     block->name = Names::getValidName(
       block->name, [&](Name test) { return !fromNames.count(test) && !callNames.count(test); });
   }
