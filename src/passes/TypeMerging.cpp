@@ -219,7 +219,7 @@ struct TypeMerging : public Pass {
         sig.params = getUpdatedTypeList(oldSig.params);
         sig.results = getUpdatedTypeList(oldSig.results);
       }
-    } rewriter(*module, merges, types);
+    } rewriter(*module, merges);
   }
 };
 
