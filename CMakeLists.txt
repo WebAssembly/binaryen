@@ -318,7 +318,7 @@ if(EMSCRIPTEN)
   # make the tools immediately usable on Node.js
   add_link_flag("-sNODERAWFS")
   # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-  # add_nondebug_compile_flag("-flto")
+  add_nondebug_compile_flag("-flto")
 endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
