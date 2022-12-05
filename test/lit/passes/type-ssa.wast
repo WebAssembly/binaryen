@@ -229,12 +229,35 @@
   ;; NOMNL:      (type $array (array (mut anyref)))
   (type $array (array (mut (ref null any))))
 
+  ;; CHECK:      (type $array-func (array (mut funcref)))
+  ;; NOMNL:      (type $array$1 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $array$2 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $array$3 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $none_=>_none (func))
+
+  ;; NOMNL:      (type $array-func (array (mut funcref)))
+  (type $array-func (array (mut funcref)))
+
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $array$1 (array_subtype (mut anyref) $array))
 
   ;; CHECK:       (type $array$2 (array_subtype (mut anyref) $array))
 
   ;; CHECK:       (type $array$3 (array_subtype (mut anyref) $array))
+
+  ;; CHECK:       (type $array-func$4 (array_subtype (mut funcref) $array-func))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem func $array.new)
+  ;; NOMNL:      (type $array-func$4 (array_subtype (mut funcref) $array-func))
+
+  ;; NOMNL:      (elem func $array.new)
+  (elem func $array.new)
 
   ;; CHECK:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; CHECK-NEXT:  (drop
@@ -261,12 +284,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (type $array$1 (array_subtype (mut anyref) $array))
-
-  ;; NOMNL:      (type $array$2 (array_subtype (mut anyref) $array))
-
-  ;; NOMNL:      (type $array$3 (array_subtype (mut anyref) $array))
-
   ;; NOMNL:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (array.new_default $array$1
@@ -318,6 +335,33 @@
       (array.new $array
         (local.get $null-any)
         (i32.const 5)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.new_seg (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $array-func$4 0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $array.new_seg (type $none_=>_none)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.new_elem $array-func$4 0
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:    (i32.const 3)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $array.new_seg
+    ;; We consider all new_elem to be interesting as we don't look at the elem
+    ;; data yet.
+    (drop
+      (array.new_elem $array-func 0
+        (i32.const 0)
+        (i32.const 3)
       )
     )
   )
