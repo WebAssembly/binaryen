@@ -212,8 +212,6 @@ struct TypeSSA : public Pass {
         existingTypeNames.insert(newName);
       }
     }
-
-    // TODO: arrays
   }
 
   // An interesting *.new, which we think is worth creating a new type for, is

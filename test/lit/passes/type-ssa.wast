@@ -219,3 +219,106 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
+
+  ;; CHECK:      (type $array (array (mut anyref)))
+  ;; NOMNL:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
+
+  ;; NOMNL:      (type $array (array (mut anyref)))
+  (type $array (array (mut (ref null any))))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $array$1 (array_subtype (mut anyref) $array))
+
+  ;; CHECK:       (type $array$2 (array_subtype (mut anyref) $array))
+
+  ;; CHECK:       (type $array$3 (array_subtype (mut anyref) $array))
+
+  ;; CHECK:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_default $array$1
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new $array$2
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new $array$3
+  ;; CHECK-NEXT:    (local.get $refined)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new $array
+  ;; CHECK-NEXT:    (local.get $null-any)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (type $array$1 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $array$2 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $array$3 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.new_default $array$1
+  ;; NOMNL-NEXT:    (i32.const 5)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.new $array$2
+  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:    (i32.const 5)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.new $array$3
+  ;; NOMNL-NEXT:    (local.get $refined)
+  ;; NOMNL-NEXT:    (i32.const 5)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.new $array
+  ;; NOMNL-NEXT:    (local.get $null-any)
+  ;; NOMNL-NEXT:    (i32.const 5)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $array.new (param $refined (ref i31)) (param $null-any (ref null any))
+    ;; Default null, an interesting value, so we get a new type.
+    (drop
+      (array.new_default $array
+        (i32.const 5)
+      )
+    )
+    ;; Given null, also interesting.
+    (drop
+      (array.new $array
+        (ref.null none)
+        (i32.const 5)
+      )
+    )
+    ;; More refined type, interesting.
+    (drop
+      (array.new $array
+        (local.get $refined)
+        (i32.const 5)
+      )
+    )
+    ;; Same type as declared - boring, no new type.
+    (drop
+      (array.new $array
+        (local.get $null-any)
+        (i32.const 5)
+      )
+    )
+  )
+)
