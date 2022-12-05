@@ -429,8 +429,8 @@ public:
 
   std::string name;
 
-  virtual PassRunner* getPassRunner() { return runner; }
-  virtual void setPassRunner(PassRunner* runner_) {
+  PassRunner* getPassRunner() { return runner; }
+  void setPassRunner(PassRunner* runner_) {
     assert((!runner || runner == runner_) && "Pass already had a runner");
     runner = runner_;
   }

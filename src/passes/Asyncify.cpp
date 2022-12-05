@@ -860,9 +860,13 @@ struct InstrumentedProxy : public Pass {
   bool isFunctionParallel() override { return pass->isFunctionParallel(); }
 
   void runOnFunction(Module* module, Function* func) override {
-    if (analyzer->needsInstrumentation(func)) {
-      pass->runOnFunction(module, func);
+    if (!analyzer->needsInstrumentation(func)) {
+      return;
     }
+    if (pass->getPassRunner() == nullptr) {
+      pass->setPassRunner(getPassRunner());
+    }
+    pass->runOnFunction(module, func);
   }
 
   bool modifiesBinaryenIR() override { return pass->modifiesBinaryenIR(); }
@@ -871,11 +875,6 @@ struct InstrumentedProxy : public Pass {
 
   bool requiresNonNullableLocalFixups() override {
     return pass->requiresNonNullableLocalFixups();
-  }
-
-  PassRunner* getPassRunner() override { return pass->getPassRunner(); }
-  void setPassRunner(PassRunner* runner_) override {
-    pass->setPassRunner(runner_);
   }
 
 private:
