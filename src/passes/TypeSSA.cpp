@@ -257,7 +257,7 @@ struct TypeSSA : public Pass {
 
     auto type = curr->type.getHeapType();
 
-    if (auto* structNew = curr->dynCast<StructNew>(curr)) {
+    if (auto* structNew = curr->dynCast<StructNew>()) {
       if (structNew->isWithDefault()) {
         // This starts with all default values - zeros and nulls - and that
         // might be useful.
@@ -271,24 +271,24 @@ struct TypeSSA : public Pass {
 
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
-        assert(i <= curr->operands.size());
-        if (isInterestingRelevantTo(curr->operands[i], fields[i].type)) {
+        assert(i <= structNew->operands.size());
+        if (isInterestingRelevantTo(structNew->operands[i], fields[i].type)) {
           return true;
         }
       }
-    } else if (auto* arrayNew = curr->dynCast<arrayNew>(curr)) {
+    } else if (auto* arrayNew = curr->dynCast<ArrayNew>()) {
       if (arrayNew->isWithDefault()) {
         return true;
       }
 
       auto element = type.getArray().element;
-      if (isInterestingRelevantTo(curr->init, element.type)) {
+      if (isInterestingRelevantTo(arrayNew->init, element.type)) {
         return true;
       }
-    } else if (curr->is<arrayNewSeg>(curr)) {
+    } else if (curr->is<ArrayNewSeg>()) {
       // TODO: If the element segment is immutable perhaps we could inspect it.
       return true;
-    } else if (auto* arrayInit = curr->dynCast<arrayNewInit>(curr)) {
+    } else if (auto* arrayInit = curr->dynCast<ArrayInit>()) {
       auto element = type.getArray().element;
       for (auto* value : arrayInit->values) {
         if (isInterestingRelevantTo(value, element.type)) {
