@@ -221,15 +221,15 @@
 )
 
 (module
-  ;; CHECK:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
-
   ;; CHECK:      (type $array (array (mut anyref)))
-  ;; NOMNL:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
-
   ;; NOMNL:      (type $array (array (mut anyref)))
   (type $array (array (mut (ref null any))))
 
+  ;; CHECK:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
+
   ;; CHECK:      (type $array-func (array (mut funcref)))
+  ;; NOMNL:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
+
   ;; NOMNL:      (type $array$1 (array_subtype (mut anyref) $array))
 
   ;; NOMNL:      (type $array$2 (array_subtype (mut anyref) $array))
@@ -251,10 +251,18 @@
 
   ;; CHECK:       (type $array-func$4 (array_subtype (mut funcref) $array-func))
 
+  ;; CHECK:       (type $array$5 (array_subtype (mut anyref) $array))
+
+  ;; CHECK:       (type $array$6 (array_subtype (mut anyref) $array))
+
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem func $array.new)
   ;; NOMNL:      (type $array-func$4 (array_subtype (mut funcref) $array-func))
+
+  ;; NOMNL:      (type $array$5 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $array$6 (array_subtype (mut anyref) $array))
 
   ;; NOMNL:      (elem func $array.new)
   (elem func $array.new)
@@ -362,6 +370,81 @@
       (array.new_elem $array-func 0
         (i32.const 0)
         (i32.const 3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.init (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.init_static $array$5
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.init_static $array$6
+  ;; CHECK-NEXT:    (local.get $refined)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.init_static $array
+  ;; CHECK-NEXT:    (local.get $null-any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.init_static $array
+  ;; CHECK-NEXT:    (local.get $refined)
+  ;; CHECK-NEXT:    (local.get $null-any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $array.init (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.init_static $array$5
+  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.init_static $array$6
+  ;; NOMNL-NEXT:    (local.get $refined)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.init_static $array
+  ;; NOMNL-NEXT:    (local.get $null-any)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (array.init_static $array
+  ;; NOMNL-NEXT:    (local.get $refined)
+  ;; NOMNL-NEXT:    (local.get $null-any)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $array.init (param $refined (ref i31)) (param $null-any (ref null any))
+    ;; Null, interesting, so we get a new type.
+    (drop
+      (array.init_static $array
+        (ref.null none)
+      )
+    )
+    ;; More refined type, interesting.
+    (drop
+      (array.init_static $array
+        (local.get $refined)
+      )
+    )
+    ;; Same type as declared - boring, no new type.
+    (drop
+      (array.init_static $array
+        (local.get $null-any)
+      )
+    )
+    ;; Mixture of boring and interesting => boring (since we infer a single type
+    ;; for the entire array).
+    (drop
+      (array.init_static $array
+        (local.get $refined)
+        (local.get $null-any)
       )
     )
   )

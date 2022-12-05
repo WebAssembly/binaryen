@@ -287,12 +287,19 @@ struct TypeSSA : public Pass {
       // TODO: If the element segment is immutable perhaps we could inspect it.
       return true;
     } else if (auto* arrayInit = curr->dynCast<ArrayInit>()) {
+      // All the items must be interesting for us to consider this interesting,
+      // as we only track a single value for all indexes in the array, so one
+      // boring value means it is all boring.
+      //
+      // Note that we consider the empty array to be interesting (though atm no
+      // pass tracks the length - we might add one later though).
       auto element = type.getArray().element;
       for (auto* value : arrayInit->values) {
-        if (isInterestingRelevantTo(value, element.type)) {
-          return true;
+        if (!isInterestingRelevantTo(value, element.type)) {
+          return false;
         }
       }
+      return true;
     } else {
       WASM_UNREACHABLE("unknown new");
     }
