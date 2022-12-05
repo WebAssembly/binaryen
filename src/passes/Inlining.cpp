@@ -328,9 +328,8 @@ static Expression* doInlining(Module* module,
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.toString());
   // In the unlikely event that the function already has a branch target with
-  // this name, or one of the call's parameters does, then fix that up, as
-  // otherwise we can get unexpected capture of our branches, that is, we could
-  // end up with this:
+  // this name, fix that up, as otherwise we can get unexpected capture of our
+  // branches, that is, we could end up with this:
   //
   //  (block $X             ;; a new block we add as the target of returns
   //    (from's contents
@@ -339,7 +338,18 @@ static Expression* doInlining(Module* module,
   //
   // Here the br wants to go to the very outermost block, to represent a
   // return from the inlined function's code, but it ends up captured by an
-  // internal block.
+  // internal block. We also need to be careful of the call's children:
+  //
+  //  (block $X             ;; a new block we add as the target of returns
+  //    (local.set $param
+  //      (call's first parameter
+  //        (br $X)         ;; nested br in call's first parameter
+  //      )
+  //    )
+  //
+  // (In this case we could use a second block and define the named block $X
+  // after the call's parameters, but that adds work for an extremely rare
+  // situation.)
   if (BranchUtils::hasBranchTarget(from->body, block->name) ||
       BranchUtils::BranchSeeker::has(call, block->name)) {
     auto fromNames = BranchUtils::getBranchTargets(from->body);
