@@ -259,13 +259,13 @@ struct TypeSSA : public Pass {
 
     if (auto* structNew = curr->dynCast<StructNew>(curr)) {
       if (structNew->isWithDefault()) {
-        // This starts with all default values - zeros and nulls - and that might
-        // be useful.
+        // This starts with all default values - zeros and nulls - and that
+        // might be useful.
         //
         // (An item whose fields are all bottom types only has a single possible
         // value in each field anyhow, so that is not interesting, but also
-        // unreasonable to occur in practice as other optimizations should handle
-        // it.)
+        // unreasonable to occur in practice as other optimizations should
+        // handle it.)
         return true;
       }
 
