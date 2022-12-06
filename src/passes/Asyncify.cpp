@@ -848,6 +848,54 @@ public:
   }
 };
 
+// Proxy that runs wrapped pass for instrumented functions only
+struct InstrumentedProxy : public Pass {
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<InstrumentedProxy>(analyzer, pass->create());
+  }
+
+  InstrumentedProxy(ModuleAnalyzer* analyzer, std::unique_ptr<Pass> pass)
+    : analyzer(analyzer), pass(std::move(pass)) {}
+
+  bool isFunctionParallel() override { return pass->isFunctionParallel(); }
+
+  void runOnFunction(Module* module, Function* func) override {
+    if (!analyzer->needsInstrumentation(func)) {
+      return;
+    }
+    if (pass->getPassRunner() == nullptr) {
+      pass->setPassRunner(getPassRunner());
+    }
+    pass->runOnFunction(module, func);
+  }
+
+  bool modifiesBinaryenIR() override { return pass->modifiesBinaryenIR(); }
+
+  bool invalidatesDWARF() override { return pass->invalidatesDWARF(); }
+
+  bool requiresNonNullableLocalFixups() override {
+    return pass->requiresNonNullableLocalFixups();
+  }
+
+private:
+  ModuleAnalyzer* analyzer;
+  std::unique_ptr<Pass> pass;
+};
+
+struct InstrumentedPassRunner : public PassRunner {
+  InstrumentedPassRunner(Module* wasm, ModuleAnalyzer* analyzer)
+    : PassRunner(wasm), analyzer(analyzer) {}
+
+protected:
+  void doAdd(std::unique_ptr<Pass> pass) override {
+    PassRunner::doAdd(
+      std::unique_ptr<Pass>(new InstrumentedProxy(analyzer, std::move(pass))));
+  }
+
+private:
+  ModuleAnalyzer* analyzer;
+};
+
 // Instrument control flow, around calls and adding skips for rewinding.
 struct AsyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
@@ -1616,7 +1664,7 @@ struct Asyncify : public Pass {
     // practical to add code around each call, without affecting
     // anything else.
     {
-      PassRunner runner(module);
+      InstrumentedPassRunner runner(module, &analyzer);
       runner.add("flatten");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
@@ -1647,7 +1695,7 @@ struct Asyncify : public Pass {
     // restore those locals). We also and optimize after as well to simplify
     // the code as much as possible.
     {
-      PassRunner runner(module);
+      InstrumentedPassRunner runner(module, &analyzer);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
