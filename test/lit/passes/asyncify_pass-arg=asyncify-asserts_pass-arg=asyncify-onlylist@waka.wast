@@ -3,6 +3,11 @@
 
 ;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-asserts --pass-arg=asyncify-onlylist@waka -S -o - | filecheck %s
 
+;; This test has an only-list, and that list has a non-existent function, so we
+;; do not actually instrument anything. But we should still add the assertions
+;; we add in non-instrumented code, namely asserts that they don't change the
+;; state.
+
 (module
   (memory 1 2)
   ;; CHECK:      (type $f (func))
