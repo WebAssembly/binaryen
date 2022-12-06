@@ -54,7 +54,8 @@ namespace {
 // Most functions do no casts, or perhaps cast |this| and perhaps a few others.
 using ReferredTypes = SmallUnorderedSet<HeapType, 5>;
 
-struct CastFinder : public PostWalker<CastFinder, UnifiedExpressionVisitor<CastFinder>> {
+struct CastFinder
+  : public PostWalker<CastFinder, UnifiedExpressionVisitor<CastFinder>> {
   ReferredTypes referredTypes;
 
   void visitExpression(Expression* curr) {
@@ -64,8 +65,7 @@ struct CastFinder : public PostWalker<CastFinder, UnifiedExpressionVisitor<CastF
 
 #define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
 
-#define DELEGATE_FIELD_HEAPTYPE(id, field)                                     \
-  referredTypes.insert(cast->field);
+#define DELEGATE_FIELD_HEAPTYPE(id, field) referredTypes.insert(cast->field);
 
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
