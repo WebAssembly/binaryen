@@ -47,17 +47,42 @@ namespace wasm {
 
 namespace {
 
-// We need to find all the types that have casts to them, as such types must be
-// preserved - even if they are identical to other types, they are nominally
-// distinguishable.
+// We need to find all the types that have references to them, such as casts,
+// as such types must be preserved - even if they are identical to other types,
+// they are nominally distinguishable.
 
 // Most functions do no casts, or perhaps cast |this| and perhaps a few others.
-using CastTypes = SmallUnorderedSet<HeapType, 5>;
+using ReferredTypes = SmallUnorderedSet<HeapType, 5>;
 
-struct CastFinder : public PostWalker<CastFinder> {
-  CastTypes castTypes;
+struct CastFinder : public PostWalker<CastFinder, UnifiedExpressionVisitor<CastFinder>> {
+  ReferredTypes referredTypes;
 
-  void visitRefCast(RefCast* curr) { castTypes.insert(curr->intendedType); }
+  void visitExpression(Expression* curr) {
+    // Find all references to a heap type.
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+
+#define DELEGATE_FIELD_HEAPTYPE(id, field)                                     \
+  referredTypes.insert(cast->field);
+
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+
+#include "wasm-delegations-fields.def"
+  }
 };
 
 struct TypeMerging : public Pass {
@@ -80,15 +105,15 @@ struct TypeMerging : public Pass {
 
     // First, find all the cast types.
 
-    ModuleUtils::ParallelFunctionAnalysis<CastTypes> analysis(
-      *module, [&](Function* func, CastTypes& castTypes) {
+    ModuleUtils::ParallelFunctionAnalysis<ReferredTypes> analysis(
+      *module, [&](Function* func, ReferredTypes& referredTypes) {
         if (func->imported()) {
           return;
         }
 
         CastFinder finder;
         finder.walk(func->body);
-        castTypes = std::move(finder.castTypes);
+        referredTypes = std::move(finder.referredTypes);
       });
 
     // Also find cast types in the module scope (not possible in the current
@@ -96,11 +121,11 @@ struct TypeMerging : public Pass {
     CastFinder moduleFinder;
     moduleFinder.walkModuleCode(module);
 
-    // Accumulate all the castTypes.
-    auto& allCastTypes = moduleFinder.castTypes;
-    for (auto& [k, castTypes] : analysis.map) {
-      for (auto type : castTypes) {
-        allCastTypes.insert(type);
+    // Accumulate all the referredTypes.
+    auto& allReferredTypes = moduleFinder.referredTypes;
+    for (auto& [k, referredTypes] : analysis.map) {
+      for (auto type : referredTypes) {
+        allReferredTypes.insert(type);
       }
     }
 
@@ -108,7 +133,7 @@ struct TypeMerging : public Pass {
     std::vector<HeapType> types = ModuleUtils::collectHeapTypes(*module);
 
     for (auto type : types) {
-      if (allCastTypes.count(type)) {
+      if (allReferredTypes.count(type)) {
         // This has a cast, so it is distinguishable nominally.
         continue;
       }
