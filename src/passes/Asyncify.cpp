@@ -886,6 +886,10 @@ struct InstrumentedPassRunner : public PassRunner {
   InstrumentedPassRunner(Module* wasm, ModuleAnalyzer* analyzer)
     : PassRunner(wasm), analyzer(analyzer) {}
 
+  void addForAll(std::unique_ptr<Pass> pass) {
+    PassRunner::doAdd(std::move(pass));
+  }
+
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {
     PassRunner::doAdd(
@@ -1683,7 +1687,10 @@ struct Asyncify : public Pass {
         runner.add("reorder-locals");
         runner.add("merge-blocks");
       }
-      runner.add(
+      // AsyncifyFlow must run on all functions no matter instrumented them
+      // or not, because it may add assertions for functions that are
+      // not instrumented
+      runner.addForAll(
         make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
