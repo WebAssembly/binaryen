@@ -146,9 +146,9 @@
 ;; Test some real-world patterns, including fields to ignore, links between
 ;; merged types, etc.
 ;;
-;; The result here is that we will merge $A$to-merge into $A, and
-;; $D$to-merge into $D. While doing so we must update the fields and
-;; the expressions that they appear in, and not error.
+;; The result here is that we will merge $A$to-merge into $A, and $D$to-merge
+;; into $D. While doing so we must update the fields and the expressions that
+;; they appear in, and not error.
 (module
   ;; CHECK:      (type $C (struct (field (mut i32))))
 
