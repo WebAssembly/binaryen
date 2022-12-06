@@ -146,39 +146,39 @@
 ;; Test some real-world patterns, including fields to ignore, links between
 ;; merged types, etc.
 ;;
-;; The result here is that we will merge $type$3$to-merge into $type$3, and
-;; $type$6$to-merge into $type$6. While doing so we must update the fields and
+;; The result here is that we will merge $A$to-merge into $A, and
+;; $D$to-merge into $D. While doing so we must update the fields and
 ;; the expressions that they appear in, and not error.
 (module
-  ;; CHECK:      (type $type$5 (struct (field (mut i32))))
+  ;; CHECK:      (type $C (struct (field (mut i32))))
 
-  ;; CHECK:      (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
+  ;; CHECK:      (type $D (struct_subtype (field (mut i32)) (field (mut i32)) $C))
 
-  ;; CHECK:      (type $type$2 (array (mut (ref null $type$5))))
-  (type $type$2 (array (mut (ref null $type$5))))
-  (type $type$5 (struct (field (mut i32))))
-  (type $type$6 (struct_subtype (field (mut i32)) (field (mut i32)) $type$5))
-  (type $type$4 (struct_subtype (field (mut i32)) (field (mut i32)) $type$6))
-  (type $type$0 (struct_subtype (field (mut i32)) (field (mut i32)) $type$4))
-  (type $type$6$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) $type$0))
-  ;; CHECK:      (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
-  (type $type$1 (func (param (ref $type$5)) (result (ref $type$6))))
-  ;; CHECK:      (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$6))) $type$6))
-  (type $type$7 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) $type$6))
-  ;; CHECK:      (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$6))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
-  (type $type$3 (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$7))
-  (type $type$3$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $type$4))) (field (mut i64)) (field (mut (ref null $type$2))) $type$3))
+  ;; CHECK:      (type $type$2 (array (mut (ref null $C))))
+  (type $type$2 (array (mut (ref null $C))))
+  (type $C (struct (field (mut i32))))
+  (type $D (struct_subtype (field (mut i32)) (field (mut i32)) $C))
+  (type $E (struct_subtype (field (mut i32)) (field (mut i32)) $D))
+  (type $F (struct_subtype (field (mut i32)) (field (mut i32)) $E))
+  (type $D$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) $F))
+  ;; CHECK:      (type $G (func (param (ref $C)) (result (ref $D))))
+  (type $G (func (param (ref $C)) (result (ref $D))))
+  ;; CHECK:      (type $H (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $D))) $D))
+  (type $H (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) $D))
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $D))) (field (mut i64)) (field (mut (ref null $type$2))) $H))
+  (type $A (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) (field (mut i64)) (field (mut (ref null $type$2))) $H))
+  (type $A$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) (field (mut i64)) (field (mut (ref null $type$2))) $A))
 
-  ;; CHECK:      (global $global$0 (ref $type$6) (struct.new $type$6
+  ;; CHECK:      (global $global$0 (ref $D) (struct.new $D
   ;; CHECK-NEXT:  (i32.const 1705)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: ))
-  (global $global$0 (ref $type$0) (struct.new $type$6$to-merge
+  (global $global$0 (ref $F) (struct.new $D$to-merge
     (i32.const 1705)
     (i32.const 0)
   ))
-  ;; CHECK:      (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
-  ;; CHECK-NEXT:  (struct.new $type$3
+  ;; CHECK:      (func $0 (type $G) (param $0 (ref $C)) (result (ref $D))
+  ;; CHECK-NEXT:  (struct.new $A
   ;; CHECK-NEXT:   (i32.const 1685)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (global.get $global$0)
@@ -186,8 +186,8 @@
   ;; CHECK-NEXT:   (array.init_static $type$2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $0 (type $type$1) (param $0 (ref $type$5)) (result (ref $type$6))
-    (struct.new $type$3$to-merge
+  (func $0 (type $G) (param $0 (ref $C)) (result (ref $D))
+    (struct.new $A$to-merge
       (i32.const 1685)
       (i32.const 0)
       (global.get $global$0)
