@@ -329,9 +329,9 @@ struct BranchAccumulator
   }
 
   static NameSet get(Expression* tree) {
-    BranchAccumulator branches;
-    branches.walk(tree);
-    return branches.branches;
+    BranchAccumulator accumulator;
+    accumulator.walk(tree);
+    return accumulator.branches;
   }
 };
 
