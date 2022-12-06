@@ -154,8 +154,8 @@
 
   ;; CHECK:      (type $D (struct_subtype (field (mut i32)) (field (mut i32)) $C))
 
-  ;; CHECK:      (type $type$2 (array (mut (ref null $C))))
-  (type $type$2 (array (mut (ref null $C))))
+  ;; CHECK:      (type $I (array (mut (ref null $C))))
+  (type $I (array (mut (ref null $C))))
   (type $C (struct (field (mut i32))))
   (type $D (struct_subtype (field (mut i32)) (field (mut i32)) $C))
   (type $E (struct_subtype (field (mut i32)) (field (mut i32)) $D))
@@ -165,9 +165,9 @@
   (type $G (func (param (ref $C)) (result (ref $D))))
   ;; CHECK:      (type $H (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $D))) $D))
   (type $H (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) $D))
-  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $D))) (field (mut i64)) (field (mut (ref null $type$2))) $H))
-  (type $A (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) (field (mut i64)) (field (mut (ref null $type$2))) $H))
-  (type $A$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) (field (mut i64)) (field (mut (ref null $type$2))) $A))
+  ;; CHECK:      (type $A (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $D))) (field (mut i64)) (field (mut (ref null $I))) $H))
+  (type $A (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) (field (mut i64)) (field (mut (ref null $I))) $H))
+  (type $A$to-merge (struct_subtype (field (mut i32)) (field (mut i32)) (field (mut (ref null $E))) (field (mut i64)) (field (mut (ref null $I))) $A))
 
   ;; CHECK:      (global $global$0 (ref $D) (struct.new $D
   ;; CHECK-NEXT:  (i32.const 1705)
@@ -183,7 +183,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (global.get $global$0)
   ;; CHECK-NEXT:   (i64.const 0)
-  ;; CHECK-NEXT:   (array.init_static $type$2)
+  ;; CHECK-NEXT:   (array.init_static $I)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0 (type $G) (param $0 (ref $C)) (result (ref $D))
@@ -192,7 +192,7 @@
       (i32.const 0)
       (global.get $global$0)
       (i64.const 0)
-      (array.init_static $type$2)
+      (array.init_static $I)
     )
   )
 )
