@@ -230,7 +230,8 @@ struct TypeSSA : public Pass {
 
     // Look for at least one interesting operand. We will consider each operand
     // against the declared type, that is, the type declared for where it is
-    // stored. If it is has more information that than then it is interesting.
+    // stored. If it has more information than the declared type then it is
+    // interesting.
     auto isInterestingRelevantTo = [&](Expression* operand, Type declaredType) {
       if (operand->type != declaredType) {
         // Excellent, this field has an interesting type - more refined than the
