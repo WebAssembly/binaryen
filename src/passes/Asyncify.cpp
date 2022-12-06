@@ -1239,7 +1239,7 @@ struct AsyncifyAssertInNonInstrumented : public Pass {
     //        instrumentation, like random code - but the top-most runtime is
     //        actually a place that needs neither instrumentation *nor*
     //        assertions, as the assertions will error when it changes the
-    /         state).
+    //        state).
     if (!analyzer->needsInstrumentation(func)) {
       module = module_;
       builder =
