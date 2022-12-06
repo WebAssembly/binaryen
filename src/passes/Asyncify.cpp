@@ -1233,12 +1233,17 @@ struct AsyncifyAssertInNonInstrumented : public Pass {
     : analyzer(analyzer), pointerType(pointerType),
       asyncifyMemory(asyncifyMemory) {}
 
-  void runOnFunction(Module* module_, Function* func_) override {
-    module = module_;
-    func = func_;
-    builder =
-      make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
+  void runOnFunction(Module* module_, Function* func) override {
+    // FIXME: This looks like it was never right, as it should ignore the top-
+    //        most runtime, but it will actually instrument it (as it needs no
+    //        instrumentation, like random code - but the top-most runtime is
+    //        actually a place that needs neither instrumentation *nor*
+    //        assertions, as the assertions will error when it changes the
+    /         state).
     if (!analyzer->needsInstrumentation(func)) {
+      module = module_;
+      builder =
+        make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
       addAssertsInNonInstrumented(func);
     }
   }
@@ -1305,7 +1310,6 @@ struct AsyncifyAssertInNonInstrumented : public Pass {
 private:
   std::unique_ptr<AsyncifyBuilder> builder;
   Module* module;
-  Function* func;
 };
 
 // Instrument local saving/restoring.
@@ -1720,7 +1724,7 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
-    {
+    if (asserts) {
       // Add asserts in non-instrumented code. Note we do not use an
       // instrumented pass runner here as we do want to run on all functions.
       PassRunner runner(module);
