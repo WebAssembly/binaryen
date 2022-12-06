@@ -177,14 +177,18 @@ struct TypeMerging : public Pass {
       }
 
       auto newType = merges[type];
-      while (1) {
-        if (merges.count(newType)) {
-          newType = merges[newType];
-          continue;
-        }
-        break;
+      while (merges.count(newType)) {
+        newType = merges[newType];
       }
-      merges[type] = newType;
+      // Apply the findings to all intermediate types as well, to avoid
+      // duplicate work in later iterations. That is, all the types we saw in
+      // the above loop will all get merged into newType.
+      auto temp = type;
+      while (merges.count(temp)) {
+        auto next = merges[temp];
+        merges[temp] = newType;
+        temp = next;
+      }
     }
 
     // Apply the merges.
