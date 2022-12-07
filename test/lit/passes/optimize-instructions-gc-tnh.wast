@@ -16,7 +16,7 @@
   ;; NO_TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; NO_TNH-NEXT:  (ref.eq
   ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (ref.cast $struct
+  ;; NO_TNH-NEXT:    (ref.cast null $struct
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
@@ -31,7 +31,7 @@
     (ref.eq
       (ref.as_data
         (ref.as_non_null
-          (ref.cast $struct
+          (ref.cast null $struct
             (local.get $a)
           )
         )
@@ -78,7 +78,7 @@
     ;; something that does not validate (as ref.eq inputs must be eqrefs).
     (drop
       (ref.eq
-        (ref.cast $struct
+        (ref.cast null $struct
           (ref.func $ref.eq-no) ;; *Not* an eqref!
         )
         (ref.as_non_null
@@ -94,7 +94,7 @@
 
   ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.cast $struct
+  ;; TNH-NEXT:   (ref.cast null $struct
   ;; TNH-NEXT:    (ref.as_data
   ;; TNH-NEXT:     (local.get $a)
   ;; TNH-NEXT:    )
@@ -104,7 +104,7 @@
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:   (ref.cast null $struct
   ;; NO_TNH-NEXT:    (ref.as_data
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
@@ -116,7 +116,7 @@
     ;; In this case non-nullability is enough to tell that the ref.is will
     ;; return 0. TNH does not help here.
     (ref.is_null
-      (ref.cast $struct
+      (ref.cast null $struct
         (ref.as_non_null
           (ref.as_data
             (local.get $a)
@@ -133,7 +133,7 @@
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (ref.is_null
-  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:   (ref.cast null $struct
   ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -143,7 +143,7 @@
     ;; to be non-nullable. That means we cannot remove the ref.is, but we can
     ;; remove the cast in TNH.
     (ref.is_null
-      (ref.cast $struct
+      (ref.cast null $struct
         (local.get $a)
       )
     )

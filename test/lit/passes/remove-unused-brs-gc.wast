@@ -202,7 +202,7 @@
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (ref.cast $struct
+ ;; CHECK-NEXT:    (ref.cast null $struct
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -255,7 +255,7 @@
    (if (result anyref)
     (local.get $x)
     (ref.null any)
-    (ref.cast $struct
+    (ref.cast null $struct
      (ref.null any)
     )
    )

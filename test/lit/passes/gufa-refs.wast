@@ -1093,7 +1093,7 @@
     ;; contents in ref.cast, but not br_on_cast, so test both.
     (drop
       (struct.get $parent 0
-        (ref.cast $parent
+        (ref.cast null $parent
           (ref.func $func)
         )
       )
@@ -1152,7 +1152,7 @@
   ;; CHECK-NEXT:      (br $block1
   ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.cast $child
+  ;; CHECK-NEXT:         (ref.cast null $child
   ;; CHECK-NEXT:          (ref.null none)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -1198,13 +1198,13 @@
       )
     )
     ;; Send a less specific type, via a cast. But all nulls are identical and
-    ;; ref.cast passes nulls through, so this is ok, but we must be careful to
+    ;; ref.cast null passes nulls through, so this is ok, but we must be careful to
     ;; emit a ref.null $child on the outside (to not change the outer type to a
     ;; less refined one).
     (drop
       (block $block (result (ref null $child))
         (br $block
-          (ref.cast $child
+          (ref.cast null $child
             (ref.null $parent)
           )
         )
@@ -1710,7 +1710,7 @@
     (drop
       (ref.as_non_null
         (array.get $something-child
-          (ref.cast $something-child
+          (ref.cast null $something-child
             (array.new_default $something
               (i32.const 10)
             )
@@ -2532,7 +2532,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $substruct
+  ;; CHECK-NEXT:   (ref.cast null $substruct
   ;; CHECK-NEXT:    (struct.new $substruct
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
@@ -2540,7 +2540,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $substruct
+  ;; CHECK-NEXT:   (ref.cast null $substruct
   ;; CHECK-NEXT:    (struct.new $subsubstruct
   ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:     (i32.const 4)
@@ -2550,10 +2550,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; The cast here will fail, and the ref.cast allows nothing through, so we
+    ;; The cast here will fail, and the ref.cast null allows nothing through, so we
     ;; can emit an unreachable here.
     (drop
-      (ref.cast $substruct
+      (ref.cast null $substruct
         (struct.new $struct
           (i32.const 0)
         )
@@ -2562,7 +2562,7 @@
     ;; This cast of a type to itself can succeed (in fact, it will), so we make
     ;; no changes here.
     (drop
-      (ref.cast $substruct
+      (ref.cast null $substruct
         (struct.new $substruct
           (i32.const 1)
           (i32.const 2)
@@ -2571,7 +2571,7 @@
     )
     ;; This cast of a subtype will also succeed. As above, we make no changes.
     (drop
-      (ref.cast $substruct
+      (ref.cast null $substruct
         (struct.new $subsubstruct
           (i32.const 3)
           (i32.const 4)
@@ -2585,7 +2585,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast $struct
+  ;; CHECK-NEXT:     (ref.cast null $struct
   ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $import)
@@ -2600,7 +2600,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast $struct
+  ;; CHECK-NEXT:     (ref.cast null $struct
   ;; CHECK-NEXT:      (select (result i31ref)
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:       (i31.new
@@ -2614,7 +2614,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
+  ;; CHECK-NEXT:   (ref.cast null $struct
   ;; CHECK-NEXT:    (select (result (ref null $struct))
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (struct.new $struct
@@ -2629,7 +2629,7 @@
     ;; Only a null can flow through the cast, which we can infer for the value
     ;; of the cast.
     (drop
-      (ref.cast $struct
+      (ref.cast null $struct
         (select
           (ref.null $struct)
           (ref.null $struct)
@@ -2641,7 +2641,7 @@
     ;; through (an i31 would fail the cast). Given that, we can infer a null for
     ;; the value of the cast.
     (drop
-      (ref.cast $struct
+      (ref.cast null $struct
         (select
           (ref.null $struct)
           (i31.new (i32.const 0))
@@ -2651,7 +2651,7 @@
     )
     ;; A null or a $struct may arrive, and so we cannot do anything here.
     (drop
-      (ref.cast $struct
+      (ref.cast null $struct
         (select
           (ref.null $struct)
           (struct.new $struct
@@ -2665,7 +2665,7 @@
 
   ;; CHECK:      (func $test-cones (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
+  ;; CHECK-NEXT:   (ref.cast null $struct
   ;; CHECK-NEXT:    (select (result (ref null $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 0)
@@ -2676,7 +2676,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
+  ;; CHECK-NEXT:   (ref.cast null $struct
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 1)
@@ -2690,7 +2690,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $substruct
+  ;; CHECK-NEXT:   (ref.cast null $substruct
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 4)
@@ -2708,9 +2708,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-cones (export "test-cones") (param $x i32)
-    ;; The input to the ref.cast is potentially null, so we cannot infer here.
+    ;; The input to the ref.cast null is potentially null, so we cannot infer here.
     (drop
-      (ref.cast $struct
+      (ref.cast null $struct
         (select
           (struct.new $struct
             (i32.const 0)
@@ -2720,10 +2720,10 @@
         )
       )
     )
-    ;; The input to the ref.cast is either $struct or $substruct, both of which
+    ;; The input to the ref.cast null is either $struct or $substruct, both of which
     ;; work, so we cannot optimize anything here away.
     (drop
-      (ref.cast $struct
+      (ref.cast null $struct
         (select
           (struct.new $struct
             (i32.const 1)
@@ -2739,7 +2739,7 @@
     ;; As above, but now we test with $substruct, so one possibility fails and
     ;; one succeeds. We cannot infer here either.
     (drop
-      (ref.cast $substruct
+      (ref.cast null $substruct
         (select
           (struct.new $struct
             (i32.const 4)
@@ -2756,7 +2756,7 @@
     ;; can infer an unreachable. The combination of these two is a cone from
     ;; $struct of depth 1, which does not overlap with $subsubstruct.
     (drop
-      (ref.cast $subsubstruct
+      (ref.cast null $subsubstruct
         (select
           (struct.new $struct
             (i32.const 7)
@@ -3637,7 +3637,7 @@
 
   ;; CHECK:      (func $foo (type $none_=>_ref|$B|) (result (ref $B))
   ;; CHECK-NEXT:  (local $A (ref null $A))
-  ;; CHECK-NEXT:  (ref.cast $B
+  ;; CHECK-NEXT:  (ref.cast null $B
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.tee $A
   ;; CHECK-NEXT:     (struct.new $B
@@ -3653,7 +3653,7 @@
 
     ;; Read the following from the most nested comment first.
 
-    (ref.cast $B ;; if we mistakenly think this contains content of
+    (ref.cast null $B ;; if we mistakenly think this contains content of
                         ;; type $A, it would trap, but it should not, and we
                         ;; have nothing to optimize here
       (ref.as_non_null ;; also $B, based on the child's *contents* (not type!)

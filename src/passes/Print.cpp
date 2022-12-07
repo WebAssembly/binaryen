@@ -2116,7 +2116,7 @@ struct PrintExpressionContents
     if (curr->safety == RefCast::Unsafe) {
       printMedium(o, "ref.cast_nop ");
     } else {
-      printMedium(o, "ref.cast ");
+      printMedium(o, "ref.cast null ");
     }
     printHeapType(o, curr->intendedType, wasm);
   }

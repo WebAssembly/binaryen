@@ -199,12 +199,12 @@
   (call $log (i32.const 0))
   ;; a valid cast
   (call_ref $void_func
-   (ref.cast $void_func (ref.func $a-void-func))
+   (ref.cast null $void_func (ref.func $a-void-func))
   )
   (call $log (i32.const 1))
   ;; an invalid cast
   (drop (call_ref $int_func
-   (ref.cast $int_func (ref.func $a-void-func))
+   (ref.cast null $int_func (ref.func $a-void-func))
   ))
   ;; will never be reached
   (call $log (i32.const 2))
@@ -236,7 +236,7 @@
  (func "cast-func-to-struct"
   (drop
    ;; An impossible cast of a function to a struct, which should fail.
-   (ref.cast $struct
+   (ref.cast null $struct
     (ref.func $call-target)
    )
   )
@@ -323,7 +323,7 @@
  (func "static-casts"
   ;; Casting null returns null.
   (call $log (ref.is_null
-   (ref.cast $struct (ref.null $struct))
+   (ref.cast null $struct (ref.null $struct))
   ))
   ;; Testing null returns 0.
   (call $log

@@ -29,37 +29,37 @@
   (func (export "test-sub")
     (call $init)
 
-    (drop (ref.cast $t0 (ref.null data)))
-    (drop (ref.cast $t0 (global.get $tab.0)))
-    (drop (ref.cast $t0 (global.get $tab.1)))
-    (drop (ref.cast $t0 (global.get $tab.2)))
-    (drop (ref.cast $t0 (global.get $tab.3)))
-    (drop (ref.cast $t0 (global.get $tab.4)))
+    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t0 (global.get $tab.0)))
+    (drop (ref.cast null $t0 (global.get $tab.1)))
+    (drop (ref.cast null $t0 (global.get $tab.2)))
+    (drop (ref.cast null $t0 (global.get $tab.3)))
+    (drop (ref.cast null $t0 (global.get $tab.4)))
 
-    (drop (ref.cast $t0 (ref.null data)))
-    (drop (ref.cast $t1 (global.get $tab.1)))
-    (drop (ref.cast $t1 (global.get $tab.2)))
+    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t1 (global.get $tab.1)))
+    (drop (ref.cast null $t1 (global.get $tab.2)))
 
-    (drop (ref.cast $t0 (ref.null data)))
-    (drop (ref.cast $t2 (global.get $tab.2)))
+    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t2 (global.get $tab.2)))
 
-    (drop (ref.cast $t0 (ref.null data)))
-    (drop (ref.cast $t3 (global.get $tab.3)))
+    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t3 (global.get $tab.3)))
 
-    (drop (ref.cast $t0 (ref.null data)))
+    (drop (ref.cast null $t0 (ref.null data)))
   )
 
   (func (export "test-canon")
     (call $init)
 
-    (drop (ref.cast $t0 (global.get $tab.10)))
-    (drop (ref.cast $t0 (global.get $tab.11)))
-    (drop (ref.cast $t0 (global.get $tab.12)))
+    (drop (ref.cast null $t0 (global.get $tab.10)))
+    (drop (ref.cast null $t0 (global.get $tab.11)))
+    (drop (ref.cast null $t0 (global.get $tab.12)))
 
-    (drop (ref.cast $t1 (global.get $tab.11)))
-    (drop (ref.cast $t1 (global.get $tab.12)))
+    (drop (ref.cast null $t1 (global.get $tab.11)))
+    (drop (ref.cast null $t1 (global.get $tab.12)))
 
-    (drop (ref.cast $t2 (global.get $tab.12)))
+    (drop (ref.cast null $t2 (global.get $tab.12)))
   )
 )
 

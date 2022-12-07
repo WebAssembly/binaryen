@@ -2782,8 +2782,14 @@ Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto* ref = parseExpression(*s[2]);
+  int i = 1;
+  if (s[0]->str().str != "ref.cast_static") {
+    if (s[i++]->str().str != "null") {
+      throw ParseException("ref.cast not yet supported. Use ref.cast null.");
+    }
+  }
+  auto heapType = parseHeapType(*s[i++]);
+  auto* ref = parseExpression(*s[i++]);
   return Builder(wasm).makeRefCast(ref, heapType, RefCast::Safe);
 }
 

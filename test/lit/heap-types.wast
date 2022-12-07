@@ -41,21 +41,21 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct.A
+  ;; CHECK-NEXT:   (ref.cast null $struct.A
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $test (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $struct.B
+  ;; NOMNL-NEXT:   (ref.cast null $struct.B
   ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $test
     (drop
-      (ref.cast $struct.B (ref.null $struct.A))
+      (ref.cast null $struct.B (ref.null $struct.A))
     )
   )
 )

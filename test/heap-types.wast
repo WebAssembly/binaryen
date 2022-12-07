@@ -326,7 +326,7 @@
       (ref.test $struct.B (ref.null $struct.A))
     )
     (drop
-      (ref.cast $struct.B (ref.null $struct.A))
+      (ref.cast null $struct.B (ref.null $struct.A))
     )
     (drop
       (block $out-B (result (ref $struct.B))

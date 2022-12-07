@@ -354,7 +354,7 @@
    )
   )
   (drop
-   (ref.cast ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+   (ref.cast null ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
     (ref.null none)
    )
   )

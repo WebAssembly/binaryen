@@ -793,7 +793,7 @@
   (type $A (struct))
   ;; CHECK:      (func $0 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 f32)
-  ;; CHECK-NEXT:  (ref.cast $A
+  ;; CHECK-NEXT:  (ref.cast null $A
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -804,7 +804,7 @@
     ;; we do need to handle it in the optimization as well as print it (note how
     ;; type $A is declared in the output here - it would be a bug if it were
     ;; not, which this is a regression test for).
-    (ref.cast $A
+    (ref.cast null $A
       (unreachable)
     )
   )

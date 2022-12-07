@@ -2034,7 +2034,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   if (curr->safety == RefCast::Unsafe) {
     o << U32LEB(BinaryConsts::RefCastNop);
   } else {
-    o << U32LEB(BinaryConsts::RefCast);
+    o << U32LEB(BinaryConsts::RefCastNull);
   }
   parent.writeIndexedHeapType(curr->intendedType);
 }

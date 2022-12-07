@@ -6903,8 +6903,8 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCast ||
-      code == BinaryConsts::RefCastNop) {
+  if (code == BinaryConsts::RefCastStatic ||
+      code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
     auto safety =

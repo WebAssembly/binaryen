@@ -1084,10 +1084,10 @@
   (local $temp (ref null $B))
   ;; Try to cast a null of A to B. While the types are incompatible, ref.cast
   ;; returns a null when given a null (and the null must have the type that the
-  ;; ref.cast instruction has, that is, the value is a null of type $B). So this
+  ;; ref.cast null instruction has, that is, the value is a null of type $B). So this
   ;; is an odd cast that "works".
   (local.set $temp
-   (ref.cast $B
+   (ref.cast null $B
     (ref.null $A)
    )
   )
@@ -1139,7 +1139,7 @@
   ;; As above, but with a tuple.
   (local.set $temp
    (tuple.make
-    (ref.cast $B
+    (ref.cast null $B
      (ref.null $A)
     )
     (i32.const 10)
@@ -1166,7 +1166,7 @@
 
  ;; CHECK:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (ref.cast $func-return-i32
+ ;; CHECK-NEXT:   (ref.cast null $func-return-i32
  ;; CHECK-NEXT:    (ref.func $receive-f64)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1178,7 +1178,7 @@
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (ref.cast $func-return-i32
+ ;; NOMNL-NEXT:   (ref.cast null $func-return-i32
  ;; NOMNL-NEXT:    (ref.func $receive-f64)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
@@ -1191,7 +1191,7 @@
  (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
   ;; Try to cast a function to an incompatible type.
   (local.set $temp
-   (ref.cast $func-return-i32
+   (ref.cast null $func-return-i32
     (ref.func $receive-f64)
    )
   )
