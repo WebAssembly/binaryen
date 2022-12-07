@@ -1117,11 +1117,19 @@ enum ASTNodes {
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
+  RefTest = 0x40,
+  // TODO: RefTestNull
+  RefCastNull = 0x49,
+  // TODO: RefCastNull
+  BrOnCast = 0x42,
+  // TODO: BrOnCastNull
+  BrOnCastFail = 0x43,
+  // TODO: BrOnCastFailNull
   RefTestStatic = 0x44,
   RefCastStatic = 0x45,
   BrOnCastStatic = 0x46,
   BrOnCastStaticFail = 0x47,
-  RefCastNopStatic = 0x48,
+  RefCastNop = 0x48,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,

@@ -396,19 +396,19 @@
   (local $temp.A (ref null $struct.A))
   (local $temp.B (ref null $struct.B))
   (drop
-   (ref.test_static $struct.B
+   (ref.test $struct.B
     (ref.null none)
    )
   )
   (drop
-   (ref.cast_static $struct.B
+   (ref.cast null $struct.B
     (ref.null none)
    )
   )
   (drop
    (block $out-B (result (ref $struct.B))
     (local.set $temp.A
-     (br_on_cast_static $out-B $struct.B
+     (br_on_cast $out-B $struct.B
       (ref.null none)
      )
     )
@@ -418,7 +418,7 @@
   (drop
    (block $out-A (result (ref null $struct.A))
     (local.set $temp.B
-     (br_on_cast_static_fail $out-A $struct.B
+     (br_on_cast_fail $out-A $struct.B
       (ref.null none)
      )
     )

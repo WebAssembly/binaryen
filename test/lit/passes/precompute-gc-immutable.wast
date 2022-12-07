@@ -794,7 +794,7 @@
     ;; We can precompute all these operations away into the final constants.
     (call $helper
       (struct.get $vtable-0 0
-        (ref.cast_static $vtable-0
+        (ref.cast null $vtable-0
           (array.get $itable
             (struct.get $object 0
               (local.get $ref)
@@ -806,7 +806,7 @@
     )
     (call $helper
       (struct.get $vtable-1 0
-        (ref.cast_static $vtable-1
+        (ref.cast null $vtable-1
           (array.get $itable
             (struct.get $object 0
               (local.get $ref)

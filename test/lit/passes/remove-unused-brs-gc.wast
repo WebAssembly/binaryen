@@ -116,7 +116,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_static (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -127,13 +127,13 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_static (result (ref $struct))
+ (func $br_on_cast (result (ref $struct))
   (local $temp (ref null $struct))
   (block $block (result (ref $struct))
    (drop
     ;; This static cast can be computed at compile time: it will definitely be
     ;; taken, so we can turn it into a normal br.
-    (br_on_cast_static $block $struct
+    (br_on_cast $block $struct
      (struct.new $struct)
     )
    )
@@ -141,22 +141,22 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_static_no (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast_no (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_static $block $struct
+ ;; CHECK-NEXT:    (br_on_cast $block $struct
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_static_no (result (ref $struct))
+ (func $br_on_cast_no (result (ref $struct))
   (local $temp (ref null $struct))
   (block $block (result (ref $struct))
    (drop
-    (br_on_cast_static $block $struct
+    (br_on_cast $block $struct
      ;; As above, but now the type is nullable, so we cannot infer anything.
      (ref.null $struct)
     )
@@ -165,7 +165,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_static (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast_fail (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
@@ -174,13 +174,13 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_fail_static (result (ref $struct))
+ (func $br_on_cast_fail (result (ref $struct))
   (local $temp (ref null $struct))
   (block $block (result (ref $struct))
    (drop
-    ;; As $br_on_cast_static, but this checks for a failing cast, so we know it will
+    ;; As $br_on_cast, but this checks for a failing cast, so we know it will
     ;; *not* be taken.
-    (br_on_cast_static_fail $block $struct
+    (br_on_cast_fail $block $struct
      (struct.new $struct)
     )
    )
@@ -192,7 +192,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.test_static $struct
+ ;; CHECK-NEXT:    (ref.test $struct
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)
@@ -202,7 +202,7 @@
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (ref.cast_static $struct
+ ;; CHECK-NEXT:    (ref.cast null $struct
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -212,7 +212,7 @@
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (block $something (result anyref)
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (br_on_cast_static $something $struct
+ ;; CHECK-NEXT:      (br_on_cast $something $struct
  ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -245,7 +245,7 @@
   (drop
    (if (result i32)
     (local.get $x)
-    (ref.test_static $struct
+    (ref.test $struct
      (ref.null any)
     )
     (i32.const 0)
@@ -255,7 +255,7 @@
    (if (result anyref)
     (local.get $x)
     (ref.null any)
-    (ref.cast_static $struct
+    (ref.cast null $struct
      (ref.null any)
     )
    )
@@ -266,7 +266,7 @@
     (block (result anyref)
      (block $something (result anyref)
       (drop
-       (br_on_cast_static $something $struct
+       (br_on_cast $something $struct
         (ref.null $struct)
        )
       )

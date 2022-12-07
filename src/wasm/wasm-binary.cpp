@@ -6893,7 +6893,7 @@ bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefTestStatic) {
+  if (code == BinaryConsts::RefTestStatic || code == BinaryConsts::RefTest) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
     out = Builder(wasm).makeRefTest(ref, intendedType);
@@ -6904,11 +6904,11 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
 
 bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::RefCastStatic ||
-      code == BinaryConsts::RefCastNopStatic) {
+      code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
     auto intendedType = getIndexedHeapType();
     auto* ref = popNonVoidExpression();
     auto safety =
-      code == BinaryConsts::RefCastNopStatic ? RefCast::Unsafe : RefCast::Safe;
+      code == BinaryConsts::RefCastNop ? RefCast::Unsafe : RefCast::Safe;
     out = Builder(wasm).makeRefCast(ref, intendedType, safety);
     return true;
   }
@@ -6925,9 +6925,11 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
       op = BrOnNonNull;
       break;
     case BinaryConsts::BrOnCastStatic:
+    case BinaryConsts::BrOnCast:
       op = BrOnCast;
       break;
     case BinaryConsts::BrOnCastStaticFail:
+    case BinaryConsts::BrOnCastFail:
       op = BrOnCastFail;
       break;
     case BinaryConsts::BrOnFunc:
@@ -6952,15 +6954,12 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
       return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  if (code == BinaryConsts::BrOnCastStatic ||
-      code == BinaryConsts::BrOnCastStaticFail) {
-    auto intendedType = getIndexedHeapType();
-    auto* ref = popNonVoidExpression();
-    out = Builder(wasm).makeBrOn(op, name, ref, intendedType);
-    return true;
+  HeapType intendedType;
+  if (op == BrOnCast || op == BrOnCastFail) {
+    intendedType = getIndexedHeapType();
   }
   auto* ref = popNonVoidExpression();
-  out = ValidatingBuilder(wasm, pos).validateAndMakeBrOn(op, name, ref);
+  out = Builder(wasm).makeBrOn(op, name, ref, intendedType);
   return true;
 }
 

@@ -42,11 +42,11 @@
 [LoggingExternalInterface logging 99]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 10]
-[fuzz-exec] calling array.init
+[fuzz-exec] calling array.init_static
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 50]
-[fuzz-exec] calling array.init-packed
+[fuzz-exec] calling array.init_static-packed
 [LoggingExternalInterface logging 8]
 [fuzz-exec] calling static-casts
 [LoggingExternalInterface logging 1]
@@ -82,8 +82,8 @@
  (export "init-array-packed" (func $14))
  (export "cast-func-to-struct" (func $9))
  (export "array-copy" (func $17))
- (export "array.init" (func $18))
- (export "array.init-packed" (func $19))
+ (export "array.init_static" (func $18))
+ (export "array.init_static-packed" (func $19))
  (export "static-casts" (func $20))
  (export "static-br_on_cast" (func $2))
  (export "static-br_on_cast_fail" (func $22))
@@ -162,7 +162,7 @@
      (i32.const 1)
     )
     (drop
-     (br_on_cast_static_fail $any $extendedstruct
+     (br_on_cast_fail $any $extendedstruct
       (local.get $0)
      )
     )
@@ -384,11 +384,11 @@
 [LoggingExternalInterface logging 99]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 10]
-[fuzz-exec] calling array.init
+[fuzz-exec] calling array.init_static
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 50]
-[fuzz-exec] calling array.init-packed
+[fuzz-exec] calling array.init_static-packed
 [LoggingExternalInterface logging 8]
 [fuzz-exec] calling static-casts
 [LoggingExternalInterface logging 1]

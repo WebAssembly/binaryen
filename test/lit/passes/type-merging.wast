@@ -19,12 +19,12 @@
   ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (local $d (ref null $D))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:   (ref.cast null $A
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $D
+  ;; CHECK-NEXT:   (ref.cast null $D
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -41,13 +41,13 @@
 
     ;; A cast of $A has no effect.
     (drop
-      (ref.cast_static $A
+      (ref.cast null $A
         (local.get $a)
       )
     )
     ;; A cast of $D prevents it from being merged.
     (drop
-      (ref.cast_static $D
+      (ref.cast null $D
         (local.get $a)
       )
     )

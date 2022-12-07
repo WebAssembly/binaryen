@@ -45,7 +45,7 @@ switch (op[0]) {
           case 'n': {
             switch (op[9]) {
               case '\0':
-                if (op == "array.new"sv) { return makeArrayNewStatic(s, false); }
+                if (op == "array.new"sv) { return makeArrayNew(s, false); }
                 goto parse_error;
               case '_': {
                 switch (op[10]) {
@@ -55,7 +55,7 @@ switch (op[0]) {
                         if (op == "array.new_data"sv) { return makeArrayNewSeg(s, NewData); }
                         goto parse_error;
                       case 'e':
-                        if (op == "array.new_default"sv) { return makeArrayNewStatic(s, true); }
+                        if (op == "array.new_default"sv) { return makeArrayNew(s, true); }
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -111,10 +111,10 @@ switch (op[0]) {
                           case 's': {
                             switch (op[17]) {
                               case '\0':
-                                if (op == "br_on_cast_static"sv) { return makeBrOnStatic(s, BrOnCast); }
+                                if (op == "br_on_cast_static"sv) { return makeBrOn(s, BrOnCast); }
                                 goto parse_error;
                               case '_':
-                                if (op == "br_on_cast_static_fail"sv) { return makeBrOnStatic(s, BrOnCastFail); }
+                                if (op == "br_on_cast_static_fail"sv) { return makeBrOn(s, BrOnCastFail); }
                                 goto parse_error;
                               default: goto parse_error;
                             }
@@ -3016,13 +3016,29 @@ switch (op[0]) {
             }
           }
           case 'c': {
-            switch (op[9]) {
-              case 'n':
-                if (op == "ref.cast_nop_static"sv) { return makeRefCastNopStatic(s); }
+            switch (op[8]) {
+              case '\0':
+                if (op == "ref.cast"sv) { return makeRefCast(s); }
                 goto parse_error;
-              case 's':
-                if (op == "ref.cast_static"sv) { return makeRefCastStatic(s); }
-                goto parse_error;
+              case '_': {
+                switch (op[9]) {
+                  case 'n': {
+                    switch (op[12]) {
+                      case '\0':
+                        if (op == "ref.cast_nop"sv) { return makeRefCastNop(s); }
+                        goto parse_error;
+                      case '_':
+                        if (op == "ref.cast_nop_static"sv) { return makeRefCastNop(s); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 's':
+                    if (op == "ref.cast_static"sv) { return makeRefCast(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               default: goto parse_error;
             }
           }
@@ -3052,9 +3068,17 @@ switch (op[0]) {
           case 'n':
             if (op == "ref.null"sv) { return makeRefNull(s); }
             goto parse_error;
-          case 't':
-            if (op == "ref.test_static"sv) { return makeRefTestStatic(s); }
-            goto parse_error;
+          case 't': {
+            switch (op[8]) {
+              case '\0':
+                if (op == "ref.test"sv) { return makeRefTest(s); }
+                goto parse_error;
+              case '_':
+                if (op == "ref.test_static"sv) { return makeRefTest(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }
@@ -3295,10 +3319,10 @@ switch (op[0]) {
               case 'n': {
                 switch (op[10]) {
                   case '\0':
-                    if (op == "struct.new"sv) { return makeStructNewStatic(s, false); }
+                    if (op == "struct.new"sv) { return makeStructNew(s, false); }
                     goto parse_error;
                   case '_':
-                    if (op == "struct.new_default"sv) { return makeStructNewStatic(s, true); }
+                    if (op == "struct.new_default"sv) { return makeStructNew(s, true); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -3613,7 +3637,7 @@ switch (op[0]) {
             switch (op[9]) {
               case '\0':
                 if (op == "array.new"sv) {
-                  auto ret = makeArrayNewStatic(ctx, pos, false);
+                  auto ret = makeArrayNew(ctx, pos, false);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -3631,7 +3655,7 @@ switch (op[0]) {
                         goto parse_error;
                       case 'e':
                         if (op == "array.new_default"sv) {
-                          auto ret = makeArrayNewStatic(ctx, pos, true);
+                          auto ret = makeArrayNew(ctx, pos, true);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -3723,14 +3747,14 @@ switch (op[0]) {
                             switch (op[17]) {
                               case '\0':
                                 if (op == "br_on_cast_static"sv) {
-                                  auto ret = makeBrOnStatic(ctx, pos, BrOnCast);
+                                  auto ret = makeBrOn(ctx, pos, BrOnCast);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
                                 if (op == "br_on_cast_static_fail"sv) {
-                                  auto ret = makeBrOnStatic(ctx, pos, BrOnCastFail);
+                                  auto ret = makeBrOn(ctx, pos, BrOnCastFail);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -8607,21 +8631,45 @@ switch (op[0]) {
             }
           }
           case 'c': {
-            switch (op[9]) {
-              case 'n':
-                if (op == "ref.cast_nop_static"sv) {
-                  auto ret = makeRefCastNopStatic(ctx, pos);
+            switch (op[8]) {
+              case '\0':
+                if (op == "ref.cast"sv) {
+                  auto ret = makeRefCast(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
-              case 's':
-                if (op == "ref.cast_static"sv) {
-                  auto ret = makeRefCastStatic(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
+              case '_': {
+                switch (op[9]) {
+                  case 'n': {
+                    switch (op[12]) {
+                      case '\0':
+                        if (op == "ref.cast_nop"sv) {
+                          auto ret = makeRefCastNop(ctx, pos);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      case '_':
+                        if (op == "ref.cast_nop_static"sv) {
+                          auto ret = makeRefCastNop(ctx, pos);
+                          CHECK_ERR(ret);
+                          return *ret;
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 's':
+                    if (op == "ref.cast_static"sv) {
+                      auto ret = makeRefCast(ctx, pos);
+                      CHECK_ERR(ret);
+                      return *ret;
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
                 }
-                goto parse_error;
+              }
               default: goto parse_error;
             }
           }
@@ -8679,13 +8727,25 @@ switch (op[0]) {
               return *ret;
             }
             goto parse_error;
-          case 't':
-            if (op == "ref.test_static"sv) {
-              auto ret = makeRefTestStatic(ctx, pos);
-              CHECK_ERR(ret);
-              return *ret;
+          case 't': {
+            switch (op[8]) {
+              case '\0':
+                if (op == "ref.test"sv) {
+                  auto ret = makeRefTest(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case '_':
+                if (op == "ref.test_static"sv) {
+                  auto ret = makeRefTest(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           default: goto parse_error;
         }
       }
@@ -9067,14 +9127,14 @@ switch (op[0]) {
                 switch (op[10]) {
                   case '\0':
                     if (op == "struct.new"sv) {
-                      auto ret = makeStructNewStatic(ctx, pos, false);
+                      auto ret = makeStructNew(ctx, pos, false);
                       CHECK_ERR(ret);
                       return *ret;
                     }
                     goto parse_error;
                   case '_':
                     if (op == "struct.new_default"sv) {
-                      auto ret = makeStructNewStatic(ctx, pos, true);
+                      auto ret = makeStructNew(ctx, pos, true);
                       CHECK_ERR(ret);
                       return *ret;
                     }
