@@ -157,10 +157,29 @@
  (memory $mem-i64 i64 2)
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
  ;; CHECK:      (memory $mem-init 1 1)
- (memory $mem-init (data "hello, world!"))
+ (memory $mem-init (data "hello inline data"))
+
+ ;; data segments
+ ;; CHECK:      (data (memory $mem-init) (i32.const 0) "hello inline data")
+
+ ;; CHECK:      (data "hello world")
+ (data "hello world")
+ ;; CHECK:      (data $passive "hello again")
+ (data $passive "hello" " " "again")
+ ;; CHECK:      (data $active (i32.const 0) "active hello")
+ (data $active (offset i32.const 0) "active hello" "" "")
+ ;; CHECK:      (data $active2 (i32.const 1) "active again!")
+ (data $active2 (offset (i32.const 1)) "" "active again" "!")
+ ;; CHECK:      (data $active3 (i32.const 42) "active abbreviated")
+ (data $active3 (memory $mem) (i32.const 42) "" "active abbreviated" "")
+ ;; CHECK:      (data $active4 (memory $mem-i32) (i32.const 16) "")
+ (data $active4 (memory $mem-i32) (i32.const 16) "")
+ (data (memory 3) (offset i64.const 0) "64-bit")
 
  ;; functions
  (func)
+
+ ;; CHECK:      (data (memory $mem-i64) (i64.const 0) "64-bit")
 
  ;; CHECK:      (export "g1" (global $g1))
 
