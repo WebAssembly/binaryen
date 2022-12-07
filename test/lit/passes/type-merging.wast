@@ -95,6 +95,43 @@
   )
 )
 
+;; As above but now $D is a subtype of $C, so there is a single subtype chain
+;; in which we have two "merge points" that things get merged into. The results
+;; should remain the same as before, everything merged into either $A or $D.
+(module
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct_subtype (field i32) data))
+  (type $B (struct_subtype (field i32) $A))
+  (type $C (struct_subtype (field i32) $B))
+  ;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
+  (type $D (struct_subtype (field i32) (field f64) $C)) ;; this line changed
+  (type $E (struct_subtype (field i32) (field f64) $D))
+  (type $F (struct_subtype (field i32) (field f64) $E))
+  (type $G (struct_subtype (field i32) (field f64) $F))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $c (ref null $A))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $e (ref null $D))
+  ;; CHECK-NEXT:  (local $f (ref null $D))
+  ;; CHECK-NEXT:  (local $g (ref null $D))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $c (ref null $C))
+    (local $d (ref null $D))
+    (local $e (ref null $E))
+    (local $f (ref null $F))
+    (local $g (ref null $G))
+  )
+)
+
 (module
   ;; CHECK:      (type $A (struct (field (ref null $A))))
   (type $A (struct_subtype (field (ref null $A)) data))
