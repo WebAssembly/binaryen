@@ -57,17 +57,16 @@ namespace wasm {
 
 namespace {
 
-struct News {
-  std::vector<StructNew*> structNews;
-  // TODO: arrayNews of all kinds
-};
+// A vector of struct.new or one of the variations on array.new.
+using News = std::vector<Expression*>;
 
 struct NewFinder : public PostWalker<NewFinder> {
   News news;
 
-  void visitStructNew(StructNew* curr) { news.structNews.push_back(curr); }
-
-  // TODO arrays
+  void visitStructNew(StructNew* curr) { news.push_back(curr); }
+  void visitArrayNew(ArrayNew* curr) { news.push_back(curr); }
+  void visitArrayNewSeg(ArrayNewSeg* curr) { news.push_back(curr); }
+  void visitArrayInit(ArrayInit* curr) { news.push_back(curr); }
 };
 
 struct TypeSSA : public Pass {
@@ -118,16 +117,15 @@ struct TypeSSA : public Pass {
   Index nameCounter = 0;
 
   void processNews(const News& news) {
-    for (auto* curr : news.structNews) {
+    for (auto* curr : news) {
       if (isInteresting(curr)) {
-        newsToModify.structNews.push_back(curr);
+        newsToModify.push_back(curr);
       }
     }
   }
 
   void modifyNews() {
-    auto& structNews = newsToModify.structNews;
-    auto num = structNews.size();
+    auto num = newsToModify.size();
     if (num == 0) {
       return;
     }
@@ -148,9 +146,13 @@ struct TypeSSA : public Pass {
 
     TypeBuilder builder(num);
     for (Index i = 0; i < num; i++) {
-      auto* curr = structNews[i];
+      auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
-      builder[i] = oldType.getStruct();
+      if (oldType.isStruct()) {
+        builder[i] = oldType.getStruct();
+      } else {
+        builder[i] = oldType.getArray();
+      }
       builder[i].subTypeOf(oldType);
     }
     builder.createRecGroup(0, num);
@@ -192,7 +194,7 @@ struct TypeSSA : public Pass {
     }
 
     for (Index i = 0; i < num; i++) {
-      auto* curr = structNews[i];
+      auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
       auto newType = newTypes[i];
       curr->type = Type(newType, NonNullable);
@@ -210,41 +212,28 @@ struct TypeSSA : public Pass {
         existingTypeNames.insert(newName);
       }
     }
-
-    // TODO: arrays
   }
 
-  // An interesting StructNew, which we think is worth creating a new type for,
-  // is one that can be optimized better with a new type. That means it must
-  // have something interesting for optimizations to work with.
+  // An interesting *.new, which we think is worth creating a new type for, is
+  // one that can be optimized better with a new type. That means it must have
+  // something interesting for optimizations to work with.
   //
   // TODO: We may add new optimizations in the future that can benefit from more
   //       things, so it may be interesting to experiment with considering all
   //       news as "interesting" when we add major new type-based optimization
   //       passes.
-  bool isInteresting(StructNew* curr) {
+  bool isInteresting(Expression* curr) {
     if (curr->type == Type::unreachable) {
       // This is dead code anyhow.
       return false;
     }
 
-    if (curr->isWithDefault()) {
-      // This starts with all default values - zeros and nulls - and that might
-      // be useful.
-      //
-      // (A struct whose fields are all bottom types only has a single possible
-      // value in each field anyhow, so that is not interesting, but also
-      // unreasonable to occur in practice as other optimizations should handle
-      // it.)
-      return true;
-    }
-
-    // Look for at least one interesting operand.
-    auto& fields = curr->type.getHeapType().getStruct().fields;
-    for (Index i = 0; i < fields.size(); i++) {
-      assert(i <= curr->operands.size());
-      auto* operand = curr->operands[i];
-      if (operand->type != fields[i].type) {
+    // Look for at least one interesting operand. We will consider each operand
+    // against the declared type, that is, the type declared for where it is
+    // stored. If it has more information than the declared type then it is
+    // interesting.
+    auto isInterestingRelevantTo = [&](Expression* operand, Type declaredType) {
+      if (operand->type != declaredType) {
         // Excellent, this field has an interesting type - more refined than the
         // declared type, and which optimizations might benefit from.
         //
@@ -261,6 +250,59 @@ struct TypeSSA : public Pass {
         // This is a constant that passes may benefit from.
         return true;
       }
+
+      return false;
+    };
+
+    auto type = curr->type.getHeapType();
+
+    if (auto* structNew = curr->dynCast<StructNew>()) {
+      if (structNew->isWithDefault()) {
+        // This starts with all default values - zeros and nulls - and that
+        // might be useful.
+        //
+        // (An item whose fields are all bottom types only has a single possible
+        // value in each field anyhow, so that is not interesting, but also
+        // unreasonable to occur in practice as other optimizations should
+        // handle it.)
+        return true;
+      }
+
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        assert(i <= structNew->operands.size());
+        if (isInterestingRelevantTo(structNew->operands[i], fields[i].type)) {
+          return true;
+        }
+      }
+    } else if (auto* arrayNew = curr->dynCast<ArrayNew>()) {
+      if (arrayNew->isWithDefault()) {
+        return true;
+      }
+
+      auto element = type.getArray().element;
+      if (isInterestingRelevantTo(arrayNew->init, element.type)) {
+        return true;
+      }
+    } else if (curr->is<ArrayNewSeg>()) {
+      // TODO: If the element segment is immutable perhaps we could inspect it.
+      return true;
+    } else if (auto* arrayInit = curr->dynCast<ArrayInit>()) {
+      // All the items must be interesting for us to consider this interesting,
+      // as we only track a single value for all indexes in the array, so one
+      // boring value means it is all boring.
+      //
+      // Note that we consider the empty array to be interesting (though atm no
+      // pass tracks the length - we might add one later though).
+      auto element = type.getArray().element;
+      for (auto* value : arrayInit->values) {
+        if (!isInterestingRelevantTo(value, element.type)) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      WASM_UNREACHABLE("unknown new");
     }
 
     // Nothing interesting.
