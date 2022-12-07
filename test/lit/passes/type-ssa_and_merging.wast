@@ -8,136 +8,140 @@
 
 (module
   ;; NOP:      (type $A (struct (field (mut i32))))
+  ;; YES:      (type $none_=>_i32 (func (result i32)))
+
   ;; YES:      (type $A (struct (field (mut i32))))
   (type $A (struct_subtype (field (mut i32)) data))
 
-  ;; NOP:      (type $dataref_=>_none (func (param dataref)))
-
   ;; NOP:      (type $none_=>_i32 (func (result i32)))
 
-  ;; NOP:      (import "a" "b" (func $escape (param dataref)))
-  ;; YES:      (type $dataref_=>_none (func (param dataref)))
+  ;; NOP:      (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
 
-  ;; YES:      (type $none_=>_i32 (func (result i32)))
+  ;; NOP:      (import "a" "b" (func $import (result i32)))
+  ;; YES:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; YES:      (import "a" "b" (func $escape (param dataref)))
-  (import "a" "b" (func $escape (param dataref)))
+  ;; YES:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
-  ;; NOP:      (export "foo" (func $foo))
+  ;; NOP:      (export "main1" (func $main1))
 
-  ;; NOP:      (func $foo (type $none_=>_i32) (; has Stack IR ;) (result i32)
-  ;; NOP-NEXT:  (local $0 (ref $A))
-  ;; NOP-NEXT:  (local $1 (ref $A))
-  ;; NOP-NEXT:  (local.set $0
+  ;; NOP:      (export "main2" (func $main2))
+
+  ;; NOP:      (func $main1 (type $none_=>_i32) (; has Stack IR ;) (result i32)
+  ;; NOP-NEXT:  (call $get-a-1
+  ;; NOP-NEXT:   (struct.new $A
+  ;; NOP-NEXT:    (i32.const 42)
+  ;; NOP-NEXT:   )
+  ;; NOP-NEXT:  )
+  ;; NOP-NEXT: )
+  ;; YES:      (export "main1" (func $main1))
+
+  ;; YES:      (export "main2" (func $main2))
+
+  ;; YES:      (func $main1 (type $none_=>_i32) (result i32)
+  ;; YES-NEXT:  (call $get-a-1
+  ;; YES-NEXT:   (struct.new $A
+  ;; YES-NEXT:    (i32.const 42)
+  ;; YES-NEXT:   )
+  ;; YES-NEXT:  )
+  ;; YES-NEXT:  (i32.const 42)
+  ;; YES-NEXT: )
+  (func $main1 (export "main1") (result i32)
+    ;; YES can infer a result here, 42.
+    (call $get-a-1
+      (struct.new $A (i32.const 42))
+    )
+  )
+
+  ;; NOP:      (func $main2 (type $none_=>_i32) (; has Stack IR ;) (result i32)
+  ;; NOP-NEXT:  (call $get-a-2
   ;; NOP-NEXT:   (struct.new $A
   ;; NOP-NEXT:    (i32.const 1337)
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (call $escape
-  ;; NOP-NEXT:   (local.tee $1
-  ;; NOP-NEXT:    (struct.new $A
-  ;; NOP-NEXT:     (i32.const 42)
-  ;; NOP-NEXT:    )
-  ;; NOP-NEXT:   )
-  ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (call $escape
-  ;; NOP-NEXT:   (local.get $0)
-  ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (struct.set $A 0
-  ;; NOP-NEXT:   (local.get $1)
-  ;; NOP-NEXT:   (i32.const 100)
-  ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (struct.set $A 0
-  ;; NOP-NEXT:   (local.get $0)
-  ;; NOP-NEXT:   (i32.const 1337)
-  ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (i32.add
-  ;; NOP-NEXT:   (struct.get $A 0
-  ;; NOP-NEXT:    (local.get $1)
-  ;; NOP-NEXT:   )
-  ;; NOP-NEXT:   (struct.get $A 0
-  ;; NOP-NEXT:    (local.get $0)
-  ;; NOP-NEXT:   )
-  ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (export "foo" (func $foo))
-
-  ;; YES:      (func $foo (type $none_=>_i32) (result i32)
-  ;; YES-NEXT:  (local $0 (ref $A))
-  ;; YES-NEXT:  (local $1 (ref $A))
-  ;; YES-NEXT:  (local.set $0
+  ;; YES:      (func $main2 (type $none_=>_i32) (result i32)
+  ;; YES-NEXT:  (call $get-a-2
   ;; YES-NEXT:   (struct.new $A
   ;; YES-NEXT:    (i32.const 1337)
   ;; YES-NEXT:   )
   ;; YES-NEXT:  )
-  ;; YES-NEXT:  (call $escape
-  ;; YES-NEXT:   (local.tee $1
-  ;; YES-NEXT:    (struct.new $A
-  ;; YES-NEXT:     (i32.const 42)
-  ;; YES-NEXT:    )
+  ;; YES-NEXT:  (i32.const 1337)
+  ;; YES-NEXT: )
+  (func $main2 (export "main2") (result i32)
+    ;; YES can infer a result here, 1337.
+    (call $get-a-2
+      (struct.new $A (i32.const 1337))
+    )
+  )
+
+  ;; NOP:      (func $get-a-1 (type $ref|$A|_=>_i32) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
+  ;; NOP-NEXT:  (if
+  ;; NOP-NEXT:   (call $import)
+  ;; NOP-NEXT:   (return
+  ;; NOP-NEXT:    (call $get-a-1
+  ;; NOP-NEXT:     (local.get $0)
+  ;; NOP-NEXT:    )
+  ;; NOP-NEXT:   )
+  ;; NOP-NEXT:  )
+  ;; NOP-NEXT:  (struct.get $A 0
+  ;; NOP-NEXT:   (local.get $0)
+  ;; NOP-NEXT:  )
+  ;; NOP-NEXT: )
+  ;; YES:      (func $get-a-1 (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; YES-NEXT:  (if
+  ;; YES-NEXT:   (call $import)
+  ;; YES-NEXT:   (call $get-a-1
+  ;; YES-NEXT:    (local.get $0)
   ;; YES-NEXT:   )
-  ;; YES-NEXT:  )
-  ;; YES-NEXT:  (call $escape
-  ;; YES-NEXT:   (local.get $0)
-  ;; YES-NEXT:  )
-  ;; YES-NEXT:  (struct.set $A 0
-  ;; YES-NEXT:   (local.get $1)
-  ;; YES-NEXT:   (i32.const 100)
-  ;; YES-NEXT:  )
-  ;; YES-NEXT:  (struct.set $A 0
-  ;; YES-NEXT:   (local.get $0)
-  ;; YES-NEXT:   (i32.const 1337)
-  ;; YES-NEXT:  )
-  ;; YES-NEXT:  (i32.add
-  ;; YES-NEXT:   (struct.get $A 0
-  ;; YES-NEXT:    (local.get $1)
-  ;; YES-NEXT:   )
-  ;; YES-NEXT:   (i32.const 1337)
   ;; YES-NEXT:  )
   ;; YES-NEXT: )
-  (func $foo (export "foo") (result i32)
-    (local $a-42 (ref null $A))
-    (local $a-1337 (ref null $A))
+  (func $get-a-1 (param $ref (ref $A)) (result i32)
+    ;; YES infers the result and applies it in the caller, so nothing is
+    ;; returned any more (but we do keep the possibly infinite recursion, which
+    ;; is necessary to avoid inlining making this testcase trivial even in NOP).
+    (if
+      (call $import)
+      (return
+        (call $get-a-1
+          (local.get $ref)
+        )
+      )
+    )
+    (struct.get $A 0 (local.get 0))
+  )
 
-    ;; Two instances of $a. Both escape, so we can't just do escape analysis
-    ;; here, and the field is mutable.
-    (local.set $a-42
-      (struct.new $A
-        (i32.const 42)
+  ;; NOP:      (func $get-a-2 (type $ref|$A|_=>_i32) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
+  ;; NOP-NEXT:  (if
+  ;; NOP-NEXT:   (call $import)
+  ;; NOP-NEXT:   (return
+  ;; NOP-NEXT:    (call $get-a-2
+  ;; NOP-NEXT:     (local.get $0)
+  ;; NOP-NEXT:    )
+  ;; NOP-NEXT:   )
+  ;; NOP-NEXT:  )
+  ;; NOP-NEXT:  (struct.get $A 0
+  ;; NOP-NEXT:   (local.get $0)
+  ;; NOP-NEXT:  )
+  ;; NOP-NEXT: )
+  ;; YES:      (func $get-a-2 (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; YES-NEXT:  (if
+  ;; YES-NEXT:   (call $import)
+  ;; YES-NEXT:   (call $get-a-2
+  ;; YES-NEXT:    (local.get $0)
+  ;; YES-NEXT:   )
+  ;; YES-NEXT:  )
+  ;; YES-NEXT: )
+  (func $get-a-2 (param $ref (ref $A)) (result i32)
+    ;; Parallel to the above.
+    (if
+      (call $import)
+      (return
+        (call $get-a-2
+          (local.get $ref)
+        )
       )
     )
-    (local.set $a-1337
-      (struct.new $A
-        (i32.const 1337)
-      )
-    )
-    (call $escape
-      (local.get $a-42)
-    )
-    (call $escape
-      (local.get $a-1337)
-    )
-
-    ;; Write some values back to them. The first gets a different value than
-    ;; before.
-    (struct.set $A 0
-      (local.get $a-42)
-      (i32.const 100)
-    )
-    (struct.set $A 0
-      (local.get $a-1337)
-      (i32.const 1337)
-    )
-
-    ;; We can infer 1337 in the second local: that type, after SSA, always gets
-    ;; written the same constant.
-    (i32.add
-      (struct.get $A 0
-        (local.get $a-42)
-      )
-      (struct.get $A 0       ;; in YES this will become a constant 1337
-        (local.get $a-1337)
-      )
-    )
+    (struct.get $A 0 (local.get 0))
   )
 )
