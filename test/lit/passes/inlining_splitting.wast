@@ -1249,6 +1249,39 @@
     (drop (call $multi-if (ref.null none)))
   )
 
+  ;; CHECK:      (func $too-many-ifs (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
   (func $too-many-ifs (param $x anyref) (result anyref)
     ;; 5 ifs, which is too many.
     (if
@@ -1285,51 +1318,19 @@
   )
 
   ;; CHECK:      (func $call-too-many-ifs (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$too-many-ifs (result anyref)
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result anyref)
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_null
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_null
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_null
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_null
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_null
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (call $too-many-ifs
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $too-many-ifs
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-too-many-ifs
+    (drop (call $too-many-ifs (ref.null none)))
     (drop (call $too-many-ifs (ref.null none)))
   )
 )
