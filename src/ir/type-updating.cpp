@@ -266,6 +266,10 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   WASM_UNREACHABLE("bad type");
 }
 
+Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
+  return typeBuilder.getTempTupleType(tuple);
+}
+
 namespace TypeUpdating {
 
 bool canHandleAsLocal(Type type) {

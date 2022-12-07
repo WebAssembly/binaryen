@@ -461,6 +461,9 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("type-merging",
+               "merge types to their supertypes where possible",
+               createTypeMergingPass);
   registerPass("type-ssa",
                "create new nominal types to help other optimizations",
                createTypeSSAPass);

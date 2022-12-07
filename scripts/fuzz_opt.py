@@ -1323,6 +1323,7 @@ opt_choices = [
     ["--simplify-locals-notee-nostructure"],
     ["--ssa"],
     ["--type-refining"],
+    ["--type-merging"],
     ["--type-ssa"],
     ["--vacuum"],
 ]
