@@ -132,6 +132,11 @@ struct TypeMerging : public Pass {
     // Find all the heap types.
     std::vector<HeapType> types = ModuleUtils::collectHeapTypes(*module);
 
+    // TODO: There may be more opportunities after this loop. Imagine that we
+    //       decide to merge A and B into C, and there are types X and Y that
+    //       contain a nested reference to A and B respectively, then after A
+    //       and B become identical so do X and Y. The recursive case is not
+    //       trivial, however, and needs more thought.
     for (auto type : types) {
       if (allReferredTypes.count(type)) {
         // This has a cast, so it is distinguishable nominally.
