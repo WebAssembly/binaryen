@@ -1339,10 +1339,8 @@ public:
     : Builder(wasm), line(line), col(col) {}
 
   Expression* validateAndMakeRefAs(RefAsOp op, Expression* value) {
-    if (op == RefAsNonNull) {
-      if (!value->type.isRef() && value->type != Type::unreachable) {
-        throw ParseException("Invalid ref for ref.as", line, col);
-      }
+    if (!value->type.isRef() && value->type != Type::unreachable) {
+      throw ParseException("Invalid ref for ref.as", line, col);
     }
     return makeRefAs(op, value);
   }
