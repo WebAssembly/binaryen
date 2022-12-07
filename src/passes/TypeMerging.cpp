@@ -157,6 +157,12 @@ struct TypeMerging : public Pass {
           // not distinguishable nominally.
           merges[type] = *super;
         }
+      } else if (type.isArray()) {
+        auto element = type.getArray().element;
+        auto superElement = super->getArray().element;
+        if (element == superElement) {
+          merges[type] = *super;
+        }
       }
     }
 
