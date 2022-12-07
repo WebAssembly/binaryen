@@ -2504,49 +2504,54 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
 void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc [--enable-gc]");
-  if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+  if (curr->ref->type == Type::unreachable) {
+    return;
   }
-  shouldBeUnequal(curr->intendedType,
-                  HeapType(),
-                  curr,
-                  "static ref.test must set intendedType field");
-  shouldBeTrue(
-    !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "ref.test ref must have ref type")) {
+    return;
+  }
+  shouldBeEqual(
+    curr->intendedType.getBottom(),
+    curr->ref->type.getHeapType().getBottom(),
+    curr,
+    "ref.test target type and ref type must have a common supertype");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc [--enable-gc]");
-  if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
+  if (curr->ref->type == Type::unreachable) {
+    return;
   }
-  shouldBeUnequal(curr->intendedType,
-                  HeapType(),
-                  curr,
-                  "static ref.cast must set intendedType field");
-  shouldBeTrue(
-    !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "ref.cast ref must have ref type")) {
+    return;
+  }
+  shouldBeEqual(
+    curr->intendedType.getBottom(),
+    curr->ref->type.getHeapType().getBottom(),
+    curr,
+    "ref.cast target type and ref type must have a common supertype");
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "br_on_cast requires gc [--enable-gc]");
-  if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type")) {
+    return;
   }
   if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-    shouldBeUnequal(curr->intendedType,
-                    HeapType(),
-                    curr,
-                    "static br_on_cast* must set intendedType field");
-    shouldBeTrue(!curr->intendedType.isBasic(),
-                 curr,
-                 "br_on_cast* must cast to a non-basic");
+    shouldBeEqual(
+      curr->intendedType.getBottom(),
+      curr->ref->type.getHeapType().getBottom(),
+      curr,
+      "br_on_cast* target type and ref type must have a common supertype");
   } else {
     shouldBeEqual(curr->intendedType,
                   HeapType(),

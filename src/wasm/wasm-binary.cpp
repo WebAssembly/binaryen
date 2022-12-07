@@ -6894,7 +6894,8 @@ bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
 
 bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::RefTestStatic || code == BinaryConsts::RefTest) {
-    auto intendedType = getIndexedHeapType();
+    bool legacy = code == BinaryConsts::RefTestStatic;
+    auto intendedType = legacy ? getIndexedHeapType() : getHeapType();
     auto* ref = popNonVoidExpression();
     out = Builder(wasm).makeRefTest(ref, intendedType);
     return true;
@@ -6905,7 +6906,9 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::RefCastStatic ||
       code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
-    auto intendedType = getIndexedHeapType();
+    bool legacy =
+      code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCastNop;
+    auto intendedType = legacy ? getIndexedHeapType() : getHeapType();
     auto* ref = popNonVoidExpression();
     auto safety =
       code == BinaryConsts::RefCastNop ? RefCast::Unsafe : RefCast::Safe;
@@ -6956,7 +6959,9 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
   auto name = getBreakTarget(getU32LEB()).name;
   HeapType intendedType;
   if (op == BrOnCast || op == BrOnCastFail) {
-    intendedType = getIndexedHeapType();
+    bool legacy = code == BinaryConsts::BrOnCastStatic ||
+                  code == BinaryConsts::BrOnCastStaticFail;
+    intendedType = legacy ? getIndexedHeapType() : getHeapType();
   }
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeBrOn(op, name, ref, intendedType);

@@ -3,6 +3,7 @@
 ;; Test that the opcodes for the deprecated *_static cast instructions still parse.
 
 ;; RUN: wasm-opt %s.wasm -all -S -o - | filecheck %s
+
 ;; CHECK:      (type ${} (struct ))
 
 ;; CHECK:      (type $none_=>_none (func))

@@ -61,7 +61,66 @@
 
     (drop (ref.cast null $t2 (global.get $tab.12)))
   )
+
+  (func (export "test-ref-test-t0") (result i32)
+    (ref.test $t0 (struct.new $t0))
+  )
+
+  (func (export "test-ref-test-struct") (result i32)
+    (ref.test struct (struct.new $t0))
+  )
+
+  (func (export "test-ref-test-any") (result i32)
+    (ref.test any (struct.new $t0))
+  )
+
+  (func (export "test-ref-cast-struct")
+    (drop
+      (ref.cast null struct (struct.new $t0))
+    )
+  )
+
+  (func (export "test-br-on-cast-struct") (result i32)
+    (drop
+      (block $l (result (ref struct))
+        (drop
+          (br_on_cast $l struct (struct.new $t0))
+        )
+        (return (i32.const 0))
+      )
+    )
+    (i32.const 1)
+  )
+
+  (func (export "test-br-on-cast-fail-struct") (result i32)
+    (drop
+      (block $l (result (ref struct))
+        (drop
+          (br_on_cast_fail $l struct (struct.new $t0))
+        )
+        (return (i32.const 0))
+      )
+    )
+    (i32.const 1)
+  )
 )
+
 
 (invoke "test-sub")
 (invoke "test-canon")
+(assert_return (invoke "test-ref-test-t0") (i32.const 1))
+(assert_return (invoke "test-ref-test-struct") (i32.const 1))
+(assert_return (invoke "test-ref-test-any") (i32.const 1))
+(assert_return (invoke "test-ref-cast-struct"))
+(assert_return (invoke "test-br-on-cast-struct") (i32.const 1))
+(assert_return (invoke "test-br-on-cast-fail-struct") (i32.const 0))
+
+(assert_invalid
+  (module
+    (type $t0 (struct))
+    (func (export "test-ref-test-extern") (result i32)
+      (ref.test extern (struct.new $t0))
+    )
+  )
+  "common supertype"
+)
