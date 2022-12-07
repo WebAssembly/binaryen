@@ -2016,24 +2016,20 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31Get(Ctx&, Index, bool signed_);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&, Index);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx&, Index);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNop(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeBrOn(Ctx&, Index, BrOnOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOnStatic(Ctx&, Index, BrOnOp op);
+Result<typename Ctx::InstrT> makeBrOn(Ctx&, Index, BrOnOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStructNewStatic(Ctx&, Index, bool default_);
+Result<typename Ctx::InstrT> makeStructNew(Ctx&, Index, bool default_);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStructGet(Ctx&, Index, bool signed_ = false);
 template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNewStatic(Ctx&, Index, bool default_);
+Result<typename Ctx::InstrT> makeArrayNew(Ctx&, Index, bool default_);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNewSeg(Ctx&, Index, ArrayNewSegOp op);
 template<typename Ctx>
@@ -2972,22 +2968,12 @@ Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTestStatic(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastStatic(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNopStatic(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeRefCastNop(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
@@ -2997,13 +2983,7 @@ Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, Index pos, BrOnOp op) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOnStatic(Ctx& ctx, Index pos, BrOnOp op) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeStructNewStatic(Ctx& ctx, Index pos, bool default_) {
+Result<typename Ctx::InstrT> makeStructNew(Ctx& ctx, Index pos, bool default_) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   if (default_) {
@@ -3031,8 +3011,7 @@ Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewStatic(Ctx& ctx, Index pos, bool default_) {
+Result<typename Ctx::InstrT> makeArrayNew(Ctx& ctx, Index pos, bool default_) {
   return ctx.in.err("unimplemented instruction");
 }
 

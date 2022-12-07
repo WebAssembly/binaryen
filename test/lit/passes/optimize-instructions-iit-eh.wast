@@ -25,13 +25,13 @@
       (do)
       (catch $e
         (throw $e
-          ;; Because --ignore-implicit-traps is given, this ref.cast_static is
-          ;; assumed not to throw so this ref.cast can be statically removed.
+          ;; Because --ignore-implicit-traps is given, this ref.cast null is
+          ;; assumed not to throw so this ref.cast null can be statically removed.
           ;; But that creates a block around this, making 'pop' nested into it,
           ;; which is invalid. We fix this up at the end up OptimizeInstruction,
           ;; assigning the 'pop' to a local at the start of this 'catch' body
           ;; and later using 'local.get' to get it.
-          (ref.cast_static $struct.A
+          (ref.cast null $struct.A
             (pop (ref null $struct.A))
           )
         )

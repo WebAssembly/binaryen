@@ -2109,14 +2109,14 @@ struct PrintExpressionContents
     printHeapType(o, curr->target->type.getHeapType(), wasm);
   }
   void visitRefTest(RefTest* curr) {
-    printMedium(o, "ref.test_static ");
+    printMedium(o, "ref.test ");
     printHeapType(o, curr->intendedType, wasm);
   }
   void visitRefCast(RefCast* curr) {
     if (curr->safety == RefCast::Unsafe) {
-      printMedium(o, "ref.cast_nop_static ");
+      printMedium(o, "ref.cast_nop ");
     } else {
-      printMedium(o, "ref.cast_static ");
+      printMedium(o, "ref.cast null ");
     }
     printHeapType(o, curr->intendedType, wasm);
   }
@@ -2130,13 +2130,13 @@ struct PrintExpressionContents
         printMedium(o, "br_on_non_null ");
         break;
       case BrOnCast:
-        printMedium(o, "br_on_cast_static ");
+        printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
         printHeapType(o, curr->intendedType, wasm);
         return;
       case BrOnCastFail:
-        printMedium(o, "br_on_cast_static_fail ");
+        printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
         printHeapType(o, curr->intendedType, wasm);

@@ -15,21 +15,21 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test_static $struct.A
+  ;; CHECK-NEXT:   (ref.test $struct.A
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $test (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test_static $struct.B
+  ;; NOMNL-NEXT:   (ref.test $struct.B
   ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $test
     (drop
-      (ref.test_static $struct.B (ref.null $struct.A))
+      (ref.test $struct.B (ref.null $struct.A))
     )
   )
 )
@@ -41,21 +41,21 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $struct.A
+  ;; CHECK-NEXT:   (ref.cast null $struct.A
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $test (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast_static $struct.B
+  ;; NOMNL-NEXT:   (ref.cast null $struct.B
   ;; NOMNL-NEXT:    (ref.null none)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $test
     (drop
-      (ref.cast_static $struct.B (ref.null $struct.A))
+      (ref.cast null $struct.B (ref.null $struct.A))
     )
   )
 )

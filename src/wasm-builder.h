@@ -1320,30 +1320,6 @@ public:
   }
 };
 
-// This class adds methods that first inspect the input. They may not have fully
-// comprehensive error checking, when that can be left to the validator; the
-// benefit of the validate* methods is that they can share code between the
-// text and binary format parsers, for handling certain situations in the
-// input which preclude even creating valid IR, which the validator depends
-// on.
-class ValidatingBuilder : public Builder {
-  size_t line = -1, col = -1;
-
-public:
-  ValidatingBuilder(Module& wasm, size_t line) : Builder(wasm), line(line) {}
-  ValidatingBuilder(Module& wasm, size_t line, size_t col)
-    : Builder(wasm), line(line), col(col) {}
-
-  Expression* validateAndMakeBrOn(BrOnOp op, Name name, Expression* ref) {
-    if (op == BrOnNull) {
-      if (!ref->type.isRef() && ref->type != Type::unreachable) {
-        throw ParseException("Invalid ref for br_on_null", line, col);
-      }
-    }
-    return makeBrOn(op, name, ref);
-  }
-};
-
 } // namespace wasm
 
 #endif // wasm_wasm_builder_h

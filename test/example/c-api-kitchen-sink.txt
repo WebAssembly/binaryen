@@ -2165,12 +2165,12 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (ref.test_static $[mut:i8]
+       (ref.test $[mut:i8]
         (global.get $i8Array-global)
        )
       )
       (drop
-       (ref.cast_static $[mut:i8]
+       (ref.cast null $[mut:i8]
         (global.get $i8Array-global)
        )
       )

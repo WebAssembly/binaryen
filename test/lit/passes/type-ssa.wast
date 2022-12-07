@@ -374,7 +374,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.init (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; CHECK:      (func $array.init_static (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.init_static $array$5
   ;; CHECK-NEXT:    (ref.null none)
@@ -397,7 +397,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $array.init (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; NOMNL:      (func $array.init_static (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (array.init_static $array$5
   ;; NOMNL-NEXT:    (ref.null none)
@@ -420,7 +420,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $array.init (param $refined (ref i31)) (param $null-any (ref null any))
+  (func $array.init_static (param $refined (ref i31)) (param $null-any (ref null any))
     ;; Null, interesting, so we get a new type.
     (drop
       (array.init_static $array
