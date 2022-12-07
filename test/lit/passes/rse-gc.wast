@@ -3,12 +3,12 @@
 
 (module
  ;; CHECK:      (type $A (struct (field dataref)))
- (type $A (struct_subtype (field (ref null data)) data))
+ (type $A (struct (field (ref null struct))))
 
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
  ;; nullable).
  ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
- (type $B (struct_subtype (field (ref data)) $A))
+ (type $B (struct_subtype (field (ref struct)) $A))
 
  ;; CHECK:      (func $test (type $none_=>_none)
  ;; CHECK-NEXT:  (local $single (ref func))

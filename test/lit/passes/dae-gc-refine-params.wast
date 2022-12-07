@@ -475,7 +475,7 @@
  ;; NOMNL-NEXT:  (local $0 dataref)
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
- (func $unused-and-refinable (param $0 dataref)
+ (func $unused-and-refinable (param $0 structref)
   ;; This function does not use $0. It is called with ${}, so it is also
   ;; a parameter whose type we can refine. Do not do both operations: instead,
   ;; just remove it because it is ignored, without altering the type (handling
@@ -517,7 +517,7 @@
  ;; NOMNL-NEXT:   (local.get $1)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
- (func $non-nullable-fixup (param $0 dataref)
+ (func $non-nullable-fixup (param $0 structref)
   ;; Use the param to avoid other opts removing it, and to force us to do a
   ;; fixup when we refine the param's type. When doing so, we must handle the
   ;; fact that the new local's type is non-nullable.

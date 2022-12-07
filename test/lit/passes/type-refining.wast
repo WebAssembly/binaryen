@@ -82,20 +82,20 @@
 
 (module
   ;; Multiple writes to a field, with a LUB that is not equal to any of them.
-  ;; We can at least improve from dataref to a ref of $struct here. Note also
+  ;; We can at least improve from structref to a ref of $struct here. Note also
   ;; that we do so in all three types, not just the parent to which we write
   ;; (the children have no writes, but must still be updated).
 
   ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child-A|_ref|$child-B|_=>_none (func (param (ref $struct) (ref $child-A) (ref $child-B))))
 
   ;; CHECK:      (type $child-A (struct_subtype (field (mut (ref $struct))) $struct))
-  (type $child-A (struct_subtype (field (mut dataref)) $struct))
+  (type $child-A (struct_subtype (field (mut structref)) $struct))
 
   ;; CHECK:      (type $child-B (struct_subtype (field (mut (ref $struct))) $struct))
-  (type $child-B (struct_subtype (field (mut dataref)) $struct))
+  (type $child-B (struct_subtype (field (mut structref)) $struct))
 
   ;; CHECK:      (func $work (type $ref|$struct|_ref|$child-A|_ref|$child-B|_=>_none) (param $struct (ref $struct)) (param $child-A (ref $child-A)) (param $child-B (ref $child-B))
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -126,16 +126,16 @@
   ;; CHECK:      (type $struct (struct (field (mut (ref $child-A)))))
 
   ;; CHECK:      (type $child-A (struct_subtype (field (mut (ref $child-A))) $struct))
-  (type $child-A (struct_subtype (field (mut dataref)) $struct))
+  (type $child-A (struct_subtype (field (mut structref)) $struct))
 
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child-A|_=>_none (func (param (ref $struct) (ref $child-A))))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $child-B (struct_subtype (field (mut (ref $child-A))) $struct))
-  (type $child-B (struct_subtype (field (mut dataref)) $struct))
+  (type $child-B (struct_subtype (field (mut structref)) $struct))
 
   ;; CHECK:      (func $work (type $ref|$struct|_ref|$child-A|_=>_none) (param $struct (ref $struct)) (param $child-A (ref $child-A))
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -176,10 +176,10 @@
   ;; $struct but not to $child.
 
   ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) $struct))
-  (type $child (struct_subtype (field (mut dataref)) $struct))
+  (type $child (struct_subtype (field (mut structref)) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -211,9 +211,9 @@
   ;; CHECK:      (type $struct (struct (field (mut (ref $child)))))
 
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $child))) $struct))
-  (type $child (struct_subtype (field (mut dataref)) $struct))
+  (type $child (struct_subtype (field (mut structref)) $struct))
 
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -246,10 +246,10 @@
   ;; child's.
 
   ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) $struct))
-  (type $child (struct_subtype (field (mut dataref)) $struct))
+  (type $child (struct_subtype (field (mut structref)) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -290,10 +290,10 @@
   ;; testcase after this.)
 
   ;; CHECK:      (type $struct (struct (field (ref $struct))))
-  (type $struct (struct_subtype (field dataref) data))
+  (type $struct (struct_subtype (field structref) data))
 
   ;; CHECK:      (type $child (struct_subtype (field (ref $child)) $struct))
-  (type $child (struct_subtype (field dataref) $struct))
+  (type $child (struct_subtype (field structref) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -329,10 +329,10 @@
   ;; improvement!)
 
   ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) $struct))
-  (type $child (struct_subtype (field (mut dataref)) $struct))
+  (type $child (struct_subtype (field (mut structref)) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -368,10 +368,10 @@
   ;; to $child.
 
   ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref $struct))) (field (mut (ref $child))) $struct))
-  (type $child (struct_subtype (field (mut dataref)) (field (mut dataref)) $struct))
+  (type $child (struct_subtype (field (mut structref)) (field (mut structref)) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -408,7 +408,7 @@
   ;; the old type).
 
   ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
-  (type $struct (struct_subtype (field (mut dataref)) data))
+  (type $struct (struct_subtype (field (mut structref)) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
@@ -456,7 +456,7 @@
 
   (type $A (struct_subtype (field (ref $X)) data))
 
-  (type $X (struct_subtype data))
+  (type $X (struct))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $unused (ref null $C))
@@ -491,7 +491,7 @@
   ;; no writes to them. There are no optimizations to do here.
 
   ;; CHECK:      (type $X (struct ))
-  (type $X (struct_subtype data))
+  (type $X (struct))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -524,7 +524,7 @@
 
 (module
   ;; CHECK:      (type $X (struct ))
-  (type $X (struct_subtype data))
+  (type $X (struct))
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $A (struct (field (ref $X))))
@@ -562,7 +562,7 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
-  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
@@ -584,9 +584,8 @@
     )
     (struct.set $struct 0
       (local.get $struct)
-      ;; This null can be updated, allowing us to refine the type of the field
-      ;; to a null of $struct.
-      (ref.null data)
+      ;; This null does not prevent refinement.
+      (ref.null none)
     )
   )
 )
@@ -596,9 +595,9 @@
   ;; refine the field to nullable $struct.
 
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
-  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) data))
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) $struct))
-  (type $child (struct_subtype (field (mut (ref null data))) $struct))
+  (type $child (struct_subtype (field (mut (ref null struct))) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -619,7 +618,7 @@
     )
     (struct.set $child 0
       (local.get $child)
-      (ref.null data)
+      (ref.null none)
     )
   )
 )
@@ -628,9 +627,9 @@
   ;; As above, but now the null is in a parent. The result should be the same.
 
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
-  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) data))
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $struct))) $struct))
-  (type $child (struct_subtype (field (mut (ref null data))) $struct))
+  (type $child (struct_subtype (field (mut (ref null struct))) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -647,7 +646,7 @@
   (func $update-null (param $struct (ref $struct)) (param $child (ref $child))
     (struct.set $struct 0
       (local.get $struct)
-      (ref.null data)
+      (ref.null none)
     )
     (struct.set $child 0
       (local.get $child)
@@ -658,7 +657,7 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut nullref))))
-  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
@@ -678,7 +677,7 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
-  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
@@ -706,7 +705,7 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut (ref null $struct)))))
-  (type $struct (struct_subtype (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) data))
 
   ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
 
@@ -723,10 +722,10 @@
   ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
     ;; As before, but instead of new_default, new, and use a null in the given
-    ;; value, which should be updated.
+    ;; value.
     (drop
       (struct.new $struct
-        (ref.null data)
+        (ref.null none)
       )
     )
     (struct.set $struct 0
@@ -738,10 +737,10 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut (ref null $child))) (field (mut (ref null $struct)))))
-  (type $struct (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) data))
+  (type $struct (struct_subtype (field (mut (ref null struct))) (field (mut (ref null struct))) data))
 
   ;; CHECK:      (type $child (struct_subtype (field (mut (ref null $child))) (field (mut (ref null $struct))) $struct))
-  (type $child (struct_subtype (field (mut (ref null data))) (field (mut (ref null data))) $struct))
+  (type $child (struct_subtype (field (mut (ref null struct))) (field (mut (ref null struct))) $struct))
 
   ;; CHECK:      (type $ref|$struct|_ref|$child|_=>_none (func (param (ref $struct) (ref $child))))
 
@@ -765,12 +764,12 @@
     (drop
       (struct.new $struct
         (local.get $child)
-        (ref.null data)
+        (ref.null none)
       )
     )
     (drop
       (struct.new $struct
-        (ref.null data)
+        (ref.null none)
         (local.get $struct)
       )
     )
@@ -810,7 +809,7 @@
 
   (type $Root-Outer (struct_subtype (field (ref $Root-Inner)) data))
 
-  (type $Root-Inner (struct_subtype  data))
+  (type $Root-Inner (struct))
 
   (type $Leaf1-Inner (struct_subtype (field i32) $Root-Inner))
 

@@ -1245,8 +1245,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-multi-if
-    (drop (call $multi-if (ref.null any)))
-    (drop (call $multi-if (ref.null data)))
+    (drop (call $multi-if (ref.null none)))
+    (drop (call $multi-if (ref.null none)))
   )
 
   ;; CHECK:      (func $too-many-ifs (type $anyref_=>_anyref) (param $x anyref) (result anyref)
@@ -1330,8 +1330,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-too-many-ifs
-    (drop (call $too-many-ifs (ref.null any)))
-    (drop (call $too-many-ifs (ref.null data)))
+    (drop (call $too-many-ifs (ref.null none)))
+    (drop (call $too-many-ifs (ref.null none)))
   )
 )
 

@@ -802,7 +802,7 @@
  (type $A (struct (field (mut i32))))
  (func $foo
   (drop
-   (block (result dataref)
+   (block (result structref)
     ;; this dropped item can be vacuumed out in principle, but it is a non-
     ;; nullable reference type and we don't have a type to put in its place, so
     ;; don't try to replace it. (later operations will remove all the body of

@@ -5,10 +5,10 @@
   ;; CHECK:      (type $[i8] (array i8))
   (type $[i8] (array i8))
 
-  ;; CHECK:      (func $take-ref-null-data (type $dataref_=>_none) (param $0 dataref)
+  ;; CHECK:      (func $take-ref-null-array (type $arrayref_=>_none) (param $0 arrayref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $take-ref-null-data (param (ref null data))
+  (func $take-ref-null-array (param (ref null array))
     (unreachable)
   )
   ;; CHECK:      (func $take-ref-eq (type $ref|eq|_=>_none) (param $0 (ref eq))
@@ -43,7 +43,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (call $take-ref-null-data
+  ;; CHECK-NEXT:  (call $take-ref-null-array
   ;; CHECK-NEXT:   (array.init_static $[i8])
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -51,7 +51,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
-    (call $take-ref-null-data
+    (call $take-ref-null-array
       (array.init_static $[i8])
     )
   )

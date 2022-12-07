@@ -153,70 +153,8 @@
    )
   )
  )
- (func $get_data (result dataref)
+ (func $get_struct (result structref)
   (struct.new_default $struct)
- )
- (func "br_on_data" (param $x anyref)
-  (local $y anyref)
-  (drop
-   (block $data (result dataref)
-    (local.set $y
-     (br_on_data $data (local.get $x))
-    )
-    (call $log (i32.const 1))
-    (call $get_data)
-   )
-  )
- )
- (func "br_on_non_data-null"
-  (local $x anyref)
-  (drop
-   (block $any (result anyref)
-    (drop
-     (br_on_non_data $any (local.get $x))
-    )
-    ;; $x is a null, and so it is not data, and the branch will be taken, and no
-    ;; logging will occur.
-    (call $log (i32.const 1))
-    (ref.null any)
-   )
-  )
- )
- (func "br_on_non_data-data"
-  (local $x anyref)
-  ;; set x to valid data
-  (local.set $x
-   (struct.new_default $struct)
-  )
-  (drop
-   (block $any (result anyref)
-    (drop
-     (br_on_non_data $any (local.get $x))
-    )
-    ;; $x refers to valid data, and so we will not branch, and will log.
-    (call $log (i32.const 1))
-    (ref.null any)
-   )
-  )
- )
- (func "br_on_non_data-other"
-  (local $x anyref)
-  ;; set x to something that is not null, but also not data
-  (local.set $x
-   (i31.new
-    (i32.const 0)
-   )
-  )
-  (drop
-   (block $any (result anyref)
-    (drop
-     (br_on_non_data $any (local.get $x))
-    )
-    ;; $x refers to an i31, so we will branch, and not log
-    (call $log (i32.const 1))
-    (ref.null any)
-   )
-  )
  )
  (func "br-on_non_null"
   (drop
@@ -236,21 +174,6 @@
     ;; $x is null, and so we will not branch, and log and then trap
     (call $log (i32.const 1))
     (unreachable)
-   )
-  )
- )
- (func "ref-as-data-of-func"
-  (drop
-   ;; This should trap.
-   (ref.as_data
-    (ref.func $0)
-   )
-  )
- )
- (func "ref-as-data-of-data"
-  (drop
-   (ref.as_data
-    (struct.new_default $struct)
    )
   )
  )
