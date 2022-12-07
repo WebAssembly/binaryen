@@ -1087,7 +1087,7 @@
   ;; ref.cast instruction has, that is, the value is a null of type $B). So this
   ;; is an odd cast that "works".
   (local.set $temp
-   (ref.cast_static $B
+   (ref.cast $B
     (ref.null $A)
    )
   )
@@ -1139,7 +1139,7 @@
   ;; As above, but with a tuple.
   (local.set $temp
    (tuple.make
-    (ref.cast_static $B
+    (ref.cast $B
      (ref.null $A)
     )
     (i32.const 10)
@@ -1166,7 +1166,7 @@
 
  ;; CHECK:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (ref.cast_static $func-return-i32
+ ;; CHECK-NEXT:   (ref.cast $func-return-i32
  ;; CHECK-NEXT:    (ref.func $receive-f64)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1178,7 +1178,7 @@
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (ref.cast_static $func-return-i32
+ ;; NOMNL-NEXT:   (ref.cast $func-return-i32
  ;; NOMNL-NEXT:    (ref.func $receive-f64)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
@@ -1191,7 +1191,7 @@
  (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
   ;; Try to cast a function to an incompatible type.
   (local.set $temp
-   (ref.cast_static $func-return-i32
+   (ref.cast $func-return-i32
     (ref.func $receive-f64)
    )
   )
@@ -1238,7 +1238,7 @@
  ;; CHECK:      (func $br_on_cast-on-creation (type $none_=>_ref|$empty|) (result (ref $empty))
  ;; CHECK-NEXT:  (block $label (result (ref $empty))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_static $label $empty
+ ;; CHECK-NEXT:    (br_on_cast $label $empty
  ;; CHECK-NEXT:     (struct.new_default $empty)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -1248,7 +1248,7 @@
  ;; NOMNL:      (func $br_on_cast-on-creation (type $none_=>_ref|$empty|) (result (ref $empty))
  ;; NOMNL-NEXT:  (block $label (result (ref $empty))
  ;; NOMNL-NEXT:   (drop
- ;; NOMNL-NEXT:    (br_on_cast_static $label $empty
+ ;; NOMNL-NEXT:    (br_on_cast $label $empty
  ;; NOMNL-NEXT:     (struct.new_default $empty)
  ;; NOMNL-NEXT:    )
  ;; NOMNL-NEXT:   )
@@ -1258,7 +1258,7 @@
  (func $br_on_cast-on-creation (result (ref $empty))
   (block $label (result (ref $empty))
    (drop
-    (br_on_cast_static $label $empty
+    (br_on_cast $label $empty
      (struct.new_default $empty)
     )
    )

@@ -19,7 +19,7 @@
 
  ;; CHECK:      (func $target (type $ref?|$A|_=>_none) (param $0 (ref null $A))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast_static $B
+ ;; CHECK-NEXT:   (ref.cast $B
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -27,7 +27,7 @@
  ;; CHECK-NEXT: )
  (func $target (param $0 (ref null $A))
   (drop
-   (ref.cast_static $B
+   (ref.cast $B
     (struct.get $A 0
      (call $get-null)
     )

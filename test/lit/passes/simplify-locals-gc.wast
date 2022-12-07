@@ -604,7 +604,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
   ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (ref.cast_static $B
+  ;; CHECK-NEXT:     (ref.cast $B
   ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -632,7 +632,7 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.get $B 0
   ;; NOMNL-NEXT:    (local.tee $B
-  ;; NOMNL-NEXT:     (ref.cast_static $B
+  ;; NOMNL-NEXT:     (ref.cast $B
   ;; NOMNL-NEXT:      (local.get $A)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
@@ -655,7 +655,7 @@
     ;; nullability but not the heap type.
     (local $B (ref null $B))
     (local.set $B
-      (ref.cast_static $B
+      (ref.cast $B
         (local.get $A)
       )
     )

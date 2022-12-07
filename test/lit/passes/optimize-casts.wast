@@ -96,7 +96,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:    (ref.cast $A
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -112,7 +112,7 @@
     ;; As $ref.as but with ref.casts: we should use the cast value after it has
     ;; been computed, in both gets.
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $x)
       )
     )
@@ -128,7 +128,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:    (ref.cast $A
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -145,7 +145,7 @@
   ;; CHECK-NEXT: )
   (func $not-past-set (param $x (ref struct))
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $x)
       )
     )
@@ -166,7 +166,7 @@
   ;; CHECK-NEXT:  (local $2 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:    (ref.cast $A
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -176,7 +176,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $2
-  ;; CHECK-NEXT:    (ref.cast_static $B
+  ;; CHECK-NEXT:    (ref.cast $B
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -187,7 +187,7 @@
   ;; CHECK-NEXT: )
   (func $best (param $x (ref struct))
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $x)
       )
     )
@@ -196,7 +196,7 @@
       (local.get $x)
     )
     (drop
-      (ref.cast_static $B
+      (ref.cast $B
         (local.get $x)
       )
     )
@@ -210,7 +210,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast_static $B
+  ;; CHECK-NEXT:    (ref.cast $B
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -219,7 +219,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -231,7 +231,7 @@
     ;; As above, but with the casts reversed. Now we should use $B in both
     ;; gets.
     (drop
-      (ref.cast_static $B
+      (ref.cast $B
         (local.get $x)
       )
     )
@@ -239,7 +239,7 @@
       (local.get $x)
     )
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $x)
       )
     )
@@ -252,7 +252,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:    (ref.cast $A
   ;; CHECK-NEXT:     (block (result (ref data))
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -265,7 +265,7 @@
   ;; CHECK-NEXT: )
   (func $fallthrough (param $x (ref struct))
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         ;; We look through the block, and optimize.
         (block (result (ref struct))
           (local.get $x)
@@ -279,7 +279,7 @@
 
   ;; CHECK:      (func $past-basic-block (type $ref|data|_=>_none) (param $x (ref data))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast_static $A
+  ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -293,7 +293,7 @@
   ;; CHECK-NEXT: )
   (func $past-basic-block (param $x (ref struct))
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $x)
       )
     )
@@ -321,14 +321,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $4
-  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:    (ref.cast $A
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $5
-  ;; CHECK-NEXT:    (ref.cast_static $A
+  ;; CHECK-NEXT:    (ref.cast $A
   ;; CHECK-NEXT:     (local.get $b)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -360,12 +360,12 @@
       (local.get $y)
     )
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $a)
       )
     )
     (drop
-      (ref.cast_static $A
+      (ref.cast $A
         (local.get $b)
       )
     )

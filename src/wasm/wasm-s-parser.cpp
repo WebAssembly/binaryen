@@ -2775,40 +2775,36 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeRefTestStatic(Element& s) {
+Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
   return Builder(wasm).makeRefTest(ref, heapType);
 }
 
-Expression* SExpressionWasmBuilder::makeRefCastStatic(Element& s) {
+Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, heapType, RefCast::Safe);
 }
 
-Expression* SExpressionWasmBuilder::makeRefCastNopStatic(Element& s) {
+Expression* SExpressionWasmBuilder::makeRefCastNop(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, heapType, RefCast::Unsafe);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
-  auto name = getLabel(*s[1]);
-  auto* ref = parseExpression(*s[2]);
-  return ValidatingBuilder(wasm, s.line, s.col)
-    .validateAndMakeBrOn(op, name, ref);
-}
-
-Expression* SExpressionWasmBuilder::makeBrOnStatic(Element& s, BrOnOp op) {
-  auto name = getLabel(*s[1]);
-  auto heapType = parseHeapType(*s[2]);
-  auto* ref = parseExpression(*s[3]);
+  int i = 1;
+  auto name = getLabel(*s[i++]);
+  HeapType heapType;
+  if (op == BrOnCast || op == BrOnCastFail) {
+    heapType = parseHeapType(*s[i++]);
+  }
+  auto* ref = parseExpression(*s[i]);
   return Builder(wasm).makeBrOn(op, name, ref, heapType);
 }
 
-Expression* SExpressionWasmBuilder::makeStructNewStatic(Element& s,
-                                                        bool default_) {
+Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   auto heapType = parseHeapType(*s[1]);
   auto numOperands = s.size() - 2;
   if (default_ && numOperands > 0) {
@@ -2865,8 +2861,7 @@ Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
   return Builder(wasm).makeStructSet(index, ref, value);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayNewStatic(Element& s,
-                                                       bool default_) {
+Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   auto heapType = parseHeapType(*s[1]);
   Expression* init = nullptr;
   size_t i = 2;
