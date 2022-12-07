@@ -235,3 +235,44 @@
     )
   )
 )
+
+;; Arrays
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $intarray (array (mut i32)))
+  (type $intarray (array (mut i32)))
+  (type $sub-intarray (array_subtype (mut i32) $intarray))
+
+  ;; CHECK:      (type $refarray (array anyref))
+  (type $refarray (array (ref null any)))
+  (type $sub-refarray    (array_subtype (ref null any) $refarray))
+  ;; CHECK:      (type $sub-refarray-nn (array_subtype (ref any) $refarray))
+  (type $sub-refarray-nn (array_subtype (ref      any) $refarray))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $intarray))
+  ;; CHECK-NEXT:  (local $b (ref null $intarray))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; $A will remain the same.
+    (local $a (ref null $intarray))
+    ;; $B can be merged into $A.
+    (local $b (ref null $sub-intarray))
+  )
+
+  ;; CHECK:      (func $bar (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $refarray))
+  ;; CHECK-NEXT:  (local $b (ref null $refarray))
+  ;; CHECK-NEXT:  (local $c (ref null $sub-refarray-nn))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bar
+    (local $a (ref null $refarray))
+    ;; $B can be merged into $A.
+    (local $b (ref null $sub-refarray))
+    ;; $C cannot be merged as the element type is more refined.
+    (local $c (ref null $sub-refarray-nn))
+  )
+)
