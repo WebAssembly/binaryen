@@ -921,9 +921,6 @@ struct AsyncifyFlow : public Pass {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
-      if (analyzer->asserts) {
-        addAssertsInNonInstrumented(func);
-      }
       return;
     }
     // Rewrite the function body.
@@ -947,7 +944,6 @@ struct AsyncifyFlow : public Pass {
 
 private:
   std::unique_ptr<AsyncifyBuilder> builder;
-
   Module* module;
   Function* func;
 
@@ -1216,6 +1212,41 @@ private:
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, Type::none);
   }
+};
+
+// Add asserts in non-instrumented code.
+struct AsyncifyAssertInNonInstrumented : public Pass {
+  bool isFunctionParallel() override { return true; }
+
+  ModuleAnalyzer* analyzer;
+  Type pointerType;
+  Name asyncifyMemory;
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AsyncifyAssertInNonInstrumented>(
+      analyzer, pointerType, asyncifyMemory);
+  }
+
+  AsyncifyAssertInNonInstrumented(ModuleAnalyzer* analyzer,
+                                  Type pointerType,
+                                  Name asyncifyMemory)
+    : analyzer(analyzer), pointerType(pointerType),
+      asyncifyMemory(asyncifyMemory) {}
+
+  void runOnFunction(Module* module_, Function* func) override {
+    // FIXME: This looks like it was never right, as it should ignore the top-
+    //        most runtime, but it will actually instrument it (as it needs no
+    //        instrumentation, like random code - but the top-most runtime is
+    //        actually a place that needs neither instrumentation *nor*
+    //        assertions, as the assertions will error when it changes the
+    //        state).
+    if (!analyzer->needsInstrumentation(func)) {
+      module = module_;
+      builder =
+        make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
+      addAssertsInNonInstrumented(func);
+    }
+  }
 
   // Given a function that is not instrumented - because we proved it doesn't
   // need it, or depending on the only-list / remove-list - add assertions that
@@ -1275,6 +1306,10 @@ private:
     walker.oldState = oldState;
     walker.walk(func->body);
   }
+
+private:
+  std::unique_ptr<AsyncifyBuilder> builder;
+  Module* module;
 };
 
 // Instrument local saving/restoring.
@@ -1685,6 +1720,16 @@ struct Asyncify : public Pass {
       }
       runner.add(
         make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
+      runner.setIsNested(true);
+      runner.setValidateGlobally(false);
+      runner.run();
+    }
+    if (asserts) {
+      // Add asserts in non-instrumented code. Note we do not use an
+      // instrumented pass runner here as we do want to run on all functions.
+      PassRunner runner(module);
+      runner.add(make_unique<AsyncifyAssertInNonInstrumented>(
+        &analyzer, pointerType, asyncifyMemory));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
