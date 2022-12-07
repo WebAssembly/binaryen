@@ -848,6 +848,54 @@ public:
   }
 };
 
+// Proxy that runs wrapped pass for instrumented functions only
+struct InstrumentedProxy : public Pass {
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<InstrumentedProxy>(analyzer, pass->create());
+  }
+
+  InstrumentedProxy(ModuleAnalyzer* analyzer, std::unique_ptr<Pass> pass)
+    : analyzer(analyzer), pass(std::move(pass)) {}
+
+  bool isFunctionParallel() override { return pass->isFunctionParallel(); }
+
+  void runOnFunction(Module* module, Function* func) override {
+    if (!analyzer->needsInstrumentation(func)) {
+      return;
+    }
+    if (pass->getPassRunner() == nullptr) {
+      pass->setPassRunner(getPassRunner());
+    }
+    pass->runOnFunction(module, func);
+  }
+
+  bool modifiesBinaryenIR() override { return pass->modifiesBinaryenIR(); }
+
+  bool invalidatesDWARF() override { return pass->invalidatesDWARF(); }
+
+  bool requiresNonNullableLocalFixups() override {
+    return pass->requiresNonNullableLocalFixups();
+  }
+
+private:
+  ModuleAnalyzer* analyzer;
+  std::unique_ptr<Pass> pass;
+};
+
+struct InstrumentedPassRunner : public PassRunner {
+  InstrumentedPassRunner(Module* wasm, ModuleAnalyzer* analyzer)
+    : PassRunner(wasm), analyzer(analyzer) {}
+
+protected:
+  void doAdd(std::unique_ptr<Pass> pass) override {
+    PassRunner::doAdd(
+      std::unique_ptr<Pass>(new InstrumentedProxy(analyzer, std::move(pass))));
+  }
+
+private:
+  ModuleAnalyzer* analyzer;
+};
+
 // Instrument control flow, around calls and adding skips for rewinding.
 struct AsyncifyFlow : public Pass {
   bool isFunctionParallel() override { return true; }
@@ -873,9 +921,6 @@ struct AsyncifyFlow : public Pass {
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
-      if (analyzer->asserts) {
-        addAssertsInNonInstrumented(func);
-      }
       return;
     }
     // Rewrite the function body.
@@ -899,7 +944,6 @@ struct AsyncifyFlow : public Pass {
 
 private:
   std::unique_ptr<AsyncifyBuilder> builder;
-
   Module* module;
   Function* func;
 
@@ -1168,6 +1212,41 @@ private:
     // don't want it to be seen by asyncify itself.
     return builder->makeCall(ASYNCIFY_GET_CALL_INDEX, {}, Type::none);
   }
+};
+
+// Add asserts in non-instrumented code.
+struct AsyncifyAssertInNonInstrumented : public Pass {
+  bool isFunctionParallel() override { return true; }
+
+  ModuleAnalyzer* analyzer;
+  Type pointerType;
+  Name asyncifyMemory;
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<AsyncifyAssertInNonInstrumented>(
+      analyzer, pointerType, asyncifyMemory);
+  }
+
+  AsyncifyAssertInNonInstrumented(ModuleAnalyzer* analyzer,
+                                  Type pointerType,
+                                  Name asyncifyMemory)
+    : analyzer(analyzer), pointerType(pointerType),
+      asyncifyMemory(asyncifyMemory) {}
+
+  void runOnFunction(Module* module_, Function* func) override {
+    // FIXME: This looks like it was never right, as it should ignore the top-
+    //        most runtime, but it will actually instrument it (as it needs no
+    //        instrumentation, like random code - but the top-most runtime is
+    //        actually a place that needs neither instrumentation *nor*
+    //        assertions, as the assertions will error when it changes the
+    //        state).
+    if (!analyzer->needsInstrumentation(func)) {
+      module = module_;
+      builder =
+        make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
+      addAssertsInNonInstrumented(func);
+    }
+  }
 
   // Given a function that is not instrumented - because we proved it doesn't
   // need it, or depending on the only-list / remove-list - add assertions that
@@ -1227,6 +1306,10 @@ private:
     walker.oldState = oldState;
     walker.walk(func->body);
   }
+
+private:
+  std::unique_ptr<AsyncifyBuilder> builder;
+  Module* module;
 };
 
 // Instrument local saving/restoring.
@@ -1616,7 +1699,7 @@ struct Asyncify : public Pass {
     // practical to add code around each call, without affecting
     // anything else.
     {
-      PassRunner runner(module);
+      InstrumentedPassRunner runner(module, &analyzer);
       runner.add("flatten");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
@@ -1641,13 +1724,23 @@ struct Asyncify : public Pass {
       runner.setValidateGlobally(false);
       runner.run();
     }
+    if (asserts) {
+      // Add asserts in non-instrumented code. Note we do not use an
+      // instrumented pass runner here as we do want to run on all functions.
+      PassRunner runner(module);
+      runner.add(make_unique<AsyncifyAssertInNonInstrumented>(
+        &analyzer, pointerType, asyncifyMemory));
+      runner.setIsNested(true);
+      runner.setValidateGlobally(false);
+      runner.run();
+    }
     // Next, add local saving/restoring logic. We optimize before doing this,
     // to undo the extra code generated by flattening, and to arrive at the
     // minimal amount of locals (which is important as we must save and
     // restore those locals). We also and optimize after as well to simplify
     // the code as much as possible.
     {
-      PassRunner runner(module);
+      InstrumentedPassRunner runner(module, &analyzer);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

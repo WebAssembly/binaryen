@@ -211,15 +211,15 @@
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $call-bar
-  ;; Call with nulls. Mixing nulls is fine as they all have the same value, and
-  ;; we can optimize (to the LUB of the nulls). However, mixing a null with a
-  ;; reference stops us in the second param.
+  ;; Call with nulls. Mixing nulls is fine as they all have the same type and
+  ;; value. However, mixing a null with a reference stops us in the second
+  ;; param.
   (call $bar
-   (ref.null i31)
-   (ref.null data)
+   (ref.null none)
+   (ref.null none)
   )
   (call $bar
-   (ref.null any)
+   (ref.null none)
    (i31.new (i32.const 0))
   )
  )

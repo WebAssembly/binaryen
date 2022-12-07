@@ -40,6 +40,9 @@ option(BUILD_TOOLS "Build tools" ON)
 # Turn this off to install only tools and not static/dynamic libs
 option(INSTALL_LIBS "Install libraries" ON)
 
+# Turn this on to build only the subset of tools needed for emscripten
+option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
+
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
@@ -415,6 +418,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack")
+  target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
   target_link_libraries(binaryen_wasm "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "-msign-ext")
   target_link_libraries(binaryen_wasm "-mbulk-memory")
@@ -453,6 +457,7 @@ if(EMSCRIPTEN)
     target_link_libraries(binaryen_js "-sEXPORT_ES6=1")
   endif()
   target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack")
+  target_link_libraries(binaryen_js "-sEXPORTED_FUNCTIONS=_malloc,_free")
   target_link_libraries(binaryen_js "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)

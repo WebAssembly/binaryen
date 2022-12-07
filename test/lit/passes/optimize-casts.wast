@@ -108,7 +108,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.cast (param $x (ref data))
+  (func $ref.cast (param $x (ref struct))
     ;; As $ref.as but with ref.casts: we should use the cast value after it has
     ;; been computed, in both gets.
     (drop
@@ -143,7 +143,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $not-past-set (param $x (ref data))
+  (func $not-past-set (param $x (ref struct))
     (drop
       (ref.cast_static $A
         (local.get $x)
@@ -185,7 +185,7 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $best (param $x (ref data))
+  (func $best (param $x (ref struct))
     (drop
       (ref.cast_static $A
         (local.get $x)
@@ -227,7 +227,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $best-2 (param $x (ref data))
+  (func $best-2 (param $x (ref struct))
     ;; As above, but with the casts reversed. Now we should use $B in both
     ;; gets.
     (drop
@@ -263,11 +263,11 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $fallthrough (param $x (ref data))
+  (func $fallthrough (param $x (ref struct))
     (drop
       (ref.cast_static $A
         ;; We look through the block, and optimize.
-        (block (result (ref data))
+        (block (result (ref struct))
           (local.get $x)
         )
       )
@@ -291,7 +291,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $past-basic-block (param $x (ref data))
+  (func $past-basic-block (param $x (ref struct))
     (drop
       (ref.cast_static $A
         (local.get $x)
@@ -349,9 +349,9 @@
   ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $multiple (param $x (ref data)) (param $y (ref data))
-    (local $a (ref data))
-    (local $b (ref data))
+  (func $multiple (param $x (ref struct)) (param $y (ref struct))
+    (local $a (ref struct))
+    (local $b (ref struct))
     ;; Two different locals, with overlapping lives.
     (local.set $a
       (local.get $x)
@@ -391,7 +391,7 @@
   ;; CHECK:      (func $get (type $none_=>_ref|data|) (result (ref data))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $get (result (ref data))
+  (func $get (result (ref struct))
     ;; Helper for the above.
     (unreachable)
   )

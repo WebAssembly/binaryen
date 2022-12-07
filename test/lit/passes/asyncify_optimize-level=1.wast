@@ -301,7 +301,11 @@
     (drop (call $import2))
   )
   ;; CHECK:      (func $calls-nothing
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 17)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-nothing
     (drop (i32.eqz (i32.const 17)))

@@ -485,12 +485,8 @@
     )
   )
   ;; CHECK:      (func $calls-indirect (param $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_indirect (type $f)
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-indirect (param $x i32)

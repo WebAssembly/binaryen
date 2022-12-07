@@ -4,10 +4,10 @@
 
 (module
   ;; CHECK:      (type $struct-imm (struct (field i32)))
-  (type $struct-imm (struct_subtype i32 data))
+  (type $struct-imm (struct i32))
 
   ;; CHECK:      (type $struct-mut (struct (field (mut i32))))
-  (type $struct-mut (struct_subtype (mut i32) data))
+  (type $struct-mut (struct (mut i32)))
 
   ;; CHECK:      (func $propagate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
@@ -359,7 +359,7 @@
   ;; One field is immutable, the other is not, so we can only propagate the
   ;; former.
   ;; CHECK:      (type $struct (struct (field (mut i32)) (field i32)))
-  (type $struct (struct_subtype (mut i32) i32 data))
+  (type $struct (struct (mut i32) i32))
 
   ;; CHECK:      (func $propagate (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
@@ -413,8 +413,8 @@
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
 
   ;; CHECK:      (type $vtable (struct (field funcref)))
-  (type $vtable (struct_subtype funcref data))
-  (type $object (struct_subtype (ref $vtable) data))
+  (type $vtable (struct funcref))
+  (type $object (struct (ref $vtable)))
 
   ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
@@ -461,8 +461,8 @@
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
 
   ;; CHECK:      (type $vtable (struct (field (mut funcref))))
-  (type $vtable (struct_subtype (mut funcref) data))
-  (type $object (struct_subtype (ref $vtable) data))
+  (type $vtable (struct (mut funcref)))
+  (type $object (struct (ref $vtable)))
 
   ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
@@ -514,8 +514,8 @@
   ;; CHECK:      (type $object (struct (field (mut (ref $vtable)))))
 
   ;; CHECK:      (type $vtable (struct (field funcref)))
-  (type $vtable (struct_subtype funcref data))
-  (type $object (struct_subtype (mut (ref $vtable)) data))
+  (type $vtable (struct funcref))
+  (type $object (struct (mut (ref $vtable))))
 
   ;; CHECK:      (func $nested-creations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref null $object))
@@ -563,9 +563,9 @@
   ;; with.
 
   ;; CHECK:      (type $vtable (struct (field funcref)))
-  (type $vtable (struct_subtype funcref data))
+  (type $vtable (struct funcref))
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
-  (type $object (struct_subtype (ref $vtable) data))
+  (type $object (struct (ref $vtable)))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $nested-creations)
@@ -614,9 +614,9 @@
   ;; optimization.
 
   ;; CHECK:      (type $vtable (struct (field funcref)))
-  (type $vtable (struct_subtype funcref data))
+  (type $vtable (struct funcref))
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
-  (type $object (struct_subtype (ref $vtable) data))
+  (type $object (struct (ref $vtable)))
 
   ;; CHECK:      (global $vtable (mut (ref $vtable)) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $nested-creations)
@@ -669,9 +669,9 @@
   ;; instead of a struct.
 
   ;; CHECK:      (type $vtable (array funcref))
-  (type $vtable (array_subtype funcref data))
+  (type $vtable (array funcref))
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
-  (type $object (struct_subtype (ref $vtable) data))
+  (type $object (struct (ref $vtable)))
 
   ;; CHECK:      (global $vtable (ref $vtable) (array.init_static $vtable
   ;; CHECK-NEXT:  (ref.func $nested-creations)
@@ -740,16 +740,16 @@
   ;; cast of the vtable type.
 
   ;; CHECK:      (type $itable (array dataref))
-  (type $itable (array_subtype (ref null data) data))
+  (type $itable (array (ref null struct)))
 
   ;; CHECK:      (type $object (struct (field (ref $itable))))
-  (type $object (struct_subtype (ref $itable) data))
+  (type $object (struct (ref $itable)))
 
   ;; CHECK:      (type $vtable-0 (struct (field funcref)))
-  (type $vtable-0 (struct_subtype funcref data))
+  (type $vtable-0 (struct funcref))
 
   ;; CHECK:      (type $vtable-1 (struct (field funcref)))
-  (type $vtable-1 (struct_subtype funcref data))
+  (type $vtable-1 (struct funcref))
 
   ;; CHECK:      (global $itable (ref $itable) (array.init_static $itable
   ;; CHECK-NEXT:  (struct.new $vtable-0

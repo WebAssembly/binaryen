@@ -660,9 +660,9 @@ struct NullInstrParserCtx {
   using ExprT = Ok;
 
   using FieldIdxT = Ok;
-  using LocalT = Ok;
-  using GlobalT = Ok;
-  using MemoryT = Ok;
+  using LocalIdxT = Ok;
+  using GlobalIdxT = Ok;
+  using MemoryIdxT = Ok;
 
   using MemargT = Ok;
 
@@ -678,12 +678,12 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> FieldIdxT getFieldFromName(HeapTypeT, Name) {
     return Ok{};
   }
-  LocalT getLocalFromIdx(uint32_t) { return Ok{}; }
-  LocalT getLocalFromName(Name) { return Ok{}; }
-  GlobalT getGlobalFromIdx(uint32_t) { return Ok{}; }
-  GlobalT getGlobalFromName(Name) { return Ok{}; }
-  MemoryT getMemoryFromIdx(uint32_t) { return Ok{}; }
-  MemoryT getMemoryFromName(Name) { return Ok{}; }
+  LocalIdxT getLocalFromIdx(uint32_t) { return Ok{}; }
+  LocalIdxT getLocalFromName(Name) { return Ok{}; }
+  GlobalIdxT getGlobalFromIdx(uint32_t) { return Ok{}; }
+  GlobalIdxT getGlobalFromName(Name) { return Ok{}; }
+  MemoryIdxT getMemoryFromIdx(uint32_t) { return Ok{}; }
+  MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
@@ -695,42 +695,46 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   InstrT makeDrop(Index) { return Ok{}; }
-  InstrT makeMemorySize(Index, MemoryT*) { return Ok{}; }
-  InstrT makeMemoryGrow(Index, MemoryT*) { return Ok{}; }
-  InstrT makeLocalGet(Index, LocalT) { return Ok{}; }
-  InstrT makeLocalTee(Index, LocalT) { return Ok{}; }
-  InstrT makeLocalSet(Index, LocalT) { return Ok{}; }
-  InstrT makeGlobalGet(Index, GlobalT) { return Ok{}; }
-  InstrT makeGlobalSet(Index, GlobalT) { return Ok{}; }
+  InstrT makeMemorySize(Index, MemoryIdxT*) { return Ok{}; }
+  InstrT makeMemoryGrow(Index, MemoryIdxT*) { return Ok{}; }
+  InstrT makeLocalGet(Index, LocalIdxT) { return Ok{}; }
+  InstrT makeLocalTee(Index, LocalIdxT) { return Ok{}; }
+  InstrT makeLocalSet(Index, LocalIdxT) { return Ok{}; }
+  InstrT makeGlobalGet(Index, GlobalIdxT) { return Ok{}; }
+  InstrT makeGlobalSet(Index, GlobalIdxT) { return Ok{}; }
 
   InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
   InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
   InstrT makeF32Const(Index, float) { return Ok{}; }
   InstrT makeF64Const(Index, double) { return Ok{}; }
-  InstrT makeLoad(Index, Type, bool, int, bool, MemoryT*, MemargT) {
+  InstrT makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeStore(Index, Type, int, bool, MemoryT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryT*, MemargT) {
+  InstrT makeStore(Index, Type, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicCmpxchg(Index, Type, int, MemoryT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicWait(Index, Type, MemoryT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicNotify(Index, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  InstrT makeAtomicCmpxchg(Index, Type, int, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  InstrT makeAtomicWait(Index, Type, MemoryIdxT*, MemargT) { return Ok{}; }
+  InstrT makeAtomicNotify(Index, MemoryIdxT*, MemargT) { return Ok{}; }
   InstrT makeAtomicFence(Index) { return Ok{}; }
   InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
   InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
   InstrT makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
   InstrT makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
-  InstrT makeSIMDLoad(Index, SIMDLoadOp, MemoryT*, MemargT) { return Ok{}; }
+  InstrT makeSIMDLoad(Index, SIMDLoadOp, MemoryIdxT*, MemargT) { return Ok{}; }
   InstrT makeSIMDLoadStoreLane(
-    Index, SIMDLoadStoreLaneOp, MemoryT*, MemargT, uint8_t) {
+    Index, SIMDLoadStoreLaneOp, MemoryIdxT*, MemargT, uint8_t) {
     return Ok{};
   }
 
-  InstrT makeMemoryCopy(Index, MemoryT*, MemoryT*) { return Ok{}; }
-  InstrT makeMemoryFill(Index, MemoryT*) { return Ok{}; }
+  InstrT makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
+  InstrT makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
 
   InstrT makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
@@ -1166,9 +1170,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using ExprT = Expression*;
 
   using FieldIdxT = Index;
-  using LocalT = Index;
-  using GlobalT = Name;
-  using MemoryT = Name;
+  using LocalIdxT = Index;
+  using GlobalIdxT = Name;
+  using MemoryIdxT = Name;
 
   using MemargT = Memarg;
 
@@ -2074,10 +2078,10 @@ template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
-template<typename Ctx> MaybeResult<typename Ctx::MemoryT> maybeMemidx(Ctx&);
-template<typename Ctx> Result<typename Ctx::MemoryT> memidx(Ctx&);
-template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx&);
-template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
@@ -2811,7 +2815,7 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemoryCopy(Ctx& ctx, Index pos) {
   auto destMem = maybeMemidx(ctx);
   CHECK_ERR(destMem);
-  std::optional<typename Ctx::MemoryT> srcMem = std::nullopt;
+  std::optional<typename Ctx::MemoryIdxT> srcMem = std::nullopt;
   if (destMem) {
     auto mem = memidx(ctx);
     CHECK_ERR(mem);
@@ -3182,7 +3186,7 @@ Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
 // memidx ::= x:u32 => x
 //          | v:id  => x (if memories[x] = v)
 template<typename Ctx>
-MaybeResult<typename Ctx::MemoryT> maybeMemidx(Ctx& ctx) {
+MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getMemoryFromIdx(*x);
   }
@@ -3192,7 +3196,7 @@ MaybeResult<typename Ctx::MemoryT> maybeMemidx(Ctx& ctx) {
   return {};
 }
 
-template<typename Ctx> Result<typename Ctx::MemoryT> memidx(Ctx& ctx) {
+template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx& ctx) {
   if (auto idx = maybeMemidx(ctx)) {
     CHECK_ERR(idx);
     return *idx;
@@ -3202,7 +3206,7 @@ template<typename Ctx> Result<typename Ctx::MemoryT> memidx(Ctx& ctx) {
 
 // globalidx ::= x:u32 => x
 //             | v:id  => x (if globals[x] = v)
-template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx& ctx) {
+template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getGlobalFromIdx(*x);
   }
@@ -3214,7 +3218,7 @@ template<typename Ctx> Result<typename Ctx::GlobalT> globalidx(Ctx& ctx) {
 
 // localidx ::= x:u32 => x
 //            | v:id  => x (if locals[x] = v)
-template<typename Ctx> Result<typename Ctx::LocalT> localidx(Ctx& ctx) {
+template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getLocalFromIdx(*x);
   }

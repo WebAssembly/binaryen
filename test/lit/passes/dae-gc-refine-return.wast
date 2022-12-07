@@ -230,7 +230,7 @@
  ;; CHECK:      (func $refine-return-many-lub (type $none_=>_eqref) (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
- ;; CHECK-NEXT:  (local $data dataref)
+ ;; CHECK-NEXT:  (local $struct dataref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-lub)
  ;; CHECK-NEXT:  )
@@ -243,7 +243,7 @@
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (local.get $data)
+ ;; CHECK-NEXT:    (local.get $struct)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $i31)
@@ -251,7 +251,7 @@
  ;; NOMNL:      (func $refine-return-many-lub (type $none_=>_eqref) (result eqref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $i31 i31ref)
- ;; NOMNL-NEXT:  (local $data dataref)
+ ;; NOMNL-NEXT:  (local $struct dataref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-lub)
  ;; NOMNL-NEXT:  )
@@ -264,7 +264,7 @@
  ;; NOMNL-NEXT:  (if
  ;; NOMNL-NEXT:   (i32.const 2)
  ;; NOMNL-NEXT:   (return
- ;; NOMNL-NEXT:    (local.get $data)
+ ;; NOMNL-NEXT:    (local.get $struct)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT:  (local.get $i31)
@@ -272,7 +272,7 @@
  (func $refine-return-many-lub (result anyref)
   (local $temp anyref)
   (local $i31 (ref null i31))
-  (local $data (ref null data))
+  (local $struct (ref null struct))
 
   (local.set $temp (call $refine-return-many-lub))
 
@@ -282,8 +282,8 @@
   )
   (if
    (i32.const 2)
-   ;; The refined return type has to be a supertype of data.
-   (return (local.get $data))
+   ;; The refined return type has to be a supertype of struct.
+   (return (local.get $struct))
   )
   (local.get $i31)
  )
@@ -291,7 +291,7 @@
  ;; CHECK:      (func $refine-return-many-lub-2 (type $none_=>_eqref) (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
- ;; CHECK-NEXT:  (local $data dataref)
+ ;; CHECK-NEXT:  (local $struct dataref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-lub-2)
  ;; CHECK-NEXT:  )
@@ -307,12 +307,12 @@
  ;; CHECK-NEXT:    (local.get $i31)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.get $data)
+ ;; CHECK-NEXT:  (local.get $struct)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $refine-return-many-lub-2 (type $none_=>_eqref) (result eqref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $i31 i31ref)
- ;; NOMNL-NEXT:  (local $data dataref)
+ ;; NOMNL-NEXT:  (local $struct dataref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-lub-2)
  ;; NOMNL-NEXT:  )
@@ -328,12 +328,12 @@
  ;; NOMNL-NEXT:    (local.get $i31)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT:  (local.get $data)
+ ;; NOMNL-NEXT:  (local.get $struct)
  ;; NOMNL-NEXT: )
  (func $refine-return-many-lub-2 (result anyref)
   (local $temp anyref)
   (local $i31 (ref null i31))
-  (local $data (ref null data))
+  (local $struct (ref null struct))
 
   (local.set $temp (call $refine-return-many-lub-2))
 
@@ -345,8 +345,8 @@
    (i32.const 2)
    (return (local.get $i31))
   )
-  ;; The refined return type has to be a supertype of data.
-  (local.get $data)
+  ;; The refined return type has to be a supertype of struct.
+  (local.get $struct)
  )
 
  ;; We can refine the return types of tuples.

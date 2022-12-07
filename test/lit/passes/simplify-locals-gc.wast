@@ -21,11 +21,11 @@
   ;; NOMNL:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
-  (type $A (struct_subtype (field (ref null data)) data))
+  (type $A (struct_subtype (field (ref null struct)) data))
 
   ;; $B is a subtype of $A, and its field has a more refined type (it is non-
   ;; nullable).
-  (type $B (struct_subtype (field (ref data)) $A))
+  (type $B (struct_subtype (field (ref struct)) $A))
 
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (type $ref|$struct|_=>_i32) (param $x (ref $struct)) (result i32)
@@ -716,7 +716,7 @@
   (func $remove-tee-refinalize
     (param $a (ref null $A))
     (param $b (ref null $B))
-    (result (ref null data))
+    (result (ref null struct))
 
     ;; The local.tee receives a $B and flows out an $A. After we remove it (it is
     ;; obviously unnecessary), the struct.get will be reading from the more

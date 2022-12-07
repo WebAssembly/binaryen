@@ -3,6 +3,11 @@
 
 ;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-asserts --pass-arg=asyncify-onlylist@waka -S -o - | filecheck %s
 
+;; This test has an only-list, and that list has a non-existent function, so we
+;; do not actually instrument anything. But we should still add the assertions
+;; we add in non-instrumented code, namely asserts that they don't change the
+;; state.
+
 (module
   (memory 1 2)
   ;; CHECK:      (type $f (func))
@@ -60,12 +65,37 @@
   ;; CHECK:      (func $calls-import2-drop
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (global.get $__asyncify_state)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $import2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (global.get $__asyncify_state)
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $calls-import2-drop
+    (drop (call $import2))
+  )
+  ;; CHECK:      (func $returns (result i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (global.get $__asyncify_state)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $2
   ;; CHECK-NEXT:      (call $import2)
@@ -80,58 +110,7 @@
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $calls-import2-drop
-    (drop (call $import2))
-  )
-  ;; CHECK:      (func $returns (result i32)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 i32)
-  ;; CHECK-NEXT:  (local $6 i32)
-  ;; CHECK-NEXT:  (local.set $5
-  ;; CHECK-NEXT:   (global.get $__asyncify_state)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $6
-  ;; CHECK-NEXT:       (call $import2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (i32.ne
-  ;; CHECK-NEXT:        (global.get $__asyncify_state)
-  ;; CHECK-NEXT:        (local.get $5)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $6)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $x
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $4
-  ;; CHECK-NEXT:    (local.get $3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $4)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $returns (result i32)
@@ -141,25 +120,19 @@
   )
   ;; CHECK:      (func $calls-indirect (param $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (global.get $__asyncify_state)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:   (call_indirect (type $f)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (call_indirect (type $f)
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.ne
+  ;; CHECK-NEXT:     (global.get $__asyncify_state)
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.ne
-  ;; CHECK-NEXT:      (global.get $__asyncify_state)
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

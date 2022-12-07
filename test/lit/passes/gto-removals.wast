@@ -363,7 +363,7 @@
     (i64.const 1)
     (f32.const 2.2)
     (f64.const 3.3)
-    (ref.null data)
+    (ref.null none)
   ))
 
   ;; CHECK:      (func $test (type $none_=>_none)

@@ -196,7 +196,6 @@
     (local $y anyref)
     (local $z (ref null any))
     (local $temp-func (ref null func))
-    (local $temp-data (ref null data))
     (local $temp-i31 (ref null i31))
     (block $null
       (local.set $z
@@ -209,14 +208,6 @@
           (br_on_func $func (local.get $x))
         )
         (ref.null func)
-      )
-    )
-    (drop
-      (block $data (result (ref null data))
-        (local.set $y
-          (br_on_data $data (local.get $x))
-        )
-        (ref.null data)
       )
     )
     (drop
@@ -237,14 +228,6 @@
       (block $non-func (result anyref)
         (local.set $temp-func
           (br_on_non_func $non-func (local.get $x))
-        )
-        (ref.null any)
-      )
-    )
-    (drop
-      (block $non-data (result anyref)
-        (local.set $temp-data
-          (br_on_non_data $non-data (local.get $x))
         )
         (ref.null any)
       )

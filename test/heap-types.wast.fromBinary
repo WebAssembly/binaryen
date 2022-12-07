@@ -219,7 +219,6 @@
   (local $y anyref)
   (local $z anyref)
   (local $temp-func funcref)
-  (local $temp-data dataref)
   (local $temp-i31 i31ref)
   (block $label$1
    (local.set $z
@@ -239,9 +238,9 @@
    )
   )
   (drop
-   (block $label$3 (result dataref)
+   (block $label$3 (result i31ref)
     (local.set $y
-     (br_on_data $label$3
+     (br_on_i31 $label$3
       (local.get $x)
      )
     )
@@ -249,27 +248,17 @@
    )
   )
   (drop
-   (block $label$4 (result i31ref)
-    (local.set $y
-     (br_on_i31 $label$4
-      (local.get $x)
-     )
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $label$5 (result (ref any))
-    (br_on_non_null $label$5
+   (block $label$4 (result (ref any))
+    (br_on_non_null $label$4
      (local.get $x)
     )
     (unreachable)
    )
   )
   (drop
-   (block $label$6 (result anyref)
+   (block $label$5 (result anyref)
     (local.set $temp-func
-     (br_on_non_func $label$6
+     (br_on_non_func $label$5
       (local.get $x)
      )
     )
@@ -277,19 +266,9 @@
    )
   )
   (drop
-   (block $label$7 (result anyref)
-    (local.set $temp-data
-     (br_on_non_data $label$7
-      (local.get $x)
-     )
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $label$8 (result anyref)
+   (block $label$6 (result anyref)
     (local.set $temp-i31
-     (br_on_non_i31 $label$8
+     (br_on_non_i31 $label$6
       (local.get $x)
      )
     )

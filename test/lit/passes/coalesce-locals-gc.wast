@@ -13,10 +13,10 @@
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
 
- (type $A (struct_subtype (field (ref null data)) data))
+ (type $A (struct_subtype (field (ref null struct)) data))
 
  ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
- (type $B (struct_subtype (field (ref data)) $A))
+ (type $B (struct_subtype (field (ref struct)) $A))
 
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
@@ -29,7 +29,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $test-dead-get-non-nullable (param $func (ref data))
+ (func $test-dead-get-non-nullable (param $func (ref struct))
   (unreachable)
   (drop
    ;; A useless get (that does not read from any set, or from the inputs to the
@@ -184,7 +184,7 @@
  (func $remove-tee-refinalize
   (param $a (ref null $A))
   (param $b (ref null $B))
-  (result (ref null data))
+  (result (ref null struct))
   ;; The local.tee receives a $B and flows out an $A. We want to avoid changing
   ;; types here, so we'll wrap it in a block, and leave further improvements
   ;; for other passes.
@@ -205,7 +205,7 @@
  (func $remove-tee-refinalize-2
   (param $a (ref null $A))
   (param $b (ref null $B))
-  (result (ref null data))
+  (result (ref null struct))
   ;; As above, but with an extra tee in the middle. The result should be the
   ;; same.
   (struct.get $A 0

@@ -338,11 +338,25 @@ static Expression* doInlining(Module* module,
   //
   // Here the br wants to go to the very outermost block, to represent a
   // return from the inlined function's code, but it ends up captured by an
-  // internal block.
-  if (BranchUtils::hasBranchTarget(from->body, block->name)) {
-    auto existingNames = BranchUtils::getBranchTargets(from->body);
-    block->name = Names::getValidName(
-      block->name, [&](Name test) { return !existingNames.count(test); });
+  // internal block. We also need to be careful of the call's children:
+  //
+  //  (block $X             ;; a new block we add as the target of returns
+  //    (local.set $param
+  //      (call's first parameter
+  //        (br $X)         ;; nested br in call's first parameter
+  //      )
+  //    )
+  //
+  // (In this case we could use a second block and define the named block $X
+  // after the call's parameters, but that adds work for an extremely rare
+  // situation.)
+  if (BranchUtils::hasBranchTarget(from->body, block->name) ||
+      BranchUtils::BranchSeeker::has(call, block->name)) {
+    auto fromNames = BranchUtils::getBranchTargets(from->body);
+    auto callNames = BranchUtils::BranchAccumulator::get(call);
+    block->name = Names::getValidName(block->name, [&](Name test) {
+      return !fromNames.count(test) && !callNames.count(test);
+    });
   }
   if (call->isReturn) {
     if (retType.isConcrete()) {
