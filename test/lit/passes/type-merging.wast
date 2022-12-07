@@ -239,20 +239,20 @@
 ;; Arrays
 (module
   ;; CHECK:      (type $array (array (mut i32)))
-  (type $array (array (mut i32)))
-  (type $sub-array (array_subtype (mut i32) $array))
+  (type $intarray (array (mut i32)))
+  (type $sub-intarray (array_subtype (mut i32) $intarray))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $a (ref null $array))
-  ;; CHECK-NEXT:  (local $b (ref null $array))
+  ;; CHECK-NEXT:  (local $a (ref null $intarray))
+  ;; CHECK-NEXT:  (local $b (ref null $intarray))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; $A will remain the same.
-    (local $a (ref null $array))
+    (local $a (ref null $intarray))
     ;; $B can be merged into $A.
-    (local $b (ref null $sub-array))
+    (local $b (ref null $sub-intarray))
   )
 )
