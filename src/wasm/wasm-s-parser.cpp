@@ -2945,8 +2945,11 @@ Expression* SExpressionWasmBuilder::makeArrayCopy(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
-  return ValidatingBuilder(wasm, s.line, s.col)
-    .validateAndMakeRefAs(op, parseExpression(s[1]));
+  auto* value = parseExpression(s[1]);
+  if (!value->type.isRef() && value->type != Type::unreachable) {
+    throw ParseException("ref.as child must be a ref", s.line, s.col);
+  }
+  return Builder(wasm).makeRefAs(op, value);
 }
 
 Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
