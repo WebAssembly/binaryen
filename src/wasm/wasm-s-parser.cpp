@@ -2944,7 +2944,8 @@ Expression* SExpressionWasmBuilder::makeArrayCopy(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
-  return Builder(wasm).makeRefAs(op, parseExpression(s[1]));
+  return ValidatingBuilder(wasm, s.line, s.col)
+    .validateAndMakeRefAs(op, parseExpression(s[1]));
 }
 
 Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {

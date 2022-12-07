@@ -1326,6 +1326,10 @@ public:
 // text and binary format parsers, for handling certain situations in the
 // input which preclude even creating valid IR, which the validator depends
 // on.
+//
+// A common case handled here is when the type of an expression depends on a
+// child. We validate that the child has a reasonable type for that situation,
+// and by doing so avoid finalize() hitting an assert in invalid cases.
 class ValidatingBuilder : public Builder {
   size_t line = -1, col = -1;
 
@@ -1333,6 +1337,15 @@ public:
   ValidatingBuilder(Module& wasm, size_t line) : Builder(wasm), line(line) {}
   ValidatingBuilder(Module& wasm, size_t line, size_t col)
     : Builder(wasm), line(line), col(col) {}
+
+  Expression* validateAndMakeRefAs(RefAsOp op, Expression* value) {
+    if (op == RefAsNonNull) {
+      if (!value->type.isRef() && value->type != Type::unreachable) {
+        throw ParseException("Invalid ref for ref.as", line, col);
+      }
+    }
+    return makeRefAs(op, value);
+  }
 
   Expression* validateAndMakeBrOn(BrOnOp op, Name name, Expression* ref) {
     if (op == BrOnNull) {
