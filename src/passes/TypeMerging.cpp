@@ -149,22 +149,15 @@ struct TypeMerging : public Pass {
         continue;
       }
 
-      // TODO: arrays
-      if (!type.isStruct()) {
-        continue;
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& superFields = super->getStruct().fields;
+        if (fields == superFields) {
+          // We can merge! This is identical structurally to the super, and also
+          // not distinguishable nominally.
+          merges[type] = *super;
+        }
       }
-
-      auto& fields = type.getStruct().fields;
-      auto& superFields = super->getStruct().fields;
-      if (fields != superFields) {
-        // This adds a field, or refines one, so it differs from the super, and
-        // we cannot merge it with the super.
-        continue;
-      }
-
-      // We can merge! This is identical structurally to the super, and also not
-      // distinguishable nominally.
-      merges[type] = *super;
     }
 
     if (merges.empty()) {
