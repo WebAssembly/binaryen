@@ -101,9 +101,11 @@
 (module
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct_subtype (field i32) data))
+  ;; CHECK:      (type $B (struct_subtype (field i32) $A))
   (type $B (struct_subtype (field i32) $A))
+  ;; CHECK:      (type $C (struct_subtype (field i32) $B))
   (type $C (struct_subtype (field i32) $B))
-  ;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $A))
+  ;; CHECK:      (type $D (struct_subtype (field i32) (field f64) $C))
   (type $D (struct_subtype (field i32) (field f64) $C)) ;; this line changed
   (type $E (struct_subtype (field i32) (field f64) $D))
   (type $F (struct_subtype (field i32) (field f64) $E))
