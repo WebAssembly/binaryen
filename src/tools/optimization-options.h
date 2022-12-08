@@ -41,6 +41,7 @@ struct OptimizationOptions : public ToolOptions {
     std::optional<int> shrinkLevel;
 
     PassInfo(std::string name) : name(name) {}
+    PassInfo(const char* name) : name(name) {}
     PassInfo(std::string name, int optimizeLevel, int shrinkLevel) : name(name), optimizeLevel(optimizeLevel), shrinkLevel(shrinkLevel) {}
   };
 
