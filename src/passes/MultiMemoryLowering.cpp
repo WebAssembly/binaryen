@@ -23,11 +23,14 @@
 // multi-memories feature also prevents later passes from adding additional
 // memories.
 //
-// Also worth noting that we are diverging from the spec with regards to
-// handling load and store instructions. We are not trapping if the offset +
-// write size is larger than the length of the memory's data. Warning:
-// out-of-bounds loads and stores can read junk out of or corrupt other
-// memories instead of trapping.
+// The offset computation in function makeReplacement is not precise according to the spec. In the
+// spec offsets do not overflow as twos-complement, but i32.add does.
+// Concretely, a load from address 1000 with offset 0xffffffff should
+// actually trap, as the combined number is greater than 32 bits. But with
+// an add, 1000 + 0xffffffff = 999 due to overflow, which would not trap.
+// In theory we could compute like the spec, by expanding the i32s
+// to i64s and adding there (where we won't overflow), but we don't have
+// i128s to handle i64 overflow.
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -113,17 +116,6 @@ struct MultiMemoryLowering : public Pass {
           builder.makeGlobalGet(offsetGlobal, parent.pointerType),
           curr->ptr));
       curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
-      /*
-       * The offset computation is not precise according to the spec. In the
-       * spec offsets do not overflow as twos-complement, but i32.add does.
-       * Concretely, a load from address 1000 with offset 0xffffffff should
-       * actually trap, as the combined number is greater than 32 bits. But with
-       * an add, 1000 + 0xffffffff = 999 due to overflow, which would not trap.
-       *
-       *  In theory we could compute this like the spec, by expanding the i32s
-       * to i64s and adding there (where we won't overflow), but we don't have
-       * i128s to handle i64 overflow.
-       */
       Expression* boundsCheck = builder.makeIf(
         builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::GtU),
