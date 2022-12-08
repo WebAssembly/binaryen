@@ -981,7 +981,8 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (type $unrelated (struct ))
+  (type $unrelated (struct))
 
   ;; CHECK:      (func $func (type $none_=>_none)
   ;; CHECK-NEXT:  (local $child (ref null $child))
@@ -1034,13 +1035,8 @@
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (block $parent (result (ref $parent))
   ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (block (result (ref $none_=>_none))
-  ;; CHECK-NEXT:         (drop
-  ;; CHECK-NEXT:          (br_on_cast $parent $parent
-  ;; CHECK-NEXT:           (ref.func $func)
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (ref.func $func)
+  ;; CHECK-NEXT:        (br_on_cast $parent $parent
+  ;; CHECK-NEXT:         (struct.new_default $unrelated)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (unreachable)
@@ -1087,14 +1083,14 @@
         (local.get $parent)
       )
     )
-    ;; A ref.func is cast to a struct type, and then we read from that. The cast
-    ;; will trap at runtime, of course; for here, we should not error and also
-    ;; we can optimize these to unreachables. atm we filter out trapping
-    ;; contents in ref.cast, but not br_on_cast, so test both.
+    ;; An unrelated type is cast to a struct type, and then we read from that.
+    ;; The cast will trap at runtime, of course; for here, we should not error
+    ;; and also we can optimize these to unreachables. atm we filter out
+    ;; trapping contents in ref.cast, but not br_on_cast, so test both.
     (drop
       (struct.get $parent 0
         (ref.cast null $parent
-          (ref.func $func)
+          (struct.new $unrelated)
         )
       )
     )
@@ -1103,7 +1099,7 @@
         (block $parent (result (ref $parent))
           (drop
             (br_on_cast $parent $parent
-              (ref.func $func)
+              (struct.new $unrelated)
             )
           )
           (unreachable)

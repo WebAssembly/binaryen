@@ -1000,13 +1000,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast null $struct
-  ;; CHECK-NEXT:    (ref.as_func
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
   ;; CHECK-NEXT:    (ref.as_i31
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -1024,13 +1017,6 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.get_u $struct $i8
   ;; NOMNL-NEXT:    (ref.cast null $struct
-  ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
-  ;; NOMNL-NEXT:    (ref.as_func
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
@@ -1064,13 +1050,6 @@
       )
     )
     ;; other ref.as* operations are ignored for now
-    (drop
-      (ref.cast null $struct
-        (ref.as_func
-          (local.get $x)
-        )
-      )
-    )
     (drop
       (ref.cast null $struct
         (ref.as_i31
@@ -2126,35 +2105,6 @@
         (local.tee $a
           (ref.null $A)
         )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $ref-cast-static-impossible (type $ref|func|_=>_none) (param $func (ref func))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $func)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $ref-cast-static-impossible (type $ref|func|_=>_none) (param $func (ref func))
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref $struct))
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (local.get $func)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (unreachable)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
-  (func $ref-cast-static-impossible (param $func (ref func))
-    ;; A func cannot be cast to a struct, so this will trap.
-    (drop
-      (ref.cast null $struct
-        (local.get $func)
       )
     )
   )

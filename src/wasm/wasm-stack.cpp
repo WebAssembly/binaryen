@@ -2026,7 +2026,7 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   o << U32LEB(BinaryConsts::RefTest);
-  parent.writeIndexedHeapType(curr->intendedType);
+  parent.writeHeapType(curr->intendedType);
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
@@ -2036,7 +2036,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   } else {
     o << U32LEB(BinaryConsts::RefCastNull);
   }
-  parent.writeIndexedHeapType(curr->intendedType);
+  parent.writeHeapType(curr->intendedType);
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -2078,7 +2078,7 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
   }
   o << U32LEB(getBreakIndex(curr->name));
   if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-    parent.writeIndexedHeapType(curr->intendedType);
+    parent.writeHeapType(curr->intendedType);
   }
 }
 

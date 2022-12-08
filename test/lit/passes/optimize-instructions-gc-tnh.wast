@@ -48,43 +48,34 @@
     )
   )
 
-  ;; TNH:      (func $ref.eq-no (type $eqref_eqref_=>_none) (param $a eqref) (param $b eqref)
+  ;; TNH:      (func $ref.eq-no (type $eqref_eqref_anyref_=>_none) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_=>_none) (param $a eqref) (param $b eqref)
+  ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_anyref_=>_none) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.eq
-  ;; NO_TNH-NEXT:    (block (result (ref $struct))
-  ;; NO_TNH-NEXT:     (drop
-  ;; NO_TNH-NEXT:      (ref.func $ref.eq-no)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    (ref.cast null $struct
+  ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (block (result (ref data))
-  ;; NO_TNH-NEXT:     (drop
-  ;; NO_TNH-NEXT:      (ref.func $ref.eq-no)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    (ref.as_data
+  ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $ref.eq-no (param $a (ref null eq)) (param $b (ref null eq))
-    ;; We must leave the inputs to ref.eq of type eqref or a subtype. Note that
-    ;; these casts will trap, so other opts might get in the way before we can
-    ;; do anything. The crucial thing we test here is that we do not emit
-    ;; something that does not validate (as ref.eq inputs must be eqrefs).
+  (func $ref.eq-no (param $a (ref null eq)) (param $b (ref null eq)) (param $any anyref)
+    ;; We must leave the inputs to ref.eq of type eqref or a subtype.
     (drop
       (ref.eq
         (ref.cast null $struct
-          (ref.func $ref.eq-no) ;; *Not* an eqref!
+          (local.get $any) ;; *Not* an eqref!
         )
         (ref.as_non_null
           (ref.as_data
             (ref.as_non_null
-              (ref.func $ref.eq-no) ;; *Not* an eqref!
+              (local.get $any) ;; *Not* an eqref!
             )
           )
         )
