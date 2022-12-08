@@ -42,7 +42,8 @@ struct OptimizationOptions : public ToolOptions {
 
     PassInfo(std::string name) : name(name) {}
     PassInfo(const char* name) : name(name) {}
-    PassInfo(std::string name, int optimizeLevel, int shrinkLevel) : name(name), optimizeLevel(optimizeLevel), shrinkLevel(shrinkLevel) {}
+    PassInfo(std::string name, int optimizeLevel, int shrinkLevel)
+      : name(name), optimizeLevel(optimizeLevel), shrinkLevel(shrinkLevel) {}
   };
 
   std::vector<PassInfo> passes;
@@ -56,7 +57,8 @@ struct OptimizationOptions : public ToolOptions {
   // also we note the current opt level for when we run the pass, so that the
   // sequence -O3 -Os will run -O3 and then -Os, and not -Os twice.
   void addDefaultOptPasses() {
-    passes.push_back(PassInfo{DEFAULT_OPT_PASSES, passOptions.optimizeLevel, passOptions.shrinkLevel});
+    passes.push_back(PassInfo{
+      DEFAULT_OPT_PASSES, passOptions.optimizeLevel, passOptions.shrinkLevel});
   }
 
   constexpr static const char* OptimizationOptionsCategory =
