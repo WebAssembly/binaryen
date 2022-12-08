@@ -336,13 +336,13 @@ struct OptimizationOptions : public ToolOptions {
     }
     for (auto& pass : passes) {
       // We apply the pass's intended opt and shrink levels, if any.
-      auto oldOptimizeLevel = passOptions.optimizeLevel;
-      auto oldShrinkLevel = passOptions.shrinkLevel;
+      auto oldOptimizeLevel = passRunner.options.optimizeLevel;
+      auto oldShrinkLevel = passRunner.options.shrinkLevel;
       if (pass.optimizeLevel) {
-        passOptions.optimizeLevel = *pass.optimizeLevel;
+        passRunner.options.optimizeLevel = *pass.optimizeLevel;
       }
       if (pass.shrinkLevel) {
-        passOptions.shrinkLevel = *pass.shrinkLevel;
+        passRunner.options.shrinkLevel = *pass.shrinkLevel;
       }
 
       if (pass.name == DEFAULT_OPT_PASSES) {
@@ -352,8 +352,8 @@ struct OptimizationOptions : public ToolOptions {
       }
 
       // Revert back to the default levels, if we changed them.
-      passOptions.optimizeLevel = oldOptimizeLevel;
-      passOptions.shrinkLevel = oldShrinkLevel;
+      passRunner.options.optimizeLevel = oldOptimizeLevel;
+      passRunner.options.shrinkLevel = oldShrinkLevel;
     }
     passRunner.run();
   }
