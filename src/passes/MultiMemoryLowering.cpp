@@ -103,19 +103,27 @@ struct MultiMemoryLowering : public Pass {
       replaceCurrent(builder.makeCall(funcName, {}, curr->type));
     }
 
-    template<typename T>
-    Expression* makeReplacement(T* curr,
-                                Function* func,
-                                Name memorySizeFunc,
-                                Name offsetGlobal) {
+    template<typename T> Expression* setPtr(T* curr, Function* func) {
+      auto idx = parent.memoryIdxMap.at(curr->memory);
+      auto offsetGlobal = parent.getOffsetGlobal(idx);
+      if (!offsetGlobal) {
+        return nullptr;
+      }
       Index ptrIdx = Builder::addVar(func, parent.pointerType);
-      Expression* ptrSet = builder.makeLocalSet(
+      Expression *ptrSet = builder.makeLocalSet(
         ptrIdx,
         builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::Add),
           builder.makeGlobalGet(offsetGlobal, parent.pointerType),
           curr->ptr));
       curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
+      return ptrSet;
+    }
+
+    template<typename T>
+    Expression* makeBoundsCheck(T* curr) {
+      auto idx = parent.memoryIdxMap.at(curr->memory);
+      Name memorySizeFunc = parent.memorySizeNames[idx];
       Expression* boundsCheck = builder.makeIf(
         builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::GtU),
@@ -126,36 +134,32 @@ struct MultiMemoryLowering : public Pass {
             Abstract::getBinary(parent.pointerType, Abstract::Add),
             builder.makeBinary(
               Abstract::getBinary(parent.pointerType, Abstract::Add),
-              builder.makeLocalGet(ptrIdx, parent.pointerType),
+              //builder.makeLocalGet(ptrIdx, parent.pointerType),
+              curr->ptr,
               builder.makeConstPtr(curr->offset, parent.pointerType)),
             builder.makeConstPtr(curr->bytes, parent.pointerType)),
           builder.makeCall(memorySizeFunc, {}, parent.pointerType)),
         builder.makeUnreachable());
-      return builder.makeBlock({ptrSet, boundsCheck, curr});
+
+        return boundsCheck;
+    }
+
+    template<typename T> void setMemory(T* curr) {
+      curr->memory = parent.combinedMemory;
     }
 
     void visitLoad(Load* curr) {
-      auto idx = parent.memoryIdxMap.at(curr->memory);
-      auto global = parent.getOffsetGlobal(idx);
-      curr->memory = parent.combinedMemory;
-      if (!global) {
-        return;
-      }
-      Expression* replacement = makeReplacement(
-        curr, getFunction(), parent.memorySizeNames[idx], global);
-      replaceCurrent(replacement);
+      Expression *updatePtr = setPtr(curr, getFunction());
+      Expression *boundsCheck = makeBoundsCheck(curr);
+      setMemory(curr);
+      replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
 
     void visitStore(Store* curr) {
-      auto idx = parent.memoryIdxMap.at(curr->memory);
-      auto global = parent.getOffsetGlobal(idx);
-      curr->memory = parent.combinedMemory;
-      if (!global) {
-        return;
-      }
-      Expression* replacement = makeReplacement(
-        curr, getFunction(), parent.memorySizeNames[idx], global);
-      replaceCurrent(replacement);
+      Expression *updatePtr = setPtr(curr, getFunction());
+      Expression *boundsCheck = makeBoundsCheck(curr);
+      setMemory(curr);
+      replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
   };
 
