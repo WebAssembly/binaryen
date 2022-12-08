@@ -281,6 +281,9 @@ void PassRegistry::registerPasses() {
   registerPass("multi-memory-lowering",
                "combines multiple memories into a single memory",
                createMultiMemoryLoweringPass);
+  registerPass("multi-memory-lowering-with-bounds-checks",
+               "combines multiple memories into a single memory, trapping if the read or write is larger than the length of the memory's data",
+               createMultiMemoryLoweringWithBoundsChecksPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
   registerPass("once-reduction",

@@ -282,6 +282,11 @@
 ;; CHECK-NEXT:   --multi-memory-lowering                       combines multiple memories into
 ;; CHECK-NEXT:                                                 a single memory
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --multi-memory-lowering-with-bounds-checks    combines multiple memories into
+;; CHECK-NEXT:                                                 a single memory, trapping if the
+;; CHECK-NEXT:                                                 read or write is larger than the
+;; CHECK-NEXT:                                                 length of the memory's data
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --name-types                                  (re)name all heap types
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --nm                                          name list
