@@ -30,7 +30,33 @@ struct OptimizationOptions : public ToolOptions {
   static constexpr const int OS_OPTIMIZE_LEVEL = 2;
   static constexpr const int OS_SHRINK_LEVEL = 1;
 
-  std::vector<std::string> passes;
+  // Information to run a pass, as requested by a commandline flag.
+  struct PassInfo {
+    // The name of the pass to run.
+    std::string name;
+
+    // The optimize and shrink levels to run the pass with, if specified. If not
+    // specified then the defaults are used.
+    std::optional<int> optimizeLevel;
+    std::optional<int> shrinkLevel;
+
+    PassInfo(std::string name) : name(name) {}
+    PassInfo(std::string name, int optimizeLevel, int shrinkLevel) : name(name), optimizeLevel(optimizeLevel), shrinkLevel(shrinkLevel) {}
+  };
+
+  std::vector<PassInfo> passes;
+
+  // Add a request to run all the default opt passes. They are run with the
+  // current opt and shrink levels specified, which are read from passOptions.
+  //
+  // Each caller to here sets the opt and shrink levels before, which provides
+  // the right values for us to read. That is, -Os etc. sets the default opt
+  // level, so that the last of -O3 -Os will override the previous default, but
+  // also we note the current opt level for when we run the pass, so that the
+  // sequence -O3 -Os will run -O3 and then -Os, and not -Os twice.
+  void addDefaultOptPasses() {
+    passes.push_back(PassInfo{DEFAULT_OPT_PASSES, passOptions.optimizeLevel, passOptions.shrinkLevel});
+  }
 
   constexpr static const char* OptimizationOptionsCategory =
     "Optimization options";
@@ -51,7 +77,7 @@ struct OptimizationOptions : public ToolOptions {
             PassOptions::DEFAULT_OPTIMIZE_LEVEL == OS_OPTIMIZE_LEVEL &&
               PassOptions::DEFAULT_SHRINK_LEVEL == OS_SHRINK_LEVEL,
             "Help text states that -O is equivalent to -Os but now it isn't.");
-          passes.push_back(DEFAULT_OPT_PASSES);
+          addDefaultOptPasses();
         })
       .add("",
            "-O0",
@@ -71,7 +97,7 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 1;
              passOptions.shrinkLevel = 0;
-             passes.push_back(DEFAULT_OPT_PASSES);
+             addDefaultOptPasses();
            })
       .add(
         "",
@@ -82,7 +108,7 @@ struct OptimizationOptions : public ToolOptions {
         [this](Options*, const std::string&) {
           passOptions.optimizeLevel = 2;
           passOptions.shrinkLevel = 0;
-          passes.push_back(DEFAULT_OPT_PASSES);
+          addDefaultOptPasses();
         })
       .add("",
            "-O3",
@@ -93,7 +119,7 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 3;
              passOptions.shrinkLevel = 0;
-             passes.push_back(DEFAULT_OPT_PASSES);
+             addDefaultOptPasses();
            })
       .add("",
            "-O4",
@@ -105,7 +131,7 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 4;
              passOptions.shrinkLevel = 0;
-             passes.push_back(DEFAULT_OPT_PASSES);
+             addDefaultOptPasses();
            })
       .add("",
            "-Os",
@@ -115,7 +141,7 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = OS_OPTIMIZE_LEVEL;
              passOptions.shrinkLevel = OS_SHRINK_LEVEL;
-             passes.push_back(DEFAULT_OPT_PASSES);
+             addDefaultOptPasses();
            })
       .add("",
            "-Oz",
@@ -125,7 +151,7 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.optimizeLevel = 2;
              passOptions.shrinkLevel = 2;
-             passes.push_back(DEFAULT_OPT_PASSES);
+             addDefaultOptPasses();
            })
       .add("--optimize-level",
            "-ol",
@@ -293,7 +319,7 @@ struct OptimizationOptions : public ToolOptions {
 
   bool runningDefaultOptimizationPasses() {
     for (auto& pass : passes) {
-      if (pass == DEFAULT_OPT_PASSES) {
+      if (pass.name == DEFAULT_OPT_PASSES) {
         return true;
       }
     }
@@ -308,10 +334,30 @@ struct OptimizationOptions : public ToolOptions {
       passRunner.setDebug(true);
     }
     for (auto& pass : passes) {
-      if (pass == DEFAULT_OPT_PASSES) {
+      // We apply the pass's intended opt and shrink levels, if any.
+      int oldOptimizeLevel;
+      int oldShrinkLevel;
+      if (pass.optimizeLevel) {
+        oldOptimizeLevel = passOptions.optimizeLevel;
+        passOptions.optimizeLevel = *pass.optimizeLevel;
+      }
+      if (pass.shrinkLevel) {
+        oldShrinkLevel = passOptions.shrinkLevel;
+        passOptions.shrinkLevel = *pass.shrinkLevel;
+      }
+
+      if (pass.name == DEFAULT_OPT_PASSES) {
         passRunner.addDefaultOptimizationPasses();
       } else {
-        passRunner.add(pass);
+        passRunner.add(pass.name);
+      }
+
+      // Revert back to the default levels, if we changed them.
+      if (pass.optimizeLevel) {
+        passOptions.optimizeLevel = oldOptimizeLevel;
+      }
+      if (pass.shrinkLevel) {
+        passOptions.shrinkLevel = oldShrinkLevel;
       }
     }
     passRunner.run();
