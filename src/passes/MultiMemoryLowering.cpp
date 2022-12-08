@@ -100,7 +100,11 @@ struct MultiMemoryLowering : public Pass {
       replaceCurrent(builder.makeCall(funcName, {}, curr->type));
     }
 
-    template<typename T> Expression* makeReplacement(T* curr, Function *func, Name memorySizeFunc, Name offsetGlobal) {
+    template<typename T>
+    Expression* makeReplacement(T* curr,
+                                Function* func,
+                                Name memorySizeFunc,
+                                Name offsetGlobal) {
       Index ptrIdx = Builder::addVar(func, parent.pointerType);
       Expression* ptrSet = builder.makeLocalSet(
         ptrIdx,
@@ -110,9 +114,15 @@ struct MultiMemoryLowering : public Pass {
           curr->ptr));
       curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
       /*
-       * The offset computation is not precise according to the spec. In the spec offsets do not overflow as twos-complement, but i32.add does. Concretely, a load from address 1000 with offset 0xffffffff should actually trap, as the combined number is greater than 32 bits. But with an add, 1000 + 0xffffffff = 999 due to overflow, which would not trap.
+       * The offset computation is not precise according to the spec. In the
+       * spec offsets do not overflow as twos-complement, but i32.add does.
+       * Concretely, a load from address 1000 with offset 0xffffffff should
+       * actually trap, as the combined number is greater than 32 bits. But with
+       * an add, 1000 + 0xffffffff = 999 due to overflow, which would not trap.
        *
-       *  In theory we could compute this like the spec, by expanding the i32s to i64s and adding there (where we won't overflow), but we don't have i128s to handle i64 overflow.
+       *  In theory we could compute this like the spec, by expanding the i32s
+       * to i64s and adding there (where we won't overflow), but we don't have
+       * i128s to handle i64 overflow.
        */
       Expression* boundsCheck = builder.makeIf(
         builder.makeBinary(
@@ -127,8 +137,7 @@ struct MultiMemoryLowering : public Pass {
               builder.makeLocalGet(ptrIdx, parent.pointerType),
               builder.makeConstPtr(curr->offset, parent.pointerType)),
             builder.makeConstPtr(curr->bytes, parent.pointerType)),
-          builder.makeCall(
-            memorySizeFunc, {}, parent.pointerType)),
+          builder.makeCall(memorySizeFunc, {}, parent.pointerType)),
         builder.makeUnreachable());
       return builder.makeBlock({ptrSet, boundsCheck, curr});
     }
@@ -140,7 +149,8 @@ struct MultiMemoryLowering : public Pass {
       if (!global) {
         return;
       }
-      Expression* replacement = makeReplacement(curr, getFunction(), parent.memorySizeNames[idx], global);
+      Expression* replacement = makeReplacement(
+        curr, getFunction(), parent.memorySizeNames[idx], global);
       replaceCurrent(replacement);
     }
 
@@ -151,7 +161,8 @@ struct MultiMemoryLowering : public Pass {
       if (!global) {
         return;
       }
-      Expression* replacement = makeReplacement(curr, getFunction(), parent.memorySizeNames[idx], global);
+      Expression* replacement = makeReplacement(
+        curr, getFunction(), parent.memorySizeNames[idx], global);
       replaceCurrent(replacement);
     }
   };
@@ -445,7 +456,6 @@ struct MultiMemoryLowering : public Pass {
     wasm->addMemory(std::move(memory));
   }
 };
-
 
 Pass* createMultiMemoryLoweringPass() { return new MultiMemoryLowering(); }
 
