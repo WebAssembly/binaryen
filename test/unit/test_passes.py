@@ -59,7 +59,9 @@ class PassesTest(utils.BinaryenTestCase):
 
         # That pass is run in -O3 and -O3 -O1 etc. but not -O1 or -O1 -O1
         self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O3']))
-        self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1']))
         self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O3', '-O1']))
+        self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1', '-O3']))
         self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O3', '-O3']))
+
+        self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1']))
         self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1', '-O1']))
