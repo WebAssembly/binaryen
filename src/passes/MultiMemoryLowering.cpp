@@ -67,6 +67,95 @@ struct MultiMemoryLowering : public Pass {
   // each memory
   std::vector<Name> memoryGrowNames;
 
+  struct Replacer : public WalkerPass<PostWalker<Replacer>> {
+    MultiMemoryLowering& parent;
+    Builder builder;
+    Replacer(MultiMemoryLowering& parent, Module& wasm)
+      : parent(parent), builder(wasm) {}
+    // Avoid visiting the custom functions added by the parent pass
+    // MultiMemoryLowering
+    void walkFunction(Function* func) {
+      for (Name funcName : parent.memorySizeNames) {
+        if (funcName == func->name) {
+          return;
+        }
+      }
+      for (Name funcName : parent.memoryGrowNames) {
+        if (funcName == func->name) {
+          return;
+        }
+      }
+      super::walkFunction(func);
+    }
+
+    void visitMemoryGrow(MemoryGrow* curr) {
+      auto idx = parent.memoryIdxMap.at(curr->memory);
+      Name funcName = parent.memoryGrowNames[idx];
+      replaceCurrent(builder.makeCall(funcName, {curr->delta}, curr->type));
+    }
+
+    void visitMemorySize(MemorySize* curr) {
+      auto idx = parent.memoryIdxMap.at(curr->memory);
+      Name funcName = parent.memorySizeNames[idx];
+      replaceCurrent(builder.makeCall(funcName, {}, curr->type));
+    }
+
+    template<typename T> Expression* makeReplacement(T* curr, Function *func, Name memorySizeFunc, Name offsetGlobal) {
+      Index ptrIdx = Builder::addVar(func, parent.pointerType);
+      Expression* ptrSet = builder.makeLocalSet(
+        ptrIdx,
+        builder.makeBinary(
+          Abstract::getBinary(parent.pointerType, Abstract::Add),
+          builder.makeGlobalGet(offsetGlobal, parent.pointerType),
+          curr->ptr));
+      curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
+      /*
+       * The offset computation is not precise according to the spec. In the spec offsets do not overflow as twos-complement, but i32.add does. Concretely, a load from address 1000 with offset 0xffffffff should actually trap, as the combined number is greater than 32 bits. But with an add, 1000 + 0xffffffff = 999 due to overflow, which would not trap.
+       *
+       *  In theory we could compute this like the spec, by expanding the i32s to i64s and adding there (where we won't overflow), but we don't have i128s to handle i64 overflow.
+       */
+      Expression* boundsCheck = builder.makeIf(
+        builder.makeBinary(
+          Abstract::getBinary(parent.pointerType, Abstract::GtU),
+          builder.makeBinary(
+            // ptr + offset (ea from wasm spec) + bit width
+            // two builder Adds, we'll add the first two operands in the first
+            // add and then add the third operand in the second add
+            Abstract::getBinary(parent.pointerType, Abstract::Add),
+            builder.makeBinary(
+              Abstract::getBinary(parent.pointerType, Abstract::Add),
+              builder.makeLocalGet(ptrIdx, parent.pointerType),
+              builder.makeConstPtr(curr->offset, parent.pointerType)),
+            builder.makeConstPtr(curr->bytes, parent.pointerType)),
+          builder.makeCall(
+            memorySizeFunc, {}, parent.pointerType)),
+        builder.makeUnreachable());
+      return builder.makeBlock({ptrSet, boundsCheck, curr});
+    }
+
+    void visitLoad(Load* curr) {
+      auto idx = parent.memoryIdxMap.at(curr->memory);
+      auto global = parent.getOffsetGlobal(idx);
+      curr->memory = parent.combinedMemory;
+      if (!global) {
+        return;
+      }
+      Expression* replacement = makeReplacement(curr, getFunction(), parent.memorySizeNames[idx], global);
+      replaceCurrent(replacement);
+    }
+
+    void visitStore(Store* curr) {
+      auto idx = parent.memoryIdxMap.at(curr->memory);
+      auto global = parent.getOffsetGlobal(idx);
+      curr->memory = parent.combinedMemory;
+      if (!global) {
+        return;
+      }
+      Expression* replacement = makeReplacement(curr, getFunction(), parent.memorySizeNames[idx], global);
+      replaceCurrent(replacement);
+    }
+  };
+
   void run(Module* module) override {
     module->features.disable(FeatureSet::MultiMemories);
 
@@ -85,111 +174,6 @@ struct MultiMemoryLowering : public Pass {
     removeExistingMemories();
     addCombinedMemory();
 
-    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
-      MultiMemoryLowering& parent;
-      Builder builder;
-      Replacer(MultiMemoryLowering& parent, Module& wasm)
-        : parent(parent), builder(wasm) {}
-      // Avoid visiting the custom functions added by the parent pass
-      // MultiMemoryLowering
-      void walkFunction(Function* func) {
-        for (Name funcName : parent.memorySizeNames) {
-          if (funcName == func->name) {
-            return;
-          }
-        }
-        for (Name funcName : parent.memoryGrowNames) {
-          if (funcName == func->name) {
-            return;
-          }
-        }
-        super::walkFunction(func);
-      }
-
-      void visitMemoryGrow(MemoryGrow* curr) {
-        auto idx = parent.memoryIdxMap.at(curr->memory);
-        Name funcName = parent.memoryGrowNames[idx];
-        replaceCurrent(builder.makeCall(funcName, {curr->delta}, curr->type));
-      }
-
-      void visitMemorySize(MemorySize* curr) {
-        auto idx = parent.memoryIdxMap.at(curr->memory);
-        Name funcName = parent.memorySizeNames[idx];
-        replaceCurrent(builder.makeCall(funcName, {}, curr->type));
-      }
-
-      void visitLoad(Load* curr) {
-        auto idx = parent.memoryIdxMap.at(curr->memory);
-        auto global = parent.getOffsetGlobal(idx);
-        curr->memory = parent.combinedMemory;
-        if (!global) {
-          return;
-        }
-        Expression* replacement;
-        Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
-        Expression* ptrSet = builder.makeLocalSet(
-          ptrIdx,
-          builder.makeBinary(
-            Abstract::getBinary(parent.pointerType, Abstract::Add),
-            builder.makeGlobalGet(global, parent.pointerType),
-            curr->ptr));
-        curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
-        Expression* boundsCheck = builder.makeIf(
-          builder.makeBinary(
-            Abstract::getBinary(parent.pointerType, Abstract::GtU),
-            builder.makeBinary(
-              // ptr + offset (ea from wasm spec) + bit width
-              // two builder Adds, we'll add the first two operands in the first
-              // add and then add the third operand in the second add
-              Abstract::getBinary(parent.pointerType, Abstract::Add),
-              builder.makeBinary(
-                Abstract::getBinary(parent.pointerType, Abstract::Add),
-                builder.makeLocalGet(ptrIdx, parent.pointerType),
-                builder.makeConstPtr(curr->offset, parent.pointerType)),
-              builder.makeConstPtr(curr->bytes, parent.pointerType)),
-            builder.makeCall(
-              parent.memorySizeNames[idx], {}, parent.pointerType)),
-          builder.makeUnreachable());
-        replacement = builder.makeBlock({ptrSet, boundsCheck, curr});
-        replaceCurrent(replacement);
-      }
-
-      void visitStore(Store* curr) {
-        auto idx = parent.memoryIdxMap.at(curr->memory);
-        auto global = parent.getOffsetGlobal(idx);
-        curr->memory = parent.combinedMemory;
-        if (!global) {
-          return;
-        }
-        Expression* replacement;
-        Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
-        Expression* ptrSet = builder.makeLocalSet(
-          ptrIdx,
-          builder.makeBinary(
-            Abstract::getBinary(parent.pointerType, Abstract::Add),
-            builder.makeGlobalGet(global, parent.pointerType),
-            curr->ptr));
-        curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
-        Expression* boundsCheck = builder.makeIf(
-          builder.makeBinary(
-            Abstract::getBinary(parent.pointerType, Abstract::GtU),
-            builder.makeBinary(
-              // ptr + offset (ea from wasm spec) + bit width
-              // two builder Adds, we'll add the first two operands in the first
-              // add and then add the third operand in the second add
-              Abstract::getBinary(parent.pointerType, Abstract::Add),
-              builder.makeBinary(
-                Abstract::getBinary(parent.pointerType, Abstract::Add),
-                builder.makeLocalGet(ptrIdx, parent.pointerType),
-                builder.makeConstPtr(curr->offset, parent.pointerType)),
-              builder.makeConstPtr(curr->bytes, parent.pointerType)),
-            builder.makeCall(
-              parent.memorySizeNames[idx], {}, parent.pointerType)),
-          builder.makeUnreachable());
-        replacement = builder.makeBlock({ptrSet, boundsCheck, curr});
-        replaceCurrent(replacement);
-      }
-    };
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
   }
 
@@ -461,6 +445,7 @@ struct MultiMemoryLowering : public Pass {
     wasm->addMemory(std::move(memory));
   }
 };
+
 
 Pass* createMultiMemoryLoweringPass() { return new MultiMemoryLowering(); }
 
