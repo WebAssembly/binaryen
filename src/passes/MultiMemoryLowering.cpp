@@ -114,7 +114,7 @@ struct MultiMemoryLowering : public Pass {
         return nullptr;
       }
       Index ptrIdx = Builder::addVar(func, parent.pointerType);
-      Expression *ptrSet = builder.makeLocalSet(
+      Expression* ptrSet = builder.makeLocalSet(
         ptrIdx,
         builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::Add),
@@ -124,8 +124,7 @@ struct MultiMemoryLowering : public Pass {
       return ptrSet;
     }
 
-    template<typename T>
-    Expression* maybeMakeBoundsCheck(T* curr) {
+    template<typename T> Expression* maybeMakeBoundsCheck(T* curr) {
       if (!parent.checkBounds) {
         return nullptr;
       }
@@ -141,13 +140,13 @@ struct MultiMemoryLowering : public Pass {
             Abstract::getBinary(parent.pointerType, Abstract::Add),
             builder.makeBinary(
               Abstract::getBinary(parent.pointerType, Abstract::Add),
-              //builder.makeLocalGet(ptrIdx, parent.pointerType),
+              // builder.makeLocalGet(ptrIdx, parent.pointerType),
               curr->ptr,
               builder.makeConstPtr(curr->offset, parent.pointerType)),
             builder.makeConstPtr(curr->bytes, parent.pointerType)),
           builder.makeCall(memorySizeFunc, {}, parent.pointerType)),
         builder.makeUnreachable());
-        return boundsCheck;
+      return boundsCheck;
     }
 
     template<typename T> void setMemory(T* curr) {
@@ -155,15 +154,15 @@ struct MultiMemoryLowering : public Pass {
     }
 
     void visitLoad(Load* curr) {
-      Expression *updatePtr = maybeSetPtr(curr, getFunction());
-      Expression *boundsCheck = maybeMakeBoundsCheck(curr);
+      Expression* updatePtr = maybeSetPtr(curr, getFunction());
+      Expression* boundsCheck = maybeMakeBoundsCheck(curr);
       setMemory(curr);
       replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
 
     void visitStore(Store* curr) {
-      Expression *updatePtr = maybeSetPtr(curr, getFunction());
-      Expression *boundsCheck = maybeMakeBoundsCheck(curr);
+      Expression* updatePtr = maybeSetPtr(curr, getFunction());
+      Expression* boundsCheck = maybeMakeBoundsCheck(curr);
       setMemory(curr);
       replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
@@ -461,6 +460,8 @@ struct MultiMemoryLowering : public Pass {
 
 Pass* createMultiMemoryLoweringPass() { return new MultiMemoryLowering(false); }
 
-Pass* createMultiMemoryLoweringWithBoundsChecksPass() { return new MultiMemoryLowering(true); }
+Pass* createMultiMemoryLoweringWithBoundsChecksPass() {
+  return new MultiMemoryLowering(true);
+}
 
 } // namespace wasm
