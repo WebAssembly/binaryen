@@ -23,7 +23,7 @@
 // multi-memories feature also prevents later passes from adding additional
 // memories.
 //
-// The offset computation in function makeReplacement is not precise according
+// The offset computation in function maybeMakeBoundsCheck is not precise according
 // to the spec. In the spec offsets do not overflow as twos-complement, but
 // i32.add does. Concretely, a load from address 1000 with offset 0xffffffff
 // should actually trap, as the combined number is greater than 32 bits. But
@@ -107,24 +107,25 @@ struct MultiMemoryLowering : public Pass {
       replaceCurrent(builder.makeCall(funcName, {}, curr->type));
     }
 
-    template<typename T> Expression* maybeSetPtr(T* curr, Function* func) {
+    template<typename T> Expression* setPtr(T* curr, Index ptrIdx) {
       auto idx = parent.memoryIdxMap.at(curr->memory);
       auto offsetGlobal = parent.getOffsetGlobal(idx);
-      if (!offsetGlobal) {
-        return nullptr;
+      Expression* ptrSet;
+      if (offsetGlobal) {
+        ptrSet = builder.makeLocalSet(
+          ptrIdx,
+          builder.makeBinary(
+            Abstract::getBinary(parent.pointerType, Abstract::Add),
+            builder.makeGlobalGet(offsetGlobal, parent.pointerType),
+            curr->ptr));
+      } else {
+        ptrSet = builder.makeLocalSet(ptrIdx, curr->ptr);
       }
-      Index ptrIdx = Builder::addVar(func, parent.pointerType);
-      Expression* ptrSet = builder.makeLocalSet(
-        ptrIdx,
-        builder.makeBinary(
-          Abstract::getBinary(parent.pointerType, Abstract::Add),
-          builder.makeGlobalGet(offsetGlobal, parent.pointerType),
-          curr->ptr));
       curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
       return ptrSet;
     }
 
-    template<typename T> Expression* maybeMakeBoundsCheck(T* curr) {
+    template<typename T> Expression* maybeMakeBoundsCheck(T* curr, Index ptrIdx) {
       if (!parent.checkBounds) {
         return nullptr;
       }
@@ -140,8 +141,7 @@ struct MultiMemoryLowering : public Pass {
             Abstract::getBinary(parent.pointerType, Abstract::Add),
             builder.makeBinary(
               Abstract::getBinary(parent.pointerType, Abstract::Add),
-              // builder.makeLocalGet(ptrIdx, parent.pointerType),
-              curr->ptr,
+              builder.makeLocalGet(ptrIdx, parent.pointerType),
               builder.makeConstPtr(curr->offset, parent.pointerType)),
             builder.makeConstPtr(curr->bytes, parent.pointerType)),
           builder.makeCall(memorySizeFunc, {}, parent.pointerType)),
@@ -154,15 +154,17 @@ struct MultiMemoryLowering : public Pass {
     }
 
     void visitLoad(Load* curr) {
-      Expression* updatePtr = maybeSetPtr(curr, getFunction());
-      Expression* boundsCheck = maybeMakeBoundsCheck(curr);
+      Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
+      Expression* updatePtr = setPtr(curr, ptrIdx);
+      Expression* boundsCheck = maybeMakeBoundsCheck(curr, ptrIdx);
       setMemory(curr);
       replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
 
     void visitStore(Store* curr) {
-      Expression* updatePtr = maybeSetPtr(curr, getFunction());
-      Expression* boundsCheck = maybeMakeBoundsCheck(curr);
+      Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
+      Expression* updatePtr = setPtr(curr, ptrIdx);
+      Expression* boundsCheck = maybeMakeBoundsCheck(curr, ptrIdx);
       setMemory(curr);
       replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
