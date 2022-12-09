@@ -1166,7 +1166,7 @@
 
  ;; CHECK:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (ref.cast null $func-return-i32
+ ;; CHECK-NEXT:   (ref.cast $func-return-i32
  ;; CHECK-NEXT:    (ref.func $receive-f64)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1178,7 +1178,7 @@
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; NOMNL-NEXT:  (local.set $temp
- ;; NOMNL-NEXT:   (ref.cast null $func-return-i32
+ ;; NOMNL-NEXT:   (ref.cast $func-return-i32
  ;; NOMNL-NEXT:    (ref.func $receive-f64)
  ;; NOMNL-NEXT:   )
  ;; NOMNL-NEXT:  )
@@ -1191,7 +1191,7 @@
  (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
   ;; Try to cast a function to an incompatible type.
   (local.set $temp
-   (ref.cast null $func-return-i32
+   (ref.cast $func-return-i32
     (ref.func $receive-f64)
    )
   )

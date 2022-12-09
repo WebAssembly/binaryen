@@ -793,7 +793,7 @@
   (type $A (struct))
   ;; CHECK:      (func $0 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 f32)
-  ;; CHECK-NEXT:  (ref.cast null $A
+  ;; CHECK-NEXT:  (ref.cast $A
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

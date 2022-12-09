@@ -529,7 +529,7 @@
     ;; As the get must trap, we can optimize to an unreachable here.
     (drop
       (struct.get $substruct 0
-        (ref.cast null $substruct
+        (ref.cast $substruct
           (call $create)
         )
       )
@@ -588,7 +588,7 @@
   (func $get
     (drop
       (struct.get $substruct 0
-        (ref.cast null $substruct
+        (ref.cast $substruct
           (call $create)
         )
       )
@@ -802,7 +802,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast null $substruct
+  ;; CHECK-NEXT:     (ref.cast $substruct
   ;; CHECK-NEXT:      (select (result (ref $struct))
   ;; CHECK-NEXT:       (struct.new $struct
   ;; CHECK-NEXT:        (i32.const 10)
@@ -823,7 +823,7 @@
     (drop
       (struct.get $struct 0
         ;; This cast is added, ensuring only a $substruct can reach the get.
-        (ref.cast null $substruct
+        (ref.cast $substruct
           (select
             (struct.new $struct
               (i32.const 10)
@@ -2041,7 +2041,7 @@
   )
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 20)
@@ -2052,7 +2052,7 @@
     ;; the type is $A, which should not confuse us: this set does alias the data
     ;; in $C, which means we cannot optimize in the function $get below.
     (struct.set $A 0
-      (ref.cast null $A
+      (ref.cast $A
         (call $create-C)
       )
       (i32.const 20) ;; different value than in $create

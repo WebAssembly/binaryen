@@ -2116,7 +2116,12 @@ struct PrintExpressionContents
     if (curr->safety == RefCast::Unsafe) {
       printMedium(o, "ref.cast_nop ");
     } else {
-      printMedium(o, "ref.cast null ");
+      // Emulate legacy polymorphic behavior for now.
+      if (curr->ref->type.isNullable()) {
+        printMedium(o, "ref.cast null ");
+      } else {
+        printMedium(o, "ref.cast ");
+      }
     }
     printHeapType(o, curr->intendedType, wasm);
   }

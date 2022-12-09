@@ -85,7 +85,7 @@
 
   ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.cast null $struct
+  ;; TNH-NEXT:   (ref.cast $struct
   ;; TNH-NEXT:    (ref.as_data
   ;; TNH-NEXT:     (local.get $a)
   ;; TNH-NEXT:    )
@@ -95,7 +95,7 @@
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $struct
+  ;; NO_TNH-NEXT:   (ref.cast $struct
   ;; NO_TNH-NEXT:    (ref.as_data
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
@@ -107,7 +107,7 @@
     ;; In this case non-nullability is enough to tell that the ref.is will
     ;; return 0. TNH does not help here.
     (ref.is_null
-      (ref.cast null $struct
+      (ref.cast $struct
         (ref.as_non_null
           (ref.as_data
             (local.get $a)

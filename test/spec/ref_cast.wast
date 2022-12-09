@@ -76,7 +76,7 @@
 
   (func (export "test-ref-cast-struct")
     (drop
-      (ref.cast null struct (struct.new $t0))
+      (ref.cast struct (struct.new $t0))
     )
   )
 

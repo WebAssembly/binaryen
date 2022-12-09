@@ -41,7 +41,7 @@
   ;; CHECK-NEXT:   (local.get $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $child
+  ;; CHECK-NEXT:   (ref.cast $child
   ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -62,7 +62,7 @@
   ;; NOMNL-NEXT:   (local.get $child)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $child
+  ;; NOMNL-NEXT:   (ref.cast $child
   ;; NOMNL-NEXT:    (local.get $parent)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -83,7 +83,7 @@
   ;; NOMNL-TNH-NEXT:   (local.get $child)
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast null $child
+  ;; NOMNL-TNH-NEXT:   (ref.cast $child
   ;; NOMNL-TNH-NEXT:    (local.get $parent)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
@@ -104,13 +104,13 @@
     ;; a cast of parent to parent. We can optimize this as the new type will be
     ;; valid.
     (drop
-      (ref.cast null $parent
+      (ref.cast $parent
         (local.get $parent)
       )
     )
     ;; a cast of child to a supertype: again, we replace with a valid type.
     (drop
-      (ref.cast null $parent
+      (ref.cast $parent
         (local.get $child)
       )
     )
@@ -118,13 +118,13 @@
     ;; $child with one that is not equal or more specific, like $parent, so we
     ;; cannot optimize here.
     (drop
-      (ref.cast null $child
+      (ref.cast $child
         (local.get $parent)
       )
     )
     ;; a cast of child to an unrelated type: it will trap anyhow
     (drop
-      (ref.cast null $other
+      (ref.cast $other
         (local.get $child)
       )
     )
@@ -138,7 +138,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $parent
+  ;; CHECK-NEXT:   (ref.cast $parent
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -151,7 +151,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $parent
+  ;; NOMNL-NEXT:   (ref.cast $parent
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -164,7 +164,7 @@
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast null $parent
+  ;; NOMNL-TNH-NEXT:   (ref.cast $parent
   ;; NOMNL-TNH-NEXT:    (unreachable)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
@@ -174,7 +174,7 @@
 
     ;; optimizing this cast away requires reordering.
     (drop
-      (ref.cast null $parent
+      (ref.cast $parent
         (block (result (ref $parent))
           (call $foo)
           (local.get $parent)
@@ -280,14 +280,14 @@
   ;; NOMNL-TNH-NEXT: )
   (func $test (param $C (ref $C)) (result anyref)
     (struct.get $B 0
-      (ref.cast null $B ;; Try to cast a $C to its parent, $B. That always
-                          ;; works, so the cast can be removed.
-                          ;; Then once the cast is removed, the outer struct.get
-                          ;; will have a reference with a different type,
-                          ;; making it a (struct.get $C ..) instead of $B.
-                          ;; But $B and $C have different types on field 0, and
-                          ;; so the struct.get must be refinalized so the node
-                          ;; has the expected type.
+      (ref.cast $B ;; Try to cast a $C to its parent, $B. That always
+                   ;; works, so the cast can be removed.
+                   ;; Then once the cast is removed, the outer struct.get
+                   ;; will have a reference with a different type,
+                   ;; making it a (struct.get $C ..) instead of $B.
+                   ;; But $B and $C have different types on field 0, and
+                   ;; so the struct.get must be refinalized so the node
+                   ;; has the expected type.
         (local.get $C)
       )
     )
