@@ -110,12 +110,12 @@ struct MultiMemoryLowering : public Pass {
     template<typename T> Expression* getPtr(T* curr, Function* func) {
       auto memoryIdx = parent.memoryIdxMap.at(curr->memory);
       auto offsetGlobal = parent.getOffsetGlobal(memoryIdx);
-      Expression *ptrValue;
+      Expression* ptrValue;
       if (offsetGlobal) {
         ptrValue = builder.makeBinary(
-            Abstract::getBinary(parent.pointerType, Abstract::Add),
-            builder.makeGlobalGet(offsetGlobal, parent.pointerType),
-            curr->ptr);
+          Abstract::getBinary(parent.pointerType, Abstract::Add),
+          builder.makeGlobalGet(offsetGlobal, parent.pointerType),
+          curr->ptr);
       } else {
         ptrValue = curr->ptr;
       }
