@@ -6915,7 +6915,8 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
     if (ref->type.isRef()) {
       if (code == BinaryConsts::RefCast && ref->type.isNullable()) {
         throwError("ref.cast on nullable input not yet supported");
-      } else if (code == BinaryConsts::RefCastNull && !ref->type.isNullable()) {
+      } else if (code == BinaryConsts::RefCastNull &&
+                 ref->type.isNonNullable()) {
         throwError("ref.cast null on non-nullable input not yet supported");
       }
     }

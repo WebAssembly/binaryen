@@ -2797,7 +2797,7 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
     if (*nullability == NonNullable && ref->type.isNullable()) {
       throw ParseException(
         "ref.cast on nullable input not yet supported", s.line, s.col);
-    } else if (*nullability == Nullable && !ref->type.isNullable()) {
+    } else if (*nullability == Nullable && ref->type.isNonNullable()) {
       throw ParseException(
         "ref.cast null on non-nullable input not yet supported", s.line, s.col);
     }
