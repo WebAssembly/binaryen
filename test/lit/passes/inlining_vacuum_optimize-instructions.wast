@@ -19,7 +19,7 @@
 
  ;; CHECK:      (func $target (type $ref?|$A|_=>_none) (param $0 (ref null $A))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast null $B
+ ;; CHECK-NEXT:   (ref.cast $B
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

@@ -999,7 +999,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast $struct
   ;; CHECK-NEXT:    (ref.as_i31
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -1022,7 +1022,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
+  ;; NOMNL-NEXT:   (ref.cast $struct
   ;; NOMNL-NEXT:    (ref.as_i31
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
@@ -1031,7 +1031,7 @@
   ;; NOMNL-NEXT: )
   (func $flip-cast-of-as-non-null (param $x anyref)
     (drop
-      (ref.cast null $struct
+      (ref.cast $struct
         ;; this can be moved through the ref.cast null outward.
         (ref.as_non_null
           (local.get $x)
@@ -1041,7 +1041,7 @@
     (drop
       ;; an example of how this helps: the struct.get will trap on null anyhow
       (struct.get_u $struct 0
-        (ref.cast null $struct
+        (ref.cast $struct
           ;; this can be moved through the ref.cast null outward.
           (ref.as_non_null
             (local.get $x)
@@ -1051,7 +1051,7 @@
     )
     ;; other ref.as* operations are ignored for now
     (drop
-      (ref.cast null $struct
+      (ref.cast $struct
         (ref.as_i31
           (local.get $x)
         )
@@ -1585,7 +1585,7 @@
     ;; equal, and the result must be 0.
     (drop
       (ref.eq
-        (ref.cast null $struct
+        (ref.cast $struct
           (ref.as_non_null
             (local.get $x)
           )
@@ -1601,7 +1601,7 @@
         (ref.cast null $struct
           (local.get $x)
         )
-        (ref.cast null $array
+        (ref.cast $array
           (ref.as_non_null
             (local.get $y)
           )
@@ -1611,12 +1611,12 @@
     ;; As above but the cast is both.
     (drop
       (ref.eq
-        (ref.cast null $struct
+        (ref.cast $struct
           (ref.as_non_null
             (local.get $x)
           )
         )
-        (ref.cast null $array
+        (ref.cast $array
           (ref.as_non_null
             (local.get $y)
           )
@@ -1690,12 +1690,12 @@
     ;; subtype of A, so we cannot optimize.
     (drop
       (ref.eq
-        (ref.cast null $A
+        (ref.cast $A
           (ref.as_non_null
             (local.get $x)
           )
         )
-        (ref.cast null $B
+        (ref.cast $B
           (ref.as_non_null
             (local.get $y)
           )
@@ -1705,12 +1705,12 @@
     ;; As above but flipped.
     (drop
       (ref.eq
-        (ref.cast null $B
+        (ref.cast $B
           (ref.as_non_null
             (local.get $x)
           )
         )
-        (ref.cast null $A
+        (ref.cast $A
           (ref.as_non_null
             (local.get $y)
           )
@@ -1783,7 +1783,7 @@
   ;; NOMNL-NEXT: )
   (func $incompatible-cast-of-non-null (param $struct (ref $struct))
     (drop
-      (ref.cast null $array
+      (ref.cast $array
         (local.get $struct)
       )
     )
@@ -1840,7 +1840,7 @@
       )
     )
     (drop
-      (ref.cast null $array
+      (ref.cast $array
         ;; The fallthrough is null, but the node's child's type is non-nullable,
         ;; so we must add a ref.as_non_null on the outside to keep the type
         ;; identical.
@@ -1966,7 +1966,7 @@
 
   ;; CHECK:      (func $consecutive-opts-with-unreachable (type $funcref_=>_none) (param $func funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast $struct
   ;; CHECK-NEXT:    (block (result (ref i31))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (local.get $func)
@@ -1978,7 +1978,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $consecutive-opts-with-unreachable (type $funcref_=>_none) (param $func funcref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
+  ;; NOMNL-NEXT:   (ref.cast $struct
   ;; NOMNL-NEXT:    (block (result (ref i31))
   ;; NOMNL-NEXT:     (drop
   ;; NOMNL-NEXT:      (local.get $func)
@@ -1990,7 +1990,7 @@
   ;; NOMNL-NEXT: )
   (func $consecutive-opts-with-unreachable (param $func funcref)
     (drop
-      (ref.cast null $struct
+      (ref.cast $struct
         ;; Casting a funcref to i31 will definitely fail, so this will be
         ;; replaced with an unreachable. But it should be enclosed in a block of
         ;; the previous type, so that the outside ref.cast null is not confused. This
@@ -2503,7 +2503,7 @@
   ;; CHECK-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
   ;; CHECK-NEXT:       (local.get $x)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.cast null $struct
+  ;; CHECK-NEXT:      (ref.cast $struct
   ;; CHECK-NEXT:       (local.get $x)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -2520,7 +2520,7 @@
   ;; NOMNL-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
   ;; NOMNL-NEXT:       (local.get $x)
   ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (ref.cast null $struct
+  ;; NOMNL-NEXT:      (ref.cast $struct
   ;; NOMNL-NEXT:       (local.get $x)
   ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
@@ -2534,12 +2534,12 @@
       ;; As above, but with an impossible cast of an array to a struct. The
       ;; block with the side effects and the inner cast must be kept around and
       ;; dropped, and then we replace the outer cast with an unreachable.
-      (ref.cast null $array
+      (ref.cast $array
         (block (result (ref eq))
           (call $ref-cast-static-fallthrough-remaining-impossible
             (local.get $x)
           )
-          (ref.cast null $struct
+          (ref.cast $struct
             (local.get $x)
           )
         )
@@ -2549,12 +2549,12 @@
 
   ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-nonnull (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (block (result (ref eq))
   ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.cast null $B
+  ;; CHECK-NEXT:     (ref.cast $B
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2563,12 +2563,12 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $A
+  ;; NOMNL-NEXT:   (ref.cast $A
   ;; NOMNL-NEXT:    (block (result (ref eq))
   ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining
   ;; NOMNL-NEXT:      (local.get $x)
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.cast null $B
+  ;; NOMNL-NEXT:     (ref.cast $B
   ;; NOMNL-NEXT:      (local.get $x)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
@@ -2582,12 +2582,12 @@
     ;; the middle block prevents us from seeing that (after other opts run,
     ;; however, we would).
     (drop
-      (ref.cast null $A
+      (ref.cast $A
         (block (result (ref eq))
           (call $ref-cast-static-fallthrough-remaining
             (local.get $x)
           )
-          (ref.cast null $B
+          (ref.cast $B
             (local.get $x)
           )
         )
@@ -2647,8 +2647,8 @@
       )
     )
     (drop
-      (ref.cast null $struct
-        (ref.cast null $array
+      (ref.cast $struct
+        (ref.cast $array
           (ref.as_non_null (local.get $x))
         )
       )

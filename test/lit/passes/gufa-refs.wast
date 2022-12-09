@@ -1089,7 +1089,7 @@
     ;; trapping contents in ref.cast, but not br_on_cast, so test both.
     (drop
       (struct.get $parent 0
-        (ref.cast null $parent
+        (ref.cast $parent
           (struct.new $unrelated)
         )
       )
@@ -1706,7 +1706,7 @@
     (drop
       (ref.as_non_null
         (array.get $something-child
-          (ref.cast null $something-child
+          (ref.cast $something-child
             (array.new_default $something
               (i32.const 10)
             )
@@ -2528,7 +2528,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $substruct
+  ;; CHECK-NEXT:   (ref.cast $substruct
   ;; CHECK-NEXT:    (struct.new $substruct
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
@@ -2536,7 +2536,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $substruct
+  ;; CHECK-NEXT:   (ref.cast $substruct
   ;; CHECK-NEXT:    (struct.new $subsubstruct
   ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:     (i32.const 4)
@@ -2549,7 +2549,7 @@
     ;; The cast here will fail, and the ref.cast null allows nothing through, so we
     ;; can emit an unreachable here.
     (drop
-      (ref.cast null $substruct
+      (ref.cast $substruct
         (struct.new $struct
           (i32.const 0)
         )
@@ -2558,7 +2558,7 @@
     ;; This cast of a type to itself can succeed (in fact, it will), so we make
     ;; no changes here.
     (drop
-      (ref.cast null $substruct
+      (ref.cast $substruct
         (struct.new $substruct
           (i32.const 1)
           (i32.const 2)
@@ -2567,7 +2567,7 @@
     )
     ;; This cast of a subtype will also succeed. As above, we make no changes.
     (drop
-      (ref.cast null $substruct
+      (ref.cast $substruct
         (struct.new $subsubstruct
           (i32.const 3)
           (i32.const 4)
@@ -2672,7 +2672,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast $struct
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 1)
@@ -2686,7 +2686,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $substruct
+  ;; CHECK-NEXT:   (ref.cast $substruct
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 4)
@@ -2716,10 +2716,10 @@
         )
       )
     )
-    ;; The input to the ref.cast null is either $struct or $substruct, both of which
+    ;; The input to the ref.cast is either $struct or $substruct, both of which
     ;; work, so we cannot optimize anything here away.
     (drop
-      (ref.cast null $struct
+      (ref.cast $struct
         (select
           (struct.new $struct
             (i32.const 1)
@@ -2735,7 +2735,7 @@
     ;; As above, but now we test with $substruct, so one possibility fails and
     ;; one succeeds. We cannot infer here either.
     (drop
-      (ref.cast null $substruct
+      (ref.cast $substruct
         (select
           (struct.new $struct
             (i32.const 4)
@@ -2752,7 +2752,7 @@
     ;; can infer an unreachable. The combination of these two is a cone from
     ;; $struct of depth 1, which does not overlap with $subsubstruct.
     (drop
-      (ref.cast null $subsubstruct
+      (ref.cast $subsubstruct
         (select
           (struct.new $struct
             (i32.const 7)
@@ -3633,7 +3633,7 @@
 
   ;; CHECK:      (func $foo (type $none_=>_ref|$B|) (result (ref $B))
   ;; CHECK-NEXT:  (local $A (ref null $A))
-  ;; CHECK-NEXT:  (ref.cast null $B
+  ;; CHECK-NEXT:  (ref.cast $B
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.tee $A
   ;; CHECK-NEXT:     (struct.new $B
@@ -3649,9 +3649,9 @@
 
     ;; Read the following from the most nested comment first.
 
-    (ref.cast null $B ;; if we mistakenly think this contains content of
-                        ;; type $A, it would trap, but it should not, and we
-                        ;; have nothing to optimize here
+    (ref.cast $B ;; if we mistakenly think this contains content of
+                 ;; type $A, it would trap, but it should not, and we
+                 ;; have nothing to optimize here
       (ref.as_non_null ;; also $B, based on the child's *contents* (not type!)
         (local.tee $A ;; flows out a $B, but has type $A
           (struct.new $B ;; returns a $B

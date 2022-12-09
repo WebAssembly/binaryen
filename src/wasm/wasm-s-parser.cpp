@@ -2783,13 +2783,25 @@ Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   int i = 1;
+  std::optional<Nullability> nullability;
   if (s[0]->str().str != "ref.cast_static") {
-    if (s[i++]->str().str != "null") {
-      throw ParseException("ref.cast not yet supported. Use ref.cast null.");
+    nullability = NonNullable;
+    if (s[i]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
     }
   }
   auto heapType = parseHeapType(*s[i++]);
   auto* ref = parseExpression(*s[i++]);
+  if (nullability && ref->type.isRef()) {
+    if (*nullability == NonNullable && ref->type.isNullable()) {
+      throw ParseException(
+        "ref.cast on nullable input not yet supported", s.line, s.col);
+    } else if (*nullability == Nullable && !ref->type.isNullable()) {
+      throw ParseException(
+        "ref.cast null on non-nullable input not yet supported", s.line, s.col);
+    }
+  }
   return Builder(wasm).makeRefCast(ref, heapType, RefCast::Safe);
 }
 

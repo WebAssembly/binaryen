@@ -2033,10 +2033,16 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->safety == RefCast::Unsafe) {
     o << U32LEB(BinaryConsts::RefCastNop);
+    parent.writeIndexedHeapType(curr->intendedType);
   } else {
-    o << U32LEB(BinaryConsts::RefCastNull);
+    // Emulate legacy polymorphic behavior for now.
+    if (curr->ref->type.isNullable()) {
+      o << U32LEB(BinaryConsts::RefCastNull);
+    } else {
+      o << U32LEB(BinaryConsts::RefCast);
+    }
+    parent.writeHeapType(curr->intendedType);
   }
-  parent.writeHeapType(curr->intendedType);
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
