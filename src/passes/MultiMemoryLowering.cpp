@@ -107,31 +107,33 @@ struct MultiMemoryLowering : public Pass {
       replaceCurrent(builder.makeCall(funcName, {}, curr->type));
     }
 
-    template<typename T> Expression* setPtr(T* curr, Index ptrIdx) {
-      auto idx = parent.memoryIdxMap.at(curr->memory);
-      auto offsetGlobal = parent.getOffsetGlobal(idx);
-      Expression* ptrSet;
+    template<typename T> Expression* getPtr(T* curr, Function* func) {
+      auto memoryIdx = parent.memoryIdxMap.at(curr->memory);
+      auto offsetGlobal = parent.getOffsetGlobal(memoryIdx);
+      Expression *ptrValue;
       if (offsetGlobal) {
-        ptrSet = builder.makeLocalSet(
-          ptrIdx,
-          builder.makeBinary(
+        ptrValue = builder.makeBinary(
             Abstract::getBinary(parent.pointerType, Abstract::Add),
             builder.makeGlobalGet(offsetGlobal, parent.pointerType),
-            curr->ptr));
+            curr->ptr);
       } else {
-        ptrSet = builder.makeLocalSet(ptrIdx, curr->ptr);
+        ptrValue = curr->ptr;
       }
-      curr->ptr = builder.makeLocalGet(ptrIdx, parent.pointerType);
-      return ptrSet;
+
+      if (parent.checkBounds) {
+        Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Expression* ptrSet = builder.makeLocalSet(ptrIdx, ptrValue);
+        Expression* boundsCheck = makeBoundsCheck(curr, ptrIdx, memoryIdx);
+        Expression* ptrGet = builder.makeLocalGet(ptrIdx, parent.pointerType);
+        return builder.makeBlock({ptrSet, boundsCheck, ptrGet});
+      }
+
+      return ptrValue;
     }
 
     template<typename T>
-    Expression* maybeMakeBoundsCheck(T* curr, Index ptrIdx) {
-      if (!parent.checkBounds) {
-        return nullptr;
-      }
-      auto idx = parent.memoryIdxMap.at(curr->memory);
-      Name memorySizeFunc = parent.memorySizeNames[idx];
+    Expression* makeBoundsCheck(T* curr, Index ptrIdx, Index memoryIdx) {
+      Name memorySizeFunc = parent.memorySizeNames[memoryIdx];
       Expression* boundsCheck = builder.makeIf(
         builder.makeBinary(
           Abstract::getBinary(parent.pointerType, Abstract::GtU),
@@ -155,19 +157,13 @@ struct MultiMemoryLowering : public Pass {
     }
 
     void visitLoad(Load* curr) {
-      Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
-      Expression* updatePtr = setPtr(curr, ptrIdx);
-      Expression* boundsCheck = maybeMakeBoundsCheck(curr, ptrIdx);
+      curr->ptr = getPtr(curr, getFunction());
       setMemory(curr);
-      replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
 
     void visitStore(Store* curr) {
-      Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
-      Expression* updatePtr = setPtr(curr, ptrIdx);
-      Expression* boundsCheck = maybeMakeBoundsCheck(curr, ptrIdx);
+      curr->ptr = getPtr(curr, getFunction());
       setMemory(curr);
-      replaceCurrent(builder.blockify(updatePtr, boundsCheck, curr));
     }
   };
 
