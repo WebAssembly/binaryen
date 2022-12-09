@@ -83,6 +83,12 @@ struct CastFinder
 
 #include "wasm-delegations-fields.def"
   }
+
+  void visitRefCast(Expression* curr) {
+    if (curr->type != Type::unreachable) {
+      referredTypes.insert(curr->type.getHeapType());
+    }
+  }
 };
 
 struct TypeMerging : public Pass {

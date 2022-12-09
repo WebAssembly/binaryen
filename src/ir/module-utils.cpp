@@ -71,7 +71,7 @@ struct CodeScanner
     } else if (curr->is<ArrayInit>()) {
       counts.note(curr->type);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
-      counts.note(cast->intendedType);
+      counts.note(cast->type);
     } else if (auto* cast = curr->dynCast<RefTest>()) {
       counts.note(cast->intendedType);
     } else if (auto* cast = curr->dynCast<BrOn>()) {

@@ -1430,10 +1430,6 @@ public:
     struct Breaking : Flow {
       Breaking(Flow breaking) : Flow(breaking) {}
     };
-    // The null input to the cast.
-    struct Null : Literal {
-      Null(Literal original) : Literal(original) {}
-    };
     // The result of the successful cast.
     struct Success : Literal {
       Success(Literal result) : Literal(result) {}
@@ -1443,20 +1439,12 @@ public:
       Failure(Literal original) : Literal(original) {}
     };
 
-    std::variant<Breaking, Null, Success, Failure> state;
+    std::variant<Breaking, Success, Failure> state;
 
     template<class T> Cast(T state) : state(state) {}
     Flow* getBreaking() { return std::get_if<Breaking>(&state); }
-    Literal* getNull() { return std::get_if<Null>(&state); }
     Literal* getSuccess() { return std::get_if<Success>(&state); }
     Literal* getFailure() { return std::get_if<Failure>(&state); }
-    Literal* getNullOrFailure() {
-      if (auto* original = getNull()) {
-        return original;
-      } else {
-        return getFailure();
-      }
-    }
   };
 
   template<typename T> Cast doCast(T* curr) {
@@ -1464,21 +1452,19 @@ public:
     if (ref.breaking()) {
       return typename Cast::Breaking{ref};
     }
-    Literal original = ref.getSingleValue();
-    if (original.isNull()) {
-      return typename Cast::Null{original};
+    Literal val = ref.getSingleValue();
+    Type castType = curr->getCastType();
+    if (val.isNull()) {
+      if (castType.isNullable()) {
+        return typename Cast::Success{val};
+      } else {
+        return typename Cast::Failure{val};
+      }
     }
-    // The input may not be GC data or a function; for example it could be an
-    // anyref or an i31. The cast definitely fails in these cases.
-    if (!original.isData() && !original.isFunction()) {
-      return typename Cast::Failure{original};
-    }
-    HeapType actualType = original.type.getHeapType();
-    // We have the actual and intended types, so perform the cast.
-    if (HeapType::isSubType(actualType, curr->intendedType)) {
-      return typename Cast::Success{original};
+    if (HeapType::isSubType(val.type.getHeapType(), castType.getHeapType())) {
+      return typename Cast::Success{val};
     } else {
-      return typename Cast::Failure{original};
+      return typename Cast::Failure{val};
     }
   }
 
@@ -1496,8 +1482,6 @@ public:
     auto cast = doCast(curr);
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
-    } else if (cast.getNull()) {
-      return Literal::makeNull(curr->type.getHeapType());
     } else if (auto* result = cast.getSuccess()) {
       return *result;
     }
@@ -1512,7 +1496,7 @@ public:
       auto cast = doCast(curr);
       if (auto* breaking = cast.getBreaking()) {
         return *breaking;
-      } else if (auto* original = cast.getNullOrFailure()) {
+      } else if (auto* original = cast.getFailure()) {
         if (curr->op == BrOnCast) {
           return *original;
         } else {

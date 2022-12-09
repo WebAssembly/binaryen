@@ -6908,21 +6908,27 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
       code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
     bool legacy =
       code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCastNop;
-    auto intendedType = legacy ? getIndexedHeapType() : getHeapType();
+    auto heapType = legacy ? getIndexedHeapType() : getHeapType();
     auto* ref = popNonVoidExpression();
-    // Even though we're parsing new instructions, we only support those that
-    // emulate the legacy polymorphic behavior for now.
+    Nullability nullability;
+    if (legacy) {
+      // Legacy polymorphic behavior.
+      nullability = ref->type.getNullability();
+    } else {
+      nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
+    }
+    // Only accept instructions emulating the legacy behavior for now.
     if (ref->type.isRef()) {
-      if (code == BinaryConsts::RefCast && ref->type.isNullable()) {
+      if (nullability == NonNullable && ref->type.isNullable()) {
         throwError("ref.cast on nullable input not yet supported");
-      } else if (code == BinaryConsts::RefCastNull &&
-                 ref->type.isNonNullable()) {
+      } else if (nullability == Nullable && ref->type.isNonNullable()) {
         throwError("ref.cast null on non-nullable input not yet supported");
       }
     }
     auto safety =
       code == BinaryConsts::RefCastNop ? RefCast::Unsafe : RefCast::Safe;
-    out = Builder(wasm).makeRefCast(ref, intendedType, safety);
+    auto type = Type(heapType, nullability);
+    out = Builder(wasm).makeRefCast(ref, type, safety);
     return true;
   }
   return false;

@@ -787,13 +787,15 @@
 )
 
 (module
+  (type $A (struct))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct))
   ;; CHECK:      (func $0 (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 f32)
-  ;; CHECK-NEXT:  (ref.cast $A
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

@@ -1042,10 +1042,9 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenRefTest(BinaryenModuleRef module,
                 BinaryenExpressionRef ref,
                 BinaryenHeapType intendedType);
-BINARYEN_API BinaryenExpressionRef
-BinaryenRefCast(BinaryenModuleRef module,
-                BinaryenExpressionRef ref,
-                BinaryenHeapType intendedType);
+BINARYEN_API BinaryenExpressionRef BinaryenRefCast(BinaryenModuleRef module,
+                                                   BinaryenExpressionRef ref,
+                                                   BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                                 BinaryenOp op,
                                                 const char* name,
@@ -2374,10 +2373,6 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenRefCastGetRef(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenRefCastSetRef(BinaryenExpressionRef expr,
                                         BinaryenExpressionRef refExpr);
-BINARYEN_API BinaryenHeapType
-BinaryenRefCastGetIntendedType(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenRefCastSetIntendedType(BinaryenExpressionRef expr,
-                                                 BinaryenHeapType intendedType);
 
 // BrOn
 

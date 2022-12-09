@@ -1785,7 +1785,7 @@ struct OptimizeInstructions
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
 
-    auto intendedType = curr->intendedType;
+    auto intendedType = curr->type.getHeapType();
 
     // If the value is a null, it will just flow through, and we do not need
     // the cast. However, if that would change the type, then things are less
@@ -1873,7 +1873,7 @@ struct OptimizeInstructions
     if (auto* child = ref->dynCast<RefCast>()) {
       // Repeated casts can be removed, leaving just the most demanding of
       // them.
-      auto childIntendedType = child->intendedType;
+      auto childIntendedType = child->type.getHeapType();
       if (HeapType::isSubType(intendedType, childIntendedType)) {
         // Skip the child.
         if (curr->ref == child) {
@@ -1931,6 +1931,11 @@ struct OptimizeInstructions
     if (auto* as = curr->ref->dynCast<RefAs>()) {
       if (as->op == RefAsNonNull) {
         curr->ref = as->value;
+        // Match the nullability of the new child.
+        // TODO: Combine the ref.as_non_null into the cast once we allow that.
+        if (curr->ref->type.isNullable()) {
+          curr->type = Type(curr->type.getHeapType(), Nullable);
+        }
         curr->finalize();
         as->value = curr;
         as->finalize();

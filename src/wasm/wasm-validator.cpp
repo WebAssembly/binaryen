@@ -2529,10 +2529,16 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     return;
   }
   shouldBeEqual(
-    curr->intendedType.getBottom(),
+    curr->type.getHeapType().getBottom(),
     curr->ref->type.getHeapType().getBottom(),
     curr,
     "ref.cast target type and ref type must have a common supertype");
+
+  // TODO: Remove this restriction
+  shouldBeEqual(curr->type.getNullability(),
+                curr->ref->type.getNullability(),
+                curr,
+                "ref.cast to a different nullability not yet implemented");
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
