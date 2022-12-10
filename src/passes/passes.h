@@ -87,6 +87,7 @@ Pass* createMetricsPass();
 Pass* createMonomorphizePass();
 Pass* createMonomorphizeAlwaysPass();
 Pass* createMultiMemoryLoweringPass();
+Pass* createMultiMemoryLoweringWithBoundsChecksPass();
 Pass* createNameListPass();
 Pass* createNameTypesPass();
 Pass* createOnceReductionPass();
