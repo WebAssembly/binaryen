@@ -123,6 +123,18 @@ struct GlobalStructInference : public Pass {
 
       auto type = global->init->type.getHeapType();
 
+      // The global's type must be a subtype of |eq| for us to do a comparison
+      // check on it later. For example a global declared as type |any| but that
+      // contains (ref $A) is not something we can optimize, as ref.eq on a
+      // global.get of that global will not validate. (This should not be a
+      // problem after GlobalSubtyping runs, which will specialize the type of
+      // the global.)
+      if (!global->type.isRef() ||
+          !HeapType::isSubType(global->type.getHeapType(), HeapType::eq)) {
+        unoptimizable.insert(type);
+        continue;
+      }
+
       // We cannot optimize mutable globals.
       if (global->mutable_) {
         unoptimizable.insert(type);
@@ -197,6 +209,14 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
+        // We must ignore the case of a non-struct heap type, that is, a bottom
+        // type (which is all that is left after we've already ruled out
+        // unreachable).
+        auto heapType = type.getHeapType();
+        if (!heapType.isStruct()) {
+          return;
+        }
+
         auto iter = parent.typeGlobals.find(type.getHeapType());
         if (iter == parent.typeGlobals.end()) {
           return;
@@ -204,7 +224,7 @@ struct GlobalStructInference : public Pass {
 
         // The field must be immutable.
         auto fieldIndex = curr->index;
-        auto& field = type.getHeapType().getStruct().fields[fieldIndex];
+        auto& field = heapType.getStruct().fields[fieldIndex];
         if (field.mutable_ == Mutable) {
           return;
         }
