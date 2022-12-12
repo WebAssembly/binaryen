@@ -31,6 +31,14 @@
 // would not trap. In theory we could compute like the spec, by expanding the
 // i32s to i64s and adding there (where we won't overflow), but we don't have
 // i128s to handle i64 overflow.
+//
+// The Atomic instructions memory.atomic.wait and memory.atomic.notify, have
+// browser engine implementations that predate the still-in-progress threads
+// spec (https://github.com/WebAssembly/threads). And whether or not
+// atomic.notify should trap for out-of-bounds addresses remains an open issue
+// (https://github.com/WebAssembly/threads/issues/105). For now, we are using
+// the same semantics as v8, which is to bounds check all Atomic instructions
+// the same way and trap for out-of-bounds.
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -191,6 +199,39 @@ struct MultiMemoryLowering : public Pass {
 
     void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
+      setMemory(curr);
+    }
+
+    void visitAtomicRMW(AtomicRMW* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->bytes);
+      setMemory(curr);
+    }
+
+    void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->bytes);
+      setMemory(curr);
+    }
+
+    void visitAtomicWait(AtomicWait* curr) {
+      Index bytes;
+      switch (curr->expectedType.getBasic()) {
+        case Type::i32: {
+          bytes = 4;
+          break;
+        }
+        case Type::i64: {
+          bytes = 8;
+          break;
+        }
+        default:
+          WASM_UNREACHABLE("unexpected type");
+      }
+      curr->ptr = getPtr(curr, getFunction(), bytes);
+      setMemory(curr);
+    }
+
+    void visitAtomicNotify(AtomicNotify* curr) {
+      curr->ptr = getPtr(curr, getFunction(), Index(4));
       setMemory(curr);
     }
   };
