@@ -8,17 +8,15 @@
   (memory $memory3 3)
   (data (memory $memory1) (i32.const 0) "a")
   (data (memory $memory3) (i32.const 1) "123")
+  ;; CHECK:      (type $i32_=>_v128 (func (param i32) (result v128)))
+
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $i32_=>_v128 (func (param i32) (result v128)))
-
   ;; CHECK:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
-
-  ;; CHECK:      (type $v128_=>_v128 (func (param v128) (result v128)))
 
   ;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 
@@ -56,17 +54,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; BOUNDS:      (type $i32_=>_v128 (func (param i32) (result v128)))
+
   ;; BOUNDS:      (type $none_=>_i32 (func (result i32)))
 
   ;; BOUNDS:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
   ;; BOUNDS:      (type $none_=>_none (func))
 
-  ;; BOUNDS:      (type $i32_=>_v128 (func (param i32) (result v128)))
-
   ;; BOUNDS:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
-
-  ;; BOUNDS:      (type $v128_=>_v128 (func (param v128) (result v128)))
 
   ;; BOUNDS:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 
@@ -409,21 +405,46 @@
    (local.get $0)
   )
  )
-  ;; CHECK:      (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
-  ;; CHECK-NEXT:  (i64x2.extend_low_i32x4_s
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK:      (func $v128.load32x2_s (param $0 i32) (result v128)
+  ;; CHECK-NEXT:  (v128.load32x2_s
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; BOUNDS:      (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
-  ;; BOUNDS-NEXT:  (i64x2.extend_low_i32x4_s
-  ;; BOUNDS-NEXT:   (local.get $0)
+  ;; BOUNDS:      (func $v128.load32x2_s (param $0 i32) (result v128)
+  ;; BOUNDS-NEXT:  (local $1 i32)
+  ;; BOUNDS-NEXT:  (v128.load32x2_s
+  ;; BOUNDS-NEXT:   (block (result i32)
+  ;; BOUNDS-NEXT:    (local.set $1
+  ;; BOUNDS-NEXT:     (i32.add
+  ;; BOUNDS-NEXT:      (global.get $memory2_byte_offset)
+  ;; BOUNDS-NEXT:      (local.get $0)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (if
+  ;; BOUNDS-NEXT:     (i32.gt_u
+  ;; BOUNDS-NEXT:      (i32.add
+  ;; BOUNDS-NEXT:       (i32.add
+  ;; BOUNDS-NEXT:        (local.get $1)
+  ;; BOUNDS-NEXT:        (i32.const 0)
+  ;; BOUNDS-NEXT:       )
+  ;; BOUNDS-NEXT:       (i32.const 8)
+  ;; BOUNDS-NEXT:      )
+  ;; BOUNDS-NEXT:      (call $memory2_size)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.get $1)
+  ;; BOUNDS-NEXT:   )
   ;; BOUNDS-NEXT:  )
   ;; BOUNDS-NEXT: )
-  (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
-  (i64x2.extend_low_i32x4_s
+  (func $v128.load32x2_s (param $0 i32) (result v128)
+  (v128.load32x2_s $memory2
    (local.get $0)
   )
-  )
+ )
 )
 
 ;; CHECK:      (func $memory1_size (result i32)
