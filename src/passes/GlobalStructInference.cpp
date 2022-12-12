@@ -128,7 +128,7 @@ struct GlobalStructInference : public Pass {
       // that is not something we can optimize, as ref.eq on a global.get of
       // that global will not validate. (This should not be a problem after
       // GlobalSubtyping runs, which will specialize the type of the global.)
-      if (global->type != global->init.type) {
+      if (global->type != global->init->type) {
         unoptimizable.insert(type);
         continue;
       }
