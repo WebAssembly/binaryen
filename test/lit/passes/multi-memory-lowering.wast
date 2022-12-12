@@ -18,6 +18,8 @@
 
   ;; CHECK:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
 
+  ;; CHECK:      (type $v128_=>_v128 (func (param v128) (result v128)))
+
   ;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 
   ;; CHECK:      (global $memory3_byte_offset (mut i32) (i32.const 196608))
@@ -63,6 +65,8 @@
   ;; BOUNDS:      (type $i32_=>_v128 (func (param i32) (result v128)))
 
   ;; BOUNDS:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
+
+  ;; BOUNDS:      (type $v128_=>_v128 (func (param v128) (result v128)))
 
   ;; BOUNDS:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 
@@ -405,6 +409,16 @@
    (local.get $0)
   )
  )
+  ;; CHECK:      (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
+  ;; CHECK-NEXT:  (i64x2.extend_low_i32x4_s
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; BOUNDS:      (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
+  ;; BOUNDS-NEXT:  (i64x2.extend_low_i32x4_s
+  ;; BOUNDS-NEXT:   (local.get $0)
+  ;; BOUNDS-NEXT:  )
+  ;; BOUNDS-NEXT: )
   (func $i64x2.extend_low_i32x4_s (param $0 v128) (result v128)
   (i64x2.extend_low_i32x4_s
    (local.get $0)
