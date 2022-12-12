@@ -107,7 +107,8 @@ struct MultiMemoryLowering : public Pass {
       replaceCurrent(builder.makeCall(funcName, {}, curr->type));
     }
 
-    template<typename T> Expression* getPtr(T* curr, Function* func, Index bytes) {
+    template<typename T>
+    Expression* getPtr(T* curr, Function* func, Index bytes) {
       auto memoryIdx = parent.memoryIdxMap.at(curr->memory);
       auto offsetGlobal = parent.getOffsetGlobal(memoryIdx);
       Expression* ptrValue;
@@ -123,7 +124,8 @@ struct MultiMemoryLowering : public Pass {
       if (parent.checkBounds) {
         Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
         Expression* ptrSet = builder.makeLocalSet(ptrIdx, ptrValue);
-        Expression* boundsCheck = makeBoundsCheck(curr, ptrIdx, memoryIdx, bytes);
+        Expression* boundsCheck =
+          makeBoundsCheck(curr, ptrIdx, memoryIdx, bytes);
         Expression* ptrGet = builder.makeLocalGet(ptrIdx, parent.pointerType);
         return builder.makeBlock({ptrSet, boundsCheck, ptrGet});
       }
@@ -132,7 +134,8 @@ struct MultiMemoryLowering : public Pass {
     }
 
     template<typename T>
-    Expression* makeBoundsCheck(T* curr, Index ptrIdx, Index memoryIdx, Index bytes) {
+    Expression*
+    makeBoundsCheck(T* curr, Index ptrIdx, Index memoryIdx, Index bytes) {
       Name memorySizeFunc = parent.memorySizeNames[memoryIdx];
       Expression* boundsCheck = builder.makeIf(
         builder.makeBinary(
@@ -166,7 +169,7 @@ struct MultiMemoryLowering : public Pass {
       setMemory(curr);
     }
 
-    void visitSIMDLoad(SIMDLoad *curr) {
+    void visitSIMDLoad(SIMDLoad* curr) {
       curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
       setMemory(curr);
     }
