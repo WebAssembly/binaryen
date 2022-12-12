@@ -123,14 +123,12 @@ struct GlobalStructInference : public Pass {
 
       auto type = global->init->type.getHeapType();
 
-      // The global's type must be a subtype of |eq| for us to do a comparison
-      // check on it later. For example a global declared as type |any| but that
-      // contains (ref $A) is not something we can optimize, as ref.eq on a
-      // global.get of that global will not validate. (This should not be a
-      // problem after GlobalSubtyping runs, which will specialize the type of
-      // the global.)
-      if (!global->type.isRef() ||
-          !HeapType::isSubType(global->type.getHeapType(), HeapType::eq)) {
+      // The global's declared type must match the init's type. If not, say if
+      // we had a global declared as type |any| but that contains (ref $A), then
+      // that is not something we can optimize, as ref.eq on a global.get of
+      // that global will not validate. (This should not be a problem after
+      // GlobalSubtyping runs, which will specialize the type of the global.)
+      if (global->type != global->init.type) {
         unoptimizable.insert(type);
         continue;
       }
