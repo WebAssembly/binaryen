@@ -107,7 +107,7 @@ struct MultiMemoryLowering : public Pass {
       replaceCurrent(builder.makeCall(funcName, {}, curr->type));
     }
 
-    template<typename T> Expression* getPtr(T* curr, Function* func) {
+    template<typename T> Expression* getPtr(T* curr, Function* func, Index bytes) {
       auto memoryIdx = parent.memoryIdxMap.at(curr->memory);
       auto offsetGlobal = parent.getOffsetGlobal(memoryIdx);
       Expression* ptrValue;
@@ -123,7 +123,7 @@ struct MultiMemoryLowering : public Pass {
       if (parent.checkBounds) {
         Index ptrIdx = Builder::addVar(getFunction(), parent.pointerType);
         Expression* ptrSet = builder.makeLocalSet(ptrIdx, ptrValue);
-        Expression* boundsCheck = makeBoundsCheck(curr, ptrIdx, memoryIdx);
+        Expression* boundsCheck = makeBoundsCheck(curr, ptrIdx, memoryIdx, bytes);
         Expression* ptrGet = builder.makeLocalGet(ptrIdx, parent.pointerType);
         return builder.makeBlock({ptrSet, boundsCheck, ptrGet});
       }
@@ -132,7 +132,7 @@ struct MultiMemoryLowering : public Pass {
     }
 
     template<typename T>
-    Expression* makeBoundsCheck(T* curr, Index ptrIdx, Index memoryIdx) {
+    Expression* makeBoundsCheck(T* curr, Index ptrIdx, Index memoryIdx, Index bytes) {
       Name memorySizeFunc = parent.memorySizeNames[memoryIdx];
       Expression* boundsCheck = builder.makeIf(
         builder.makeBinary(
@@ -146,7 +146,7 @@ struct MultiMemoryLowering : public Pass {
               Abstract::getBinary(parent.pointerType, Abstract::Add),
               builder.makeLocalGet(ptrIdx, parent.pointerType),
               builder.makeConstPtr(curr->offset, parent.pointerType)),
-            builder.makeConstPtr(curr->bytes, parent.pointerType)),
+            builder.makeConstPtr(bytes, parent.pointerType)),
           builder.makeCall(memorySizeFunc, {}, parent.pointerType)),
         builder.makeUnreachable());
       return boundsCheck;
@@ -157,12 +157,37 @@ struct MultiMemoryLowering : public Pass {
     }
 
     void visitLoad(Load* curr) {
-      curr->ptr = getPtr(curr, getFunction());
+      curr->ptr = getPtr(curr, getFunction(), curr->bytes);
       setMemory(curr);
     }
 
     void visitStore(Store* curr) {
-      curr->ptr = getPtr(curr, getFunction());
+      curr->ptr = getPtr(curr, getFunction(), curr->bytes);
+      setMemory(curr);
+    }
+
+    void visitSIMDLoad(SIMDLoad *curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
+      setMemory(curr);
+    }
+
+    void visitSIMDLoadSplat(SIMDLoad* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
+      setMemory(curr);
+    }
+
+    void visitSIMDLoadExtend(SIMDLoad* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
+      setMemory(curr);
+    }
+
+    void visitSIMDLoadZero(SIMDLoad* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
+      setMemory(curr);
+    }
+
+    void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
       setMemory(curr);
     }
   };
