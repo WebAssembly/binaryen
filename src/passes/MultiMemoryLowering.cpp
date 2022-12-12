@@ -37,8 +37,8 @@
 // spec (https://github.com/WebAssembly/threads). And whether or not
 // atomic.notify should trap for out-of-bounds addresses remains an open issue
 // (https://github.com/WebAssembly/threads/issues/105). For now, we are using
-// the same semantics as v8, which is to bounds check all Atomic instructions the same way
-// and trap for out-of-bounds.
+// the same semantics as v8, which is to bounds check all Atomic instructions
+// the same way and trap for out-of-bounds.
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
