@@ -193,6 +193,39 @@ struct MultiMemoryLowering : public Pass {
       curr->ptr = getPtr(curr, getFunction(), curr->getMemBytes());
       setMemory(curr);
     }
+
+    void visitAtomicRMW(AtomicRMW* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->bytes);
+      setMemory(curr);
+    }
+
+    void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      curr->ptr = getPtr(curr, getFunction(), curr->bytes);
+      setMemory(curr);
+    }
+
+    void visitAtomicWait(AtomicWait* curr) {
+      Index bytes;
+      switch (curr->expectedType.getBasic()) {
+        case Type::i32: {
+          bytes = 4;
+          break;
+        }
+        case Type::i64: {
+          bytes = 8;
+          break;
+        }
+        default:
+          WASM_UNREACHABLE("unexpected type");
+      }
+      curr->ptr = getPtr(curr, getFunction(), bytes);
+      setMemory(curr);
+    }
+
+    void visitAtomicNotify(AtomicNotify* curr) {
+      curr->ptr = getPtr(curr, getFunction(), Index(4));
+      setMemory(curr);
+    }
   };
 
   void run(Module* module) override {
