@@ -211,14 +211,14 @@ struct GlobalStructInference : public Pass {
         // type (which is all that is left after we've already ruled out
         // unreachable).
         auto heapType = type.getHeapType();
-        if (!heapType.isStruct()) {
-          return;
-        }
-
-        auto iter = parent.typeGlobals.find(type.getHeapType());
+        auto iter = parent.typeGlobals.find(heapType);
         if (iter == parent.typeGlobals.end()) {
           return;
         }
+
+        // This cannot be a bottom type as we found it in the typeGlobals map,
+        // which only contains types of struct.news.
+        assert(heapType.isStruct());
 
         // The field must be immutable.
         auto fieldIndex = curr->index;

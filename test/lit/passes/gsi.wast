@@ -1239,3 +1239,32 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_i32 (func (param (ref null $A)) (result i32)))
+
+  ;; CHECK:      (global $A0 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $A0 (ref $A) (struct.new $A
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $func (type $ref?|$A|_=>_i32) (param $ref (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $ref (ref null $A)) (result i32)
+    ;; Test that we do not error when we see a struct.get of a bottom type.
+    (struct.get $A 0
+      (ref.null none)
+    )
+  )
+)
