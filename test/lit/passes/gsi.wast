@@ -1175,3 +1175,96 @@
     )
   )
 )
+
+;; One global is declared as heap type |any|, which we cannot do a ref.eq on, so
+;; we do not optimize.
+(module
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_i32 (func (param (ref null $A)) (result i32)))
+
+  ;; CHECK:      (global $A0 (ref any) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $A0 (ref any) (struct.new $A
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (global $A1 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 9999)
+  ;; CHECK-NEXT: ))
+  (global $A1 (ref $A) (struct.new $A
+    (i32.const 9999)
+  ))
+
+  ;; CHECK:      (func $func (type $ref?|$A|_=>_i32) (param $ref (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $A 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $ref (ref null $A)) (result i32)
+    (struct.get $A 0
+      (local.get $ref)
+    )
+  )
+)
+
+;; As above, but now there is just a single global. Again, we should not
+;; optimize because the global is not declared as a struct type (which means we
+;; cannot do a struct.get on a global.get of that global - we'd need a cast; it
+;; is simpler to not optimize here and let other passes first refine the global
+;; type).
+(module
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_i32 (func (param (ref null $A)) (result i32)))
+
+  ;; CHECK:      (global $A0 (ref any) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $A0 (ref any) (struct.new $A
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $func (type $ref?|$A|_=>_i32) (param $ref (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $A 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $ref (ref null $A)) (result i32)
+    (struct.get $A 0
+      (local.get $ref)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_i32 (func (param (ref null $A)) (result i32)))
+
+  ;; CHECK:      (global $A0 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $A0 (ref $A) (struct.new $A
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $func (type $ref?|$A|_=>_i32) (param $ref (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $ref (ref null $A)) (result i32)
+    ;; Test that we do not error when we see a struct.get of a bottom type.
+    (struct.get $A 0
+      (ref.null none)
+    )
+  )
+)

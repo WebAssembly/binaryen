@@ -123,6 +123,16 @@ struct GlobalStructInference : public Pass {
 
       auto type = global->init->type.getHeapType();
 
+      // The global's declared type must match the init's type. If not, say if
+      // we had a global declared as type |any| but that contains (ref $A), then
+      // that is not something we can optimize, as ref.eq on a global.get of
+      // that global will not validate. (This should not be a problem after
+      // GlobalSubtyping runs, which will specialize the type of the global.)
+      if (global->type != global->init->type) {
+        unoptimizable.insert(type);
+        continue;
+      }
+
       // We cannot optimize mutable globals.
       if (global->mutable_) {
         unoptimizable.insert(type);
@@ -197,14 +207,22 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        auto iter = parent.typeGlobals.find(type.getHeapType());
+        // We must ignore the case of a non-struct heap type, that is, a bottom
+        // type (which is all that is left after we've already ruled out
+        // unreachable).
+        auto heapType = type.getHeapType();
+        auto iter = parent.typeGlobals.find(heapType);
         if (iter == parent.typeGlobals.end()) {
           return;
         }
 
+        // This cannot be a bottom type as we found it in the typeGlobals map,
+        // which only contains types of struct.news.
+        assert(heapType.isStruct());
+
         // The field must be immutable.
         auto fieldIndex = curr->index;
-        auto& field = type.getHeapType().getStruct().fields[fieldIndex];
+        auto& field = heapType.getStruct().fields[fieldIndex];
         if (field.mutable_ == Mutable) {
           return;
         }
