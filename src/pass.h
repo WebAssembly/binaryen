@@ -191,6 +191,26 @@ struct PassOptions {
   // to the outside may be inspected in detail, which prevents us from e.g.
   // changing a type that escapes (so we can't remove or refine fields on an
   // escaping struct type, for example).
+  //
+  // Note that the module can still have imports and exports - otherwise it
+  // could do nothing at all! - so the meaning of "closed world" is a little
+  // subtle here. We do still want to keep imports and exports unchanged, as
+  // they form a contract with the outside world. For example, if an import has
+  // two parameters, we can't remove one of them. A nuance regarding that is how
+  // type equality works between wasm modules using the isorecursive type
+  // system: not only do we need to not remove a parameter as just mentioned,
+  // but we also want to keep types of things on the boundary unchanged. For
+  // example, we should not change an exported function's signature, as the
+  // outside may need that type to properly call the export.
+  //   * For now we disallow nontrivial types on the boundary, that is, you
+  //     cannot use a custom struct type as a function parameter type. Such a
+  //     type would not be optimizable due to the constraint to not modify the
+  //     type of the import/export, but it is very simple to use a type in a
+  //     single import/export and then all of its subtypes become unoptimizable,
+  //     which can mean all the types in your module if it is a root type such
+  //     as $java.lang.Object. For that reason we error on using such types on
+  //     the boundary for now. Instead, use basic types like anyref, externref,
+  //     etc.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
