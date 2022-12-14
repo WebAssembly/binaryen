@@ -488,7 +488,14 @@ public:
     assert(getPassRunner());
     // Parallel pass running is implemented in the PassRunner.
     if (isFunctionParallel()) {
-      PassRunner runner(module, getPassOptions());
+      // Reduce opt/shrink levels to a maximum of one in nested runners like
+      // these, to balance runtime. We definitely want the full levels in the
+      // main passes we run, but nested pass runners are of secondary
+      // importance.
+      auto options = getPassOptions();
+      options.optimizeLevel = std::min(options.optimizeLevel, 1);
+      options.shrinkLevel = std::min(options.shrinkLevel, 1);
+      PassRunner runner(module, options);
       runner.setIsNested(true);
       runner.add(create());
       runner.run();
