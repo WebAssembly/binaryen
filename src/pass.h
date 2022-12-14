@@ -491,7 +491,7 @@ public:
       // TODO: We should almost certainly be propagating pass options here, but
       // that is a widespread change, so make sure it doesn't unacceptably
       // regress compile times.
-      PassRunner runner(module /*, getPassOptions()*/);
+      PassRunner runner(module, getPassOptions());
       runner.setIsNested(true);
       runner.add(create());
       runner.run();
