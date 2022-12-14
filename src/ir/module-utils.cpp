@@ -198,14 +198,119 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
   }
 }
 
+InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
+  InsertOrderedSet<HeapType> publicTypes;
+
+  auto notePublic = [&](HeapType type) {
+    // TODO: Gracefully handle public types with arbitrary public children here
+    // and leave it to separate code to handle erroring or warning if
+    // optimizations would be inhibited.
+    if (type.isBasic()) {
+      return;
+    }
+    // All the rec group members are public as well.
+    for (auto member : type.getRecGroup()) {
+      if (!publicTypes.insert(type)) {
+        // We've already inserted this rec group.
+        break;
+      }
+      // Validate that this type does not have nontrivial children. We don't
+      // traverse the types to collect such children and we want to report them
+      // as errors because they might significantly inhibit optimizations if we
+      // did collect them.
+      for (auto child : member.getReferencedHeapTypes()) {
+        if (!child.isBasic()) {
+          std::string typeName = child.toString();
+          if (auto it = wasm.typeNames.find(child);
+              it != wasm.typeNames.end()) {
+            typeName = it->second.name.toString();
+          }
+          Fatal() << "nontrivial public type found during type optimizations: "
+                  << typeName;
+        }
+      }
+    }
+  };
+
+  // TODO: Consider Tags as well, but they should store HeapTypes instead of
+  // Signatures first.
+  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
+    assert(table->type.isRef());
+    notePublic(table->type.getHeapType());
+  });
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
+    if (global->type.isRef()) {
+      notePublic(global->type.getHeapType());
+    }
+  });
+  ModuleUtils::iterImportedFunctions(
+    wasm, [&](Function* func) { notePublic(func->type); });
+  for (auto& ex : wasm.exports) {
+    switch (ex->kind) {
+      case ExternalKind::Function: {
+        auto* func = wasm.getFunction(ex->value);
+        notePublic(func->type);
+        continue;
+      }
+      case ExternalKind::Table: {
+        auto* table = wasm.getTable(ex->value);
+        assert(table->type.isRef());
+        notePublic(table->type.getHeapType());
+        continue;
+      }
+      case ExternalKind::Memory:
+        // Never a reference type.
+        continue;
+      case ExternalKind::Global: {
+        auto* global = wasm.getGlobal(ex->value);
+        if (global->type.isRef()) {
+          notePublic(global->type.getHeapType());
+        }
+        continue;
+      }
+      case ExternalKind::Tag:
+        // TODO
+        continue;
+      case ExternalKind::Invalid:
+        break;
+    }
+    WASM_UNREACHABLE("unexpected export kind");
+  }
+
+  return publicTypes;
+}
+
 } // anonymous namespace
 
 std::vector<HeapType> collectHeapTypes(Module& wasm) {
-  Counts counts = getHeapTypeCounts(wasm);
+  auto counts = getHeapTypeCounts(wasm);
   std::vector<HeapType> types;
   types.reserve(counts.size());
   for (auto& [type, _] : counts) {
     types.push_back(type);
+  }
+  return types;
+}
+
+std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
+  auto publicTypes = getPublicTypeSet(wasm);
+  std::vector<HeapType> types;
+  types.reserve(publicTypes.size());
+  for (auto type : publicTypes) {
+    types.push_back(type);
+  }
+  return types;
+}
+
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
+  auto allTypes = getHeapTypeCounts(wasm);
+  auto publicTypes = getPublicTypeSet(wasm);
+  std::vector<HeapType> types;
+  types.reserve(allTypes.size() - publicTypes.size());
+  for (auto [type, _] : allTypes) {
+    if (!publicTypes.count(type)) {
+      types.push_back(type);
+    }
   }
   return types;
 }
