@@ -492,6 +492,11 @@ public:
       // these, to balance runtime. We definitely want the full levels in the
       // main passes we run, but nested pass runners are of secondary
       // importance.
+      // TODO Investigate the impact of allowing the levels to just pass
+      //      through. That seems to cause at least some regression in compile
+      //      times in -O3, however, but with careful measurement we may find
+      //      the benefits are worth it. For now -O1 is a reasonable compromise
+      //      as it has basically linear runtime, unlike -O2 and -O3.
       auto options = getPassOptions();
       options.optimizeLevel = std::min(options.optimizeLevel, 1);
       options.shrinkLevel = std::min(options.shrinkLevel, 1);
