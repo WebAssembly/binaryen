@@ -716,16 +716,14 @@ def instruction_parser(new_parser=False):
 
     printer = CodePrinter()
 
-    printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
-
     if new_parser:
-        printer.print_line("auto str = *keyword;")
+        printer.print_line("auto op = *keyword;")
     else:
         printer.print_line("using namespace std::string_view_literals;")
-        printer.print_line("auto str = s[0]->str().str;")
+        printer.print_line("auto op = s[0]->str().str;")
 
-    printer.print_line("memcpy(buf, str.data(), str.size());")
-    printer.print_line("std::string_view op = {buf, str.size()};")
+    printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
+    printer.print_line("memcpy(buf, op.data(), op.size());")
 
     def print_leaf(expr, inst):
         if new_parser:
@@ -744,7 +742,7 @@ def instruction_parser(new_parser=False):
 
     def emit(node, idx=0):
         assert node.children
-        printer.print_line("switch (op[{}]) {{".format(idx))
+        printer.print_line("switch (buf[{}]) {{".format(idx))
         with printer.indent():
             if node.expr:
                 printer.print_line("case '\\0':")
