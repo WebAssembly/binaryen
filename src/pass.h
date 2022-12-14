@@ -207,10 +207,12 @@ struct PassOptions {
   //     type would not be optimizable due to the constraint to not modify the
   //     type of the import/export, but it is very simple to use a type in a
   //     single import/export and then all of its supertypes become
-  //     unoptimizable, which can mean all the types in your module if it is a
-  //     root type such as $java.lang.Object. For that reason we error on using
-  //     such types on the boundary for now. Instead, use basic types like
-  //     anyref, externref, etc.
+  //     unoptimizable; likewise, in some optimizations all subtypes may be
+  //     affected, say in not being able to remove a field from them. Overall,
+  //     there is a risk of missing out on significant optimization
+  //     opportunities here, and for that reason we error on using such types on
+  //     the boundary for now. Instead, use basic types like anyref, externref,
+  //     etc.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
