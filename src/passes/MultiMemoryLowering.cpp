@@ -174,12 +174,11 @@ struct MultiMemoryLowering : public Pass {
                                            Index sizeIdx,
                                            Index offsetIdx) {
       auto& segment = parent.wasm->dataSegments[curr->segment];
-      Expression* destSet = builder.makeLocalSet(offsetIdx, curr->offset);
       Expression* addGtuTrap = makeAddGtuTrap(
         builder.makeLocalGet(offsetIdx, parent.pointerType),
         builder.makeLocalGet(sizeIdx, parent.pointerType),
         builder.makeConstPtr(segment->data.size(), parent.pointerType));
-      return builder.makeBlock({destSet, addGtuTrap});
+      return addGtuTrap;
     }
 
     template<typename T> Expression* getPtr(T* curr, Index bytes) {
@@ -199,6 +198,7 @@ struct MultiMemoryLowering : public Pass {
     Expression* getDest(T* curr,
                         Name memory,
                         Index sizeIdx = Index(-1),
+                        Expression* localSet = nullptr,
                         Expression* additionalCheck = nullptr) {
       Expression* destValue = addOffsetGlobal(curr->dest, memory);
 
@@ -210,7 +210,7 @@ struct MultiMemoryLowering : public Pass {
           builder.makeLocalGet(destIdx, parent.pointerType),
           builder.makeLocalGet(sizeIdx, parent.pointerType),
           memory);
-        std::vector<Expression*> exprs = {sizeSet, destSet, boundsCheck};
+        std::vector<Expression*> exprs = {destSet, localSet, sizeSet, boundsCheck};
         if (additionalCheck) {
           exprs.push_back(additionalCheck);
         }
@@ -222,20 +222,18 @@ struct MultiMemoryLowering : public Pass {
       return destValue;
     }
 
-    Expression* getSource(MemoryCopy* curr, Index sizeIdx = Index(-1)) {
+    Expression* getSource(MemoryCopy* curr, Index sizeIdx = Index(-1), Index sourceIdx = Index(-1)) {
       Expression* sourceValue =
         addOffsetGlobal(curr->source, curr->sourceMemory);
 
       if (parent.checkBounds) {
-        Index sourceIdx = Builder::addVar(getFunction(), parent.pointerType);
-        Expression* sourceSet = builder.makeLocalSet(sourceIdx, sourceValue);
         Expression* boundsCheck = makeAddGtuMemoryTrap(
           builder.makeLocalGet(sourceIdx, parent.pointerType),
           builder.makeLocalGet(sizeIdx, parent.pointerType),
           curr->sourceMemory);
         Expression* sourceGet =
           builder.makeLocalGet(sourceIdx, parent.pointerType);
-        std::vector<Expression*> exprs = {sourceSet, boundsCheck, sourceGet};
+        std::vector<Expression*> exprs = {boundsCheck, sourceGet};
         return builder.makeBlock(exprs);
       }
 
@@ -244,12 +242,13 @@ struct MultiMemoryLowering : public Pass {
 
     void visitMemoryInit(MemoryInit* curr) {
       if (parent.checkBounds) {
-        Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
         Index offsetIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
         curr->dest =
           getDest(curr,
                   curr->memory,
                   sizeIdx,
+                  builder.makeLocalSet(offsetIdx, curr->offset),
                   makeDataSegmentBoundsCheck(curr, sizeIdx, offsetIdx));
         curr->offset = builder.makeLocalGet(offsetIdx, parent.pointerType);
         curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
@@ -261,9 +260,10 @@ struct MultiMemoryLowering : public Pass {
 
     void visitMemoryCopy(MemoryCopy* curr) {
       if (parent.checkBounds) {
+        Index sourceIdx = Builder::addVar(getFunction(), parent.pointerType);
         Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
-        curr->dest = getDest(curr, curr->destMemory, sizeIdx);
-        curr->source = getSource(curr, sizeIdx);
+        curr->dest = getDest(curr, curr->destMemory, sizeIdx, builder.makeLocalSet(sourceIdx, curr->source));
+        curr->source = getSource(curr, sizeIdx, sourceIdx);
         curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
       } else {
         curr->dest = getDest(curr, curr->destMemory);
@@ -275,8 +275,9 @@ struct MultiMemoryLowering : public Pass {
 
     void visitMemoryFill(MemoryFill* curr) {
       if (parent.checkBounds) {
+        Index valueIdx = Builder::addVar(getFunction(), parent.pointerType);
         Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
-        curr->dest = getDest(curr, curr->memory, sizeIdx);
+        curr->dest = getDest(curr, curr->memory, sizeIdx, builder.makeLocalSet(valueIdx, curr->value));
         curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
       } else {
         curr->dest = getDest(curr, curr->memory);
