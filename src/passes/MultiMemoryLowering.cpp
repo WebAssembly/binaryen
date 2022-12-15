@@ -210,7 +210,8 @@ struct MultiMemoryLowering : public Pass {
           builder.makeLocalGet(destIdx, parent.pointerType),
           builder.makeLocalGet(sizeIdx, parent.pointerType),
           memory);
-        std::vector<Expression*> exprs = {destSet, localSet, sizeSet, boundsCheck};
+        std::vector<Expression*> exprs = {
+          destSet, localSet, sizeSet, boundsCheck};
         if (additionalCheck) {
           exprs.push_back(additionalCheck);
         }
@@ -222,7 +223,9 @@ struct MultiMemoryLowering : public Pass {
       return destValue;
     }
 
-    Expression* getSource(MemoryCopy* curr, Index sizeIdx = Index(-1), Index sourceIdx = Index(-1)) {
+    Expression* getSource(MemoryCopy* curr,
+                          Index sizeIdx = Index(-1),
+                          Index sourceIdx = Index(-1)) {
       Expression* sourceValue =
         addOffsetGlobal(curr->source, curr->sourceMemory);
 
@@ -262,7 +265,10 @@ struct MultiMemoryLowering : public Pass {
       if (parent.checkBounds) {
         Index sourceIdx = Builder::addVar(getFunction(), parent.pointerType);
         Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
-        curr->dest = getDest(curr, curr->destMemory, sizeIdx, builder.makeLocalSet(sourceIdx, curr->source));
+        curr->dest = getDest(curr,
+                             curr->destMemory,
+                             sizeIdx,
+                             builder.makeLocalSet(sourceIdx, curr->source));
         curr->source = getSource(curr, sizeIdx, sourceIdx);
         curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
       } else {
@@ -277,7 +283,10 @@ struct MultiMemoryLowering : public Pass {
       if (parent.checkBounds) {
         Index valueIdx = Builder::addVar(getFunction(), parent.pointerType);
         Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
-        curr->dest = getDest(curr, curr->memory, sizeIdx, builder.makeLocalSet(valueIdx, curr->value));
+        curr->dest = getDest(curr,
+                             curr->memory,
+                             sizeIdx,
+                             builder.makeLocalSet(valueIdx, curr->value));
         curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
       } else {
         curr->dest = getDest(curr, curr->memory);
