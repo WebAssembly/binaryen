@@ -1184,14 +1184,14 @@ TEST(LexerTest, LexNan) {
   {
     Lexer lexer("nan:0x0"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"nan:0x0"sv, FloatTok{{0}, NAN}};
+    Token expected{"nan:0x0"sv, FloatTok{{0}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("nan:0x10_0000_0000_0000"sv);
     ASSERT_FALSE(lexer.empty());
     Token expected{"nan:0x10_0000_0000_0000"sv,
-                   FloatTok{{0x10000000000000}, NAN}};
+                   FloatTok{{0x10000000000000}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
