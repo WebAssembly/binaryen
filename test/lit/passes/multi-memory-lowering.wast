@@ -8,13 +8,13 @@
   (memory $memory3 3)
   (data (memory $memory1) (i32.const 0) "a")
   (data (memory $memory3) (i32.const 1) "123")
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (type $i32_=>_v128 (func (param i32) (result v128)))
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-
-  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
 
@@ -56,13 +56,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; BOUNDS:      (type $none_=>_none (func))
+
   ;; BOUNDS:      (type $i32_=>_v128 (func (param i32) (result v128)))
 
   ;; BOUNDS:      (type $none_=>_i32 (func (result i32)))
 
   ;; BOUNDS:      (type $i32_=>_i32 (func (param i32) (result i32)))
-
-  ;; BOUNDS:      (type $none_=>_none (func))
 
   ;; BOUNDS:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
 
@@ -627,6 +627,181 @@
     (local.get $0)
    )
   )
+  )
+
+  ;; CHECK:      (func $memory.fill
+  ;; CHECK-NEXT:  (memory.fill
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; BOUNDS:      (func $memory.fill
+  ;; BOUNDS-NEXT:  (local $0 i32)
+  ;; BOUNDS-NEXT:  (local $1 i32)
+  ;; BOUNDS-NEXT:  (local $2 i32)
+  ;; BOUNDS-NEXT:  (memory.fill
+  ;; BOUNDS-NEXT:   (block (result i32)
+  ;; BOUNDS-NEXT:    (local.set $2
+  ;; BOUNDS-NEXT:     (i32.const 0)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.set $0
+  ;; BOUNDS-NEXT:     (i32.const 1)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.set $1
+  ;; BOUNDS-NEXT:     (i32.const 2)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (if
+  ;; BOUNDS-NEXT:     (i32.gt_u
+  ;; BOUNDS-NEXT:      (i32.add
+  ;; BOUNDS-NEXT:       (local.get $2)
+  ;; BOUNDS-NEXT:       (local.get $1)
+  ;; BOUNDS-NEXT:      )
+  ;; BOUNDS-NEXT:      (call $memory1_size)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.get $2)
+  ;; BOUNDS-NEXT:   )
+  ;; BOUNDS-NEXT:   (local.get $0)
+  ;; BOUNDS-NEXT:   (local.get $1)
+  ;; BOUNDS-NEXT:  )
+  ;; BOUNDS-NEXT: )
+  (func $memory.fill
+    (memory.fill $memory1
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $memory.copy
+  ;; CHECK-NEXT:  (memory.copy
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:    (i32.const 512)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $memory3_byte_offset)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 12)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; BOUNDS:      (func $memory.copy
+  ;; BOUNDS-NEXT:  (local $0 i32)
+  ;; BOUNDS-NEXT:  (local $1 i32)
+  ;; BOUNDS-NEXT:  (local $2 i32)
+  ;; BOUNDS-NEXT:  (memory.copy
+  ;; BOUNDS-NEXT:   (block (result i32)
+  ;; BOUNDS-NEXT:    (local.set $2
+  ;; BOUNDS-NEXT:     (i32.add
+  ;; BOUNDS-NEXT:      (global.get $memory2_byte_offset)
+  ;; BOUNDS-NEXT:      (i32.const 512)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.set $0
+  ;; BOUNDS-NEXT:     (i32.const 0)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.set $1
+  ;; BOUNDS-NEXT:     (i32.const 12)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (if
+  ;; BOUNDS-NEXT:     (i32.gt_u
+  ;; BOUNDS-NEXT:      (i32.add
+  ;; BOUNDS-NEXT:       (local.get $2)
+  ;; BOUNDS-NEXT:       (local.get $1)
+  ;; BOUNDS-NEXT:      )
+  ;; BOUNDS-NEXT:      (call $memory2_size)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.get $2)
+  ;; BOUNDS-NEXT:   )
+  ;; BOUNDS-NEXT:   (block (result i32)
+  ;; BOUNDS-NEXT:    (if
+  ;; BOUNDS-NEXT:     (i32.gt_u
+  ;; BOUNDS-NEXT:      (i32.add
+  ;; BOUNDS-NEXT:       (local.get $0)
+  ;; BOUNDS-NEXT:       (local.get $1)
+  ;; BOUNDS-NEXT:      )
+  ;; BOUNDS-NEXT:      (call $memory3_size)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.get $0)
+  ;; BOUNDS-NEXT:   )
+  ;; BOUNDS-NEXT:   (local.get $1)
+  ;; BOUNDS-NEXT:  )
+  ;; BOUNDS-NEXT: )
+  (func $memory.copy
+    (memory.copy $memory2 $memory3
+      (i32.const 512)
+      (i32.const 0)
+      (i32.const 12)
+    )
+  )
+
+  ;; CHECK:      (func $memory.init
+  ;; CHECK-NEXT:  (memory.init 0
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (global.get $memory2_byte_offset)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 45)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; BOUNDS:      (func $memory.init
+  ;; BOUNDS-NEXT:  (local $0 i32)
+  ;; BOUNDS-NEXT:  (local $1 i32)
+  ;; BOUNDS-NEXT:  (local $2 i32)
+  ;; BOUNDS-NEXT:  (memory.init 0
+  ;; BOUNDS-NEXT:   (block (result i32)
+  ;; BOUNDS-NEXT:    (local.set $2
+  ;; BOUNDS-NEXT:     (i32.add
+  ;; BOUNDS-NEXT:      (global.get $memory2_byte_offset)
+  ;; BOUNDS-NEXT:      (i32.const 0)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.set $0
+  ;; BOUNDS-NEXT:     (i32.const 1)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.set $1
+  ;; BOUNDS-NEXT:     (i32.const 45)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (if
+  ;; BOUNDS-NEXT:     (i32.gt_u
+  ;; BOUNDS-NEXT:      (i32.add
+  ;; BOUNDS-NEXT:       (local.get $2)
+  ;; BOUNDS-NEXT:       (local.get $1)
+  ;; BOUNDS-NEXT:      )
+  ;; BOUNDS-NEXT:      (call $memory2_size)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (if
+  ;; BOUNDS-NEXT:     (i32.gt_u
+  ;; BOUNDS-NEXT:      (i32.add
+  ;; BOUNDS-NEXT:       (local.get $0)
+  ;; BOUNDS-NEXT:       (local.get $1)
+  ;; BOUNDS-NEXT:      )
+  ;; BOUNDS-NEXT:      (i32.const 1)
+  ;; BOUNDS-NEXT:     )
+  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:    )
+  ;; BOUNDS-NEXT:    (local.get $2)
+  ;; BOUNDS-NEXT:   )
+  ;; BOUNDS-NEXT:   (local.get $0)
+  ;; BOUNDS-NEXT:   (local.get $1)
+  ;; BOUNDS-NEXT:  )
+  ;; BOUNDS-NEXT: )
+  (func $memory.init
+    (memory.init $memory2 0
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 45)
+    )
   )
 )
 
