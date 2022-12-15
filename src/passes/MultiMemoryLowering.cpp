@@ -170,6 +170,18 @@ struct MultiMemoryLowering : public Pass {
       return boundsCheck;
     }
 
+    Expression* makeDataSegmentBoundsCheck(MemoryInit* curr,
+                                           Index sizeIdx,
+                                           Index offsetIdx) {
+      auto& segment = parent.wasm->dataSegments[curr->segment];
+      Expression* destSet = builder.makeLocalSet(offsetIdx, curr->offset);
+      Expression* addGtuTrap = makeAddGtuTrap(
+        builder.makeLocalGet(offsetIdx, parent.pointerType),
+        builder.makeLocalGet(sizeIdx, parent.pointerType),
+        builder.makeConstPtr(segment->data.size(), parent.pointerType));
+      return builder.makeBlock({destSet, addGtuTrap});
+    }
+
     template<typename T> Expression* getPtr(T* curr, Index bytes) {
       Expression* ptrValue = addOffsetGlobal(curr->ptr, curr->memory);
       if (parent.checkBounds) {
@@ -181,6 +193,95 @@ struct MultiMemoryLowering : public Pass {
       }
 
       return ptrValue;
+    }
+
+template<typename T>
+    Expression* getDest(T* curr,
+                        Name memory,
+                        Index sizeIdx = Index(-1),
+                        Expression* additionalCheck = nullptr) {
+      Expression* destValue = addOffsetGlobal(curr->dest, memory);
+
+      if (parent.checkBounds) {
+        Expression* sizeSet = builder.makeLocalSet(sizeIdx, curr->size);
+        Index destIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Expression* destSet = builder.makeLocalSet(destIdx, destValue);
+        Expression* boundsCheck = makeAddGtuMemoryTrap(
+          builder.makeLocalGet(destIdx, parent.pointerType),
+          builder.makeLocalGet(sizeIdx, parent.pointerType),
+          memory);
+        std::vector<Expression*> exprs = {sizeSet, destSet, boundsCheck};
+        if (additionalCheck) {
+          exprs.push_back(additionalCheck);
+        }
+        Expression* destGet = builder.makeLocalGet(destIdx, parent.pointerType);
+        exprs.push_back(destGet);
+        return builder.makeBlock(exprs);
+      }
+
+      return destValue;
+    }
+
+    Expression* getSource(MemoryCopy* curr, Index sizeIdx = Index(-1)) {
+      Expression* sourceValue =
+        addOffsetGlobal(curr->source, curr->sourceMemory);
+
+      if (parent.checkBounds) {
+        Index sourceIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Expression* sourceSet = builder.makeLocalSet(sourceIdx, sourceValue);
+        Expression* boundsCheck = makeAddGtuMemoryTrap(
+          builder.makeLocalGet(sourceIdx, parent.pointerType),
+          builder.makeLocalGet(sizeIdx, parent.pointerType),
+          curr->sourceMemory);
+        Expression* sourceGet =
+          builder.makeLocalGet(sourceIdx, parent.pointerType);
+        std::vector<Expression*> exprs = {sourceSet, boundsCheck, sourceGet};
+        return builder.makeBlock(exprs);
+      }
+
+      return sourceValue;
+    }
+
+    void visitMemoryInit(MemoryInit* curr) {
+      if (parent.checkBounds) {
+        Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
+        Index offsetIdx = Builder::addVar(getFunction(), parent.pointerType);
+        curr->dest =
+          getDest(curr,
+                  curr->memory,
+                  sizeIdx,
+                  makeDataSegmentBoundsCheck(curr, sizeIdx, offsetIdx));
+        curr->offset = builder.makeLocalGet(offsetIdx, parent.pointerType);
+        curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
+      } else {
+        curr->dest = getDest(curr, curr->memory);
+      }
+      setMemory(curr);
+    }
+
+    void visitMemoryCopy(MemoryCopy* curr) {
+      if (parent.checkBounds) {
+        Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
+        curr->dest = getDest(curr, curr->destMemory, sizeIdx);
+        curr->source = getSource(curr, sizeIdx);
+        curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
+      } else {
+        curr->dest = getDest(curr, curr->destMemory);
+        curr->source = getSource(curr);
+      }
+      curr->destMemory = parent.combinedMemory;
+      curr->sourceMemory = parent.combinedMemory;
+    }
+
+    void visitMemoryFill(MemoryFill* curr) {
+      if (parent.checkBounds) {
+        Index sizeIdx = Builder::addVar(getFunction(), parent.pointerType);
+        curr->dest = getDest(curr, curr->memory, sizeIdx);
+        curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
+      } else {
+        curr->dest = getDest(curr, curr->memory);
+      }
+      setMemory(curr);
     }
 
     template<typename T> void setMemory(T* curr) {
