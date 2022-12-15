@@ -195,7 +195,7 @@ struct MultiMemoryLowering : public Pass {
       return ptrValue;
     }
 
-template<typename T>
+    template<typename T>
     Expression* getDest(T* curr,
                         Name memory,
                         Index sizeIdx = Index(-1),
