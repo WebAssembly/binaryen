@@ -170,7 +170,6 @@ struct MultiMemoryLowering : public Pass {
       return boundsCheck;
     }
 
-
     template<typename T> Expression* getPtr(T* curr, Index bytes) {
       Expression* ptrValue = addOffsetGlobal(curr->ptr, curr->memory);
       if (parent.checkBounds) {
