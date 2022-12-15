@@ -27,7 +27,7 @@
 # include both the global and the first function.
 #
 
-RUN: wasm-opt --debug %s.wasm 2>&1 | filecheck %s
+RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
 
 # CHECK:      Fatal: error parsing wasm. here is what we read up to the error:
 # CHECK-NEXT: (module
