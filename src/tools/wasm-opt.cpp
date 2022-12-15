@@ -279,7 +279,12 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error parsing wasm";
+      if (options.debug) {
+        Fatal() << "error parsing wasm. here is what we read up to the error:\n"
+                << wasm;
+      } else {
+        Fatal() << "error parsing wasm (try --debug for more info)";
+      }
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
