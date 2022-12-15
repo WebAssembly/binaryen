@@ -287,6 +287,7 @@ struct MultiMemoryLowering : public Pass {
                              curr->memory,
                              sizeIdx,
                              builder.makeLocalSet(valueIdx, curr->value));
+        curr->value = builder.makeLocalGet(valueIdx, parent.pointerType);
         curr->size = builder.makeLocalGet(sizeIdx, parent.pointerType);
       } else {
         curr->dest = getDest(curr, curr->memory);

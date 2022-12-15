@@ -663,7 +663,7 @@
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $2)
   ;; BOUNDS-NEXT:   )
-  ;; BOUNDS-NEXT:   (i32.const 1)
+  ;; BOUNDS-NEXT:   (local.get $0)
   ;; BOUNDS-NEXT:   (local.get $1)
   ;; BOUNDS-NEXT:  )
   ;; BOUNDS-NEXT: )
