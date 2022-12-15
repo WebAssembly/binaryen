@@ -59,9 +59,10 @@ static std::string runCommand(std::string command) {
 #endif
 }
 
-static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
+static bool
+willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
   for (auto& pass : passes) {
-    if (PassRunner::passRemovesDebugInfo(pass)) {
+    if (PassRunner::passRemovesDebugInfo(pass.name)) {
       return true;
     }
   }
@@ -250,8 +251,11 @@ int main(int argc, const char* argv[]) {
     // If the user asked to print the module, print it even if invalid,
     // as otherwise there is no way to print the broken module (the pass
     // to print would not be reached).
-    if (std::find(options.passes.begin(), options.passes.end(), "print") !=
-        options.passes.end()) {
+    if (std::any_of(options.passes.begin(),
+                    options.passes.end(),
+                    [](const OptimizationOptions::PassInfo& info) {
+                      return info.name == "print";
+                    })) {
       std::cout << wasm << '\n';
     }
     Fatal() << message;
