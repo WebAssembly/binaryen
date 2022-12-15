@@ -3568,6 +3568,14 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   return info.valid.load();
 }
 
+bool WasmValidator::validate(Module& module, const PassOptions& options) {
+  Flags flags = options.validateGlobally ? Globally : Minimal;
+  if (options.closedWorld) {
+    flags |= ClosedWorld;
+  }
+  return validate(module, flags);
+}
+
 bool WasmValidator::validate(Function* func, Module& module, Flags flags) {
   ValidationInfo info(module);
   info.validateWeb = (flags & Web) != 0;

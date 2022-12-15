@@ -286,11 +286,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (options.passOptions.validate) {
-      WasmValidator::Flags flags = WasmValidator::Globally;
-      if (options.passOptions.closedWorld) {
-        flags |= WasmValidator::ClosedWorld;
-      }
-      if (!WasmValidator().validate(wasm, flags)) {
+      if (!WasmValidator().validate(wasm, options.passOptions)) {
         exitOnInvalidWasm("error validating input");
       }
     }
@@ -304,7 +300,7 @@ int main(int argc, const char* argv[]) {
     reader.setAllowOOB(fuzzOOB);
     reader.build();
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm)) {
+      if (!WasmValidator().validate(wasm, options.passOptions)) {
         std::cout << wasm << '\n';
         Fatal() << "error after translate-to-fuzz";
       }
@@ -363,11 +359,7 @@ int main(int argc, const char* argv[]) {
     auto runPasses = [&]() {
       options.runPasses(wasm);
       if (options.passOptions.validate) {
-        WasmValidator::Flags flags = WasmValidator::Globally;
-        if (options.passOptions.closedWorld) {
-          flags |= WasmValidator::ClosedWorld;
-        }
-        bool valid = WasmValidator().validate(wasm, flags);
+        bool valid = WasmValidator().validate(wasm, options.passOptions);
         if (!valid) {
           exitOnInvalidWasm("error after opts");
         }
