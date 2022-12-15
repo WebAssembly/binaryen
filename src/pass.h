@@ -196,12 +196,24 @@ struct PassOptions {
   // can't remove or refine fields on an escaping struct type, for example,
   // unless the new type declares the original type as a supertype).
   //
-  // Since the goal of closedWorld is to optimize types aggressively but types
-  // on the module boundary cannot be changed, we assume the producer has made a
-  // mistake and consider it a validation error if any user defined types
-  // besides the types of imported or exported functions themselves appear on
-  // the module boundary. This error may be relaxed or made more configurable in
-  // the future.
+  // Note that the module can still have imports and exports - otherwise it
+  // could do nothing at all! - so the meaning of "closed world" is a little
+  // subtle here. We do still want to keep imports and exports unchanged, as
+  // they form a contract with the outside world. For example, if an import has
+  // two parameters, we can't remove one of them. A nuance regarding that is how
+  // type equality works between wasm modules using the isorecursive type
+  // system: not only do we need to not remove a parameter as just mentioned,
+  // but we also want to keep types of things on the boundary unchanged. For
+  // example, we should not change an exported function's signature, as the
+  // outside may need that type to properly call the export.
+  //
+  //   * Since the goal of closedWorld is to optimize types aggressively but
+  //     types on the module boundary cannot be changed, we assume the producer
+  //     has made a mistake and we consider it a validation error if any user
+  //     defined types besides the types of imported or exported functions
+  //     themselves appear on the module boundary. For example, no user defined
+  //     struct type may be a parameter or result of an exported function. This
+  //     error may be relaxed or made more configurable in the future.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
@@ -477,10 +489,19 @@ public:
     assert(getPassRunner());
     // Parallel pass running is implemented in the PassRunner.
     if (isFunctionParallel()) {
-      // TODO: We should almost certainly be propagating pass options here, but
-      // that is a widespread change, so make sure it doesn't unacceptably
-      // regress compile times.
-      PassRunner runner(module /*, getPassOptions()*/);
+      // Reduce opt/shrink levels to a maximum of one in nested runners like
+      // these, to balance runtime. We definitely want the full levels in the
+      // main passes we run, but nested pass runners are of secondary
+      // importance.
+      // TODO Investigate the impact of allowing the levels to just pass
+      //      through. That seems to cause at least some regression in compile
+      //      times in -O3, however, but with careful measurement we may find
+      //      the benefits are worth it. For now -O1 is a reasonable compromise
+      //      as it has basically linear runtime, unlike -O2 and -O3.
+      auto options = getPassOptions();
+      options.optimizeLevel = std::min(options.optimizeLevel, 1);
+      options.shrinkLevel = std::min(options.shrinkLevel, 1);
+      PassRunner runner(module, options);
       runner.setIsNested(true);
       runner.add(create());
       runner.run();

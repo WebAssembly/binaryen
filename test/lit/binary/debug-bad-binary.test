@@ -1,0 +1,42 @@
+;; Verify --debug mode prints partial results even after an error.
+;;
+;; debug-bad-binary.test.wasm contains:
+;;
+;; (module
+;;   (global $A (mut i32) (i32.const 10))
+;;
+;;   (func $a
+;;     (drop
+;;       (i32.const 10)
+;;     )
+;;   )
+;;
+;;   (func $b
+;;     ;; bad opcodes here!
+;;   )
+;;
+;;   (func $c
+;;     (drop
+;;       (i32.const 30)
+;;     )
+;;   )
+;; )
+;;
+;; We will error when we get to the bad opcodes. In --debug mode, this test
+;; shows that we at least print what we read so far up to that point, which will
+;; include both the global and the first function.
+;;
+
+RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
+
+;; CHECK:      Fatal: error parsing wasm. here is what we read up to the error:
+;; CHECK-NEXT: (module
+;; CHECK-NEXT:  (type $none_=>_none (func))
+;; CHECK-NEXT:  (global $global$0 (mut i32) (i32.const 10))
+;; CHECK-NEXT:  (func $0
+;; CHECK-NEXT:   (drop
+;; CHECK-NEXT:    (i32.const 10)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+

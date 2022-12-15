@@ -47,3 +47,21 @@ class PassesTest(utils.BinaryenTestCase):
                         self.assertIn(pass_, passes)
                     else:
                         self.assertNotIn(pass_, passes)
+
+    def test_O3_O1(self):
+        # When we run something like -O3 -O1 we should run -O3 followed by -O1
+        # (and not -O1 -O1, which would be the case if the last commandline
+        # argument set a global opt level flag that was then used by all
+        # invocations of the full opt pipeline).
+
+        # A pass that runs in -O3 but not -O1
+        PASS_IN_O3_ONLY = 'precompute-propagate'
+
+        # That pass is run in -O3 and -O3 -O1 etc. but not -O1 or -O1 -O1
+        self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O3']))
+        self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O3', '-O1']))
+        self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1', '-O3']))
+        self.assertIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O3', '-O3']))
+
+        self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1']))
+        self.assertNotIn(PASS_IN_O3_ONLY, self.get_passes_run(['-O1', '-O1']))
