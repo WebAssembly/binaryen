@@ -202,32 +202,14 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
   InsertOrderedSet<HeapType> publicTypes;
 
   auto notePublic = [&](HeapType type) {
-    // TODO: Gracefully handle public types with arbitrary public children here
-    // and leave it to separate code to handle erroring or warning if
-    // optimizations would be inhibited.
     if (type.isBasic()) {
       return;
     }
     // All the rec group members are public as well.
     for (auto member : type.getRecGroup()) {
-      if (!publicTypes.insert(type)) {
+      if (!publicTypes.insert(member)) {
         // We've already inserted this rec group.
         break;
-      }
-      // Validate that this type does not have nontrivial children. We don't
-      // traverse the types to collect such children and we want to report them
-      // as errors because they might significantly inhibit optimizations if we
-      // did collect them.
-      for (auto child : member.getReferencedHeapTypes()) {
-        if (!child.isBasic()) {
-          std::string typeName = child.toString();
-          if (auto it = wasm.typeNames.find(child);
-              it != wasm.typeNames.end()) {
-            typeName = it->second.name.toString();
-          }
-          Fatal() << "nontrivial public type found during type optimizations: "
-                  << typeName;
-        }
       }
     }
   };
@@ -275,6 +257,18 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
         break;
     }
     WASM_UNREACHABLE("unexpected export kind");
+  }
+
+  // Find all the other public types reachable from directly publicized types.
+  std::vector<HeapType> workList(publicTypes.begin(), publicTypes.end());
+  while (workList.size()) {
+    auto curr = workList.back();
+    workList.pop_back();
+    for (auto t : curr.getReferencedHeapTypes()) {
+      if (!t.isBasic() && publicTypes.insert(t)) {
+        workList.push_back(t);
+      }
+    }
   }
 
   return publicTypes;

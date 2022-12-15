@@ -520,7 +520,8 @@ template<typename T> struct CallGraphPropertyAnalysis {
 std::vector<HeapType> collectHeapTypes(Module& wasm);
 
 // Collect all the heap types visible on the module boundary that cannot be
-// changed.
+// changed. TODO: For open world use cases, this needs to include all subtypes
+// of public types as well.
 std::vector<HeapType> getPublicHeapTypes(Module& wasm);
 
 // getHeapTypes - getPublicHeapTypes

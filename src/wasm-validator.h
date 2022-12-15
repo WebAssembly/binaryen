@@ -52,7 +52,8 @@ struct WasmValidator {
     Minimal = 0,
     Web = 1 << 0,
     Globally = 1 << 1,
-    Quiet = 1 << 2
+    Quiet = 1 << 2,
+    ClosedWorld = 1 << 3,
   };
   using Flags = uint32_t;
 

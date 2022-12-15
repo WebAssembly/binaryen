@@ -286,7 +286,11 @@ int main(int argc, const char* argv[]) {
     }
 
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm)) {
+      WasmValidator::Flags flags = WasmValidator::Globally;
+      if (options.passOptions.closedWorld) {
+        flags |= WasmValidator::ClosedWorld;
+      }
+      if (!WasmValidator().validate(wasm, flags)) {
         exitOnInvalidWasm("error validating input");
       }
     }
@@ -359,7 +363,11 @@ int main(int argc, const char* argv[]) {
     auto runPasses = [&]() {
       options.runPasses(wasm);
       if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(wasm);
+        WasmValidator::Flags flags = WasmValidator::Globally;
+        if (options.passOptions.closedWorld) {
+          flags |= WasmValidator::ClosedWorld;
+        }
+        bool valid = WasmValidator().validate(wasm, flags);
         if (!valid) {
           exitOnInvalidWasm("error after opts");
         }

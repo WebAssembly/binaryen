@@ -700,7 +700,10 @@ void PassRunner::run() {
     auto totalTime = std::chrono::duration<double>(0);
     WasmValidator::Flags validationFlags = WasmValidator::Minimal;
     if (options.validateGlobally) {
-      validationFlags = validationFlags | WasmValidator::Globally;
+      validationFlags |= WasmValidator::Globally;
+    }
+    if (options.closedWorld) {
+      validationFlags |= WasmValidator::ClosedWorld;
     }
     auto what = isNested ? "nested passes" : "passes";
     std::cerr << "[PassRunner] running " << what << std::endl;
