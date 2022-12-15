@@ -185,12 +185,23 @@ struct PassOptions {
   // applied.)
   bool zeroFilledMemory = false;
   // Assume code outside of the module does not inspect or interact with GC and
-  // function references, even if they are passed out. The outside may hold on
-  // to them and pass them back in, but not inspect their contents or call them.
-  // By default we do not make that assumption, and assume anything that escapes
+  // function references, with the goal of being able to aggressively optimize
+  // all user-defined types. The outside may hold on to references and pass them
+  // back in, but may not inspect their contents, call them, or reflect on their
+  // types in any way.
+  //
+  // By default we do not make this assumption, and assume anything that escapes
   // to the outside may be inspected in detail, which prevents us from e.g.
-  // changing a type that escapes (so we can't remove or refine fields on an
-  // escaping struct type, for example).
+  // changing the type of any value that may escape except by refining it (so we
+  // can't remove or refine fields on an escaping struct type, for example,
+  // unless the new type declares the original type as a supertype).
+  //
+  // Since the goal of closedWorld is to optimize types aggressively but types
+  // on the module boundary cannot be changed, we assume the producer has made a
+  // mistake and consider it a validation error if any user defined types
+  // besides the types of imported or exported functions themselves appear on
+  // the module boundary. This error may be relaxed or made more configurable in
+  // the future.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
