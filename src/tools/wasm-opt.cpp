@@ -283,7 +283,7 @@ int main(int argc, const char* argv[]) {
         Fatal() << "error parsing wasm. here is what we read up to the error:\n"
                 << wasm;
       } else {
-        Fatal() << "error parsing wasm";
+        Fatal() << "error parsing wasm (try --debug for more info)";
       }
     } catch (MapParseException& p) {
       p.dump(std::cerr);
