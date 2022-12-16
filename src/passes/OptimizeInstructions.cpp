@@ -1515,11 +1515,7 @@ struct OptimizeInstructions
 
   Expression* getResultOfFirst(Expression* first, Expression* second) {
     return wasm::getResultOfFirst(
-      first,
-      second,
-      getFunction(),
-      getModule(),
-      getPassOptions());
+      first, second, getFunction(), getModule(), getPassOptions());
   }
 
   // Optimize an instruction and the reference it operates on, under the
@@ -1545,21 +1541,15 @@ struct OptimizeInstructions
       if (auto* iff = ref->dynCast<If>()) {
         if (iff->ifFalse) {
           if (iff->ifTrue->type.isNull()) {
-            replaceCurrent(builder.makeBlock({
-              builder.makeDrop(iff->condition),
-              builder.makeDrop(iff->ifTrue),
-              iff->ifFalse
-            }));
+            replaceCurrent(builder.makeBlock({builder.makeDrop(iff->condition),
+                                              builder.makeDrop(iff->ifTrue),
+                                              iff->ifFalse}));
             return true;
           }
           if (iff->ifFalse->type.isNull()) {
             replaceCurrent(builder.makeSequence(
               builder.makeDrop(iff->condition),
-              getResultOfFirst(
-                iff->ifTrue,
-                builder.makeDrop(iff->ifFalse)
-              )
-            ));
+              getResultOfFirst(iff->ifTrue, builder.makeDrop(iff->ifFalse))));
             return true;
           }
         }
@@ -1568,31 +1558,23 @@ struct OptimizeInstructions
         if (select->ifTrue->type.isNull()) {
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(select->ifTrue),
-            getResultOfFirst(
-              select->ifFalse,
-              builder.makeDrop(select->condition)
-            )
-          ));
+            getResultOfFirst(select->ifFalse,
+                             builder.makeDrop(select->condition))));
           return true;
         }
         if (select->ifFalse->type.isNull()) {
-          replaceCurrent(
-            getResultOfFirst(
-              select->ifTrue,
-              builder.makeSequence(
-                builder.makeDrop(select->ifFalse),
-                builder.makeDrop(select->condition)
-              )
-            )
-          );
+          replaceCurrent(getResultOfFirst(
+            select->ifTrue,
+            builder.makeSequence(builder.makeDrop(select->ifFalse),
+                                 builder.makeDrop(select->condition))));
           return true;
         }
       }
     }
 
     if (ref->type.isNull()) {
-      replaceCurrent(getDroppedChildrenAndAppend(
-        curr, builder.makeUnreachable()));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(curr, builder.makeUnreachable()));
       // Propagate the unreachability.
       refinalize = true;
       return true;
