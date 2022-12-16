@@ -473,6 +473,56 @@
     )
   )
 
+  ;; TNH:      (func $null.arm.null.effects (type $none_=>_none)
+  ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (block (result nullref)
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (ref.as_non_null
+  ;; TNH-NEXT:       (ref.null none)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (block (result nullref)
+  ;; TNH-NEXT:      (drop
+  ;; TNH-NEXT:       (call $get-i32)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:      (ref.null none)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (i32.const 1)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $null.arm.null.effects (type $none_=>_none)
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:    (call $get-i32)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $null.arm.null.effects
+    ;; Verify we do not error on a null reference in a select, even if cast to
+    ;; non-null.
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (ref.as_non_null
+          (ref.null none)
+        )
+        (ref.null none)
+        (call $get-i32)
+      )
+      (i32.const 1)
+    )
+  )
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)

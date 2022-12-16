@@ -1651,8 +1651,12 @@ struct OptimizeInstructions
     }
 
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
-      const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-      optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
+      // We must avoid the case of a null type.
+      auto heapType = curr->ref->type.getHeapType();
+      if (heapType.isStruct()) {
+        const auto& fields = heapType.getStruct().fields;
+        optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
+      }
     }
 
     // If our reference is a tee of a struct.new, we may be able to fold the
