@@ -1105,9 +1105,8 @@ void test_core() {
     BinaryenRefTest(module,
                     BinaryenGlobalGet(module, "i8Array-global", i8Array),
                     BinaryenTypeGetHeapType(i8Array)),
-    BinaryenRefCast(module,
-                    BinaryenGlobalGet(module, "i8Array-global", i8Array),
-                    BinaryenTypeGetHeapType(i8Array)),
+    BinaryenRefCast(
+      module, BinaryenGlobalGet(module, "i8Array-global", i8Array), i8Array),
     BinaryenStructNew(module, 0, 0, BinaryenTypeGetHeapType(i32Struct)),
     BinaryenStructNew(module,
                       (BinaryenExpressionRef[]){makeInt32(module, 0)},
