@@ -56,6 +56,8 @@ PRINT_WATS = False
 
 given_seed = None
 
+CLOSED_WORLD_FLAG = '--closed-world'
+
 
 # utilities
 
@@ -130,6 +132,14 @@ def randomize_feature_opts():
     # Type system flags only make sense when GC is enabled
     if '--disable-gc' not in FEATURE_OPTS:
         FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
+
+    # Pick closed or open with equal probability as both matter.
+    #
+    # Closed world is not a feature flag, technically, since it only makes sense
+    # to pass to wasm-opt (and not other tools). But decide on whether we'll
+    # be fuzzing in that mode now, as it determinies how we set other things up.
+    global CLOSED_WORLD
+    CLOSED_WORLD = random.random() < 0.5
 
 
 ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
@@ -402,9 +412,14 @@ def pick_initial_contents():
             return
         test_name = temp_test_name
 
-    # next, test the wasm.
+    # Next, test the wasm. Note that we must check for closed world explicitly
+    # here, as a testcase may only work in an open world, which means we need to
+    # skip it.
+    args = FEATURE_OPTS
+    if CLOSED_WORLD:
+        args.append(CLOSED_WORLD_FLAG)
     try:
-        run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
+        run([in_bin('wasm-opt'), test_name] + args,
             stderr=subprocess.PIPE,
             silent=True)
     except Exception:
@@ -1381,8 +1396,8 @@ def randomize_opt_flags():
     if random.random() < 0.5:
         ret += ['-fimfs=99999999']
     # test both closed and open world
-    if random.random() < 0.5:
-        ret += ['--closed-world']
+    if CLOSED_WORLD:
+        ret += [CLOSED_WORLD_FLAG]
     assert ret.count('--flatten') <= 1
     return ret
 
