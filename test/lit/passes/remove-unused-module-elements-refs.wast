@@ -78,24 +78,23 @@
   (type $A (func))
   (type $B (func))
 
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
   ;; CHECK:      (elem declare func $target-A)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null nofunc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo (export "foo")
+  (func $foo (export "foo") (param $A (ref null $A))
     (call_ref $A
-      (ref.null $A)
+      (local.get $A)
     )
     (drop
       (ref.func $target-A)
