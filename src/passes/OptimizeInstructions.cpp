@@ -1543,18 +1543,19 @@ struct OptimizeInstructions
       //
       // TODO We could recurse here.
       // TODO We could do similar things for casts (rule out an impossible arm).
+      // TODO Worth thinking about an 'assume' instrinsic of some form that
+      //      annotates knowledge about a value, or another mechanism to allow
+      //      that information to be passed around.
       if (auto* iff = ref->dynCast<If>()) {
         if (iff->ifFalse) {
           if (iff->ifTrue->type.isNull()) {
-            ref = builder.makeBlock({builder.makeDrop(iff->condition),
-                                     builder.makeDrop(iff->ifTrue),
-                                     iff->ifFalse});
+            ref = builder.makeSequence(builder.makeDrop(iff->condition),
+                                       iff->ifFalse);
             return false;
           }
           if (iff->ifFalse->type.isNull()) {
-            ref = builder.makeSequence(
-              builder.makeDrop(iff->condition),
-              getResultOfFirst(iff->ifTrue, builder.makeDrop(iff->ifFalse)));
+            ref = builder.makeSequence(builder.makeDrop(iff->condition),
+                                       iff->ifTrue);
             return false;
           }
         }
