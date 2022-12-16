@@ -198,12 +198,7 @@
   ;; TNH-NEXT:    (drop
   ;; TNH-NEXT:     (local.get $x)
   ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (block (result (ref $struct))
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (ref.null none)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (local.get $ref)
-  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $ref)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
@@ -211,9 +206,6 @@
   ;; TNH-NEXT:   (block (result (ref $struct))
   ;; TNH-NEXT:    (drop
   ;; TNH-NEXT:     (local.get $x)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (ref.null none)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:    (local.get $ref)
   ;; TNH-NEXT:   )
@@ -327,77 +319,6 @@
     )
   )
 
-  ;; TNH:      (func $if.arm.null.effects (type $none_=>_none)
-  ;; TNH-NEXT:  (local $0 (ref $struct))
-  ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (block (result (ref $struct))
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (call $get-i32)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (block (result (ref $struct))
-  ;; TNH-NEXT:     (local.set $0
-  ;; TNH-NEXT:      (call $get-ref)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (call $get-null)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (local.get $0)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:   (i32.const 1)
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (block (result (ref $struct))
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (call $get-i32)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (call $get-null)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (call $get-ref)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:   (i32.const 2)
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $if.arm.null.effects (type $none_=>_none)
-  ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (if (result (ref null $struct))
-  ;; NO_TNH-NEXT:    (call $get-i32)
-  ;; NO_TNH-NEXT:    (call $get-ref)
-  ;; NO_TNH-NEXT:    (call $get-null)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (i32.const 1)
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (if (result (ref null $struct))
-  ;; NO_TNH-NEXT:    (call $get-i32)
-  ;; NO_TNH-NEXT:    (call $get-null)
-  ;; NO_TNH-NEXT:    (call $get-ref)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (i32.const 2)
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT: )
-  (func $if.arm.null.effects
-    ;; As above but there are conflicting effects and we must add a local in
-    ;; one case.
-    (struct.set $struct 0
-      (if (result (ref null $struct))
-        (call $get-i32)
-        (call $get-ref)
-        (call $get-null)
-      )
-      (i32.const 1)
-    )
-    (struct.set $struct 0
-      (if (result (ref null $struct))
-        (call $get-i32)
-        (call $get-null)
-        (call $get-ref)
-      )
-      (i32.const 2)
-    )
-  )
-
   ;; TNH:      (func $select.arm.null.effects (type $none_=>_none)
   ;; TNH-NEXT:  (local $0 (ref $struct))
   ;; TNH-NEXT:  (local $1 (ref $struct))
@@ -455,7 +376,8 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $select.arm.null.effects
-    ;; As above but with a select.
+    ;; As above but there are conflicting effects and we must add a local when
+    ;; we optimize.
     (struct.set $struct 0
       (select (result (ref null $struct))
         (call $get-ref)
