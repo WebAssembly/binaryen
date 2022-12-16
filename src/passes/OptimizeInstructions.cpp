@@ -1543,8 +1543,8 @@ struct OptimizeInstructions
         if (iff->ifFalse) {
           if (iff->ifTrue->type.isNull()) {
             ref = builder.makeBlock({builder.makeDrop(iff->condition),
-                                              builder.makeDrop(iff->ifTrue),
-                                              iff->ifFalse});
+                                     builder.makeDrop(iff->ifTrue),
+                                     iff->ifFalse});
             return false;
           }
           if (iff->ifFalse->type.isNull()) {
