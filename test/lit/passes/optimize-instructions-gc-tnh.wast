@@ -3,9 +3,9 @@
 ;; RUN: wasm-opt %s --optimize-instructions                      -all --nominal -S -o - | filecheck %s --check-prefix NO_TNH
 
 (module
-  ;; TNH:      (type $struct (struct ))
-  ;; NO_TNH:      (type $struct (struct ))
-  (type $struct (struct_subtype data))
+  ;; TNH:      (type $struct (struct (field (mut i32))))
+  ;; NO_TNH:      (type $struct (struct (field (mut i32))))
+  (type $struct (struct_subtype (field (mut i32)) data))
 
   ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; TNH-NEXT:  (ref.eq
@@ -190,5 +190,52 @@
         (local.get $a)
       )
     )
+  )
+
+  ;; TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (block (result (ref $struct))
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (ref.null none)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (local.get $ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (if (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $if.arm.null (param $x i32) (param $ref (ref $struct))
+    ;; A set will trap on a null, so in tnh mode we know the null arm is not
+    ;; executed, and the other one is.
+    (struct.set $struct 0
+      (if (result (ref null $struct))
+        (local.get $x)
+        (local.get $ref)
+        (ref.null none)
+      )
+      (i32.const 1)
+    )
+    (;;struct.set $struct 0
+      (if (result (ref null $struct))
+        (local.get $x)
+        (ref.null none)
+        (local.get $ref)
+      )
+      (i32.const 2)
+    ;;)
   )
 )

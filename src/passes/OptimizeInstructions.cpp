@@ -1520,8 +1520,9 @@ struct OptimizeInstructions
 
   // Optimize an instruction and the reference it operates on, under the
   // assumption that if the reference is a null then we will trap. Returns true
-  // if we replaced the expression with something simpler.
-  bool trapOnNull(Expression* curr, Expression* ref) {
+  // if we replaced the expression with something simpler. Returns false if we
+  // found nothing to optimize, or if we just modified or replace the ref.
+  bool trapOnNull(Expression* curr, Expression*& ref) {
     Builder builder(*getModule());
 
     if (getPassOptions().trapsNeverHappen) {
@@ -1541,33 +1542,33 @@ struct OptimizeInstructions
       if (auto* iff = ref->dynCast<If>()) {
         if (iff->ifFalse) {
           if (iff->ifTrue->type.isNull()) {
-            replaceCurrent(builder.makeBlock({builder.makeDrop(iff->condition),
+            ref = builder.makeBlock({builder.makeDrop(iff->condition),
                                               builder.makeDrop(iff->ifTrue),
-                                              iff->ifFalse}));
-            return true;
+                                              iff->ifFalse});
+            return false;
           }
           if (iff->ifFalse->type.isNull()) {
-            replaceCurrent(builder.makeSequence(
+            ref = builder.makeSequence(
               builder.makeDrop(iff->condition),
-              getResultOfFirst(iff->ifTrue, builder.makeDrop(iff->ifFalse))));
-            return true;
+              getResultOfFirst(iff->ifTrue, builder.makeDrop(iff->ifFalse)));
+            return false;
           }
         }
       }
       if (auto* select = ref->dynCast<If>()) {
         if (select->ifTrue->type.isNull()) {
-          replaceCurrent(builder.makeSequence(
+          ref = builder.makeSequence(
             builder.makeDrop(select->ifTrue),
             getResultOfFirst(select->ifFalse,
-                             builder.makeDrop(select->condition))));
-          return true;
+                             builder.makeDrop(select->condition)));
+          return false;
         }
         if (select->ifFalse->type.isNull()) {
-          replaceCurrent(getResultOfFirst(
+          ref = getResultOfFirst(
             select->ifTrue,
             builder.makeSequence(builder.makeDrop(select->ifFalse),
-                                 builder.makeDrop(select->condition))));
-          return true;
+                                 builder.makeDrop(select->condition)));
+          return false;
         }
       }
     }
