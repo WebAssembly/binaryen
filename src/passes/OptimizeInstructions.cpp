@@ -1583,8 +1583,7 @@ struct OptimizeInstructions
                 builder.makeDrop(select->ifFalse),
                 builder.makeDrop(select->condition)
               )
-            ),
-            builder.makeDrop(select->ifTrue)
+            )
           );
           return true;
         }
