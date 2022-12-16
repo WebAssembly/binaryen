@@ -207,6 +207,18 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (ref.null none)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $ref)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 2)
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
   ;; NO_TNH-NEXT:  (struct.set $struct 0
@@ -216,6 +228,14 @@
   ;; NO_TNH-NEXT:    (ref.null none)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (if (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 2)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $if.arm.null (param $x i32) (param $ref (ref $struct))
@@ -229,13 +249,13 @@
       )
       (i32.const 1)
     )
-    (;;struct.set $struct 0
+    (struct.set $struct 0
       (if (result (ref null $struct))
         (local.get $x)
         (ref.null none)
         (local.get $ref)
       )
       (i32.const 2)
-    ;;)
+    )
   )
 )
