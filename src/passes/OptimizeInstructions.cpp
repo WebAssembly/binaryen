@@ -1513,10 +1513,86 @@ struct OptimizeInstructions
     return getDroppedChildrenAndAppend(curr, result);
   }
 
+  Expression* getResultOfFirst(Expression* first, Expression* second) {
+    return getResultOfFirst(
+      first,
+      second,
+      getFunction(),
+      getModule(),
+      getPassOptions());
+  }
+
+  // Optimize an instruction and the reference it operates on, under the
+  // assumption that if the reference is a null then we will trap.
   bool trapOnNull(Expression* curr, Expression* ref) {
+    Builder builder(*getModule());
+
+    if (getPassOptions().trapsNeverHappen) {
+      // We can ignore the possibility of the reference being an input, so
+      //
+      //    (if
+      //      (condition)
+      //      (null)
+      //      (other))
+      // =>
+      //    (drop
+      //      (condition))
+      //    (other)
+      //
+      // That is, we will by assumption not read from the null, so remove that
+      // arm.
+      if (auto* iff = ref->dynCast<If>()) {
+        if (iff->ifFalse) {
+          if (iff->ifTrue->type.isNull()) {
+            replaceCurrent(builder.makeBlock({
+              builder.makeDrop(iff->condition),
+              builder.makeDrop(iff->ifTrue),
+              iff->ifFalse
+            }));
+            return;
+          }
+          if (iff->ifFalse->type.isNull()) {
+            replaceCurrent(builder.makeSequence(
+              builder.makeDrop(iff->condition),
+              getResultOfFirst(
+                iff->ifTrue,
+                builder.makeDrop(iff->ifFalse),
+              )
+            ));
+            return;
+          }
+        }
+      }
+      if (auto* select = ref->dynCast<If>()) {
+        if (select->ifTrue->type.isNull()) {
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(select->ifTrue),
+            getResultOfFirst(
+              select->ifFalse,
+              builder.makeDrop(select->condition),
+            )
+          ));
+          return;
+        }
+        if (select->ifFalse->type.isNull()) {
+          replaceCurrent(
+            getResultOfFirst(
+              select->ifTrue,
+              builder.makeSequence(
+                builder.makeDrop(select->ifFalse),
+                builder.makeDrop(select->condition)
+              )
+            )
+            builder.makeDrop(select->ifTrue),
+          );
+          return;
+        }
+      }
+    }
+
     if (ref->type.isNull()) {
       replaceCurrent(getDroppedChildrenAndAppend(
-        curr, Builder(*getModule()).makeUnreachable()));
+        curr, builder.makeUnreachable()));
       // Propagate the unreachability.
       refinalize = true;
       return true;
