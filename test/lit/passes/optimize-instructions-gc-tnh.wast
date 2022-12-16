@@ -378,7 +378,8 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $if.arm.null.effects
-    ;; As above but there are conflicting effects and we must add locals.
+    ;; As above but there are conflicting effects and we must add a local in
+    ;; one case.
     (struct.set $struct 0
       (if (result (ref null $struct))
         (call $get-i32)
