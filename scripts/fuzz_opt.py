@@ -56,6 +56,7 @@ PRINT_WATS = False
 
 given_seed = None
 
+CLOSED_WORLD_FLAG = '--closed-world'
 
 # utilities
 
@@ -415,7 +416,7 @@ def pick_initial_contents():
     # skip it.
     args = FEATURE_OPTS
     if CLOSED_WORLD:
-        args += ['--closed-world']
+        args += [CLOSED_WORLD_FLAG]
     try:
         run([in_bin('wasm-opt'), test_name] + args,
             stderr=subprocess.PIPE,
@@ -1395,7 +1396,7 @@ def randomize_opt_flags():
         ret += ['-fimfs=99999999']
     # test both closed and open world
     if CLOSED_WORLD:
-        ret += ['--closed-world']
+        ret += [CLOSED_WORLD_FLAG]
     assert ret.count('--flatten') <= 1
     return ret
 
