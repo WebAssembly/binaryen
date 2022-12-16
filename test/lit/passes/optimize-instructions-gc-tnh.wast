@@ -397,6 +397,82 @@
     )
   )
 
+  ;; TNH:      (func $select.arm.null.effects (type $none_=>_none)
+  ;; TNH-NEXT:  (local $0 (ref $struct))
+  ;; TNH-NEXT:  (local $1 (ref $struct))
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:    (local.set $0
+  ;; TNH-NEXT:     (call $get-ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (block
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (call $get-null)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (call $get-i32)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $0)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (call $get-null)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (block (result (ref $struct))
+  ;; TNH-NEXT:     (local.set $1
+  ;; TNH-NEXT:      (call $get-ref)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (call $get-i32)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (local.get $1)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 2)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $select.arm.null.effects (type $none_=>_none)
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (call $get-ref)
+  ;; NO_TNH-NEXT:    (call $get-null)
+  ;; NO_TNH-NEXT:    (call $get-i32)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (call $get-null)
+  ;; NO_TNH-NEXT:    (call $get-ref)
+  ;; NO_TNH-NEXT:    (call $get-i32)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 2)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $select.arm.null.effects
+    ;; As above but with a select.
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (call $get-ref)
+        (call $get-null)
+        (call $get-i32)
+      )
+      (i32.const 1)
+    )
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (call $get-null)
+        (call $get-ref)
+        (call $get-i32)
+      )
+      (i32.const 2)
+    )
+  )
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)
