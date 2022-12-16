@@ -1539,6 +1539,9 @@ struct OptimizeInstructions
       //
       // That is, we will by assumption not read from the null, so remove that
       // arm.
+      //
+      // TODO We could recurse here.
+      // TODO We could do similar things for casts (rule out an impossible arm).
       if (auto* iff = ref->dynCast<If>()) {
         if (iff->ifFalse) {
           if (iff->ifTrue->type.isNull()) {
