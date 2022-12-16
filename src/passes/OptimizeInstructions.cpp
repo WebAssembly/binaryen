@@ -1514,7 +1514,7 @@ struct OptimizeInstructions
   }
 
   Expression* getResultOfFirst(Expression* first, Expression* second) {
-    return getResultOfFirst(
+    return wasm::getResultOfFirst(
       first,
       second,
       getFunction(),
@@ -1523,7 +1523,8 @@ struct OptimizeInstructions
   }
 
   // Optimize an instruction and the reference it operates on, under the
-  // assumption that if the reference is a null then we will trap.
+  // assumption that if the reference is a null then we will trap. Returns true
+  // if we replaced the expression with something simpler.
   bool trapOnNull(Expression* curr, Expression* ref) {
     Builder builder(*getModule());
 
@@ -1549,17 +1550,17 @@ struct OptimizeInstructions
               builder.makeDrop(iff->ifTrue),
               iff->ifFalse
             }));
-            return;
+            return true;
           }
           if (iff->ifFalse->type.isNull()) {
             replaceCurrent(builder.makeSequence(
               builder.makeDrop(iff->condition),
               getResultOfFirst(
                 iff->ifTrue,
-                builder.makeDrop(iff->ifFalse),
+                builder.makeDrop(iff->ifFalse)
               )
             ));
-            return;
+            return true;
           }
         }
       }
@@ -1569,10 +1570,10 @@ struct OptimizeInstructions
             builder.makeDrop(select->ifTrue),
             getResultOfFirst(
               select->ifFalse,
-              builder.makeDrop(select->condition),
+              builder.makeDrop(select->condition)
             )
           ));
-          return;
+          return true;
         }
         if (select->ifFalse->type.isNull()) {
           replaceCurrent(
@@ -1583,9 +1584,9 @@ struct OptimizeInstructions
                 builder.makeDrop(select->condition)
               )
             )
-            builder.makeDrop(select->ifTrue),
+            builder.makeDrop(select->ifTrue)
           );
-          return;
+          return true;
         }
       }
     }
