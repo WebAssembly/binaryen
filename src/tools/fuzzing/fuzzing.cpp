@@ -23,6 +23,22 @@ namespace wasm {
 
 namespace {
 
+// Construct a fresh signature type for a given signature, and return its heap
+// type. This is useful when we do not want to get the default behavior of
+// reusing the "canonical" heap type for a signature, which can cause problems
+// in closed-world mode - in that mode the canonical heap type may be private,
+// so we should use a fresh type whenever we construct a function that will be
+// exported.
+static HeapType getFreshSignatureHeapType(Signature sig) {
+  TypeBuilder builder(1);
+  builder.setHeapType(0, sig);
+  return (*builder.build())[0];
+}
+
+static HeapType getFreshSignatureHeapType(Type params, Type results) {
+  return getFreshSignatureHeapType(Signature(params, results));
+}
+
 // Weighting for the core make* methods. Some nodes are important enough that
 // we should do them quite often.
 
@@ -254,8 +270,11 @@ void TranslateToFuzzReader::setupMemory() {
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
-  auto* hasher = wasm.addFunction(builder.makeFunction(
-    "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
+  auto* hasher = wasm.addFunction(
+    builder.makeFunction("hashMemory",
+                         getFreshSignatureHeapType(Type::none, Type::i32),
+                         {Type::i32},
+                         body));
   wasm.addExport(
     builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
   // Export memory so JS fuzzing can use it
@@ -426,7 +445,7 @@ void TranslateToFuzzReader::addHangLimitSupport() {
   auto funcName = Names::getValidFunctionName(wasm, exportName);
   auto* func = new Function;
   func->name = funcName;
-  func->type = Signature(Type::none, Type::none);
+  func->type = getFreshSignatureHeapType(Type::none, Type::none);
   func->body = builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
                                      builder.makeConst(int32_t(HANG_LIMIT)));
   wasm.addFunction(func);
@@ -508,7 +527,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
   auto paramType = Type(params);
   auto resultType = getControlFlowType();
-  func->type = Signature(paramType, resultType);
+  func->type = getFreshSignatureHeapType(paramType, resultType);
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
@@ -893,7 +912,8 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
     return;
   }
-  auto invoker = builder.makeFunction(name, Signature(), {});
+  auto invoker =
+    builder.makeFunction(name, getFreshSignatureHeapType(Signature()), {});
   Block* body = builder.makeBlock();
   invoker->body = body;
   FunctionCreationContext context(*this, invoker.get());
