@@ -258,4 +258,72 @@
       (i32.const 2)
     )
   )
+
+  ;; TNH:      (func $select.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:    (block
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (ref.null none)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (local.get $x)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $ref)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (ref.null none)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (block (result (ref $struct))
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (local.get $x)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (local.get $ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 2)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $select.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 2)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $select.arm.null (param $x i32) (param $ref (ref $struct))
+    ;; As above but with a select.
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (local.get $ref)
+        (ref.null none)
+        (local.get $x)
+      )
+      (i32.const 1)
+    )
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (ref.null none)
+        (local.get $ref)
+        (local.get $x)
+      )
+      (i32.const 2)
+    )
+  )
 )

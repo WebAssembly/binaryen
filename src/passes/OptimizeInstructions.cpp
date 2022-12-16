@@ -1555,7 +1555,8 @@ struct OptimizeInstructions
           }
         }
       }
-      if (auto* select = ref->dynCast<If>()) {
+
+      if (auto* select = ref->dynCast<Select>()) {
         if (select->ifTrue->type.isNull()) {
           ref = builder.makeSequence(
             builder.makeDrop(select->ifTrue),
