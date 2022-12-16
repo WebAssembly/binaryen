@@ -19,6 +19,7 @@
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "support/topological_sort.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -30,11 +31,37 @@ void GlobalTypeRewriter::update() {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
-  // will be located in the builder.
+  // will be located in the builder. Sort the private types so that supertypes
+  // come before their subtypes.
+  struct SortedPrivateTypes : TopologicalSort<HeapType, SortedPrivateTypes> {
+    SortedPrivateTypes(Module& wasm) {
+      auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
+      std::unordered_set<HeapType> supertypes;
+      for (auto type : privateTypes) {
+        if (auto super = type.getSuperType()) {
+          supertypes.insert(*super);
+        }
+      }
+      // Types that are not supertypes of others are the roots.
+      for (auto type : privateTypes) {
+        if (!supertypes.count(type)) {
+          push(type);
+        }
+      }
+    }
+
+    void pushPredecessors(HeapType type) {
+      if (auto super = type.getSuperType()) {
+        push(*super);
+      }
+    }
+  };
+
   Index i = 0;
-  for (auto type : ModuleUtils::getPrivateHeapTypes(wasm)) {
+  for (auto type : SortedPrivateTypes(wasm)) {
     typeIndices[type] = i++;
   }
+
   if (typeIndices.size() == 0) {
     return;
   }
@@ -86,6 +113,7 @@ void GlobalTypeRewriter::update() {
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
+        assert(it->second < i);
         typeBuilder[i].subTypeOf(typeBuilder[it->second]);
       } else {
         typeBuilder[i].subTypeOf(*super);
