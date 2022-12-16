@@ -1521,7 +1521,8 @@ struct OptimizeInstructions
   // Optimize an instruction and the reference it operates on, under the
   // assumption that if the reference is a null then we will trap. Returns true
   // if we replaced the expression with something simpler. Returns false if we
-  // found nothing to optimize, or if we just modified or replace the ref.
+  // found nothing to optimize, or if we just modified or replaced the ref (but
+  // not the expression itself).
   bool trapOnNull(Expression* curr, Expression*& ref) {
     Builder builder(*getModule());
 
