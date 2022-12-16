@@ -416,7 +416,7 @@ def pick_initial_contents():
     # skip it.
     args = FEATURE_OPTS
     if CLOSED_WORLD:
-        args += [CLOSED_WORLD_FLAG]
+        args.append(CLOSED_WORLD_FLAG)
     try:
         run([in_bin('wasm-opt'), test_name] + args,
             stderr=subprocess.PIPE,
