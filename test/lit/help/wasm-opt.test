@@ -365,6 +365,8 @@
 ;; CHECK-NEXT:   --remove-unused-nonfunction-module-elements   removes unused module elements
 ;; CHECK-NEXT:                                                 that are not functions
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --remove-unused-types                         remove unused private GC types
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --reorder-functions                           sorts functions by access
 ;; CHECK-NEXT:                                                 frequency
 ;; CHECK-NEXT:
