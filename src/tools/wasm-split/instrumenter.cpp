@@ -61,18 +61,17 @@ void Instrumenter::ensureFirstMemory(size_t profileSize) {
 
 void Instrumenter::addSecondaryMemory(size_t numFuncs) {
   if (!wasm->features.hasMultiMemories()) {
-    Fatal()
-      << "error: wasm-split requires multi-memories to be enabled";
+    Fatal() << "error: wasm-split requires multi-memories to be enabled";
   }
 
   Type pointerType = wasm->memories[0]->indexType;
   bool isShared = wasm->memories[0]->shared;
 
-  secondaryMemory =
-    Names::getValidMemoryName(*wasm, "profile-data");
+  secondaryMemory = Names::getValidMemoryName(*wasm, "profile-data");
   // Create a memory with enough pages to write into
   size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
-  auto mem = Builder::makeMemory(secondaryMemory, pages, pages, isShared, pointerType);
+  auto mem =
+    Builder::makeMemory(secondaryMemory, pages, pages, isShared, pointerType);
   mem->module = config.importNamespace;
   mem->base = secondaryMemory;
   wasm->addMemory(std::move(mem));
@@ -129,7 +128,6 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
 
-
   // Create the function body
   Builder builder(*wasm);
   auto getAddr = [&]() { return builder.makeLocalGet(0, Type::i32); };
@@ -144,8 +142,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
     8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
 
-  Index funcIdxVar =
-    Builder::addVar(writeProfile.get(), "funcIdx", Type::i32);
+  Index funcIdxVar = Builder::addVar(writeProfile.get(), "funcIdx", Type::i32);
   auto getFuncIdx = [&]() {
     return builder.makeLocalGet(funcIdxVar, Type::i32);
   };
@@ -175,9 +172,8 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
           builder.makeBreak(
             "outer",
             nullptr,
-            builder.makeBinary(EqInt32,
-                               getFuncIdx(),
-                               builder.makeConst(uint32_t(numFuncs)))),
+            builder.makeBinary(
+              EqInt32, getFuncIdx(), builder.makeConst(uint32_t(numFuncs)))),
           builder.makeStore(
             4,
             offset,
