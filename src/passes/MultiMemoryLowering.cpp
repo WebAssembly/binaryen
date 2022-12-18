@@ -385,6 +385,7 @@ struct MultiMemoryLowering : public Pass {
     createMemoryGrowFunctions();
     removeExistingMemories();
     addCombinedMemory();
+    updateMemoryExports();
 
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
   }
@@ -655,6 +656,14 @@ struct MultiMemoryLowering : public Pass {
     memory->initial = totalInitialPages;
     memory->max = totalMaxPages;
     wasm->addMemory(std::move(memory));
+  }
+
+  void updateMemoryExports() {
+    for (auto& exp : wasm->exports) {
+      if (exp->kind == ExternalKind::Memory) {
+        exp->value = combinedMemory;
+      }
+    }
   }
 };
 
