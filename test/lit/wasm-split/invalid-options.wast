@@ -40,10 +40,6 @@
 ;; RUN: not wasm-split %s --profile-export=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix SPLIT-PROFILE-EXPORT
 
-;; --secondary-memory-name cannot be used with Split mode
-;; RUN: not wasm-split %s --secondary-memory-name=foo 2>&1 \
-;; RUN:   | filecheck %s --check-prefix SPLIT-SECONDARY-MEMORY-NAME
-
 ;; -S cannot be used with --merge-profiles
 ;; RUN: not wasm-split %s --merge-profiles -S 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix MERGE-EMIT-TEXT
@@ -83,8 +79,6 @@
 ;; SPLIT-OUT: error: Option --output cannot be used in split mode.
 
 ;; SPLIT-PROFILE-EXPORT: error: Option --profile-export cannot be used in split mode.
-
-;; SPLIT-SECONDARY-MEMORY-NAME: error: Option --secondary-memory-name cannot be used in split mode.
 
 ;; MERGE-EMIT-TEXT: error: Option --emit-text cannot be used in merge-profiles mode.
 

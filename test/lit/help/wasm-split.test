@@ -80,27 +80,6 @@
 ;; CHECK-NEXT:                                        profile into memory. Defaults to
 ;; CHECK-NEXT:                                        `__write_profile`.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --in-memory                          [instrument] Store profile information in
-;; CHECK-NEXT:                                        memory (starting at address 0 and taking
-;; CHECK-NEXT:                                        one byte per function) rather than
-;; CHECK-NEXT:                                        globals (the default) so that it can be
-;; CHECK-NEXT:                                        shared between multiple threads. Users
-;; CHECK-NEXT:                                        are responsible for ensuring that the
-;; CHECK-NEXT:                                        module does not use the initial memory
-;; CHECK-NEXT:                                        region for anything else.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --in-secondary-memory                [instrument] Store profile information in
-;; CHECK-NEXT:                                        a separate memory, rather than in module
-;; CHECK-NEXT:                                        main memory or globals (the default).
-;; CHECK-NEXT:                                        With this option, users do not need to
-;; CHECK-NEXT:                                        reserve the initial memory region for
-;; CHECK-NEXT:                                        profile data and the data can be shared
-;; CHECK-NEXT:                                        between multiple threads.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --secondary-memory-name              [instrument] The name of the secondary
-;; CHECK-NEXT:                                        memory created to store profile
-;; CHECK-NEXT:                                        information.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-module-names                  [split, instrument] Emit module names,
 ;; CHECK-NEXT:                                        even if not emitting the rest of the
 ;; CHECK-NEXT:                                        names section. Can help differentiate the

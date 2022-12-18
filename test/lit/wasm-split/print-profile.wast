@@ -1,8 +1,8 @@
 ;; Instrument the module
-;; RUN: wasm-split --instrument %s -o %t.instrumented.wasm -g
+;; RUN: wasm-split --instrument -all %s -o %t.instrumented.wasm -g
 
 ;; Generate profile
-;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
+;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
 
 ;; Print profile
 ;; RUN: wasm-split %s --print-profile=%t.foo.prof | filecheck %s --check-prefix=ESCAPED

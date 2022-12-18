@@ -1,8 +1,8 @@
 ;; Test that the instrumentation increases the memory bounds if necessary
 
-;; RUN: wasm-split %s --instrument -S -o - | filecheck %s
+;; RUN: wasm-split %s --instrument -all -S -o - | filecheck %s
 
-;; CHECK: (memory $0 1 1)
+;; CHECK: (memory $combined_memory (shared 1 1)
 ;; CHECK: (export "__write_profile" (func $__write_profile))
 
 (module

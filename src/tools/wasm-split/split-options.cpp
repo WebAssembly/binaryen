@@ -233,43 +233,6 @@ WasmSplitOptions::WasmSplitOptions()
            profileExport = argument;
          })
     .add(
-      "--in-memory",
-      "",
-      "Store profile information in memory (starting at address 0 and taking "
-      "one byte per function) rather than globals (the default) so that "
-      "it can be shared between multiple threads. Users are responsible for "
-      "ensuring that the module does not use the initial memory region for "
-      "anything else.",
-      WasmSplitOption,
-      {Mode::Instrument},
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& argument) {
-        storageKind = StorageKind::InMemory;
-      })
-    .add(
-      "--in-secondary-memory",
-      "",
-      "Store profile information in a separate memory, rather than in module "
-      "main memory or globals (the default). With this option, users do not "
-      "need to reserve the initial memory region for profile data and the "
-      "data can be shared between multiple threads.",
-      WasmSplitOption,
-      {Mode::Instrument},
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& argument) {
-        storageKind = StorageKind::InSecondaryMemory;
-      })
-    .add("--secondary-memory-name",
-         "",
-         "The name of the secondary memory created to store profile "
-         "information.",
-         WasmSplitOption,
-         {Mode::Instrument},
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           secondaryMemoryName = argument;
-         })
-    .add(
       "--emit-module-names",
       "",
       "Emit module names, even if not emitting the rest of the names section. "

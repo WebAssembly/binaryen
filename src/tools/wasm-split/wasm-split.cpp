@@ -114,14 +114,11 @@ void instrumentModule(const WasmSplitOptions& options) {
   if (options.importNamespace.size()) {
     config.importNamespace = options.importNamespace;
   }
-  if (options.secondaryMemoryName.size()) {
-    config.secondaryMemoryName = options.secondaryMemoryName;
-  }
-  config.storageKind = options.storageKind;
   config.profileExport = options.profileExport;
 
   PassRunner runner(&wasm, options.passOptions);
   runner.add(std::make_unique<Instrumenter>(config, moduleHash));
+  runner.add("multi-memory-lowering");
   runner.run();
 
   adjustTableSize(wasm, options.initialTableSize);
