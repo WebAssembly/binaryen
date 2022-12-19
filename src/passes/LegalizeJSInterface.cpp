@@ -31,6 +31,7 @@
 //
 
 #include "asmjs/shared-constants.h"
+#include "ir/closed-world.h"
 #include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
@@ -168,6 +169,11 @@ struct LegalizeJSInterface : public Pass {
 
     module->removeExport(GET_TEMP_RET_EXPORT);
     module->removeExport(SET_TEMP_RET_EXPORT);
+
+    // Fix up our new exports for closed world, if we need to.
+    if (getPassOptions().closedWorld) {
+      ensureClosedWorld(*module);
+    }
   }
 
 private:

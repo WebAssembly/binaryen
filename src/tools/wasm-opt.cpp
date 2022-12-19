@@ -23,6 +23,7 @@
 
 #include "execution-results.h"
 #include "fuzzing.h"
+#include "ir/closed-world.h"
 #include "js-wrapper.h"
 #include "optimization-options.h"
 #include "pass.h"
@@ -308,6 +309,11 @@ int main(int argc, const char* argv[]) {
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
     reader.build();
+    // The fuzzer creates various exports, some of whom may need fixups in
+    // closed world.
+    if (options.passOptions.closedWorld) {
+      ensureClosedWorld(wasm);
+    }
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.passOptions)) {
         std::cout << wasm << '\n';
