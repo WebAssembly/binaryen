@@ -107,6 +107,9 @@ struct CodeScanner
   }
 };
 
+// Count the number of times each heap type that would appear in the binary is
+// referenced. If `prune`, exclude types that are never referenced, even though
+// a binary would be invalid without them.
 Counts getHeapTypeCounts(Module& wasm, bool prune = false) {
   // Collect module-level info.
   Counts counts;
