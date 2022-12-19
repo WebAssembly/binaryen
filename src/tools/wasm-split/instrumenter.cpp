@@ -23,9 +23,9 @@
 
 namespace wasm {
 
-Instrumenter::Instrumenter(const InstrumenterConfig& config,
+Instrumenter::Instrumenter(const WasmSplitOptions& options,
                            uint64_t moduleHash)
-  : config(config), moduleHash(moduleHash) {}
+  : options(options), moduleHash(moduleHash) {}
 
 void Instrumenter::run(Module* wasm) {
   this->wasm = wasm;
@@ -72,8 +72,6 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
   size_t pages = (numFuncs + Memory::kPageSize - 1) / Memory::kPageSize;
   auto mem =
     Builder::makeMemory(secondaryMemory, pages, pages, isShared, pointerType);
-  mem->module = config.importNamespace;
-  mem->base = secondaryMemory;
   wasm->addMemory(std::move(mem));
 }
 
@@ -121,7 +119,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
   // writes the profile if the given space is sufficient to hold it.
-  auto name = Names::getValidFunctionName(*wasm, config.profileExport);
+  auto name = Names::getValidFunctionName(*wasm, options.profileExport);
   auto writeProfile = Builder::makeFunction(
     name, Signature({Type::i32, Type::i32}, Type::i32), {});
   writeProfile->hasExplicitName = true;
@@ -201,7 +199,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   // Create an export for the function
   wasm->addFunction(std::move(writeProfile));
   wasm->addExport(
-    Builder::makeExport(config.profileExport, name, ExternalKind::Function));
+    Builder::makeExport(options.profileExport, name, ExternalKind::Function));
 
   // Export the memory if it is not already exported or imported.
   if (!wasm->memories[0]->imported()) {

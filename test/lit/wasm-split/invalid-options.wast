@@ -17,6 +17,10 @@
 ;; RUN: not wasm-split %s --instrument --symbolmap 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-SYMBOLMAP
 
+;; --instrument cannot be used with --import-namespace
+;; RUN: not wasm-split %s --instrument --import-namespace=foo 2>&1 \
+;; RUN:   | filecheck %s --check-prefix INSTRUMENT-IMPORT-NS
+
 ;; --instrument cannot be used with --placeholder-namespace
 ;; RUN: not wasm-split %s --instrument --placeholder-namespace=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-PLACEHOLDER-NS
@@ -67,6 +71,8 @@
 ;; INSTRUMENT-OUT2: error: Option --secondary-output cannot be used in instrument mode.
 
 ;; INSTRUMENT-SYMBOLMAP: error: Option --symbolmap cannot be used in instrument mode.
+
+;; INSTRUMENT-IMPORT-NS: error: Option --import-namespace cannot be used in instrument mode.
 
 ;; INSTRUMENT-PLACEHOLDER-NS: error: Option --placeholder-namespace cannot be used in instrument mode.
 

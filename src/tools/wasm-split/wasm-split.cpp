@@ -110,14 +110,9 @@ void instrumentModule(const WasmSplitOptions& options) {
   }
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
-  InstrumenterConfig config;
-  if (options.importNamespace.size()) {
-    config.importNamespace = options.importNamespace;
-  }
-  config.profileExport = options.profileExport;
 
   PassRunner runner(&wasm, options.passOptions);
-  runner.add(std::make_unique<Instrumenter>(config, moduleHash));
+  runner.add(std::make_unique<Instrumenter>(options, moduleHash));
   runner.add("multi-memory-lowering");
   runner.run();
 
