@@ -364,12 +364,20 @@ struct ConstantGlobalApplier
       }
       return;
     }
-    // Otherwise, invalidate if we need to.
-    EffectAnalyzer effects(getPassOptions(), *getModule());
-    effects.visit(curr);
-    assert(effects.globalsWritten.empty()); // handled above
+
+    // Otherwise, invalidate if we need to. Note that we handled a GlobalSet
+    // earlier, but also need to handle calls. A general call forces us to
+    // forget everything, but in some cases we can do better, if we have a call
+    // and have computed function effects for it.
+    ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
     if (effects.calls) {
+      // Forget everything.
       currConstantGlobals.clear();
+    } else {
+      // Forget just the globals written, if any.
+      for (auto writtenGlobal : effects.globalsWritten) {
+        currConstantGlobals.erase(writtenGlobal);
+      }
     }
   }
 

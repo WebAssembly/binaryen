@@ -519,6 +519,14 @@ template<typename T> struct CallGraphPropertyAnalysis {
 // module, i.e. the types that would appear in the type section.
 std::vector<HeapType> collectHeapTypes(Module& wasm);
 
+// Collect all the heap types visible on the module boundary that cannot be
+// changed. TODO: For open world use cases, this needs to include all subtypes
+// of public types as well.
+std::vector<HeapType> getPublicHeapTypes(Module& wasm);
+
+// getHeapTypes - getPublicHeapTypes
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm);
+
 struct IndexedHeapTypes {
   std::vector<HeapType> types;
   std::unordered_map<HeapType, Index> indices;

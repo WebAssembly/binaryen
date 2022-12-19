@@ -19,6 +19,7 @@
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "support/topological_sort.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -27,24 +28,55 @@ namespace wasm {
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() {
-  indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(wasm);
-  if (indexedTypes.types.empty()) {
+  // Find the heap types that are not publicly observable. Even in a closed
+  // world scenario, don't modify public types because we assume that they may
+  // be reflected on or used for linking. Figure out where each private type
+  // will be located in the builder. Sort the private types so that supertypes
+  // come before their subtypes.
+  struct SortedPrivateTypes : TopologicalSort<HeapType, SortedPrivateTypes> {
+    SortedPrivateTypes(Module& wasm) {
+      auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
+      std::unordered_set<HeapType> supertypes;
+      for (auto type : privateTypes) {
+        if (auto super = type.getSuperType()) {
+          supertypes.insert(*super);
+        }
+      }
+      // Types that are not supertypes of others are the roots.
+      for (auto type : privateTypes) {
+        if (!supertypes.count(type)) {
+          push(type);
+        }
+      }
+    }
+
+    void pushPredecessors(HeapType type) {
+      if (auto super = type.getSuperType()) {
+        push(*super);
+      }
+    }
+  };
+
+  Index i = 0;
+  for (auto type : SortedPrivateTypes(wasm)) {
+    typeIndices[type] = i++;
+  }
+
+  if (typeIndices.size() == 0) {
     return;
   }
-  typeBuilder.grow(indexedTypes.types.size());
+  typeBuilder.grow(typeIndices.size());
 
   // All the input types are distinct, so we need to make sure the output types
   // are distinct as well. Further, the new types may have more recursions than
   // the original types, so the old recursion groups may not be sufficient any
   // more. Both of these problems are solved by putting all the new types into a
   // single large recursion group.
-  // TODO: When we properly analyze which types are external and which are
-  // internal to the module, only optimize internal types.
   typeBuilder.createRecGroup(0, typeBuilder.size());
 
   // Create the temporary heap types.
-  for (Index i = 0; i < indexedTypes.types.size(); i++) {
-    auto type = indexedTypes.types[i];
+  i = 0;
+  for (auto [type, _] : typeIndices) {
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;
@@ -56,8 +88,8 @@ void GlobalTypeRewriter::update() {
       }
       Signature newSig(typeBuilder.getTempTupleType(newParams),
                        typeBuilder.getTempTupleType(newResults));
-      modifySignature(indexedTypes.types[i], newSig);
-      typeBuilder.setHeapType(i, newSig);
+      modifySignature(type, newSig);
+      typeBuilder[i] = newSig;
     } else if (type.isStruct()) {
       auto struct_ = type.getStruct();
       // Start with a copy to get mutability/packing/etc.
@@ -65,24 +97,29 @@ void GlobalTypeRewriter::update() {
       for (auto& field : newStruct.fields) {
         field.type = getTempType(field.type);
       }
-      modifyStruct(indexedTypes.types[i], newStruct);
-      typeBuilder.setHeapType(i, newStruct);
+      modifyStruct(type, newStruct);
+      typeBuilder[i] = newStruct;
     } else if (type.isArray()) {
       auto array = type.getArray();
       // Start with a copy to get mutability/packing/etc.
       auto newArray = array;
       newArray.element.type = getTempType(newArray.element.type);
-      modifyArray(indexedTypes.types[i], newArray);
-      typeBuilder.setHeapType(i, newArray);
+      modifyArray(type, newArray);
+      typeBuilder[i] = newArray;
     } else {
       WASM_UNREACHABLE("bad type");
     }
 
     // Apply a super, if there is one
     if (auto super = type.getSuperType()) {
-      typeBuilder.setSubType(
-        i, typeBuilder.getTempHeapType(indexedTypes.indices[*super]));
+      if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
+        assert(it->second < i);
+        typeBuilder[i].subTypeOf(typeBuilder[it->second]);
+      } else {
+        typeBuilder[i].subTypeOf(*super);
+      }
     }
+    i++;
   }
 
   auto buildResults = typeBuilder.build();
@@ -94,19 +131,17 @@ void GlobalTypeRewriter::update() {
 #endif
   auto& newTypes = *buildResults;
 
-  // Map the old types to the new ones. This uses the fact that type indices
-  // are the same in the old and new types, that is, we have not added or
-  // removed types, just modified them.
+  // Map the old types to the new ones.
   TypeMap oldToNewTypes;
-  for (Index i = 0; i < indexedTypes.types.size(); i++) {
-    oldToNewTypes[indexedTypes.types[i]] = newTypes[i];
+  for (auto [type, index] : typeIndices) {
+    oldToNewTypes[type] = newTypes[index];
   }
 
   // Update type names (doing it before mapTypes can help debugging there, but
   // has no other effect; mapTypes does not look at type names).
   for (auto& [old, new_] : oldToNewTypes) {
-    if (wasm.typeNames.count(old)) {
-      wasm.typeNames[new_] = wasm.typeNames[old];
+    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
+      wasm.typeNames[new_] = it->second;
     }
   }
 
@@ -114,7 +149,6 @@ void GlobalTypeRewriter::update() {
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
-
   // Replace all the old types in the module with the new ones.
   struct CodeUpdater
     : public WalkerPass<
@@ -246,14 +280,13 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (!indexedTypes.indices.count(heapType)) {
-      // This type was not present in the module, but is now being used when
-      // defining new types. That is fine; just use it.
-      return type;
+    if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
+      return typeBuilder.getTempRefType(typeBuilder[it->second],
+                                        type.getNullability());
     }
-    return typeBuilder.getTempRefType(
-      typeBuilder.getTempHeapType(indexedTypes.indices[heapType]),
-      type.getNullability());
+    // This type is not one that is eligible for optimizing. That is fine; just
+    // use it unmodified.
+    return type;
   }
   if (type.isTuple()) {
     auto& tuple = type.getTuple();

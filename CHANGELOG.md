@@ -15,6 +15,14 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Optimization sequences like `-O3 -Os` now do the expected thing and run `-O3`
+  followed by `-Os`. Previously the last of them set the defaults that were used
+  by all executions, so `-O3 -Os` was equivalent to `-Os -Os`. (There is no
+  change to the default optimization level that other passes can see. For
+  example, `--precompute-propagate -O2 -O1` will run `--precompute-propagate`
+  at opt level `1`, as the global default is set to `2` and then overridden to
+  `1`. The only change is that the passes run by `-O2` will actually run `-O2`
+  now, while before they'd use the global default which made them do `-O1`.)
 - Add `--closed-world` flag. This enables more optimizations in GC mode as it
   lets us assume that we can change types inside the module.
 - The isorecursive WasmGC type system (i.e. --hybrid) is now the default to

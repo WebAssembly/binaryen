@@ -59,9 +59,10 @@ static std::string runCommand(std::string command) {
 #endif
 }
 
-static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
+static bool
+willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
   for (auto& pass : passes) {
-    if (PassRunner::passRemovesDebugInfo(pass)) {
+    if (PassRunner::passRemovesDebugInfo(pass.name)) {
       return true;
     }
   }
@@ -250,8 +251,11 @@ int main(int argc, const char* argv[]) {
     // If the user asked to print the module, print it even if invalid,
     // as otherwise there is no way to print the broken module (the pass
     // to print would not be reached).
-    if (std::find(options.passes.begin(), options.passes.end(), "print") !=
-        options.passes.end()) {
+    if (std::any_of(options.passes.begin(),
+                    options.passes.end(),
+                    [](const OptimizationOptions::PassInfo& info) {
+                      return info.name == "print";
+                    })) {
       std::cout << wasm << '\n';
     }
     Fatal() << message;
@@ -275,7 +279,12 @@ int main(int argc, const char* argv[]) {
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
-      Fatal() << "error parsing wasm";
+      if (options.debug) {
+        Fatal() << "error parsing wasm. here is what we read up to the error:\n"
+                << wasm;
+      } else {
+        Fatal() << "error parsing wasm (try --debug for more info)";
+      }
     } catch (MapParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -286,7 +295,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm)) {
+      if (!WasmValidator().validate(wasm, options.passOptions)) {
         exitOnInvalidWasm("error validating input");
       }
     }
@@ -300,7 +309,7 @@ int main(int argc, const char* argv[]) {
     reader.setAllowOOB(fuzzOOB);
     reader.build();
     if (options.passOptions.validate) {
-      if (!WasmValidator().validate(wasm)) {
+      if (!WasmValidator().validate(wasm, options.passOptions)) {
         std::cout << wasm << '\n';
         Fatal() << "error after translate-to-fuzz";
       }
@@ -359,7 +368,7 @@ int main(int argc, const char* argv[]) {
     auto runPasses = [&]() {
       options.runPasses(wasm);
       if (options.passOptions.validate) {
-        bool valid = WasmValidator().validate(wasm);
+        bool valid = WasmValidator().validate(wasm, options.passOptions);
         if (!valid) {
           exitOnInvalidWasm("error after opts");
         }

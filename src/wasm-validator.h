@@ -43,6 +43,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "pass.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -52,12 +53,14 @@ struct WasmValidator {
     Minimal = 0,
     Web = 1 << 0,
     Globally = 1 << 1,
-    Quiet = 1 << 2
+    Quiet = 1 << 2,
+    ClosedWorld = 1 << 3,
   };
   using Flags = uint32_t;
 
   // Validate an entire module.
   bool validate(Module& module, Flags flags = Globally);
+  bool validate(Module& module, const PassOptions& options);
 
   // Validate a specific function.
   bool validate(Function* func, Module& module, Flags flags = Globally);

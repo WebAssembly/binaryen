@@ -185,12 +185,16 @@ struct PassOptions {
   // applied.)
   bool zeroFilledMemory = false;
   // Assume code outside of the module does not inspect or interact with GC and
-  // function references, even if they are passed out. The outside may hold on
-  // to them and pass them back in, but not inspect their contents or call them.
-  // By default we do not make that assumption, and assume anything that escapes
+  // function references, with the goal of being able to aggressively optimize
+  // all user-defined types. The outside may hold on to references and pass them
+  // back in, but may not inspect their contents, call them, or reflect on their
+  // types in any way.
+  //
+  // By default we do not make this assumption, and assume anything that escapes
   // to the outside may be inspected in detail, which prevents us from e.g.
-  // changing a type that escapes (so we can't remove or refine fields on an
-  // escaping struct type, for example).
+  // changing the type of any value that may escape except by refining it (so we
+  // can't remove or refine fields on an escaping struct type, for example,
+  // unless the new type declares the original type as a supertype).
   //
   // Note that the module can still have imports and exports - otherwise it
   // could do nothing at all! - so the meaning of "closed world" is a little
@@ -202,17 +206,14 @@ struct PassOptions {
   // but we also want to keep types of things on the boundary unchanged. For
   // example, we should not change an exported function's signature, as the
   // outside may need that type to properly call the export.
-  //   * For now we disallow nontrivial types on the boundary, that is, you
-  //     cannot use a custom struct type as a function parameter type. Such a
-  //     type would not be optimizable due to the constraint to not modify the
-  //     type of the import/export, but it is very simple to use a type in a
-  //     single import/export and then all of its supertypes become
-  //     unoptimizable; likewise, in some optimizations all subtypes may be
-  //     affected (say in not being able to remove a field from them). Overall,
-  //     there is a risk of missing out on significant optimization
-  //     opportunities here, and for that reason we error on using such types on
-  //     the boundary for now. Instead, use basic types like anyref, externref,
-  //     etc.
+  //
+  //   * Since the goal of closedWorld is to optimize types aggressively but
+  //     types on the module boundary cannot be changed, we assume the producer
+  //     has made a mistake and we consider it a validation error if any user
+  //     defined types besides the types of imported or exported functions
+  //     themselves appear on the module boundary. For example, no user defined
+  //     struct type may be a parameter or result of an exported function. This
+  //     error may be relaxed or made more configurable in the future.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
@@ -488,10 +489,19 @@ public:
     assert(getPassRunner());
     // Parallel pass running is implemented in the PassRunner.
     if (isFunctionParallel()) {
-      // TODO: We should almost certainly be propagating pass options here, but
-      // that is a widespread change, so make sure it doesn't unacceptably
-      // regress compile times.
-      PassRunner runner(module /*, getPassOptions()*/);
+      // Reduce opt/shrink levels to a maximum of one in nested runners like
+      // these, to balance runtime. We definitely want the full levels in the
+      // main passes we run, but nested pass runners are of secondary
+      // importance.
+      // TODO Investigate the impact of allowing the levels to just pass
+      //      through. That seems to cause at least some regression in compile
+      //      times in -O3, however, but with careful measurement we may find
+      //      the benefits are worth it. For now -O1 is a reasonable compromise
+      //      as it has basically linear runtime, unlike -O2 and -O3.
+      auto options = getPassOptions();
+      options.optimizeLevel = std::min(options.optimizeLevel, 1);
+      options.shrinkLevel = std::min(options.shrinkLevel, 1);
+      PassRunner runner(module, options);
       runner.setIsNested(true);
       runner.add(create());
       runner.run();

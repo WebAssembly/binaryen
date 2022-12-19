@@ -61,6 +61,7 @@ struct ValidationInfo {
   bool validateWeb;
   bool validateGlobally;
   bool quiet;
+  bool closedWorld;
 
   std::atomic<bool> valid;
 
@@ -3506,6 +3507,32 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
   }
 }
 
+static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
+  // Error if there are any publicly exposed heap types beyond the types of
+  // publicly exposed functions.
+  std::unordered_set<HeapType> publicFuncTypes;
+  ModuleUtils::iterImportedFunctions(
+    module, [&](Function* func) { publicFuncTypes.insert(func->type); });
+  for (auto& ex : module.exports) {
+    if (ex->kind == ExternalKind::Function) {
+      publicFuncTypes.insert(module.getFunction(ex->value)->type);
+    }
+  }
+
+  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
+    if (!publicFuncTypes.count(type)) {
+      auto name = type.toString();
+      if (auto it = module.typeNames.find(type); it != module.typeNames.end()) {
+        name = it->second.name.toString();
+      }
+      info.fail("publicly exposed type disallowed with a closed world: $" +
+                  name,
+                type,
+                nullptr);
+    }
+  }
+}
+
 // TODO: If we want the validator to be part of libwasm rather than libpasses,
 // then Using PassRunner::getPassDebug causes a circular dependence. We should
 // fix that, perhaps by moving some of the pass infrastructure into libsupport.
@@ -3514,6 +3541,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   info.validateWeb = (flags & Web) != 0;
   info.validateGlobally = (flags & Globally) != 0;
   info.quiet = (flags & Quiet) != 0;
+  info.closedWorld = (flags & ClosedWorld) != 0;
   // parallel wasm logic validation
   PassRunner runner(&module);
   FunctionValidator(module, &info).validate(&runner);
@@ -3528,6 +3556,9 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateTags(module, info);
     validateModule(module, info);
     validateFeatures(module, info);
+    if (info.closedWorld) {
+      validateClosedWorldInterface(module, info);
+    }
   }
   // validate additional internal IR details when in pass-debug mode
   if (PassRunner::getPassDebug()) {
@@ -3541,6 +3572,14 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     std::cerr << info.getStream(nullptr).str();
   }
   return info.valid.load();
+}
+
+bool WasmValidator::validate(Module& module, const PassOptions& options) {
+  Flags flags = options.validateGlobally ? Globally : Minimal;
+  if (options.closedWorld) {
+    flags |= ClosedWorld;
+  }
+  return validate(module, flags);
 }
 
 bool WasmValidator::validate(Function* func, Module& module, Flags flags) {

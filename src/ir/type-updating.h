@@ -19,6 +19,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/module-utils.h"
+#include "support/insert_ordered.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -393,8 +394,8 @@ public:
 private:
   TypeBuilder typeBuilder;
 
-  // The old types and their indices.
-  ModuleUtils::IndexedHeapTypes indexedTypes;
+  // Map old types to their indices in the builder.
+  InsertOrderedMap<HeapType, Index> typeIndices;
 };
 
 namespace TypeUpdating {

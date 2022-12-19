@@ -11,11 +11,7 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; CHECK:      (type $B (func))
-  ;; OPEN_WORLD:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; OPEN_WORLD:      (type $B (func))
   (type $B (func))
 
@@ -23,7 +19,8 @@
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
   ;; CHECK-NEXT:  )
@@ -44,7 +41,8 @@
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; OPEN_WORLD:      (func $foo (type $A)
+  ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A)
   ;; OPEN_WORLD-NEXT:  )
@@ -61,7 +59,8 @@
   ;; OPEN_WORLD-NEXT:   (unreachable)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
-  (func $foo (export "foo") (param $A (ref null $A))
+  (func $foo (export "foo")
+    (local $A (ref null $A))
     ;; This export has two RefFuncs, and one CallRef.
     (drop
       (ref.func $target-A)
@@ -122,13 +121,12 @@
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; CHECK:      (elem declare func $target-A)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
@@ -136,13 +134,12 @@
   ;; CHECK-NEXT:   (ref.func $target-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; OPEN_WORLD:      (elem declare func $target-A)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; OPEN_WORLD:      (func $foo (type $A)
+  ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (call_ref $A
   ;; OPEN_WORLD-NEXT:   (local.get $A)
   ;; OPEN_WORLD-NEXT:  )
@@ -150,7 +147,8 @@
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
-  (func $foo (export "foo") (param $A (ref null $A))
+  (func $foo (export "foo")
+    (local $A (ref null $A))
     (call_ref $A
       (local.get $A)
     )
@@ -181,13 +179,12 @@
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
@@ -201,13 +198,12 @@
   ;; CHECK-NEXT:   (ref.func $target-A-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; OPEN_WORLD:      (elem declare func $target-A-1 $target-A-2)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; OPEN_WORLD:      (func $foo (type $A)
+  ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (call_ref $A
   ;; OPEN_WORLD-NEXT:   (local.get $A)
   ;; OPEN_WORLD-NEXT:  )
@@ -221,7 +217,8 @@
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A-2)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
-  (func $foo (export "foo") (param $A (ref null $A))
+  (func $foo (export "foo")
+    (local $A (ref null $A))
     (call_ref $A
       (local.get $A)
     )
@@ -236,6 +233,7 @@
     )
   )
 
+  ;; WORLD_OPEN-NEXT: )
   ;; CHECK:      (func $target-A-1 (type $A)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -269,13 +267,12 @@
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A-1)
   ;; CHECK-NEXT:  )
@@ -289,13 +286,12 @@
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; OPEN_WORLD:      (elem declare func $target-A-1 $target-A-2)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; OPEN_WORLD:      (func $foo (type $A)
+  ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A-1)
   ;; OPEN_WORLD-NEXT:  )
@@ -309,7 +305,8 @@
   ;; OPEN_WORLD-NEXT:   (local.get $A)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
-  (func $foo (export "foo") (param $A (ref null $A))
+  (func $foo (export "foo")
+    (local $A (ref null $A))
     (drop
       (ref.func $target-A-1)
     )
@@ -435,12 +432,8 @@
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   ;; OPEN_WORLD:      (type $funcref_=>_none (func (param funcref)))
-
-  ;; OPEN_WORLD:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
@@ -455,7 +448,8 @@
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (call $call-without-effects
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
@@ -470,7 +464,8 @@
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $ref?|$A|_=>_none) (param $A (ref null $A))
+  ;; OPEN_WORLD:      (func $foo (type $A)
+  ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (call $call-without-effects
   ;; OPEN_WORLD-NEXT:   (local.get $A)
   ;; OPEN_WORLD-NEXT:  )
@@ -481,7 +476,8 @@
   ;; OPEN_WORLD-NEXT:   (ref.func $target-keep-2)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
-  (func $foo (export "foo") (param $A (ref null $A))
+  (func $foo (export "foo")
+    (local $A (ref null $A))
     ;; Call the intrinsic without a RefFunc. All we infer here is the type,
     ;; which means we must assume anything with type $A (and a reference) can be
     ;; called, which will keep alive both $target-keep and $target-keep-2
