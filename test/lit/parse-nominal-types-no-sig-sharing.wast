@@ -10,6 +10,9 @@
 ;; canonical type for that signature. That is fine as at least it only makes
 ;; $super effectively a public type, instead of both $sub and $super (the latter
 ;; does not validate in closed world, but the former does).
+;;
+;; Note that this problem only happens in nominal mode, since $sub can appear
+;; before $super in the list of types.
 
 (module
   (type $sub (func_subtype $super))
