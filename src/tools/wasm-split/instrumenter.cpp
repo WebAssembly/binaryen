@@ -145,7 +145,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   };
   // (block $outer
   //   (loop $l
-  //     (br_if $outer (i32.eq (local.get $fucIdx) (i32.const numFuncs))
+  //     (br_if $outer (i32.eq (local.get $funcIdx) (i32.const numFuncs))
   //     (i32.store offset=8
   //       (i32.add
   //         (local.get $addr)
@@ -154,7 +154,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   //       (i32.atomic.load8_u (local.get $funcIdx))
   //     )
   //     (local.set $funcIdx
-  //      (i32.add (local.get $fundIdx) (i32.const 1)
+  //      (i32.add (local.get $funcIdx) (i32.const 1)
   //     )
   //     (br $l)
   //   )
