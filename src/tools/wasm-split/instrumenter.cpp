@@ -23,8 +23,7 @@
 
 namespace wasm {
 
-Instrumenter::Instrumenter(const WasmSplitOptions& options,
-                           uint64_t moduleHash)
+Instrumenter::Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash)
   : options(options), moduleHash(moduleHash) {}
 
 void Instrumenter::run(Module* wasm) {
