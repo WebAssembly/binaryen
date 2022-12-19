@@ -2967,7 +2967,11 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 
   // Note built signature types. See comment in `HeapType::HeapType(Signature)`.
   for (auto type : state.results) {
-    if (type.isSignature() && (getTypeSystem() == TypeSystem::Nominal)) {
+    // Do not cache types with explicit supertypes (that is, whose supertype is
+    // not HeapType::func). We don't want to reuse such types because then we'd
+    // be adding subtyping relationships that are not in the input.
+    if (type.isSignature() && (getTypeSystem() == TypeSystem::Nominal) &&
+        !type.getSuperType()) {
       nominalSignatureCache.insertType(type);
     }
   }
