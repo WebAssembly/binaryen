@@ -94,6 +94,7 @@ set(passes_SOURCES
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
+  RemoveUnusedTypes.cpp
   ReorderFunctions.cpp
   ReorderGlobals.cpp
   ReorderLocals.cpp

@@ -369,6 +369,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-unused-names",
                "removes names from locations that are never branched to",
                createRemoveUnusedNamesPass);
+  registerPass("remove-unused-types",
+               "remove unused private GC types",
+               createRemoveUnusedTypesPass);
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
@@ -620,6 +623,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
     }
     addIfNoDWARFIssues("remove-unused-module-elements");
     if (options.closedWorld) {
+      addIfNoDWARFIssues("remove-unused-types");
       addIfNoDWARFIssues("cfp");
       addIfNoDWARFIssues("gsi");
     }

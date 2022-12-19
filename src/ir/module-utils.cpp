@@ -84,7 +84,9 @@ struct CodeScanner
       // not written in the binary format, so it doesn't need to be counted, but
       // it does need to be taken into account in the IR (this may be the only
       // place this type appears in the entire binary, and we must scan all
-      // types as the analyses that use us depend on that).
+      // types as the analyses that use us depend on that). TODO: This is kind
+      // of a hack, so it would be nice to remove. If we could remove it, we
+      // could also remove some of the pruning logic in getHeapTypeCounts below.
       counts.include(get->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       counts.note(set->ref->type);
@@ -105,7 +107,10 @@ struct CodeScanner
   }
 };
 
-Counts getHeapTypeCounts(Module& wasm) {
+// Count the number of times each heap type that would appear in the binary is
+// referenced. If `prune`, exclude types that are never referenced, even though
+// a binary would be invalid without them.
+Counts getHeapTypeCounts(Module& wasm, bool prune = false) {
   // Collect module-level info.
   Counts counts;
   CodeScanner(wasm, counts).walkModuleCode(&wasm);
@@ -138,6 +143,19 @@ Counts getHeapTypeCounts(Module& wasm) {
   for (auto& [_, functionCounts] : analysis.map) {
     for (auto& [sig, count] : functionCounts) {
       counts[sig] += count;
+    }
+  }
+
+  if (prune) {
+    // Remove types that are not actually used.
+    auto it = counts.begin();
+    while (it != counts.end()) {
+      if (it->second == 0) {
+        auto deleted = it++;
+        counts.erase(deleted);
+      } else {
+        ++it;
+      }
     }
   }
 
@@ -178,12 +196,14 @@ Counts getHeapTypeCounts(Module& wasm) {
     }
 
     // Make sure we've noted the complete recursion group of each type as well.
-    auto recGroup = ht.getRecGroup();
-    if (includedGroups.insert(recGroup).second) {
-      for (auto type : recGroup) {
-        if (!counts.count(type)) {
-          newTypes.insert(type);
-          counts.include(type);
+    if (!prune) {
+      auto recGroup = ht.getRecGroup();
+      if (includedGroups.insert(recGroup).second) {
+        for (auto type : recGroup) {
+          if (!counts.count(type)) {
+            newTypes.insert(type);
+            counts.include(type);
+          }
         }
       }
     }
@@ -297,11 +317,11 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
 }
 
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
-  auto allTypes = getHeapTypeCounts(wasm);
+  auto allTypes = getHeapTypeCounts(wasm, true);
   auto publicTypes = getPublicTypeSet(wasm);
   std::vector<HeapType> types;
   types.reserve(allTypes.size() - publicTypes.size());
-  for (auto [type, _] : allTypes) {
+  for (auto& [type, _] : allTypes) {
     if (!publicTypes.count(type)) {
       types.push_back(type);
     }
