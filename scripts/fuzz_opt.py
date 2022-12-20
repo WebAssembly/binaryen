@@ -1355,6 +1355,7 @@ requires_closed_world = {("--type-refining",),
                          ("--type-ssa",),
                          ("--type-merging",)}
 
+
 def randomize_opt_flags():
     flag_groups = []
     has_flatten = False
