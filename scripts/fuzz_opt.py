@@ -1271,85 +1271,104 @@ def write_commands(commands, filename):
 # main
 
 opt_choices = [
-    [],
-    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
-    ["--cfp"],
-    ["--coalesce-locals"],
-    # XXX slow, non-default ["--coalesce-locals-learning"],
-    ["--code-pushing"],
-    ["--code-folding"],
-    ["--const-hoisting"],
-    ["--dae"],
-    ["--dae-optimizing"],
-    ["--dce"],
-    ["--directize"],
-    ["--discard-global-effects"],
-    ["--flatten", "--dfo"],
-    ["--duplicate-function-elimination"],
-    ["--flatten"],
-    # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
-    ["--inlining"],
-    ["--inlining-optimizing"],
-    ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
+    (),
+    ('-O1',), ('-O2',), ('-O3',), ('-O4',), ('-Os',), ('-Oz',),
+    ("--cfp",),
+    ("--coalesce-locals",),
+    # XXX slow, non-default ("--coalesce-locals-learning",),
+    ("--code-pushing",),
+    ("--code-folding",),
+    ("--const-hoisting",),
+    ("--dae",),
+    ("--dae-optimizing",),
+    ("--dce",),
+    ("--directize",),
+    ("--discard-global-effects",),
+    ("--flatten", "--dfo",),
+    ("--duplicate-function-elimination",),
+    ("--flatten",),
+    # ("--fpcast-emu",), # removes indirect call failures as it makes them go through regardless of type
+    ("--inlining",),
+    ("--inlining-optimizing",),
+    ("--flatten", "--simplify-locals-notee-nostructure", "--local-cse",),
     # note that no pass we run here should add effects to a function, so it is
     # ok to run this pass and let the passes after it use the effects to
     # optimize
-    ["--generate-global-effects"],
-    ["--global-refining"],
-    ["--gsi"],
-    ["--gto"],
-    ["--gufa"],
-    ["--gufa-optimizing"],
-    ["--local-cse"],
-    ["--heap2local"],
-    ["--remove-unused-names", "--heap2local"],
-    ["--generate-stack-ir"],
-    ["--licm"],
-    ["--local-subtyping"],
-    ["--memory-packing"],
-    ["--merge-blocks"],
-    ['--merge-locals'],
-    ['--monomorphize'],
-    ['--monomorphize-always'],
-    ['--once-reduction'],
-    ["--optimize-casts"],
-    ["--optimize-instructions"],
-    ["--optimize-stack-ir"],
-    ["--generate-stack-ir", "--optimize-stack-ir"],
-    ["--pick-load-signs"],
-    ["--precompute"],
-    ["--precompute-propagate"],
-    ["--print"],
-    ["--remove-unused-brs"],
-    ["--remove-unused-nonfunction-module-elements"],
-    ["--remove-unused-module-elements"],
-    ["--remove-unused-names"],
-    ["--reorder-functions"],
-    ["--reorder-locals"],
-    ["--flatten", "--rereloop"],
-    ["--roundtrip"],
-    ["--rse"],
-    ["--signature-pruning"],
-    ["--signature-refining"],
-    ["--simplify-locals"],
-    ["--simplify-locals-nonesting"],
-    ["--simplify-locals-nostructure"],
-    ["--simplify-locals-notee"],
-    ["--simplify-locals-notee-nostructure"],
-    ["--ssa"],
-    ["--type-refining"],
-    ["--type-merging"],
-    ["--type-ssa"],
-    ["--vacuum"],
+    ("--generate-global-effects",),
+    ("--global-refining",),
+    ("--gsi",),
+    ("--gto",),
+    ("--gufa",),
+    ("--gufa-optimizing",),
+    ("--local-cse",),
+    ("--heap2local",),
+    ("--remove-unused-names", "--heap2local",),
+    ("--generate-stack-ir",),
+    ("--licm",),
+    ("--local-subtyping",),
+    ("--memory-packing",),
+    ("--merge-blocks",),
+    ('--merge-locals',),
+    ('--monomorphize',),
+    ('--monomorphize-always',),
+    ('--once-reduction',),
+    ("--optimize-casts",),
+    ("--optimize-instructions",),
+    ("--optimize-stack-ir",),
+    ("--generate-stack-ir", "--optimize-stack-ir",),
+    ("--pick-load-signs",),
+    ("--precompute",),
+    ("--precompute-propagate",),
+    ("--print",),
+    ("--remove-unused-brs",),
+    ("--remove-unused-nonfunction-module-elements",),
+    ("--remove-unused-module-elements",),
+    ("--remove-unused-names",),
+    ("--remove-unused-types",),
+    ("--reorder-functions",),
+    ("--reorder-locals",),
+    ("--flatten", "--rereloop",),
+    ("--roundtrip",),
+    ("--rse",),
+    ("--signature-pruning",),
+    ("--signature-refining",),
+    ("--simplify-locals",),
+    ("--simplify-locals-nonesting",),
+    ("--simplify-locals-nostructure",),
+    ("--simplify-locals-notee",),
+    ("--simplify-locals-notee-nostructure",),
+    ("--ssa",),
+    ("--type-refining",),
+    ("--type-merging",),
+    ("--type-ssa",),
+    ("--vacuum",),
 ]
 
+# TODO: Fix these passes so that they still work without --closed-world!
+requires_closed_world = {("--type-refining",),
+                         ("--signature-pruning",),
+                         ("--signature-refining",),
+                         ("--gto",),
+                         ("--remove-unused-types",),
+                         ("--cfp",),
+                         ("--gsi",),
+                         ("--type-ssa",),
+                         ("--type-merging",)}
 
 def randomize_opt_flags():
     flag_groups = []
     has_flatten = False
+
+    if CLOSED_WORLD:
+        usable_opt_choices = opt_choices
+    else:
+        usable_opt_choices = [choice
+                              for choice in opt_choices
+                              if choice not in requires_closed_world]
+
     # core opts
     while 1:
-        choice = random.choice(opt_choices)
+        choice = random.choice(usable_opt_choices)
         if '--flatten' in choice or '-O4' in choice:
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
@@ -1376,7 +1395,7 @@ def randomize_opt_flags():
     # maybe add an extra round trip
     if random.random() < 0.5:
         pos = random.randint(0, len(flag_groups))
-        flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
+        flag_groups = flag_groups[:pos] + [('--roundtrip',)] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):

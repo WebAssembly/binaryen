@@ -103,6 +103,10 @@ struct TypeMerging : public Pass {
       return;
     }
 
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "TypeMerging requires --closed-world";
+    }
+
     // First, find all the cast types.
 
     ModuleUtils::ParallelFunctionAnalysis<ReferredTypes> analysis(
