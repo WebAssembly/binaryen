@@ -2513,7 +2513,7 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     return;
   }
   shouldBeEqual(
-    curr->intendedType.getBottom(),
+    curr->castType.getHeapType().getBottom(),
     curr->ref->type.getHeapType().getBottom(),
     curr,
     "ref.test target type and ref type must have a common supertype");

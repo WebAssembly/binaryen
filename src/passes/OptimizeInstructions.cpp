@@ -2021,20 +2021,29 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
+    if (curr->ref->type.isNull()) {
+      // The input is null, so we know whether this will succeed or fail.
+      int32_t result = curr->castType.isNullable() ? 1 : 0;
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(result))}));
+      return;
+    }
+
     auto refType = curr->ref->type.getHeapType();
-    auto intendedType = curr->intendedType;
+    auto intendedType = curr->castType.getHeapType();
 
     // See above in RefCast.
-    if (!canBeCastTo(refType, intendedType)) {
+    if (!canBeCastTo(refType, intendedType) &&
+        (curr->castType.isNonNullable() || curr->ref->type.isNonNullable())) {
       // This test cannot succeed, and will definitely return 0.
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeConst(int32_t(0))));
       return;
     }
 
-    if (curr->ref->type.isNonNullable() &&
-        HeapType::isSubType(refType, intendedType)) {
-      // This static test will definitely succeed.
+    if (HeapType::isSubType(refType, intendedType) &&
+        (curr->castType.isNullable() || curr->ref->type.isNonNullable())) {
+      // This test will definitely succeed and return 1.
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
       return;

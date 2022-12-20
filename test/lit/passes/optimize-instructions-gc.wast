@@ -14,18 +14,18 @@
     (field $i64 (mut i64))
   ))
 
+  ;; CHECK:      (type $array (array (mut i8)))
+
   ;; CHECK:      (type $A (struct (field i32)))
+  ;; NOMNL:      (type $array (array (mut i8)))
+
   ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-
-  ;; CHECK:      (type $array (array (mut i8)))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-
-  ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
+  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
@@ -1882,6 +1882,21 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test null $array
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; NOMNL-NEXT:  (drop
@@ -1892,12 +1907,41 @@
   ;; NOMNL-NEXT:    (i32.const 0)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test null $array
+  ;; NOMNL-NEXT:    (local.get $struct)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (local.get $struct)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $incompatible-test (param $struct (ref null $struct))
     (drop
       ;; This test will definitely fail, so we can turn it into 0.
       (ref.test $array
         (local.get $struct)
+      )
+    )
+    (drop
+      ;; But this one might succeed due to a null, so don't optimize it.
+      (ref.test null $array
+        (local.get $struct)
+      )
+    )
+    (drop
+      ;; This one cannot succeed due to a null, so optimize it.
+      (ref.test null $array
+        (ref.as_non_null
+          (local.get $struct)
+        )
       )
     )
   )
@@ -1913,6 +1957,34 @@
   ;; CHECK-NEXT:    (local.get $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $subtype-compatible (type $ref?|$A|_ref?|$B|_=>_none) (param $A (ref null $A)) (param $B (ref null $B))
   ;; NOMNL-NEXT:  (drop
@@ -1923,6 +1995,34 @@
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.test $A
   ;; NOMNL-NEXT:    (local.get $B)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $B)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (local.get $B)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (local.get $B)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 1)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -1939,10 +2039,37 @@
         (local.get $B)
       )
     )
+    (drop
+      ;; If the test is nullable, this will succeed.
+      (ref.test null $A
+        (local.get $B)
+      )
+    )
+    (drop
+      ;; We will also succeed if the input is non-nullable.
+      (ref.test $A
+        (ref.as_non_null
+          (local.get $B)
+        )
+      )
+    )
+    (drop
+      ;; Or if the test is nullable and the input is non-nullable.
+      (ref.test null $A
+        (ref.as_non_null
+          (local.get $B)
+        )
+      )
+    )
   )
   ;; CHECK:      (func $ref.test-unreachable (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test $A
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test null $A
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1953,12 +2080,22 @@
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test null $A
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref.test-unreachable (param $A (ref null $A))
     (drop
       ;; We should ignore unreachable ref.tests and not try to compare their
       ;; HeapTypes.
       (ref.test $A
+        (unreachable)
+      )
+    )
+    (drop
+      (ref.test null $A
         (unreachable)
       )
     )

@@ -1522,12 +1522,11 @@ public:
 
   Expression* ref;
 
-  HeapType intendedType;
+  Type castType;
 
   void finalize();
 
-  // TODO: Support ref.test null as well.
-  Type getCastType() { return Type(intendedType, NonNullable); }
+  Type getCastType() { return castType; }
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
