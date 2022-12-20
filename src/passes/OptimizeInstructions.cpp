@@ -58,6 +58,22 @@ static Index getBitsForType(Type type) {
   return type.getByteSize() * 8;
 }
 
+static bool isSignedOp(BinaryOp op) {
+  switch (op) {
+    case LtSInt32:
+    case LeSInt32:
+    case GtSInt32:
+    case GeSInt32:
+    case LtSInt64:
+    case LeSInt64:
+    case GtSInt64:
+    case GeSInt64:
+      return true;
+    default:
+      return false;
+  }
+}
+
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
@@ -4070,28 +4086,97 @@ private:
       // x + C1 > C2   ==>  x + (C1-C2) > 0  if no overflowing, C2 <  C1
       // And similarly for other relational operations on integers with a "+"
       // on the left.
+      // TODO: support - and not just +
       {
         Binary* add;
         Const* c1;
         Const* c2;
-        if ((matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) ||
-             matches(curr,
-                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2)))) &&
+        if (matches(curr,
+                    binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
             !canOverflow(add)) {
-          if (c2->value.geU(c1->value).getInteger()) {
-            // This is the first line above, we turn into x > (C2-C1)
-            c2->value = c2->value.sub(c1->value);
+          // We want to subtract C2-C1 or C1-C2. When doing so, we must avoid an
+          // overflow in that subtraction (so that we keep all the math here
+          // properly linear in the mathematical sense). Overflows that concern
+          // us include an underflow with unsigned values (e.g. 10 - 20, which
+          // flips the result to a large positive number), and a sign bit
+          // overflow for signed values (e.g. 0x80000000 - 1 = 0x7fffffff flips
+          // from a negative number, -1, to a positive one). We also need to be
+          // careful of signed handling of 0x80000000, for whom 0 - 0x80000000
+          // is equal to 0x80000000, leading to
+          //   x + 0x80000000 > 0                ;; always false
+          // (apply the rule)
+          //   x > 0 - 0x80000000 = 0x80000000   ;; depends on x
+          // The general principle in all of this is that when we go from
+          //   (a)    x + C1 > C2
+          // to
+          //   (b)    x      > (C2-C1)
+          // then we want to adjust both sides in the same (linear) manner. That
+          // is, we can write the latter as
+          //   (b')   x + 0  > (C2-C1)
+          // Comparing (a) and (b'), we want the constants to change in a
+          // consistent way: C1 changes to 0, and C2 changes to C2-C1. Both
+          // transformations should decrease the value, which is violated in all
+          // the overflows described above:
+          //   * Unsigned overflow: C1=20, C2=10, then C1 decreases but C2-C1
+          //     is larger than C2.
+          //   * Sign flip: C1=1, C2=0x80000000, then C1 decreases but C2-C1 is
+          //     is larger than C2.
+          //   * C1=0x80000000, C2=0, then C1 increases while C2-C1 stays the
+          //     same.
+          // In the first and second case we can apply the other rule using
+          // C1-C2 rather than C2-C1. The third case, however, doesn't even work
+          // that way.
+          auto C1 = c1->value;
+          auto C2 = c2->value;
+          auto C1SubC2 = C1.sub(C2);
+          auto C2SubC1 = C2.sub(C1);
+          auto zero = Literal::makeZero(add->type);
+          auto doC1SubC2 = false;
+          auto doC2SubC1 = false;
+          // Ignore the case of C1 or C2 being zero, as then C2-C1 or C1-C2
+          // does not change anything (and we don't want the optimizer to think
+          // we improved anything, or we could infinite loop on the mirage of
+          // progress).
+          if (C1 != zero && C2 != zero) {
+            if (isSignedOp(curr->op)) {
+              if (C2SubC1.leS(C2).getInteger() && zero.leS(C1).getInteger()) {
+                // C2=>C2-C1 and C1=>0 both decrease, which means we can do the
+                // rule
+                //   (a)    x + C1   > C2
+                //   (b')   x (+ 0)  > (C2-C1)
+                // That is, subtracting C1 from both sides is ok; the constants
+                // on both sides change in the same manner.
+                doC2SubC1 = true;
+              } else if (C1SubC2.leS(C1).getInteger() &&
+                         zero.leS(C2).getInteger()) {
+                // N.B. this code path is not tested atm as other optimizations
+                // will canonicalize x + C into x - C, and so we would need to
+                // implement the TODO above on subtraction and not only support
+                // addition here.
+                doC1SubC2 = true;
+              }
+            } else {
+              // Unsigned.
+              if (C2SubC1.leU(C2).getInteger() && zero.leU(C1).getInteger()) {
+                doC2SubC1 = true;
+              } else if (C1SubC2.leU(C1).getInteger() &&
+                         zero.leU(C2).getInteger()) {
+                doC1SubC2 = true;
+              }
+              // For unsigned, one of the cases must work out, as there are no
+              // corner cases with the sign bit.
+              assert(doC2SubC1 || doC1SubC2);
+            }
+          }
+          if (doC2SubC1) {
+            // This is the first line above, we turn into x > (C2-C1).
+            c2->value = C2SubC1;
             curr->left = add->left;
             return curr;
           }
-          // This is the second line above, we turn into x + (C1-C2) > 0. Other
-          // optimizations can often kick in later. However, we must rule out
-          // the case where C2 is already 0 (as then we would not actually
-          // change anything, and we could infinite loop).
-          auto zero = Literal::makeZero(c2->type);
-          if (c2->value != zero) {
-            c1->value = c1->value.sub(c2->value);
+          // This is the second line above, we turn into x + (C1-C2) > 0.
+          if (doC1SubC2) {
+            c1->value = C1SubC2;
             c2->value = zero;
             return curr;
           }
