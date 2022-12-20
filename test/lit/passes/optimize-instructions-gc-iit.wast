@@ -138,7 +138,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $parent
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -151,7 +154,10 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $parent
+  ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -164,7 +170,10 @@
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast $parent
+  ;; NOMNL-TNH-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (unreachable)
+  ;; NOMNL-TNH-NEXT:    )
   ;; NOMNL-TNH-NEXT:    (unreachable)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )

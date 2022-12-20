@@ -2783,8 +2783,11 @@ Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   int i = 1;
-  std::optional<Nullability> nullability;
-  if (s[0]->str().str != "ref.cast_static") {
+  Nullability nullability;
+  bool legacy = false;
+  if (s[0]->str().str == "ref.cast_static") {
+    legacy = true;
+  } else {
     nullability = NonNullable;
     if (s[i]->str().str == "null") {
       nullability = Nullable;
@@ -2793,22 +2796,29 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   }
   auto heapType = parseHeapType(*s[i++]);
   auto* ref = parseExpression(*s[i++]);
-  if (nullability && ref->type.isRef()) {
-    if (*nullability == NonNullable && ref->type.isNullable()) {
+  if (legacy) {
+    // Legacy polymorphic behavior.
+    nullability = ref->type.getNullability();
+  } else if (ref->type.isRef()) {
+    // Only accept instructions emulating the legacy behavior for now.
+    if (nullability == NonNullable && ref->type.isNullable()) {
       throw ParseException(
         "ref.cast on nullable input not yet supported", s.line, s.col);
-    } else if (*nullability == Nullable && ref->type.isNonNullable()) {
+    } else if (nullability == Nullable && ref->type.isNonNullable()) {
       throw ParseException(
         "ref.cast null on non-nullable input not yet supported", s.line, s.col);
     }
   }
-  return Builder(wasm).makeRefCast(ref, heapType, RefCast::Safe);
+  auto type = Type(heapType, nullability);
+  return Builder(wasm).makeRefCast(ref, type, RefCast::Safe);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCastNop(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto* ref = parseExpression(*s[2]);
-  return Builder(wasm).makeRefCast(ref, heapType, RefCast::Unsafe);
+  // Legacy polymorphic behavior.
+  auto type = Type(heapType, ref->type.getNullability());
+  return Builder(wasm).makeRefCast(ref, type, RefCast::Unsafe);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {

@@ -1525,6 +1525,9 @@ public:
   HeapType intendedType;
 
   void finalize();
+
+  // TODO: Support ref.test null as well.
+  Type getCastType() { return Type(intendedType, NonNullable); }
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1533,14 +1536,14 @@ public:
 
   Expression* ref;
 
-  HeapType intendedType;
-
   // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
   // measurements.
   enum Safety { Safe, Unsafe };
   Safety safety = Safe;
 
   void finalize();
+
+  Type getCastType() { return type; }
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1554,6 +1557,9 @@ public:
   HeapType intendedType;
 
   void finalize();
+
+  // TODO: Support br_on_cast* null as well.
+  Type getCastType() { return Type(intendedType, NonNullable); }
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();

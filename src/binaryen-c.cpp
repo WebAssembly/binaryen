@@ -1749,11 +1749,10 @@ BinaryenExpressionRef BinaryenRefTest(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenRefCast(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,
-                                      BinaryenHeapType intendedType) {
-  return static_cast<Expression*>(Builder(*(Module*)module)
-                                    .makeRefCast((Expression*)ref,
-                                                 HeapType(intendedType),
-                                                 RefCast::Safety::Safe));
+                                      BinaryenType type) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeRefCast((Expression*)ref, Type(type), RefCast::Safety::Safe));
 }
 BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                    BinaryenOp op,
@@ -4086,17 +4085,6 @@ void BinaryenRefCastSetRef(BinaryenExpressionRef expr,
   assert(expression->is<RefCast>());
   assert(refExpr);
   static_cast<RefCast*>(expression)->ref = (Expression*)refExpr;
-}
-BinaryenHeapType BinaryenRefCastGetIntendedType(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<RefCast>());
-  return static_cast<RefCast*>(expression)->intendedType.getID();
-}
-void BinaryenRefCastSetIntendedType(BinaryenExpressionRef expr,
-                                    BinaryenHeapType intendedType) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<RefCast>());
-  static_cast<RefCast*>(expression)->intendedType = HeapType(intendedType);
 }
 // BrOn
 BinaryenOp BinaryenBrOnGetOp(BinaryenExpressionRef expr) {

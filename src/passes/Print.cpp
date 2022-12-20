@@ -2113,17 +2113,19 @@ struct PrintExpressionContents
     printHeapType(o, curr->intendedType, wasm);
   }
   void visitRefCast(RefCast* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
     if (curr->safety == RefCast::Unsafe) {
       printMedium(o, "ref.cast_nop ");
     } else {
-      // Emulate legacy polymorphic behavior for now.
-      if (curr->ref->type.isNullable()) {
+      if (curr->type.isNullable()) {
         printMedium(o, "ref.cast null ");
       } else {
         printMedium(o, "ref.cast ");
       }
     }
-    printHeapType(o, curr->intendedType, wasm);
+    printHeapType(o, curr->type.getHeapType(), wasm);
   }
 
   void visitBrOn(BrOn* curr) {
@@ -2824,6 +2826,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void visitCallRef(CallRef* curr) {
     maybePrintUnreachableOrNullReplacement(curr, curr->target->type);
+  }
+  void visitRefCast(RefCast* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitStructNew(StructNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);

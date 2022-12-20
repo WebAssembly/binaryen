@@ -875,11 +875,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefCast*
-  makeRefCast(Expression* ref, HeapType intendedType, RefCast::Safety safety) {
+  RefCast* makeRefCast(Expression* ref, Type type, RefCast::Safety safety) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
-    ret->intendedType = intendedType;
+    ret->type = type;
     ret->safety = safety;
     ret->finalize();
     return ret;

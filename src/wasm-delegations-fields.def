@@ -621,7 +621,6 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
-    DELEGATE_FIELD_HEAPTYPE(RefCast, intendedType);
     DELEGATE_FIELD_CHILD(RefCast, ref);
     DELEGATE_END(RefCast);
     break;
