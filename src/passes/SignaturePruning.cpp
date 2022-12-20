@@ -53,6 +53,10 @@ struct SignaturePruning : public Pass {
       return;
     }
 
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "SignaturePruning requires --closed-world";
+    }
+
     if (!module->tables.empty()) {
       // When there are tables we must also take their types into account, which
       // would require us to take call_indirect, element segments, etc. into
