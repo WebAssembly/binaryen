@@ -27,6 +27,7 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/insert_ordered.h"
+#include "support/topological_sort.h"
 #include "wasm-features.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
@@ -2709,25 +2710,17 @@ validateSubtyping(const std::vector<HeapType>& types) {
 }
 
 std::optional<TypeBuilder::Error>
-canonicalizeNominal(CanonicalizationState& state) {
-  for (auto& info : state.newInfos) {
-    info->recGroup = nullptr;
-  }
-
-  // Nominal types do not require separate canonicalization, so just validate
-  // that their subtyping is correct.
-
+getSupertypeCycle(const std::vector<HeapType>& types) {
   // Ensure there are no cycles in the subtype graph. This is the classic DFA
   // algorithm for detecting cycles, but in the form of a simple loop because
   // each node (type) has at most one child (supertype).
   std::unordered_set<HeapTypeInfo*> checked;
-  for (size_t i = 0; i < state.results.size(); ++i) {
-    HeapType type = state.results[i];
-    if (type.isBasic()) {
+  for (size_t i = 0; i < types.size(); ++i) {
+    if (types[i].isBasic()) {
       continue;
     }
     std::unordered_set<HeapTypeInfo*> path;
-    for (auto* curr = getHeapTypeInfo(type);
+    for (auto* curr = getHeapTypeInfo(types[i]);
          curr != nullptr && !checked.count(curr);
          curr = curr->supertype) {
       if (!path.insert(curr).second) {
@@ -2739,6 +2732,17 @@ canonicalizeNominal(CanonicalizationState& state) {
   }
 
   return {};
+}
+
+std::optional<TypeBuilder::Error>
+canonicalizeNominal(CanonicalizationState& state) {
+  for (auto& info : state.newInfos) {
+    info->recGroup = nullptr;
+  }
+
+  // Nominal types do not require separate canonicalization, so just validate
+  // that their subtyping is correct.
+  return getSupertypeCycle(state.results);
 }
 
 std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
@@ -2977,6 +2981,87 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   }
 
   return {state.results};
+}
+
+TypeBuilder::BuildResult TypeBuilder::buildRelaxed() {
+  // Map types to indices and check for supertype cycles to avoid infinite
+  // looping when tryiing to sort in the next step.
+  std::unordered_map<HeapType, size_t> originalTypeIndices;
+  std::vector<HeapType> originalTypes;
+  originalTypes.reserve(size());
+  for (size_t i = 0; i < size(); ++i) {
+    auto type = getTempHeapType(i);
+    originalTypeIndices[type] = i;
+  }
+
+  if (auto err = getSupertypeCycle(originalTypes)) {
+    return {*err};
+  }
+
+  // Sort to have supertypes come before their subtypes.
+  struct SortedTypes : TopologicalSort<HeapType, SortedTypes> {
+    SortedTypes(TypeBuilder& builder) {
+      // Record the supertypes that are also temporary types in this builder.
+      std::unordered_set<HeapType> supertypes;
+      for (auto& entry : builder.impl->entries) {
+        auto super = entry.get().getSuperType();
+        if (super && isTemp(*super)) {
+          supertypes.insert(*super);
+        }
+      }
+      // Types that are not supertypes of others are the roots.
+      for (auto& entry : builder.impl->entries) {
+        auto type = entry.get();
+        if (!supertypes.count(type)) {
+          push(type);
+        }
+      }
+    }
+
+    void pushPredecessors(HeapType type) {
+      auto super = type.getSuperType();
+      if (super && isTemp(*super)) {
+        push(*super);
+      }
+    }
+  };
+
+  // Map sorted type indices to their original type indices.
+  std::vector<size_t> originalIndices;
+  originalIndices.reserve(size());
+  for (auto type : SortedTypes(*this)) {
+    auto it = originalTypeIndices.find(type);
+    assert(it != originalTypeIndices.end());
+    originalIndices.push_back(it->second);
+  }
+
+  // Reorder the builder entries.
+  std::vector<Impl::Entry> sortedEntries;
+  sortedEntries.reserve(size());
+  for (size_t i = 0; i < size(); ++i) {
+    sortedEntries.emplace_back(std::move(impl->entries[originalIndices[i]]));
+  }
+  impl->entries = std::move(sortedEntries);
+
+  // Create the single rec group.
+  createRecGroup(0, size());
+
+  // Time to build!
+  auto buildResults = build();
+  if (const auto* err = buildResults.getError()) {
+    assert(err->reason != ErrorReason::ForwardSupertypeReference);
+    assert(err->reason != ErrorReason::ForwardChildReference);
+    return {Error{originalIndices[err->index], err->reason}};
+  }
+  auto built = *buildResults;
+
+  // Reorder the built types back to their original order.
+  std::vector<HeapType> results(size());
+  for (size_t i = 0; i < size(); ++i) {
+    results[originalIndices[i]] = built[i];
+  }
+
+  return {results};
 }
 
 } // namespace wasm

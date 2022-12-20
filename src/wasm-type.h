@@ -647,11 +647,12 @@ struct TypeBuilder {
   };
 
   // Returns all of the newly constructed heap types. May only be called once
-  // all of the heap types have been initialized with `setHeapType`. In nominal
-  // mode, all of the constructed HeapTypes will be fresh and distinct. In
-  // nominal mode, will also produce a fatal error if the declared subtype
-  // relationships are not valid.
+  // all of the heap types have been initialized with `setHeapType`. In relaxed
+  // mode, the types are allowed to appear in any order and be arbitrarily
+  // mututally recursive because they will be implicitly reordered and put into
+  // a single rec group, so there should not be any existing rec groups.
   BuildResult build();
+  BuildResult buildRelaxed();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType
   // and getTempHeapType methods.
