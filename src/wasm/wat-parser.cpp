@@ -345,10 +345,12 @@ struct ParseInput {
 // Utilities
 // =========
 
-// The location and possible name of a module-level definition in the input.
+// The location, possible name, and index of a module-level definition in the
+// input.
 struct DefPos {
   Name name;
   Index pos;
+  Index index;
 };
 
 struct GlobalType {
@@ -427,10 +429,10 @@ Result<> addExports(ParseInput& in,
 Result<IndexMap> createIndexMap(ParseInput& in,
                                 const std::vector<DefPos>& defs) {
   IndexMap indices;
-  for (Index i = 0; i < defs.size(); ++i) {
-    if (defs[i].name.is()) {
-      if (!indices.insert({defs[i].name, i}).second) {
-        return in.err(defs[i].pos, "duplicate element name");
+  for (auto& def : defs) {
+    if (def.name.is()) {
+      if (!indices.insert({def.name, def.index}).second) {
+        return in.err(def.pos, "duplicate element name");
       }
     }
   }
@@ -450,9 +452,9 @@ template<typename Ctx>
 Result<> parseDefs(Ctx& ctx,
                    const std::vector<DefPos>& defs,
                    MaybeResult<> (*parser)(Ctx&)) {
-  for (Index i = 0; i < defs.size(); ++i) {
-    ctx.index = i;
-    WithPosition with(ctx, defs[i].pos);
+  for (auto& def : defs) {
+    ctx.index = def.index;
+    WithPosition with(ctx, def.pos);
     auto parsed = parser(ctx);
     CHECK_ERR(parsed);
     assert(parsed);
@@ -801,11 +803,13 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addArrayType(ArrayT) {}
   Result<> addSubtype(Index) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
-    subtypeDefs.push_back({name, pos});
+    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size())});
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
-  void finishDeftype(Index pos) { typeDefs.push_back({{}, pos}); }
+  void finishDeftype(Index pos) {
+    typeDefs.push_back({{}, pos, Index(typeDefs.size())});
+  }
 
   Result<TypeUseT>
   makeTypeUse(Index pos, std::optional<HeapTypeT> type, ParamsT*, ResultsT*) {
@@ -847,7 +851,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     auto f = addFuncDecl(pos, name, import);
     CHECK_ERR(f);
     CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
-    funcDefs.push_back({name, pos});
+    funcDefs.push_back({name, pos, Index(funcDefs.size())});
     return Ok{};
   }
 
@@ -881,7 +885,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     auto m = addMemoryDecl(pos, name, import);
     CHECK_ERR(m);
     CHECK_ERR(addExports(in, wasm, *m, exports, ExternalKind::Memory));
-    memoryDefs.push_back({name, pos});
+    memoryDefs.push_back({name, pos, Index(memoryDefs.size())});
     return Ok{};
   }
 
@@ -916,7 +920,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     auto g = addGlobalDecl(pos, name, import);
     CHECK_ERR(g);
     CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
-    globalDefs.push_back({name, pos});
+    globalDefs.push_back({name, pos, Index(globalDefs.size())});
     return Ok{};
   }
 };
