@@ -2025,8 +2025,12 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  o << U32LEB(BinaryConsts::RefTest);
-  parent.writeHeapType(curr->intendedType);
+  if (curr->castType.isNullable()) {
+    o << U32LEB(BinaryConsts::RefTestNull);
+  } else {
+    o << U32LEB(BinaryConsts::RefTest);
+  }
+  parent.writeHeapType(curr->castType.getHeapType());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {

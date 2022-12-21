@@ -868,10 +868,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefTest* makeRefTest(Expression* ref, HeapType intendedType) {
+  RefTest* makeRefTest(Expression* ref, Type castType) {
     auto* ret = wasm.allocator.alloc<RefTest>();
     ret->ref = ref;
-    ret->intendedType = intendedType;
+    ret->castType = castType;
     ret->finalize();
     return ret;
   }

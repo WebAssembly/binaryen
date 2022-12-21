@@ -6893,11 +6893,14 @@ bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefTestStatic || code == BinaryConsts::RefTest) {
+  if (code == BinaryConsts::RefTestStatic || code == BinaryConsts::RefTest ||
+      code == BinaryConsts::RefTestNull) {
     bool legacy = code == BinaryConsts::RefTestStatic;
-    auto intendedType = legacy ? getIndexedHeapType() : getHeapType();
+    auto castType = legacy ? getIndexedHeapType() : getHeapType();
+    auto nullability =
+      (code == BinaryConsts::RefTestNull) ? Nullable : NonNullable;
     auto* ref = popNonVoidExpression();
-    out = Builder(wasm).makeRefTest(ref, intendedType);
+    out = Builder(wasm).makeRefTest(ref, Type(castType, nullability));
     return true;
   }
   return false;

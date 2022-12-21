@@ -2165,7 +2165,7 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (ref.test $[mut:i8]
+       (ref.test null $[mut:i8]
         (global.get $i8Array-global)
        )
       )
