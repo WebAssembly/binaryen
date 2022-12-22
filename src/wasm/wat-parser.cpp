@@ -653,6 +653,7 @@ struct NullInstrParserCtx {
   using LocalIdxT = Ok;
   using GlobalIdxT = Ok;
   using MemoryIdxT = Ok;
+  using DataIdxT = Ok;
 
   using MemargT = Ok;
 
@@ -675,6 +676,8 @@ struct NullInstrParserCtx {
   GlobalIdxT getGlobalFromName(Name) { return Ok{}; }
   MemoryIdxT getMemoryFromIdx(uint32_t) { return Ok{}; }
   MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
+  DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
+  DataIdxT getDataFromName(Name) { return Ok{}; }
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
@@ -723,6 +726,8 @@ struct NullInstrParserCtx {
     Index, SIMDLoadStoreLaneOp, MemoryIdxT*, MemargT, uint8_t) {
     return Ok{};
   }
+  InstrT makeMemoryInit(Index, MemoryIdxT*, DataIdxT) { return Ok{}; }
+  InstrT makeDataDrop(Index, DataIdxT) { return Ok{}; }
 
   InstrT makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
   InstrT makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
@@ -750,6 +755,16 @@ struct NullInstrParserCtx {
   }
   template<typename HeapTypeT>
   InstrT makeStructSet(Index, HeapTypeT, FieldIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> InstrT makeArrayNew(Index, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> InstrT makeArrayNewDefault(Index, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  InstrT makeArrayNewData(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
 };
@@ -1226,6 +1241,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using LocalIdxT = Index;
   using GlobalIdxT = Name;
   using MemoryIdxT = Name;
+  using DataIdxT = uint32_t;
 
   using MemargT = Memarg;
 
@@ -1448,6 +1464,22 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return in.err("memory $" + name.toString() + " does not exist");
     }
     return name;
+  }
+
+  Result<uint32_t> getDataFromIdx(uint32_t idx) {
+    if (idx >= wasm.dataSegments.size()) {
+      return in.err("data index out of bounds");
+    }
+    return idx;
+  }
+
+  Result<uint32_t> getDataFromName(Name name) {
+    for (uint32_t i = 0; i < wasm.dataSegments.size(); ++i) {
+      if (wasm.dataSegments[i]->name == name) {
+        return i;
+      }
+    }
+    return in.err("data $" + name.toString() + " does not exist");
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
@@ -1854,6 +1886,22 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                   op, memarg.offset, memarg.align, lane, *ptr, *vec, *m));
   }
 
+  Result<> makeMemoryInit(Index pos, Name* mem, uint32_t data) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto offset = pop(pos);
+    CHECK_ERR(offset);
+    auto dest = pop(pos);
+    CHECK_ERR(dest);
+    return push(pos, builder.makeMemoryInit(data, *dest, *offset, *size, *m));
+  }
+
+  Result<> makeDataDrop(Index pos, uint32_t data) {
+    return push(pos, builder.makeDataDrop(data));
+  }
+
   Result<> makeMemoryCopy(Index pos, Name* destMem, Name* srcMem) {
     auto destMemory = getMemory(pos, destMem);
     CHECK_ERR(destMemory);
@@ -1952,9 +2000,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeStructGet(Index pos, HeapType type, Index field, bool signed_) {
-    assert(type.isStruct());
+    if (!type.isStruct()) {
+      return in.err(pos, "expected struct type annotation");
+    }
     const auto& fields = type.getStruct().fields;
-    assert(fields.size() > field);
+    if (field >= fields.size()) {
+      return in.err(pos, "struct field index out of bounds");
+    }
     auto fieldType = fields[field].type;
     auto ref = pop(pos);
     CHECK_ERR(ref);
@@ -1963,14 +2015,50 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeStructSet(Index pos, HeapType type, Index field) {
-    assert(type.isStruct());
-    assert(type.getStruct().fields.size() > field);
+    if (!type.isStruct()) {
+      return in.err(pos, "expected struct type annotation");
+    }
+    if (field >= type.getStruct().fields.size()) {
+      return in.err(pos, "struct field index out of bounds");
+    }
     auto val = pop(pos);
     CHECK_ERR(val);
     auto ref = pop(pos);
     CHECK_ERR(ref);
     CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
     return push(pos, builder.makeStructSet(field, *ref, *val));
+  }
+
+  Result<> makeArrayNew(Index pos, HeapType type) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    return push(pos, builder.makeArrayNew(type, *size, *val));
+  }
+
+  Result<> makeArrayNewDefault(Index pos, HeapType type) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    return push(pos, builder.makeArrayNew(type, *size));
+  }
+
+  Result<> makeArrayNewData(Index pos, HeapType type, uint32_t data) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto offset = pop(pos);
+    CHECK_ERR(offset);
+    return push(pos,
+                builder.makeArrayNewSeg(NewData, type, data, *offset, *size));
   }
 };
 
@@ -2881,12 +2969,33 @@ makeSIMDLoadStoreLane(Ctx& ctx, Index pos, SIMDLoadStoreLaneOp op, int bytes) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeMemoryInit(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto reset = ctx.in.getPos();
+
+  auto retry = [&]() -> Result<typename Ctx::InstrT> {
+    // We failed to parse. Maybe the data index was accidentally parsed as the
+    // optional memory index. Try again without parsing a memory index.
+    WithPosition with(ctx, reset);
+    auto data = dataidx(ctx);
+    CHECK_ERR(data);
+    return ctx.makeMemoryInit(pos, nullptr, *data);
+  };
+
+  auto mem = maybeMemidx(ctx);
+  if (mem.getErr()) {
+    return retry();
+  }
+  auto data = dataidx(ctx);
+  if (data.getErr()) {
+    return retry();
+  }
+  return ctx.makeMemoryInit(pos, mem.getPtr(), *data);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeDataDrop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeDataDrop(pos, *data);
 }
 
 template<typename Ctx>
@@ -3094,13 +3203,29 @@ Result<typename Ctx::InstrT> makeStructSet(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNew(Ctx& ctx, Index pos, bool default_) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  if (default_) {
+    return ctx.makeArrayNewDefault(pos, *type);
+  }
+  return ctx.makeArrayNew(pos, *type);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeArrayNewSeg(Ctx& ctx, Index pos, ArrayNewSegOp op) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  switch (op) {
+    case NewData: {
+      auto data = dataidx(ctx);
+      CHECK_ERR(data);
+      return ctx.makeArrayNewData(pos, *type, *data);
+    }
+    case NewElem:
+      return ctx.in.err("unimplemented instruction");
+  }
+  WASM_UNREACHABLE("unexpected op");
 }
 
 template<typename Ctx>
@@ -3289,6 +3414,18 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
     return ctx.getGlobalFromName(*id);
   }
   return ctx.in.err("expected global index or identifier");
+}
+
+// dataidx ::= x:u32 => x
+//           | v:id => x (if data[x] = v)
+template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getDataFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getDataFromName(*id);
+  }
+  return ctx.in.err("expected data index or identifier");
 }
 
 // localidx ::= x:u32 => x
