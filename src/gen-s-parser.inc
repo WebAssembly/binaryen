@@ -9544,7 +9544,7 @@ switch (buf[0]) {
   default: goto parse_error;
 }
 parse_error:
-  return ctx.in.err("unrecognized instruction");
+  return ctx.in.err(pos, "unrecognized instruction");
 #endif // NEW_INSTRUCTION_PARSER
 
 // clang-format on

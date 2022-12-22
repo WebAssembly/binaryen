@@ -767,7 +767,7 @@ def instruction_parser(new_parser=False):
     printer.print_line("parse_error:")
     with printer.indent():
         if new_parser:
-            printer.print_line("return ctx.in.err(\"unrecognized instruction\");")
+            printer.print_line("return ctx.in.err(pos, \"unrecognized instruction\");")
         else:
             printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 

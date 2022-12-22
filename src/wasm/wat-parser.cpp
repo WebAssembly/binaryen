@@ -471,7 +471,8 @@ struct NullTypeParserCtx {
   using HeapTypeT = Ok;
   using TypeT = Ok;
   using ParamsT = Ok;
-  using ResultsT = Ok;
+  using ResultsT = size_t;
+  using BlockTypeT = Ok;
   using SignatureT = Ok;
   using StorageT = Ok;
   using FieldT = Ok;
@@ -504,8 +505,12 @@ struct NullTypeParserCtx {
   ParamsT makeParams() { return Ok{}; }
   void appendParam(ParamsT&, Name, TypeT) {}
 
-  ResultsT makeResults() { return Ok{}; }
-  void appendResult(ResultsT&, TypeT) {}
+  // We have to count results because whether or not a block introduces a
+  // typeuse that may implicitly define a type depends on how many results it
+  // has.
+  size_t makeResults() { return 0; }
+  void appendResult(size_t& results, TypeT) { ++results; }
+  size_t getResultsSize(size_t results) { return results; }
 
   SignatureT makeFuncType(ParamsT*, ResultsT*) { return Ok{}; }
 
@@ -534,6 +539,10 @@ struct NullTypeParserCtx {
   void appendDataString(DataStringT&, std::string_view) {}
 
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
+
+  BlockTypeT getBlockTypeFromResult(size_t results) { return Ok{}; }
+
+  Result<> getBlockTypeFromTypeUse(Index, TypeUseT) { return Ok{}; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -542,6 +551,7 @@ template<typename Ctx> struct TypeParserCtx {
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
   using ResultsT = std::vector<Type>;
+  using BlockTypeT = HeapType;
   using SignatureT = Signature;
   using StorageT = Field;
   using FieldT = Field;
@@ -587,6 +597,7 @@ template<typename Ctx> struct TypeParserCtx {
 
   ResultsT makeResults() { return {}; }
   void appendResult(ResultsT& results, TypeT type) { results.push_back(type); }
+  size_t getResultsSize(const ResultsT& results) { return results.size(); }
 
   SignatureT makeFuncType(ParamsT* params, ResultsT* results) {
     std::vector<Type> empty;
@@ -644,6 +655,11 @@ template<typename Ctx> struct TypeParserCtx {
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
 
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
+
+  HeapType getBlockTypeFromResult(const std::vector<Type> results) {
+    assert(results.size() == 1);
+    return HeapType(Signature(Type::none, results[0]));
+  }
 };
 
 struct NullInstrParserCtx {
@@ -683,6 +699,10 @@ struct NullInstrParserCtx {
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
+  template<typename BlockTypeT>
+  InstrT makeBlock(Index, std::optional<Name>, BlockTypeT, InstrsT) {
+    return Ok{};
+  }
   InstrT makeUnreachable(Index) { return Ok{}; }
   InstrT makeNop(Index) { return Ok{}; }
   InstrT makeBinary(Index, BinaryOp) { return Ok{}; }
@@ -792,7 +812,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   ParseInput in;
 
   // At this stage we only look at types to find implicit type definitions,
-  // which are inserted directly in to the context. We cannot materialize or
+  // which are inserted directly into the context. We cannot materialize or
   // validate any types because we don't know what types exist yet.
   //
   // Declared module elements are inserted into the module, but their bodies are
@@ -1190,6 +1210,16 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return TypeUse{it->second, ids};
   }
 
+  Result<HeapType> getBlockTypeFromTypeUse(Index pos, TypeUse use) {
+    assert(use.type.isSignature());
+    if (use.type.getSignature().params != Type::none) {
+      return in.err(pos, "block parameters not yet supported");
+    }
+    // TODO: Once we support block parameters, return an error here if any of
+    // them are named.
+    return use.type;
+  }
+
   GlobalTypeT makeGlobalType(Mutability mutability, TypeT type) {
     return {mutability, type};
   }
@@ -1273,16 +1303,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   // local.get, etc.
   Function* func = nullptr;
 
-  // The stack of parsed expressions, used as the children of newly parsed
-  // expressions.
-  std::vector<Expression*> exprStack;
+  // The context for a single block scope, including the instructions parsed
+  // inside that scope so far and the ultimate result type we expect this block
+  // to have.
+  struct BlockCtx {
+    std::vector<Expression*> exprStack;
+    Type type;
+  };
+
+  // The stack of block contexts currently being parsed.
+  std::vector<BlockCtx> scopeStack;
 
   // Whether we have seen an unreachable instruction and are in
   // stack-polymorphic unreachable mode.
   bool unreachable = false;
-
-  // The expected result type of the instruction sequence we are parsing.
-  Type type;
 
   ParseDefsCtx(std::string_view in,
                Module& wasm,
@@ -1292,7 +1326,23 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     : TypeParserCtx(typeIndices), in(in), wasm(wasm), builder(wasm),
       types(types), implicitTypes(implicitTypes) {}
 
+  std::vector<Expression*>& getExprStack() {
+    if (scopeStack.empty()) {
+      // We are not in a function, so push a dummy scope.
+      scopeStack.push_back({{}, Type::none});
+    }
+    return scopeStack.back().exprStack;
+  }
+
+  void pushScope(Type type) { scopeStack.push_back({{}, type}); }
+
+  Type getResultType() {
+    assert(!scopeStack.empty());
+    return scopeStack.back().type;
+  }
+
   Result<> push(Index pos, Expression* expr) {
+    auto& exprStack = getExprStack();
     if (expr->type == Type::unreachable) {
       // We want to avoid popping back past this most recent unreachable
       // instruction. Drop all prior instructions so they won't be consumed by
@@ -1310,7 +1360,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       for (Index i = 0; i < expr->type.size(); ++i) {
         CHECK_ERR(push(pos,
                        builder.makeTupleExtract(
-                         builder.makeLocalGet(*scratchIdx, expr->type[i]), i)));
+                         builder.makeLocalGet(*scratchIdx, expr->type), i)));
       }
     } else {
       exprStack.push_back(expr);
@@ -1319,6 +1369,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<Expression*> pop(Index pos) {
+    auto& exprStack = getExprStack();
+
     // Find the suffix of expressions that do not produce values.
     auto firstNone = exprStack.size();
     for (; firstNone > 0; --firstNone) {
@@ -1363,11 +1415,25 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return builder.makeBlock(exprs, expr->type);
   }
 
+  HeapType getBlockTypeFromResult(const std::vector<Type> results) {
+    assert(results.size() == 1);
+    pushScope(results[0]);
+    return HeapType(Signature(Type::none, results[0]));
+  }
+
+  Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
+    pushScope(type.getSignature().results);
+    return type;
+  }
+
   Ok makeInstrs() { return Ok{}; }
 
   void appendInstr(Ok&, InstrT instr) {}
 
   Result<InstrsT> finishInstrs(Ok&) {
+    auto& exprStack = getExprStack();
+    auto type = getResultType();
+
     // We have finished parsing a sequence of instructions. Fix up the parsed
     // instructions and reset the context for the next sequence.
     if (type.isTuple()) {
@@ -1396,11 +1462,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       exprStack.push_back(*expr);
     }
     unreachable = false;
-    return std::move(exprStack);
+    auto ret = std::move(exprStack);
+    scopeStack.pop_back();
+    return ret;
   }
 
   Expression* instrToExpr(Ok&) {
+    auto& exprStack = getExprStack();
+    assert(scopeStack.size() == 1);
     assert(exprStack.size() == 1);
+
     auto e = exprStack.back();
     exprStack.clear();
     unreachable = false;
@@ -1433,7 +1504,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<Index> getLocalFromIdx(uint32_t idx) {
     if (!func) {
-      return in.err("cannot access locals outside of a funcion");
+      return in.err("cannot access locals outside of a function");
     }
     if (idx >= func->getNumLocals()) {
       return in.err("local index out of bounds");
@@ -1625,6 +1696,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return in.err(pos, "memory required, but there is no memory");
     }
     return wasm.memories[0]->name;
+  }
+
+  Result<> makeBlock(Index pos,
+                     std::optional<Name> label,
+                     HeapType type,
+                     const std::vector<Expression*>& instrs) {
+    // TODO: validate labels?
+    // TODO: Move error on input types to here?
+    auto results = type.getSignature().results;
+    if (label) {
+      return push(pos, builder.makeBlock(*label, instrs, results));
+    } else {
+      return push(pos, builder.makeBlock(instrs, results));
+    }
   }
 
   Result<> makeUnreachable(Index pos) {
@@ -2153,10 +2238,17 @@ template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 
 // Instructions
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> foldedBlockinstr(Ctx&);
+template<typename Ctx>
+MaybeResult<typename Ctx::InstrT> unfoldedBlockinstr(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> blockinstr(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> plaininstr(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx&);
 template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&);
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemargT> memarg(Ctx&, uint32_t);
+template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> block(Ctx&, bool);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&, Index);
@@ -2665,7 +2757,37 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
 // Instructions
 // ============
 
-template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
+// blockinstr ::= block | loop | if-else | try-catch
+template<typename Ctx>
+MaybeResult<typename Ctx::InstrT> foldedBlockinstr(Ctx& ctx) {
+  if (auto i = block(ctx, true)) {
+    return i;
+  }
+  // TODO: Other block instructions
+  return {};
+}
+
+template<typename Ctx>
+MaybeResult<typename Ctx::InstrT> unfoldedBlockinstr(Ctx& ctx) {
+  if (auto i = block(ctx, false)) {
+    return i;
+  }
+  // TODO: Other block instructions
+  return {};
+}
+
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> blockinstr(Ctx& ctx) {
+  if (auto i = foldedBlockinstr(ctx)) {
+    return i;
+  }
+  if (auto i = unfoldedBlockinstr(ctx)) {
+    return i;
+  }
+  return {};
+}
+
+// plaininstr ::= ... all plain instructions ...
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> plaininstr(Ctx& ctx) {
   auto pos = ctx.in.getPos();
   auto keyword = ctx.in.takeKeyword();
   if (!keyword) {
@@ -2677,10 +2799,36 @@ template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
 #include <gen-s-parser.inc>
 }
 
+// instr ::= plaininstr | blockinstr
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
+  // Check for valid strings that are not instructions.
+  if (auto tok = ctx.in.peek()) {
+    if (auto keyword = tok->getKeyword()) {
+      if (keyword == "end"sv) {
+        return {};
+      }
+    }
+  }
+  if (auto i = blockinstr(ctx)) {
+    return i;
+  }
+  if (auto i = plaininstr(ctx)) {
+    return i;
+  }
+  // TODO: Handle folded plain instructions as well.
+  return {};
+}
+
 template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
   auto insts = ctx.makeInstrs();
 
   while (true) {
+    if (auto blockinst = foldedBlockinstr(ctx)) {
+      CHECK_ERR(blockinst);
+      ctx.appendInstr(insts, *blockinst);
+      continue;
+    }
+    // Parse an arbitrary number of folded instructions.
     if (ctx.in.takeLParen()) {
       // A stack of (start, end) position pairs defining the positions of
       // instructions that need to be parsed after their folded children.
@@ -2704,7 +2852,10 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
 
         // We have either the start of a new folded child or the end of the last
         // one.
-        if (ctx.in.takeLParen()) {
+        if (auto blockinst = foldedBlockinstr(ctx)) {
+          CHECK_ERR(blockinst);
+          ctx.appendInstr(insts, *blockinst);
+        } else if (ctx.in.takeLParen()) {
           foldedInstrs.push_back({ctx.in.getPos(), {}});
         } else if (ctx.in.takeRParen()) {
           auto [start, end] = foldedInstrs.back();
@@ -2712,7 +2863,7 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
           foldedInstrs.pop_back();
 
           WithPosition with(ctx, start);
-          if (auto inst = instr(ctx)) {
+          if (auto inst = plaininstr(ctx)) {
             CHECK_ERR(inst);
             ctx.appendInstr(insts, *inst);
           } else {
@@ -2761,6 +2912,69 @@ Result<typename Ctx::MemargT> memarg(Ctx& ctx, uint32_t n) {
     align = *a;
   }
   return ctx.getMemarg(offset, align);
+}
+
+// blocktype ::= (t:result)? => t? | x,I:typeuse => x if I = {}
+template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+
+  if (auto res = results(ctx)) {
+    CHECK_ERR(res);
+    if (ctx.getResultsSize(*res) == 1) {
+      return ctx.getBlockTypeFromResult(*res);
+    }
+  }
+
+  // We either had no results or multiple results. Reset and parse again as a
+  // type use.
+  ctx.in.lexer.setIndex(pos);
+  auto use = typeuse(ctx);
+  CHECK_ERR(use);
+
+  auto type = ctx.getBlockTypeFromTypeUse(pos, *use);
+  CHECK_ERR(type);
+  return *type;
+}
+
+// block ::= 'block' label blocktype instr* 'end' id?   if id = {} or id = label
+//         | '(' 'block' label blocktype instr* ')'
+template<typename Ctx>
+MaybeResult<typename Ctx::InstrT> block(Ctx& ctx, bool folded) {
+  auto pos = ctx.in.getPos();
+
+  if (folded) {
+    if (!ctx.in.takeSExprStart("block"sv)) {
+      return {};
+    }
+  } else {
+    if (!ctx.in.takeKeyword("block"sv)) {
+      return {};
+    }
+  }
+
+  auto label = ctx.in.takeID();
+
+  auto type = blocktype(ctx);
+  CHECK_ERR(type);
+
+  auto insts = instrs(ctx);
+  CHECK_ERR(insts);
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of block");
+    }
+  } else {
+    if (!ctx.in.takeKeyword("end"sv)) {
+      return ctx.in.err("expected 'end' at end of block");
+    }
+    auto id = ctx.in.takeID();
+    if (id && id != label) {
+      return ctx.in.err("end label does not match block label");
+    }
+  }
+
+  return ctx.makeBlock(pos, label, *type, std::move(*insts));
 }
 
 template<typename Ctx>
@@ -4023,7 +4237,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
       ctx.func = wasm.functions[i].get();
-      ctx.type = ctx.func->getResults();
+      ctx.pushScope(ctx.func->getResults());
       WithPosition with(ctx, decls.funcDefs[i].pos);
       auto parsed = func(ctx);
       CHECK_ERR(parsed);
