@@ -491,6 +491,7 @@ struct NullTypeParserCtx {
   HeapTypeT makeEq() { return Ok{}; }
   HeapTypeT makeI31() { return Ok{}; }
   HeapTypeT makeData() { return Ok{}; }
+  HeapTypeT makeArrayType() { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -565,6 +566,7 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeEq() { return HeapType::eq; }
   HeapTypeT makeI31() { return HeapType::i31; }
   HeapTypeT makeData() { return HeapType::data; }
+  HeapTypeT makeArrayType() { return HeapType::array; }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
@@ -765,6 +767,17 @@ struct NullInstrParserCtx {
   }
   template<typename HeapTypeT>
   InstrT makeArrayNewData(Index, HeapTypeT, DataIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> InstrT makeArrayGet(Index, HeapTypeT, bool) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> InstrT makeArraySet(Index, HeapTypeT) {
+    return Ok{};
+  }
+  InstrT makeArrayLen(Index) { return Ok{}; }
+  template<typename HeapTypeT>
+  InstrT makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
     return Ok{};
   }
 };
@@ -2060,6 +2073,62 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return push(pos,
                 builder.makeArrayNewSeg(NewData, type, data, *offset, *size));
   }
+
+  Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto elemType = type.getArray().element.type;
+    auto index = pop(pos);
+    CHECK_ERR(index);
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
+    return push(pos, builder.makeArrayGet(*ref, *index, elemType, signed_));
+  }
+
+  Result<> makeArraySet(Index pos, HeapType type) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto val = pop(pos);
+    CHECK_ERR(val);
+    auto index = pop(pos);
+    CHECK_ERR(index);
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
+    return push(pos, builder.makeArraySet(*ref, *index, *val));
+  }
+
+  Result<> makeArrayLen(Index pos) {
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    return push(pos, builder.makeArrayLen(*ref));
+  }
+
+  Result<> makeArrayCopy(Index pos, HeapType destType, HeapType srcType) {
+    if (!destType.isArray()) {
+      return in.err(pos, "expected array destination type annotation");
+    }
+    if (!srcType.isArray()) {
+      return in.err(pos, "expected array source type annotation");
+    }
+    auto len = pop(pos);
+    CHECK_ERR(len);
+    auto srcIdx = pop(pos);
+    CHECK_ERR(srcIdx);
+    auto srcRef = pop(pos);
+    CHECK_ERR(srcRef);
+    auto destIdx = pop(pos);
+    CHECK_ERR(destIdx);
+    auto destRef = pop(pos);
+    CHECK_ERR(destRef);
+    CHECK_ERR(validateTypeAnnotation(pos, srcType, *srcRef));
+    CHECK_ERR(validateTypeAnnotation(pos, destType, *destRef));
+    return push(
+      pos, builder.makeArrayCopy(*destRef, *destIdx, *srcRef, *srcIdx, *len));
+  }
 };
 
 // ================
@@ -2289,7 +2358,7 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
     return ctx.makeData();
   }
   if (ctx.in.takeKeyword("array"sv)) {
-    return ctx.in.err("array heap type not yet supported");
+    return ctx.makeArrayType();
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
@@ -3235,22 +3304,30 @@ Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayGet(Ctx& ctx, Index pos, bool signed_) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayGet(pos, *type, signed_);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArraySet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArraySet(pos, *type);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayLen(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeArrayLen(pos);
 }
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto destType = typeidx(ctx);
+  CHECK_ERR(destType);
+  auto srcType = typeidx(ctx);
+  CHECK_ERR(srcType);
+  return ctx.makeArrayCopy(pos, *destType, *srcType);
 }
 
 template<typename Ctx>
