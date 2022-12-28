@@ -77,12 +77,12 @@ void Instrumenter::instrumentFuncs() {
   // Inject code at the beginning of each function to advance the monotonic
   // counter and set the function's timestamp if it hasn't already been set.
   Builder builder(*wasm);
-  // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
   Index funcIdx = 0;
   assert(!wasm->memories.empty());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     Expression* store;
     if (wasm->features.hasAtomics()) {
+      // (i32.atomic.store8 offset=funcidx (i32.const 0) (i32.const 1))
       store = builder.makeAtomicStore(1,
                                       funcIdx,
                                       builder.makeConstPtr(0, Type::i32),
@@ -90,6 +90,7 @@ void Instrumenter::instrumentFuncs() {
                                       Type::i32,
                                       secondaryMemory);
     } else {
+      // (i32.store8 offset=funcidx (i32.const 0) (i32.const 1))
       store = builder.makeStore(1,
                                 funcIdx,
                                 1,
@@ -156,7 +157,10 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   //         (local.get $addr)
   //         (i32.mul (local.get $funcIdx) (i32.const 4))
   //       )
+  // If Atomics:
   //       (i32.atomic.load8_u (local.get $funcIdx))
+  // Else:
+  //       (i32.load8_u (local.get $funcIdx))
   //     )
   //     (local.set $funcIdx
   //      (i32.add (local.get $funcIdx) (i32.const 1)
