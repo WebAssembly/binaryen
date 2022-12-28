@@ -81,25 +81,24 @@ void Instrumenter::instrumentFuncs() {
   Index funcIdx = 0;
   assert(!wasm->memories.empty());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    Expression *store;
+    Expression* store;
     if (wasm->features.hasAtomics()) {
       store = builder.makeAtomicStore(1,
-                              funcIdx,
-                              builder.makeConstPtr(0, Type::i32),
-                              builder.makeConst(uint32_t(1)),
-                              Type::i32,
-                              secondaryMemory);
+                                      funcIdx,
+                                      builder.makeConstPtr(0, Type::i32),
+                                      builder.makeConst(uint32_t(1)),
+                                      Type::i32,
+                                      secondaryMemory);
     } else {
-      store = builder.makeStore(1, funcIdx, 1,
+      store = builder.makeStore(1,
+                                funcIdx,
+                                1,
                                 builder.makeConstPtr(0, Type::i32),
                                 builder.makeConst(uint32_t(1)),
                                 Type::i32,
                                 secondaryMemory);
     }
-    func->body = builder.makeSequence(
-      store,
-      func->body,
-      func->body->type);
+    func->body = builder.makeSequence(store, func->body, func->body->type);
     ++funcIdx;
   });
 }
@@ -166,13 +165,13 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   //   )
   // )
 
-  Expression *load;
+  Expression* load;
   if (wasm->features.hasAtomics()) {
-    load = builder.makeAtomicLoad(
-                1, 0, getFuncIdx(), Type::i32, secondaryMemory);
+    load =
+      builder.makeAtomicLoad(1, 0, getFuncIdx(), Type::i32, secondaryMemory);
   } else {
     load = builder.makeLoad(
-                1, false, 0, 1, getFuncIdx(), Type::i32, secondaryMemory);
+      1, false, 0, 1, getFuncIdx(), Type::i32, secondaryMemory);
   }
 
   writeData = builder.blockify(
