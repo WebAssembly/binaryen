@@ -476,7 +476,7 @@ struct MultiMemoryLowering : public Pass {
       // No need to update the offset of data segments for the first memory
       if (idx != 0) {
         assert(dataSegment->offset->is<Const>() &&
-             "TODO: handle non-const segment offsets");
+               "TODO: handle non-const segment offsets");
         assert(wasm->features.hasExtendedConst());
         auto offsetGlobalName = getOffsetGlobal(idx);
         dataSegment->offset = builder.makeBinary(
