@@ -52,6 +52,9 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
                "request for silly amounts of memory)";
   }
 
+  // Setting features we need when the instrumenter pass is run
+  // Multi-MemoryLoweringPass will run afterwards, disabling the multi-memories
+  // feature
   wasm.features.setMultiMemories();
   wasm.features.setBulkMemory();
   if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
