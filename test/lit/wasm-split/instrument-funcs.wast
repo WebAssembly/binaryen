@@ -4,6 +4,12 @@
 ;; RUN: wasm-split %s --instrument -g -o %t.wasm
 ;; RUN: wasm-opt %t.wasm --enable-bulk-memory -S -o -
 
+;; RUN: wasm-split %s --instrument --enable-threads -S -o - | filecheck %s --check-prefix ATOMIC
+
+;; Check that the output round trips and validates as well
+;; RUN: wasm-split %s --instrument --enable-threads -g -o %t.wasm
+;; RUN: wasm-opt %t.wasm --enable-threads --enable-bulk-memory -S -o -
+
 (module
   (import "env" "foo" (func $foo))
   (export "bar" (func $bar))
@@ -19,14 +25,18 @@
 ;; Check that a memory has been added
 ;; CHECK: (memory $combined_memory 2 2)
 
+;; Check that atomic memory is shared
+;; ATOMIC: (memory $combined_memory (shared 2 2))
+
 ;; And the profiling function exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
+;; ATOMIC: (export "__write_profile" (func $__write_profile))
 
 ;; And main memory has been exported
 ;; CHECK: (export "profile-memory" (memory $combined_memory))
+;; ATOMIC: (export "profile-memory" (memory $combined_memory))
 
 ;; Check that the function instrumentation is correct
-
 ;; CHECK:      (func $bar
 ;; CHECK-NEXT:  (i32.store8
 ;; CHECK-NEXT:   (i32.add
@@ -48,6 +58,29 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (local.get $0)
 ;; CHECK-NEXT: )
+
+;; Check that the atomic function instrumentation is correct
+;; ATOMIC:      (func $bar
+;; ATOMIC-NEXT:  (i32.atomic.store8
+;; ATOMIC-NEXT:   (i32.add
+;; ATOMIC-NEXT:    (global.get $profile-data_byte_offset)
+;; ATOMIC-NEXT:    (i32.const 0)
+;; ATOMIC-NEXT:   )
+;; ATOMIC-NEXT:   (i32.const 1)
+;; ATOMIC-NEXT:  )
+;; ATOMIC-NEXT:  (call $foo)
+;; ATOMIC-NEXT: )
+
+;; ATOMIC:      (func $baz (param $0 i32) (result i32)
+;; ATOMIC-NEXT:  (i32.atomic.store8 offset=1
+;; ATOMIC-NEXT:   (i32.add
+;; ATOMIC-NEXT:    (global.get $profile-data_byte_offset)
+;; ATOMIC-NEXT:    (i32.const 0)
+;; ATOMIC-NEXT:   )
+;; ATOMIC-NEXT:   (i32.const 1)
+;; ATOMIC-NEXT:  )
+;; ATOMIC-NEXT:  (local.get $0)
+;; ATOMIC-NEXT: )
 
 ;; Check that the profiling function is correct.
 ;;CHECK: (func $__write_profile (param $addr i32) (param $size i32) (result i32)
@@ -98,6 +131,56 @@
 ;;CHECK-NEXT: )
 ;;CHECK-NEXT: (i32.const 16)
 ;;CHECK-NEXT:)
+
+;; Check that the atomic profiling function is correct.
+;;ATOMIC: (func $__write_profile (param $addr i32) (param $size i32) (result i32)
+;;ATOMIC-NEXT: (local $funcIdx i32)
+;;ATOMIC-NEXT: (if
+;;ATOMIC-NEXT:  (i32.ge_u
+;;ATOMIC-NEXT:   (local.get $size)
+;;ATOMIC-NEXT:   (i32.const 16)
+;;ATOMIC-NEXT:  )
+;;ATOMIC-NEXT:  (block
+;;ATOMIC-NEXT:   (i64.store align=1
+;;ATOMIC-NEXT:    (local.get $addr)
+;;ATOMIC-NEXT:    (i64.const {{.*}})
+;;ATOMIC-NEXT:   )
+;;ATOMIC-NEXT:   (block $outer
+;;ATOMIC-NEXT:    (loop $l
+;;ATOMIC-NEXT:     (br_if $outer
+;;ATOMIC-NEXT:      (i32.eq
+;;ATOMIC-NEXT:       (local.get $funcIdx)
+;;ATOMIC-NEXT:       (i32.const 2)
+;;ATOMIC-NEXT:      )
+;;ATOMIC-NEXT:     )
+;;ATOMIC-NEXT:     (i32.store offset=8
+;;ATOMIC-NEXT:      (i32.add
+;;ATOMIC-NEXT:       (local.get $addr)
+;;ATOMIC-NEXT:       (i32.mul
+;;ATOMIC-NEXT:        (local.get $funcIdx)
+;;ATOMIC-NEXT:        (i32.const 4)
+;;ATOMIC-NEXT:       )
+;;ATOMIC-NEXT:      )
+;;ATOMIC-NEXT:      (i32.atomic.load8_u
+;;ATOMIC-NEXT:       (i32.add
+;;ATOMIC-NEXT:        (global.get $profile-data_byte_offset)
+;;ATOMIC-NEXT:        (local.get $funcIdx)
+;;ATOMIC-NEXT:       )
+;;ATOMIC-NEXT:      )
+;;ATOMIC-NEXT:     )
+;;ATOMIC-NEXT:     (local.set $funcIdx
+;;ATOMIC-NEXT:      (i32.add
+;;ATOMIC-NEXT:       (local.get $funcIdx)
+;;ATOMIC-NEXT:       (i32.const 1)
+;;ATOMIC-NEXT:      )
+;;ATOMIC-NEXT:     )
+;;ATOMIC-NEXT:     (br $l)
+;;ATOMIC-NEXT:    )
+;;ATOMIC-NEXT:   )
+;;ATOMIC-NEXT:  )
+;;ATOMIC-NEXT: )
+;;ATOMIC-NEXT: (i32.const 16)
+;;ATOMIC-NEXT:)
 
 ;; Check that the Multi-Memory Lowering Pass grow/size functions are correct
 ;; CHECK: (func $0_size (result i32)
