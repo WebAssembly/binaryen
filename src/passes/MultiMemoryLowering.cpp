@@ -471,14 +471,14 @@ struct MultiMemoryLowering : public Pass {
   void adjustActiveDataSegmentOffsets() {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
-      assert(dataSegment->offset->is<Const>() &&
-             "TODO: handle non-const segment offsets");
       auto idx = memoryIdxMap.at(dataSegment->memory);
       dataSegment->memory = combinedMemory;
       // No need to update the offset of data segments for the first memory
       if (idx != 0) {
-        auto offsetGlobalName = getOffsetGlobal(idx);
+        assert(dataSegment->offset->is<Const>() &&
+             "TODO: handle non-const segment offsets");
         assert(wasm->features.hasExtendedConst());
+        auto offsetGlobalName = getOffsetGlobal(idx);
         dataSegment->offset = builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::Add),
           builder.makeGlobalGet(offsetGlobalName, pointerType),
