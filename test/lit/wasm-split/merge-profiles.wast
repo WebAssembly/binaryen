@@ -1,10 +1,10 @@
 ;; Instrument the module
-;; RUN: wasm-split --instrument -all %s -o %t.instrumented.wasm -g
+;; RUN: wasm-split --instrument %s -o %t.instrumented.wasm -g
 
 ;; Generate profiles
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.foo.bar.prof foo bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.bar.baz.prof bar baz
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.foo.bar.prof foo bar
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.bar.baz.prof bar baz
 
 ;; Merge profiles
 ;; RUN: wasm-split --merge-profiles -v %t.foo.prof %t.foo.bar.prof %t.bar.baz.prof -o %t.merged.prof 2>&1 \

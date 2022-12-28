@@ -52,6 +52,8 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
                "request for silly amounts of memory)";
   }
 
+  wasm.features.setMultiMemories();
+  wasm.features.setBulkMemory();
   if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
     Fatal() << "error validating input";
   }

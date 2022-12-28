@@ -55,14 +55,13 @@ void Instrumenter::ensureFirstMemory(size_t profileSize) {
       wasm->memories[0]->max = pages;
     }
   }
-  wasm->memories[0]->shared = true;
+
+  if (wasm->features.hasAtomics()) {
+    wasm->memories[0]->shared = true;
+  }
 }
 
 void Instrumenter::addSecondaryMemory(size_t numFuncs) {
-  if (!wasm->features.hasMultiMemories()) {
-    Fatal() << "error: wasm-split requires multi-memories to be enabled";
-  }
-
   Type pointerType = wasm->memories[0]->indexType;
   bool isShared = wasm->memories[0]->shared;
 
@@ -75,9 +74,6 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
 }
 
 void Instrumenter::instrumentFuncs() {
-  if (!wasm->features.hasAtomics()) {
-    Fatal() << "error:  wasm-split requires atomics to be enabled";
-  }
   // Inject code at the beginning of each function to advance the monotonic
   // counter and set the function's timestamp if it hasn't already been set.
   Builder builder(*wasm);
@@ -85,13 +81,23 @@ void Instrumenter::instrumentFuncs() {
   Index funcIdx = 0;
   assert(!wasm->memories.empty());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    func->body = builder.makeSequence(
-      builder.makeAtomicStore(1,
+    Expression *store;
+    if (wasm->features.hasAtomics()) {
+      store = builder.makeAtomicStore(1,
                               funcIdx,
                               builder.makeConstPtr(0, Type::i32),
                               builder.makeConst(uint32_t(1)),
                               Type::i32,
-                              secondaryMemory),
+                              secondaryMemory);
+    } else {
+      store = builder.makeStore(1, funcIdx, 1,
+                                builder.makeConstPtr(0, Type::i32),
+                                builder.makeConst(uint32_t(1)),
+                                Type::i32,
+                                secondaryMemory);
+    }
+    func->body = builder.makeSequence(
+      store,
       func->body,
       func->body->type);
     ++funcIdx;
@@ -159,6 +165,16 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   //     (br $l)
   //   )
   // )
+
+  Expression *load;
+  if (wasm->features.hasAtomics()) {
+    load = builder.makeAtomicLoad(
+                1, 0, getFuncIdx(), Type::i32, secondaryMemory);
+  } else {
+    load = builder.makeLoad(
+                1, false, 0, 1, getFuncIdx(), Type::i32, secondaryMemory);
+  }
+
   writeData = builder.blockify(
     writeData,
     builder.makeBlock(
@@ -180,8 +196,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
               getAddr(),
               builder.makeBinary(
                 MulInt32, getFuncIdx(), builder.makeConst(uint32_t(4)))),
-            builder.makeAtomicLoad(
-              1, 0, getFuncIdx(), Type::i32, secondaryMemory),
+            load,
             Type::i32,
             wasm->memories[0]->name),
           builder.makeLocalSet(
