@@ -33,7 +33,7 @@ void Instrumenter::run(Module* wasm) {
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function*) { ++numFuncs; });
   // Calculate the size of the profile:
   //   8 bytes module hash +
-  //   4 bytes for the timestamp for each function
+  //   4 bytes for the integer for each function
   const size_t profileSize = 8 + 4 * numFuncs;
 
   ensureFirstMemory(profileSize);
@@ -74,8 +74,8 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
 }
 
 void Instrumenter::instrumentFuncs() {
-  // Inject code at the beginning of each function to advance the monotonic
-  // counter and set the function's timestamp if it hasn't already been set.
+  // Inject code at the beginning of each function that will set a 1 in memory
+  // at the offset equal to the index of the defined function
   Builder builder(*wasm);
   Index funcIdx = 0;
   assert(!wasm->memories.empty());
@@ -111,13 +111,11 @@ void Instrumenter::instrumentFuncs() {
 //
 //   1. An 8-byte module hash
 //
-//   2. A 4-byte timestamp for each defined function
+//   2. A 4-byte integer for each defined function
 //
 // The module hash is meant to guard against bugs where the module that was
-// instrumented and the module that is being split are different. The timestamps
-// are non-zero for functions that were called during the instrumented run and 0
-// otherwise. Functions with smaller non-zero timestamps were called earlier in
-// the instrumented run than funtions with larger timestamps.
+// instrumented and the module that is being split are different. The integer is
+// 1 for functions that were called during the instrumented run and 0 otherwise.
 
 void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   // Create and export a function to dump the profile into a given memory
@@ -140,7 +138,7 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
     return builder.makeConst(int32_t(profileSize));
   };
 
-  // Write the hash followed by all the time stamps
+  // Write the hash followed by an integer for each defined function
   Expression* writeData = builder.makeStore(
     8, 0, 1, getAddr(), hashConst(), Type::i64, wasm->memories[0]->name);
   uint32_t offset = 8;
@@ -168,7 +166,6 @@ void Instrumenter::addProfileExport(size_t profileSize, size_t numFuncs) {
   //     (br $l)
   //   )
   // )
-
   Expression* load;
   if (wasm->features.hasAtomics()) {
     load =
