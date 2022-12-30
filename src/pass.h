@@ -217,6 +217,12 @@ struct PassOptions {
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
+  // Whether we are targeting JS. In that case we want to avoid emitting things
+  // in the optimizer that do not translate well to JS, or that could cause us
+  // to need extra lowering work or even a loop (where we optimize to something
+  // that needs lowering, then we lower it, then we can optimize it again to the
+  // original form).
+  bool targetJS = false;
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::unordered_map<std::string, std::string> arguments;
