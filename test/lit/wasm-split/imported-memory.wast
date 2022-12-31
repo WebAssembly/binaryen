@@ -6,7 +6,7 @@
   (import "env" "mem" (memory $mem 1 1))
 )
 
-;; CHECK: (import "env" "mem" (memory $combined_memory 1 1))
+;; CHECK: (import "env" "mem" (memory $combined_memory (shared 1 1)))
 ;; CHECK: (export "__write_profile" (func $__write_profile))
 
 ;; CHECK-NOT: (export "profile-memory" (memory $combined_memory))
