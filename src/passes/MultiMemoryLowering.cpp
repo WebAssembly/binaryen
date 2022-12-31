@@ -62,7 +62,7 @@ struct MultiMemoryLowering : public Pass {
   // If the combined memory is imported
   bool isImported;
   // If the combined memory is exported
-  bool isExported;
+  bool isExported = false;
   // If the combined memory should be imported or exported, the following two
   // properties will be set
   Name module;
