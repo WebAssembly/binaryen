@@ -429,7 +429,6 @@ struct MultiMemoryLowering : public Pass {
       if (memory->imported()) {
         Fatal() << "MultiMemoryLowering: only the first memory can be imported";
       }
-
     }
     if (isImported) {
       module = wasm->memories[0]->module;
@@ -440,7 +439,8 @@ struct MultiMemoryLowering : public Pass {
           if (exp->value == wasm->memories[0]->name) {
             isExported = true;
           } else {
-            Fatal() << "MultiMemoryLowering: only the first memory can be exported";
+            Fatal()
+              << "MultiMemoryLowering: only the first memory can be exported";
           }
         }
       }
