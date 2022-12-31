@@ -59,6 +59,14 @@ struct MultiMemoryLowering : public Pass {
   Builder::MemoryInfo memoryInfo;
   // If the combined memory is shared
   bool isShared;
+  // If the combined memory is imported
+  bool isImported;
+  // If the combined memory is exported
+  bool isExported;
+  // If the combined memory should be imported or exported, the following two
+  // properties will be set
+  Name module;
+  Name base;
   // The initial page size of the combined memory
   Address totalInitialPages;
   // The max page size of the combined memory
@@ -385,7 +393,9 @@ struct MultiMemoryLowering : public Pass {
     createMemoryGrowFunctions();
     removeExistingMemories();
     addCombinedMemory();
-    updateMemoryExports();
+    if (isExported) {
+      updateMemoryExports();
+    }
 
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
   }
@@ -413,6 +423,29 @@ struct MultiMemoryLowering : public Pass {
     memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32
                                           : Builder::MemoryInfo::Memory64;
     isShared = wasm->memories[0]->shared;
+    isImported = wasm->memories[0]->imported();
+    for (Index i = 1; i < wasm->memories.size(); i++) {
+      auto& memory = wasm->memories[i];
+      if (memory->imported()) {
+        Fatal() << "MultiMemoryLowering: only the first memory can be imported";
+      }
+
+    }
+    if (isImported) {
+      module = wasm->memories[0]->module;
+      base = wasm->memories[0]->base;
+    } else {
+      for (auto& exp : wasm->exports) {
+        if (exp->kind == ExternalKind::Memory) {
+          if (exp->value == wasm->memories[0]->name) {
+            isExported = true;
+          } else {
+            Fatal() << "MultiMemoryLowering: only the first memory can be exported";
+          }
+        }
+      }
+    }
+
     for (auto& memory : wasm->memories) {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration
@@ -655,12 +688,18 @@ struct MultiMemoryLowering : public Pass {
     memory->indexType = pointerType;
     memory->initial = totalInitialPages;
     memory->max = totalMaxPages;
+    if (isImported) {
+      memory->base = base;
+      memory->module = module;
+    }
     wasm->addMemory(std::move(memory));
   }
 
   void updateMemoryExports() {
     for (auto& exp : wasm->exports) {
       if (exp->kind == ExternalKind::Memory) {
+        // We checked in prepForCombinedMemory that any memory exports are for
+        // the first memory
         exp->value = combinedMemory;
       }
     }
