@@ -37,16 +37,13 @@ std::vector<T*> getExportedByKind(Module& wasm, G getModuleItem) {
 } // anonymous namespace
 
 std::vector<Function*> getExportedFunctions(Module& wasm) {
-  return getExportedByKind<Function, ExternalKind::Function>(wasm, [&](Name name) {
-    return wasm.getFunction(name);
-  });
+  return getExportedByKind<Function, ExternalKind::Function>(
+    wasm, [&](Name name) { return wasm.getFunction(name); });
 }
 
 std::vector<Global*> getExportedGlobals(Module& wasm) {
-  return getExportedByKind<Global, ExternalKind::Global>(wasm, [&](Name name) {
-    return wasm.getGlobal(name);
-  });
+  return getExportedByKind<Global, ExternalKind::Global>(
+    wasm, [&](Name name) { return wasm.getGlobal(name); });
 }
-
 
 } // namespace wasm::ExportUtils
