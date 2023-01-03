@@ -345,8 +345,8 @@ struct ParseInput {
 // Utilities
 // =========
 
-// The location, possible name, and index of a module-level definition in the
-// input.
+// The location, possible name, and index in the respective module index space
+// of a module-level definition in the input.
 struct DefPos {
   Name name;
   Index pos;
