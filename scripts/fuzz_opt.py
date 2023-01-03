@@ -307,6 +307,9 @@ INITIAL_CONTENTS_IGNORE = [
     # TODO: fuzzer support for internalize/externalize
     'optimize-instructions-gc-extern.wast',
     'gufa-extern.wast',
+    # the fuzzer does not support imported memories
+    'multi-memory-lowering-import.wast',
+    'multi-memory-lowering-import-error.wast',
 ]
 
 
