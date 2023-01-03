@@ -1,4 +1,4 @@
-;; RUN: not wasm-opt %s --enable-multi-memories --multi-memory-lowering --enable-bulk-memory --enable-extended-const --enable-simd --enable-threads 2>&1 | filecheck %s
+;; RUN: not wasm-opt %s --multi-memory-lowering -all 2>&1 | filecheck %s
 
 (module
   (memory $memory1 1)

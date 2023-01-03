@@ -418,7 +418,7 @@ struct MultiMemoryLowering : public Pass {
   // offsetGlobalNames
   bool isLastMemory(Index idx) { return idx == offsetGlobalNames.size(); }
 
-  Memory getFirstMemory() { return *wasm->memories[0]; }
+  Memory& getFirstMemory() { return *wasm->memories[0]; }
 
   void prepCombinedMemory() {
     pointerType = getFirstMemory().indexType;
