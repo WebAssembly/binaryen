@@ -64,8 +64,9 @@ struct GlobalRefining : public Pass {
       }
     }
 
-    // In closed world we cannot change the types of exports. TODO we could
-    // change them when the change is still to a public type, at least.
+    // In closed world we cannot change the types of exports, as we might change
+    // from a public type to a private that would cause a validation error.
+    // TODO We could refine to a type that is still public, however.
     std::unordered_set<Name> unoptimizable;
     if (getPassOptions().closedWorld) {
       for (auto* global : ExportUtils::getExportedGlobals(*module)) {
