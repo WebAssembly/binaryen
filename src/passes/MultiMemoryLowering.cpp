@@ -59,6 +59,14 @@ struct MultiMemoryLowering : public Pass {
   Builder::MemoryInfo memoryInfo;
   // If the combined memory is shared
   bool isShared;
+  // If the combined memory is imported
+  bool isImported;
+  // If the combined memory is exported
+  bool isExported = false;
+  // If the combined memory should be imported, the following two
+  // properties will be set
+  Name module;
+  Name base;
   // The initial page size of the combined memory
   Address totalInitialPages;
   // The max page size of the combined memory
@@ -385,6 +393,9 @@ struct MultiMemoryLowering : public Pass {
     createMemoryGrowFunctions();
     removeExistingMemories();
     addCombinedMemory();
+    if (isExported) {
+      updateMemoryExports();
+    }
 
     Replacer(*this, *wasm).run(getPassRunner(), wasm);
   }
@@ -407,16 +418,24 @@ struct MultiMemoryLowering : public Pass {
   // offsetGlobalNames
   bool isLastMemory(Index idx) { return idx == offsetGlobalNames.size(); }
 
+  Memory& getFirstMemory() { return *wasm->memories[0]; }
+
   void prepCombinedMemory() {
-    pointerType = wasm->memories[0]->indexType;
+    pointerType = getFirstMemory().indexType;
     memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32
                                           : Builder::MemoryInfo::Memory64;
-    isShared = wasm->memories[0]->shared;
+    isShared = getFirstMemory().shared;
+    isImported = getFirstMemory().imported();
     for (auto& memory : wasm->memories) {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration
       assert(memory->shared == isShared);
       assert(memory->indexType == pointerType);
+
+      // TODO: handle memory import for memories other than the first
+      if (memory->name != getFirstMemory().name && memory->imported()) {
+        Fatal() << "MultiMemoryLowering: only the first memory can be imported";
+      }
 
       // Calculating the total initial and max page size for the combined memory
       // by totaling the initial and max page sizes for the memories in the
@@ -437,6 +456,20 @@ struct MultiMemoryLowering : public Pass {
       totalInitialPages = totalMaxPages;
     }
 
+    // Save the module and base to set on the combinedMemory
+    if (isImported) {
+      module = getFirstMemory().module;
+      base = getFirstMemory().base;
+    }
+    // Ensuring only the first memory is an exported memory
+    for (auto& exp : wasm->exports) {
+      if (exp->kind == ExternalKind::Memory &&
+          exp->value == getFirstMemory().name) {
+        isExported = true;
+      } else if (exp->kind == ExternalKind::Memory) {
+        Fatal() << "MultiMemoryLowering: only the first memory can be exported";
+      }
+    }
     // Creating the combined memory name so we can reference the combined memory
     // in subsequent instructions before it is added to the module
     combinedMemory = Names::getValidMemoryName(*wasm, "combined_memory");
@@ -657,7 +690,22 @@ struct MultiMemoryLowering : public Pass {
     memory->indexType = pointerType;
     memory->initial = totalInitialPages;
     memory->max = totalMaxPages;
+    if (isImported) {
+      memory->base = base;
+      memory->module = module;
+    }
     wasm->addMemory(std::move(memory));
+  }
+
+  void updateMemoryExports() {
+    for (auto& exp : wasm->exports) {
+      if (exp->kind == ExternalKind::Memory) {
+        // We checked in prepCombinedMemory that any memory exports are for
+        // the first memory, so setting the exports to the combinedMemory means
+        // calling JS will not have to worry about offsets
+        exp->value = combinedMemory;
+      }
+    }
   }
 };
 
