@@ -1299,15 +1299,8 @@
 
   ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:    (i32.const 1337)
-  ;; CHECK-NEXT:    (ref.eq
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.get $global1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1355,15 +1348,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:    (i32.const 1337)
-  ;; CHECK-NEXT:    (ref.eq
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.get $global1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1387,11 +1373,10 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct_subtype i32 data))
 
-  ;; CHECK:      (type $sub-struct2 (struct_subtype (field i32) $struct))
-
   ;; CHECK:      (type $sub-struct1 (struct_subtype (field i32) $struct))
   (type $sub-struct1 (struct_subtype i32 $struct))
 
+  ;; CHECK:      (type $sub-struct2 (struct_subtype (field i32) $struct))
   (type $sub-struct2 (struct_subtype i32 $struct))
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
@@ -1417,15 +1402,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $sub-struct2 0
-  ;; CHECK-NEXT:    (block (result (ref $sub-struct2))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (local.get $struct)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.get $global2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
