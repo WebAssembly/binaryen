@@ -34,6 +34,16 @@ struct RemoveUnusedTypes : Pass {
       // This pass only does anything with GC types.
       return;
     }
+
+    // Consider (rec $A $unused), where anyrefs received from the outside are
+    // cast to `$A`. In an open world we cannot remove $unused because that
+    // would change the identity of $A. Currently we would incorrectly remove
+    // $unused. To fix that, we need to fix our collection of public types to
+    // consider $A (and $unused) public in an open world.
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "RemoveUnusedTypes requires --closed-world";
+    }
+
     // We're not changing the contents of any of the types, so we just round
     // trip them throgh GlobalTypeRewriter, which will put all the private types
     // in a single new rec group and leave out all the unused types.

@@ -118,6 +118,10 @@ struct GlobalTypeOptimization : public Pass {
       return;
     }
 
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "GTO requires --closed-world";
+    }
+
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);

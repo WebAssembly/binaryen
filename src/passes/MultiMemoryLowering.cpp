@@ -468,17 +468,20 @@ struct MultiMemoryLowering : public Pass {
     }
   }
 
+  // TODO: Add a trap for segments that have a non-constant offset that would
+  // have been out of bounds at runtime but is in bounds after multi-memory
+  // lowering
   void adjustActiveDataSegmentOffsets() {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
-      assert(dataSegment->offset->is<Const>() &&
-             "TODO: handle non-const segment offsets");
       auto idx = memoryIdxMap.at(dataSegment->memory);
       dataSegment->memory = combinedMemory;
       // No need to update the offset of data segments for the first memory
       if (idx != 0) {
-        auto offsetGlobalName = getOffsetGlobal(idx);
+        assert(dataSegment->offset->is<Const>() &&
+               "TODO: handle non-const segment offsets");
         assert(wasm->features.hasExtendedConst());
+        auto offsetGlobalName = getOffsetGlobal(idx);
         dataSegment->offset = builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::Add),
           builder.makeGlobalGet(offsetGlobalName, pointerType),

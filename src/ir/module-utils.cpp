@@ -73,7 +73,7 @@ struct CodeScanner
     } else if (auto* cast = curr->dynCast<RefCast>()) {
       counts.note(cast->type);
     } else if (auto* cast = curr->dynCast<RefTest>()) {
-      counts.note(cast->intendedType);
+      counts.note(cast->castType);
     } else if (auto* cast = curr->dynCast<BrOn>()) {
       if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
         counts.note(cast->intendedType);
@@ -317,11 +317,10 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
 }
 
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
-  auto allTypes = getHeapTypeCounts(wasm, true);
+  auto usedTypes = getHeapTypeCounts(wasm, true);
   auto publicTypes = getPublicTypeSet(wasm);
   std::vector<HeapType> types;
-  types.reserve(allTypes.size() - publicTypes.size());
-  for (auto& [type, _] : allTypes) {
+  for (auto& [type, _] : usedTypes) {
     if (!publicTypes.count(type)) {
       types.push_back(type);
     }

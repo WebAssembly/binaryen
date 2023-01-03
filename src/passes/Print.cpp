@@ -2110,7 +2110,10 @@ struct PrintExpressionContents
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
-    printHeapType(o, curr->intendedType, wasm);
+    if (curr->castType.isNullable()) {
+      printMedium(o, "null ");
+    }
+    printHeapType(o, curr->castType.getHeapType(), wasm);
   }
   void visitRefCast(RefCast* curr) {
     if (printUnreachableReplacement(curr)) {

@@ -2776,9 +2776,15 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto* ref = parseExpression(*s[2]);
-  return Builder(wasm).makeRefTest(ref, heapType);
+  int i = 1;
+  auto nullability = NonNullable;
+  if (s[0]->str().str != "ref.test_static" && s[1]->str().str == "null") {
+    nullability = Nullable;
+    ++i;
+  }
+  auto heapType = parseHeapType(*s[i++]);
+  auto* ref = parseExpression(*s[i++]);
+  return Builder(wasm).makeRefTest(ref, Type(heapType, nullability));
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {

@@ -4,6 +4,7 @@ set(ir_SOURCES
   ExpressionManipulator.cpp
   drop.cpp
   eh-utils.cpp
+  export-utils.cpp
   intrinsics.cpp
   lubs.cpp
   memory-utils.cpp
