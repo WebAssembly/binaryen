@@ -515,6 +515,54 @@
   )
 )
 
+;; We ignore imports, as we assume a closed world, but that might change in the
+;; future. For now, we will optimize here.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+
+  ;; CHECK:      (import "a" "b" (global $global-import (ref $struct)))
+  (import "a" "b" (global $global-import (ref $struct)))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
 ;; A struct.new in a non-toplevel position in a global stops us from
 ;; optimizing.
 (module
