@@ -72,6 +72,10 @@ struct GlobalStructInference : public Pass {
       return;
     }
 
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "GSI requires --closed-world";
+    }
+
     // First, find all the information we need. We need to know which struct
     // types are created in functions, because we will not be able to optimize
     // those.
