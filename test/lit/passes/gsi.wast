@@ -761,57 +761,6 @@
   )
 )
 
-;; As above, but one global has the subtype as its type. The supertype is still
-;; not optimizable because of the struct.new in a function for the subtype.
-(module
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct_subtype i32 data))
-
-  ;; CHECK:      (type $sub-struct (struct_subtype (field i32) $struct))
-  (type $sub-struct (struct_subtype i32 $struct))
-
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
-
-  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
-  ;; CHECK-NEXT:  (i32.const 42)
-  ;; CHECK-NEXT: ))
-  (global $global1 (ref $struct) (struct.new $struct
-    (i32.const 42)
-  ))
-
-  ;; CHECK:      (global $global2 (ref $sub-struct) (struct.new $sub-struct
-  ;; CHECK-NEXT:  (i32.const 1337)
-  ;; CHECK-NEXT: ))
-  (global $global2 (ref $sub-struct) (struct.new $sub-struct ;; this type changed
-    (i32.const 1337)
-  ))
-
-  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $sub-struct
-  ;; CHECK-NEXT:    (i32.const 999999)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test (param $struct (ref null $struct))
-    (drop
-      (struct.new $sub-struct
-        (i32.const 999999)
-      )
-    )
-    (drop
-      (struct.get $struct 0
-        (local.get $struct)
-      )
-    )
-  )
-)
-
 ;; A *super*-type is not optimizable, but that does not block us, and we can
 ;; optimize.
 (module
@@ -1316,6 +1265,180 @@
     ;; Test that we do not error when we see a struct.get of a bottom type.
     (struct.get $A 0
       (ref.null none)
+    )
+  )
+)
+
+;; Two subtypes, each with a global. A get of the parent can be optimized into
+;; a select, as it must read one of the children.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $sub-struct1 (struct_subtype (field i32) $struct))
+  (type $sub-struct1 (struct_subtype i32 $struct))
+
+  ;; CHECK:      (type $sub-struct2 (struct_subtype (field i32) $struct))
+  (type $sub-struct2 (struct_subtype i32 $struct))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 (ref $sub-struct1) (struct.new $sub-struct1
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $sub-struct1) (struct.new $sub-struct1
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $sub-struct2) (struct.new $sub-struct2
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $sub-struct2) (struct.new $sub-struct2
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
+;; As above, but now the parent is unoptimizable due to a struct.new in a
+;; function. We must not optimize here to a select.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $sub-struct1 (struct_subtype (field i32) $struct))
+  (type $sub-struct1 (struct_subtype i32 $struct))
+
+  ;; CHECK:      (type $sub-struct2 (struct_subtype (field i32) $struct))
+  (type $sub-struct2 (struct_subtype i32 $struct))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 (ref $sub-struct1) (struct.new $sub-struct1
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $sub-struct1) (struct.new $sub-struct1
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $sub-struct2) (struct.new $sub-struct2
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $sub-struct2) (struct.new $sub-struct2
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 999999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.new $struct
+        (i32.const 999999)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
+;; As above, the struct.new in a function is of a subtype. Again, we cannot
+;; optimize, as unoptimizability spreads to supertypes.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $sub-struct2 (struct_subtype (field i32) $struct))
+
+  ;; CHECK:      (type $sub-struct1 (struct_subtype (field i32) $struct))
+  (type $sub-struct1 (struct_subtype i32 $struct))
+
+  (type $sub-struct2 (struct_subtype i32 $struct))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 (ref $sub-struct1) (struct.new $sub-struct1
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $sub-struct1) (struct.new $sub-struct1
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $sub-struct2) (struct.new $sub-struct2
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $sub-struct2) (struct.new $sub-struct2
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub-struct1
+  ;; CHECK-NEXT:    (i32.const 999999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub-struct2 0
+  ;; CHECK-NEXT:    (block (result (ref $sub-struct2))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.new $sub-struct1
+        (i32.const 999999)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
     )
   )
 )
