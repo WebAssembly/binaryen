@@ -761,6 +761,64 @@
   )
 )
 
+;; As above, but add a global for the subtype. The supertype is still not
+;; optimizable.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct_subtype i32 data))
+
+  ;; CHECK:      (type $sub-struct (struct_subtype (field i32) $struct))
+  (type $sub-struct (struct_subtype i32 $struct))
+
+  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (global $global3 (ref $sub-struct) (struct.new $sub-struct
+  ;; CHECK-NEXT:  (i32.const 56789)
+  ;; CHECK-NEXT: ))
+  (global $global3 (ref $sub-struct) (struct.new $sub-struct
+    (i32.const 56789) ;; this global is new compared to before
+  ))
+
+  ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub-struct
+  ;; CHECK-NEXT:    (i32.const 999999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.new $sub-struct
+        (i32.const 999999)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
 ;; A *super*-type is not optimizable, but that does not block us, and we can
 ;; optimize.
 (module

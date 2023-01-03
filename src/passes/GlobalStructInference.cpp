@@ -172,8 +172,13 @@ struct GlobalStructInference : public Pass {
           break;
         }
         curr = *super;
-        for (auto global : globals) {
-          typeGlobals[curr].push_back(global);
+        // The existence of an entry in typeGlobals indicates that we can
+        // optimize that type, so do not add an entry - if a type was
+        // unoptimizable, keep it that way.
+        if (typeGlobals.count(curr)) {
+          for (auto global : globals) {
+            typeGlobals[curr].push_back(global);
+          }
         }
       }
     }
