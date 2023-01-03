@@ -532,9 +532,6 @@ struct NullTypeParserCtx {
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
 
-  LimitsT makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
-  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
-
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
 };
 
@@ -550,10 +547,10 @@ template<typename Ctx> struct TypeParserCtx {
   using FieldsT = std::pair<std::vector<Name>, std::vector<Field>>;
   using StructT = std::pair<std::vector<Name>, Struct>;
   using ArrayT = Array;
-  using LimitsT = Limits;
-  using MemTypeT = MemType;
+  using LimitsT = Ok;
+  using MemTypeT = Ok;
   using LocalsT = std::vector<NameType>;
-  using DataStringT = std::vector<char>;
+  using DataStringT = Ok;
 
   // Map heap type names to their indices.
   const IndexMap& typeIndices;
@@ -638,22 +635,13 @@ template<typename Ctx> struct TypeParserCtx {
     return it->second;
   }
 
-  std::vector<char> makeDataString() { return {}; }
-  void appendDataString(std::vector<char>& data, std::string_view str) {
-    data.insert(data.end(), str.begin(), str.end());
-  }
+  DataStringT makeDataString() { return Ok{}; }
+  void appendDataString(DataStringT&, std::string_view) {}
 
-  Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
-    return m ? Limits{n, *m} : Limits{n, Memory::kUnlimitedSize};
-  }
-  Limits getLimitsFromData(const std::vector<char>& data) {
-    uint64_t size = (data.size() + Memory::kPageSize - 1) / Memory::kPageSize;
-    return {size, size};
-  }
+  LimitsT makeLimits(uint64_t, std::optional<uint64_t>) { return Ok{}; }
+  LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
 
-  MemType makeMemType(Type type, Limits limits, bool shared) {
-    return {type, limits, shared};
-  }
+  MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
 };
 
 struct NullInstrParserCtx {
@@ -673,6 +661,7 @@ struct NullInstrParserCtx {
   InstrsT finishInstrs(InstrsT&) { return Ok{}; }
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
+  ExprT instrToExpr(InstrT) { return Ok{}; }
 
   template<typename HeapTypeT> FieldIdxT getFieldFromIdx(HeapTypeT, uint32_t) {
     return Ok{};
@@ -768,6 +757,10 @@ struct NullInstrParserCtx {
 // Phase 1: Parse definition spans for top-level module elements and determine
 // their indices and names.
 struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
+  using DataStringT = std::vector<char>;
+  using LimitsT = Limits;
+  using MemTypeT = MemType;
+
   ParseInput in;
 
   // At this stage we only look at types to find implicit type definitions,
@@ -784,6 +777,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> funcDefs;
   std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
+  std::vector<DefPos> dataDefs;
 
   // Positions of typeuses that might implicitly define new types.
   std::vector<Index> implicitTypeDefs;
@@ -792,6 +786,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   int funcCounter = 0;
   int memoryCounter = 0;
   int globalCounter = 0;
+  int dataCounter = 0;
 
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
@@ -809,6 +804,23 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addRecGroup(Index, size_t) {}
   void finishDeftype(Index pos) {
     typeDefs.push_back({{}, pos, Index(typeDefs.size())});
+  }
+
+  std::vector<char> makeDataString() { return {}; }
+  void appendDataString(std::vector<char>& data, std::string_view str) {
+    data.insert(data.end(), str.begin(), str.end());
+  }
+
+  Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
+    return m ? Limits{n, *m} : Limits{n, Memory::kUnlimitedSize};
+  }
+  Limits getLimitsFromData(const std::vector<char>& data) {
+    uint64_t size = (data.size() + Memory::kPageSize - 1) / Memory::kPageSize;
+    return {size, size};
+  }
+
+  MemType makeMemType(Type type, Limits limits, bool shared) {
+    return {type, limits, shared};
   }
 
   Result<TypeUseT>
@@ -856,8 +868,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   }
 
   Result<Memory*>
-  addMemoryDecl(Index pos, Name name, ImportNames* importNames) {
+  addMemoryDecl(Index pos, Name name, ImportNames* importNames, MemType type) {
     auto m = std::make_unique<Memory>();
+    m->indexType = type.type;
+    m->initial = type.limits.initial;
+    m->max = type.limits.max;
+    m->shared = type.shared;
     if (name) {
       // TODO: if the existing memory is not explicitly named, fix its name
       // and continue.
@@ -877,15 +893,27 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   Result<> addMemory(Name name,
                      const std::vector<Name>& exports,
                      ImportNames* import,
-                     MemTypeT,
+                     MemType type,
                      Index pos) {
     if (import && hasNonImport) {
       return in.err(pos, "import after non-import");
     }
-    auto m = addMemoryDecl(pos, name, import);
+    auto m = addMemoryDecl(pos, name, import, type);
     CHECK_ERR(m);
     CHECK_ERR(addExports(in, wasm, *m, exports, ExternalKind::Memory));
     memoryDefs.push_back({name, pos, Index(memoryDefs.size())});
+    return Ok{};
+  }
+
+  Result<> addImplicitData(DataStringT&& data) {
+    auto& mem = *wasm.memories.back();
+    auto d = std::make_unique<DataSegment>();
+    d->memory = mem.name;
+    d->isPassive = false;
+    d->offset = Builder(wasm).makeConstPtr(0, mem.indexType);
+    d->data = std::move(data);
+    d->name = Names::getValidDataSegmentName(wasm, "implicit-data");
+    wasm.addDataSegment(std::move(d));
     return Ok{};
   }
 
@@ -921,6 +949,30 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     CHECK_ERR(g);
     CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
     globalDefs.push_back({name, pos, Index(globalDefs.size())});
+    return Ok{};
+  }
+
+  Result<> addData(Name name,
+                   MemoryIdxT*,
+                   std::optional<ExprT>,
+                   std::vector<char>&& data,
+                   Index pos) {
+    auto d = std::make_unique<DataSegment>();
+    if (name) {
+      if (wasm.getDataSegmentOrNull(name)) {
+        // TODO: if the existing segment is not explicitly named, fix its name
+        // and continue.
+        return in.err(pos, "repeated data segment name");
+      }
+      d->setExplicitName(name);
+    } else {
+      name = std::to_string(dataCounter++);
+      name = Names::getValidDataSegmentName(wasm, name);
+      d->name = name;
+    }
+    d->data = std::move(data);
+    dataDefs.push_back({name, pos, Index(wasm.dataSegments.size())});
+    wasm.addDataSegment(std::move(d));
     return Ok{};
   }
 };
@@ -1139,15 +1191,12 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return Ok{};
   }
 
-  Result<> addMemory(
-    Name, const std::vector<Name>&, ImportNames*, MemType type, Index pos) {
-    auto& m = wasm.memories[index];
-    m->indexType = type.type;
-    m->initial = type.limits.initial;
-    m->max = type.limits.max;
-    m->shared = type.shared;
+  Result<>
+  addMemory(Name, const std::vector<Name>&, ImportNames*, MemTypeT, Index) {
     return Ok{};
   }
+
+  Result<> addImplicitData(DataStringT&& data) { return Ok{}; }
 
   Result<> addGlobal(Name,
                      const std::vector<Name>&,
@@ -1321,6 +1370,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return std::move(exprStack);
   }
 
+  Expression* instrToExpr(Ok&) {
+    assert(exprStack.size() == 1);
+    auto e = exprStack.back();
+    exprStack.clear();
+    unreachable = false;
+    return e;
+  }
+
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
@@ -1459,6 +1516,25 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      Index) {
     if (exp) {
       wasm.globals[index]->init = *exp;
+    }
+    return Ok{};
+  }
+
+  Result<> addData(
+    Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos) {
+    auto& d = wasm.dataSegments[index];
+    if (offset) {
+      d->isPassive = false;
+      d->offset = *offset;
+      if (mem) {
+        d->memory = *mem;
+      } else if (wasm.memories.size() > 0) {
+        d->memory = wasm.memories[0]->name;
+      } else {
+        return in.err(pos, "active segment with no memory");
+      }
+    } else {
+      d->isPassive = true;
     }
     return Ok{};
   }
@@ -2080,6 +2156,7 @@ template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
@@ -2093,6 +2170,7 @@ template<typename Ctx> MaybeResult<> func(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
 template<typename Ctx> Result<typename Ctx::DataStringT> datastring(Ctx&);
+template<typename Ctx> MaybeResult<> data(Ctx&);
 MaybeResult<> modulefield(ParseDeclsCtx&);
 Result<> module(ParseDeclsCtx&);
 
@@ -3187,6 +3265,20 @@ template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx& ctx) {
   return ctx.in.err("expected memory index or identifier");
 }
 
+// memuse ::= '(' 'memory' x:memidx ')' => x
+template<typename Ctx>
+MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("memory"sv)) {
+    return {};
+  }
+  auto idx = memidx(ctx);
+  CHECK_ERR(idx);
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of memory use");
+  }
+  return *idx;
+}
+
 // globalidx ::= x:u32 => x
 //             | v:id  => x (if globals[x] = v)
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
@@ -3462,18 +3554,18 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
   CHECK_ERR(import);
 
   std::optional<typename Ctx::MemTypeT> mtype;
-
+  std::optional<typename Ctx::DataStringT> data;
   if (ctx.in.takeSExprStart("data"sv)) {
     if (import) {
       return ctx.in.err("imported memories cannot have inline data");
     }
-    auto data = datastring(ctx);
-    CHECK_ERR(data);
+    auto datastr = datastring(ctx);
+    CHECK_ERR(datastr);
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
-    mtype = ctx.makeMemType(Type::i32, ctx.getLimitsFromData(*data), false);
-    // TODO: addDataSegment as well.
+    mtype = ctx.makeMemType(Type::i32, ctx.getLimitsFromData(*datastr), false);
+    data = *datastr;
   } else {
     auto type = memtype(ctx);
     CHECK_ERR(type);
@@ -3485,6 +3577,11 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
   }
 
   CHECK_ERR(ctx.addMemory(name, *exports, import.getPtr(), *mtype, pos));
+
+  if (data) {
+    CHECK_ERR(ctx.addImplicitData(std::move(*data)));
+  }
+
   return Ok{};
 }
 
@@ -3535,6 +3632,57 @@ template<typename Ctx> Result<typename Ctx::DataStringT> datastring(Ctx& ctx) {
   return data;
 }
 
+// data ::= '(' 'data' id? b*:datastring ')' => {init b*, mode passive}
+//        | '(' 'data' id? x:memuse? ('(' 'offset' e:expr ')' | e:instr)
+//               b*:datastring ')
+//             => {init b*, mode active {memory x, offset e}}
+template<typename Ctx> MaybeResult<> data(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("data"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = ctx.in.takeID()) {
+    name = *id;
+  }
+
+  auto mem = maybeMemuse(ctx);
+  CHECK_ERR(mem);
+
+  std::optional<typename Ctx::ExprT> offset;
+  if (ctx.in.takeSExprStart("offset"sv)) {
+    auto e = expr(ctx);
+    CHECK_ERR(e);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of offset expression");
+    }
+    offset = *e;
+  } else if (ctx.in.takeLParen()) {
+    auto inst = instr(ctx);
+    CHECK_ERR(inst);
+    offset = ctx.instrToExpr(*inst);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of offset instruction");
+    }
+  }
+
+  if (mem && !offset) {
+    return ctx.in.err("expected offset for active segment");
+  }
+
+  auto str = datastring(ctx);
+  CHECK_ERR(str);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of data segment");
+  }
+
+  CHECK_ERR(ctx.addData(name, mem.getPtr(), offset, std::move(*str), pos));
+
+  return Ok{};
+}
+
 // modulefield ::= deftype
 //               | import
 //               | func
@@ -3562,6 +3710,10 @@ MaybeResult<> modulefield(ParseDeclsCtx& ctx) {
     return Ok{};
   }
   if (auto res = global(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = data(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
@@ -3652,6 +3804,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     // TODO: Parallelize this.
     ParseDefsCtx ctx(input, wasm, types, implicitTypes, *typeIndices);
     CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.dataDefs, data));
 
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;

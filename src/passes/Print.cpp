@@ -3283,6 +3283,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ';
     }
     if (!curr->isPassive) {
+      assert(!currModule || currModule->memories.size() > 0);
+      if (!currModule || curr->memory != currModule->memories[0]->name) {
+        o << "(memory $" << curr->memory << ") ";
+      }
       visit(curr->offset);
       o << ' ';
     }
