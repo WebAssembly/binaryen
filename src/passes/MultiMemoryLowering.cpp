@@ -468,7 +468,9 @@ struct MultiMemoryLowering : public Pass {
     }
   }
 
-  // TODO: Add a trap for segments that have a non-constant offset that would have been out of bounds at runtime but is in bounds after multi-memory lowering
+  // TODO: Add a trap for segments that have a non-constant offset that would
+  // have been out of bounds at runtime but is in bounds after multi-memory
+  // lowering
   void adjustActiveDataSegmentOffsets() {
     Builder builder(*wasm);
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
