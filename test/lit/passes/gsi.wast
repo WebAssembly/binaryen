@@ -761,8 +761,8 @@
   )
 )
 
-;; As above, but add a global for the subtype. The supertype is still not
-;; optimizable.
+;; As above, but one global has the subtype as its type. The supertype is still
+;; not optimizable because of the struct.new in a function for the subtype.
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct_subtype i32 data))
@@ -779,18 +779,11 @@
     (i32.const 42)
   ))
 
-  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK:      (global $global2 (ref $sub-struct) (struct.new $sub-struct
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: ))
-  (global $global2 (ref $struct) (struct.new $struct
+  (global $global2 (ref $sub-struct) (struct.new $sub-struct ;; this type changed
     (i32.const 1337)
-  ))
-
-  ;; CHECK:      (global $global3 (ref $sub-struct) (struct.new $sub-struct
-  ;; CHECK-NEXT:  (i32.const 56789)
-  ;; CHECK-NEXT: ))
-  (global $global3 (ref $sub-struct) (struct.new $sub-struct
-    (i32.const 56789) ;; this global is new compared to before
   ))
 
   ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
