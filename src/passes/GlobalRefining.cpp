@@ -18,6 +18,7 @@
 // Apply more specific subtypes to global variables where possible.
 //
 
+#include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
@@ -63,10 +64,19 @@ struct GlobalRefining : public Pass {
       }
     }
 
+    // In closed world we cannot change the types of exports. TODO we could
+    // change them when the change is still to a public type, at least.
+    std::unordered_set<Name> unoptimizable;
+    if (getPassOptions().closedWorld) {
+      for (auto* global : ExportUtils::getExportedGlobals(*module)) {
+        unoptimizable.insert(global->name);
+      }
+    }
+
     bool optimized = false;
 
     for (auto& global : module->globals) {
-      if (global->imported()) {
+      if (global->imported() || unoptimizable.count(global->name)) {
         continue;
       }
 
