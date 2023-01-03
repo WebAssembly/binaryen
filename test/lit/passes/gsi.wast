@@ -1299,8 +1299,15 @@
 
   ;; CHECK:      (func $test (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
