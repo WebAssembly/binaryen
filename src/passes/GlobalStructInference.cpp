@@ -65,6 +65,9 @@ struct GlobalStructInference : public Pass {
 
   // Maps optimizable struct types to the globals whose init is a struct.new of
   // them.
+  //
+  // We will remove unoptimizable types from here, so in practice, if a type is
+  // optimizable it will have an entry here, and not if not.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
   void run(Module* module) override {
