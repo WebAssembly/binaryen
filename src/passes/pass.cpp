@@ -671,7 +671,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
 }
 
 static void dumpWasm(Name name, Module* wasm) {
-  // write out the wat
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
   while (numstr.size() < 3) {
@@ -685,6 +684,7 @@ static void dumpWasm(Name name, Module* wasm) {
   fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
   ModuleWriter writer;
+  writer.setDebugInfo(true);
   writer.writeBinary(*wasm, fullName + ".wasm");
 }
 
