@@ -28,17 +28,17 @@
   ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+  ;; NOMNL:      (type $void (func))
+
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
-
-  ;; CHECK:      (type $void (func))
 
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; CHECK:      (type $empty (struct ))
-  ;; NOMNL:      (type $void (func))
-
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; NOMNL:      (type $empty (struct ))
@@ -1791,54 +1791,29 @@
 
   ;; CHECK:      (func $incompatible-cast-of-null (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result nullref)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-cast-of-null (type $void)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result nullref)
+  ;; NOMNL-NEXT:   (block (result (ref $array))
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (block (result nullref)
-  ;; NOMNL-NEXT:     (drop
-  ;; NOMNL-NEXT:      (ref.as_non_null
-  ;; NOMNL-NEXT:       (ref.null none)
-  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (ref.null none)
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.null none)
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $incompatible-cast-of-null
-    (drop
-      (ref.cast null $array
-        (ref.null $struct)
-      )
-    )
     (drop
       (ref.cast $array
         ;; The fallthrough is null, but the node's child's type is non-nullable,
@@ -1850,6 +1825,34 @@
       )
     )
   )
+
+ ;; CHECK:      (func $non-nullable-cast-of-null (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result (ref $struct))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $non-nullable-cast-of-null (type $void)
+ ;; NOMNL-NEXT:  (drop
+ ;; NOMNL-NEXT:   (block (result (ref $struct))
+ ;; NOMNL-NEXT:    (drop
+ ;; NOMNL-NEXT:     (ref.null none)
+ ;; NOMNL-NEXT:    )
+ ;; NOMNL-NEXT:    (unreachable)
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $non-nullable-cast-of-null
+   (drop
+     (ref.cast $struct
+       (ref.null none)
+     )
+   )
+ )
 
   ;; CHECK:      (func $incompatible-cast-of-unknown (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
