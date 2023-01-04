@@ -64,7 +64,10 @@ struct GlobalStructInference : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   // Maps optimizable struct types to the globals whose init is a struct.new of
-  // them. If a global is not present here, it cannot be optimized.
+  // them.
+  //
+  // We will remove unoptimizable types from here, so in practice, if a type is
+  // optimizable it will have an entry here, and not if not.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
   void run(Module* module) override {
@@ -152,7 +155,13 @@ struct GlobalStructInference : public Pass {
     //       fields)
     for (auto type : unoptimizable) {
       while (1) {
+        unoptimizable.insert(type);
+
+        // Also erase the globals, as we will never read them anyhow. This can
+        // allow us to skip unneeded work, when we check if typeGlobals is
+        // empty, below.
         typeGlobals.erase(type);
+
         auto super = type.getSuperType();
         if (!super) {
           break;
@@ -172,8 +181,12 @@ struct GlobalStructInference : public Pass {
           break;
         }
         curr = *super;
-        for (auto global : globals) {
-          typeGlobals[curr].push_back(global);
+
+        // As above, avoid adding pointless data for anything unoptimizable.
+        if (!unoptimizable.count(curr)) {
+          for (auto global : globals) {
+            typeGlobals[curr].push_back(global);
+          }
         }
       }
     }
@@ -209,7 +222,8 @@ struct GlobalStructInference : public Pass {
 
         // We must ignore the case of a non-struct heap type, that is, a bottom
         // type (which is all that is left after we've already ruled out
-        // unreachable).
+        // unreachable). Such things will not be in typeGlobals, which we are
+        // checking now anyhow.
         auto heapType = type.getHeapType();
         auto iter = parent.typeGlobals.find(heapType);
         if (iter == parent.typeGlobals.end()) {
