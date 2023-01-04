@@ -10,8 +10,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $1($0) {
   $0 = $0 | 0;

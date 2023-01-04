@@ -10,8 +10,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function func(x) {
   x = x | 0;
   return (1 << x | 0) ^ -1 | 0 | 0;

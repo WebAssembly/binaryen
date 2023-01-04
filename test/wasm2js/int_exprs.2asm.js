@@ -10,8 +10,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function $0(x, y) {
   x = x | 0;
   y = y | 0;
@@ -248,8 +246,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
@@ -331,8 +327,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
@@ -413,8 +407,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
@@ -610,8 +602,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
@@ -807,8 +797,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -1619,8 +1607,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -2337,8 +2323,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -3037,8 +3021,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -3849,8 +3831,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -4501,8 +4481,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -5135,8 +5113,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -5853,8 +5829,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -6571,8 +6545,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -7289,8 +7261,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -8007,8 +7977,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -8707,8 +8675,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -9407,8 +9373,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;
@@ -10107,8 +10071,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var __wasm_intrinsics_temp_i64 = 0;

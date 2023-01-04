@@ -57,8 +57,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var import$memoryBase = env.memoryBase | 0;
  var import$tableBase = env.tableBase | 0;
  function foo() {
