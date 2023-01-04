@@ -11,8 +11,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var spectest = imports.spectest;
  var print = spectest.print_i32;
  function $3() {
@@ -61,8 +59,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function t1() {
   return 1 | 0;
  }
@@ -116,8 +112,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function t1() {
   return 1 | 0;
  }

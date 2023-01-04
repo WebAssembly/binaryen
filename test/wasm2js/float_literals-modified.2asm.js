@@ -29,57 +29,55 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
-  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $1() {
-  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $2() {
-  return (wasm2js_scratch_store_f32(Math_fround(-nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $3() {
-  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $4() {
-  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $5() {
-  return (wasm2js_scratch_store_f32(Math_fround(-nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $6() {
-  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $7() {
-  return (wasm2js_scratch_store_f32(Math_fround(nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $8() {
-  return (wasm2js_scratch_store_f32(Math_fround(-nan)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-NaN)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $9() {
-  return (wasm2js_scratch_store_f32(Math_fround(infinity)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(Infinity)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $10() {
-  return (wasm2js_scratch_store_f32(Math_fround(infinity)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(Infinity)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $11() {
-  return (wasm2js_scratch_store_f32(Math_fround(-infinity)), wasm2js_scratch_load_i32(2)) | 0;
+  return (wasm2js_scratch_store_f32(Math_fround(-Infinity)), wasm2js_scratch_load_i32(2)) | 0;
  }
  
  function $12() {
@@ -156,7 +154,7 @@ function asmFunc(imports) {
  
  function $30() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(nan));
+  wasm2js_scratch_store_f64(+(NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -165,7 +163,7 @@ function asmFunc(imports) {
  
  function $31() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(nan));
+  wasm2js_scratch_store_f64(+(NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -174,7 +172,7 @@ function asmFunc(imports) {
  
  function $32() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(-nan));
+  wasm2js_scratch_store_f64(+(-NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -183,7 +181,7 @@ function asmFunc(imports) {
  
  function $33() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(nan));
+  wasm2js_scratch_store_f64(+(NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -192,7 +190,7 @@ function asmFunc(imports) {
  
  function $34() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(nan));
+  wasm2js_scratch_store_f64(+(NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -201,7 +199,7 @@ function asmFunc(imports) {
  
  function $35() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(-nan));
+  wasm2js_scratch_store_f64(+(-NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -210,7 +208,7 @@ function asmFunc(imports) {
  
  function $36() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(nan));
+  wasm2js_scratch_store_f64(+(NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -219,7 +217,7 @@ function asmFunc(imports) {
  
  function $37() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(nan));
+  wasm2js_scratch_store_f64(+(NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -228,7 +226,7 @@ function asmFunc(imports) {
  
  function $38() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(-nan));
+  wasm2js_scratch_store_f64(+(-NaN));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -237,7 +235,7 @@ function asmFunc(imports) {
  
  function $39() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(infinity));
+  wasm2js_scratch_store_f64(+(Infinity));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -246,7 +244,7 @@ function asmFunc(imports) {
  
  function $40() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(infinity));
+  wasm2js_scratch_store_f64(+(Infinity));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
@@ -255,7 +253,7 @@ function asmFunc(imports) {
  
  function $41() {
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  wasm2js_scratch_store_f64(+(-infinity));
+  wasm2js_scratch_store_f64(+(-Infinity));
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   i64toi32_i32$1 = wasm2js_scratch_load_i32(0 | 0) | 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;

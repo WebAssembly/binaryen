@@ -10,8 +10,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var f = -1412567121;
  var f$hi = 305419896;
  function call($0, $0$hi) {

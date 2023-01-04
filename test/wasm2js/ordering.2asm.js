@@ -13,8 +13,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function main() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   FUNCTION_TABLE[foo(2 | 0) | 0 | 0](1) | 0;

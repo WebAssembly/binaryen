@@ -109,8 +109,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function $0() {
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0;
   Atomics.compareExchange(HEAP8, 1024, 1, 2) | 0;

@@ -18,8 +18,6 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   
@@ -54,8 +52,6 @@ function asmFunc(global, env, buffer) {
       var HEAP32 = new Int32Array(__array_buffer);
       var HEAPF32 = new Float32Array(__array_buffer);
       var HEAPF64 = new Float64Array(__array_buffer);
-      var nan = NaN;
-      var infinity = Infinity;
     ;
 
       function f32Equal(a, b) {
