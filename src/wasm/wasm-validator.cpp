@@ -2535,11 +2535,11 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     curr,
     "ref.cast target type and ref type must have a common supertype");
 
-  // TODO: Remove this restriction
-  shouldBeEqual(curr->type.getNullability(),
-                curr->ref->type.getNullability(),
-                curr,
-                "ref.cast to a different nullability not yet implemented");
+  // We should never have a nullable cast of a non-nullable reference, since
+  // that unnecessarily loses type information.
+  shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
+               curr,
+               "ref.cast null of non-nullable references are not allowed");
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {

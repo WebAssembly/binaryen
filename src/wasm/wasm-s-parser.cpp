@@ -2805,15 +2805,6 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   if (legacy) {
     // Legacy polymorphic behavior.
     nullability = ref->type.getNullability();
-  } else if (ref->type.isRef()) {
-    // Only accept instructions emulating the legacy behavior for now.
-    if (nullability == NonNullable && ref->type.isNullable()) {
-      throw ParseException(
-        "ref.cast on nullable input not yet supported", s.line, s.col);
-    } else if (nullability == Nullable && ref->type.isNonNullable()) {
-      throw ParseException(
-        "ref.cast null on non-nullable input not yet supported", s.line, s.col);
-    }
   }
   auto type = Type(heapType, nullability);
   return Builder(wasm).makeRefCast(ref, type, RefCast::Safe);

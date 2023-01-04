@@ -1872,28 +1872,28 @@ struct OptimizeInstructions
 
     auto intendedType = curr->type.getHeapType();
 
-    // If the value is a null, it will just flow through, and we do not need
-    // the cast. However, if that would change the type, then things are less
-    // simple: if the original type was non-nullable, replacing it with a null
-    // would change the type, which can happen in e.g.
-    //   (ref.cast (ref.as_non_null (.. (ref.null)
+    // If the value is a null, then we know a nullable cast will succeed and a
+    // non-nullable cast will fail. Either way, we do not need the cast.
+    // However, we have to avoid changing the type when replacing a cast with
+    // its potentially more refined child, e.g.
+    //   (ref.cast null (ref.as_non_null (.. (ref.null)))
     if (fallthrough->is<RefNull>()) {
-      // Replace the expression with drops of the inputs, and a null. Note
-      // that we provide a null of the previous type, so that we do not alter
-      // the type received by our parent.
-      Expression* rep = builder.makeSequence(builder.makeDrop(curr->ref),
-                                             builder.makeRefNull(intendedType));
-      if (curr->ref->type.isNonNullable()) {
-        // Avoid a type change by forcing to be non-nullable. In practice,
-        // this would have trapped before we get here, so this is just for
-        // validation.
-        rep = builder.makeRefAs(RefAsNonNull, rep);
+      if (curr->type.isNullable()) {
+        // Replace the expression to drop the input and directly produce the
+        // null.
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeRefNull(intendedType)));
+        return;
+        // TODO: The optimal ordering of this and the other ref.as_non_null
+        //       stuff later down in this functions is unclear and may be worth
+        //       looking into.
+      } else {
+        // The cast will trap on the null, so replace it with an unreachable
+        // wrapped in a block of the original type.
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->ref), builder.makeUnreachable(), curr->type));
+        return;
       }
-      replaceCurrent(rep);
-      return;
-      // TODO: The optimal ordering of this and the other ref.as_non_null
-      //       stuff later down in this functions is unclear and may be worth
-      //       looking into.
     }
 
     // For the cast to be able to succeed, the value being cast must be a

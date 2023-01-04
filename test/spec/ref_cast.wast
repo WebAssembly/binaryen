@@ -30,23 +30,34 @@
     (call $init)
 
     (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t0 (struct.new_default $t0)))
     (drop (ref.cast null $t0 (global.get $tab.0)))
     (drop (ref.cast null $t0 (global.get $tab.1)))
     (drop (ref.cast null $t0 (global.get $tab.2)))
     (drop (ref.cast null $t0 (global.get $tab.3)))
     (drop (ref.cast null $t0 (global.get $tab.4)))
+    (drop (ref.cast $t0 (global.get $tab.0)))
+    (drop (ref.cast $t0 (global.get $tab.1)))
+    (drop (ref.cast $t0 (global.get $tab.2)))
+    (drop (ref.cast $t0 (global.get $tab.3)))
+    (drop (ref.cast $t0 (global.get $tab.4)))
 
-    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t1 (ref.null data)))
+    (drop (ref.cast null $t1 (struct.new_default $t1)))
     (drop (ref.cast null $t1 (global.get $tab.1)))
     (drop (ref.cast null $t1 (global.get $tab.2)))
+    (drop (ref.cast $t1 (global.get $tab.1)))
+    (drop (ref.cast $t1 (global.get $tab.2)))
 
-    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t2 (ref.null data)))
+    (drop (ref.cast null $t2 (struct.new_default $t2)))
     (drop (ref.cast null $t2 (global.get $tab.2)))
+    (drop (ref.cast $t2 (global.get $tab.2)))
 
-    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast null $t3 (ref.null data)))
+    (drop (ref.cast null $t3 (struct.new_default $t3)))
     (drop (ref.cast null $t3 (global.get $tab.3)))
-
-    (drop (ref.cast null $t0 (ref.null data)))
+    (drop (ref.cast $t3 (global.get $tab.3)))
   )
 
   (func (export "test-canon")
@@ -103,8 +114,15 @@
     )
     (i32.const 1)
   )
-)
 
+  (func (export "test-trap-null")
+    (drop
+      (ref.cast $t0
+        (ref.null $t0)
+      )
+    )
+  )
+)
 
 (invoke "test-sub")
 (invoke "test-canon")
@@ -114,6 +132,7 @@
 (assert_return (invoke "test-ref-cast-struct"))
 (assert_return (invoke "test-br-on-cast-struct") (i32.const 1))
 (assert_return (invoke "test-br-on-cast-fail-struct") (i32.const 0))
+(assert_trap (invoke "test-trap-null"))
 
 (assert_invalid
   (module

@@ -945,6 +945,7 @@ void RefTest::finalize() {
 void RefCast::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
+    return;
   }
   // Do not unnecessarily lose non-nullability information.
   if (ref->type.isNonNullable() && type.isNullable()) {
