@@ -6920,11 +6920,6 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
     } else {
       nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
     }
-    // Implicitly convert nullable casts of non-null references to non-nullable
-    // casts to avoid losing type information.
-    if (ref->type.isRef() && ref->type.isNonNullable()) {
-      nullability = NonNullable;
-    }
     auto safety =
       code == BinaryConsts::RefCastNop ? RefCast::Unsafe : RefCast::Safe;
     auto type = Type(heapType, nullability);

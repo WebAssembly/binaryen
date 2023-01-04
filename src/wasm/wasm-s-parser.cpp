@@ -2805,10 +2805,6 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   if (legacy) {
     // Legacy polymorphic behavior.
     nullability = ref->type.getNullability();
-  } else if (ref->type.isRef() && ref->type.isNonNullable()) {
-    // Implicitly convert nullable casts of non-null references to non-nullable
-    // casts to avoid losing type information.
-    nullability = NonNullable;
   }
   auto type = Type(heapType, nullability);
   return Builder(wasm).makeRefCast(ref, type, RefCast::Safe);
