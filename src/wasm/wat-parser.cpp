@@ -528,7 +528,7 @@ struct NullTypeParserCtx {
   void appendLocal(LocalsT&, Name, TypeT) {}
 
   Result<Index> getTypeIndex(Name) { return 1; }
-  Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
+  Result<HeapTypeT> getHeapTypeIdxFromIdx(Index) { return Ok{}; }
 
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
@@ -666,20 +666,21 @@ struct NullInstrParserCtx {
   ExprT makeExpr(InstrsT) { return Ok{}; }
   ExprT instrToExpr(InstrT) { return Ok{}; }
 
-  template<typename HeapTypeT> FieldIdxT getFieldFromIdx(HeapTypeT, uint32_t) {
+  template<typename HeapTypeT>
+  FieldIdxT getFieldIdxFromIdx(HeapTypeT, uint32_t) {
     return Ok{};
   }
-  template<typename HeapTypeT> FieldIdxT getFieldFromName(HeapTypeT, Name) {
+  template<typename HeapTypeT> FieldIdxT getFieldIdxFromName(HeapTypeT, Name) {
     return Ok{};
   }
-  LocalIdxT getLocalFromIdx(uint32_t) { return Ok{}; }
-  LocalIdxT getLocalFromName(Name) { return Ok{}; }
-  GlobalIdxT getGlobalFromIdx(uint32_t) { return Ok{}; }
-  GlobalIdxT getGlobalFromName(Name) { return Ok{}; }
-  MemoryIdxT getMemoryFromIdx(uint32_t) { return Ok{}; }
-  MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
-  DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
-  DataIdxT getDataFromName(Name) { return Ok{}; }
+  LocalIdxT getLocalIdxFromIdx(uint32_t) { return Ok{}; }
+  LocalIdxT getLocalIdxFromName(Name) { return Ok{}; }
+  GlobalIdxT getGlobalIdxFromIdx(uint32_t) { return Ok{}; }
+  GlobalIdxT getGlobalIdxFromName(Name) { return Ok{}; }
+  MemoryIdxT getMemoryIdxFromIdx(uint32_t) { return Ok{}; }
+  MemoryIdxT getMemoryIdxFromName(Name) { return Ok{}; }
+  DataIdxT getDataIdxFromIdx(uint32_t) { return Ok{}; }
+  DataIdxT getDataIdxFromName(Name) { return Ok{}; }
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
@@ -1032,7 +1033,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     return builder.getTempTupleType(types);
   }
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
+  Result<HeapTypeT> getHeapTypeIdxFromIdx(Index idx) {
     if (idx >= builder.size()) {
       return in.err("type index out of bounds");
     }
@@ -1100,7 +1101,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     }
   }
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
+  Result<HeapTypeT> getHeapTypeIdxFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
     }
@@ -1161,7 +1162,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), in(in), wasm(wasm),
       types(types), implicitTypes(implicitTypes) {}
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
+  Result<HeapTypeT> getHeapTypeIdxFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
     }
@@ -1409,14 +1410,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
-  Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
+  Result<HeapTypeT> getHeapTypeIdxFromIdx(Index idx) {
     if (idx >= types.size()) {
       return in.err("type index out of bounds");
     }
     return types[idx];
   }
 
-  Result<Index> getFieldFromIdx(HeapType type, uint32_t idx) {
+  Result<Index> getFieldIdxFromIdx(HeapType type, uint32_t idx) {
     if (!type.isStruct()) {
       return in.err("expected struct type");
     }
@@ -1426,12 +1427,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return idx;
   }
 
-  Result<Index> getFieldFromName(HeapType type, Name name) {
+  Result<Index> getFieldIdxFromName(HeapType type, Name name) {
     // TODO: Field names
     return in.err("symbolic field names note yet supported");
   }
 
-  Result<Index> getLocalFromIdx(uint32_t idx) {
+  Result<Index> getLocalIdxFromIdx(uint32_t idx) {
     if (!func) {
       return in.err("cannot access locals outside of a funcion");
     }
@@ -1441,7 +1442,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return idx;
   }
 
-  Result<Index> getLocalFromName(Name name) {
+  Result<Index> getLocalIdxFromName(Name name) {
     if (!func) {
       return in.err("cannot access locals outside of a function");
     }
@@ -1451,42 +1452,42 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return func->getLocalIndex(name);
   }
 
-  Result<Name> getGlobalFromIdx(uint32_t idx) {
+  Result<Name> getGlobalIdxFromIdx(uint32_t idx) {
     if (idx >= wasm.globals.size()) {
       return in.err("global index out of bounds");
     }
     return wasm.globals[idx]->name;
   }
 
-  Result<Name> getGlobalFromName(Name name) {
+  Result<Name> getGlobalIdxFromName(Name name) {
     if (!wasm.getGlobalOrNull(name)) {
       return in.err("global $" + name.toString() + " does not exist");
     }
     return name;
   }
 
-  Result<Name> getMemoryFromIdx(uint32_t idx) {
+  Result<Name> getMemoryIdxFromIdx(uint32_t idx) {
     if (idx >= wasm.memories.size()) {
       return in.err("memory index out of bounds");
     }
     return wasm.memories[idx]->name;
   }
 
-  Result<Name> getMemoryFromName(Name name) {
+  Result<Name> getMemoryIdxFromName(Name name) {
     if (!wasm.getMemoryOrNull(name)) {
       return in.err("memory $" + name.toString() + " does not exist");
     }
     return name;
   }
 
-  Result<uint32_t> getDataFromIdx(uint32_t idx) {
+  Result<uint32_t> getDataIdxFromIdx(uint32_t idx) {
     if (idx >= wasm.dataSegments.size()) {
       return in.err("data index out of bounds");
     }
     return idx;
   }
 
-  Result<uint32_t> getDataFromName(Name name) {
+  Result<uint32_t> getDataIdxFromName(Name name) {
     for (uint32_t i = 0; i < wasm.dataSegments.size(); ++i) {
       if (wasm.dataSegments[i]->name == name) {
         return i;
@@ -3427,7 +3428,7 @@ template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx) {
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
   if (auto idx = maybeTypeidx(ctx)) {
     CHECK_ERR(idx);
-    return ctx.getHeapTypeFromIdx(*idx);
+    return ctx.getHeapTypeIdxFromIdx(*idx);
   }
   return ctx.in.err("expected type index or identifier");
 }
@@ -3438,10 +3439,10 @@ template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
                                          typename Ctx::HeapTypeT type) {
   if (auto x = ctx.in.takeU32()) {
-    return ctx.getFieldFromIdx(type, *x);
+    return ctx.getFieldIdxFromIdx(type, *x);
   }
   if (auto id = ctx.in.takeID()) {
-    return ctx.getFieldFromName(type, *id);
+    return ctx.getFieldIdxFromName(type, *id);
   }
   return ctx.in.err("expected field index or identifier");
 }
@@ -3451,10 +3452,10 @@ Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
 template<typename Ctx>
 MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
-    return ctx.getMemoryFromIdx(*x);
+    return ctx.getMemoryIdxFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
-    return ctx.getMemoryFromName(*id);
+    return ctx.getMemoryIdxFromName(*id);
   }
   return {};
 }
@@ -3485,10 +3486,10 @@ MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx& ctx) {
 //             | v:id  => x (if globals[x] = v)
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
-    return ctx.getGlobalFromIdx(*x);
+    return ctx.getGlobalIdxFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
-    return ctx.getGlobalFromName(*id);
+    return ctx.getGlobalIdxFromName(*id);
   }
   return ctx.in.err("expected global index or identifier");
 }
@@ -3497,10 +3498,10 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
 //           | v:id => x (if data[x] = v)
 template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
-    return ctx.getDataFromIdx(*x);
+    return ctx.getDataIdxFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
-    return ctx.getDataFromName(*id);
+    return ctx.getDataIdxFromName(*id);
   }
   return ctx.in.err("expected data index or identifier");
 }
@@ -3509,10 +3510,10 @@ template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx& ctx) {
 //            | v:id  => x (if locals[x] = v)
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
-    return ctx.getLocalFromIdx(*x);
+    return ctx.getLocalIdxFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
-    return ctx.getLocalFromName(*id);
+    return ctx.getLocalIdxFromName(*id);
   }
   return ctx.in.err("expected local index or identifier");
 }
