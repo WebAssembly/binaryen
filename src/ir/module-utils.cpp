@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/intrinsics.h"
 #include "module-utils.h"
 #include "support/insert_ordered.h"
 #include "support/topological_sort.h"
@@ -246,7 +247,13 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
     }
   });
   ModuleUtils::iterImportedFunctions(
-    wasm, [&](Function* func) { notePublic(func->type); });
+    wasm, [&](Function* func) {
+    // We can ignore call.without.effects, which is implemented as an import but
+    // functionally is a call within the module.
+    if (!Intrinsics(wasm).isCallWithoutEffects(func)) {
+      notePublic(func->type);
+    }
+  });
   for (auto& ex : wasm.exports) {
     switch (ex->kind) {
       case ExternalKind::Function: {
