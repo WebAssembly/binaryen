@@ -207,7 +207,6 @@ def init_important_initial_contents():
         os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
         os.path.join('lit', 'passes', 'inlining_splitting.wast'),
         os.path.join('heap-types.wast'),
-        os.path.join('spec', 'ref_cast.wast'),
     ]
     RECENT_DAYS = 30
 
