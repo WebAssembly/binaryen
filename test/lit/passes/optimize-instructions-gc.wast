@@ -28,17 +28,17 @@
   ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
-  ;; CHECK:      (type $void (func))
-
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
-  ;; NOMNL:      (type $void (func))
-
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+
+  ;; CHECK:      (type $void (func))
 
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; CHECK:      (type $empty (struct ))
+  ;; NOMNL:      (type $void (func))
+
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   ;; NOMNL:      (type $empty (struct ))
