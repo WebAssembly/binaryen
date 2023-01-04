@@ -3669,7 +3669,10 @@ private:
     {
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
       Expression* x;
-      if (matches(curr, binary(Xor, binary(Shl, ival(1), any(&x)), ival(-1)))) {
+      // Note that we avoid this in JS mode, as emitting a rotation would
+      // require lowering that rotation for JS in another cycle of work.
+      if (matches(curr, binary(Xor, binary(Shl, ival(1), any(&x)), ival(-1))) &&
+          !getPassOptions().targetJS) {
         curr->op = Abstract::getBinary(type, RotL);
         right->value = Literal::makeFromInt32(-2, type);
         curr->left = right;

@@ -173,8 +173,11 @@ public:
     // and store would need to do a check. Given that, we can just ignore
     // implicit traps like those when optimizing. (When not optimizing, it's
     // nice to see codegen that matches wasm more precisely.)
+    // It is also important to prevent the optimizer from adding new things that
+    // require additional lowering, as we could hit a cycle.
     if (options.optimizeLevel > 0) {
       options.ignoreImplicitTraps = true;
+      options.targetJS = true;
     }
   }
 
