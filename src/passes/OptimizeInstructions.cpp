@@ -1879,18 +1879,10 @@ struct OptimizeInstructions
     //   (ref.cast null (ref.as_non_null (.. (ref.null)))
     if (fallthrough->is<RefNull>()) {
       if (curr->type.isNullable()) {
-        // Replace the expression with drops of the inputs, and a null. Note
-        // that we provide a null of the previous type, so that we do not alter
-        // the type received by our parent.
-        Expression* rep = builder.makeSequence(
-          builder.makeDrop(curr->ref), builder.makeRefNull(intendedType));
-        if (curr->type.isNonNullable()) {
-          // Avoid a type change by forcing to be non-nullable. In practice,
-          // this would have trapped before we get here, so this is just for
-          // validation.
-          rep = builder.makeRefAs(RefAsNonNull, rep);
-        }
-        replaceCurrent(rep);
+        // Replace the expression to drop the input and directly produce the
+        // null.
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeRefNull(intendedType)));
         return;
         // TODO: The optimal ordering of this and the other ref.as_non_null
         //       stuff later down in this functions is unclear and may be worth
@@ -1898,9 +1890,8 @@ struct OptimizeInstructions
       } else {
         // The cast will trap on the null, so replace it with an unreachable
         // wrapped in a block of the original type.
-        Expression* rep = builder.makeSequence(
-          builder.makeDrop(curr->ref), builder.makeUnreachable(), curr->type);
-        replaceCurrent(rep);
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->ref), builder.makeUnreachable(), curr->type));
         return;
       }
     }
