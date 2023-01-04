@@ -1793,6 +1793,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1802,6 +1810,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-cast-of-null (type $void)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref $array))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.null none)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $array))
   ;; NOMNL-NEXT:    (drop
@@ -1816,43 +1832,22 @@
   (func $incompatible-cast-of-null
     (drop
       (ref.cast $array
-        ;; The fallthrough is null, but the node's child's type is non-nullable,
-        ;; so we must add a ref.as_non_null on the outside to keep the type
-        ;; identical.
+        ;; The child is null, so the cast will trap. Replace it with an
+        ;; unreachable.
+        (ref.null none)
+      )
+    )
+    (drop
+      (ref.cast $array
+        ;; Even though the child type is non-null, it is still valid to do this
+        ;; transformation. In practice this code will trap before getting to our
+        ;; new unreachable.
         (ref.as_non_null
           (ref.null $struct)
         )
       )
     )
   )
-
- ;; CHECK:      (func $non-nullable-cast-of-null (type $void)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result (ref $struct))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (ref.null none)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; NOMNL:      (func $non-nullable-cast-of-null (type $void)
- ;; NOMNL-NEXT:  (drop
- ;; NOMNL-NEXT:   (block (result (ref $struct))
- ;; NOMNL-NEXT:    (drop
- ;; NOMNL-NEXT:     (ref.null none)
- ;; NOMNL-NEXT:    )
- ;; NOMNL-NEXT:    (unreachable)
- ;; NOMNL-NEXT:   )
- ;; NOMNL-NEXT:  )
- ;; NOMNL-NEXT: )
- (func $non-nullable-cast-of-null
-   (drop
-     (ref.cast $struct
-       (ref.null none)
-     )
-   )
- )
 
   ;; CHECK:      (func $incompatible-cast-of-unknown (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
