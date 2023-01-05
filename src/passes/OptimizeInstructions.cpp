@@ -1595,6 +1595,21 @@ struct OptimizeInstructions
       }
     }
 
+    // A nullable cast can be turned into a non-nullable one:
+    //
+    //    (struct.get ;; or something else that traps on a null ref
+    //      (ref.cast null
+    // =>
+    //    (struct.get
+    //      (ref.cast      ;; now non-nullable
+    //
+    // Either way we trap here, but refining the type may have benefits later.
+    if (ref->type.isNullable()) {
+      if (auto* cast = ref->dynCast<RefCast>()) {
+        cast->type = Type(cast->type.getHeapType(), NonNullable);
+      }
+    }
+
     auto fallthrough =
       Properties::getFallthrough(ref, getPassOptions(), *getModule());
 

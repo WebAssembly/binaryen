@@ -993,7 +993,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get_u $struct $i8
-  ;; CHECK-NEXT:    (ref.cast null $struct
+  ;; CHECK-NEXT:    (ref.cast $struct
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1016,7 +1016,7 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (struct.get_u $struct $i8
-  ;; NOMNL-NEXT:    (ref.cast null $struct
+  ;; NOMNL-NEXT:    (ref.cast $struct
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
