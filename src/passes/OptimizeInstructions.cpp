@@ -1606,7 +1606,37 @@ struct OptimizeInstructions
     // Either way we trap here, but refining the type may have benefits later.
     if (ref->type.isNullable()) {
       if (auto* cast = ref->dynCast<RefCast>()) {
-        cast->type = Type(cast->type.getHeapType(), NonNullable);
+        // Note that we must be the last child of the parent, otherwise effects
+        // in the middle may need to remain:
+        //
+        //    (struct.set
+        //      (ref.cast null
+        //      (call ..
+        //
+        // The call here must execute before the trap in the struct.set. To
+        // avoid that problem, inspect all children after us. If there are no
+        // such children, then there is no problem; if there are, see below.
+        auto canOptimize = true;
+        auto seenRef = false;
+        for (auto* child : ChildIterator(curr)) {
+          if (child == ref) {
+            seenRef = true;
+          } else if (seenRef) {
+            // This is a child after the reference. Check it for effects. For
+            // simplicity, focus on the case of traps-never-happens: if we can
+            // assume no trap occurs in the parent, then there must not be a
+            // trap in the child either, unless control flow transfers and we
+            // might not reach the parent.
+            // TODO: handle more cases.
+            if (!getPassOptions().trapsNeverHappen ||
+                effects(child).transfersControlFlow()) {
+              canOptimize = false;
+            }
+          }
+        }
+        if (canOptimize) {
+          cast->type = Type(cast->type.getHeapType(), NonNullable);
+        }
       }
     }
 
