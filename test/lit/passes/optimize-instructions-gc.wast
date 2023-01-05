@@ -2168,6 +2168,16 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $a
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-null (type $void)
   ;; NOMNL-NEXT:  (local $a (ref null $A))
@@ -2203,6 +2213,16 @@
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.tee $a
+  ;; NOMNL-NEXT:      (ref.null none)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
