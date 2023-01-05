@@ -1791,15 +1791,10 @@
 
   ;; CHECK:      (func $incompatible-cast-of-null (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (ref.null none)
@@ -1811,15 +1806,10 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-cast-of-null (type $void)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref $array))
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (unreachable)
-  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref $array))
+  ;; NOMNL-NEXT:   (block
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (ref.as_non_null
   ;; NOMNL-NEXT:      (ref.null none)
@@ -2237,6 +2227,14 @@
     ;; A fallthrough works too.
     (drop
       (ref.cast null $A
+        (local.tee $a
+          (ref.null $A)
+        )
+      )
+    )
+    ;; A non-null cast of a falling-though null will trap.
+    (drop
+      (ref.cast $A
         (local.tee $a
           (ref.null $A)
         )
