@@ -56,11 +56,11 @@
     )
   )
 
-  ;; CHECK:      (func $br-fail (type $none_=>_none)
+  ;; CHECK:      (func $br-null (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result dataref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 data
+  ;; CHECK-NEXT:     (br_on_cast $label$1 null data
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -68,11 +68,36 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-fail
+  (func $br-null
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast_fail $l struct
+          (br_on_cast $l null struct
+            (ref.null none)
+          )
+        )
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br-fail-null (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $label$1 (result dataref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 null data
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-fail-null
+    (drop
+      (block $l (result structref)
+        (drop
+          (br_on_cast_fail $l null struct
             (ref.null none)
           )
         )

@@ -3,8 +3,13 @@
 ;; RUN:  | filecheck %s
 
 (module
- ;; CHECK:      (type $struct (struct ))
- (type $struct (struct ))
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct ))
+  (type $struct (struct))
+  ;; CHECK:       (type $struct2 (struct ))
+  (type $struct2 (struct))
+ )
 
  ;; CHECK:      (func $br_on_non_i31-1 (type $none_=>_none)
  ;; CHECK-NEXT:  (drop
@@ -117,7 +122,6 @@
  )
 
  ;; CHECK:      (func $br_on_cast (type $none_=>_ref|$struct|) (result (ref $struct))
- ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
@@ -128,7 +132,6 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_cast (result (ref $struct))
-  (local $temp (ref null $struct))
   (block $block (result (ref $struct))
    (drop
     ;; This static cast can be computed at compile time: it will definitely be
@@ -141,23 +144,66 @@
   )
  )
 
+ ;; CHECK:      (func $br_on_cast_unrelated (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $struct2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_unrelated (result (ref $struct))
+  (block $block (result (ref $struct))
+   (drop
+    ;; This cast can be computed at compile time: it will definitely fail, so we
+    ;; can remove it.
+    (br_on_cast $block $struct
+     (struct.new $struct2)
+    )
+   )
+   (unreachable)
+  )
+ )
+
  ;; CHECK:      (func $br_on_cast_no (type $none_=>_ref|$struct|) (result (ref $struct))
- ;; CHECK-NEXT:  (local $temp (ref null $struct))
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br_on_cast $block $struct
- ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:     (local.get $struct)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_cast_no (result (ref $struct))
-  (local $temp (ref null $struct))
+  (local $struct (ref null $struct))
   (block $block (result (ref $struct))
    (drop
     (br_on_cast $block $struct
      ;; As above, but now the type is nullable, so we cannot infer anything.
+     (local.get $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_nullable (type $none_=>_ref?|$struct|) (result (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result nullref)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_nullable (result (ref null $struct))
+  (block $block (result (ref null $struct))
+   (drop
+    (br_on_cast $block null $struct
+     ;; As above, but now the cast allows nulls, so we can optimize.
      (ref.null $struct)
     )
    )
@@ -166,7 +212,6 @@
  )
 
  ;; CHECK:      (func $br_on_cast_fail (type $none_=>_ref|$struct|) (result (ref $struct))
- ;; CHECK-NEXT:  (local $temp (ref null $struct))
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $struct)
@@ -175,7 +220,6 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_cast_fail (result (ref $struct))
-  (local $temp (ref null $struct))
   (block $block (result (ref $struct))
    (drop
     ;; As $br_on_cast, but this checks for a failing cast, so we know it will
@@ -189,6 +233,7 @@
  )
 
  ;; CHECK:      (func $casts-are-costly (type $i32_=>_none) (param $x i32)
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
@@ -213,7 +258,7 @@
  ;; CHECK-NEXT:    (block $something (result anyref)
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (br_on_cast $something $struct
- ;; CHECK-NEXT:       (ref.null none)
+ ;; CHECK-NEXT:       (local.get $struct)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (ref.null none)
@@ -242,6 +287,7 @@
   ;; We never turn an if into a select if an arm has a cast of any kind, as
   ;; those things involve branches internally, so we'd be adding more than we
   ;; save.
+  (local $struct (ref null $struct))
   (drop
    (if (result i32)
     (local.get $x)
@@ -267,7 +313,7 @@
      (block $something (result anyref)
       (drop
        (br_on_cast $something $struct
-        (ref.null $struct)
+        (local.get $struct)
        )
       )
       (ref.null any)

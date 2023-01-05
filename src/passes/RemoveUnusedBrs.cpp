@@ -713,12 +713,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
 
         // First, check for a possible null which would prevent all other
-        // optimizations.
+        // optimizations (except for br_on_cast variants).
         // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
         // input is (ref null func) with br_on_non_null (as only the null check
         // would be needed).
         auto refType = curr->ref->type;
-        if (refType.isNullable()) {
+        if (refType.isNullable() && curr->op != BrOnCast &&
+            curr->op != BrOnCastFail) {
           return;
         }
 

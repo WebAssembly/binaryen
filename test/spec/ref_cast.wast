@@ -103,11 +103,35 @@
     (i32.const 1)
   )
 
+  (func (export "test-br-on-cast-null-struct") (result i32)
+    (drop
+      (block $l (result (ref null struct))
+        (drop
+          (br_on_cast $l null struct (ref.null none))
+        )
+        (return (i32.const 0))
+      )
+    )
+    (i32.const 1)
+  )
+
   (func (export "test-br-on-cast-fail-struct") (result i32)
     (drop
       (block $l (result (ref struct))
         (drop
           (br_on_cast_fail $l struct (struct.new $t0))
+        )
+        (return (i32.const 0))
+      )
+    )
+    (i32.const 1)
+  )
+
+  (func (export "test-br-on-cast-fail-null-struct") (result i32)
+    (drop
+      (block $l (result (ref struct))
+        (drop
+          (br_on_cast_fail $l null struct (ref.null none))
         )
         (return (i32.const 0))
       )
@@ -131,7 +155,9 @@
 (assert_return (invoke "test-ref-test-any") (i32.const 1))
 (assert_return (invoke "test-ref-cast-struct"))
 (assert_return (invoke "test-br-on-cast-struct") (i32.const 1))
+(assert_return (invoke "test-br-on-cast-null-struct") (i32.const 1))
 (assert_return (invoke "test-br-on-cast-fail-struct") (i32.const 0))
+(assert_return (invoke "test-br-on-cast-fail-null-struct") (i32.const 0))
 (assert_trap (invoke "test-trap-null"))
 
 (assert_invalid

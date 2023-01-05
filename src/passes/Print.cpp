@@ -2143,13 +2143,19 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
-        printHeapType(o, curr->intendedType, wasm);
+        if (curr->castType.isNullable()) {
+          printMedium(o, "null ");
+        }
+        printHeapType(o, curr->castType.getHeapType(), wasm);
         return;
       case BrOnCastFail:
         printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
-        printHeapType(o, curr->intendedType, wasm);
+        if (curr->castType.isNullable()) {
+          printMedium(o, "null ");
+        }
+        printHeapType(o, curr->castType.getHeapType(), wasm);
         return;
       case BrOnFunc:
         printMedium(o, "br_on_func ");

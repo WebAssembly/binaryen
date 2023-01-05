@@ -1553,12 +1553,11 @@ public:
   Name name;
   Expression* ref;
 
-  HeapType intendedType;
+  Type castType;
 
   void finalize();
 
-  // TODO: Support br_on_cast* null as well.
-  Type getCastType() { return Type(intendedType, NonNullable); }
+  Type getCastType() { return castType; }
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
