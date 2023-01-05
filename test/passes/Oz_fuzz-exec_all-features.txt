@@ -62,7 +62,6 @@
  (type $void_func (func))
  (type $struct (struct (field (mut i32))))
  (type $i32_=>_none (func (param i32)))
- (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "structs" (func $0))
@@ -159,14 +158,10 @@
      (i32.const 1)
     )
     (drop
-     (br_on_cast_fail $any $extendedstruct
+     (br $any
       (local.get $0)
      )
     )
-    (call $log
-     (i32.const 999)
-    )
-    (ref.null none)
    )
   )
  )

@@ -6931,6 +6931,7 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
 
 bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
   BrOnOp op;
+  auto nullability = NonNullable;
   switch (code) {
     case BinaryConsts::BrOnNull:
       op = BrOnNull;
@@ -6945,6 +6946,14 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     case BinaryConsts::BrOnCastStaticFail:
     case BinaryConsts::BrOnCastFail:
       op = BrOnCastFail;
+      break;
+    case BinaryConsts::BrOnCastNull:
+      op = BrOnCast;
+      nullability = Nullable;
+      break;
+    case BinaryConsts::BrOnCastFailNull:
+      op = BrOnCastFail;
+      nullability = Nullable;
       break;
     case BinaryConsts::BrOnFunc:
       op = BrOnFunc;
@@ -6968,14 +6977,15 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
       return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  HeapType intendedType;
+  Type castType = Type::none;
   if (op == BrOnCast || op == BrOnCastFail) {
     bool legacy = code == BinaryConsts::BrOnCastStatic ||
                   code == BinaryConsts::BrOnCastStaticFail;
-    intendedType = legacy ? getIndexedHeapType() : getHeapType();
+    auto type = legacy ? getIndexedHeapType() : getHeapType();
+    castType = Type(type, nullability);
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeBrOn(op, name, ref, intendedType);
+  out = Builder(wasm).makeBrOn(op, name, ref, castType);
   return true;
 }
 

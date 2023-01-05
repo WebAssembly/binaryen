@@ -1757,12 +1757,10 @@ BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                    BinaryenOp op,
                                    const char* name,
                                    BinaryenExpressionRef ref,
-                                   BinaryenHeapType intendedType) {
-  Builder builder(*(Module*)module);
+                                   BinaryenType castType) {
   return static_cast<Expression*>(
-    intendedType ? builder.makeBrOn(
-                     BrOnOp(op), name, (Expression*)ref, HeapType(intendedType))
-                 : builder.makeBrOn(BrOnOp(op), name, (Expression*)ref));
+    Builder(*(Module*)module)
+      .makeBrOn(BrOnOp(op), name, (Expression*)ref, Type(castType)));
 }
 BinaryenExpressionRef BinaryenStructNew(BinaryenModuleRef module,
                                         BinaryenExpressionRef* operands,
@@ -4119,16 +4117,16 @@ void BinaryenBrOnSetRef(BinaryenExpressionRef expr,
   assert(refExpr);
   static_cast<BrOn*>(expression)->ref = (Expression*)refExpr;
 }
-BinaryenHeapType BinaryenBrOnGetIntendedType(BinaryenExpressionRef expr) {
+BinaryenType BinaryenBrOnGetCastType(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOn>());
-  return static_cast<BrOn*>(expression)->intendedType.getID();
+  return static_cast<BrOn*>(expression)->castType.getID();
 }
-void BinaryenBrOnSetIntendedType(BinaryenExpressionRef expr,
-                                 BinaryenHeapType intendedType) {
+void BinaryenBrOnSetCastType(BinaryenExpressionRef expr,
+                             BinaryenType castType) {
   auto* expression = (Expression*)expr;
   assert(expression->is<BrOn>());
-  static_cast<BrOn*>(expression)->intendedType = HeapType(intendedType);
+  static_cast<BrOn*>(expression)->castType = Type(castType);
 }
 // StructNew
 BinaryenIndex BinaryenStructNewGetNumOperands(BinaryenExpressionRef expr) {

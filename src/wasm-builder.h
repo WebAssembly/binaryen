@@ -899,12 +899,12 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOn* makeBrOn(BrOnOp op, Name name, Expression* ref, HeapType intendedType) {
+  BrOn* makeBrOn(BrOnOp op, Name name, Expression* ref, Type castType) {
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
     ret->name = name;
     ret->ref = ref;
-    ret->intendedType = intendedType;
+    ret->castType = castType;
     ret->finalize();
     return ret;
   }

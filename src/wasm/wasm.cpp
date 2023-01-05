@@ -968,17 +968,11 @@ void BrOn::finalize() {
       // us flow out the null, but it does not).
       type = Type::none;
       break;
-    case BrOnCast:
     case BrOnFunc:
     case BrOnData:
     case BrOnI31:
       // If we do not branch, we return the input in this case.
       type = ref->type;
-      break;
-    case BrOnCastFail:
-      // If we do not branch, the cast worked, and we have something of the cast
-      // type.
-      type = Type(intendedType, NonNullable);
       break;
     case BrOnNonFunc:
       type = Type(HeapType::func, NonNullable);
@@ -988,6 +982,26 @@ void BrOn::finalize() {
       break;
     case BrOnNonI31:
       type = Type(HeapType::i31, NonNullable);
+      break;
+    case BrOnCast:
+      if (castType.isNullable()) {
+        // Nulls take the branch, so the result is non-nullable.
+        type = Type(ref->type.getHeapType(), NonNullable);
+      } else {
+        // Nulls do not take the branch, so the result is non-nullable only if
+        // the input is.
+        type = ref->type;
+      }
+      break;
+    case BrOnCastFail:
+      if (castType.isNullable()) {
+        // Nulls do not take the branch, so the result is non-nullable only if
+        // the input is.
+        type = Type(castType.getHeapType(), ref->type.getNullability());
+      } else {
+        // Nulls take the branch, so the result is non-nullable.
+        type = castType;
+      }
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
@@ -1007,22 +1021,30 @@ Type BrOn::getSentType() {
       }
       // BrOnNonNull sends the non-nullable type on the branch.
       return Type(ref->type.getHeapType(), NonNullable);
-    case BrOnCast:
-      if (ref->type == Type::unreachable) {
-        return Type::unreachable;
-      }
-      return Type(intendedType, NonNullable);
     case BrOnFunc:
       return Type(HeapType::func, NonNullable);
     case BrOnData:
       return Type(HeapType::data, NonNullable);
     case BrOnI31:
       return Type(HeapType::i31, NonNullable);
-    case BrOnCastFail:
     case BrOnNonFunc:
     case BrOnNonData:
     case BrOnNonI31:
       return ref->type;
+    case BrOnCast:
+      // The same as the result type of br_on_cast_fail.
+      if (castType.isNullable()) {
+        return Type(castType.getHeapType(), ref->type.getNullability());
+      } else {
+        return castType;
+      }
+    case BrOnCastFail:
+      // The same as the result type of br_on_cast.
+      if (castType.isNullable()) {
+        return Type(ref->type.getHeapType(), NonNullable);
+      } else {
+        return ref->type;
+      }
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }

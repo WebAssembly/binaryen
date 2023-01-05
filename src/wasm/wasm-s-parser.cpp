@@ -2821,12 +2821,18 @@ Expression* SExpressionWasmBuilder::makeRefCastNop(Element& s) {
 Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   int i = 1;
   auto name = getLabel(*s[i++]);
-  HeapType heapType;
+  Type castType = Type::none;
   if (op == BrOnCast || op == BrOnCastFail) {
-    heapType = parseHeapType(*s[i++]);
+    auto nullability = NonNullable;
+    if (s[i]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
   auto* ref = parseExpression(*s[i]);
-  return Builder(wasm).makeBrOn(op, name, ref, heapType);
+  return Builder(wasm).makeBrOn(op, name, ref, castType);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {

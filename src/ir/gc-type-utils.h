@@ -52,15 +52,19 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       // We don't check nullability here.
       case BrOnNull:
       case BrOnNonNull:
+        return Unknown;
       case BrOnCastFail:
         flip = true;
         [[fallthrough]];
       case BrOnCast:
-        // Note that the type must be non-nullable for us to succeed since a
-        // null would make us fail.
-        if (Type::isSubType(br->ref->type,
-                            Type(br->intendedType, NonNullable))) {
+        // If we already have a subtype of the cast type, the cast will succeed.
+        if (Type::isSubType(br->ref->type, br->castType)) {
           return flip ? Failure : Success;
+        }
+        // If the cast type is unrelated to the type we have, the cast will
+        // certainly fail.
+        if (!Type::isSubType(br->castType, br->ref->type)) {
+          return flip ? Success : Failure;
         }
         return Unknown;
       case BrOnNonFunc:
