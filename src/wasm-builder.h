@@ -195,6 +195,14 @@ public:
     ret->finalize(type);
     return ret;
   }
+  Block*
+  makeBlock(Name name, const std::vector<Expression*>& items, Type type) {
+    auto* ret = wasm.allocator.alloc<Block>();
+    ret->name = name;
+    ret->list.set(items);
+    ret->finalize(type);
+    return ret;
+  }
   Block* makeBlock(const ExpressionList& items) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->list.set(items);
