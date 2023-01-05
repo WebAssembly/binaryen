@@ -446,6 +446,90 @@
     )
   )
 
+  ;; TNH:      (func $set-get-cast (type $dataref_=>_none) (param $ref dataref)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (struct.get $struct 0
+  ;; TNH-NEXT:    (ref.cast $struct
+  ;; TNH-NEXT:     (local.get $ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (ref.cast $struct
+  ;; TNH-NEXT:    (local.get $ref)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (ref.cast null $struct
+  ;; TNH-NEXT:    (local.get $ref)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (block (result i32)
+  ;; TNH-NEXT:    (return)
+  ;; TNH-NEXT:    (i32.const 1)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $set-get-cast (type $dataref_=>_none) (param $ref dataref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.get $struct 0
+  ;; NO_TNH-NEXT:    (ref.cast $struct
+  ;; NO_TNH-NEXT:     (local.get $ref)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (ref.cast null $struct
+  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (ref.cast null $struct
+  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (block (result i32)
+  ;; NO_TNH-NEXT:    (return)
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $set-get-cast (param $ref (ref null data))
+    ;; A nullable cast flowing into a place that traps on null can become a
+    ;; non-nullable cast.
+    (drop
+      (struct.get $struct 0
+        (ref.cast null $struct
+          (local.get $ref)
+        )
+      )
+    )
+    ;; Ditto for a set, at least in traps-happen mode.
+    ;; TODO handle non-TNH as well, but we need to be careful of effects in
+    ;;      other children.
+    (struct.set $struct 0
+      (ref.cast null $struct
+        (local.get $ref)
+      )
+      (i32.const 1)
+    )
+    ;; Even in TNH mode, a child with an effect of control flow transfer
+    ;; prevents us from optimizing - if the parent is not necessarily reached,
+    ;; we cannot infer the child won't trap.
+    (struct.set $struct 0
+      (ref.cast null $struct
+        (local.get $ref)
+      )
+      (block (result i32)
+        ;; This block has type i32, to check that we don't just look for
+        ;; unreachable. We must scan for any transfer of control flow in the
+        ;; child of the struct.set.
+        (return)
+        (i32.const 1)
+      )
+    )
+  )
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)
