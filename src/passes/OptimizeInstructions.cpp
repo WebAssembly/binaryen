@@ -1631,6 +1631,7 @@ struct OptimizeInstructions
             if (!getPassOptions().trapsNeverHappen ||
                 effects(child).transfersControlFlow()) {
               canOptimize = false;
+              break;
             }
           }
         }

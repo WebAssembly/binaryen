@@ -461,7 +461,7 @@
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (ref.cast $struct
+  ;; TNH-NEXT:   (ref.cast null $struct
   ;; TNH-NEXT:    (local.get $ref)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (block (result i32)
@@ -479,13 +479,13 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:   (ref.cast null $struct
   ;; NO_TNH-NEXT:    (local.get $ref)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:   (ref.cast null $struct
   ;; NO_TNH-NEXT:    (local.get $ref)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (block (result i32)
