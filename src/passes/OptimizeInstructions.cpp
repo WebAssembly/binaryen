@@ -1595,7 +1595,10 @@ struct OptimizeInstructions
       }
     }
 
-    if (ref->type.isNull()) {
+    auto fallthrough =
+      Properties::getFallthrough(ref, getPassOptions(), *getModule());
+
+    if (fallthrough->type.isNull()) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, builder.makeUnreachable()));
       // Propagate the unreachability.
@@ -1864,6 +1867,10 @@ struct OptimizeInstructions
       return;
     }
 
+    if (curr->type.isNonNullable() && trapOnNull(curr, curr->ref)) {
+      return;
+    }
+
     Builder builder(*getModule());
     auto& passOptions = getPassOptions();
 
@@ -1873,27 +1880,21 @@ struct OptimizeInstructions
     auto intendedType = curr->type.getHeapType();
 
     // If the value is a null, then we know a nullable cast will succeed and a
-    // non-nullable cast will fail. Either way, we do not need the cast.
-    // However, we have to avoid changing the type when replacing a cast with
+    // non-nullable cast will fail. Either way, we do not need the cast. We've
+    // already handled the non-nullable case above, so all we have left is a
+    // nullable one.
+    // Note that we have to avoid changing the type when replacing a cast with
     // its potentially more refined child, e.g.
     //   (ref.cast null (ref.as_non_null (.. (ref.null)))
-    if (fallthrough->is<RefNull>()) {
-      if (curr->type.isNullable()) {
-        // Replace the expression to drop the input and directly produce the
-        // null.
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                            builder.makeRefNull(intendedType)));
-        return;
-        // TODO: The optimal ordering of this and the other ref.as_non_null
-        //       stuff later down in this functions is unclear and may be worth
-        //       looking into.
-      } else {
-        // The cast will trap on the null, so replace it with an unreachable
-        // wrapped in a block of the original type.
-        replaceCurrent(builder.makeSequence(
-          builder.makeDrop(curr->ref), builder.makeUnreachable(), curr->type));
-        return;
-      }
+    if (fallthrough->is<RefNull>() && curr->type.isNullable()) {
+      // Replace the expression to drop the input and directly produce the
+      // null.
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeRefNull(intendedType)));
+      return;
+      // TODO: The optimal ordering of this and the other ref.as_non_null
+      //       stuff later down in this functions is unclear and may be worth
+      //       looking into.
     }
 
     // For the cast to be able to succeed, the value being cast must be a
