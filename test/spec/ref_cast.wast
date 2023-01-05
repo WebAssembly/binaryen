@@ -105,9 +105,9 @@
 
   (func (export "test-br-on-cast-null-struct") (result i32)
     (drop
-      (block $l (result (ref struct))
+      (block $l (result (ref null struct))
         (drop
-          (br_on cast $l null struct (ref.null none))
+          (br_on_cast $l null struct (ref.null none))
         )
         (return (i32.const 0))
       )
@@ -157,6 +157,7 @@
 (assert_return (invoke "test-br-on-cast-struct") (i32.const 1))
 (assert_return (invoke "test-br-on-cast-null-struct") (i32.const 1))
 (assert_return (invoke "test-br-on-cast-fail-struct") (i32.const 0))
+(assert_return (invoke "test-br-on-cast-fail-null-struct") (i32.const 0))
 (assert_trap (invoke "test-trap-null"))
 
 (assert_invalid

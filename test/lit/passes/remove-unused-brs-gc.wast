@@ -166,19 +166,23 @@
  )
 
  ;; CHECK:      (func $br_on_cast_no (type $none_=>_ref|$struct|) (result (ref $struct))
- ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (br_on_cast $block $struct
+ ;; CHECK-NEXT:     (local.get $struct)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_cast_no (result (ref $struct))
+  (local $struct (ref null $struct))
   (block $block (result (ref $struct))
    (drop
     (br_on_cast $block $struct
      ;; As above, but now the type is nullable, so we cannot infer anything.
-     (ref.null $struct)
+     (local.get $struct)
     )
    )
    (unreachable)
