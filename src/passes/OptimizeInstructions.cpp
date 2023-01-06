@@ -1979,6 +1979,15 @@ struct OptimizeInstructions
           return;
         }
 
+        // Or, perhaps the heap type part must fail. E.g. the input might be a
+        // nullable array while the output might be a nullable struct. That is, a
+        // situation where the only way the cast succeeds is if the input is null,
+        // which we can cast to using a bottom type.
+        if (ref->type.isRef() && !canBeCastTo(ref->type.getHeapType(), intendedType)) {
+          curr->type = Type(HeapType::none, Nullable);
+          return;
+        }
+
         auto* last = ref;
         ref = Properties::getImmediateFallthrough(
           ref, getPassOptions(), *getModule());
@@ -2024,18 +2033,6 @@ struct OptimizeInstructions
     // cast as a whole is not, that would leave only nullability as an issue,
     // that is, this means that the input ref is nullable but we are casting to
     // non-null.
-    //
-    // Note that we could do something similar for a failed cast, that is,
-    // handle the situation where the entire cast might succeed, but the heap
-    // type part will definitely fail. For example, the input might be a
-    // nullable array while the output might be a nullable struct. That is, a
-    // situation where the only way the cast succeeds is if the input is null.
-    // However, optimizing this would mean emitting something like
-    //
-    //   ref == null ? null : trap
-    //
-    // which is strictly larger. However, it might be more efficient, so could
-    // be worth investigating TODO
     if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
       assert(curr->ref->type.isNullable());
       assert(curr->type.isNonNullable());

@@ -1350,7 +1350,7 @@
   )
   ;; CHECK:      (func $ref-cast-squared-different (type $eqref_=>_none) (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast null none
   ;; CHECK-NEXT:    (ref.cast null $empty
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -1359,7 +1359,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-squared-different (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
+  ;; NOMNL-NEXT:   (ref.cast null none
   ;; NOMNL-NEXT:    (ref.cast null $empty
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
@@ -1367,7 +1367,8 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-squared-different (param $x eqref)
-    ;; Different casts cannot be folded.
+    ;; Different casts cannot be folded. We can emit a cast to null here, which
+    ;; is the only possible thing that can pass through.
     (drop
       (ref.cast null $struct
         (ref.cast null $empty
@@ -1811,14 +1812,14 @@
 
   ;; CHECK:      (func $incompatible-cast-of-unknown (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $array
+  ;; CHECK-NEXT:   (ref.cast null none
   ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $incompatible-cast-of-unknown (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $array
+  ;; NOMNL-NEXT:   (ref.cast null none
   ;; NOMNL-NEXT:    (local.get $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -2677,7 +2678,7 @@
 
   ;; CHECK:      (func $ref-cast-static-squared-impossible (type $eqref_=>_none) (param $x eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast null none
   ;; CHECK-NEXT:    (ref.cast null $array
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -2716,7 +2717,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-squared-impossible (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
+  ;; NOMNL-NEXT:   (ref.cast null none
   ;; NOMNL-NEXT:    (ref.cast null $array
   ;; NOMNL-NEXT:     (local.get $x)
   ;; NOMNL-NEXT:    )
@@ -3188,7 +3189,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast null none
   ;; CHECK-NEXT:    (local.get $null-b)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3219,7 +3220,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
+  ;; NOMNL-NEXT:   (ref.cast null none
   ;; NOMNL-NEXT:    (local.get $null-b)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -3243,8 +3244,8 @@
         (local.get $b)
       )
     )
-    ;; This last case is the only one that can succeed. We leave it alone, but
-    ;; in theory we could optimize it to { ref == null ? null : trap }.
+    ;; This last case is the only one that can succeed. We turn it into a cast
+    ;; to a null.
     (drop
       (ref.cast null $struct
         (local.get $null-b)
