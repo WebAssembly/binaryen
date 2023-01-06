@@ -228,13 +228,13 @@
   (block $block (result anyref)
    (drop
     ;; This cast can be computed at compile time: it will definitely fail, so we
-    ;; can remove it.
+    ;; can replace it with an unconditional br.
     (br_on_cast_fail $block $struct
      (struct.new $struct2)
     )
    )
    (drop
-    ;; We can still remove it even if the cast allows nulls.
+    ;; We can still replace it even if the cast allows nulls.
     (br_on_cast_fail $block null $struct
      (struct.new $struct2)
     )

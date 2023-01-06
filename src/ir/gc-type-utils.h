@@ -62,10 +62,10 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
           return flip ? Failure : Success;
         }
         // If the cast type is unrelated to the type we have and it's not
-        // possible for the cast succeed anyway because the value is null, then
-        // the cast will certainly fail. TODO: This is essentially the same as
-        // `canBeCastTo` in OptimizeInstructions. Find a way to deduplicate this
-        // logic.
+        // possible for the cast to succeed anyway because the value is null,
+        // then the cast will certainly fail. TODO: This is essentially the same
+        // as `canBeCastTo` in OptimizeInstructions. Find a way to deduplicate
+        // this logic.
         if (!Type::isSubType(br->castType, br->ref->type) &&
             (br->castType.isNonNullable() || br->ref->type.isNonNullable())) {
           return flip ? Success : Failure;
