@@ -1902,6 +1902,18 @@ struct OptimizeInstructions
     return HeapType::isSubType(a, b) || HeapType::isSubType(b, a);
   }
 
+  bool canBeCastTo(Type a, Type b) {
+    // A value can be cast to the other if the heap type can be cast, or if a
+    // null can work.
+    if (a.isNullable() && b.isNullable()) {
+      return true;
+    }
+    if (a.isRef() && b.isRef() && canBeCastTo(a.getHeapType(), b.getHeapType())) {
+      return true;
+    }
+    return false;
+  }
+
   void visitRefCast(RefCast* curr) {
     // Note we must check the ref's type here and not our own, since we only
     // refinalize at the end, which means our type may not have been updated yet
@@ -1943,26 +1955,22 @@ struct OptimizeInstructions
       //       looking into.
     }
 
-    // For the cast to be able to succeed, the value being cast must be a
-    // subtype of the desired type. For example, trying to cast an array to a
-    // struct would be incompatible.
-    if (!canBeCastTo(curr->ref->type.getHeapType(), intendedType)) {
-      // This cast cannot succeed. If the input is not a null, it will
-      // definitely trap.
-      if (fallthrough->type.isNonNullable()) {
-        // Make sure to emit a block with the same type as us; leave updating
-        // types for other passes.
-        replaceCurrent(builder.makeBlock(
-          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-          curr->type));
-        return;
-      }
-      // Otherwise, we are not sure what it is, and need to wait for runtime
-      // to see if it is a null or not. (We've already handled the case where
-      // we can see the value is definitely a null at compile time, earlier.)
+    // Check whether the cast will definitely fail.
+    if (!canBeCastTo(fallthrough->type, curr->type)) {
+      // This cast cannot succeed, so it will trap.
+      // Make sure to emit a block with the same type as us; leave updating
+      // types for other passes.
+      replaceCurrent(builder.makeBlock(
+        {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+        curr->type));
+      return;
     }
 
     // Check whether the cast will definitely succeed.
+    //
+    // Note that we could look at the fallthrough for the ref, but that would
+    // require additional work to make sure we emit something that validates
+    // properly. TODO
     if (Type::isSubType(curr->ref->type, curr->type)) {
       replaceCurrent(curr->ref);
 
@@ -1987,10 +1995,25 @@ struct OptimizeInstructions
       return;
     }
 
-    // The cast will not definitely succeed, but perhaps the heap type part of
-    // the cast will, at least. That would leave only nullability as an issue,
+    // The cast will not definitely succeed nor will it definitely fail.
+    //
+    // Perhaps the heap type part of the cast can be reasoned about, at least.
+    // E.g. if the heap type part of the cast is definitely compatible, but the
+    // cast as a whole is not, that would leave only nullability as an issue,
     // that is, this means that the input ref is nullable but we are casting to
     // non-null.
+    //
+    // Note that we could do something similar for a failed cast, that is,
+    // handle the situation where the entire cast might succeed, but the heap
+    // type part will definitely fail. For example, the input might be a
+    // nullable array while the output might be a nullable struct. That is, a
+    // situation where the only way the cast succeeds is if the input is null.
+    // However, optimizing this would mean emitting something like
+    //
+    //   ref == null ? null : trap
+    //
+    // which is strictly larger. However, it might be more efficient, so could
+    // be worth investigating TODO
     if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
       assert(curr->ref->type.isNullable());
       assert(curr->type.isNonNullable());

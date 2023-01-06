@@ -2091,25 +2091,31 @@
 
   ;; CHECK:      (func $consecutive-opts-with-unreachable (type $funcref_=>_none) (param $func funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
-  ;; CHECK-NEXT:    (block (result (ref i31))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $func)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref i31))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $func)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $consecutive-opts-with-unreachable (type $funcref_=>_none) (param $func funcref)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $struct
-  ;; NOMNL-NEXT:    (block (result (ref i31))
-  ;; NOMNL-NEXT:     (drop
-  ;; NOMNL-NEXT:      (local.get $func)
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result (ref i31))
+  ;; NOMNL-NEXT:      (drop
+  ;; NOMNL-NEXT:       (local.get $func)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (unreachable)
   ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (unreachable)
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -2117,9 +2123,8 @@
     (drop
       (ref.cast $struct
         ;; Casting a funcref to i31 will definitely fail, so this will be
-        ;; replaced with an unreachable. But it should be enclosed in a block of
-        ;; the previous type, so that the outside ref.cast null is not confused. This
-        ;; is a regression test for a bug where we replace this node with an
+        ;; replaced with an unreachable. Likewise, the cast must fail. This is
+        ;; a regression test for a bug where we replace this node with an
         ;; unreachable one, but we left refinalize til the end of all the other
         ;; opts - and that meant that we got to our parent, the ref.cast, with
         ;; one unreachable child but before it itself was refinalized, so its
