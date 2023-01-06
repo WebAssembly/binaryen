@@ -2004,12 +2004,14 @@ struct OptimizeInstructions
       }
     }
 
-    // Check whether the cast will definitely succeed.
+    // See what we know about the cast result.
     //
     // Note that we could look at the fallthrough for the ref, but that would
     // require additional work to make sure we emit something that validates
     // properly. TODO
-    if (Type::isSubType(curr->ref->type, curr->type)) {
+    auto result = GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->type);
+
+    if (result == GCTypeUtils::Success) {
       replaceCurrent(curr->ref);
 
       // We must refinalize here, as we may be returning a more specific
@@ -2031,33 +2033,11 @@ struct OptimizeInstructions
       // refinalized so the IR node has the expected type.
       refinalize = true;
       return;
-    }
-
-    // The cast will not definitely succeed nor will it definitely fail.
-    //
-    // Perhaps the heap type part of the cast can be reasoned about, at least.
-    // E.g. if the heap type part of the cast is definitely compatible, but the
-    // cast as a whole is not, that would leave only nullability as an issue,
-    // that is, this means that the input ref is nullable but we are casting to
-    // non-null.
-    //
-    // Note that we could do something similar for a failed cast, that is,
-    // handle the situation where the entire cast might succeed, but the heap
-    // type part will definitely fail. For example, the input might be a
-    // nullable array while the output might be a nullable struct. That is, a
-    // situation where the only way the cast succeeds is if the input is null.
-    // However, optimizing this would mean emitting something like
-    //
-    //   ref == null ? null : trap
-    //
-    // which is strictly larger. However, it might be more efficient, so could
-    // be worth investigating TODO
-    if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+    } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
       assert(curr->ref->type.isNullable());
       assert(curr->type.isNonNullable());
 
-      // Given the heap type will cast ok, all we need to do is check for a null
-      // here.
+      // All we need to do is check for a null here.
       //
       // As above, we must refinalize as we may now be emitting a more refined
       // type (specifically a more refined heap type).

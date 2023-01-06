@@ -33,7 +33,9 @@ enum EvaluationResult {
   // The evaluation is known to succeed (i.e., we find what we are looking
   // for), or fail, at compile time.
   Success,
-  Failure
+  Failure,
+  // The cast will only succeed if the input is a null.
+  SuccessOnlyIfNull,
 };
 
 // Given an instruction that checks if the child reference is of a certain kind
@@ -134,6 +136,33 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
     success = !success;
   }
   return success ? Success : Failure;
+}
+
+// Given the type of a reference and a type to attempt to cast it to, return
+// what we know about the result.
+inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
+  if (Type::isSubType(refType, castType)) {
+    return Success;
+  }
+
+  auto refHeapType = refType.getHeapType();
+  auto castHeapType = castType.getHeapType();
+  bool heapTypesCompatible = 
+      HeapType::isSubType(refHeapType, castHeapType) ||
+      HeapType::isSubType(castHeapType, refHeapType);
+
+  if (!heapTypesCompatible) {
+    // If at least one is not null, then since the heap types are not compatible
+    // we must fail.
+    if (refType.isNonNullable() || castType.isNonNullable()) {
+      return Failure;
+    }
+
+    // Otherwise, both are nullable and a null is the only hope of success.
+    return SuccessOnlyIfNull;
+  }
+
+  return Unknown;
 }
 
 } // namespace wasm::GCTypeUtils
