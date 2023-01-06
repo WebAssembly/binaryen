@@ -2033,7 +2033,7 @@ struct OptimizeInstructions
       // refinalized so the IR node has the expected type.
       refinalize = true;
       return;
-    } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
+    } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
       assert(curr->ref->type.isNullable());
       assert(curr->type.isNonNullable());
 

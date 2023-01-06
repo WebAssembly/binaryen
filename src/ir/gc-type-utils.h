@@ -34,8 +34,9 @@ enum EvaluationResult {
   // for), or fail, at compile time.
   Success,
   Failure,
-  // The cast will only succeed if the input is a null.
+  // The cast will only succeed if the input is a null, or is not
   SuccessOnlyIfNull,
+  SuccessOnlyIfNonNull,
 };
 
 // Given an instruction that checks if the child reference is of a certain kind
@@ -147,9 +148,9 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 
   auto refHeapType = refType.getHeapType();
   auto castHeapType = castType.getHeapType();
-  bool heapTypesCompatible = 
-      HeapType::isSubType(refHeapType, castHeapType) ||
-      HeapType::isSubType(castHeapType, refHeapType);
+  auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
+  auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
+  bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
   if (!heapTypesCompatible) {
     // If at least one is not null, then since the heap types are not compatible
@@ -160,6 +161,19 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 
     // Otherwise, both are nullable and a null is the only hope of success.
     return SuccessOnlyIfNull;
+  }
+
+  // The cast will not definitely succeed nor will it definitely fail.
+  //
+  // Perhaps the heap type part of the cast can be reasoned about, at least.
+  // E.g. if the heap type part of the cast is definitely compatible, but the
+  // cast as a whole is not, that would leave only nullability as an issue,
+  // that is, this means that the input ref is nullable but we are casting to
+  // non-null.
+  if (refIsHeapSubType) {
+    assert(refType.isNullable());
+    assert(castType.isNonNullable());
+    return SuccessOnlyIfNonNull;
   }
 
   return Unknown;
