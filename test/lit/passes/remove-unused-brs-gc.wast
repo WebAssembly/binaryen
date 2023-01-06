@@ -144,21 +144,112 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $none_=>_ref|$struct|) (result (ref $struct))
- ;; CHECK-NEXT:  (block $block
+ ;; CHECK:      (func $br_on_cast_unrelated (type $none_=>_ref?|$struct|) (result (ref null $struct))
+ ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
+ ;; CHECK-NEXT:  (block $block (result (ref null $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $struct2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $struct2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $nullable-struct2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block null $struct
+ ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_unrelated (result (ref $struct))
-  (block $block (result (ref $struct))
+ (func $br_on_cast_unrelated (result (ref null $struct))
+  (local $nullable-struct2 (ref null $struct2))
+  (block $block (result (ref null $struct))
    (drop
     ;; This cast can be computed at compile time: it will definitely fail, so we
     ;; can remove it.
     (br_on_cast $block $struct
      (struct.new $struct2)
+    )
+   )
+   (drop
+    ;; We can still remove it even if the cast allows nulls.
+    (br_on_cast $block null $struct
+     (struct.new $struct2)
+    )
+   )
+   (drop
+    ;; Or if the cast does not allow nulls and the value is nullable.
+    (br_on_cast $block $struct
+     (local.get $nullable-struct2)
+    )
+   )
+   (drop
+    ;; But if both are nullable, then we can't optimize because the cast would
+    ;; succeed if the value is a null.
+    (br_on_cast $block null $struct
+     (local.get $nullable-struct2)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail_unrelated (type $none_=>_anyref) (result anyref)
+ ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
+ ;; CHECK-NEXT:  (block $block (result (ref null $struct2))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block null $struct
+ ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_unrelated (result anyref)
+  (local $nullable-struct2 (ref null $struct2))
+  (block $block (result anyref)
+   (drop
+    ;; This cast can be computed at compile time: it will definitely fail, so we
+    ;; can remove it.
+    (br_on_cast_fail $block $struct
+     (struct.new $struct2)
+    )
+   )
+   (drop
+    ;; We can still remove it even if the cast allows nulls.
+    (br_on_cast_fail $block null $struct
+     (struct.new $struct2)
+    )
+   )
+   (drop
+    ;; Or if the cast does not allow nulls and the value is nullable.
+    (br_on_cast_fail $block $struct
+     (local.get $nullable-struct2)
+    )
+   )
+   (drop
+    ;; But if both are nullable, then we can't optimize because the cast would
+    ;; succeed if the value is a null.
+    (br_on_cast_fail $block null $struct
+     (local.get $nullable-struct2)
     )
    )
    (unreachable)
