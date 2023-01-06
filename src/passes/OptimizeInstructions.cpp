@@ -1980,10 +1980,11 @@ struct OptimizeInstructions
         }
 
         // Or, perhaps the heap type part must fail. E.g. the input might be a
-        // nullable array while the output might be a nullable struct. That is, a
-        // situation where the only way the cast succeeds is if the input is null,
-        // which we can cast to using a bottom type.
-        if (ref->type.isRef() && !canBeCastTo(ref->type.getHeapType(), intendedType)) {
+        // nullable array while the output might be a nullable struct. That is,
+        // a situation where the only way the cast succeeds is if the input is
+        // null, which we can cast to using a bottom type.
+        if (ref->type.isRef() &&
+            !canBeCastTo(ref->type.getHeapType(), intendedType)) {
           curr->type = Type(HeapType::none, Nullable);
           // Call replaceCurrent() to make us re-optimize this node, as we may
           // have just unlocked further opportunities. (We could just continue
