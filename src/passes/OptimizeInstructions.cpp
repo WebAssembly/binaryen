@@ -1955,14 +1955,35 @@ struct OptimizeInstructions
       //       looking into.
     }
 
-    // Check whether the cast will definitely fail.
-    if (!canBeCastTo(fallthrough->type, curr->type)) {
-      // This cast cannot succeed, so it will trap.
-      // Make sure to emit a block with the same type as us; leave updating
-      // types for other passes.
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ref), builder.makeUnreachable()}, curr->type));
-      return;
+    // Check whether the cast will definitely fail. Look not just at the
+    // fallthrough but all intermediatary fallthrough values as well, as if any
+    // of them has a type that cannot be cast to us, then we will trap, e.g.
+    //
+    //   (ref.cast $struct-A
+    //     (ref.cast $struct-B
+    //       (ref.cast $array
+    //         (local.get $x)
+    //
+    // The fallthrough is the local.get, but the array cast in the middle
+    // proves a trap must happen.
+    {
+      auto* ref = curr->ref;
+      while (1) {
+        if (!canBeCastTo(ref->type, curr->type)) {
+          // This cast cannot succeed, so it will trap.
+          // Make sure to emit a block with the same type as us; leave updating
+          // types for other passes.
+          replaceCurrent(builder.makeBlock(
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()}, curr->type));
+          return;
+        }
+      }
+
+      auto* last = ref;
+      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
+      if (ref == last) {
+        break;
+      }
     }
 
     // Check whether the cast will definitely succeed.
