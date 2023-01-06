@@ -3121,6 +3121,38 @@
     )
   )
 
+  ;; CHECK:      (func $ref-cast-heap-type (type $ref?|$B|_ref|$B|_=>_none) (param $null-b (ref null $B)) (param $b (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $null-b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $null-b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-heap-type (type $ref?|$B|_ref|$B|_=>_none) (param $null-b (ref null $B)) (param $b (ref $B))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.get $b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.as_non_null
+  ;; NOMNL-NEXT:    (local.get $null-b)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.get $b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.get $null-b)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
   (func $ref-cast-heap-type (param $null-b (ref null $B)) (param $b (ref $B))
     ;; We are casting a heap type to a supertype, which always succeeds. However
     ;; we need to check for nullability.
