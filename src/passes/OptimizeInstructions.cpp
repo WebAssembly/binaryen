@@ -2054,7 +2054,7 @@ struct OptimizeInstructions
       //
       // where $B is a subtype of $A. We don't need to cast to $A here; we can
       // just cast all the way to $B immediately.
-      if (Type::isSubType(curr->Type, child->type)) {
+      if (Type::isSubType(curr->type, child->type)) {
         curr->ref = child->ref;
         return;
       }
@@ -2078,7 +2078,7 @@ struct OptimizeInstructions
       if (HeapType::isSubType(intendedType, childIntendedType)) {
         assert(curr->type.isNullable());
         assert(child->type.isNonNullable());
-        curr->ref = Builder(*getModule()).makeRefAs(RefAsNonNull, child->ref));
+        curr->ref = Builder(*getModule()).makeRefAs(RefAsNonNull, child->ref);
         // Fall through to the rule below.
       }
     }
