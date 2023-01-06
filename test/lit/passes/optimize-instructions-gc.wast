@@ -997,10 +997,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
-  ;; CHECK-NEXT:    (ref.as_i31
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_i31
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1018,10 +1021,13 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $struct
-  ;; NOMNL-NEXT:    (ref.as_i31
-  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.as_i31
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -1045,7 +1051,7 @@
         )
       )
     )
-    ;; other ref.as* operations are ignored for now
+    ;; This will trap, so we can emit an unreachable.
     (drop
       (ref.cast $struct
         (ref.as_i31
@@ -2619,29 +2625,35 @@
 
   ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-impossible (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $array
-  ;; CHECK-NEXT:    (block (result (ref eq))
-  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining-impossible
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.cast $struct
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref eq))
+  ;; CHECK-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.cast $struct
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-impossible (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $array
-  ;; NOMNL-NEXT:    (block (result (ref eq))
-  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining-impossible
-  ;; NOMNL-NEXT:      (local.get $x)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.cast $struct
-  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:   (block (result (ref $array))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result (ref eq))
+  ;; NOMNL-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (ref.cast $struct
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -2720,10 +2732,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
-  ;; CHECK-NEXT:    (ref.cast $array
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2736,18 +2751,36 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $struct
-  ;; NOMNL-NEXT:    (ref.cast $array
-  ;; NOMNL-NEXT:     (local.get $x)
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (ref.cast $array
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-static-squared-impossible (param $x eqref)
-    ;; Impossible casts will trap unless the input is null.
+    ;; Impossible casts will trap unless the input is null. Only the first one
+    ;; here, which lets a null get through, will not trap.
     (drop
       (ref.cast null $struct
         (ref.cast null $array
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.cast $struct
+        (ref.cast null $array
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (ref.cast null $struct
+        (ref.cast $array
           (local.get $x)
         )
       )

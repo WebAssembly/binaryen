@@ -1977,12 +1977,12 @@ struct OptimizeInstructions
             {builder.makeDrop(curr->ref), builder.makeUnreachable()}, curr->type));
           return;
         }
-      }
 
-      auto* last = ref;
-      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
-      if (ref == last) {
-        break;
+        auto* last = ref;
+        ref = Properties::getImmediateFallthrough(ref, getPassOptions(), *getModule());
+        if (ref == last) {
+          break;
+        }
       }
     }
 
