@@ -1974,12 +1974,14 @@ struct OptimizeInstructions
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
           replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeUnreachable()}, curr->type));
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            curr->type));
           return;
         }
 
         auto* last = ref;
-        ref = Properties::getImmediateFallthrough(ref, getPassOptions(), *getModule());
+        ref = Properties::getImmediateFallthrough(
+          ref, getPassOptions(), *getModule());
         if (ref == last) {
           break;
         }
