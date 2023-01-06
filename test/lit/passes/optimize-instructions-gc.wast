@@ -3188,4 +3188,94 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-cast-heap-type-incompatible (type $ref?|$B|_ref|$B|_=>_none) (param $null-b (ref null $B)) (param $b (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $null-b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:    (local.get $null-b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $ref-cast-heap-type-incompatible (type $ref?|$B|_ref|$B|_=>_none) (param $null-b (ref null $B)) (param $b (ref $B))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $b)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $null-b)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result (ref $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $b)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast null $struct
+  ;; NOMNL-NEXT:    (local.get $null-b)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $ref-cast-heap-type-incompatible (param $null-b (ref null $B)) (param $b (ref $B))
+    ;; As above, but replacing $A with $struct. Now we have two incompatible
+    ;; types, $B and $struct, so the only possible way the cast succeeds is if
+    ;; the cast allows null and the input is a null.
+    (drop
+      (ref.cast $struct
+        (local.get $b)
+      )
+    )
+    (drop
+      (ref.cast $struct
+        (local.get $null-b)
+      )
+    )
+    (drop
+      (ref.cast null $struct
+        (local.get $b)
+      )
+    )
+    ;; This last case is the only one that can succeed. We leave it alone, but
+    ;; in theory we could optimize it to { ref == null ? null : trap }.
+    (drop
+      (ref.cast null $struct
+        (local.get $null-b)
+      )
+    )
+  )
 )
