@@ -901,7 +901,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   while (oneIn(2) && !random.finished()) {
     std::vector<Expression*> args;
     for (const auto& type : func->getParams()) {
-      args.push_back(makeConst(type)); // maek smart stuff for struct types here
+      args.push_back(makeConst(type));
     }
     Expression* invoke = builder.makeCall(func->name, args, func->getResults());
     if (func->getResults().isConcrete()) {
