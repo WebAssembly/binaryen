@@ -1908,7 +1908,8 @@ struct OptimizeInstructions
     if (a.isNullable() && b.isNullable()) {
       return true;
     }
-    if (a.isRef() && b.isRef() && canBeCastTo(a.getHeapType(), b.getHeapType())) {
+    if (a.isRef() && b.isRef() &&
+        canBeCastTo(a.getHeapType(), b.getHeapType())) {
       return true;
     }
     return false;
@@ -1961,8 +1962,7 @@ struct OptimizeInstructions
       // Make sure to emit a block with the same type as us; leave updating
       // types for other passes.
       replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-        curr->type));
+        {builder.makeDrop(curr->ref), builder.makeUnreachable()}, curr->type));
       return;
     }
 
