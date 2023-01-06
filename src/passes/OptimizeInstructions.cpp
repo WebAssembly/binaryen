@@ -1963,7 +1963,7 @@ struct OptimizeInstructions
     }
 
     // Check whether the cast will definitely succeed.
-    if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+    if (Type::isSubType(curr->ref->type, curr->type)) {
       replaceCurrent(curr->ref);
 
       // We must refinalize here, as we may be returning a more specific
@@ -1983,6 +1983,24 @@ struct OptimizeInstructions
       // But if $parent and $child have different types on field 0 (the
       // child may have a more refined one) then the struct.get must be
       // refinalized so the IR node has the expected type.
+      refinalize = true;
+      return;
+    }
+
+    // The cast will not definitely succeed, but perhaps the heap type part of
+    // the cast will, at least. That would leave only nullability as an issue,
+    // that is, this means that the input ref is nullable but we are casting to
+    // non-null.
+    if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
+      assert(curr->ref->type.isNullable());
+      assert(curr->type.isNonNullable());
+
+      // Given the heap type will cast ok, all we need to do is check for a null
+      // here.
+      //
+      // As above, we must refinalize as we may now be emitting a more refined
+      // type (specifically a more refined heap type).
+      replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, curr->ref));
       refinalize = true;
       return;
     }
