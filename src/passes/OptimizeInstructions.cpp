@@ -1931,7 +1931,6 @@ struct OptimizeInstructions
     }
 
     Builder builder(*getModule());
-    auto& passOptions = getPassOptions();
 
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
@@ -2023,27 +2022,12 @@ struct OptimizeInstructions
       //
       // As above, we must refinalize as we may now be emitting a more refined
       // type (specifically a more refined heap type).
-      replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, curr->ref));
+      replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
       refinalize = true;
       return;
     }
 
-    // Repeated identical ref.cast operations are unnecessary. First, find the
-    // immediate child cast, if there is one.
-    // TODO: Look even further through incompatible casts?
-    auto* ref = curr->ref;
-    while (!ref->is<RefCast>()) {
-      auto* last = ref;
-      // RefCast falls through the value, so instead of calling
-      // getFallthrough() to look through all fallthroughs, we must iterate
-      // manually. Keep going until we reach either the end of things
-      // falling-through, or a cast.
-      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
-      if (ref == last) {
-        break;
-      }
-    }
-    if (auto* child = ref->dynCast<RefCast>()) {
+    if (auto* child = curr->ref->dynCast<RefCast>()) {
       // Repeated casts can be removed, leaving just the most demanding of
       // them. Note that earlier we already checked for the cast of the ref's
       // type being more refined, so all we need to handle is the opposite, that
@@ -2078,7 +2062,7 @@ struct OptimizeInstructions
       if (HeapType::isSubType(intendedType, childIntendedType)) {
         assert(curr->type.isNullable());
         assert(child->type.isNonNullable());
-        curr->ref = Builder(*getModule()).makeRefAs(RefAsNonNull, child->ref);
+        curr->ref = builder.makeRefAs(RefAsNonNull, child->ref);
         // Fall through to the rule below.
       }
     }
