@@ -3120,4 +3120,35 @@
       (ref.null nofunc)
     )
   )
+
+  (func $ref-cast-heap-type (param $null-b (ref null $B)) (param $b (ref $B))
+    ;; We are casting a heap type to a supertype, which always succeeds. However
+    ;; we need to check for nullability.
+
+    ;; Non-nullable casts. When the input is non-nullable we must succeed.
+    (drop
+      (ref.cast $A
+        (local.get $b)
+      )
+    )
+    ;; When the input can be null, we might fail if it is a null. But we can
+    ;; switch to checking only that.
+    (drop
+      (ref.cast $A
+        (local.get $null-b)
+      )
+    )
+
+    ;; Null casts. Both of these must succeed.
+    (drop
+      (ref.cast null $A
+        (local.get $b)
+      )
+    )
+    (drop
+      (ref.cast null $A
+        (local.get $null-b)
+      )
+    )
+  )
 )
