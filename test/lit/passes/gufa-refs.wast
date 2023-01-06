@@ -14,8 +14,6 @@
 
   ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
 
-  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
-
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
 
@@ -58,7 +56,7 @@
         (nop)
         (ref.as_func
           (ref.as_non_null
-            (ref.null any)
+            (ref.null func)
           )
         )
       )
@@ -358,50 +356,6 @@
     )
     (drop
       (local.get $z)
-    )
-  )
-
-  ;; CHECK:      (func $nondeterminism (type $none_=>_funcref) (result funcref)
-  ;; CHECK-NEXT:  (block $label$1 (result funcref)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_func $label$1
-  ;; CHECK-NEXT:     (i31.new
-  ;; CHECK-NEXT:      (i32.const 1337)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.null nofunc)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $nondeterminism (result funcref)
-    ;; This block is sent an i31 and a null. The null is compatible with the
-    ;; type and the i31 is not. The order in which we process this matters:
-    ;;
-    ;;  * If the i31 arrives first, we'll filter it out as incompatible with the
-    ;;    type of the block. Then the null arrives and the final result is that
-    ;;    null, which we can then optimize the block to return.
-    ;;  * Or, if the null arrives first, then when the i31 arrives the
-    ;;    combination of nullfunc + i31 is Many (since the types are
-    ;;    incompatible). We then filter that to the block's type, ending up with
-    ;;    a cone of funcref. We cannot optimize in that case, unlike before.
-    ;;
-    ;; Ideally we'd optimize here, but atm we do not since the order in
-    ;; practice is a less ideal one. At minimum we should be deterministic in
-    ;; how we handle this, which this test enforces at least.
-    ;;
-    ;; TODO: Find a way to actually optimize such cases, perhaps by filtering
-    ;;       when sending as well and not just when receiving (the br_on_func
-    ;;       here should not send anything, as what it sends should be first
-    ;;       intersected with funcref).
-    (block $label$1 (result funcref)
-      (drop
-        (br_on_func $label$1
-          (i31.new
-            (i32.const 1337)
-          )
-        )
-      )
-      (ref.null nofunc)
     )
   )
 )

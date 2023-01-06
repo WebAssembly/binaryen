@@ -35,7 +35,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result dataref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 data
+  ;; CHECK-NEXT:     (br_on_data $label$1
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

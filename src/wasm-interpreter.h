@@ -1512,7 +1512,7 @@ public:
         }
       }
     }
-    // The others do a simpler check for the type.
+    // Otherwise we are just checking for null.
     Flow flow = visit(curr->ref);
     if (flow.breaking()) {
       return flow;
@@ -1520,62 +1520,20 @@ public:
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     if (curr->op == BrOnNull) {
-      // Unlike the others, BrOnNull does not propagate the value if it takes
-      // the branch.
+      // BrOnNull does not propagate the value if it takes the branch.
       if (value.isNull()) {
         return Flow(curr->name);
       }
       // If the branch is not taken, we return the non-null value.
       return {value};
-    }
-    if (curr->op == BrOnNonNull) {
-      // Unlike the others, BrOnNonNull does not return a value if it does not
-      // take the branch.
+    } else {
+      // BrOnNonNull does not return a value if it does not take the branch.
       if (value.isNull()) {
         return Flow();
       }
       // If the branch is taken, we send the non-null value.
       return Flow(curr->name, value);
     }
-    // See if the input is the right kind (ignoring the flipping behavior of
-    // BrOn*).
-    bool isRightKind;
-    if (value.isNull()) {
-      // A null is never the right kind.
-      isRightKind = false;
-    } else {
-      switch (curr->op) {
-        case BrOnNonFunc:
-        case BrOnFunc:
-          isRightKind = value.type.isFunction();
-          break;
-        case BrOnNonData:
-        case BrOnData:
-          isRightKind = value.isData();
-          break;
-        case BrOnNonI31:
-        case BrOnI31:
-          isRightKind = value.type.getHeapType() == HeapType::i31;
-          break;
-        default:
-          WASM_UNREACHABLE("invalid br_on_*");
-      }
-    }
-    // The Non* operations require us to flip the normal behavior.
-    switch (curr->op) {
-      case BrOnNonFunc:
-      case BrOnNonData:
-      case BrOnNonI31:
-        isRightKind = !isRightKind;
-        break;
-      default: {
-      }
-    }
-    if (isRightKind) {
-      // Take the branch.
-      return Flow(curr->name, value);
-    }
-    return {value};
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");

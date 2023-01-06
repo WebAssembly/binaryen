@@ -6930,8 +6930,8 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
+  Type castType = Type::none;
   BrOnOp op;
-  auto nullability = NonNullable;
   switch (code) {
     case BinaryConsts::BrOnNull:
       op = BrOnNull;
@@ -6941,44 +6941,47 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
       break;
     case BinaryConsts::BrOnCastStatic:
     case BinaryConsts::BrOnCast:
+    case BinaryConsts::BrOnCastNull:
       op = BrOnCast;
       break;
     case BinaryConsts::BrOnCastStaticFail:
     case BinaryConsts::BrOnCastFail:
-      op = BrOnCastFail;
-      break;
-    case BinaryConsts::BrOnCastNull:
-      op = BrOnCast;
-      nullability = Nullable;
-      break;
     case BinaryConsts::BrOnCastFailNull:
       op = BrOnCastFail;
-      nullability = Nullable;
       break;
     case BinaryConsts::BrOnFunc:
-      op = BrOnFunc;
+      op = BrOnCast;
+      castType = Type(HeapType::func, NonNullable);
       break;
     case BinaryConsts::BrOnNonFunc:
-      op = BrOnNonFunc;
+      op = BrOnCastFail;
+      castType = Type(HeapType::func, NonNullable);
       break;
     case BinaryConsts::BrOnData:
-      op = BrOnData;
+      op = BrOnCast;
+      castType = Type(HeapType::data, NonNullable);
       break;
     case BinaryConsts::BrOnNonData:
-      op = BrOnNonData;
+      op = BrOnCastFail;
+      castType = Type(HeapType::data, NonNullable);
       break;
     case BinaryConsts::BrOnI31:
-      op = BrOnI31;
+      op = BrOnCast;
+      castType = Type(HeapType::i31, NonNullable);
       break;
     case BinaryConsts::BrOnNonI31:
-      op = BrOnNonI31;
+      op = BrOnCastFail;
+      castType = Type(HeapType::i31, NonNullable);
       break;
     default:
       return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  Type castType = Type::none;
-  if (op == BrOnCast || op == BrOnCastFail) {
+  if (castType == Type::none && (op == BrOnCast || op == BrOnCastFail)) {
+    auto nullability = (code == BinaryConsts::BrOnCastNull ||
+                        code == BinaryConsts::BrOnCastFailNull)
+                         ? Nullable
+                         : NonNullable;
     bool legacy = code == BinaryConsts::BrOnCastStatic ||
                   code == BinaryConsts::BrOnCastStaticFail;
     auto type = legacy ? getIndexedHeapType() : getHeapType();

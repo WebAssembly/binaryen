@@ -286,7 +286,9 @@ private:
   Expression* makeRefTest(Element& s);
   Expression* makeRefCast(Element& s);
   Expression* makeRefCastNop(Element& s);
-  Expression* makeBrOn(Element& s, BrOnOp op);
+  Expression* makeBrOnNull(Element& s, bool onFail = false);
+  Expression*
+  makeBrOnCast(Element& s, std::optional<Type> castType, bool onFail = false);
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);

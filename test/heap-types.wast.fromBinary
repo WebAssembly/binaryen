@@ -228,19 +228,9 @@
    )
   )
   (drop
-   (block $label$2 (result funcref)
+   (block $label$2 (result i31ref)
     (local.set $y
-     (br_on_func $label$2
-      (local.get $x)
-     )
-    )
-    (ref.null nofunc)
-   )
-  )
-  (drop
-   (block $label$3 (result i31ref)
-    (local.set $y
-     (br_on_i31 $label$3
+     (br_on_i31 $label$2
       (local.get $x)
      )
     )
@@ -248,27 +238,17 @@
    )
   )
   (drop
-   (block $label$4 (result (ref any))
-    (br_on_non_null $label$4
+   (block $label$3 (result (ref any))
+    (br_on_non_null $label$3
      (local.get $x)
     )
     (unreachable)
    )
   )
   (drop
-   (block $label$5 (result anyref)
-    (local.set $temp-func
-     (br_on_non_func $label$5
-      (local.get $x)
-     )
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $label$6 (result anyref)
+   (block $label$4 (result anyref)
     (local.set $temp-i31
-     (br_on_non_i31 $label$6
+     (br_on_non_i31 $label$4
       (local.get $x)
      )
     )
