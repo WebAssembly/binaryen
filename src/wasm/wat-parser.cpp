@@ -2349,9 +2349,10 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNop(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx&, Index, BrOnOp op);
+Result<typename Ctx::InstrT> makeBrOnNull(Ctx&, Index, bool onFail = false);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx&, Index, BrOnOp op);
+Result<typename Ctx::InstrT>
+makeBrOnCast(Ctx&, Index, std::optional<Type>, bool onFail = false);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStructNew(Ctx&, Index, bool default_);
 template<typename Ctx>
@@ -3452,7 +3453,13 @@ Result<typename Ctx::InstrT> makeRefCastNop(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeBrOn(Ctx& ctx, Index pos, BrOnOp op) {
+Result<typename Ctx::InstrT> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeBrOnCast(Ctx& ctx, Index pos, std::optional<Type> castType, bool onFail) {
   return ctx.in.err("unimplemented instruction");
 }
 

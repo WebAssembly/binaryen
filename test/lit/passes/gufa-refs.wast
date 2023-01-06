@@ -14,7 +14,7 @@
 
   ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
 
-  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+  ;; CHECK:      (type $none_=>_dataref (func (result dataref)))
 
   ;; CHECK:      (import "a" "b" (func $import (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -58,7 +58,7 @@
         (nop)
         (ref.as_func
           (ref.as_non_null
-            (ref.null any)
+            (ref.null func)
           )
         )
       )
@@ -361,19 +361,22 @@
     )
   )
 
-  ;; CHECK:      (func $nondeterminism (type $none_=>_funcref) (result funcref)
-  ;; CHECK-NEXT:  (block $label$1 (result funcref)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_func $label$1
-  ;; CHECK-NEXT:     (i31.new
-  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK:      (func $nondeterminism (type $none_=>_dataref) (result dataref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $label$1 (result dataref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_data $label$1
+  ;; CHECK-NEXT:      (i31.new
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
-  (func $nondeterminism (result funcref)
+  (func $nondeterminism (result dataref)
     ;; This block is sent an i31 and a null. The null is compatible with the
     ;; type and the i31 is not. The order in which we process this matters:
     ;;
@@ -381,9 +384,7 @@
     ;;    type of the block. Then the null arrives and the final result is that
     ;;    null, which we can then optimize the block to return.
     ;;  * Or, if the null arrives first, then when the i31 arrives the
-    ;;    combination of nullfunc + i31 is Many (since the types are
-    ;;    incompatible). We then filter that to the block's type, ending up with
-    ;;    a cone of funcref. We cannot optimize in that case, unlike before.
+    ;;    combination of none + i31 is ??????
     ;;
     ;; Ideally we'd optimize here, but atm we do not since the order in
     ;; practice is a less ideal one. At minimum we should be deterministic in
@@ -393,15 +394,15 @@
     ;;       when sending as well and not just when receiving (the br_on_func
     ;;       here should not send anything, as what it sends should be first
     ;;       intersected with funcref).
-    (block $label$1 (result funcref)
+    (block $label$1 (result dataref)
       (drop
-        (br_on_func $label$1
+        (br_on_data $label$1
           (i31.new
             (i32.const 1337)
           )
         )
       )
-      (ref.null nofunc)
+      (ref.null none)
     )
   )
 )

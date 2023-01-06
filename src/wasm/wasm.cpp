@@ -968,21 +968,6 @@ void BrOn::finalize() {
       // us flow out the null, but it does not).
       type = Type::none;
       break;
-    case BrOnFunc:
-    case BrOnData:
-    case BrOnI31:
-      // If we do not branch, we return the input in this case.
-      type = ref->type;
-      break;
-    case BrOnNonFunc:
-      type = Type(HeapType::func, NonNullable);
-      break;
-    case BrOnNonData:
-      type = Type(HeapType::data, NonNullable);
-      break;
-    case BrOnNonI31:
-      type = Type(HeapType::i31, NonNullable);
-      break;
     case BrOnCast:
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
@@ -1021,16 +1006,6 @@ Type BrOn::getSentType() {
       }
       // BrOnNonNull sends the non-nullable type on the branch.
       return Type(ref->type.getHeapType(), NonNullable);
-    case BrOnFunc:
-      return Type(HeapType::func, NonNullable);
-    case BrOnData:
-      return Type(HeapType::data, NonNullable);
-    case BrOnI31:
-      return Type(HeapType::i31, NonNullable);
-    case BrOnNonFunc:
-    case BrOnNonData:
-    case BrOnNonI31:
-      return ref->type;
     case BrOnCast:
       // The same as the result type of br_on_cast_fail.
       if (castType.isNullable()) {

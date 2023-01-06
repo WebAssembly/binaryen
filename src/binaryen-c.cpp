@@ -1022,12 +1022,6 @@ BinaryenOp BinaryenBrOnNull(void) { return BrOnNull; }
 BinaryenOp BinaryenBrOnNonNull(void) { return BrOnNonNull; }
 BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }
 BinaryenOp BinaryenBrOnCastFail(void) { return BrOnCastFail; };
-BinaryenOp BinaryenBrOnFunc(void) { return BrOnFunc; }
-BinaryenOp BinaryenBrOnNonFunc(void) { return BrOnNonFunc; }
-BinaryenOp BinaryenBrOnData(void) { return BrOnData; }
-BinaryenOp BinaryenBrOnNonData(void) { return BrOnNonData; }
-BinaryenOp BinaryenBrOnI31(void) { return BrOnI31; }
-BinaryenOp BinaryenBrOnNonI31(void) { return BrOnNonI31; }
 BinaryenOp BinaryenStringNewUTF8(void) { return StringNewUTF8; }
 BinaryenOp BinaryenStringNewWTF8(void) { return StringNewWTF8; }
 BinaryenOp BinaryenStringNewReplace(void) { return StringNewReplace; }

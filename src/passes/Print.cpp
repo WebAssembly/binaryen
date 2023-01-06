@@ -2135,11 +2135,33 @@ struct PrintExpressionContents
     switch (curr->op) {
       case BrOnNull:
         printMedium(o, "br_on_null ");
-        break;
+        printName(curr->name, o);
+        return;
       case BrOnNonNull:
         printMedium(o, "br_on_non_null ");
-        break;
+        printName(curr->name, o);
+        return;
       case BrOnCast:
+        // TODO: These instructions are deprecated, so stop emitting them.
+        if (auto type = curr->castType.getHeapType();
+            type.isBasic() && curr->castType.isNonNullable()) {
+          switch (type.getBasic()) {
+            case HeapType::func:
+              printMedium(o, "br_on_func ");
+              printName(curr->name, o);
+              return;
+            case HeapType::data:
+              printMedium(o, "br_on_data ");
+              printName(curr->name, o);
+              return;
+            case HeapType::i31:
+              printMedium(o, "br_on_i31 ");
+              printName(curr->name, o);
+              return;
+            default:
+              break;
+          }
+        }
         printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
@@ -2149,6 +2171,26 @@ struct PrintExpressionContents
         printHeapType(o, curr->castType.getHeapType(), wasm);
         return;
       case BrOnCastFail:
+        // TODO: These instructions are deprecated, so stop emitting them.
+        if (auto type = curr->castType.getHeapType();
+            type.isBasic() && curr->castType.isNonNullable()) {
+          switch (type.getBasic()) {
+            case HeapType::func:
+              printMedium(o, "br_on_non_func ");
+              printName(curr->name, o);
+              return;
+            case HeapType::data:
+              printMedium(o, "br_on_non_data ");
+              printName(curr->name, o);
+              return;
+            case HeapType::i31:
+              printMedium(o, "br_on_non_i31 ");
+              printName(curr->name, o);
+              return;
+            default:
+              break;
+          }
+        }
         printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
@@ -2157,28 +2199,8 @@ struct PrintExpressionContents
         }
         printHeapType(o, curr->castType.getHeapType(), wasm);
         return;
-      case BrOnFunc:
-        printMedium(o, "br_on_func ");
-        break;
-      case BrOnNonFunc:
-        printMedium(o, "br_on_non_func ");
-        break;
-      case BrOnData:
-        printMedium(o, "br_on_data ");
-        break;
-      case BrOnNonData:
-        printMedium(o, "br_on_non_data ");
-        break;
-      case BrOnI31:
-        printMedium(o, "br_on_i31 ");
-        break;
-      case BrOnNonI31:
-        printMedium(o, "br_on_non_i31 ");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid ref.is_*");
     }
-    printName(curr->name, o);
+    WASM_UNREACHABLE("Unexpected br_on* op");
   }
   void visitStructNew(StructNew* curr) {
     if (printUnreachableReplacement(curr)) {

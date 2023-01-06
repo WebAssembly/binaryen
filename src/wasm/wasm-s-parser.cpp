@@ -2818,11 +2818,20 @@ Expression* SExpressionWasmBuilder::makeRefCastNop(Element& s) {
   return Builder(wasm).makeRefCast(ref, type, RefCast::Unsafe);
 }
 
-Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
+Expression* SExpressionWasmBuilder::makeBrOnNull(Element& s, bool onFail) {
   int i = 1;
   auto name = getLabel(*s[i++]);
-  Type castType = Type::none;
-  if (op == BrOnCast || op == BrOnCastFail) {
+  auto* ref = parseExpression(*s[i]);
+  auto op = onFail ? BrOnNonNull : BrOnNull;
+  return Builder(wasm).makeBrOn(op, name, ref);
+}
+
+Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s,
+                                                 std::optional<Type> castType,
+                                                 bool onFail) {
+  int i = 1;
+  auto name = getLabel(*s[i++]);
+  if (!castType) {
     auto nullability = NonNullable;
     if (s[i]->str().str == "null") {
       nullability = Nullable;
@@ -2832,7 +2841,8 @@ Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
     castType = Type(type, nullability);
   }
   auto* ref = parseExpression(*s[i]);
-  return Builder(wasm).makeBrOn(op, name, ref, castType);
+  auto op = onFail ? BrOnCastFail : BrOnCast;
+  return Builder(wasm).makeBrOn(op, name, ref, *castType);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
