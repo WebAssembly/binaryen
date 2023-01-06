@@ -2045,75 +2045,54 @@ struct OptimizeInstructions
     }
     if (auto* child = ref->dynCast<RefCast>()) {
       // Repeated casts can be removed, leaving just the most demanding of
-      // them.
+      // them. Note that earlier we already checked for the cast of the ref's
+      // type being more refined, so all we need to handle is the opposite, that
+      // is, something like this:
+      //
+      //   (ref.cast $B
+      //     (ref.cast $A
+      //
+      // where $B is a subtype of $A. We don't need to cast to $A here; we can
+      // just cast all the way to $B immediately.
+      if (Type::isSubType(curr->Type, child->type)) {
+        curr->ref = child->ref;
+        return;
+      }
+
+      // As above, we can also consider the case where the heap type of the
+      // child is a supertype even if the type as a whole is not, which means
+      // that nullability is an issue, specifically in the form of the child
+      // having a heap supertype which is non-nullable, and the parent having
+      // a heap subtype which is nullable, like this:
+      //
+      //   (ref.cast null $B
+      //     (ref.cast $A
+      //
+      // We can optimize that to
+      //
+      //   (ref.cast $B
+      //     (ref.as_non_null $A
+      //
+      // That can then be separately optimized by the proper rule.
       auto childIntendedType = child->type.getHeapType();
       if (HeapType::isSubType(intendedType, childIntendedType)) {
-        // Skip the child.
-        if (curr->ref == child) {
-          curr->ref = child->ref;
-          return;
-        } else {
-          // The child is not the direct child of the parent, but it is a
-          // fallthrough value, for example,
-          //
-          //  (ref.cast parent
-          //   (block
-          //    .. other code ..
-          //    (ref.cast child)))
-          //
-          // In this case it isn't obvious that we can remove the child, as
-          // doing so might require updating the types of the things in the
-          // middle - and in fact the sole purpose of the child may be to get
-          // a proper type for validation to work. Do nothing in this case,
-          // and hope that other opts will help here (for example,
-          // trapsNeverHappen will help if the code validates without the
-          // child).
-        }
-      } else if (!canBeCastTo(intendedType, childIntendedType)) {
-        // The types are not compatible, so if the input is not null, this
-        // will trap.
-        if (!curr->type.isNullable()) {
-          // Make sure to emit a block with the same type as us; leave
-          // updating types for other passes.
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-            curr->type));
-          return;
-        }
+        assert(curr->type.isNullable());
+        assert(child->type.isNonNullable());
+        curr->ref = Builder(*getModule()).makeRefAs(RefAsNonNull, child->ref));
+        // Fall through to the rule below.
       }
     }
 
-    // ref.cast can be reordered with ref.as_non_null,
+    // ref.cast can be combined with ref.as_non_null,
     //
-    //   (ref.cast (ref.as_non_null ..))
+    //   (ref.cast null (ref.as_non_null ..))
     // =>
-    //   (ref.as_non_null (ref.cast ..))
+    //   (ref.cast ..)
     //
-    // This is valid because both pass through the value if they do not trap,
-    // and so reordering does not change whether a trap happens (and reordering
-    // traps is allowed), and does not change the value flowing out at the end.
-    // It is better to have the ref.as_non_null on the outside since it allows
-    // outer instructions to potentially optimize it away (should we find
-    // optimizations that can fold away a ref.cast on an outer instruction, that
-    // might motivate changing this).
-    //
-    // Note that other ref.as* methods, like ref.as_func, are not obviously
-    // worth reordering with ref.cast. For example, the type of ref.as_data is
-    // (ref data), which is less specific than what ref.cast would have.
-    // TODO optimize ref.cast of ref.as_[func|data|i31] in other ways.
     if (auto* as = curr->ref->dynCast<RefAs>()) {
       if (as->op == RefAsNonNull) {
         curr->ref = as->value;
-        // Match the nullability of the new child.
-        // TODO: Combine the ref.as_non_null into the cast once we allow that.
-        if (curr->ref->type.isNullable()) {
-          curr->type = Type(curr->type.getHeapType(), Nullable);
-        }
-        curr->finalize();
-        as->value = curr;
-        as->finalize();
-        replaceCurrent(as);
-        return;
+        curr->type = Type(curr->type.getHeapType(), NonNullable);
       }
     }
   }
