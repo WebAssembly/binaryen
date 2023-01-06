@@ -32,18 +32,14 @@
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
+  (type $empty (struct))
+
   ;; CHECK:      (type $void (func))
 
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
-
-  ;; CHECK:      (type $empty (struct ))
   ;; NOMNL:      (type $void (func))
 
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
-
-  ;; NOMNL:      (type $empty (struct ))
-  (type $empty (struct))
-
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   (type $void (func))
@@ -1351,18 +1347,14 @@
   ;; CHECK:      (func $ref-cast-squared-different (type $eqref_=>_none) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast null none
-  ;; CHECK-NEXT:    (ref.cast null $empty
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-squared-different (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast null none
-  ;; NOMNL-NEXT:    (ref.cast null $empty
-  ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $x)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -2679,9 +2671,7 @@
   ;; CHECK:      (func $ref-cast-static-squared-impossible (type $eqref_=>_none) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast null none
-  ;; CHECK-NEXT:    (ref.cast null $array
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2718,9 +2708,7 @@
   ;; NOMNL:      (func $ref-cast-static-squared-impossible (type $eqref_=>_none) (param $x eqref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.cast null none
-  ;; NOMNL-NEXT:    (ref.cast null $array
-  ;; NOMNL-NEXT:     (local.get $x)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $x)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop

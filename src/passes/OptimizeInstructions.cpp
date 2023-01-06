@@ -1985,6 +1985,12 @@ struct OptimizeInstructions
         // which we can cast to using a bottom type.
         if (ref->type.isRef() && !canBeCastTo(ref->type.getHeapType(), intendedType)) {
           curr->type = Type(HeapType::none, Nullable);
+          // Call replaceCurrent() to make us re-optimize this node, as we may
+          // have just unlocked further opportunities. (We could just continue
+          // down to the rest, but we'd need to do more work to make sure all
+          // the local state in this function is in sync which this change; it's
+          // easier to just do another clean pass on this node.)
+          replaceCurrent(curr);
           return;
         }
 
