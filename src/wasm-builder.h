@@ -891,15 +891,8 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOn* makeBrOn(BrOnOp op, Name name, Expression* ref) {
-    auto* ret = wasm.allocator.alloc<BrOn>();
-    ret->op = op;
-    ret->name = name;
-    ret->ref = ref;
-    ret->finalize();
-    return ret;
-  }
-  BrOn* makeBrOn(BrOnOp op, Name name, Expression* ref, Type castType) {
+  BrOn*
+  makeBrOn(BrOnOp op, Name name, Expression* ref, Type castType = Type::none) {
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
     ret->name = name;

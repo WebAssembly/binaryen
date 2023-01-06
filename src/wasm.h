@@ -583,12 +583,6 @@ enum BrOnOp {
   BrOnNonNull,
   BrOnCast,
   BrOnCastFail,
-  BrOnFunc,
-  BrOnNonFunc,
-  BrOnData,
-  BrOnNonData,
-  BrOnI31,
-  BrOnNonI31,
 };
 
 enum StringNewOp {
@@ -1552,7 +1546,6 @@ public:
   BrOnOp op;
   Name name;
   Expression* ref;
-
   Type castType;
 
   void finalize();

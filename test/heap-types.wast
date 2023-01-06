@@ -203,14 +203,6 @@
       )
     )
     (drop
-      (block $func (result funcref)
-        (local.set $y
-          (br_on_func $func (local.get $x))
-        )
-        (ref.null func)
-      )
-    )
-    (drop
       (block $i31 (result (ref null i31))
         (local.set $y
           (br_on_i31 $i31 (local.get $x))
@@ -222,14 +214,6 @@
       (block $non-null (result (ref any))
         (br_on_non_null $non-null (local.get $x))
         (unreachable)
-      )
-    )
-    (drop
-      (block $non-func (result anyref)
-        (local.set $temp-func
-          (br_on_non_func $non-func (local.get $x))
-        )
-        (ref.null any)
       )
     )
     (drop

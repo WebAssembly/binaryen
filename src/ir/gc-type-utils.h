@@ -67,24 +67,6 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
           return flip ? Success : Failure;
         }
         return Unknown;
-      case BrOnNonFunc:
-        flip = true;
-        [[fallthrough]];
-      case BrOnFunc:
-        expected = Func;
-        break;
-      case BrOnNonData:
-        flip = true;
-        [[fallthrough]];
-      case BrOnData:
-        expected = Data;
-        break;
-      case BrOnNonI31:
-        flip = true;
-        [[fallthrough]];
-      case BrOnI31:
-        expected = I31;
-        break;
       default:
         WASM_UNREACHABLE("unhandled BrOn");
     }
