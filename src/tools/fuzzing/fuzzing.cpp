@@ -2954,11 +2954,10 @@ Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
   WASM_UNREACHABLE("invalid value");
 }
 
-// TODO: support other RefIs variants, and rename this
 Expression* TranslateToFuzzReader::makeRefIsNull(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes());
-  return builder.makeRefIs(RefIsNull, make(getReferenceType()));
+  return builder.makeRefIsNull(make(getReferenceType()));
 }
 
 Expression* TranslateToFuzzReader::makeRefEq(Type type) {

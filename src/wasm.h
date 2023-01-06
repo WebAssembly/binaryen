@@ -557,13 +557,6 @@ enum SIMDTernaryOp {
   DotI8x16I7x16AddSToVecI32x4,
 };
 
-enum RefIsOp {
-  RefIsNull,
-  RefIsFunc,
-  RefIsData,
-  RefIsI31,
-};
-
 enum RefAsOp {
   RefAsNonNull,
   RefAsFunc,
@@ -696,7 +689,7 @@ public:
     MemoryFillId,
     PopId,
     RefNullId,
-    RefIsId,
+    RefIsNullId,
     RefFuncId,
     RefEqId,
     TableGetId,
@@ -1346,12 +1339,9 @@ public:
   void finalize(Type type);
 };
 
-class RefIs : public SpecificExpression<Expression::RefIsId> {
+class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
 public:
-  RefIs(MixedArena& allocator) {}
-
-  // RefIs can represent ref.is_null, ref.is_func, ref.is_data, and ref.is_i31.
-  RefIsOp op;
+  RefIsNull(MixedArena& allocator) {}
 
   Expression* value;
 

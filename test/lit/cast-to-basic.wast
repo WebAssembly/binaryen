@@ -6,7 +6,7 @@
 
 (module
   ;; CHECK:      (func $test (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (ref.test data
+  ;; CHECK-NEXT:  (ref.is_data
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

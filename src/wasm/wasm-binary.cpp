@@ -3795,7 +3795,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
       break;
     case BinaryConsts::RefIsNull:
-      visitRefIs((curr = allocator.alloc<RefIs>())->cast<RefIs>(), code);
+      visitRefIsNull((curr = allocator.alloc<RefIsNull>())->cast<RefIsNull>());
       break;
     case BinaryConsts::RefFunc:
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
@@ -4026,7 +4026,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (opcode == BinaryConsts::RefIsFunc ||
           opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
-        visitRefIs((curr = allocator.alloc<RefIs>())->cast<RefIs>(), opcode);
+        visitRefIs((curr = allocator.alloc<RefTest>())->cast<RefTest>(),
+                   opcode);
         break;
       }
       if (opcode == BinaryConsts::RefAsFunc ||
@@ -6591,25 +6592,28 @@ void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   curr->finalize(getHeapType().getBottom());
 }
 
-void WasmBinaryBuilder::visitRefIs(RefIs* curr, uint8_t code) {
+void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {
+  BYN_TRACE("zz node: RefIsNull\n");
+  curr->value = popNonVoidExpression();
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitRefIs(RefTest* curr, uint8_t code) {
   BYN_TRACE("zz node: RefIs\n");
   switch (code) {
-    case BinaryConsts::RefIsNull:
-      curr->op = RefIsNull;
-      break;
     case BinaryConsts::RefIsFunc:
-      curr->op = RefIsFunc;
+      curr->castType = Type(HeapType::func, NonNullable);
       break;
     case BinaryConsts::RefIsData:
-      curr->op = RefIsData;
+      curr->castType = Type(HeapType::data, NonNullable);
       break;
     case BinaryConsts::RefIsI31:
-      curr->op = RefIsI31;
+      curr->castType = Type(HeapType::i31, NonNullable);
       break;
     default:
       WASM_UNREACHABLE("invalid code for ref.is_*");
   }
-  curr->value = popNonVoidExpression();
+  curr->ref = popNonVoidExpression();
   curr->finalize();
 }
 

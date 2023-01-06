@@ -36,7 +36,7 @@ total
  RefAs          : 4       
  RefEq          : 2       
  RefFunc        : 9       
- RefIs          : 1       
+ RefIsNull      : 1       
  RefNull        : 5       
  Return         : 29      
  SIMDExtract    : 3       

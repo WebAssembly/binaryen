@@ -1738,7 +1738,8 @@ public:
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
   void visitRefNull(RefNull* curr);
-  void visitRefIs(RefIs* curr, uint8_t code);
+  void visitRefIsNull(RefIsNull* curr);
+  void visitRefIs(RefTest* curr, uint8_t code);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);

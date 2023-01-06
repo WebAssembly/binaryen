@@ -1002,8 +1002,8 @@ void test_core() {
                                iIfF,
                                BinaryenTypeInt32()),
     // Reference types
-    BinaryenRefIs(module, BinaryenRefIsNull(), externrefExpr),
-    BinaryenRefIs(module, BinaryenRefIsNull(), funcrefExpr),
+    BinaryenRefIsNull(module, externrefExpr),
+    BinaryenRefIsNull(module, funcrefExpr),
     BinaryenSelect(
       module,
       temp10,
@@ -1013,15 +1013,6 @@ void test_core() {
     // GC
     BinaryenRefEq(module,
                   BinaryenRefNull(module, BinaryenTypeNullref()),
-                  BinaryenRefNull(module, BinaryenTypeNullref())),
-    BinaryenRefIs(module,
-                  BinaryenRefIsFunc(),
-                  BinaryenRefNull(module, BinaryenTypeNullref())),
-    BinaryenRefIs(module,
-                  BinaryenRefIsData(),
-                  BinaryenRefNull(module, BinaryenTypeNullref())),
-    BinaryenRefIs(module,
-                  BinaryenRefIsI31(),
                   BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
                   BinaryenRefAsNonNull(),

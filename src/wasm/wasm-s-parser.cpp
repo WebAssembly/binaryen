@@ -2536,9 +2536,8 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeRefIs(Element& s, RefIsOp op) {
-  auto ret = allocator.alloc<RefIs>();
-  ret->op = op;
+Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
+  auto ret = allocator.alloc<RefIsNull>();
   ret->value = parseExpression(s[1]);
   ret->finalize();
   return ret;
@@ -2775,16 +2774,20 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
+Expression* SExpressionWasmBuilder::makeRefTest(Element& s,
+                                                std::optional<Type> castType) {
   int i = 1;
-  auto nullability = NonNullable;
-  if (s[0]->str().str != "ref.test_static" && s[1]->str().str == "null") {
-    nullability = Nullable;
-    ++i;
+  if (!castType) {
+    auto nullability = NonNullable;
+    if (s[0]->str().str != "ref.test_static" && s[1]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
-  auto heapType = parseHeapType(*s[i++]);
   auto* ref = parseExpression(*s[i++]);
-  return Builder(wasm).makeRefTest(ref, Type(heapType, nullability));
+  return Builder(wasm).makeRefTest(ref, *castType);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {

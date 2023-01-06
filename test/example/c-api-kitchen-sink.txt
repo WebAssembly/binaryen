@@ -2004,21 +2004,6 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (ref.is_func
-        (ref.null none)
-       )
-      )
-      (drop
-       (ref.is_data
-        (ref.null none)
-       )
-      )
-      (drop
-       (ref.is_i31
-        (ref.null none)
-       )
-      )
-      (drop
        (ref.as_non_null
         (ref.null none)
        )

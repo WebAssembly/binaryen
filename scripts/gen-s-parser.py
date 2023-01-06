@@ -539,7 +539,7 @@ instructions = [
 
     # reference types instructions
     ("ref.null",             "makeRefNull(s)"),
-    ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
+    ("ref.is_null",          "makeRefIsNull(s)"),
     ("ref.func",             "makeRefFunc(s)"),
     ("ref.eq",               "makeRefEq(s)"),
     # table instructions
@@ -602,9 +602,9 @@ instructions = [
     ("array.set",            "makeArraySet(s)"),
     ("array.len",            "makeArrayLen(s)"),
     ("array.copy",           "makeArrayCopy(s)"),
-    ("ref.is_func",          "makeRefIs(s, RefIsFunc)"),
-    ("ref.is_data",          "makeRefIs(s, RefIsData)"),
-    ("ref.is_i31",           "makeRefIs(s, RefIsI31)"),
+    ("ref.is_func",          "makeRefTest(s, Type(HeapType::func, NonNullable))"),
+    ("ref.is_data",          "makeRefTest(s, Type(HeapType::data, NonNullable))"),
+    ("ref.is_i31",           "makeRefTest(s, Type(HeapType::i31, NonNullable))"),
     ("ref.as_non_null",      "makeRefAs(s, RefAsNonNull)"),
     ("ref.as_func",          "makeRefAs(s, RefAsFunc)"),
     ("ref.as_data",          "makeRefAs(s, RefAsData)"),
