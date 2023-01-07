@@ -96,19 +96,6 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   // Some operations flip the condition.
   bool flip = false;
 
-  auto maybeFlip = [&](EvaluationResult result) {
-    if (!flip) {
-      return result;
-    }
-    if (result == Success) {
-      return Failure;
-    }
-    if (result == Failure) {
-      return Success;
-    }
-    WASM_UNREACHABLE("non-flippable");
-  };
-
   if (auto* br = curr->dynCast<BrOn>()) {
     switch (br->op) {
       // We don't check nullability here.
@@ -118,12 +105,16 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       case BrOnCastFail:
         flip = true;
         [[fallthrough]];
-      case BrOnCast:
-        auto result = GCTypeUtils::evaluateCastCheck(br->ref->type, br->castType);
-        if (result == Success || result == Failure) {
-          return maybeFlip(result);
+      case BrOnCast: {
+        auto result =
+          GCTypeUtils::evaluateCastCheck(br->ref->type, br->castType);
+        if (result == Success) {
+          return flip ? Failure : Success;
+        } else if (result == Failure) {
+          return flip ? Success : Failure;
         }
         return Unknown;
+      }
       default:
         WASM_UNREACHABLE("unhandled BrOn");
     }
