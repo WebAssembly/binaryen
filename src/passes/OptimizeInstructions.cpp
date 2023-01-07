@@ -1898,23 +1898,6 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->destRef) || trapOnNull(curr, curr->srcRef);
   }
 
-  bool canBeCastTo(HeapType a, HeapType b) {
-    return HeapType::isSubType(a, b) || HeapType::isSubType(b, a);
-  }
-
-  bool canBeCastTo(Type a, Type b) {
-    // A value can be cast to the other if the heap type can be cast, or if a
-    // null can work.
-    if (a.isNullable() && b.isNullable()) {
-      return true;
-    }
-    if (a.isRef() && b.isRef() &&
-        canBeCastTo(a.getHeapType(), b.getHeapType())) {
-      return true;
-    }
-    return false;
-  }
-
   void visitRefCast(RefCast* curr) {
     // Note we must check the ref's type here and not our own, since we only
     // refinalize at the end, which means our type may not have been updated yet
@@ -2105,25 +2088,16 @@ struct OptimizeInstructions
       return;
     }
 
-    auto refType = curr->ref->type.getHeapType();
-    auto intendedType = curr->castType.getHeapType();
-
     // See above in RefCast.
-    if (!canBeCastTo(refType, intendedType) &&
-        (curr->castType.isNonNullable() || curr->ref->type.isNonNullable())) {
-      // This test cannot succeed, and will definitely return 0.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                          builder.makeConst(int32_t(0))));
-      return;
-    }
-
-    if (HeapType::isSubType(refType, intendedType) &&
-        (curr->castType.isNullable() || curr->ref->type.isNonNullable())) {
-      // This test will definitely succeed and return 1.
+    auto result = GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->type);
+    if (result == GCTypeUtils::Success) {
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
-      return;
+    } else if (result == GCTypeUtils::Failure) {
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeConst(int32_t(0))));
     }
+    // TODO: we can emit a ref.is_null for SuccessOnlyIfNull etc.
   }
 
   void visitRefIs(RefIs* curr) {
