@@ -42,6 +42,12 @@ enum EvaluationResult {
 // Given the type of a reference and a type to attempt to cast it to, return
 // what we know about the result.
 inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
+  if (!refType.isRef() || !castType.isRef()) {
+    // Unreachable etc. are meaningless situations that we can inform the caller
+    // about nothing useful.
+    return Unknown;
+  }
+
   if (Type::isSubType(refType, castType)) {
     return Success;
   }

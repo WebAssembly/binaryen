@@ -2089,7 +2089,7 @@ struct OptimizeInstructions
     }
 
     // See above in RefCast.
-    auto result = GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->type);
+    auto result = GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType);
     if (result == GCTypeUtils::Success) {
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
