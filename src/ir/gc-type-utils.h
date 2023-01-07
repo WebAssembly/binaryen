@@ -39,6 +39,46 @@ enum EvaluationResult {
   SuccessOnlyIfNonNull,
 };
 
+// Given the type of a reference and a type to attempt to cast it to, return
+// what we know about the result.
+inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
+  if (Type::isSubType(refType, castType)) {
+    return Success;
+  }
+
+  auto refHeapType = refType.getHeapType();
+  auto castHeapType = castType.getHeapType();
+  auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
+  auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
+  bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
+
+  if (!heapTypesCompatible) {
+    // If at least one is not null, then since the heap types are not compatible
+    // we must fail.
+    if (refType.isNonNullable() || castType.isNonNullable()) {
+      return Failure;
+    }
+
+    // Otherwise, both are nullable and a null is the only hope of success.
+    return SuccessOnlyIfNull;
+  }
+
+  // The cast will not definitely succeed nor will it definitely fail.
+  //
+  // Perhaps the heap type part of the cast can be reasoned about, at least.
+  // E.g. if the heap type part of the cast is definitely compatible, but the
+  // cast as a whole is not, that would leave only nullability as an issue,
+  // that is, this means that the input ref is nullable but we are casting to
+  // non-null.
+  if (refIsHeapSubType) {
+    assert(refType.isNullable());
+    assert(castType.isNonNullable());
+    return SuccessOnlyIfNonNull;
+  }
+
+  return Unknown;
+}
+
 // Given an instruction that checks if the child reference is of a certain kind
 // (like br_on_func checks if it is a function), see if type info lets us
 // determine that at compile time.
@@ -141,46 +181,6 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
     success = !success;
   }
   return success ? Success : Failure;
-}
-
-// Given the type of a reference and a type to attempt to cast it to, return
-// what we know about the result.
-inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
-  if (Type::isSubType(refType, castType)) {
-    return Success;
-  }
-
-  auto refHeapType = refType.getHeapType();
-  auto castHeapType = castType.getHeapType();
-  auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
-  auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
-  bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
-
-  if (!heapTypesCompatible) {
-    // If at least one is not null, then since the heap types are not compatible
-    // we must fail.
-    if (refType.isNonNullable() || castType.isNonNullable()) {
-      return Failure;
-    }
-
-    // Otherwise, both are nullable and a null is the only hope of success.
-    return SuccessOnlyIfNull;
-  }
-
-  // The cast will not definitely succeed nor will it definitely fail.
-  //
-  // Perhaps the heap type part of the cast can be reasoned about, at least.
-  // E.g. if the heap type part of the cast is definitely compatible, but the
-  // cast as a whole is not, that would leave only nullability as an issue,
-  // that is, this means that the input ref is nullable but we are casting to
-  // non-null.
-  if (refIsHeapSubType) {
-    assert(refType.isNullable());
-    assert(castType.isNonNullable());
-    return SuccessOnlyIfNonNull;
-  }
-
-  return Unknown;
 }
 
 } // namespace wasm::GCTypeUtils
