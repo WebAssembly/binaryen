@@ -1969,7 +1969,9 @@ struct OptimizeInstructions
     {
       auto* ref = curr->ref;
       while (1) {
-        if (!canBeCastTo(ref->type, curr->type)) {
+        auto result = GCTypeUtils::evaluateCastCheck(ref->type, curr->type);
+
+        if (result == GCTypeUtils::Failure) {
           // This cast cannot succeed, so it will trap.
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
@@ -1977,14 +1979,7 @@ struct OptimizeInstructions
             {builder.makeDrop(curr->ref), builder.makeUnreachable()},
             curr->type));
           return;
-        }
-
-        // Or, perhaps the heap type part must fail. E.g. the input might be a
-        // nullable array while the output might be a nullable struct. That is,
-        // a situation where the only way the cast succeeds is if the input is
-        // null, which we can cast to using a bottom type.
-        if (ref->type.isRef() &&
-            !canBeCastTo(ref->type.getHeapType(), intendedType)) {
+        } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
           curr->type = Type(HeapType::none, Nullable);
           // Call replaceCurrent() to make us re-optimize this node, as we may
           // have just unlocked further opportunities. (We could just continue
@@ -2034,9 +2029,6 @@ struct OptimizeInstructions
       refinalize = true;
       return;
     } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
-      assert(curr->ref->type.isNullable());
-      assert(curr->type.isNonNullable());
-
       // All we need to do is check for a null here.
       //
       // As above, we must refinalize as we may now be emitting a more refined
