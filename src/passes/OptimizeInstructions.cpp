@@ -2048,31 +2048,29 @@ struct OptimizeInstructions
       //     (ref.cast $A
       //
       // where $B is a subtype of $A. We don't need to cast to $A here; we can
-      // just cast all the way to $B immediately.
-      if (Type::isSubType(curr->type, child->type)) {
+      // just cast all the way to $B immediately. To check this see if the
+      // parent's type would succeed if cast by the child's; if it must then the
+      // child's is redundant.
+      auto result = GCTypeUtils::evaluateCastCheck(curr->type, child->type);
+      if (result == GCTypeUtils::Success) {
         curr->ref = child->ref;
         return;
-      }
-
-      // As above, we can also consider the case where the heap type of the
-      // child is a supertype even if the type as a whole is not, which means
-      // that nullability is an issue, specifically in the form of the child
-      // having a heap supertype which is non-nullable, and the parent having
-      // a heap subtype which is nullable, like this:
-      //
-      //   (ref.cast null $B
-      //     (ref.cast $A
-      //
-      // We can optimize that to
-      //
-      //   (ref.cast $B
-      //     (ref.as_non_null $A
-      //
-      // That can then be separately optimized by the proper rule.
-      auto childIntendedType = child->type.getHeapType();
-      if (HeapType::isSubType(intendedType, childIntendedType)) {
-        assert(curr->type.isNullable());
-        assert(child->type.isNonNullable());
+      } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
+        // As above, we can also consider the case where the heap type of the
+        // child is a supertype even if the type as a whole is not, which means
+        // that nullability is an issue, specifically in the form of the child
+        // having a heap supertype which is non-nullable, and the parent having
+        // a heap subtype which is nullable, like this:
+        //
+        //   (ref.cast null $B
+        //     (ref.cast $A
+        //
+        // We can optimize that to
+        //
+        //   (ref.cast $B
+        //     (ref.as_non_null $A
+        //
+        // That can then be separately optimized by the proper rule.
         curr->ref = builder.makeRefAs(RefAsNonNull, child->ref);
         // Fall through to the rule below.
       }
