@@ -96,6 +96,19 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   // Some operations flip the condition.
   bool flip = false;
 
+  auto maybeFlip = [&](EvaluationResult result) {
+    if (!flip) {
+      return result;
+    }
+    if (result == Success) {
+      return Failure;
+    }
+    if (result == Failure) {
+      return Success;
+    }
+    WASM_UNREACHABLE("non-flippable");
+  };
+
   if (auto* br = curr->dynCast<BrOn>()) {
     switch (br->op) {
       // We don't check nullability here.
@@ -106,18 +119,9 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
         flip = true;
         [[fallthrough]];
       case BrOnCast:
-        // If we already have a subtype of the cast type, the cast will succeed.
-        if (Type::isSubType(br->ref->type, br->castType)) {
-          return flip ? Failure : Success;
-        }
-        // If the cast type is unrelated to the type we have and it's not
-        // possible for the cast to succeed anyway because the value is null,
-        // then the cast will certainly fail. TODO: This is essentially the same
-        // as `canBeCastTo` in OptimizeInstructions. Find a way to deduplicate
-        // this logic.
-        if (!Type::isSubType(br->castType, br->ref->type) &&
-            (br->castType.isNonNullable() || br->ref->type.isNonNullable())) {
-          return flip ? Success : Failure;
+        auto result = GCTypeUtils::evaluateCastCheck(br->ref->type, br->castType);
+        if (result == Success || result == Failure) {
+          return maybeFlip(result);
         }
         return Unknown;
       default:
