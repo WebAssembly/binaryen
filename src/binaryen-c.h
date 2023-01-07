@@ -2092,8 +2092,8 @@ BINARYEN_API void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsNullGetValue(BinaryenExpressionRef expr);
 // Sets the value expression tested by a `ref.is_null` expression.
-BINARYEN_API void BinaryenRefIsNulSetValue(BinaryenExpressionRef expr,
-                                           BinaryenExpressionRef valueExpr);
+BINARYEN_API void BinaryenRefIsNullSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
 
 // RefAs
 
