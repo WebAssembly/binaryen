@@ -1008,10 +1008,6 @@ BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
 BinaryenOp BinaryenSwizzleVecI8x16(void) { return SwizzleVecI8x16; }
-BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
-BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
-BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
-BinaryenOp BinaryenRefIsI31(void) { return RefIsI31; }
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
 BinaryenOp BinaryenRefAsFunc(void) { return RefAsFunc; }
 BinaryenOp BinaryenRefAsData(void) { return RefAsData; }
@@ -1598,11 +1594,10 @@ BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRefNull(type_.getHeapType()));
 }
 
-BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
-                                    BinaryenOp op,
-                                    BinaryenExpressionRef value) {
+BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
+                                        BinaryenExpressionRef value) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefIs(RefIsOp(op), (Expression*)value));
+    Builder(*(Module*)module).makeRefIsNull((Expression*)value));
 }
 
 BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
@@ -3579,28 +3574,18 @@ void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
   assert(sizeExpr);
   static_cast<MemoryFill*>(expression)->size = (Expression*)sizeExpr;
 }
-// RefIs
-BinaryenOp BinaryenRefIsGetOp(BinaryenExpressionRef expr) {
+// RefIsNull
+BinaryenExpressionRef BinaryenRefIsNullGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<RefIs>());
-  return static_cast<RefIs*>(expression)->op;
+  assert(expression->is<RefIsNull>());
+  return static_cast<RefIsNull*>(expression)->value;
 }
-void BinaryenRefIsSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+void BinaryenRefIsNullSetValue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<RefIs>());
-  static_cast<RefIs*>(expression)->op = RefIsOp(op);
-}
-BinaryenExpressionRef BinaryenRefIsGetValue(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<RefIs>());
-  return static_cast<RefIs*>(expression)->value;
-}
-void BinaryenRefIsSetValue(BinaryenExpressionRef expr,
-                           BinaryenExpressionRef valueExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<RefIs>());
+  assert(expression->is<RefIsNull>());
   assert(valueExpr);
-  static_cast<RefIs*>(expression)->value = (Expression*)valueExpr;
+  static_cast<RefIsNull*>(expression)->value = (Expression*)valueExpr;
 }
 // RefAs
 BinaryenOp BinaryenRefAsGetOp(BinaryenExpressionRef expr) {

@@ -648,7 +648,7 @@ private:
       parent.isAtomic = true;
     }
     void visitRefNull(RefNull* curr) {}
-    void visitRefIs(RefIs* curr) {}
+    void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) {}
     void visitRefEq(RefEq* curr) {}
     void visitTableGet(TableGet* curr) {

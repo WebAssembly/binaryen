@@ -1336,26 +1336,15 @@ public:
     NOTE_ENTER("RefNull");
     return Literal::makeNull(curr->type.getHeapType());
   }
-  Flow visitRefIs(RefIs* curr) {
-    NOTE_ENTER("RefIs");
+  Flow visitRefIsNull(RefIsNull* curr) {
+    NOTE_ENTER("RefIsNull");
     Flow flow = visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    switch (curr->op) {
-      case RefIsNull:
-        return Literal(value.isNull());
-      case RefIsFunc:
-        return Literal(value.type.isFunction());
-      case RefIsData:
-        return Literal(value.isData());
-      case RefIsI31:
-        return Literal(value.type.getHeapType() == HeapType::i31);
-      default:
-        WASM_UNREACHABLE("unimplemented ref.is_*");
-    }
+    return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");

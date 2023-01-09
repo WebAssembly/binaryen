@@ -834,7 +834,7 @@ private:
     if (auto* unary = curr->dynCast<Unary>()) {
       return isSimple(unary->value);
     }
-    if (auto* is = curr->dynCast<RefIs>()) {
+    if (auto* is = curr->dynCast<RefIsNull>()) {
       return isSimple(is->value);
     }
     return false;

@@ -177,12 +177,6 @@
  )
  (func $ref.is_X (type $anyref_=>_none) (param $x anyref)
   (if
-   (ref.is_func
-    (local.get $x)
-   )
-   (unreachable)
-  )
-  (if
    (ref.is_data
     (local.get $x)
    )

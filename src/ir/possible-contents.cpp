@@ -587,7 +587,7 @@ struct InfoCollector
       curr,
       PossibleContents::literal(Literal::makeNull(curr->type.getHeapType())));
   }
-  void visitRefIs(RefIs* curr) {
+  void visitRefIsNull(RefIsNull* curr) {
     // TODO: Optimize when possible. For example, if we can infer an exact type
     //       here which allows us to know the result then we should do so. This
     //       is unlike the case in visitUnary, above: the information that lets

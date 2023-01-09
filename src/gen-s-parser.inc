@@ -3050,16 +3050,16 @@ switch (buf[0]) {
           case 'i': {
             switch (buf[7]) {
               case 'd':
-                if (op == "ref.is_data"sv) { return makeRefIs(s, RefIsData); }
+                if (op == "ref.is_data"sv) { return makeRefTest(s, Type(HeapType::data, NonNullable)); }
                 goto parse_error;
               case 'f':
-                if (op == "ref.is_func"sv) { return makeRefIs(s, RefIsFunc); }
+                if (op == "ref.is_func"sv) { return makeRefTest(s, Type(HeapType::func, NonNullable)); }
                 goto parse_error;
               case 'i':
-                if (op == "ref.is_i31"sv) { return makeRefIs(s, RefIsI31); }
+                if (op == "ref.is_i31"sv) { return makeRefTest(s, Type(HeapType::i31, NonNullable)); }
                 goto parse_error;
               case 'n':
-                if (op == "ref.is_null"sv) { return makeRefIs(s, RefIsNull); }
+                if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
                 goto parse_error;
               default: goto parse_error;
             }
@@ -8689,28 +8689,28 @@ switch (buf[0]) {
             switch (buf[7]) {
               case 'd':
                 if (op == "ref.is_data"sv) {
-                  auto ret = makeRefIs(ctx, pos, RefIsData);
+                  auto ret = makeRefTest(ctx, pos, Type(HeapType::data, NonNullable));
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
                 if (op == "ref.is_func"sv) {
-                  auto ret = makeRefIs(ctx, pos, RefIsFunc);
+                  auto ret = makeRefTest(ctx, pos, Type(HeapType::func, NonNullable));
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'i':
                 if (op == "ref.is_i31"sv) {
-                  auto ret = makeRefIs(ctx, pos, RefIsI31);
+                  auto ret = makeRefTest(ctx, pos, Type(HeapType::i31, NonNullable));
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'n':
                 if (op == "ref.is_null"sv) {
-                  auto ret = makeRefIs(ctx, pos, RefIsNull);
+                  auto ret = makeRefIsNull(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }

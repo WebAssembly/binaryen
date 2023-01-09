@@ -182,7 +182,6 @@
     (unreachable)
   )
   (func $ref.is_X (param $x anyref)
-    (if (ref.is_func (local.get $x)) (unreachable))
     (if (ref.is_data (local.get $x)) (unreachable))
     (if (ref.is_i31 (local.get $x)) (unreachable))
   )

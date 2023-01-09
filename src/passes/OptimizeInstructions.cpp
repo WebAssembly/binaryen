@@ -1705,7 +1705,7 @@ struct OptimizeInstructions
 
     // RefEq of a value to Null can be replaced with RefIsNull.
     if (curr->right->is<RefNull>()) {
-      replaceCurrent(Builder(*getModule()).makeRefIs(RefIsNull, curr->left));
+      replaceCurrent(Builder(*getModule()).makeRefIsNull(curr->left));
     }
   }
 
@@ -2154,78 +2154,27 @@ struct OptimizeInstructions
     }
   }
 
-  void visitRefIs(RefIs* curr) {
+  void visitRefIsNull(RefIsNull* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
 
-    // Optimizating RefIs is not that obvious, since even if we know the result
-    // evaluates to 0 or 1 then the replacement may not actually save code size,
-    // since RefIsNull is a single byte (the others are 2), while adding a Const
-    // of 0 would be two bytes. Other factors are that we can remove the input
-    // and the added drop on it if it has no side effects, and that replacing
-    // with a constant may allow further optimizations later. For now, replace
-    // with a constant, but this warrants more investigation. TODO
+    // Optimizing RefIsNull is not that obvious, since even if we know the
+    // result evaluates to 0 or 1 then the replacement may not actually save
+    // code size, since RefIsNull is a single byte while adding a Const of 0
+    // would be two bytes. Other factors are that we can remove the input and
+    // the added drop on it if it has no side effects, and that replacing with a
+    // constant may allow further optimizations later. For now, replace with a
+    // constant, but this warrants more investigation. TODO
 
     Builder builder(*getModule());
-
-    auto nonNull = !curr->value->type.isNullable();
-
-    if (curr->op == RefIsNull) {
-      if (nonNull) {
-        replaceCurrent(builder.makeSequence(
-          builder.makeDrop(curr->value),
-          builder.makeConst(Literal::makeZero(Type::i32))));
-      } else {
-        // See the comment on the other call to this lower down. Because of that
-        // other code path we run this optimization at the end (though in this
-        // code path it would be fine either way).
-        skipCast(curr->value);
-      }
-      return;
+    if (curr->value->type.isNonNullable()) {
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(curr->value),
+                             builder.makeConst(Literal::makeZero(Type::i32))));
+    } else {
+      skipCast(curr->value);
     }
-
-    // Check if the type is the kind we are checking for.
-    auto result = GCTypeUtils::evaluateKindCheck(curr);
-
-    if (result != GCTypeUtils::Unknown) {
-      // We know the kind. Now we must also take into account nullability.
-      if (nonNull) {
-        // We know the entire result.
-        replaceCurrent(
-          builder.makeSequence(builder.makeDrop(curr->value),
-                               builder.makeConst(Literal::makeFromInt32(
-                                 result == GCTypeUtils::Success, Type::i32))));
-      } else {
-        // The value may be null. Leave only a check for that.
-        curr->op = RefIsNull;
-        if (result == GCTypeUtils::Success) {
-          // The input is of the right kind. If it is not null then the result
-          // is 1, and otherwise it is 0, so we need to flip the result of
-          // RefIsNull.
-          // Note that even after adding an eqz here we do not regress code size
-          // as RefIsNull is a single byte while the others are two. So we keep
-          // code size identical. However, in theory this may be more work, if
-          // a VM considers ref.is_X to be as fast as ref.is_null, and if eqz is
-          // not free, so this is worth more investigation. TODO
-          replaceCurrent(builder.makeUnary(EqZInt32, curr));
-        } else {
-          // The input is of the wrong kind. In this case if it is null we
-          // return zero because of that, and if it is not then we return zero
-          // because of the kind, so the result is always the same.
-          assert(result == GCTypeUtils::Failure);
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(curr->value),
-            builder.makeConst(Literal::makeZero(Type::i32))));
-        }
-      }
-    }
-
-    // What the reference points to does not depend on the type, so casts
-    // may be removable. Do this right before returning because removing a
-    // cast may remove info that we could have used to optimize, see
-    // "notes on removing casts".
-    skipCast(curr->value);
   }
 
   void visitRefAs(RefAs* curr) {

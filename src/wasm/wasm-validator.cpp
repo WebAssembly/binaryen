@@ -427,7 +427,7 @@ public:
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
-  void visitRefIs(RefIs* curr);
+  void visitRefIsNull(RefIsNull* curr);
   void visitRefAs(RefAs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
@@ -2132,14 +2132,15 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
     curr->type.isNull(), curr, "ref.null must have a bottom heap type");
 }
 
-void FunctionValidator::visitRefIs(RefIs* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
-               curr,
-               "ref.is_* requires reference-types [--enable-reference-types]");
+void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
+  shouldBeTrue(
+    getModule()->features.hasReferenceTypes(),
+    curr,
+    "ref.is_null requires reference-types [--enable-reference-types]");
   shouldBeTrue(curr->value->type == Type::unreachable ||
                  curr->value->type.isRef(),
                curr->value,
-               "ref.is_*'s argument should be a reference type");
+               "ref.is_null's argument should be a reference type");
 }
 
 void FunctionValidator::visitRefAs(RefAs* curr) {
