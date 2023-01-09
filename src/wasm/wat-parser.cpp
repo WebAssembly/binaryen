@@ -758,7 +758,7 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
     return Ok{};
   }
-  InstrT makeRefIs(Index, RefIsOp) { return Ok{}; }
+  InstrT makeRefIsNull(Index) { return Ok{}; }
 
   InstrT makeRefEq(Index) { return Ok{}; }
 
@@ -2053,10 +2053,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return push(pos, builder.makeRefNull(type));
   }
 
-  Result<> makeRefIs(Index pos, RefIsOp op) {
+  Result<> makeRefIsNull(Index pos) {
     auto ref = pop(pos);
     CHECK_ERR(ref);
-    return push(pos, builder.makeRefIs(op, *ref));
+    return push(pos, builder.makeRefIsNull(*ref));
   }
 
   Result<> makeRefEq(Index pos) {
@@ -2322,8 +2322,7 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeBreak(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeBreakTable(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeReturn(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefNull(Ctx&, Index);
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx&, Index, RefIsOp op);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefIsNull(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefFunc(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefEq(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx&, Index);
@@ -2344,8 +2343,9 @@ Result<typename Ctx::InstrT> makeCallRef(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31Get(Ctx&, Index, bool signed_);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeRefTest(Ctx&, Index, std::optional<Type> castType = std::nullopt);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNop(Ctx&, Index);
 template<typename Ctx>
@@ -3357,8 +3357,8 @@ Result<typename Ctx::InstrT> makeRefNull(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefIs(Ctx& ctx, Index pos, RefIsOp op) {
-  return ctx.makeRefIs(pos, op);
+Result<typename Ctx::InstrT> makeRefIsNull(Ctx& ctx, Index pos) {
+  return ctx.makeRefIsNull(pos);
 }
 
 template<typename Ctx>
@@ -3438,7 +3438,8 @@ Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT>
+makeRefTest(Ctx& ctx, Index pos, std::optional<Type> castType) {
   return ctx.in.err("unimplemented instruction");
 }
 

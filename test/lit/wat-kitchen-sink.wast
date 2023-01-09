@@ -59,7 +59,7 @@
 
   ;; CHECK:      (type $none_=>_i32_i64 (func (result i32 i64)))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+  ;; CHECK:      (type $anyref_=>_i32 (func (param anyref) (result i32)))
 
   ;; CHECK:      (type $eqref_eqref_=>_i32 (func (param eqref eqref) (result i32)))
 
@@ -1398,41 +1398,14 @@
   return
  )
 
- ;; CHECK:      (func $ref-is (type $anyref_=>_none) (param $0 anyref)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.is_null
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.is_func
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.is_data
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.is_i31
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:   )
+ ;; CHECK:      (func $ref-is-null (type $anyref_=>_i32) (param $0 anyref) (result i32)
+ ;; CHECK-NEXT:  (ref.is_null
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $ref-is (param anyref)
+ (func $ref-is-null (param anyref) (result i32)
   local.get 0
   ref.is_null
-  drop
-  local.get 0
-  ref.is_func
-  drop
-  local.get 0
-  ref.is_data
-  drop
-  local.get 0
-  ref.is_i31
-  drop
  )
 
  ;; CHECK:      (func $ref-eq (type $eqref_eqref_=>_i32) (param $0 eqref) (param $1 eqref) (result i32)

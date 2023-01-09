@@ -267,7 +267,7 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
   Expression* makeRefNull(Element& s);
-  Expression* makeRefIs(Element& s, RefIsOp op);
+  Expression* makeRefIsNull(Element& s);
   Expression* makeRefFunc(Element& s);
   Expression* makeRefEq(Element& s);
   Expression* makeTableGet(Element& s);
@@ -283,7 +283,8 @@ private:
   Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
-  Expression* makeRefTest(Element& s);
+  Expression* makeRefTest(Element& s,
+                          std::optional<Type> castType = std::nullopt);
   Expression* makeRefCast(Element& s);
   Expression* makeRefCastNop(Element& s);
   Expression* makeBrOnNull(Element& s, bool onFail = false);

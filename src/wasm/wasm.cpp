@@ -805,7 +805,7 @@ void RefNull::finalize(Type type_) { type = type_; }
 
 void RefNull::finalize() {}
 
-void RefIs::finalize() {
+void RefIsNull::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {

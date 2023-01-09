@@ -2000,24 +2000,7 @@ struct PrintExpressionContents
     printMedium(o, "ref.null ");
     printHeapType(o, curr->type.getHeapType(), wasm);
   }
-  void visitRefIs(RefIs* curr) {
-    switch (curr->op) {
-      case RefIsNull:
-        printMedium(o, "ref.is_null");
-        break;
-      case RefIsFunc:
-        printMedium(o, "ref.is_func");
-        break;
-      case RefIsData:
-        printMedium(o, "ref.is_data");
-        break;
-      case RefIsI31:
-        printMedium(o, "ref.is_i31");
-        break;
-      default:
-        WASM_UNREACHABLE("unimplemented ref.is_*");
-    }
-  }
+  void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
     printName(curr->func, o);
@@ -2109,6 +2092,23 @@ struct PrintExpressionContents
     printHeapType(o, curr->target->type.getHeapType(), wasm);
   }
   void visitRefTest(RefTest* curr) {
+    // TODO: These instructions are deprecated. Remove them.
+    if (auto type = curr->castType.getHeapType();
+        curr->castType.isNonNullable() && type.isBasic()) {
+      switch (type.getBasic()) {
+        case HeapType::func:
+          printMedium(o, "ref.is_func");
+          return;
+        case HeapType::data:
+          printMedium(o, "ref.is_data");
+          return;
+        case HeapType::i31:
+          printMedium(o, "ref.is_i31");
+          return;
+        default:
+          break;
+      }
+    }
     printMedium(o, "ref.test ");
     if (curr->castType.isNullable()) {
       printMedium(o, "null ");

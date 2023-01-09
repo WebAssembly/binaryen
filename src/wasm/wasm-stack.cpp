@@ -1875,23 +1875,8 @@ void BinaryInstWriter::visitRefNull(RefNull* curr) {
   parent.writeHeapType(curr->type.getHeapType());
 }
 
-void BinaryInstWriter::visitRefIs(RefIs* curr) {
-  switch (curr->op) {
-    case RefIsNull:
-      o << int8_t(BinaryConsts::RefIsNull);
-      break;
-    case RefIsFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsFunc);
-      break;
-    case RefIsData:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsData);
-      break;
-    case RefIsI31:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsI31);
-      break;
-    default:
-      WASM_UNREACHABLE("unimplemented ref.is_*");
-  }
+void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
+  o << int8_t(BinaryConsts::RefIsNull);
 }
 
 void BinaryInstWriter::visitRefFunc(RefFunc* curr) {
@@ -2025,6 +2010,23 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
+  // TODO: These instructions are deprecated. Remove them.
+  if (auto type = curr->castType.getHeapType();
+      curr->castType.isNonNullable() && type.isBasic()) {
+    switch (type.getBasic()) {
+      case HeapType::func:
+        o << U32LEB(BinaryConsts::RefIsFunc);
+        return;
+      case HeapType::data:
+        o << U32LEB(BinaryConsts::RefIsData);
+        return;
+      case HeapType::i31:
+        o << U32LEB(BinaryConsts::RefIsI31);
+        return;
+      default:
+        break;
+    }
+  }
   if (curr->castType.isNullable()) {
     o << U32LEB(BinaryConsts::RefTestNull);
   } else {

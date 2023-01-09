@@ -145,7 +145,7 @@ function test_ids() {
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
   console.log("PopId: " + binaryen.PopId);
   console.log("RefNullId: " + binaryen.RefNullId);
-  console.log("RefIsId: " + binaryen.RefIsId);
+  console.log("RefIsNullId: " + binaryen.RefIsNullId);
   console.log("RefFuncId: " + binaryen.RefFuncId);
   console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TableGetId: " + binaryen.TableGetId);

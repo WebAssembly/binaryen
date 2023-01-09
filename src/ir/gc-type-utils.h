@@ -119,24 +119,6 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
         WASM_UNREACHABLE("unhandled BrOn");
     }
     child = br->ref;
-  } else if (auto* is = curr->dynCast<RefIs>()) {
-    switch (is->op) {
-      // We don't check nullability here.
-      case RefIsNull:
-        return Unknown;
-      case RefIsFunc:
-        expected = Func;
-        break;
-      case RefIsData:
-        expected = Data;
-        break;
-      case RefIsI31:
-        expected = I31;
-        break;
-      default:
-        WASM_UNREACHABLE("unhandled RefIs");
-    }
-    child = is->value;
   } else if (auto* as = curr->dynCast<RefAs>()) {
     switch (as->op) {
       // We don't check nullability here.

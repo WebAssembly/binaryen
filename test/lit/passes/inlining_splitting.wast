@@ -1163,7 +1163,7 @@
     )
     ;; A second if. We can outline both if bodies.
     (if
-      (ref.is_func
+      (ref.is_null
         (local.get $x)
       )
       (loop $x
@@ -1200,7 +1200,7 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_func
+  ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_0
@@ -1231,7 +1231,7 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (ref.is_func
+  ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_0

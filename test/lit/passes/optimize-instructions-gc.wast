@@ -234,17 +234,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (ref.is_null
-  ;; CHECK-NEXT:     (local.get $func)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (ref.is_func
+  ;; CHECK-NEXT:    (local.get $func)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (ref.is_null
-  ;; CHECK-NEXT:     (local.get $i31)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (ref.is_i31
+  ;; CHECK-NEXT:    (local.get $i31)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -255,17 +251,13 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (i32.eqz
-  ;; NOMNL-NEXT:    (ref.is_null
-  ;; NOMNL-NEXT:     (local.get $func)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   (ref.is_func
+  ;; NOMNL-NEXT:    (local.get $func)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (i32.eqz
-  ;; NOMNL-NEXT:    (ref.is_null
-  ;; NOMNL-NEXT:     (local.get $i31)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   (ref.is_i31
+  ;; NOMNL-NEXT:    (local.get $i31)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -281,103 +273,6 @@
     )
     (drop
       (ref.is_i31 (local.get $i31))
-    )
-  )
-
-  ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
-  ;; struct, etc.). regardless of nullability the result here is always 0.
-  ;; CHECK:      (func $unneeded_is_bad_kinds (type $funcref_dataref_i31ref_=>_none) (param $func funcref) (param $struct dataref) (param $i31 i31ref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $func)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $func)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $unneeded_is_bad_kinds (type $funcref_dataref_i31ref_=>_none) (param $func funcref) (param $struct dataref) (param $i31 i31ref)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result i32)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (local.get $struct)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (i32.const 0)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result i32)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (local.get $func)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (i32.const 0)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result i32)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.as_non_null
-  ;; NOMNL-NEXT:      (local.get $struct)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (i32.const 0)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result i32)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.as_non_null
-  ;; NOMNL-NEXT:      (local.get $func)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (i32.const 0)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
-  (func $unneeded_is_bad_kinds
-    (param $func (ref null func))
-    (param $struct (ref null struct))
-    (param $i31 (ref null i31))
-    (drop
-      (ref.is_func (local.get $struct))
-    )
-    (drop
-      (ref.is_i31 (local.get $func))
-    )
-    ;; also check non-nullable types as inputs
-    (drop
-      (ref.is_func (ref.as_non_null (local.get $struct)))
-    )
-    (drop
-      (ref.is_i31 (ref.as_non_null (local.get $func)))
     )
   )
 
@@ -2954,7 +2849,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_func
+  ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2972,7 +2867,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.is_func
+  ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (local.get $x)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -2996,7 +2891,7 @@
     ;; likewise ref.is and ref.test
     (drop
       (i32.and
-        (ref.is_func
+        (ref.is_null
           (local.get $x)
         )
         (i32.const 1)
@@ -3250,6 +3145,37 @@
     (ref.as_data
       (ref.cast $A
         (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-internalized-extern (type $externref_=>_none) (param $externref externref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (extern.internalize
+  ;; CHECK-NEXT:     (local.get $externref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $cast-internalized-extern (type $externref_=>_none) (param $externref externref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast $A
+  ;; NOMNL-NEXT:    (extern.internalize
+  ;; NOMNL-NEXT:     (local.get $externref)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $cast-internalized-extern (param $externref externref)
+    ;; We cannot optimize this cast, and in particular we should not treat the
+    ;; externref as falling through to the cast and incorrectly inferring that
+    ;; the cast cannot succeed.
+    (drop
+      (ref.cast $A
+        (extern.internalize
+          (local.get $externref)
+        )
       )
     )
   )

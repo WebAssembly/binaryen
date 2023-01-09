@@ -214,7 +214,7 @@
  (i32.const 6)
 )
 
-# RefIs
+# RefIsNull
 (ref.is_null
  (local.get $2)
 )

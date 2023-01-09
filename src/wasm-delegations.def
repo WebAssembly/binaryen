@@ -55,7 +55,7 @@ DELEGATE(MemoryGrow);
 DELEGATE(Unreachable);
 DELEGATE(Pop);
 DELEGATE(RefNull);
-DELEGATE(RefIs);
+DELEGATE(RefIsNull);
 DELEGATE(RefFunc);
 DELEGATE(RefEq);
 DELEGATE(TableGet);
