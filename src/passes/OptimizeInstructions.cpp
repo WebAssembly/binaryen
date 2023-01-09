@@ -1963,7 +1963,7 @@ struct OptimizeInstructions
             curr->type));
           return;
         } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
-          curr->type = Type(HeapType::none, Nullable);
+          curr->type = Type(intendedType.getBottom(), Nullable);
           // Call replaceCurrent() to make us re-optimize this node, as we may
           // have just unlocked further opportunities. (We could just continue
           // down to the rest, but we'd need to do more work to make sure all
@@ -2053,9 +2053,15 @@ struct OptimizeInstructions
         //   (ref.cast $B
         //     (ref.as_non_null $A
         //
-        // That can then be separately optimized by the proper rule.
-        curr->ref = builder.makeRefAs(RefAsNonNull, child->ref);
-        // Fall through to the rule below.
+        // which is the same as (ref.cast $B) as that checks non-nullability
+        // anyhow (similar to the next rule after us).
+        auto childIntendedType = child->type.getHeapType();
+        if (HeapType::isSubType(intendedType, childIntendedType)) {
+          assert(curr->type.isNullable());
+          assert(child->type.isNonNullable());
+          curr->ref = child->ref;
+          curr->type = Type(curr->type.getHeapType(), NonNullable);
+        }
       }
     }
 

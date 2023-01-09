@@ -37,8 +37,18 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
   TypeUpdater typeUpdater;
 
+  // The TypeUpdater class handles efficient updating of unreachability as we
+  // go, but we may also refine types, which requires refinalization.
+  bool refinalize = false;
+
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
+    if (expression->type != old->type &&
+        expression->type != Type::unreachable) {
+      // We are changing this to a new type that is not unreachable, so it is a
+      // refinement that we need to use refinalize to propagate up.
+      refinalize = true;
+    }
     super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
@@ -48,6 +58,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   void doWalkFunction(Function* func) {
     typeUpdater.walk(func->body);
     walk(func->body);
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
   }
 
   // Returns nullptr if curr is dead, curr if it must stay as is, or one of its

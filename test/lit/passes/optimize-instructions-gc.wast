@@ -1030,7 +1030,7 @@
   (func $flip-cast-of-as-non-null (param $x anyref)
     (drop
       (ref.cast $struct
-        ;; this can be moved through the ref.cast null outward.
+        ;; this can be folded into the outer cast, which checks for null too
         (ref.as_non_null
           (local.get $x)
         )
@@ -1654,14 +1654,10 @@
     (drop
       (ref.eq
         (ref.cast $A
-          (ref.as_non_null
-            (local.get $x)
-          )
+          (local.get $x)
         )
         (ref.cast $B
-          (ref.as_non_null
-            (local.get $y)
-          )
+          (local.get $y)
         )
       )
     )
@@ -1669,14 +1665,10 @@
     (drop
       (ref.eq
         (ref.cast $B
-          (ref.as_non_null
-            (local.get $x)
-          )
+          (local.get $x)
         )
         (ref.cast $A
-          (ref.as_non_null
-            (local.get $y)
-          )
+          (local.get $y)
         )
       )
     )
@@ -3237,6 +3229,27 @@
     (drop
       (ref.cast null $struct
         (local.get $null-b)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $as_of_unreachable (type $none_=>_ref|data|) (result (ref data))
+  ;; CHECK-NEXT:  (ref.as_data
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $as_of_unreachable (type $none_=>_ref|data|) (result (ref data))
+  ;; NOMNL-NEXT:  (ref.as_data
+  ;; NOMNL-NEXT:   (unreachable)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $as_of_unreachable (result (ref data))
+    ;; The cast will definitely fail, so we can turn it into an unreachable. The
+    ;; ref.as must then ignore the unreachable input and not error on trying to
+    ;; infer anything about it.
+    (ref.as_data
+      (ref.cast $A
+        (ref.null none)
       )
     )
   )
