@@ -123,7 +123,9 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
 
   Kind actual;
 
-  if (childType.isFunction()) {
+  if (childType == Type::unreachable) {
+    return Unknown;
+  } else if (childType.isFunction()) {
     actual = Func;
   } else if (childType.isData()) {
     actual = Data;
