@@ -3230,4 +3230,35 @@
       )
     )
   )
+
+  ;; CHECK:      (func $cast-internalized-extern (type $externref_=>_none) (param $externref externref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (extern.internalize
+  ;; CHECK-NEXT:     (local.get $externref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $cast-internalized-extern (type $externref_=>_none) (param $externref externref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast $A
+  ;; NOMNL-NEXT:    (extern.internalize
+  ;; NOMNL-NEXT:     (local.get $externref)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $cast-internalized-extern (param $externref externref)
+    ;; We cannot optimize this cast, and in particular we should not treat the
+    ;; externref as falling through to the cast and incorrectly inferring that
+    ;; the cast cannot succeed.
+    (drop
+      (ref.cast $A
+        (extern.internalize
+          (local.get $externref)
+        )
+      )
+    )
+  )
 )

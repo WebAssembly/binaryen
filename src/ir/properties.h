@@ -311,7 +311,12 @@ inline Expression* getImmediateFallthrough(
   } else if (auto* as = curr->dynCast<RefCast>()) {
     return as->ref;
   } else if (auto* as = curr->dynCast<RefAs>()) {
-    return as->value;
+    // Extern conversions are not casts and actually produce new values.
+    // Treating them as fallthroughs would lead to misoptimizations of
+    // subsequent casts.
+    if (as->op != ExternInternalize && as->op != ExternExternalize) {
+      return as->value;
+    }
   } else if (auto* br = curr->dynCast<BrOn>()) {
     return br->ref;
   }
