@@ -2,6 +2,7 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type ${} (struct ))
   (type ${} (struct))
 
   ;; CHECK:      (func $drop-ref-as (type $anyref_=>_none) (param $x anyref)
@@ -89,6 +90,23 @@
     (drop
       (i31.get_s
         (local.get $ref-nn)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref.cast.null.block (type $ref|${}|_=>_dataref) (param $ref (ref ${})) (result dataref)
+  ;; CHECK-NEXT:  (ref.cast ${}
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.cast.null.block (param $ref (ref ${})) (result (ref null data))
+    ;; We can vacuum away the block, which will make this ref.cast null operate
+    ;; on a non-nullable input. That is, we are refining the input to the cast.
+    ;; The cast must be updated properly following that, to be a non-nullable
+    ;; cast.
+    (ref.cast null ${}
+      (block (result (ref null ${}))
+        (local.get $ref)
       )
     )
   )
