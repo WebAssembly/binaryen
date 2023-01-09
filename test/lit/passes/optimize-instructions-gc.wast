@@ -3230,4 +3230,15 @@
       )
     )
   )
+
+  (func $as_of_unreachable (result (ref data))
+    ;; The cast will definitely fail, so we can turn it into an unreachable. The
+    ;; ref.as must then ignore the unreachable input and not error on trying to
+    ;; infer anything about it.
+    (ref.as_data
+      (ref.cast $A
+        (ref.null none)
+      )
+    )
+  )
 )
