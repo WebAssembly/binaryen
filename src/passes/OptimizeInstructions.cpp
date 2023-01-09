@@ -1931,7 +1931,6 @@ struct OptimizeInstructions
     }
 
     Builder builder(*getModule());
-    auto& passOptions = getPassOptions();
 
     auto fallthrough =
       Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
@@ -1956,14 +1955,55 @@ struct OptimizeInstructions
       //       looking into.
     }
 
-    // Check whether the cast will definitely fail.
-    if (!canBeCastTo(fallthrough->type, curr->type)) {
-      // This cast cannot succeed, so it will trap.
-      // Make sure to emit a block with the same type as us; leave updating
-      // types for other passes.
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ref), builder.makeUnreachable()}, curr->type));
-      return;
+    // Check whether the cast will definitely fail. Look not just at the
+    // fallthrough but all intermediatary fallthrough values as well, as if any
+    // of them has a type that cannot be cast to us, then we will trap, e.g.
+    //
+    //   (ref.cast $struct-A
+    //     (ref.cast $struct-B
+    //       (ref.cast $array
+    //         (local.get $x)
+    //
+    // The fallthrough is the local.get, but the array cast in the middle
+    // proves a trap must happen.
+    {
+      auto* ref = curr->ref;
+      while (1) {
+        if (!canBeCastTo(ref->type, curr->type)) {
+          // This cast cannot succeed, so it will trap.
+          // Make sure to emit a block with the same type as us; leave updating
+          // types for other passes.
+          replaceCurrent(builder.makeBlock(
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            curr->type));
+          return;
+        }
+
+        // Or, perhaps the heap type part must fail. E.g. the input might be a
+        // nullable array while the output might be a nullable struct. That is,
+        // a situation where the only way the cast succeeds is if the input is
+        // null, which we can cast to using a bottom type.
+        if (ref->type.isRef() &&
+            !canBeCastTo(ref->type.getHeapType(), intendedType)) {
+          assert(ref->type.isNullable());
+          assert(curr->type.isNullable());
+          curr->type = Type(intendedType.getBottom(), Nullable);
+          // Call replaceCurrent() to make us re-optimize this node, as we may
+          // have just unlocked further opportunities. (We could just continue
+          // down to the rest, but we'd need to do more work to make sure all
+          // the local state in this function is in sync which this change; it's
+          // easier to just do another clean pass on this node.)
+          replaceCurrent(curr);
+          return;
+        }
+
+        auto* last = ref;
+        ref = Properties::getImmediateFallthrough(
+          ref, getPassOptions(), *getModule());
+        if (ref == last) {
+          break;
+        }
+      }
     }
 
     // Check whether the cast will definitely succeed.
@@ -2023,97 +2063,62 @@ struct OptimizeInstructions
       //
       // As above, we must refinalize as we may now be emitting a more refined
       // type (specifically a more refined heap type).
-      replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, curr->ref));
+      replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
       refinalize = true;
       return;
     }
 
-    // Repeated identical ref.cast operations are unnecessary. First, find the
-    // immediate child cast, if there is one.
-    // TODO: Look even further through incompatible casts?
-    auto* ref = curr->ref;
-    while (!ref->is<RefCast>()) {
-      auto* last = ref;
-      // RefCast falls through the value, so instead of calling
-      // getFallthrough() to look through all fallthroughs, we must iterate
-      // manually. Keep going until we reach either the end of things
-      // falling-through, or a cast.
-      ref = Properties::getImmediateFallthrough(ref, passOptions, *getModule());
-      if (ref == last) {
-        break;
-      }
-    }
-    if (auto* child = ref->dynCast<RefCast>()) {
+    if (auto* child = curr->ref->dynCast<RefCast>()) {
       // Repeated casts can be removed, leaving just the most demanding of
-      // them.
+      // them. Note that earlier we already checked for the cast of the ref's
+      // type being more refined, so all we need to handle is the opposite, that
+      // is, something like this:
+      //
+      //   (ref.cast $B
+      //     (ref.cast $A
+      //
+      // where $B is a subtype of $A. We don't need to cast to $A here; we can
+      // just cast all the way to $B immediately.
+      if (Type::isSubType(curr->type, child->type)) {
+        curr->ref = child->ref;
+        return;
+      }
+
+      // As above, we can also consider the case where the heap type of the
+      // child is a supertype even if the type as a whole is not, which means
+      // that nullability is an issue, specifically in the form of the child
+      // having a heap supertype which is non-nullable, and the parent having
+      // a heap subtype which is nullable, like this:
+      //
+      //   (ref.cast null $B
+      //     (ref.cast $A
+      //
+      // We can optimize that to
+      //
+      //   (ref.cast $B
+      //     (ref.as_non_null $A
+      //
+      // which is the same as (ref.cast $B) as that checks non-nullability
+      // anyhow (similar to the next rule after us).
       auto childIntendedType = child->type.getHeapType();
       if (HeapType::isSubType(intendedType, childIntendedType)) {
-        // Skip the child.
-        if (curr->ref == child) {
-          curr->ref = child->ref;
-          return;
-        } else {
-          // The child is not the direct child of the parent, but it is a
-          // fallthrough value, for example,
-          //
-          //  (ref.cast parent
-          //   (block
-          //    .. other code ..
-          //    (ref.cast child)))
-          //
-          // In this case it isn't obvious that we can remove the child, as
-          // doing so might require updating the types of the things in the
-          // middle - and in fact the sole purpose of the child may be to get
-          // a proper type for validation to work. Do nothing in this case,
-          // and hope that other opts will help here (for example,
-          // trapsNeverHappen will help if the code validates without the
-          // child).
-        }
-      } else if (!canBeCastTo(intendedType, childIntendedType)) {
-        // The types are not compatible, so if the input is not null, this
-        // will trap.
-        if (!curr->type.isNullable()) {
-          // Make sure to emit a block with the same type as us; leave
-          // updating types for other passes.
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-            curr->type));
-          return;
-        }
+        assert(curr->type.isNullable());
+        assert(child->type.isNonNullable());
+        curr->ref = child->ref;
+        curr->type = Type(curr->type.getHeapType(), NonNullable);
       }
     }
 
-    // ref.cast can be reordered with ref.as_non_null,
+    // ref.cast can be combined with ref.as_non_null,
     //
-    //   (ref.cast (ref.as_non_null ..))
+    //   (ref.cast null (ref.as_non_null ..))
     // =>
-    //   (ref.as_non_null (ref.cast ..))
+    //   (ref.cast ..)
     //
-    // This is valid because both pass through the value if they do not trap,
-    // and so reordering does not change whether a trap happens (and reordering
-    // traps is allowed), and does not change the value flowing out at the end.
-    // It is better to have the ref.as_non_null on the outside since it allows
-    // outer instructions to potentially optimize it away (should we find
-    // optimizations that can fold away a ref.cast on an outer instruction, that
-    // might motivate changing this).
-    //
-    // Note that other ref.as* methods, like ref.as_func, are not obviously
-    // worth reordering with ref.cast. For example, the type of ref.as_data is
-    // (ref data), which is less specific than what ref.cast would have.
-    // TODO optimize ref.cast of ref.as_[func|data|i31] in other ways.
     if (auto* as = curr->ref->dynCast<RefAs>()) {
       if (as->op == RefAsNonNull) {
         curr->ref = as->value;
-        // Match the nullability of the new child.
-        // TODO: Combine the ref.as_non_null into the cast once we allow that.
-        if (curr->ref->type.isNullable()) {
-          curr->type = Type(curr->type.getHeapType(), Nullable);
-        }
-        curr->finalize();
-        as->value = curr;
-        as->finalize();
-        replaceCurrent(as);
-        return;
+        curr->type = Type(curr->type.getHeapType(), NonNullable);
       }
     }
   }
