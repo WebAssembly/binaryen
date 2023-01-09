@@ -1030,7 +1030,7 @@
   (func $flip-cast-of-as-non-null (param $x anyref)
     (drop
       (ref.cast $struct
-        ;; this can be moved through the ref.cast null outward.
+        ;; this can be folded into the outer cast, which checks for null too
         (ref.as_non_null
           (local.get $x)
         )
@@ -1654,14 +1654,10 @@
     (drop
       (ref.eq
         (ref.cast $A
-          (ref.as_non_null
-            (local.get $x)
-          )
+          (local.get $x)
         )
         (ref.cast $B
-          (ref.as_non_null
-            (local.get $y)
-          )
+          (local.get $y)
         )
       )
     )
@@ -1669,14 +1665,10 @@
     (drop
       (ref.eq
         (ref.cast $B
-          (ref.as_non_null
-            (local.get $x)
-          )
+          (local.get $x)
         )
         (ref.cast $A
-          (ref.as_non_null
-            (local.get $y)
-          )
+          (local.get $y)
         )
       )
     )
