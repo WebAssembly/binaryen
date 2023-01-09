@@ -2031,7 +2031,7 @@ struct OptimizeInstructions
       //     (ref.cast $A
       //
       // where $B is a subtype of $A. We don't need to cast to $A here; we can
-      // just cast all the way to $B immediately. To check this see if the
+      // just cast all the way to $B immediately. To check this, see if the
       // parent's type would succeed if cast by the child's; if it must then the
       // child's is redundant.
       auto result = GCTypeUtils::evaluateCastCheck(curr->type, child->type);
@@ -2039,29 +2039,10 @@ struct OptimizeInstructions
         curr->ref = child->ref;
         return;
       } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
-        // As above, we can also consider the case where the heap type of the
-        // child is a supertype even if the type as a whole is not, which means
-        // that nullability is an issue, specifically in the form of the child
-        // having a heap supertype which is non-nullable, and the parent having
-        // a heap subtype which is nullable, like this:
-        //
-        //   (ref.cast null $B
-        //     (ref.cast $A
-        //
-        // We can optimize that to
-        //
-        //   (ref.cast $B
-        //     (ref.as_non_null $A
-        //
-        // which is the same as (ref.cast $B) as that checks non-nullability
-        // anyhow (similar to the next rule after us).
-        auto childIntendedType = child->type.getHeapType();
-        if (HeapType::isSubType(intendedType, childIntendedType)) {
-          assert(curr->type.isNullable());
-          assert(child->type.isNonNullable());
-          curr->ref = child->ref;
-          curr->type = Type(curr->type.getHeapType(), NonNullable);
-        }
+        // Similar to above, but we must also trap on null.
+        curr->ref = child->ref;
+        curr->type = Type(curr->type.getHeapType(), NonNullable);
+        return;
       }
     }
 
