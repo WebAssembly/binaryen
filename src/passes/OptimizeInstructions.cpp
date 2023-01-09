@@ -2098,13 +2098,14 @@ struct OptimizeInstructions
       //   (ref.cast $B
       //     (ref.as_non_null $A
       //
-      // That can then be separately optimized by the proper rule.
+      // which is the same as (ref.cast $B) as that checks non-nullability
+      // anyhow (similar to the next rule after us).
       auto childIntendedType = child->type.getHeapType();
       if (HeapType::isSubType(intendedType, childIntendedType)) {
         assert(curr->type.isNullable());
         assert(child->type.isNonNullable());
-        curr->ref = builder.makeRefAs(RefAsNonNull, child->ref);
-        // Fall through to the rule below.
+        curr->ref = child->ref;
+        curr->type = Type(curr->type.getHeapType(), NonNullable);
       }
     }
 
