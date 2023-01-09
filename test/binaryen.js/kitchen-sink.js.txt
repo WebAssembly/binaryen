@@ -75,7 +75,7 @@ MemoryCopyId: 38
 MemoryFillId: 39
 PopId: 40
 RefNullId: 41
-RefIsId: 42
+RefIsNullId: 42
 RefFuncId: 43
 RefEqId: 44
 TableGetId: 45

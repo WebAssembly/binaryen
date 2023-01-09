@@ -549,7 +549,6 @@ function initializeConstants() {
     'DemoteZeroVecF64x2ToVecF32x4',
     'PromoteLowVecF32x4ToVecF64x2',
     'SwizzleVecI8x16',
-    'RefIsNull',
     'RefAsNonNull',
     'RefAsFunc',
     'RefAsData',
