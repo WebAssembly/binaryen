@@ -15,10 +15,8 @@
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; NO_TNH-NEXT:  (ref.eq
-  ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (ref.cast null $struct
-  ;; NO_TNH-NEXT:     (local.get $a)
-  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (ref.as_data
   ;; NO_TNH-NEXT:    (local.get $b)
@@ -29,6 +27,8 @@
     ;; When traps never happen we can remove all the casts here, since they do
     ;; not affect the comparison of the references.
     (ref.eq
+      ;; When traps can happen we can still improve this by removing and
+      ;; combining redundant casts.
       (ref.as_data
         (ref.as_non_null
           (ref.cast null $struct
