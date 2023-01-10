@@ -2,12 +2,12 @@
 ;; RUN: wasm-opt %s --rse -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $A (struct (field dataref)))
+ ;; CHECK:      (type $A (struct (field structref)))
  (type $A (struct (field (ref null struct))))
 
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
  ;; nullable).
- ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
+ ;; CHECK:      (type $B (struct_subtype (field (ref struct)) $A))
  (type $B (struct_subtype (field (ref struct)) $A))
 
  ;; CHECK:      (func $test (type $none_=>_none)

@@ -158,7 +158,7 @@ struct HeapTypeGeneratorImpl {
                      HeapType::any,
                      HeapType::eq,
                      HeapType::i31,
-                     HeapType::data,
+                     HeapType::struct_,
                      HeapType::array);
   }
 
@@ -273,7 +273,7 @@ struct HeapTypeGeneratorImpl {
     } else if (rand.oneIn(2)) {
       return HeapType::none;
     } else {
-      return HeapType::data;
+      return HeapType::struct_;
     }
   }
 
@@ -339,7 +339,7 @@ struct HeapTypeGeneratorImpl {
           return pickSubEq();
         case HeapType::i31:
           return HeapType::i31;
-        case HeapType::data:
+        case HeapType::struct_:
           return pickSubStruct();
         case HeapType::array:
           return pickSubArray();
@@ -466,18 +466,16 @@ struct HeapTypeGeneratorImpl {
           }
           [[fallthrough]];
         case HeapType::eq:
-          switch (rand.upTo(4)) {
+          switch (rand.upTo(3)) {
             case 0:
               return HeapType::i31;
             case 1:
-              return HeapType::data;
-            case 2:
               return StructKind{};
-            case 3:
+            case 2:
               return ArrayKind{};
           }
           WASM_UNREACHABLE("unexpected index");
-        case HeapType::data:
+        case HeapType::struct_:
           return StructKind{};
         case HeapType::array:
           return ArrayKind{};

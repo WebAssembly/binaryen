@@ -92,7 +92,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast (type $ref|data|_=>_none) (param $x (ref data))
+  ;; CHECK:      (func $ref.cast (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -124,7 +124,7 @@
     )
   )
 
-  ;; CHECK:      (func $not-past-set (type $ref|data|_=>_none) (param $x (ref data))
+  ;; CHECK:      (func $not-past-set (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -161,7 +161,7 @@
     )
   )
 
-  ;; CHECK:      (func $best (type $ref|data|_=>_none) (param $x (ref data))
+  ;; CHECK:      (func $best (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (local $2 (ref $B))
   ;; CHECK-NEXT:  (drop
@@ -206,7 +206,7 @@
     )
   )
 
-  ;; CHECK:      (func $best-2 (type $ref|data|_=>_none) (param $x (ref data))
+  ;; CHECK:      (func $best-2 (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -248,12 +248,12 @@
     )
   )
 
-  ;; CHECK:      (func $fallthrough (type $ref|data|_=>_none) (param $x (ref data))
+  ;; CHECK:      (func $fallthrough (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
   ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (block (result (ref data))
+  ;; CHECK-NEXT:     (block (result (ref struct))
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -277,7 +277,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-basic-block (type $ref|data|_=>_none) (param $x (ref data))
+  ;; CHECK:      (func $past-basic-block (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (local.get $x)
@@ -308,9 +308,9 @@
     )
   )
 
-  ;; CHECK:      (func $multiple (type $ref|data|_ref|data|_=>_none) (param $x (ref data)) (param $y (ref data))
-  ;; CHECK-NEXT:  (local $a (ref data))
-  ;; CHECK-NEXT:  (local $b (ref data))
+  ;; CHECK:      (func $multiple (type $ref|struct|_ref|struct|_=>_none) (param $x (ref struct)) (param $y (ref struct))
+  ;; CHECK-NEXT:  (local $a (ref struct))
+  ;; CHECK-NEXT:  (local $b (ref struct))
   ;; CHECK-NEXT:  (local $4 (ref $A))
   ;; CHECK-NEXT:  (local $5 (ref $A))
   ;; CHECK-NEXT:  (local.set $a
@@ -388,7 +388,7 @@
     )
   )
 
-  ;; CHECK:      (func $get (type $none_=>_ref|data|) (result (ref data))
+  ;; CHECK:      (func $get (type $none_=>_ref|struct|) (result (ref struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get (result (ref struct))

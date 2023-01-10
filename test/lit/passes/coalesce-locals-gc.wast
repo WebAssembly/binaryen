@@ -8,23 +8,23 @@
 ;; testcases.
 
 (module
- ;; CHECK:      (type $A (struct (field dataref)))
+ ;; CHECK:      (type $A (struct (field structref)))
 
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
 
  (type $A (struct_subtype (field (ref null struct)) data))
 
- ;; CHECK:      (type $B (struct_subtype (field (ref data)) $A))
+ ;; CHECK:      (type $B (struct_subtype (field (ref struct)) $A))
  (type $B (struct_subtype (field (ref struct)) $A))
 
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (func $test-dead-get-non-nullable (type $ref|data|_=>_none) (param $0 (ref data))
+ ;; CHECK:      (func $test-dead-get-non-nullable (type $ref|struct|_=>_none) (param $0 (ref struct))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result (ref data))
+ ;; CHECK-NEXT:   (block (result (ref struct))
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -174,7 +174,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_dataref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_structref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)
@@ -195,7 +195,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize-2 (type $ref?|$A|_ref?|$B|_=>_dataref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result dataref)
+ ;; CHECK:      (func $remove-tee-refinalize-2 (type $ref?|$A|_ref?|$B|_=>_structref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)

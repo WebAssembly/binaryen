@@ -373,7 +373,7 @@ enum EncodedType {
   // integer reference type
   i31ref = -0x16, // 0x6a
   // gc and string reference types
-  dataref = -0x19,          // 0x67
+  structref = -0x19,        // 0x67
   arrayref = -0x1a,         // 0x66
   stringref = -0x1c,        // 0x64
   stringview_wtf8 = -0x1d,  // 0x63
@@ -399,14 +399,14 @@ enum EncodedType {
 };
 
 enum EncodedHeapType {
-  func = -0x10,   // 0x70
-  ext = -0x11,    // 0x6f
-  any = -0x12,    // 0x6e
-  eq = -0x13,     // 0x6d
-  i31 = -0x16,    // 0x6a
-  data = -0x19,   // 0x67
-  array = -0x1a,  // 0x66
-  string = -0x1c, // 0x64
+  func = -0x10,    // 0x70
+  ext = -0x11,     // 0x6f
+  any = -0x12,     // 0x6e
+  eq = -0x13,      // 0x6d
+  i31 = -0x16,     // 0x6a
+  struct_ = -0x19, // 0x67
+  array = -0x1a,   // 0x66
+  string = -0x1c,  // 0x64
   // stringview/iter constants are identical to type, and cannot be duplicated
   // here as that would be a compiler error, so add _heap suffixes. See
   // https://github.com/WebAssembly/stringref/issues/12
@@ -1131,16 +1131,12 @@ enum ASTNodes {
   BrOnCastFailNull = 0x4b,
   RefCastNop = 0x4c,
   RefIsFunc = 0x50,
-  RefIsData = 0x51,
   RefIsI31 = 0x52,
   RefAsFunc = 0x58,
-  RefAsData = 0x59,
   RefAsI31 = 0x5a,
   BrOnFunc = 0x60,
-  BrOnData = 0x61,
   BrOnI31 = 0x62,
   BrOnNonFunc = 0x63,
-  BrOnNonData = 0x64,
   BrOnNonI31 = 0x65,
   ExternInternalize = 0x70,
   ExternExternalize = 0x71,

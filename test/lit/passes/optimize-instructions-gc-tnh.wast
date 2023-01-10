@@ -18,7 +18,7 @@
   ;; NO_TNH-NEXT:   (ref.cast $struct
   ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (ref.as_data
+  ;; NO_TNH-NEXT:   (ref.cast struct
   ;; NO_TNH-NEXT:    (local.get $b)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -29,7 +29,7 @@
     (ref.eq
       ;; When traps can happen we can still improve this by removing and
       ;; combining redundant casts.
-      (ref.as_data
+      (ref.cast struct
         (ref.as_non_null
           (ref.cast null $struct
             (local.get $a)
@@ -37,8 +37,8 @@
         )
       )
       ;; Note that we can remove the non-null casts here in both modes, as the
-      ;; ref.as_data also checks for null.
-      (ref.as_data
+      ;; ref.cast struct also checks for null.
+      (ref.cast struct
         (ref.as_non_null
           (ref.as_non_null
             (local.get $b)
@@ -59,7 +59,7 @@
   ;; NO_TNH-NEXT:    (ref.cast null $struct
   ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.as_data
+  ;; NO_TNH-NEXT:    (ref.cast struct
   ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
@@ -73,7 +73,7 @@
           (local.get $any) ;; *Not* an eqref!
         )
         (ref.as_non_null
-          (ref.as_data
+          (ref.cast struct
             (ref.as_non_null
               (local.get $any) ;; *Not* an eqref!
             )
@@ -105,7 +105,7 @@
     (ref.is_null
       (ref.cast $struct
         (ref.as_non_null
-          (ref.as_data
+          (ref.cast struct
             (local.get $a)
           )
         )
@@ -417,7 +417,7 @@
     )
   )
 
-  ;; TNH:      (func $set-get-cast (type $dataref_=>_none) (param $ref dataref)
+  ;; TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (struct.get $struct 0
   ;; TNH-NEXT:    (ref.cast $struct
@@ -441,7 +441,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $set-get-cast (type $dataref_=>_none) (param $ref dataref)
+  ;; NO_TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.get $struct 0
   ;; NO_TNH-NEXT:    (ref.cast $struct
@@ -465,7 +465,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $set-get-cast (param $ref (ref null data))
+  (func $set-get-cast (param $ref (ref null struct))
     ;; A nullable cast flowing into a place that traps on null can become a
     ;; non-nullable cast.
     (drop

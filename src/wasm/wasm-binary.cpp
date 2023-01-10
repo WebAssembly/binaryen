@@ -1408,8 +1408,8 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::i31:
           o << S32LEB(BinaryConsts::EncodedType::i31ref);
           return;
-        case HeapType::data:
-          o << S32LEB(BinaryConsts::EncodedType::dataref);
+        case HeapType::struct_:
+          o << S32LEB(BinaryConsts::EncodedType::structref);
           return;
         case HeapType::array:
           o << S32LEB(BinaryConsts::EncodedType::arrayref);
@@ -1517,8 +1517,8 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     case HeapType::i31:
       ret = BinaryConsts::EncodedHeapType::i31;
       break;
-    case HeapType::data:
-      ret = BinaryConsts::EncodedHeapType::data;
+    case HeapType::struct_:
+      ret = BinaryConsts::EncodedHeapType::struct_;
       break;
     case HeapType::array:
       ret = BinaryConsts::EncodedHeapType::array;
@@ -1887,8 +1887,8 @@ bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::i31ref:
       out = Type(HeapType::i31, Nullable);
       return true;
-    case BinaryConsts::EncodedType::dataref:
-      out = Type(HeapType::data, Nullable);
+    case BinaryConsts::EncodedType::structref:
+      out = Type(HeapType::struct_, Nullable);
       return true;
     case BinaryConsts::EncodedType::arrayref:
       out = Type(HeapType::array, Nullable);
@@ -1936,8 +1936,8 @@ bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
     case BinaryConsts::EncodedHeapType::i31:
       out = HeapType::i31;
       return true;
-    case BinaryConsts::EncodedHeapType::data:
-      out = HeapType::data;
+    case BinaryConsts::EncodedHeapType::struct_:
+      out = HeapType::struct_;
       return true;
     case BinaryConsts::EncodedHeapType::array:
       out = HeapType::array;
@@ -2240,7 +2240,8 @@ void WasmBinaryBuilder::readTypes() {
               "The only allowed trivial supertype for functions is func");
           }
         } else {
-          if (basicSuper != HeapType::data) {
+          // "struct" used to be "data".
+          if (basicSuper != HeapType::struct_) {
             throwError("The only allowed trivial supertype for structs and "
                        "arrays is data");
           }
@@ -4024,14 +4025,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (opcode == BinaryConsts::RefIsFunc ||
-          opcode == BinaryConsts::RefIsData ||
           opcode == BinaryConsts::RefIsI31) {
         visitRefIs((curr = allocator.alloc<RefTest>())->cast<RefTest>(),
                    opcode);
         break;
       }
       if (opcode == BinaryConsts::RefAsFunc ||
-          opcode == BinaryConsts::RefAsData ||
           opcode == BinaryConsts::RefAsI31) {
         visitRefAsCast((curr = allocator.alloc<RefCast>())->cast<RefCast>(),
                        opcode);
@@ -6608,9 +6607,6 @@ void WasmBinaryBuilder::visitRefIs(RefTest* curr, uint8_t code) {
     case BinaryConsts::RefIsFunc:
       curr->castType = Type(HeapType::func, NonNullable);
       break;
-    case BinaryConsts::RefIsData:
-      curr->castType = Type(HeapType::data, NonNullable);
-      break;
     case BinaryConsts::RefIsI31:
       curr->castType = Type(HeapType::i31, NonNullable);
       break;
@@ -6920,9 +6916,6 @@ void WasmBinaryBuilder::visitRefAsCast(RefCast* curr, uint32_t code) {
     case BinaryConsts::RefAsFunc:
       curr->type = Type(HeapType::func, NonNullable);
       break;
-    case BinaryConsts::RefAsData:
-      curr->type = Type(HeapType::data, NonNullable);
-      break;
     case BinaryConsts::RefAsI31:
       curr->type = Type(HeapType::i31, NonNullable);
       break;
@@ -6984,14 +6977,6 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     case BinaryConsts::BrOnNonFunc:
       op = BrOnCastFail;
       castType = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::BrOnData:
-      op = BrOnCast;
-      castType = Type(HeapType::data, NonNullable);
-      break;
-    case BinaryConsts::BrOnNonData:
-      op = BrOnCastFail;
-      castType = Type(HeapType::data, NonNullable);
       break;
     case BinaryConsts::BrOnI31:
       op = BrOnCast;

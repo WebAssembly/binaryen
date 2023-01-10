@@ -230,7 +230,7 @@
  ;; CHECK:      (func $refine-return-many-lub (type $none_=>_eqref) (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
- ;; CHECK-NEXT:  (local $struct dataref)
+ ;; CHECK-NEXT:  (local $struct structref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-lub)
  ;; CHECK-NEXT:  )
@@ -251,7 +251,7 @@
  ;; NOMNL:      (func $refine-return-many-lub (type $none_=>_eqref) (result eqref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $i31 i31ref)
- ;; NOMNL-NEXT:  (local $struct dataref)
+ ;; NOMNL-NEXT:  (local $struct structref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-lub)
  ;; NOMNL-NEXT:  )
@@ -291,7 +291,7 @@
  ;; CHECK:      (func $refine-return-many-lub-2 (type $none_=>_eqref) (result eqref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
- ;; CHECK-NEXT:  (local $struct dataref)
+ ;; CHECK-NEXT:  (local $struct structref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $refine-return-many-lub-2)
  ;; CHECK-NEXT:  )
@@ -312,7 +312,7 @@
  ;; NOMNL:      (func $refine-return-many-lub-2 (type $none_=>_eqref) (result eqref)
  ;; NOMNL-NEXT:  (local $temp anyref)
  ;; NOMNL-NEXT:  (local $i31 i31ref)
- ;; NOMNL-NEXT:  (local $struct dataref)
+ ;; NOMNL-NEXT:  (local $struct structref)
  ;; NOMNL-NEXT:  (local.set $temp
  ;; NOMNL-NEXT:   (call $refine-return-many-lub-2)
  ;; NOMNL-NEXT:  )

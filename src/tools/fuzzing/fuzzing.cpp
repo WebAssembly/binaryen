@@ -2041,7 +2041,18 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      HeapType subtype = oneIn(2) ? HeapType::i31 : HeapType::data;
+      HeapType subtype;
+      switch (upTo(3)) {
+        case 0:
+          subtype = HeapType::i31;
+          break;
+        case 1:
+          subtype = HeapType::struct_;
+          break;
+        case 2:
+          subtype = HeapType::array;
+          break;
+      }
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -2055,10 +2066,16 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       auto nullability = getSubType(type.getNullability());
       // i31.new is not allowed in initializer expressions.
       HeapType subtype;
-      if (funcContext) {
-        subtype = pick(HeapType::i31, HeapType::data);
-      } else {
-        subtype = HeapType::data;
+      switch (upTo(3)) {
+        case 0:
+          subtype = HeapType::i31;
+          break;
+        case 1:
+          subtype = HeapType::struct_;
+          break;
+        case 2:
+          subtype = HeapType::array;
+          break;
       }
       return makeConst(Type(subtype, nullability));
     }
@@ -2069,17 +2086,15 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       }
       return builder.makeI31New(makeConst(Type::i32));
     }
-    case HeapType::data:
+    case HeapType::struct_: {
       assert(wasm.features.hasGC());
       // TODO: Construct nontrivial types. For now just create a hard coded
-      // struct or array.
-      if (oneIn(2)) {
-        // Use a local static to avoid creating a fresh nominal types in
-        // --nominal mode.
-        static HeapType trivialStruct = HeapType(Struct());
-        return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
-      }
-      [[fallthrough]];
+      // struct.
+      // Use a local static to avoid creating a fresh nominal types in
+      // --nominal mode.
+      static HeapType trivialStruct = HeapType(Struct());
+      return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
+    }
     case HeapType::array: {
       // Use a local static to avoid creating a fresh nominal types in
       // --nominal mode.
@@ -3051,8 +3066,8 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::eq, NonNullable),
                      Type(HeapType::i31, Nullable),
                      // Type(HeapType::i31, NonNullable),
-                     Type(HeapType::data, Nullable),
-                     Type(HeapType::data, NonNullable),
+                     Type(HeapType::struct_, Nullable),
+                     Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
                      Type(HeapType::array, NonNullable)));
 }
@@ -3068,8 +3083,10 @@ Type TranslateToFuzzReader::getReferenceType() {
                      Type(HeapType::eq, NonNullable),
                      Type(HeapType::i31, Nullable),
                      Type(HeapType::i31, NonNullable),
-                     Type(HeapType::data, Nullable),
-                     Type(HeapType::data, NonNullable)));
+                     Type(HeapType::struct_, Nullable),
+                     Type(HeapType::struct_, NonNullable),
+                     Type(HeapType::array, Nullable),
+                     Type(HeapType::array, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
@@ -3079,8 +3096,10 @@ Type TranslateToFuzzReader::getEqReferenceType() {
                                Type(HeapType::eq, NonNullable),
                                Type(HeapType::i31, Nullable),
                                Type(HeapType::i31, NonNullable),
-                               Type(HeapType::data, Nullable),
-                               Type(HeapType::data, NonNullable)));
+                               Type(HeapType::struct_, Nullable),
+                               Type(HeapType::struct_, NonNullable),
+                               Type(HeapType::array, Nullable),
+                               Type(HeapType::array, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getMVPType() {
@@ -3172,7 +3191,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(HeapType::any,
                     HeapType::eq,
                     HeapType::i31,
-                    HeapType::data,
+                    HeapType::struct_,
                     HeapType::array,
                     HeapType::none);
       case HeapType::eq:
@@ -3181,14 +3200,14 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         assert(wasm.features.hasGC());
         return pick(HeapType::eq,
                     HeapType::i31,
-                    HeapType::data,
+                    HeapType::struct_,
                     HeapType::array,
                     HeapType::none);
       case HeapType::i31:
         return pick(HeapType::i31, HeapType::none);
-      case HeapType::data:
+      case HeapType::struct_:
         // TODO: nontrivial types as well.
-        return pick(HeapType::data, HeapType::array, HeapType::none);
+        return pick(HeapType::struct_, HeapType::none);
       case HeapType::array:
         return pick(HeapType::array, HeapType::none);
       case HeapType::string:

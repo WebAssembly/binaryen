@@ -486,7 +486,7 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
     case HeapTypeInfo::SignatureKind:
       return HeapType::func;
     case HeapTypeInfo::StructKind:
-      return HeapType::data;
+      return HeapType::struct_;
     case HeapTypeInfo::ArrayKind:
       return HeapType::array;
   }
@@ -518,18 +518,19 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::any:
       return {HeapType::any};
     case HeapType::eq:
-      if (b == HeapType::i31 || b == HeapType::data || b == HeapType::array) {
+      if (b == HeapType::i31 || b == HeapType::struct_ ||
+          b == HeapType::array) {
         return {HeapType::eq};
       }
       return {HeapType::any};
     case HeapType::i31:
-      if (b == HeapType::data || b == HeapType::array) {
+      if (b == HeapType::struct_ || b == HeapType::array) {
         return {HeapType::eq};
       }
       return {HeapType::any};
-    case HeapType::data:
+    case HeapType::struct_:
       if (b == HeapType::array) {
-        return {HeapType::data};
+        return {HeapType::eq};
       }
       return {HeapType::any};
     case HeapType::array:
@@ -1014,7 +1015,7 @@ FeatureSet Type::getFeatures() const {
           case HeapType::any:
           case HeapType::eq:
           case HeapType::i31:
-          case HeapType::data:
+          case HeapType::struct_:
           case HeapType::array:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
           case HeapType::string:
@@ -1266,7 +1267,7 @@ bool HeapType::isFunction() const {
 
 bool HeapType::isData() const {
   if (isBasic()) {
-    return id == data;
+    return id == struct_ || id == array;
   } else {
     return getHeapTypeInfo(*this)->isData();
   }
@@ -1304,7 +1305,7 @@ bool HeapType::isBottom() const {
       case any:
       case eq:
       case i31:
-      case data:
+      case struct_:
       case array:
       case string:
       case stringview_wtf8:
@@ -1359,11 +1360,11 @@ size_t HeapType::getDepth() const {
     if (isFunction()) {
       depth++;
     } else if (isStruct()) {
-      // specific struct types <: data <: eq <: any
+      // specific struct types <: struct <: eq <: any
       depth += 3;
     } else if (isArray()) {
-      // specific array types <: array <: data <: eq <: any
-      depth += 4;
+      // specific array types <: array <: eq <: any
+      depth += 3;
     }
   } else {
     // Some basic types have supers.
@@ -1376,15 +1377,13 @@ size_t HeapType::getDepth() const {
         depth++;
         break;
       case HeapType::i31:
-      case HeapType::data:
+      case HeapType::struct_:
+      case HeapType::array:
       case HeapType::string:
       case HeapType::stringview_wtf8:
       case HeapType::stringview_wtf16:
       case HeapType::stringview_iter:
         depth += 2;
-        break;
-      case HeapType::array:
-        depth += 3;
         break;
       case HeapType::none:
       case HeapType::nofunc:
@@ -1406,7 +1405,7 @@ HeapType::BasicHeapType HeapType::getBottom() const {
       case any:
       case eq:
       case i31:
-      case data:
+      case struct_:
       case array:
       case string:
       case stringview_wtf8:
@@ -1673,12 +1672,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
       case HeapType::any:
         return a.getBottom() == HeapType::none;
       case HeapType::eq:
-        return a == HeapType::i31 || a == HeapType::data ||
-               a == HeapType::array || a == HeapType::none || a.isData();
+        return a == HeapType::i31 || a == HeapType::none || a.isData();
       case HeapType::i31:
         return a == HeapType::none;
-      case HeapType::data:
-        return a == HeapType::array || a == HeapType::none || a.isData();
+      case HeapType::struct_:
+        return a == HeapType::none || a.isStruct();
       case HeapType::array:
         return a == HeapType::none || a.isArray();
       case HeapType::string:
@@ -1805,8 +1803,8 @@ std::ostream& TypePrinter::print(Type type) {
             return os << "eqref";
           case HeapType::i31:
             return os << "i31ref";
-          case HeapType::data:
-            return os << "dataref";
+          case HeapType::struct_:
+            return os << "structref";
           case HeapType::array:
             return os << "arrayref";
           case HeapType::string:
@@ -1851,8 +1849,8 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "eq";
       case HeapType::i31:
         return os << "i31";
-      case HeapType::data:
-        return os << "data";
+      case HeapType::struct_:
+        return os << "struct";
       case HeapType::array:
         return os << "array";
       case HeapType::string:

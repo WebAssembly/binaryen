@@ -359,7 +359,7 @@
 
   ;; CHECK:      (type $sig-2 (func (param eqref (ref $struct))))
 
-  ;; CHECK:      (type $sig-1 (func (param dataref anyref)))
+  ;; CHECK:      (type $sig-1 (func (param structref anyref)))
   (type $sig-1 (func_subtype (param anyref) (param anyref) func))
   (type $sig-2 (func_subtype (param anyref) (param anyref) func))
 
@@ -367,7 +367,7 @@
 
   ;; CHECK:      (elem declare func $func-2)
 
-  ;; CHECK:      (func $func-1 (type $sig-1) (param $x dataref) (param $y anyref)
+  ;; CHECK:      (func $func-1 (type $sig-1) (param $x structref) (param $y anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1 (type $sig-1) (param $x anyref) (param $y anyref)
@@ -381,7 +381,7 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (local $any anyref)
-  ;; CHECK-NEXT:  (local $struct dataref)
+  ;; CHECK-NEXT:  (local $struct structref)
   ;; CHECK-NEXT:  (local $i31 i31ref)
   ;; CHECK-NEXT:  (call $func-1
   ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -737,14 +737,14 @@
 ;; Do not modify the types used on imported functions (until the spec and VM
 ;; support becomes stable).
 (module
-  ;; CHECK:      (type $dataref_=>_none (func (param dataref)))
+  ;; CHECK:      (type $structref_=>_none (func (param structref)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (param dataref)))
+  ;; CHECK:      (import "a" "b" (func $import (param structref)))
   (import "a" "b" (func $import (param (ref null struct))))
 
   ;; CHECK:      (func $test (type $none_=>_none)

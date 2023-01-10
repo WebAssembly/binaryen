@@ -27,11 +27,6 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_data
-  ;; NO_TNH-NEXT:    (local.get $y)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.as_i31
   ;; NO_TNH-NEXT:    (local.get $y)
   ;; NO_TNH-NEXT:   )
@@ -55,11 +50,6 @@
     )
 
     ;; Other ref.as* as well.
-    (drop
-      (ref.as_data
-        (local.get $y)
-      )
-    )
     (drop
       (ref.as_i31
         (local.get $y)
