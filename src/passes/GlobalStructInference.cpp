@@ -157,7 +157,7 @@ struct GlobalStructInference : public Pass {
     // unoptimizable type makes all its supertypes unoptimizable as well.
     // TODO: this could be specific per field (and not all supers have all
     //       fields)
-    // Iterate on a copy to avoid iterator invalidation as we delete.
+    // Iterate on a copy to avoid invalidation as we insert.
     auto unoptimizableCopy = unoptimizable;
     for (auto type : unoptimizableCopy) {
       while (1) {
