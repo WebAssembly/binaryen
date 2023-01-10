@@ -43,7 +43,7 @@ enum EvaluationResult {
 // what we know about the result.
 inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   if (!refType.isRef() || !castType.isRef()) {
-    // Unreachable etc. are meaningless situations that we can inform the caller
+    // Unreachable etc. are meaningless situations in which we can inform the caller
     // about nothing useful.
     return Unknown;
   }
