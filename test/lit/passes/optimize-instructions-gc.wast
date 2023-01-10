@@ -18,12 +18,14 @@
   ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
+  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+
   ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+
   ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
-  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
@@ -232,13 +234,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_func
-  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_i31
-  ;; CHECK-NEXT:    (local.get $i31)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -249,13 +255,17 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.is_func
-  ;; NOMNL-NEXT:    (local.get $func)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $func)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.is_i31
-  ;; NOMNL-NEXT:    (local.get $i31)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $i31)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -266,9 +276,12 @@
     (drop
       (ref.is_null (local.get $struct))
     )
+    ;; This can be optimized to !is_null rather than ref.test func, since we
+    ;; know the heap type is what we want, so the only possible issue is a null.
     (drop
       (ref.is_func (local.get $func))
     )
+    ;; This can be optimized similarly.
     (drop
       (ref.is_i31 (local.get $i31))
     )
@@ -1636,7 +1649,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test null $array
+  ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1661,7 +1674,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test null $array
+  ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (local.get $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -1684,7 +1697,9 @@
       )
     )
     (drop
-      ;; But this one might succeed due to a null, so don't optimize it.
+      ;; But this one might succeed due to a null, so don't optimize it away.
+      ;; We can however change it from ref.test to ref.is_null, as a null is the
+      ;; only possible way this will succeed.
       (ref.test null $array
         (local.get $struct)
       )
@@ -1706,8 +1721,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
-  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1746,8 +1763,10 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $A
-  ;; NOMNL-NEXT:    (local.get $B)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $B)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -1787,7 +1806,8 @@
       )
     )
     (drop
-      ;; The other direction works too.
+      ;; The other direction can work too. It will only fail if the input is a
+      ;; null, so we can switch to checking that.
       (ref.test $A
         (local.get $B)
       )
@@ -2579,8 +2599,10 @@
 
   ;; CHECK:      (func $ref-test-static-same-type (type $ref?|$A|_ref|$A|_=>_none) (param $nullable (ref null $A)) (param $non-nullable (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
-  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $nullable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2594,8 +2616,10 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-test-static-same-type (type $ref?|$A|_ref|$A|_=>_none) (param $nullable (ref null $A)) (param $non-nullable (ref $A))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $A
-  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $nullable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -2609,7 +2633,7 @@
   ;; NOMNL-NEXT: )
   (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
     ;; A nullable value cannot be optimized here even though it is the same
-    ;; type.
+    ;; type. But we can at least use !ref.is_null rather than ref.test.
     (drop
       (ref.test $A
         (local.get $nullable)
@@ -2625,8 +2649,10 @@
 
   ;; CHECK:      (func $ref-test-static-subtype (type $ref?|$B|_ref|$B|_=>_none) (param $nullable (ref null $B)) (param $non-nullable (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
-  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $nullable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2640,8 +2666,10 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-test-static-subtype (type $ref?|$B|_ref|$B|_=>_none) (param $nullable (ref null $B)) (param $non-nullable (ref $B))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $A
-  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $nullable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop

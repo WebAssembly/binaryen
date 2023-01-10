@@ -2075,17 +2075,30 @@ struct OptimizeInstructions
       return;
     }
 
-    // See above in RefCast.
-    auto result =
-      GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType);
-    if (result == GCTypeUtils::Success) {
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
-    } else if (result == GCTypeUtils::Failure) {
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                          builder.makeConst(int32_t(0))));
+    // Parallel to the code in visitRefCast
+    switch (GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType)) {
+      case GCTypeUtils::Unknown:
+        break;
+      case GCTypeUtils::Success:
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
+        break;
+      case GCTypeUtils::Failure:
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeConst(int32_t(0))));
+        break;
+      case GCTypeUtils::SuccessOnlyIfNull:
+        replaceCurrent(builder.makeRefIsNull(curr->ref));
+        break;
+      case GCTypeUtils::SuccessOnlyIfNonNull:
+        // This adds an EqZ, but code size does not regress since ref.test also
+        // encodes a type, and ref.is_null does not. The EqZ may also add some
+        // work, but a cast is likely more expensive than a null check + a fast
+        // int operation.
+        replaceCurrent(
+          builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
+        break;
     }
-    // TODO: we can emit a ref.is_null for SuccessOnlyIfNull etc.
   }
 
   void visitRefIsNull(RefIsNull* curr) {
