@@ -14,18 +14,18 @@
     (field $i64 (mut i64))
   ))
 
-  ;; CHECK:      (type $array (array (mut i8)))
-
   ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $array (array (mut i8)))
-
   ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
+  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+
+  ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+
+  ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
-  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
@@ -234,13 +234,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_func
-  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_i31
-  ;; CHECK-NEXT:    (local.get $i31)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -251,13 +255,17 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.is_func
-  ;; NOMNL-NEXT:    (local.get $func)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $func)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.is_i31
-  ;; NOMNL-NEXT:    (local.get $i31)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $i31)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -1638,7 +1646,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test null $array
+  ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1663,7 +1671,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test null $array
+  ;; NOMNL-NEXT:   (ref.is_null
   ;; NOMNL-NEXT:    (local.get $struct)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
@@ -1708,8 +1716,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
-  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1748,8 +1758,10 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $A
-  ;; NOMNL-NEXT:    (local.get $B)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $B)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -2581,8 +2593,10 @@
 
   ;; CHECK:      (func $ref-test-static-same-type (type $ref?|$A|_ref|$A|_=>_none) (param $nullable (ref null $A)) (param $non-nullable (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
-  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $nullable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2596,8 +2610,10 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-test-static-same-type (type $ref?|$A|_ref|$A|_=>_none) (param $nullable (ref null $A)) (param $non-nullable (ref $A))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $A
-  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $nullable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -2627,8 +2643,10 @@
 
   ;; CHECK:      (func $ref-test-static-subtype (type $ref?|$B|_ref|$B|_=>_none) (param $nullable (ref null $B)) (param $non-nullable (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
-  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $nullable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2642,8 +2660,10 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-test-static-subtype (type $ref?|$B|_ref|$B|_=>_none) (param $nullable (ref null $B)) (param $non-nullable (ref $B))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $A
-  ;; NOMNL-NEXT:    (local.get $nullable)
+  ;; NOMNL-NEXT:   (i32.eqz
+  ;; NOMNL-NEXT:    (ref.is_null
+  ;; NOMNL-NEXT:     (local.get $nullable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
