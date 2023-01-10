@@ -2219,6 +2219,22 @@ struct OptimizeInstructions
 
     if (curr->op == RefAsNonNull && !curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
+      return;
+    }
+
+    // As we do in visitRefCast, ref.cast can be combined with ref.as_non_null.
+    // This code handles the case where the ref.as is on the outside:
+    //
+    //   (ref.as_non_null (ref.cast null ..))
+    // =>
+    //   (ref.cast ..)
+    //
+    if (auto* cast = curr->value->dynCast<RefCast>()) {
+      // The cast cannot be non-nullable, or we would have handled this right
+      // above by just removing the ref.as, since it would not be needed.
+      assert(!cast->type.isNonNullable());
+      cast->type = Type(cast->type.getHeapType(), NonNullable);
+      replaceCurrent(cast);
     }
   }
 
