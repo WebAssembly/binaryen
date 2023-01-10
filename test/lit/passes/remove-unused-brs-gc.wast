@@ -62,10 +62,10 @@
   )
  )
 
- ;; CHECK:      (func $br_on-if (type $ref|data|_=>_none) (param $0 (ref data))
+ ;; CHECK:      (func $br_on-if (type $ref|struct|_=>_none) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (select (result (ref data))
+ ;; CHECK-NEXT:    (select (result (ref struct))
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (i32.const 0)

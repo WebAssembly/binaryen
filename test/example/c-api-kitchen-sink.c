@@ -263,12 +263,12 @@ void test_types() {
   BinaryenTypeExpand(i31ref, &valueType);
   assert(valueType == i31ref);
 
-  BinaryenType dataref = BinaryenTypeDataref();
-  printf("BinaryenTypeDataref: (ptr)\n");
-  assert(dataref == BinaryenTypeDataref());
-  assert(BinaryenTypeArity(dataref) == 1);
-  BinaryenTypeExpand(dataref, &valueType);
-  assert(valueType == dataref);
+  BinaryenType structref = BinaryenTypeStructref();
+  printf("BinaryenTypeStructref: (ptr)\n");
+  assert(structref == BinaryenTypeStructref());
+  assert(BinaryenTypeArity(structref) == 1);
+  BinaryenTypeExpand(structref, &valueType);
+  assert(valueType == structref);
 
   BinaryenType arrayref = BinaryenTypeArrayref();
   printf("BinaryenTypeArrayref: (ptr)\n");
@@ -348,7 +348,7 @@ void test_types() {
   printf("BinaryenHeapTypeAny: %zd\n", BinaryenHeapTypeAny());
   printf("BinaryenHeapTypeEq: %zd\n", BinaryenHeapTypeEq());
   printf("BinaryenHeapTypeI31: %zd\n", BinaryenHeapTypeI31());
-  printf("BinaryenHeapTypeData: %zd\n", BinaryenHeapTypeData());
+  printf("BinaryenHeapTypeStruct: %zd\n", BinaryenHeapTypeStruct());
   printf("BinaryenHeapTypeArray: %zd\n", BinaryenHeapTypeArray());
   printf("BinaryenHeapTypeString: %zd\n", BinaryenHeapTypeString());
   printf("BinaryenHeapTypeStringviewWTF8: %zd\n",
@@ -2201,7 +2201,7 @@ void test_typebuilder() {
   assert(BinaryenHeapTypeIsStruct(structHeapType));
   assert(!BinaryenHeapTypeIsArray(structHeapType));
   assert(!BinaryenHeapTypeIsBottom(structHeapType));
-  assert(BinaryenHeapTypeIsSubType(structHeapType, BinaryenHeapTypeData()));
+  assert(BinaryenHeapTypeIsSubType(structHeapType, BinaryenHeapTypeStruct()));
   BinaryenType structType = BinaryenTypeFromHeapType(structHeapType, true);
   assert(BinaryenStructTypeGetNumFields(structHeapType) == 1);
   assert(BinaryenStructTypeGetFieldType(structHeapType, 0) == structType);
@@ -2245,7 +2245,8 @@ void test_typebuilder() {
   assert(BinaryenHeapTypeIsStruct(subStructHeapType));
   assert(!BinaryenHeapTypeIsArray(subStructHeapType));
   assert(!BinaryenHeapTypeIsBottom(subStructHeapType));
-  assert(BinaryenHeapTypeIsSubType(subStructHeapType, BinaryenHeapTypeData()));
+  assert(
+    BinaryenHeapTypeIsSubType(subStructHeapType, BinaryenHeapTypeStruct()));
   assert(BinaryenHeapTypeIsSubType(subStructHeapType, structHeapType));
   BinaryenType subStructType =
     BinaryenTypeFromHeapType(subStructHeapType, true);

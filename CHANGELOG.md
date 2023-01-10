@@ -30,6 +30,8 @@ Current Trunk
   has been removed.
 - `ref.is_func`, `ref.is_data`, and `ref.is_i31` have been removed from the C
   and JS APIs and `RefIs` has been replaced with `RefIsNull`.
+- Types `Data` and `Dataref` have been replaced with types `Struct` and
+  `Structref` in the C and JS APIs.
 
 v111
 ----

@@ -124,9 +124,6 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'd':
-                    if (op == "br_on_data"sv) { return makeBrOnCast(s, Type(HeapType::data, NonNullable)); }
-                    goto parse_error;
                   case 'f':
                     if (op == "br_on_func"sv) { return makeBrOnCast(s, Type(HeapType::func, NonNullable)); }
                     goto parse_error;
@@ -137,9 +134,6 @@ switch (buf[0]) {
                     switch (buf[7]) {
                       case 'o': {
                         switch (buf[10]) {
-                          case 'd':
-                            if (op == "br_on_non_data"sv) { return makeBrOnCast(s, Type(HeapType::data, NonNullable), true); }
-                            goto parse_error;
                           case 'f':
                             if (op == "br_on_non_func"sv) { return makeBrOnCast(s, Type(HeapType::func, NonNullable), true); }
                             goto parse_error;
@@ -2999,9 +2993,6 @@ switch (buf[0]) {
         switch (buf[4]) {
           case 'a': {
             switch (buf[7]) {
-              case 'd':
-                if (op == "ref.as_data"sv) { return makeRefCast(s, Type(HeapType::data, NonNullable)); }
-                goto parse_error;
               case 'f':
                 if (op == "ref.as_func"sv) { return makeRefCast(s, Type(HeapType::func, NonNullable)); }
                 goto parse_error;
@@ -3049,9 +3040,6 @@ switch (buf[0]) {
             goto parse_error;
           case 'i': {
             switch (buf[7]) {
-              case 'd':
-                if (op == "ref.is_data"sv) { return makeRefTest(s, Type(HeapType::data, NonNullable)); }
-                goto parse_error;
               case 'f':
                 if (op == "ref.is_func"sv) { return makeRefTest(s, Type(HeapType::func, NonNullable)); }
                 goto parse_error;
@@ -3766,13 +3754,6 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'd':
-                    if (op == "br_on_data"sv) {
-                      auto ret = makeBrOnCast(ctx, pos, Type(HeapType::data, NonNullable));
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
                   case 'f':
                     if (op == "br_on_func"sv) {
                       auto ret = makeBrOnCast(ctx, pos, Type(HeapType::func, NonNullable));
@@ -3791,13 +3772,6 @@ switch (buf[0]) {
                     switch (buf[7]) {
                       case 'o': {
                         switch (buf[10]) {
-                          case 'd':
-                            if (op == "br_on_non_data"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, Type(HeapType::data, NonNullable), true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
                           case 'f':
                             if (op == "br_on_non_func"sv) {
                               auto ret = makeBrOnCast(ctx, pos, Type(HeapType::func, NonNullable), true);
@@ -8597,13 +8571,6 @@ switch (buf[0]) {
         switch (buf[4]) {
           case 'a': {
             switch (buf[7]) {
-              case 'd':
-                if (op == "ref.as_data"sv) {
-                  auto ret = makeRefCast(ctx, pos, Type(HeapType::data, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
               case 'f':
                 if (op == "ref.as_func"sv) {
                   auto ret = makeRefCast(ctx, pos, Type(HeapType::func, NonNullable));
@@ -8687,13 +8654,6 @@ switch (buf[0]) {
             goto parse_error;
           case 'i': {
             switch (buf[7]) {
-              case 'd':
-                if (op == "ref.is_data"sv) {
-                  auto ret = makeRefTest(ctx, pos, Type(HeapType::data, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
               case 'f':
                 if (op == "ref.is_func"sv) {
                   auto ret = makeRefTest(ctx, pos, Type(HeapType::func, NonNullable));

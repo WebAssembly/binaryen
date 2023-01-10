@@ -125,7 +125,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
           WASM_UNREACHABLE("TODO: extern literals");
         case HeapType::eq:
         case HeapType::func:
-        case HeapType::data:
+        case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
@@ -574,7 +574,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           WASM_UNREACHABLE("TODO: extern literals");
         case HeapType::eq:
         case HeapType::func:
-        case HeapType::data:
+        case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:

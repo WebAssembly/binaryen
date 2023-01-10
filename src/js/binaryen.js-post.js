@@ -38,7 +38,7 @@ function initializeConstants() {
     ['anyref', 'Anyref'],
     ['eqref', 'Eqref'],
     ['i31ref', 'I31ref'],
-    ['dataref', 'Dataref'],
+    ['structref', 'Structref'],
     ['stringref', 'Stringref'],
     ['stringview_wtf8', 'StringviewWTF8'],
     ['stringview_wtf16', 'StringviewWTF16'],
@@ -2302,9 +2302,9 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['dataref'] = {
+  self['structref'] = {
     'pop'() {
-      return Module['_BinaryenPop'](module, Module['dataref']);
+      return Module['_BinaryenPop'](module, Module['structref']);
     }
   };
 

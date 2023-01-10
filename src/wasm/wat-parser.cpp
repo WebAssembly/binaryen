@@ -491,7 +491,7 @@ struct NullTypeParserCtx {
   HeapTypeT makeExtern() { return Ok{}; }
   HeapTypeT makeEq() { return Ok{}; }
   HeapTypeT makeI31() { return Ok{}; }
-  HeapTypeT makeData() { return Ok{}; }
+  HeapTypeT makeStructType() { return Ok{}; }
   HeapTypeT makeArrayType() { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
@@ -575,7 +575,7 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeExtern() { return HeapType::ext; }
   HeapTypeT makeEq() { return HeapType::eq; }
   HeapTypeT makeI31() { return HeapType::i31; }
-  HeapTypeT makeData() { return HeapType::data; }
+  HeapTypeT makeStructType() { return HeapType::struct_; }
   HeapTypeT makeArrayType() { return HeapType::array; }
 
   TypeT makeI32() { return Type::i32; }
@@ -2449,8 +2449,8 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (ctx.in.takeKeyword("i31"sv)) {
     return ctx.makeI31();
   }
-  if (ctx.in.takeKeyword("data"sv)) {
-    return ctx.makeData();
+  if (ctx.in.takeKeyword("struct"sv)) {
+    return ctx.makeStructType();
   }
   if (ctx.in.takeKeyword("array"sv)) {
     return ctx.makeArrayType();
@@ -2465,7 +2465,7 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | 'anyref'    => anyref
 //           | 'eqref'     => eqref
 //           | 'i31ref'    => i31ref
-//           | 'dataref'   => dataref
+//           | 'structref' => structref
 //           | 'arrayref'  => arrayref
 //           | '(' ref null? t:heaptype ')' => ref null? t
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
@@ -2484,8 +2484,8 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("i31ref"sv)) {
     return ctx.makeRefType(ctx.makeI31(), Nullable);
   }
-  if (ctx.in.takeKeyword("dataref"sv)) {
-    return ctx.makeRefType(ctx.makeData(), Nullable);
+  if (ctx.in.takeKeyword("structref"sv)) {
+    return ctx.makeRefType(ctx.makeStructType(), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
     return ctx.in.err("arrayref not yet supported");

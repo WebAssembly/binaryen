@@ -658,7 +658,7 @@ function test_core() {
     module.anyref.pop(),
     module.eqref.pop(),
     module.i31ref.pop(),
-    module.dataref.pop(),
+    module.structref.pop(),
     module.stringref.pop(),
     module.stringview_wtf8.pop(),
     module.stringview_wtf16.pop(),

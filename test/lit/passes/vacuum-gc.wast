@@ -12,11 +12,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_data
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_i31
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -27,11 +22,6 @@
     ;; we cannot remove anything here.
     (drop
       (ref.as_non_null
-        (local.get $x)
-      )
-    )
-    (drop
-      (ref.as_data
         (local.get $x)
       )
     )
@@ -84,12 +74,12 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast.null.block (type $ref|${}|_=>_dataref) (param $ref (ref ${})) (result dataref)
+  ;; CHECK:      (func $ref.cast.null.block (type $ref|${}|_=>_structref) (param $ref (ref ${})) (result structref)
   ;; CHECK-NEXT:  (ref.cast ${}
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.cast.null.block (param $ref (ref ${})) (result (ref null data))
+  (func $ref.cast.null.block (param $ref (ref ${})) (result (ref null struct))
     ;; We can vacuum away the block, which will make this ref.cast null operate
     ;; on a non-nullable input. That is, we are refining the input to the cast.
     ;; The cast must be updated properly following that, to be a non-nullable

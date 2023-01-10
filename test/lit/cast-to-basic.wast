@@ -6,7 +6,7 @@
 
 (module
   ;; CHECK:      (func $test (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (ref.is_data
+  ;; CHECK-NEXT:  (ref.test struct
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -18,7 +18,7 @@
 
   ;; CHECK:      (func $cast (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null data
+  ;; CHECK-NEXT:   (ref.cast null struct
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -33,9 +33,9 @@
 
   ;; CHECK:      (func $br (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result dataref)
+  ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_data $label$1
+  ;; CHECK-NEXT:     (br_on_cast $label$1 struct
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -58,9 +58,9 @@
 
   ;; CHECK:      (func $br-null (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result dataref)
+  ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 null data
+  ;; CHECK-NEXT:     (br_on_cast $label$1 null struct
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -83,9 +83,9 @@
 
   ;; CHECK:      (func $br-fail-null (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result dataref)
+  ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 null data
+  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 null struct
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

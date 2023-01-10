@@ -2017,9 +2017,6 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
       case HeapType::func:
         o << U32LEB(BinaryConsts::RefIsFunc);
         return;
-      case HeapType::data:
-        o << U32LEB(BinaryConsts::RefIsData);
-        return;
       case HeapType::i31:
         o << U32LEB(BinaryConsts::RefIsI31);
         return;
@@ -2047,9 +2044,6 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
       switch (type.getBasic()) {
         case HeapType::func:
           o << U32LEB(BinaryConsts::RefAsFunc);
-          return;
-        case HeapType::data:
-          o << U32LEB(BinaryConsts::RefAsData);
           return;
         case HeapType::i31:
           o << U32LEB(BinaryConsts::RefAsI31);
@@ -2087,10 +2081,6 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
             o << U32LEB(BinaryConsts::BrOnFunc);
             o << U32LEB(getBreakIndex(curr->name));
             return;
-          case HeapType::data:
-            o << U32LEB(BinaryConsts::BrOnData);
-            o << U32LEB(getBreakIndex(curr->name));
-            return;
           case HeapType::i31:
             o << U32LEB(BinaryConsts::BrOnI31);
             o << U32LEB(getBreakIndex(curr->name));
@@ -2115,10 +2105,6 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
         switch (type.getBasic()) {
           case HeapType::func:
             o << U32LEB(BinaryConsts::BrOnNonFunc);
-            o << U32LEB(getBreakIndex(curr->name));
-            return;
-          case HeapType::data:
-            o << U32LEB(BinaryConsts::BrOnNonData);
             o << U32LEB(getBreakIndex(curr->name));
             return;
           case HeapType::i31:

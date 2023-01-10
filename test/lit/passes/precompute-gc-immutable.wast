@@ -739,7 +739,7 @@
   ;; data that is filled with vtables of different types. On usage, we do a
   ;; cast of the vtable type.
 
-  ;; CHECK:      (type $itable (array dataref))
+  ;; CHECK:      (type $itable (array structref))
   (type $itable (array (ref null struct)))
 
   ;; CHECK:      (type $object (struct (field (ref $itable))))

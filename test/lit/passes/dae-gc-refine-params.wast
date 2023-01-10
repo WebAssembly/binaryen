@@ -468,11 +468,11 @@
  )
 
  ;; CHECK:      (func $unused-and-refinable (type $none_=>_none)
- ;; CHECK-NEXT:  (local $0 dataref)
+ ;; CHECK-NEXT:  (local $0 structref)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $unused-and-refinable (type $none_=>_none)
- ;; NOMNL-NEXT:  (local $0 dataref)
+ ;; NOMNL-NEXT:  (local $0 structref)
  ;; NOMNL-NEXT:  (nop)
  ;; NOMNL-NEXT: )
  (func $unused-and-refinable (param $0 structref)
@@ -500,7 +500,7 @@
  )
 
  ;; CHECK:      (func $non-nullable-fixup (type $ref|${}|_=>_none) (param $0 (ref ${}))
- ;; CHECK-NEXT:  (local $1 dataref)
+ ;; CHECK-NEXT:  (local $1 structref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -509,7 +509,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $non-nullable-fixup (type $ref|${}|_=>_none) (param $0 (ref ${}))
- ;; NOMNL-NEXT:  (local $1 dataref)
+ ;; NOMNL-NEXT:  (local $1 structref)
  ;; NOMNL-NEXT:  (local.set $1
  ;; NOMNL-NEXT:   (local.get $0)
  ;; NOMNL-NEXT:  )
