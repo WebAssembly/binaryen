@@ -2095,7 +2095,8 @@ struct OptimizeInstructions
         // encodes a type, and ref.is_null does not. The EqZ may also add some
         // work, but a cast is likely more expensive than a null check + a fast
         // int operation.
-        replaceCurrent(builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
+        replaceCurrent(
+          builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
         break;
     }
   }
