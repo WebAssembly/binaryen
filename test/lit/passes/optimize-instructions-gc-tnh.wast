@@ -20,10 +20,8 @@
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (ref.cast null data
-  ;; NO_TNH-NEXT:     (local.get $b)
-  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   (ref.as_data
+  ;; NO_TNH-NEXT:    (local.get $b)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
@@ -61,10 +59,8 @@
   ;; NO_TNH-NEXT:    (ref.cast null $struct
   ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.as_non_null
-  ;; NO_TNH-NEXT:     (ref.cast null data
-  ;; NO_TNH-NEXT:      (local.get $any)
-  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    (ref.as_data
+  ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
