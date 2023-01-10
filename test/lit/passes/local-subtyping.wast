@@ -88,10 +88,10 @@
     )
   )
 
-  ;; CHECK:      (func $locals-with-multiple-assignments (type $dataref_=>_none) (param $struct dataref)
+  ;; CHECK:      (func $locals-with-multiple-assignments (type $structref_=>_none) (param $struct structref)
   ;; CHECK-NEXT:  (local $x eqref)
   ;; CHECK-NEXT:  (local $y (ref i31))
-  ;; CHECK-NEXT:  (local $z dataref)
+  ;; CHECK-NEXT:  (local $z structref)
   ;; CHECK-NEXT:  (local $w (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i31.new

@@ -176,7 +176,7 @@
  )
  (func $2 (type $anyref_=>_none) (param $0 anyref)
   (if
-   (ref.is_data
+   (ref.is_null
     (local.get $0)
    )
    (unreachable)
@@ -197,11 +197,6 @@
   (drop
    (ref.as_func
     (local.get $1)
-   )
-  )
-  (drop
-   (ref.as_data
-    (local.get $0)
    )
   )
   (drop

@@ -18,11 +18,6 @@
   ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-
-  ;; CHECK:      (type $array (array (mut i8)))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
-
   ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
@@ -3071,27 +3066,17 @@
     )
   )
 
-  ;; CHECK:      (func $as_of_unreachable (type $none_=>_ref|data|) (result (ref data))
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $as_of_unreachable (type $none_=>_ref|$A|) (result (ref $A))
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $as_of_unreachable (type $none_=>_ref|data|) (result (ref data))
-  ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; NOMNL-NEXT:   (drop
-  ;; NOMNL-NEXT:    (unreachable)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:   (unreachable)
-  ;; NOMNL-NEXT:  )
+  ;; NOMNL:      (func $as_of_unreachable (type $none_=>_ref|$A|) (result (ref $A))
+  ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
-  (func $as_of_unreachable (result (ref data))
+  (func $as_of_unreachable (result (ref $A))
     ;; The cast will definitely fail, so we can turn it into an unreachable. The
     ;; ref.as must then ignore the unreachable input and not error on trying to
     ;; infer anything about it.
-    (ref.as_data
+    (ref.as_non_null
       (ref.cast $A
         (ref.null none)
       )

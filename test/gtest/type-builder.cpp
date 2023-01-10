@@ -500,7 +500,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   HeapType any = HeapType::any;
   HeapType eq = HeapType::eq;
   HeapType i31 = HeapType::i31;
-  HeapType data = HeapType::data;
+  HeapType struct_ = HeapType::struct_;
   HeapType array = HeapType::array;
   HeapType string = HeapType::string;
   HeapType stringview_wtf8 = HeapType::stringview_wtf8;
@@ -546,7 +546,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(ext, any, {});
   assertLUB(ext, eq, {});
   assertLUB(ext, i31, {});
-  assertLUB(ext, data, {});
+  assertLUB(ext, struct_, {});
   assertLUB(ext, array, {});
   assertLUB(ext, string, {});
   assertLUB(ext, stringview_wtf8, {});
@@ -563,7 +563,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(func, any, {});
   assertLUB(func, eq, {});
   assertLUB(func, i31, {});
-  assertLUB(func, data, {});
+  assertLUB(func, struct_, {});
   assertLUB(func, array, {});
   assertLUB(func, string, {});
   assertLUB(func, stringview_wtf8, {});
@@ -579,7 +579,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(any, any, any);
   assertLUB(any, eq, any);
   assertLUB(any, i31, any);
-  assertLUB(any, data, any);
+  assertLUB(any, struct_, any);
   assertLUB(any, array, any);
   assertLUB(any, string, any);
   assertLUB(any, stringview_wtf8, any);
@@ -594,7 +594,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
 
   assertLUB(eq, eq, eq);
   assertLUB(eq, i31, eq);
-  assertLUB(eq, data, eq);
+  assertLUB(eq, struct_, eq);
   assertLUB(eq, array, eq);
   assertLUB(eq, string, any);
   assertLUB(eq, stringview_wtf8, any);
@@ -608,7 +608,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(eq, defArray, eq);
 
   assertLUB(i31, i31, i31);
-  assertLUB(i31, data, eq);
+  assertLUB(i31, struct_, eq);
   assertLUB(i31, array, eq);
   assertLUB(i31, string, any);
   assertLUB(i31, stringview_wtf8, any);
@@ -621,18 +621,18 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(i31, defStruct, eq);
   assertLUB(i31, defArray, eq);
 
-  assertLUB(data, data, data);
-  assertLUB(data, array, data);
-  assertLUB(data, string, any);
-  assertLUB(data, stringview_wtf8, any);
-  assertLUB(data, stringview_wtf16, any);
-  assertLUB(data, stringview_iter, any);
-  assertLUB(data, none, data);
-  assertLUB(data, noext, {});
-  assertLUB(data, nofunc, {});
-  assertLUB(data, defFunc, {});
-  assertLUB(data, defStruct, data);
-  assertLUB(data, defArray, data);
+  assertLUB(struct_, struct_, struct_);
+  assertLUB(struct_, array, eq);
+  assertLUB(struct_, string, any);
+  assertLUB(struct_, stringview_wtf8, any);
+  assertLUB(struct_, stringview_wtf16, any);
+  assertLUB(struct_, stringview_iter, any);
+  assertLUB(struct_, none, struct_);
+  assertLUB(struct_, noext, {});
+  assertLUB(struct_, nofunc, {});
+  assertLUB(struct_, defFunc, {});
+  assertLUB(struct_, defStruct, struct_);
+  assertLUB(struct_, defArray, eq);
 
   assertLUB(array, array, array);
   assertLUB(array, string, any);
@@ -643,7 +643,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(array, noext, {});
   assertLUB(array, nofunc, {});
   assertLUB(array, defFunc, {});
-  assertLUB(array, defStruct, data);
+  assertLUB(array, defStruct, eq);
   assertLUB(array, defArray, array);
 
   assertLUB(string, string, string);
@@ -707,7 +707,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   assertLUB(defFunc, defArray, {});
 
   assertLUB(defStruct, defStruct, defStruct);
-  assertLUB(defStruct, defArray, data);
+  assertLUB(defStruct, defArray, eq);
 
   assertLUB(defArray, defArray, defArray);
 
@@ -979,8 +979,9 @@ TEST_F(NominalTest, TestMaxStructDepths) {
 
   EXPECT_EQ(maxDepths[B], Index(0));
   EXPECT_EQ(maxDepths[A], Index(1));
-  EXPECT_EQ(maxDepths[HeapType::data], Index(2));
+  EXPECT_EQ(maxDepths[HeapType::struct_], Index(2));
   EXPECT_EQ(maxDepths[HeapType::eq], Index(3));
+  EXPECT_EQ(maxDepths[HeapType::any], Index(4));
 }
 
 TEST_F(NominalTest, TestMaxArrayDepths) {
@@ -999,8 +1000,8 @@ TEST_F(NominalTest, TestMaxArrayDepths) {
 
   EXPECT_EQ(maxDepths[A], Index(0));
   EXPECT_EQ(maxDepths[HeapType::array], Index(1));
-  EXPECT_EQ(maxDepths[HeapType::data], Index(2));
-  EXPECT_EQ(maxDepths[HeapType::eq], Index(3));
+  EXPECT_EQ(maxDepths[HeapType::eq], Index(2));
+  EXPECT_EQ(maxDepths[HeapType::any], Index(3));
 }
 
 // Test .depth() helper.
@@ -1020,14 +1021,14 @@ TEST_F(NominalTest, TestDepth) {
     C = built[2];
   }
 
-  // any :> eq :> data :> array :> specific array types
+  // any :> eq :> array :> specific array types
   EXPECT_EQ(HeapType(HeapType::any).getDepth(), 0U);
   EXPECT_EQ(HeapType(HeapType::eq).getDepth(), 1U);
-  EXPECT_EQ(HeapType(HeapType::data).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::array).getDepth(), 3U);
+  EXPECT_EQ(HeapType(HeapType::array).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::struct_).getDepth(), 2U);
   EXPECT_EQ(A.getDepth(), 3U);
   EXPECT_EQ(B.getDepth(), 4U);
-  EXPECT_EQ(C.getDepth(), 4U);
+  EXPECT_EQ(C.getDepth(), 3U);
 
   // Signature types are subtypes of func.
   EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);

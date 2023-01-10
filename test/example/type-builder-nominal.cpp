@@ -329,52 +329,6 @@ void test_subtypes() {
   };
 
   {
-    // Basic Types
-    for (auto other : {HeapType::eq,
-                       HeapType::any,
-                       HeapType::eq,
-                       HeapType::i31,
-                       HeapType::data}) {
-      assert(LUB(HeapType::any, other) == HeapType::any);
-    }
-    assert(LUB(HeapType::i31, HeapType::data) == HeapType::eq);
-  }
-
-  {
-    // Identity
-    std::vector<HeapType> built;
-    {
-      TypeBuilder builder(3);
-      builder[0] = Signature(Type::none, Type::none);
-      builder[1] = Struct{};
-      builder[2] = Array(Field(Type::i32, Mutable));
-      built = *builder.build();
-    }
-    assert(LUB(built[0], built[0]) == built[0]);
-    assert(LUB(built[1], built[1]) == built[1]);
-    assert(LUB(built[2], built[2]) == built[2]);
-  }
-
-  {
-    // No subtype declarations mean no subtypes
-    std::vector<HeapType> built;
-    {
-      TypeBuilder builder(5);
-      Type structRef0 = builder.getTempRefType(builder[0], Nullable);
-      Type structRef1 = builder.getTempRefType(builder[1], Nullable);
-      builder[0] = Struct{};
-      builder[1] = Struct{};
-      builder[2] = Signature(Type::none, anyref);
-      builder[3] = Signature(Type::none, structRef0);
-      builder[4] = Signature(Type::none, structRef1);
-      built = *builder.build();
-    }
-    assert(LUB(built[0], built[1]) == HeapType::data);
-    assert(LUB(built[2], built[3]) == HeapType::func);
-    assert(LUB(built[2], built[4]) == HeapType::func);
-  }
-
-  {
     // Subtype declarations, but still no subtypes
     std::vector<HeapType> built;
     {
@@ -385,7 +339,7 @@ void test_subtypes() {
       builder[2] = Struct{};
       built = *builder.build();
     }
-    assert(LUB(built[0], built[2]) == HeapType::data);
+    assert(LUB(built[0], built[2]) == HeapType::struct_);
   }
 
   {

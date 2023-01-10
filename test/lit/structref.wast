@@ -4,7 +4,7 @@
 
 ;; Check that `struct` is correctly parsed as an alias for `data`.
 (module
-  ;; CHECK:      (func $foo (type $dataref_ref|data|_=>_none) (param $x dataref) (param $y (ref data))
+  ;; CHECK:      (func $foo (type $structref_ref|struct|_=>_none) (param $x structref) (param $y (ref struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $foo (param $x structref) (param $y (ref struct))

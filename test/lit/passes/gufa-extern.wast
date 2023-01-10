@@ -8,7 +8,7 @@
 
   ;; CHECK:      (func $externals (type $externref_anyref_=>_none) (param $ext externref) (param $any anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_data
+  ;; CHECK-NEXT:   (ref.cast struct
   ;; CHECK-NEXT:    (extern.internalize
   ;; CHECK-NEXT:     (local.get $ext)
   ;; CHECK-NEXT:    )
@@ -24,7 +24,7 @@
     ;; We must not turn these into unreachable code, as the function is
     ;; exported.
     (drop
-      (ref.as_data
+      (ref.cast struct
         (extern.internalize
           (local.get $ext)
         )
@@ -58,7 +58,7 @@
     ;; This is not exported, so the params are dead code, and can be turned
     ;; unreachable.
     (drop
-      (ref.as_data
+      (ref.cast struct
         (extern.internalize
           (local.get $ext)
         )

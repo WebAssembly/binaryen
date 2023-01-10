@@ -141,7 +141,7 @@
 (assert_return (invoke "ref_test_struct" (i32.const 2)) (i32.const 1))
 (assert_return (invoke "ref_test_struct" (i32.const 3)) (i32.const 0))
 (assert_return (invoke "ref_test_struct" (i32.const 4)) (i32.const 2))
-(assert_return (invoke "ref_test_struct" (i32.const 5)) (i32.const 2)) ;; TOOD: expect 0 once struct is not an alias for data
+(assert_return (invoke "ref_test_struct" (i32.const 5)) (i32.const 0))
 ;; (assert_return (invoke "ref_test_struct" (i32.const 6)) (i32.const 0))
 ;; (assert_return (invoke "ref_test_struct" (i32.const 7)) (i32.const 1))
 

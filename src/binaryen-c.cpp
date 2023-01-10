@@ -85,7 +85,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
         WASM_UNREACHABLE("TODO: extern literals");
       case HeapType::eq:
       case HeapType::func:
-      case HeapType::data:
+      case HeapType::struct_:
       case HeapType::array:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
@@ -138,7 +138,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
         WASM_UNREACHABLE("TODO: extern literals");
       case HeapType::eq:
       case HeapType::func:
-      case HeapType::data:
+      case HeapType::struct_:
       case HeapType::array:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
@@ -199,8 +199,8 @@ BinaryenType BinaryenTypeEqref(void) {
 BinaryenType BinaryenTypeI31ref(void) {
   return Type(HeapType::i31, Nullable).getID();
 }
-BinaryenType BinaryenTypeDataref(void) {
-  return Type(HeapType::data, Nullable).getID();
+BinaryenType BinaryenTypeStructref(void) {
+  return Type(HeapType::struct_, Nullable).getID();
 }
 BinaryenType BinaryenTypeArrayref(void) {
   return Type(HeapType::array, Nullable).getID();
@@ -284,8 +284,8 @@ BinaryenHeapType BinaryenHeapTypeEq() {
 BinaryenHeapType BinaryenHeapTypeI31() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::i31);
 }
-BinaryenHeapType BinaryenHeapTypeData() {
-  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::data);
+BinaryenHeapType BinaryenHeapTypeStruct() {
+  return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::struct_);
 }
 BinaryenHeapType BinaryenHeapTypeArray() {
   return static_cast<BinaryenHeapType>(HeapType::BasicHeapType::array);

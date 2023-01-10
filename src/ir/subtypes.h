@@ -113,7 +113,7 @@ struct SubTypes {
     for (auto type : types) {
       HeapType basic;
       if (type.isStruct()) {
-        basic = HeapType::data;
+        basic = HeapType::struct_;
       } else if (type.isArray()) {
         basic = HeapType::array;
       } else {
@@ -123,9 +123,8 @@ struct SubTypes {
       depths[basic] = std::max(depths[basic], depths[type] + 1);
     }
 
-    depths[HeapType::data] =
-      std::max(depths[HeapType::data], depths[HeapType::array] + 1);
-    depths[HeapType::eq] = std::max(Index(1), depths[HeapType::data] + 1);
+    depths[HeapType::eq] =
+      std::max(depths[HeapType::struct_], depths[HeapType::array]) + 1;
     depths[HeapType::any] = depths[HeapType::eq] + 1;
 
     return depths;
