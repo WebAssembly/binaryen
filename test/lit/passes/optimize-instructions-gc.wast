@@ -276,9 +276,12 @@
     (drop
       (ref.is_null (local.get $struct))
     )
+    ;; This can be optimized to !is_null rather than ref.test func, since we
+    ;; know the heap type is what we want, so the only possible issue is a null.
     (drop
       (ref.is_func (local.get $func))
     )
+    ;; This can be optimized similarly.
     (drop
       (ref.is_i31 (local.get $i31))
     )
@@ -1694,7 +1697,9 @@
       )
     )
     (drop
-      ;; But this one might succeed due to a null, so don't optimize it.
+      ;; But this one might succeed due to a null, so don't optimize it away.
+      ;; We can however change it from ref.test to ref.is_null, as a null is the
+      ;; only possible way this will succeed.
       (ref.test null $array
         (local.get $struct)
       )
@@ -1801,7 +1806,8 @@
       )
     )
     (drop
-      ;; The other direction works too.
+      ;; The other direction can work too. It will only fail if the input is a
+      ;; null, so we can switch to checking that.
       (ref.test $A
         (local.get $B)
       )
@@ -2627,7 +2633,7 @@
   ;; NOMNL-NEXT: )
   (func $ref-test-static-same-type (param $nullable (ref null $A)) (param $non-nullable (ref $A))
     ;; A nullable value cannot be optimized here even though it is the same
-    ;; type.
+    ;; type. But we can at least use !ref.is_null rather than ref.test.
     (drop
       (ref.test $A
         (local.get $nullable)
