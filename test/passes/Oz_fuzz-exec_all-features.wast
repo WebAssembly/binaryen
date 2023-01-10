@@ -177,14 +177,6 @@
    )
   )
  )
- (func "ref-as-func-of-data"
-  (drop
-   ;; This should trap.
-   (ref.as_func
-    (struct.new_default $struct)
-   )
-  )
- )
  (func "ref-as-func-of-func"
   (drop
    (ref.as_func

@@ -285,7 +285,8 @@ private:
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s,
                           std::optional<Type> castType = std::nullopt);
-  Expression* makeRefCast(Element& s);
+  Expression* makeRefCast(Element& s,
+                          std::optional<Type> castType = std::nullopt);
   Expression* makeRefCastNop(Element& s);
   Expression* makeBrOnNull(Element& s, bool onFail = false);
   Expression*
@@ -302,6 +303,7 @@ private:
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
+  Expression* makeRefAsNonNull(Element& s);
   Expression* makeStringNew(Element& s, StringNewOp op);
   Expression* makeStringConst(Element& s);
   Expression* makeStringMeasure(Element& s, StringMeasureOp op);

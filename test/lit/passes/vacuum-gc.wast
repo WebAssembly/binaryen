@@ -12,11 +12,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_data
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -32,11 +27,6 @@
     ;; we cannot remove anything here.
     (drop
       (ref.as_non_null
-        (local.get $x)
-      )
-    )
-    (drop
-      (ref.as_func
         (local.get $x)
       )
     )

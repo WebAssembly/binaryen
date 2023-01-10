@@ -2009,21 +2009,6 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (ref.as_func
-        (ref.null none)
-       )
-      )
-      (drop
-       (ref.as_data
-        (ref.null none)
-       )
-      )
-      (drop
-       (ref.as_i31
-        (ref.null none)
-       )
-      )
-      (drop
        (extern.internalize
         (ref.null noextern)
        )

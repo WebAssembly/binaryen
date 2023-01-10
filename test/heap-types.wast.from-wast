@@ -9,13 +9,14 @@
  (type $parent (struct ))
  (type $child (struct_subtype (field i32) $parent))
  (type $grandchild (struct_subtype (field i32) (field i64) $child))
- (type $anyref_=>_none (func (param anyref)))
  (type $ref?|$vector|_=>_none (func (param (ref null $vector))))
  (type $nested-child-struct (struct (field (mut (ref $child)))))
  (type $words (array (mut i32)))
  (type $nested-child-array (array (mut (ref $child))))
+ (type $anyref_=>_none (func (param anyref)))
  (type $ref|$struct.A|_ref?|$struct.A|_ref?|$grandchild|_ref?|$struct.C|_ref?|$nested-child-struct|_=>_ref|$struct.B| (func (param (ref $struct.A) (ref null $struct.A) (ref null $grandchild) (ref null $struct.C) (ref null $nested-child-struct)) (result (ref $struct.B))))
  (type $ref|$vector|_ref?|$nested-child-array|_ref?|$grandchild|_=>_ref|$matrix| (func (param (ref $vector) (ref null $nested-child-array) (ref null $grandchild)) (result (ref $matrix))))
+ (type $anyref_funcref_=>_none (func (param anyref funcref)))
  (type $ref?|$struct.C|_=>_none (func (param (ref null $struct.C))))
  (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
  (type $none_=>_ref|$vector| (func (result (ref $vector))))
@@ -189,7 +190,7 @@
    (unreachable)
   )
  )
- (func $ref.as_X (type $anyref_=>_none) (param $x anyref)
+ (func $ref.as_X (type $anyref_funcref_=>_none) (param $x anyref) (param $f funcref)
   (drop
    (ref.as_non_null
     (local.get $x)
@@ -197,7 +198,7 @@
   )
   (drop
    (ref.as_func
-    (local.get $x)
+    (local.get $f)
    )
   )
   (drop

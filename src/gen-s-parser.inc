@@ -3000,13 +3000,13 @@ switch (buf[0]) {
           case 'a': {
             switch (buf[7]) {
               case 'd':
-                if (op == "ref.as_data"sv) { return makeRefAs(s, RefAsData); }
+                if (op == "ref.as_data"sv) { return makeRefCast(s, Type(HeapType::data, NonNullable)); }
                 goto parse_error;
               case 'f':
-                if (op == "ref.as_func"sv) { return makeRefAs(s, RefAsFunc); }
+                if (op == "ref.as_func"sv) { return makeRefCast(s, Type(HeapType::func, NonNullable)); }
                 goto parse_error;
               case 'i':
-                if (op == "ref.as_i31"sv) { return makeRefAs(s, RefAsI31); }
+                if (op == "ref.as_i31"sv) { return makeRefCast(s, Type(HeapType::i31, NonNullable)); }
                 goto parse_error;
               case 'n':
                 if (op == "ref.as_non_null"sv) { return makeRefAs(s, RefAsNonNull); }
@@ -8599,21 +8599,21 @@ switch (buf[0]) {
             switch (buf[7]) {
               case 'd':
                 if (op == "ref.as_data"sv) {
-                  auto ret = makeRefAs(ctx, pos, RefAsData);
+                  auto ret = makeRefCast(ctx, pos, Type(HeapType::data, NonNullable));
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'f':
                 if (op == "ref.as_func"sv) {
-                  auto ret = makeRefAs(ctx, pos, RefAsFunc);
+                  auto ret = makeRefCast(ctx, pos, Type(HeapType::func, NonNullable));
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'i':
                 if (op == "ref.as_i31"sv) {
-                  auto ret = makeRefAs(ctx, pos, RefAsI31);
+                  auto ret = makeRefCast(ctx, pos, Type(HeapType::i31, NonNullable));
                   CHECK_ERR(ret);
                   return *ret;
                 }

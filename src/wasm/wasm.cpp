@@ -1115,15 +1115,6 @@ void RefAs::finalize() {
     case RefAsNonNull:
       type = Type(value->type.getHeapType(), NonNullable);
       break;
-    case RefAsFunc:
-      type = Type(HeapType::func, NonNullable);
-      break;
-    case RefAsData:
-      type = Type(HeapType::data, NonNullable);
-      break;
-    case RefAsI31:
-      type = Type(HeapType::i31, NonNullable);
-      break;
     case ExternInternalize:
       type = Type(HeapType::any, value->type.getNullability());
       break;

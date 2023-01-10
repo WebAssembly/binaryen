@@ -2041,6 +2041,23 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
     o << U32LEB(BinaryConsts::RefCastNop);
     parent.writeIndexedHeapType(curr->type.getHeapType());
   } else {
+    // TODO: These instructions are deprecated. Remove them.
+    if (auto type = curr->type.getHeapType();
+        type.isBasic() && curr->type.isNonNullable()) {
+      switch (type.getBasic()) {
+        case HeapType::func:
+          o << U32LEB(BinaryConsts::RefAsFunc);
+          return;
+        case HeapType::data:
+          o << U32LEB(BinaryConsts::RefAsData);
+          return;
+        case HeapType::i31:
+          o << U32LEB(BinaryConsts::RefAsI31);
+          return;
+        default:
+          break;
+      }
+    }
     if (curr->type.isNullable()) {
       o << U32LEB(BinaryConsts::RefCastNull);
     } else {
@@ -2243,15 +2260,6 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
     case RefAsNonNull:
       o << int8_t(BinaryConsts::RefAsNonNull);
-      break;
-    case RefAsFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsFunc);
-      break;
-    case RefAsData:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsData);
-      break;
-    case RefAsI31:
-      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsI31);
       break;
     case ExternInternalize:
       o << int8_t(BinaryConsts::GCPrefix)

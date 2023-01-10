@@ -20,8 +20,10 @@
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (ref.as_data
-  ;; NO_TNH-NEXT:    (local.get $b)
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (ref.cast null data
+  ;; NO_TNH-NEXT:     (local.get $b)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
@@ -59,8 +61,10 @@
   ;; NO_TNH-NEXT:    (ref.cast null $struct
   ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.as_data
-  ;; NO_TNH-NEXT:     (local.get $any)
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (ref.cast null data
+  ;; NO_TNH-NEXT:      (local.get $any)
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -86,9 +90,7 @@
   ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (ref.cast $struct
-  ;; TNH-NEXT:    (ref.as_data
-  ;; TNH-NEXT:     (local.get $a)
-  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (local.get $a)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (i32.const 0)
@@ -96,9 +98,7 @@
   ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.cast $struct
-  ;; NO_TNH-NEXT:    (ref.as_data
-  ;; NO_TNH-NEXT:     (local.get $a)
-  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (i32.const 0)
@@ -140,23 +140,23 @@
     )
   )
 
-  ;; TNH:      (func $ref.is_func (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; TNH:      (func $ref.is_func (type $funcref_=>_i32) (param $a funcref) (result i32)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.as_func
+  ;; TNH-NEXT:   (ref.as_non_null
   ;; TNH-NEXT:    (local.get $a)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (i32.const 1)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_func (type $anyref_=>_i32) (param $a anyref) (result i32)
+  ;; NO_TNH:      (func $ref.is_func (type $funcref_=>_i32) (param $a funcref) (result i32)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_func
+  ;; NO_TNH-NEXT:   (ref.as_non_null
   ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (i32.const 1)
   ;; NO_TNH-NEXT: )
-  (func $ref.is_func (param $a (ref null any)) (result i32)
+  (func $ref.is_func (param $a funcref) (result i32)
     ;; The check must succeed. We can return 1 here, and drop the rest, with or
     ;; without TNH (in particular, TNH should not just remove the cast but not
     ;; return a 1).

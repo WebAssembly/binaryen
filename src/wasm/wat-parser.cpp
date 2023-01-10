@@ -2346,7 +2346,9 @@ Result<typename Ctx::InstrT> makeI31Get(Ctx&, Index, bool signed_);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
 makeRefTest(Ctx&, Index, std::optional<Type> castType = std::nullopt);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeRefCast(Ctx&, Index, std::optional<Type> castType = std::nullopt);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNop(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeBrOnNull(Ctx&, Index, bool onFail = false);
@@ -3444,7 +3446,8 @@ makeRefTest(Ctx& ctx, Index pos, std::optional<Type> castType) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT>
+makeRefCast(Ctx& ctx, Index pos, std::optional<Type> castType) {
   return ctx.in.err("unimplemented instruction");
 }
 

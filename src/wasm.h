@@ -559,9 +559,6 @@ enum SIMDTernaryOp {
 
 enum RefAsOp {
   RefAsNonNull,
-  RefAsFunc,
-  RefAsData,
-  RefAsI31,
   ExternInternalize,
   ExternExternalize,
 };

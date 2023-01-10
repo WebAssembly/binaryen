@@ -550,9 +550,6 @@ function initializeConstants() {
     'PromoteLowVecF32x4ToVecF64x2',
     'SwizzleVecI8x16',
     'RefAsNonNull',
-    'RefAsFunc',
-    'RefAsData',
-    'RefAsI31',
     'RefAsExternInternalize',
     'RefAsExternExternalize',
     'BrOnNull',
@@ -2344,15 +2341,6 @@ function wrapModule(module, self = {}) {
     },
     'as_non_null'(value) {
       return Module['_BinaryenRefAs'](module, Module['RefAsNonNull'], value);
-    },
-    'as_func'(value) {
-      return Module['_BinaryenRefAs'](module, Module['RefAsFunc'], value);
-    },
-    'as_data'(value) {
-      return Module['_BinaryenRefAs'](module, Module['RefAsData'], value);
-    },
-    'as_i31'(value) {
-      return Module['_BinaryenRefAs'](module, Module['RefAsI31'], value);
     },
     'func'(func, type) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));

@@ -9,13 +9,14 @@
  (type ${} (struct ))
  (type ${i32} (struct_subtype (field i32) ${}))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
- (type $anyref_=>_none (func (param anyref)))
  (type $ref?|[mut:f64]|_=>_none (func (param (ref null $[mut:f64]))))
  (type ${mut:ref|{i32}|} (struct (field (mut (ref ${i32})))))
  (type $[mut:i32] (array (mut i32)))
  (type $[mut:ref|{i32}|] (array (mut (ref ${i32}))))
+ (type $anyref_=>_none (func (param anyref)))
  (type $ref|{i32_f32_f64}|_ref?|{i32_f32_f64}|_ref?|{i32_i64}|_ref?|{mut:f32}|_ref?|{mut:ref|{i32}|}|_=>_ref|{i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}| (func (param (ref ${i32_f32_f64}) (ref null ${i32_f32_f64}) (ref null ${i32_i64}) (ref null ${mut:f32}) (ref null ${mut:ref|{i32}|})) (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))))
  (type $ref|[mut:f64]|_ref?|[mut:ref|{i32}|]|_ref?|{i32_i64}|_=>_ref|[mut:ref?|[mut:f64]|]| (func (param (ref $[mut:f64]) (ref null $[mut:ref|{i32}|]) (ref null ${i32_i64})) (result (ref $[mut:ref?|[mut:f64]|]))))
+ (type $anyref_funcref_=>_none (func (param anyref funcref)))
  (type $ref?|{mut:f32}|_=>_none (func (param (ref null ${mut:f32}))))
  (type $ref|[mut:f64]|_ref?|[mut:f64]|_=>_none (func (param (ref $[mut:f64]) (ref null $[mut:f64]))))
  (type $none_=>_ref|[mut:f64]| (func (result (ref $[mut:f64]))))
@@ -187,7 +188,7 @@
    (unreachable)
   )
  )
- (func $3 (type $anyref_=>_none) (param $0 anyref)
+ (func $3 (type $anyref_funcref_=>_none) (param $0 anyref) (param $1 funcref)
   (drop
    (ref.as_non_null
     (local.get $0)
@@ -195,7 +196,7 @@
   )
   (drop
    (ref.as_func
-    (local.get $0)
+    (local.get $1)
    )
   )
   (drop

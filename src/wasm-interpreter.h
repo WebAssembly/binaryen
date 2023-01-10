@@ -1787,29 +1787,12 @@ public:
     switch (curr->op) {
       case RefAsNonNull:
         // We've already checked for a null.
-        break;
-      case RefAsFunc:
-        if (!value.type.isFunction()) {
-          trap("not a func");
-        }
-        break;
-      case RefAsData:
-        if (!value.isData()) {
-          trap("not a data");
-        }
-        break;
-      case RefAsI31:
-        if (value.type.getHeapType() != HeapType::i31) {
-          trap("not an i31");
-        }
-        break;
+        return value;
       case ExternInternalize:
       case ExternExternalize:
         WASM_UNREACHABLE("unimplemented extern conversion");
-      default:
-        WASM_UNREACHABLE("unimplemented ref.as_*");
     }
-    return value;
+    WASM_UNREACHABLE("unimplemented ref.as_*");
   }
   Flow visitStringNew(StringNew* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConst(StringConst* curr) { WASM_UNREACHABLE("unimp"); }
