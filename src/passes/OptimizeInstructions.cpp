@@ -1898,23 +1898,6 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->destRef) || trapOnNull(curr, curr->srcRef);
   }
 
-  bool canBeCastTo(HeapType a, HeapType b) {
-    return HeapType::isSubType(a, b) || HeapType::isSubType(b, a);
-  }
-
-  bool canBeCastTo(Type a, Type b) {
-    // A value can be cast to the other if the heap type can be cast, or if a
-    // null can work.
-    if (a.isNullable() && b.isNullable()) {
-      return true;
-    }
-    if (a.isRef() && b.isRef() &&
-        canBeCastTo(a.getHeapType(), b.getHeapType())) {
-      return true;
-    }
-    return false;
-  }
-
   void visitRefCast(RefCast* curr) {
     // Note we must check the ref's type here and not our own, since we only
     // refinalize at the end, which means our type may not have been updated yet
@@ -1969,7 +1952,9 @@ struct OptimizeInstructions
     {
       auto* ref = curr->ref;
       while (1) {
-        if (!canBeCastTo(ref->type, curr->type)) {
+        auto result = GCTypeUtils::evaluateCastCheck(ref->type, curr->type);
+
+        if (result == GCTypeUtils::Failure) {
           // This cast cannot succeed, so it will trap.
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
@@ -1977,16 +1962,7 @@ struct OptimizeInstructions
             {builder.makeDrop(curr->ref), builder.makeUnreachable()},
             curr->type));
           return;
-        }
-
-        // Or, perhaps the heap type part must fail. E.g. the input might be a
-        // nullable array while the output might be a nullable struct. That is,
-        // a situation where the only way the cast succeeds is if the input is
-        // null, which we can cast to using a bottom type.
-        if (ref->type.isRef() &&
-            !canBeCastTo(ref->type.getHeapType(), intendedType)) {
-          assert(ref->type.isNullable());
-          assert(curr->type.isNullable());
+        } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
           curr->type = Type(intendedType.getBottom(), Nullable);
           // Call replaceCurrent() to make us re-optimize this node, as we may
           // have just unlocked further opportunities. (We could just continue
@@ -2006,12 +1982,14 @@ struct OptimizeInstructions
       }
     }
 
-    // Check whether the cast will definitely succeed.
+    // See what we know about the cast result.
     //
     // Note that we could look at the fallthrough for the ref, but that would
     // require additional work to make sure we emit something that validates
     // properly. TODO
-    if (Type::isSubType(curr->ref->type, curr->type)) {
+    auto result = GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->type);
+
+    if (result == GCTypeUtils::Success) {
       replaceCurrent(curr->ref);
 
       // We must refinalize here, as we may be returning a more specific
@@ -2033,33 +2011,8 @@ struct OptimizeInstructions
       // refinalized so the IR node has the expected type.
       refinalize = true;
       return;
-    }
-
-    // The cast will not definitely succeed nor will it definitely fail.
-    //
-    // Perhaps the heap type part of the cast can be reasoned about, at least.
-    // E.g. if the heap type part of the cast is definitely compatible, but the
-    // cast as a whole is not, that would leave only nullability as an issue,
-    // that is, this means that the input ref is nullable but we are casting to
-    // non-null.
-    //
-    // Note that we could do something similar for a failed cast, that is,
-    // handle the situation where the entire cast might succeed, but the heap
-    // type part will definitely fail. For example, the input might be a
-    // nullable array while the output might be a nullable struct. That is, a
-    // situation where the only way the cast succeeds is if the input is null.
-    // However, optimizing this would mean emitting something like
-    //
-    //   ref == null ? null : trap
-    //
-    // which is strictly larger. However, it might be more efficient, so could
-    // be worth investigating TODO
-    if (HeapType::isSubType(curr->ref->type.getHeapType(), intendedType)) {
-      assert(curr->ref->type.isNullable());
-      assert(curr->type.isNonNullable());
-
-      // Given the heap type will cast ok, all we need to do is check for a null
-      // here.
+    } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
+      // All we need to do is check for a null here.
       //
       // As above, we must refinalize as we may now be emitting a more refined
       // type (specifically a more refined heap type).
@@ -2078,34 +2031,18 @@ struct OptimizeInstructions
       //     (ref.cast $A
       //
       // where $B is a subtype of $A. We don't need to cast to $A here; we can
-      // just cast all the way to $B immediately.
-      if (Type::isSubType(curr->type, child->type)) {
+      // just cast all the way to $B immediately. To check this, see if the
+      // parent's type would succeed if cast by the child's; if it must then the
+      // child's is redundant.
+      auto result = GCTypeUtils::evaluateCastCheck(curr->type, child->type);
+      if (result == GCTypeUtils::Success) {
         curr->ref = child->ref;
         return;
-      }
-
-      // As above, we can also consider the case where the heap type of the
-      // child is a supertype even if the type as a whole is not, which means
-      // that nullability is an issue, specifically in the form of the child
-      // having a heap supertype which is non-nullable, and the parent having
-      // a heap subtype which is nullable, like this:
-      //
-      //   (ref.cast null $B
-      //     (ref.cast $A
-      //
-      // We can optimize that to
-      //
-      //   (ref.cast $B
-      //     (ref.as_non_null $A
-      //
-      // which is the same as (ref.cast $B) as that checks non-nullability
-      // anyhow (similar to the next rule after us).
-      auto childIntendedType = child->type.getHeapType();
-      if (HeapType::isSubType(intendedType, childIntendedType)) {
-        assert(curr->type.isNullable());
-        assert(child->type.isNonNullable());
+      } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
+        // Similar to above, but we must also trap on null.
         curr->ref = child->ref;
         curr->type = Type(curr->type.getHeapType(), NonNullable);
+        return;
       }
     }
 
@@ -2138,25 +2075,17 @@ struct OptimizeInstructions
       return;
     }
 
-    auto refType = curr->ref->type.getHeapType();
-    auto intendedType = curr->castType.getHeapType();
-
     // See above in RefCast.
-    if (!canBeCastTo(refType, intendedType) &&
-        (curr->castType.isNonNullable() || curr->ref->type.isNonNullable())) {
-      // This test cannot succeed, and will definitely return 0.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                          builder.makeConst(int32_t(0))));
-      return;
-    }
-
-    if (HeapType::isSubType(refType, intendedType) &&
-        (curr->castType.isNullable() || curr->ref->type.isNonNullable())) {
-      // This test will definitely succeed and return 1.
+    auto result =
+      GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType);
+    if (result == GCTypeUtils::Success) {
       replaceCurrent(builder.makeBlock(
         {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
-      return;
+    } else if (result == GCTypeUtils::Failure) {
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeConst(int32_t(0))));
     }
+    // TODO: we can emit a ref.is_null for SuccessOnlyIfNull etc.
   }
 
   void visitRefIsNull(RefIsNull* curr) {

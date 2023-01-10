@@ -33,8 +33,57 @@ enum EvaluationResult {
   // The evaluation is known to succeed (i.e., we find what we are looking
   // for), or fail, at compile time.
   Success,
-  Failure
+  Failure,
+  // The cast will only succeed if the input is a null, or is not
+  SuccessOnlyIfNull,
+  SuccessOnlyIfNonNull,
 };
+
+// Given the type of a reference and a type to attempt to cast it to, return
+// what we know about the result.
+inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
+  if (!refType.isRef() || !castType.isRef()) {
+    // Unreachable etc. are meaningless situations in which we can inform the
+    // caller about nothing useful.
+    return Unknown;
+  }
+
+  if (Type::isSubType(refType, castType)) {
+    return Success;
+  }
+
+  auto refHeapType = refType.getHeapType();
+  auto castHeapType = castType.getHeapType();
+  auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
+  auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
+  bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
+
+  if (!heapTypesCompatible) {
+    // If at least one is not null, then since the heap types are not compatible
+    // we must fail.
+    if (refType.isNonNullable() || castType.isNonNullable()) {
+      return Failure;
+    }
+
+    // Otherwise, both are nullable and a null is the only hope of success.
+    return SuccessOnlyIfNull;
+  }
+
+  // The cast will not definitely succeed nor will it definitely fail.
+  //
+  // Perhaps the heap type part of the cast can be reasoned about, at least.
+  // E.g. if the heap type part of the cast is definitely compatible, but the
+  // cast as a whole is not, that would leave only nullability as an issue,
+  // that is, this means that the input ref is nullable but we are casting to
+  // non-null.
+  if (refIsHeapSubType) {
+    assert(refType.isNullable());
+    assert(castType.isNonNullable());
+    return SuccessOnlyIfNonNull;
+  }
+
+  return Unknown;
+}
 
 // Given an instruction that checks if the child reference is of a certain kind
 // (like br_on_func checks if it is a function), see if type info lets us
@@ -56,21 +105,16 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       case BrOnCastFail:
         flip = true;
         [[fallthrough]];
-      case BrOnCast:
-        // If we already have a subtype of the cast type, the cast will succeed.
-        if (Type::isSubType(br->ref->type, br->castType)) {
+      case BrOnCast: {
+        auto result =
+          GCTypeUtils::evaluateCastCheck(br->ref->type, br->castType);
+        if (result == Success) {
           return flip ? Failure : Success;
-        }
-        // If the cast type is unrelated to the type we have and it's not
-        // possible for the cast to succeed anyway because the value is null,
-        // then the cast will certainly fail. TODO: This is essentially the same
-        // as `canBeCastTo` in OptimizeInstructions. Find a way to deduplicate
-        // this logic.
-        if (!Type::isSubType(br->castType, br->ref->type) &&
-            (br->castType.isNonNullable() || br->ref->type.isNonNullable())) {
+        } else if (result == Failure) {
           return flip ? Success : Failure;
         }
         return Unknown;
+      }
       default:
         WASM_UNREACHABLE("unhandled BrOn");
     }
