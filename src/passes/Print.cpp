@@ -2122,6 +2122,23 @@ struct PrintExpressionContents
     if (curr->safety == RefCast::Unsafe) {
       printMedium(o, "ref.cast_nop ");
     } else {
+      // TODO: These instructions are deprecated. Remove them.
+      if (auto type = curr->type.getHeapType();
+          type.isBasic() && curr->type.isNonNullable()) {
+        switch (type.getBasic()) {
+          case HeapType::func:
+            printMedium(o, "ref.as_func");
+            return;
+          case HeapType::data:
+            printMedium(o, "ref.as_data");
+            return;
+          case HeapType::i31:
+            printMedium(o, "ref.as_i31");
+            return;
+          default:
+            break;
+        }
+      }
       if (curr->type.isNullable()) {
         printMedium(o, "ref.cast null ");
       } else {
@@ -2328,15 +2345,6 @@ struct PrintExpressionContents
     switch (curr->op) {
       case RefAsNonNull:
         printMedium(o, "ref.as_non_null");
-        break;
-      case RefAsFunc:
-        printMedium(o, "ref.as_func");
-        break;
-      case RefAsData:
-        printMedium(o, "ref.as_data");
-        break;
-      case RefAsI31:
-        printMedium(o, "ref.as_i31");
         break;
       case ExternInternalize:
         printMedium(o, "extern.internalize");

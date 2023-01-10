@@ -2118,35 +2118,13 @@ struct OptimizeInstructions
 
     if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
       // We can't optimize these. Even removing a non-null cast is not valid as
-      // they allow nulls to filter through, unlike other RefAs*
+      // they allow nulls to filter through, unlike other RefAs*.
       return;
     }
 
+    assert(curr->op == RefAsNonNull);
     skipNonNullCast(curr->value);
-
-    // Check if the type is the kind we are checking for.
-    auto result = GCTypeUtils::evaluateKindCheck(curr);
-
-    if (result == GCTypeUtils::Success) {
-      // We know the kind is correct, so all that is left is a check for
-      // non-nullability, which we do lower down.
-      curr->op = RefAsNonNull;
-    } else if (result == GCTypeUtils::Failure) {
-      // This is the wrong kind, so it will trap. The binaryen optimizer does
-      // not differentiate traps, so we can perform a replacement here. We
-      // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
-      // drop, which is no worse, and the value and the drop can be optimized
-      // out later if the value has no side effects.
-      Builder builder(*getModule());
-      // Make sure to emit a block with the same type as us; leave updating
-      // types for other passes.
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->value), builder.makeUnreachable()},
-        curr->type));
-      return;
-    }
-
-    if (curr->op == RefAsNonNull && !curr->value->type.isNullable()) {
+    if (!curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
       return;
     }

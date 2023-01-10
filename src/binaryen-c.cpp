@@ -1009,9 +1009,6 @@ BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
 }
 BinaryenOp BinaryenSwizzleVecI8x16(void) { return SwizzleVecI8x16; }
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
-BinaryenOp BinaryenRefAsFunc(void) { return RefAsFunc; }
-BinaryenOp BinaryenRefAsData(void) { return RefAsData; }
-BinaryenOp BinaryenRefAsI31(void) { return RefAsI31; }
 BinaryenOp BinaryenRefAsExternInternalize(void) { return ExternInternalize; }
 BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternExternalize; }
 BinaryenOp BinaryenBrOnNull(void) { return BrOnNull; }

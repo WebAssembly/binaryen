@@ -1450,6 +1450,7 @@ console.log("# RefAs");
 
   var op = binaryen.Operations.RefAsNonNull;
   var value = module.local.get(1, binaryen.anyref);
+  var externref = module.local.get(3, binaryen.externref);
   const theRefAs = binaryen.RefAs(module.ref.as_non_null(value));
   assert(theRefAs instanceof binaryen.RefAs);
   assert(theRefAs instanceof binaryen.Expression);
@@ -1457,9 +1458,9 @@ console.log("# RefAs");
   assert(theRefAs.value === value);
   assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
 
-  theRefAs.op = op = binaryen.Operations.RefAsFunc;
+  theRefAs.op = op = binaryen.Operations.RefAsExternExternalize;
   assert(theRefAs.op === op);
-  theRefAs.op = op = binaryen.Operations.RefAsNull;
+  theRefAs.op = op = binaryen.Operations.RefAsNonNull;
   theRefAs.value = value = module.local.get(2, binaryen.anyref);
   assert(theRefAs.value === value);
   theRefAs.type = binaryen.f64;
@@ -1473,21 +1474,7 @@ console.log("# RefAs");
     "(ref.as_non_null\n (local.get $2)\n)\n"
   );
 
-  assert(
-    binaryen.RefAs(module.ref.as_func(value)).toText()
-    ==
-    "(ref.as_func\n (local.get $2)\n)\n"
-  );
-  assert(
-    binaryen.RefAs(module.ref.as_data(value)).toText()
-    ==
-    "(ref.as_data\n (local.get $2)\n)\n"
-  );
-  assert(
-    binaryen.RefAs(module.ref.as_i31(value)).toText()
-    ==
-    "(ref.as_i31\n (local.get $2)\n)\n"
-  );
+  // TODO: extern.externalize and extern.internalize
 
   module.dispose();
 })();

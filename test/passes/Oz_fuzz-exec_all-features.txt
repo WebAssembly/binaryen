@@ -22,8 +22,6 @@
 [fuzz-exec] calling br-on_non_null-2
 [LoggingExternalInterface logging 1]
 [trap unreachable]
-[fuzz-exec] calling ref-as-func-of-data
-[trap not a func]
 [fuzz-exec] calling ref-as-func-of-func
 [fuzz-exec] calling cast-on-func
 [LoggingExternalInterface logging 0]
@@ -73,17 +71,16 @@
  (export "cast-null-anyref-to-gc" (func $5))
  (export "br-on_non_null" (func $7))
  (export "br-on_non_null-2" (func $8))
- (export "ref-as-func-of-data" (func $9))
  (export "ref-as-func-of-func" (func $7))
- (export "cast-on-func" (func $12))
+ (export "cast-on-func" (func $11))
  (export "array-alloc-failure" (func $7))
- (export "init-array-packed" (func $14))
- (export "array-copy" (func $16))
- (export "array.init_static" (func $17))
- (export "array.init_static-packed" (func $18))
- (export "static-casts" (func $19))
+ (export "init-array-packed" (func $13))
+ (export "array-copy" (func $15))
+ (export "array.init_static" (func $16))
+ (export "array.init_static-packed" (func $17))
+ (export "static-casts" (func $18))
  (export "static-br_on_cast" (func $2))
- (export "static-br_on_cast_fail" (func $21))
+ (export "static-br_on_cast_fail" (func $20))
  (func $0 (type $void_func) (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -196,12 +193,7 @@
    )
   )
  )
- (func $9 (type $void_func) (; has Stack IR ;)
-  (drop
-   (unreachable)
-  )
- )
- (func $12 (type $void_func) (; has Stack IR ;)
+ (func $11 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
@@ -213,7 +205,7 @@
   )
   (unreachable)
  )
- (func $14 (type $int_func) (; has Stack IR ;) (result i32)
+ (func $13 (type $int_func) (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new $bytes
     (i32.const -43)
@@ -222,7 +214,7 @@
    (i32.const 10)
   )
  )
- (func $16 (type $void_func) (; has Stack IR ;)
+ (func $15 (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
   (local $1 (ref $bytes))
   (array.set $bytes
@@ -277,7 +269,7 @@
    )
   )
  )
- (func $17 (type $void_func) (; has Stack IR ;)
+ (func $16 (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
   (call $log
    (array.len
@@ -302,7 +294,7 @@
    )
   )
  )
- (func $18 (type $void_func) (; has Stack IR ;)
+ (func $17 (type $void_func) (; has Stack IR ;)
   (call $log
    (array.get_u $bytes
     (array.init_static $bytes
@@ -312,7 +304,7 @@
    )
   )
  )
- (func $19 (type $void_func) (; has Stack IR ;)
+ (func $18 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const 1)
   )
@@ -332,7 +324,7 @@
    (i32.const 1)
   )
  )
- (func $21 (type $void_func) (; has Stack IR ;)
+ (func $20 (type $void_func) (; has Stack IR ;)
   (call $log
    (i32.const -2)
   )
@@ -361,8 +353,6 @@
 [fuzz-exec] calling br-on_non_null
 [fuzz-exec] calling br-on_non_null-2
 [LoggingExternalInterface logging 1]
-[trap unreachable]
-[fuzz-exec] calling ref-as-func-of-data
 [trap unreachable]
 [fuzz-exec] calling ref-as-func-of-func
 [fuzz-exec] calling cast-on-func

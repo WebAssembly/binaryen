@@ -2790,27 +2790,27 @@ Expression* SExpressionWasmBuilder::makeRefTest(Element& s,
   return Builder(wasm).makeRefTest(ref, *castType);
 }
 
-Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
+Expression* SExpressionWasmBuilder::makeRefCast(Element& s,
+                                                std::optional<Type> castType) {
   int i = 1;
-  Nullability nullability;
   bool legacy = false;
-  if (s[0]->str().str == "ref.cast_static") {
-    legacy = true;
-  } else {
-    nullability = NonNullable;
-    if (s[i]->str().str == "null") {
+  if (!castType) {
+    Nullability nullability = NonNullable;
+    if (s[0]->str().str == "ref.cast_static") {
+      legacy = true;
+    } else if (s[i]->str().str == "null") {
       nullability = Nullable;
       ++i;
     }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
-  auto heapType = parseHeapType(*s[i++]);
   auto* ref = parseExpression(*s[i++]);
   if (legacy) {
     // Legacy polymorphic behavior.
-    nullability = ref->type.getNullability();
+    castType = Type(castType->getHeapType(), ref->type.getNullability());
   }
-  auto type = Type(heapType, nullability);
-  return Builder(wasm).makeRefCast(ref, type, RefCast::Safe);
+  return Builder(wasm).makeRefCast(ref, *castType, RefCast::Safe);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCastNop(Element& s) {
