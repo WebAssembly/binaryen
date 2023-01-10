@@ -2304,7 +2304,7 @@ function wrapModule(module, self = {}) {
 
   self['structref'] = {
     'pop'() {
-      return Module['_BinaryenPop'](module, Module['dataref']);
+      return Module['_BinaryenPop'](module, Module['structref']);
     }
   };
 

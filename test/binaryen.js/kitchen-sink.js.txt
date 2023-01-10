@@ -2178,7 +2178,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (pop i31ref)
       )
-      (pop)
+      (drop
+       (pop structref)
+      )
       (drop
        (pop stringref)
       )
@@ -4280,7 +4282,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       (drop
        (pop i31ref)
       )
-      (pop)
+      (drop
+       (pop structref)
+      )
       (drop
        (pop stringref)
       )

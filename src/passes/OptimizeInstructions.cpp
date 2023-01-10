@@ -2052,13 +2052,6 @@ struct OptimizeInstructions
     // =>
     //   (ref.cast ..)
     //
-    // This is valid because both pass through the value if they do not trap,
-    // and so reordering does not change whether a trap happens (and reordering
-    // traps is allowed), and does not change the value flowing out at the end.
-    // It is better to have the ref.as_non_null on the outside since it allows
-    // outer instructions to potentially optimize it away (should we find
-    // optimizations that can fold away a ref.cast on an outer instruction, that
-    // might motivate changing this).
     if (auto* as = curr->ref->dynCast<RefAs>()) {
       if (as->op == RefAsNonNull) {
         curr->ref = as->value;

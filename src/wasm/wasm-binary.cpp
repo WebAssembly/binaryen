@@ -2240,7 +2240,12 @@ void WasmBinaryBuilder::readTypes() {
               "The only allowed trivial supertype for functions is func");
           }
         } else {
-          // "struct" used to be "data".
+          // Check for "struct" here even if we are parsing an array definition.
+          // This is the old nonstandard "struct_subtype" or "array_subtype"
+          // form of type definitions that used the old "data" type as the
+          // supertype placeholder when there was no nontrivial supertype.
+          // "data" no longer exists, but "struct" has the same encoding it used
+          // to have.
           if (basicSuper != HeapType::struct_) {
             throwError("The only allowed trivial supertype for structs and "
                        "arrays is data");
