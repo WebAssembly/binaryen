@@ -1014,7 +1014,10 @@ Type BrOn::getSentType() {
         return castType;
       }
     case BrOnCastFail:
-      // The same as the result type of br_on_cast.
+      // The same as the result type of br_on_cast (if reachable).
+      if (ref->type == Type::unreachable) {
+        return Type::unreachable;
+      }
       if (castType.isNullable()) {
         return Type(ref->type.getHeapType(), NonNullable);
       } else {

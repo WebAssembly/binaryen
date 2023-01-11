@@ -1398,10 +1398,10 @@
 (module
   ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
 
-  ;; CHECK:      (func $foo (type $none_=>_ref|any|) (result (ref any))
+  ;; CHECK:      (func $br_on_non_null (type $none_=>_ref|any|) (result (ref any))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $foo (result (ref any))
+  (func $br_on_non_null (result (ref any))
     (block $label$1 (result (ref any))
       ;; this break has an unreachable input, and so it does not have a heap type
       ;; there, and no heap type to send on the branch. this tests we do not hit
@@ -1410,6 +1410,19 @@
         (block (result anyref)
           (unreachable)
         )
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $br_on_cast_fail (type $none_=>_ref|any|) (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_fail (result (ref any))
+    (block $label$1 (result (ref none))
+      ;; Similar to the above, but using br_on_cast_fail.
+      (br_on_cast_fail $label$1 null struct
+        (unreachable)
       )
       (unreachable)
     )
