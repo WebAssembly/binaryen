@@ -1967,7 +1967,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   }
   // TODO: randomize the order
   for (auto& func : wasm.functions) {
-    if (Type::isSubType(type, Type(func->type, NonNullable))) {
+    if (Type::isSubType(Type(func->type, NonNullable), type)) {
       return builder.makeRefFunc(func->name, func->type);
     }
   }
