@@ -712,18 +712,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return;
         }
 
-        // First, check for a possible null which would prevent all other
-        // optimizations (except for br_on_cast variants).
+        // First, check for a possible null which would prevent optimizations on
+        // null checks.
         // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
         // input is (ref null func) with br_on_non_null (as only the null check
         // would be needed).
+        // TODO: Use the fallthrough to determine in more cases that we
+        // definitely have a null.
         auto refType = curr->ref->type;
-        if (refType.isNullable() && curr->op != BrOnCast &&
-            curr->op != BrOnCastFail) {
+        if (refType.isNullable() &&
+            (curr->op == BrOnNull || curr->op == BrOnNonNull)) {
           return;
         }
 
         if (curr->op == BrOnNull) {
+          assert(refType.isNonNullable());
           // This cannot be null, so the br is never taken, and the non-null
           // value flows through.
           replaceCurrent(curr->ref);
@@ -731,6 +734,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return;
         }
         if (curr->op == BrOnNonNull) {
+          assert(refType.isNonNullable());
           // This cannot be null, so the br is always taken.
           replaceCurrent(
             Builder(*getModule()).makeBreak(curr->name, curr->ref));
@@ -739,20 +743,24 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
 
         // Check if the type is the kind we are checking for.
-        auto result = GCTypeUtils::evaluateKindCheck(curr);
+        auto result = GCTypeUtils::evaluateCastCheck(refType, curr->castType);
+        if (curr->op == BrOnCastFail) {
+          result = GCTypeUtils::flipEvaluationResult(result);
+        }
 
         if (result == GCTypeUtils::Success) {
-          // The type is what we are looking for, so we can switch from BrOn to
-          // a simple br which is always taken.
+          // The cast succeeds, so we can switch from BrOn to a simple br that
+          // is always taken.
           replaceCurrent(
             Builder(*getModule()).makeBreak(curr->name, curr->ref));
           worked = true;
         } else if (result == GCTypeUtils::Failure) {
-          // The type is not what we are looking for, so the branch is never
-          // taken, and the value just flows through.
+          // The cast fails, so the branch is never taken, and the value just
+          // flows through.
           replaceCurrent(curr->ref);
           worked = true;
         }
+        // TODO: Handle SuccessOnlyIfNull and SuccessOnlyIfNonNull.
       }
     } optimizer;
 
