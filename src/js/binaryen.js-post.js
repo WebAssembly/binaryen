@@ -2597,7 +2597,7 @@ function wrapModule(module, self = {}) {
         const ptr = _malloc(size);
         Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
         const res = new Uint8Array(size);
-        res.set(new Uint8Array(buffer, ptr, size));
+        res.set(HEAP8.subarray(ptr, ptr + size));
         _free(ptr);
         return res.buffer;
       })(),
