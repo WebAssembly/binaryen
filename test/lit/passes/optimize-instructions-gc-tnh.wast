@@ -152,7 +152,7 @@
         )
       )
     )
-    ;; It works on func and references, too.
+    ;; It works on func references, too.
     (ref.is_null
       (ref.cast null $void
         (local.get $f)
