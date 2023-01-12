@@ -255,34 +255,35 @@ inline Index getZeroExtBits(Expression* curr) {
 
 enum class FallthroughBehavior { AllowTeeBrIf, NoTeeBrIf };
 
-inline Expression* getImmediateFallthrough(
-  Expression* curr,
+inline Expression** getImmediateFallthroughPtr(
+  Expression** currp,
   const PassOptions& passOptions,
   Module& module,
   FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
+  auto* curr = *currp;
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
-    return curr;
+    return currp;
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee() && behavior == FallthroughBehavior::AllowTeeBrIf) {
-      return set->value;
+      return &set->value;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return block->list.back();
+      return &block->list.back();
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return loop->body;
+    return &loop->body;
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
       if (iff->ifTrue->type == Type::unreachable) {
-        return iff->ifFalse;
+        return &iff->ifFalse;
       } else if (iff->ifFalse->type == Type::unreachable) {
-        return iff->ifTrue;
+        return &iff->ifTrue;
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
@@ -302,25 +303,33 @@ inline Expression* getImmediateFallthrough(
         behavior == FallthroughBehavior::AllowTeeBrIf &&
         EffectAnalyzer::canReorder(
           passOptions, module, br->condition, br->value)) {
-      return br->value;
+      return &br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
     if (!EffectAnalyzer(passOptions, module, tryy->body).throws()) {
-      return tryy->body;
+      return &tryy->body;
     }
   } else if (auto* as = curr->dynCast<RefCast>()) {
-    return as->ref;
+    return &as->ref;
   } else if (auto* as = curr->dynCast<RefAs>()) {
     // Extern conversions are not casts and actually produce new values.
     // Treating them as fallthroughs would lead to misoptimizations of
     // subsequent casts.
     if (as->op != ExternInternalize && as->op != ExternExternalize) {
-      return as->value;
+      return &as->value;
     }
   } else if (auto* br = curr->dynCast<BrOn>()) {
-    return br->ref;
+    return &br->ref;
   }
-  return curr;
+  return currp;
+}
+
+inline Expression* getImmediateFallthrough(
+  Expression* curr,
+  const PassOptions& passOptions,
+  Module& module,
+  FallthroughBehavior behavior = FallthroughBehavior::AllowTeeBrIf) {
+  return *getImmediateFallthroughPtr(&curr, passOptions, module, behavior);
 }
 
 // Similar to getImmediateFallthrough, but looks through multiple children to
