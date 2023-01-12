@@ -1495,20 +1495,21 @@ struct OptimizeInstructions
   // |requiredType| is not provided we will accept any type there.
   //
   // See "notes on removing casts", above, for when this is safe to do.
-  void skipCast(Expression*& input,
-                Type requiredType = Type(HeapType::any, Nullable)) {
+  void skipCast(Expression*& input, Type requiredType = Type::none) {
     // Traps-never-happen mode is a requirement for us to optimize here.
     if (!getPassOptions().trapsNeverHappen) {
       return;
     }
     while (1) {
       if (auto* as = input->dynCast<RefAs>()) {
-        if (Type::isSubType(as->value->type, requiredType)) {
+        if (requiredType == Type::none ||
+            Type::isSubType(as->value->type, requiredType)) {
           input = as->value;
           continue;
         }
       } else if (auto* cast = input->dynCast<RefCast>()) {
-        if (Type::isSubType(cast->ref->type, requiredType)) {
+        if (requiredType == Type::none ||
+            Type::isSubType(cast->ref->type, requiredType)) {
           input = cast->ref;
           continue;
         }

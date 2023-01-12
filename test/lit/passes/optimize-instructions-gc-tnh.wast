@@ -7,6 +7,10 @@
   ;; NO_TNH:      (type $struct (struct (field (mut i32))))
   (type $struct (struct_subtype (field (mut i32)) data))
 
+  ;; TNH:      (type $void (func))
+  ;; NO_TNH:      (type $void (func))
+  (type $void (func))
+
   ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; TNH-NEXT:  (ref.eq
   ;; TNH-NEXT:   (local.get $a)
@@ -113,25 +117,45 @@
     )
   )
 
-  ;; TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; TNH:      (func $ref.is_b (type $eqref_funcref_=>_i32) (param $a eqref) (param $f funcref) (result i32)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (ref.is_null
+  ;; TNH-NEXT:    (local.get $a)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (ref.is_null
-  ;; TNH-NEXT:   (local.get $a)
+  ;; TNH-NEXT:   (local.get $f)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_b (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; NO_TNH:      (func $ref.is_b (type $eqref_funcref_=>_i32) (param $a eqref) (param $f funcref) (result i32)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.is_null
+  ;; NO_TNH-NEXT:    (ref.cast null $struct
+  ;; NO_TNH-NEXT:     (local.get $a)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.is_null
-  ;; NO_TNH-NEXT:   (ref.cast null $struct
-  ;; NO_TNH-NEXT:    (local.get $a)
+  ;; NO_TNH-NEXT:   (ref.cast null $void
+  ;; NO_TNH-NEXT:    (local.get $f)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $ref.is_b(param $a (ref null eq)) (result i32)
+  (func $ref.is_b (param $a eqref) (param $f funcref) (result i32)
     ;; Here we only have a cast, and no ref.as operations that force the value
     ;; to be non-nullable. That means we cannot remove the ref.is, but we can
     ;; remove the cast in TNH.
+    (drop
+      (ref.is_null
+        (ref.cast null $struct
+          (local.get $a)
+        )
+      )
+    )
+    ;; It works on func references, too.
     (ref.is_null
-      (ref.cast null $struct
-        (local.get $a)
+      (ref.cast null $void
+        (local.get $f)
       )
     )
   )
@@ -290,7 +314,7 @@
     )
   )
 
-  ;; TNH:      (func $select.arm.null.effects (type $none_=>_none)
+  ;; TNH:      (func $select.arm.null.effects (type $void)
   ;; TNH-NEXT:  (local $0 (ref $struct))
   ;; TNH-NEXT:  (local $1 (ref $struct))
   ;; TNH-NEXT:  (struct.set $struct 0
@@ -328,7 +352,7 @@
   ;; TNH-NEXT:   (i32.const 2)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.arm.null.effects (type $none_=>_none)
+  ;; NO_TNH:      (func $select.arm.null.effects (type $void)
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (select (result (ref null $struct))
   ;; NO_TNH-NEXT:    (call $get-ref)
@@ -367,7 +391,7 @@
     )
   )
 
-  ;; TNH:      (func $null.arm.null.effects (type $none_=>_none)
+  ;; TNH:      (func $null.arm.null.effects (type $void)
   ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (block (result nullref)
@@ -390,7 +414,7 @@
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $null.arm.null.effects (type $none_=>_none)
+  ;; NO_TNH:      (func $null.arm.null.effects (type $void)
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (select (result (ref null $struct))
   ;; NO_TNH-NEXT:    (ref.as_non_null
