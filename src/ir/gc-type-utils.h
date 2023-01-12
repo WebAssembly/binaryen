@@ -85,16 +85,17 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return SuccessOnlyIfNull;
   }
 
-  // The cast will not definitely succeed nor will it definitely fail.
-  //
-  // Perhaps the heap type part of the cast can be reasoned about, at least.
-  // E.g. if the heap type part of the cast is definitely compatible, but the
-  // cast as a whole is not, that would leave only nullability as an issue,
-  // that is, this means that the input ref is nullable but we are casting to
-  // non-null.
+  // If the heap type part of the cast is compatible but the cast as a whole is
+  // not, we must have a nullable input ref that we are casting to a
+  // non-nullable type.
   if (refIsHeapSubType) {
     assert(refType.isNullable());
     assert(castType.isNonNullable());
+    if (refHeapType.isBottom()) {
+      // Non-null references to bottom types do not exist, so there's no value
+      // that could make the cast succeed.
+      return Failure;
+    }
     return SuccessOnlyIfNonNull;
   }
 
