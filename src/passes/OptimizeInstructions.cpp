@@ -1935,11 +1935,11 @@ struct OptimizeInstructions
         if (result == GCTypeUtils::Success) {
           // The cast will succeed, but we can't just remove the cast and
           // replace it with `ref` because the intermediate expressions might
-          // have had side effects. If we know the value is a null, though, we
-          // can at least put the side effects in a block that directly returns
-          // the null value.
-          // TODO: Track side effects of expressions we've seen to determine
-          // whether we can just replace the cast with `ref`.
+          // have had side effects. We can replace the cast with a drop followed
+          // by a direct return of the value, though.
+          //
+          // TODO: Do this for non-null values as well by storing the value to
+          // return in a tee.
           if (ref->type.isNull()) {
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                                 builder.makeRefNull(nullType)));
