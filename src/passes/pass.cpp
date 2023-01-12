@@ -930,6 +930,12 @@ struct AfterEffectModuleChecker {
 };
 
 void PassRunner::runPass(Pass* pass) {
+  assert(!pass->isFunctionParallel());
+
+  if (options.skippedPasses.count(pass->name)) {
+    return;
+  }
+
   std::unique_ptr<AfterEffectModuleChecker> checker;
   if (getPassDebug()) {
     checker = std::unique_ptr<AfterEffectModuleChecker>(
@@ -948,6 +954,10 @@ void PassRunner::runPass(Pass* pass) {
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
+
+  if (options.skippedPasses.count(pass->name)) {
+    return;
+  }
 
   auto passDebug = getPassDebug();
 

@@ -226,6 +226,8 @@ struct PassOptions {
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::unordered_map<std::string, std::string> arguments;
+  // Passes to skip and not run.
+  std::unordered_set<std::string> skippedPasses;
 
   // Effect info computed for functions. One pass can generate this and then
   // other passes later can benefit from it. It is up to the sequence of passes
