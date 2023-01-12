@@ -1,7 +1,7 @@
 ;; RUN: wasm-fuzz-types --hybrid -v --seed=1 | filecheck %s
 
 ;; CHECK:      (type $0 (struct))
-;; CHECK-NEXT:  (rec
+;; CHECK-NEXT: (rec
 ;; CHECK-NEXT:  (type $1 (struct))
 ;; CHECK-NEXT:  (type $2 (array i16))
 ;; CHECK-NEXT:  (type $3 (func))
@@ -13,20 +13,20 @@
 ;; CHECK-NEXT:  (type $7 (func (param f64) (result i64)))
 ;; CHECK-NEXT: )
 ;; CHECK-NEXT: (rec
-;; CHECK-NEXT:  (type $8 (struct_subtype $1))
-;; CHECK-NEXT:  (type $9 (func_subtype (param (ref $5) i32 i64 f64 f64 (ref eq) v128) (result i64) $4))
+;; CHECK-NEXT:  (type $8 (struct_subtype (field f64 (ref $2) f64 (mut (ref null $9))) $1))
+;; CHECK-NEXT:  (type $9 (func_subtype (param (ref array) i32 i64 f64 f64 anyref v128) (result i64) $4))
 ;; CHECK-NEXT: )
 ;; CHECK-NEXT: (rec
-;; CHECK-NEXT:  (type $10 (func_subtype (param (ref $5) i32 i64 f64 f64 (ref eq) v128) (result i64) $9))
+;; CHECK-NEXT:  (type $10 (func_subtype (param (ref eq) i32 i64 f64 f64 anyref v128) (result i64) $9))
 ;; CHECK-NEXT:  (type $11 (array_subtype (mut funcref) $6))
-;; CHECK-NEXT:  (type $12 (array f64))
+;; CHECK-NEXT:  (type $12 (array nullref))
 ;; CHECK-NEXT:  (type $13 none)
-;; CHECK-NEXT:  (type $14 (array arrayref))
-;; CHECK-NEXT:  (type $15 (array (mut i8)))
+;; CHECK-NEXT:  (type $14 (array (ref $6)))
+;; CHECK-NEXT:  (type $15 (array i32))
 ;; CHECK-NEXT: )
 ;; CHECK-NEXT: (rec
-;; CHECK-NEXT:  (type $16 (array_subtype f64 $12))
-;; CHECK-NEXT:  (type $17 (func (param (ref $5) (ref null $3) (ref null $0) (ref null $2) (ref $8) v128) (result v128)))
+;; CHECK-NEXT:  (type $16 (array_subtype (ref none) $12))
+;; CHECK-NEXT:  (type $17 (func (param (ref null $9)) (result f32 structref)))
 ;; CHECK-NEXT:  (type $18 none)
 ;; CHECK-NEXT: )
-;; CHECK-NEXT: (type $19 (func_subtype (param (ref $5) i32 i64 f64 f64 (ref eq) v128) (result i64) $9))
+;; CHECK-NEXT: (type $19 (func_subtype (param (ref any) i32 i64 f64 f64 anyref v128) (result i64) $9))
