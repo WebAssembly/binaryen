@@ -206,14 +206,14 @@ WasmSplitOptions::WasmSplitOptions()
            placeholderNamespace = argument;
          })
     .add(
-      "--asyncify",
+      "--jspi",
       "",
-      "Transform the module to support unwinding the stack from placeholder "
-      "functions and rewinding it once the secondary module has been loaded.",
+      "Transform the module to support loading the secondary module before any "
+      "placeholder functions have been called.",
       WasmSplitOption,
       {Mode::Split},
       Options::Arguments::Zero,
-      [&](Options* o, const std::string& argument) { asyncify = true; })
+      [&](Options* o, const std::string& argument) { jspi = true; })
     .add(
       "--export-prefix",
       "",

@@ -80,6 +80,8 @@ namespace wasm::ModuleSplitting {
 
 namespace {
 
+static const Name LOAD_SECONDARY_STATUS = "load_secondary_module_status";
+
 template<class F> void forEachElement(Module& module, F f) {
   ModuleUtils::iterActiveElementSegments(module, [&](ElementSegment* segment) {
     Name base = "";
@@ -283,6 +285,7 @@ struct ModuleSplitter {
   void exportImportFunction(Name func);
 
   // Main splitting steps
+  void setupJSPI();
   void moveSecondaryFunctions();
   void thunkExportedSecondaryFunctions();
   void indirectCallsToSecondaryFunctions();
@@ -297,6 +300,9 @@ struct ModuleSplitter {
       primaryFuncs(classifiedFuncs.first),
       secondaryFuncs(classifiedFuncs.second), tableManager(primary),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
+    if (config.jspi) {
+      setupJSPI();
+    }
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
@@ -305,6 +311,19 @@ struct ModuleSplitter {
     shareImportableItems();
   }
 };
+
+void ModuleSplitter::setupJSPI() {
+  assert(primary.getExportOrNull(LOAD_SECONDARY_MODULE) &&
+         "The load secondary module function must exist");
+  Builder builder(primary);
+  // Add a global to track whether the secondary module has been loaded yet.
+  primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
+                                       Type::i32,
+                                       builder.makeConst(int32_t(0)),
+                                       Builder::Mutable));
+  primary.addExport(builder.makeExport(
+    LOAD_SECONDARY_STATUS, LOAD_SECONDARY_STATUS, ExternalKind::Global));
+}
 
 std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
   // Create the secondary module and copy trivial properties.
@@ -425,12 +444,27 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       }
       auto* func = parent.secondary.getFunction(curr->target);
       auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
-      replaceCurrent(
+
+      auto* callIndirect =
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
                                  func->type,
-                                 curr->isReturn));
+                                 curr->isReturn);
+      if (parent.config.jspi) {
+        // Check if the secondary module is loaded and if it isn't, call the
+        // function to load it.
+        auto* loadSecondary = builder.makeIf(
+          builder.makeUnary(
+            EqZInt32, builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
+          builder.makeCall(
+            parent.primary.getExport(LOAD_SECONDARY_MODULE)->value,
+            {},
+            Type::none));
+        replaceCurrent(builder.makeSequence(loadSecondary, callIndirect));
+      } else {
+        replaceCurrent(callIndirect);
+      }
     }
     void visitRefFunc(RefFunc* curr) {
       assert(false && "TODO: handle ref.func as well");
