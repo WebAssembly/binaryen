@@ -1887,22 +1887,6 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.tee $a
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1920,25 +1904,33 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.cast null none
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.cast null none
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-null (type $void)
   ;; NOMNL-NEXT:  (local $a (ref null $A))
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result nullref)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result nullref)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result nullref)
   ;; NOMNL-NEXT:    (drop
@@ -1967,30 +1959,44 @@
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result nullref)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result nullref)
+  ;; NOMNL-NEXT:      (ref.cast null none
+  ;; NOMNL-NEXT:       (local.get $a)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result nullref)
+  ;; NOMNL-NEXT:      (ref.cast null none
+  ;; NOMNL-NEXT:       (local.get $a)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-static-null
     (local $a (ref null $A))
     ;; Casting nulls results in a null.
     (drop
       (ref.cast null $A
-        (ref.null $A)
-      )
-    )
-    (drop
-      (ref.cast null $A
-        (ref.null $B)
-      )
-    )
-    (drop
-      (ref.cast null $B
-        (ref.null $A)
+        (ref.null none)
       )
     )
     ;; A fallthrough works too.
     (drop
       (ref.cast null $A
         (local.tee $a
-          (ref.null $A)
+          (ref.null none)
         )
       )
     )
@@ -1998,7 +2004,27 @@
     (drop
       (ref.cast $A
         (local.tee $a
-          (ref.null $A)
+          (ref.null none)
+        )
+      )
+    )
+    ;; The prior two examples work even if the fallthrough is only later proven
+    ;; to be null.
+    (drop
+      (ref.cast null $B
+        (block (result (ref null $A))
+          (ref.cast null none
+            (local.get $a)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast $B
+        (block (result (ref null $A))
+          (ref.cast null none
+            (local.get $a)
+          )
         )
       )
     )

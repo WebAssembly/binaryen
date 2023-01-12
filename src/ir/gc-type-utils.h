@@ -95,6 +95,10 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   if (refIsHeapSubType) {
     assert(refType.isNullable());
     assert(castType.isNonNullable());
+    if (refHeapType.isBottom()) {
+      // Non-null references to bottom types do not exist!
+      return Failure;
+    }
     return SuccessOnlyIfNonNull;
   }
 
