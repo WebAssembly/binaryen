@@ -277,28 +277,7 @@
   )
 )
 
-;; Check that a ref.cast inhibits merging.
-(module
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct))
-  ;; CHECK:      (type $B (struct_subtype  $A))
-  (type $B (struct_subtype $A))
-
-  ;; CHECK:      (type $ref|$A|_=>_ref|$B| (func (param (ref $A)) (result (ref $B))))
-
-  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$B|) (param $a (ref $A)) (result (ref $B))
-  ;; CHECK-NEXT:  (ref.cast $B
-  ;; CHECK-NEXT:   (local.get $a)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test (param $a (ref $A)) (result (ref $B))
-    (ref.cast $B
-      (local.get $a)
-    )
-  )
-)
-
-;; Check that a ref.test inhibits merging.
+;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
 
@@ -356,7 +335,7 @@
     (drop
       (block $l (result (ref $A))
         (br_on_non_null $l
-            (local.get $a)
+          (local.get $a)
         )
         (unreachable)
       )
@@ -365,7 +344,7 @@
   )
 )
 
-;; Check that a call_indirect inhibits merging of the table type.
+;; Check that a call_indirect inhibits merging.
 (module
   ;; CHECK:      (type $A (func))
   (type $A (func))
@@ -381,7 +360,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (type $A)
     (call_indirect (type $B)
       (i32.const 0)
     )
