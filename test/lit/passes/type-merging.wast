@@ -276,3 +276,93 @@
     (local $c (ref null $sub-refarray-nn))
   )
 )
+
+;; Check that a ref.test inhibits merging (ref.cast is already checked above).
+(module
+  ;; CHECK:      (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
+
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct))
+  ;; CHECK:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
+  ;; CHECK-NEXT:  (ref.test $B
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $a (ref $A)) (result i32)
+    (ref.test $B
+      (local.get $a)
+    )
+  )
+)
+
+;; Check that a br_on_cast inhibits merging.
+(module
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct))
+  ;; CHECK:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  ;; CHECK:      (type $ref|$A|_=>_ref|$B| (func (param (ref $A)) (result (ref $B))))
+
+  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$B|) (param $a (ref $A)) (result (ref $B))
+  ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return $B
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block $l (result (ref $A))
+  ;; CHECK-NEXT:     (br_on_non_null $l
+  ;; CHECK-NEXT:      (local.get $a)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $a (ref $A)) (result (ref $B))
+    (drop
+      (br_on_cast 0 $B
+        (local.get $a)
+      )
+    )
+    ;; Also check that a different br_on* doesn't confuse us.
+    (drop
+      (block $l (result (ref $A))
+        (br_on_non_null $l
+          (local.get $a)
+        )
+        (unreachable)
+      )
+    )
+    (unreachable)
+  )
+)
+
+;; Check that a call_indirect inhibits merging.
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
+  ;; CHECK:      (type $B (func_subtype $A))
+  (type $B (func_subtype $A))
+
+  (table 1 1 (ref null $A))
+
+  ;; CHECK:      (table $0 1 1 (ref null $A))
+
+  ;; CHECK:      (func $test (type $A)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $B)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (type $A)
+    (call_indirect (type $B)
+      (i32.const 0)
+    )
+  )
+)

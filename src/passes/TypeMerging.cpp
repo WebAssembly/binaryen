@@ -54,40 +54,27 @@ namespace {
 // Most functions do no casts, or perhaps cast |this| and perhaps a few others.
 using ReferredTypes = SmallUnorderedSet<HeapType, 5>;
 
-struct CastFinder
-  : public PostWalker<CastFinder, UnifiedExpressionVisitor<CastFinder>> {
+struct CastFinder : public PostWalker<CastFinder> {
   ReferredTypes referredTypes;
 
-  void visitExpression(Expression* curr) {
-    // Find all references to a heap type.
-
-#define DELEGATE_ID curr->_id
-
-#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
-
-#define DELEGATE_FIELD_HEAPTYPE(id, field) referredTypes.insert(cast->field);
-
-#define DELEGATE_FIELD_CHILD(id, field)
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
-#define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
-#define DELEGATE_FIELD_LITERAL(id, field)
-#define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
-#define DELEGATE_FIELD_TYPE(id, field)
-#define DELEGATE_FIELD_ADDRESS(id, field)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
-
-#include "wasm-delegations-fields.def"
+  template<typename T> void visitCast(T* curr) {
+    if (auto type = curr->getCastType(); type != Type::unreachable) {
+      referredTypes.insert(type.getHeapType());
+    }
   }
 
-  void visitRefCast(Expression* curr) {
-    if (curr->type != Type::unreachable) {
-      referredTypes.insert(curr->type.getHeapType());
+  void visitRefCast(RefCast* curr) { visitCast(curr); }
+
+  void visitRefTest(RefTest* curr) { visitCast(curr); }
+
+  void visitBrOn(BrOn* curr) {
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
+      visitCast(curr);
     }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    referredTypes.insert(curr->heapType);
   }
 };
 
