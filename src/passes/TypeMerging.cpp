@@ -57,13 +57,21 @@ using ReferredTypes = SmallUnorderedSet<HeapType, 5>;
 struct CastFinder : public PostWalker<CastFinder> {
   ReferredTypes referredTypes;
 
+  bool trapsNeverHappen;
+  CastFinder(const PassOptions& options)
+    : trapsNeverHappen(options.trapsNeverHappen) {}
+
   template<typename T> void visitCast(T* curr) {
     if (auto type = curr->getCastType(); type != Type::unreachable) {
       referredTypes.insert(type.getHeapType());
     }
   }
 
-  void visitRefCast(RefCast* curr) { visitCast(curr); }
+  void visitRefCast(RefCast* curr) {
+    if (!trapsNeverHappen) {
+      visitCast(curr);
+    }
+  }
 
   void visitRefTest(RefTest* curr) { visitCast(curr); }
 
@@ -74,7 +82,9 @@ struct CastFinder : public PostWalker<CastFinder> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    referredTypes.insert(curr->heapType);
+    if (!trapsNeverHappen) {
+      referredTypes.insert(curr->heapType);
+    }
   }
 };
 
@@ -108,14 +118,14 @@ struct TypeMerging : public Pass {
           return;
         }
 
-        CastFinder finder;
+        CastFinder finder(getPassOptions());
         finder.walk(func->body);
         referredTypes = std::move(finder.referredTypes);
       });
 
     // Also find cast types in the module scope (not possible in the current
     // spec, but do it to be future-proof).
-    CastFinder moduleFinder;
+    CastFinder moduleFinder(getPassOptions());
     moduleFinder.walkModuleCode(module);
 
     // Accumulate all the referredTypes.
