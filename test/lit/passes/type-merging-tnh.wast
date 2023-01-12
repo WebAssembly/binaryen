@@ -88,8 +88,8 @@
   )
 )
 
-;; call_indirect does not inhibit merging if traps never happen (although we
-;; haven't implemented function type merging anyway TODO).
+;; call_indirect should not inhibit merging if traps never happen, but we
+;; haven't implemented function type merging yet TODO.
 (module
   ;; CHECK:      (type $A (func))
   (type $A (func))

@@ -57,7 +57,12 @@ using ReferredTypes = SmallUnorderedSet<HeapType, 5>;
 struct CastFinder : public PostWalker<CastFinder> {
   ReferredTypes referredTypes;
 
+  // If traps never happen, then ref.cast and call_indirect can never
+  // differentiate between types since they always succeed. Take advantage of
+  // that by not having those instructions inhibit merges in TNH mode.
+  // mode.
   bool trapsNeverHappen;
+
   CastFinder(const PassOptions& options)
     : trapsNeverHappen(options.trapsNeverHappen) {}
 
