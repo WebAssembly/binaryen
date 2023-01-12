@@ -1936,16 +1936,17 @@ struct OptimizeInstructions
         auto result = GCTypeUtils::evaluateCastCheck(ref->type, curr->type);
 
         if (result == GCTypeUtils::Success) {
-          // The cast will succeed. This can only happen if the ref is a subtype of
-          // the cast instruction, which means we can replace the cast with the ref.
-          assert(Type::isSubType(ref->type, cast->type));
-          // If there were no intermediate expressions,
-          // we can just skip the cast.
+          // The cast will succeed. This can only happen if the ref is a subtype
+          // of the cast instruction, which means we can replace the cast with
+          // the ref.
+          assert(Type::isSubType(ref->type, curr->type));
+          if (curr->type != ref->type) {
+            refinalize = true;
+          }
+          // If there were no intermediate expressions, we can just skip the
+          // cast.
           if (ref == curr->ref) {
             replaceCurrent(ref);
-            if (curr->type != ref->type) {
-              refinalize = true;
-            }
             return;
           }
           // Otherwise we can't just remove the cast and replace it with `ref`
@@ -1965,7 +1966,6 @@ struct OptimizeInstructions
           replaceCurrent(
             builder.makeSequence(builder.makeDrop(curr->ref),
                                  builder.makeLocalGet(scratch, ref->type)));
-          refinalize = true;
           return;
         } else if (result == GCTypeUtils::Failure) {
           // This cast cannot succeed, so it will trap.
