@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "ir/element-utils.h"
+#include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -163,26 +164,40 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
 
   void walkGlobalInit(Expression* curr) {
-    if (auto* new_ = curr->dynCast<StructNew>()) {
-      auto type = curr->type.getHeapType();
-      for (Index i = 0; i < new_->operands.size(); i++) {
-        // TODO: We could recurse into nested StructNew operations. For now,
-        //       just look at the top level. That is enough for a vtable.
-        auto* operand = new_->operands[i];
-        auto sf = StructField{type, i};
-        if (readStructFields.count(sf)) {
-          // This data can be read, so just walk it.
-          walk(operand);
-        } else {
-          // This data might be read later.
-          unreadStructFieldExprMap[sf].push_back(operand);
-        }
-      }
+    auto* new_ = curr->dynCast<StructNew>();
+    if (!closedWorld || !new_) {
+      // If we are in open world then we cannot optimize based on which struct
+      // fields we see read, since reads can happen on the outside. And if this
+      // is not a StructNew, then it is not valid for that optimization anyhow.
+      // Just walk this normally.
+      walk(curr);
       return;
     }
 
-    // Just walk this normally.
-    walk(curr);
+    auto type = curr->type.getHeapType();
+    for (Index i = 0; i < new_->operands.size(); i++) {
+      // TODO: We could recurse into nested StructNew operations. For now,
+      //       just look at the top level. That is enough for a vtable.
+      auto* operand = new_->operands[i];
+      auto sf = StructField{type, i};
+      if (readStructFields.count(sf)) {
+        // This data can be read, so just walk it.
+        walk(operand);
+      } else {
+        // This data might be read later. Note it as unread.
+        unreadStructFieldExprMap[sf].push_back(operand);
+
+        // We also must mark any RefFuncs here as uncalled. By doing so, we
+        // will know that they exist even if they have not been called, and
+        // will handle that while optimizing (if we find the function is not
+        // called at all then we want to remove it, but if it has a reference
+        // we cannot do so or we'd break validation; instead, we'll just
+        // empty out its body, which leaves references to it as valid).
+        for (auto* refFunc : FindAll<RefFunc>(operand).list) {
+          visitRefFunc(refFunc);
+        }
+      }
+    }
   }
 
   // Visitors
@@ -304,17 +319,17 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   std::unique_ptr<SubTypes> subTypes;
 
   void visitStructGet(StructGet* curr) {
-    if (curr->type == Type::unreachable) {
+    if (curr->ref->type == Type::unreachable) {
       return;
     }
 
-    auto type = curr->type.getHeapType();
+    auto type = curr->ref->type.getHeapType();
     if (!readStructFields.count({type, curr->index})) {
       // This is the first time we see a read of this data. Note that it is
       // read, and also all subtypes since we might be reading from them as
       // well.
       if (!subTypes) {
-        subTypes = std::make_unique<SubTypes>(*getModule());
+        subTypes = std::make_unique<SubTypes>(*module);
       }
       subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
         auto sf = StructField{type, curr->index};
