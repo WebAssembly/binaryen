@@ -96,7 +96,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // are stored, so even just looking there is quite useful.
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression>>
-      unreadStructFieldExprMap;
+    unreadStructFieldExprMap;
 
   // Expressions that might be read
   // Maps {Struct type, field #} to a vector of expressions
