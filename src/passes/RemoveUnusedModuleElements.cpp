@@ -106,6 +106,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
+  // Functions for whom there is a ref.func. We cannot remove these blah blah XXX
+  // use this instead of scouring uRFM?
+  std::unordered_set<Name> danglingRefFuncs;
+
   ReachabilityAnalyzer(Module* module,
                        const std::vector<ModuleElement>& roots,
                        bool closedWorld)
@@ -200,14 +204,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         // This data might be read later. Note it as unread.
         unreadStructFieldExprMap[sf].push_back(operand);
 
-        // We also must mark any RefFuncs here as uncalled. By doing so, we
-        // will know that they exist even if they have not been called, and
-        // will handle that while optimizing (if we find the function is not
-        // called at all then we want to remove it, but if it has a reference
-        // we cannot do so or we'd break validation; instead, we'll just
-        // empty out its body, which leaves references to it as valid).
+        // We also must note any RefFuncs here as potentially dangling: they
+        // cannot be simply removed if they have no other references.
         for (auto* refFunc : FindAll<RefFunc>(operand).list) {
-          visitRefFunc(refFunc);
+          danglingRefFuncs.insert(refFunc->func);
         }
       }
     }
@@ -481,7 +481,7 @@ struct RemoveUnusedModuleElements : public Pass {
         return false;
       }
 
-      if (uncalledRefFuncs.count(curr->name)) {
+      if (uncalledRefFuncs.count(curr->name) || analyzer.danglingRefFuncs.count(curr->name)) {
         // This is not reached, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {
