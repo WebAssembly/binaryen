@@ -150,9 +150,9 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    // Types with subtypes cannot be pruned as we must preserve contravariance
-    // of parameters. Likewise, we must preserve covariance of results, so in
-    // practice a type with either a supertype or a subtype cannot be modified.
+    // A type must have the same number of parameters and results as its
+    // supertypes and subtypes, so we only attempt to modify types without
+    // supertypes or subtypes.
     // TODO We could handle "cycles" where we remove fields from a group of
     //      types with subtyping relations at once.
     SubTypes subTypes(*module);
