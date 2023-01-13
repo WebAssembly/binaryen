@@ -102,6 +102,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // we see reads of them, while doing that in general would take more work. But
   // global data is a major use case, since that is where vtables and so forth
   // are stored, so even just looking there is quite useful.
+  //
+  // XXX we need more than this. the global.get of a vtable into a struct field
+  //     IS NOT AN ACTUAL READ if there is no read frommm that field.
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
