@@ -150,10 +150,11 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    // Types with subtypes cannot be pruned: for a function type B to be a
-    // subtype of A, we need them to have the same number of parameters, as B's
-    // parameters must be a subtype of A's, and tuple types are only subtypes if
-    // their sizes match.
+    // Types with subtypes cannot be pruned as we must preserve contravariance
+    // of parameters. Likewise, we must preserve covariance of results, so in
+    // practice a type with either a supertype or a subtype cannot be modified.
+    // TODO We could handle "cycles" where we remove fields from a group of
+    //      types with subtyping relations at once.
     SubTypes subTypes(*module);
 
     // Find parameters to prune.
@@ -170,10 +171,6 @@ struct SignaturePruning : public Pass {
       if (!subTypes.getStrictSubTypes(type).empty()) {
         continue;
       }
-
-      // A type with a signature supertype cannot be optimized: we'd need to
-      // remove the field from the super as well, which atm we don't attempt to
-      // do. TODO
       if (auto super = type.getSuperType()) {
         if (super->isSignature()) {
           continue;
