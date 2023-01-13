@@ -26,6 +26,7 @@
 #include "ir/element-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -95,12 +96,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // global data is a major use case, since that is where vtables and so forth
   // are stored, so even just looking there is quite useful.
   std::unordered_set<StructField> readStructFields;
-  std::unordered_map<StructField, std::vector<Expression>>
-    unreadStructFieldExprMap;
-
-  // Expressions that might be read
-  // Maps {Struct type, field #} to a vector of expressions
   std::unordered_map<StructField, std::vector<Expression*>>
+    unreadStructFieldExprMap;
 
   ReachabilityAnalyzer(Module* module,
                        const std::vector<ModuleElement>& roots,
@@ -167,11 +164,11 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
   void walkGlobalInit(Expression* curr) {
     if (auto* new_ = curr->dynCast<StructNew>()) {
-      auto type = curr->type.getHeapType());
-      for (Index i = 0; i < curr->operands.size(); i++) {
+      auto type = curr->type.getHeapType();
+      for (Index i = 0; i < new_->operands.size(); i++) {
         // TODO: We could recurse into nested StructNew operations. For now,
         //       just look at the top level. That is enough for a vtable.
-        auto* operand = curr->operands[i];
+        auto* operand = new_->operands[i];
         auto sf = StructField{type, i};
         if (readStructFields.count(sf)) {
           // This data can be read, so just walk it.
@@ -316,11 +313,11 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       // This is the first time we see a read of this data. Note that it is
       // read, and also all subtypes since we might be reading from them as
       // well.
-      if (!SubTypes) {
+      if (!subTypes) {
         subTypes = std::make_unique<SubTypes>(*getModule());
       }
-      subTypes.iterSubTypes(type, [&](HeapType type, Index depth) {
-        auto sf = {type, curr->index};
+      subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
+        auto sf = StructField{type, curr->index};
         readStructFields.insert(sf);
 
         // Walk all the unread data we've queued: we queued it for the
