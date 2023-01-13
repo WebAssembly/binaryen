@@ -283,6 +283,7 @@ struct ModuleSplitter {
 
   // Other helpers
   void exportImportFunction(Name func);
+  Expression* maybeLoadSecondary(Builder& builder, Expression* callIndirect);
 
   // Main splitting steps
   void setupJSPI();
@@ -337,7 +338,12 @@ std::pair<std::set<Name>, std::set<Name>>
 ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
   std::set<Name> primaryFuncs, secondaryFuncs;
   for (auto& func : primary.functions) {
-    if (func->imported() || config.primaryFuncs.count(func->name)) {
+    // In JSPI mode exported functions cannot to be moved to the secondary
+    // module since that would make them async when they may not have the JSPI
+    // wrapper. Exported JSPI functions can still benefit from splitting though
+    // since the only the JSPI wrapper stub will remain in the primary module.
+    if (func->imported() || config.primaryFuncs.count(func->name) ||
+        (config.jspi && primary.isExported(*func))) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
@@ -428,6 +434,21 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
+Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
+                                               Expression* callIndirect) {
+  if (config.jspi) {
+    // Check if the secondary module is loaded and if it isn't, call the
+    // function to load it.
+    auto* loadSecondary = builder.makeIf(
+      builder.makeUnary(
+        EqZInt32, builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
+      builder.makeCall(
+        primary.getExport(LOAD_SECONDARY_MODULE)->value, {}, Type::none));
+    return builder.makeSequence(loadSecondary, callIndirect);
+  }
+  return callIndirect;
+}
+
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
@@ -445,26 +466,13 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       auto* func = parent.secondary.getFunction(curr->target);
       auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
 
-      auto* callIndirect =
+      replaceCurrent(parent.maybeLoadSecondary(
+        builder,
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
                                  func->type,
-                                 curr->isReturn);
-      if (parent.config.jspi) {
-        // Check if the secondary module is loaded and if it isn't, call the
-        // function to load it.
-        auto* loadSecondary = builder.makeIf(
-          builder.makeUnary(
-            EqZInt32, builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
-          builder.makeCall(
-            parent.primary.getExport(LOAD_SECONDARY_MODULE)->value,
-            {},
-            Type::none));
-        replaceCurrent(builder.makeSequence(loadSecondary, callIndirect));
-      } else {
-        replaceCurrent(callIndirect);
-      }
+                                 curr->isReturn)));
     }
     void visitRefFunc(RefFunc* curr) {
       assert(false && "TODO: handle ref.func as well");
