@@ -2,6 +2,7 @@ include_directories(../../third_party/googletest/googletest/include)
 include_directories(../../src/wasm)
 
 set(unittest_SOURCES
+  dfa_minimization.cpp
   possible-contents.cpp
   type-builder.cpp
   wat-lexer.cpp
