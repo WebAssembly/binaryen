@@ -514,10 +514,22 @@
 ;; Test reachability of struct fields in globals. Only fields that have actual
 ;; reads need to be processed.
 (module
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
+  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
+  ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $a)
+  ;; CHECK-NEXT:  (ref.func $b)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:  (ref.func $a)
+  ;; OPEN_WORLD-NEXT:  (ref.func $b)
+  ;; OPEN_WORLD-NEXT: ))
   (global $vtable (ref $vtable) (struct.new $vtable
     (ref.func $a)
     (ref.func $b)
@@ -528,11 +540,31 @@
     (ref.func $d)
   ))
 
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (type $void)
+  ;; CHECK-NEXT:  (call $b)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (export "export" (func $export))
+
+  ;; OPEN_WORLD:      (func $export (type $void)
+  ;; OPEN_WORLD-NEXT:  (call $b)
+  ;; OPEN_WORLD-NEXT: )
   (func $export (export "export")
     ;; Call $b but not $a or $c
     (call $b)
   )
 
+  ;; CHECK:      (func $a (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $a (type $void)
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 0
+  ;; OPEN_WORLD-NEXT:    (global.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
   (func $a (type $void)
     ;; $a calls field #0 in the vtable.
     ;;
@@ -541,6 +573,10 @@
     ;; is basically an unreachable cycle that we can collect. We can empty out
     ;; this function since it is dead, but we cannot remove it entirely due to
     ;; the ref in the vtable.
+    ;;
+    ;; (In open world, however, we cannot do this, as we must assume reads of
+    ;; struct fields can occur outside of our view. That is, the vtable could be
+    ;; sent somewhere that reads field #0, which would make $a live.)
     (call_ref $void
       (struct.get $vtable 0
         (global.get $vtable)
@@ -548,6 +584,20 @@
     )
   )
 
+  ;; CHECK:      (func $b (type $void)
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (struct.get $vtable 1
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $b (type $void)
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 1
+  ;; OPEN_WORLD-NEXT:    (global.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
   (func $b (type $void)
     ;; $b calls field #1 in the vtable.
     ;;
@@ -581,3 +631,5 @@
     )
   )
 )
+
+;; test itable ?
