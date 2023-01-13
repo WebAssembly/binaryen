@@ -77,6 +77,31 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
+  // A pair of a struct type and a field index, together defining a field in a
+  // particular type.
+  using StructField = std::pair<HeapType, Index>;
+
+  // Similar to calledSignatures/uncalledRefFuncMap, we store the StructFields
+  // we seen reads from, and also expresions stored in such fields that could be
+  // read if ever we see a read of that field in the future. That is, for an
+  // expression stored into a struct field to be read, we need to both see that
+  // expression written to the field, and see some other place read that field
+  // (similar to with functions that we need to see the RefFunc and also a
+  // CallRef that can actually call it).
+  //
+  // This is used for global data only so far. In global data there are no side
+  // effects, so when we see a struct.new we can look into the fields only when
+  // we see reads of them, while doing that in general would take more work. But
+  // global data is a major use case, since that is where vtables and so forth
+  // are stored, so even just looking there is quite useful.
+  std::unordered_set<StructField> readStructFields;
+  std::unordered_map<StructField, std::vector<Expression>>
+      unreadStructFieldExprMap;
+
+  // Expressions that might be read
+  // Maps {Struct type, field #} to a vector of expressions
+  std::unordered_map<StructField, std::vector<Expression*>>
+
   ReachabilityAnalyzer(Module* module,
                        const std::vector<ModuleElement>& roots,
                        bool closedWorld)
@@ -112,10 +137,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
           walk(func->body);
         }
       } else if (kind == ModuleElementKind::Global) {
-        // if not imported, it has an init expression we need to walk
+        // if not imported, it has an init expression we can walk
         auto* global = module->getGlobal(value);
         if (!global->imported()) {
-          walk(global->init);
+          walkGlobalInit(global->init);
         }
       } else if (kind == ModuleElementKind::Table) {
         ModuleUtils::iterTableSegments(
@@ -139,6 +164,17 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
     });
   }
+
+  void walkGlobalInit(Expression* curr) {
+    if (auto* new_ = curr->dynCast<StructNew>()) {
+      return;
+    }
+
+    // Just walk this normally.
+    walk(curr);
+  }
+
+  // Visitors
 
   void visitCall(Call* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
