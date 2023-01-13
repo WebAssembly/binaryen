@@ -127,8 +127,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   }
 
   void maybeAdd(ModuleElement element) {
-    if (reachable.count(element) == 0) {
-      reachable.insert(element);
+    if (reachable.emplace(element).second) {
       queue.emplace_back(element);
     }
   }
