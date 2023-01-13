@@ -173,6 +173,11 @@ struct SubTypes {
     }
   }
 
+  // As above, but iterate to the maximum depth.
+  template<typename F> void iterSubTypes(HeapType type, F func) {
+    return iterSubTypes(type, std::limits<Index>::max(), func);
+  }
+
   // All the types in the program. This is computed here anyhow, and can be
   // useful for callers to iterate on, so it is public.
   std::vector<HeapType> types;

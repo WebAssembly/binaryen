@@ -302,6 +302,38 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       maybeAdd(ModuleElement(ModuleElementKind::Tag, tag));
     }
   }
+
+  // We'll compute SubTypes if we need them.
+  std::unique_ptr<SubTypes> subTypes;
+
+  void visitStructGet(StructGet* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    auto type = curr->type.getHeapType();
+    if (!readStructFields.count({type, curr->index})) {
+      // This is the first time we see a read of this data. Note that it is
+      // read, and also all subtypes since we might be reading from them as
+      // well.
+      if (!SubTypes) {
+        subTypes = std::make_unique<SubTypes>(*getModule());
+      }
+      subTypes.iterSubTypes(type, [&](HeapType type, Index depth) {
+        auto sf = {type, curr->index};
+        readStructFields.insert(sf);
+
+        // Walk all the unread data we've queued: we queued it for the
+        // possibility of it ever being read, which just happened.
+        auto iter = unreadStructFieldExprMap.find(sf);
+        if (iter != unreadStructFieldExprMap.end()) {
+          for (auto* expr : iter->second) {
+            walk(expr);
+          }
+        }
+      });
+    }
+  }
   void visitArrayNewSeg(ArrayNewSeg* curr) {
     switch (curr->op) {
       case NewData:
