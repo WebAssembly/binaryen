@@ -270,18 +270,6 @@ struct OptimizationOptions : public ToolOptions {
         OptimizationOptionsCategory,
         Options::Arguments::Zero,
         [this](Options*, const std::string&) { passOptions.fastMath = true; })
-      .add(
-        "--closed-world",
-        "-cw",
-        "Assume code outside of the module does not inspect or interact with "
-        "GC and function references, even if they are passed out. The outside "
-        "may hold on to them and pass them back in, but not inspect their "
-        "contents or call them.",
-        OptimizationOptionsCategory,
-        Options::Arguments::Zero,
-        [this](Options*, const std::string&) {
-          passOptions.closedWorld = true;
-        })
       .add("--zero-filled-memory",
            "-uim",
            "Assume that an imported memory will be zero-initialized",

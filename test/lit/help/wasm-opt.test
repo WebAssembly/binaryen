@@ -564,15 +564,6 @@
 ;; CHECK-NEXT:                                                 corner cases of NaNs and
 ;; CHECK-NEXT:                                                 rounding
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --closed-world,-cw                            Assume code outside of the
-;; CHECK-NEXT:                                                 module does not inspect or
-;; CHECK-NEXT:                                                 interact with GC and function
-;; CHECK-NEXT:                                                 references, even if they are
-;; CHECK-NEXT:                                                 passed out. The outside may hold
-;; CHECK-NEXT:                                                 on to them and pass them back
-;; CHECK-NEXT:                                                 in, but not inspect their
-;; CHECK-NEXT:                                                 contents or call them.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory
 ;; CHECK-NEXT:                                                 will be zero-initialized
 ;; CHECK-NEXT:
@@ -686,6 +677,15 @@
 ;; CHECK-NEXT:   --hybrid                                      Force all GC type definitions to
 ;; CHECK-NEXT:                                                 be parsed using the isorecursive
 ;; CHECK-NEXT:                                                 hybrid type system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --closed-world,-cw                            Assume code outside of the
+;; CHECK-NEXT:                                                 module does not inspect or
+;; CHECK-NEXT:                                                 interact with GC and function
+;; CHECK-NEXT:                                                 references, even if they are
+;; CHECK-NEXT:                                                 passed out. The outside may hold
+;; CHECK-NEXT:                                                 on to them and pass them back
+;; CHECK-NEXT:                                                 in, but not inspect their
+;; CHECK-NEXT:                                                 contents or call them.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
