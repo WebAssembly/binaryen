@@ -105,6 +105,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   //
   // XXX we need more than this. the global.get of a vtable into a struct field
   //     IS NOT AN ACTUAL READ if there is no read frommm that field.
+  // XXX but also nested structs:
+  //    struct.new{
+  //      field #0
+  //      struct.new{  - this entire struct.new is only read if field #1 in the
+  //                     parent is read
+  //        field #0
+  //      }
+  //    }
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
