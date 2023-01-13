@@ -1929,23 +1929,44 @@ struct OptimizeInstructions
     Builder builder(*getModule());
     auto nullType = curr->type.getHeapType().getBottom();
     {
-      auto* ref = curr->ref;
+      auto** refp = &curr->ref;
       while (1) {
+        auto* ref = *refp;
+
         auto result = GCTypeUtils::evaluateCastCheck(ref->type, curr->type);
 
         if (result == GCTypeUtils::Success) {
-          // The cast will succeed, but we can't just remove the cast and
-          // replace it with `ref` because the intermediate expressions might
-          // have had side effects. We can replace the cast with a drop followed
-          // by a direct return of the value, though.
-          //
-          // TODO: Do this for non-null values as well by storing the value to
-          // return in a tee.
+          // The cast will succeed. This can only happen if the ref is a subtype
+          // of the cast instruction, which means we can replace the cast with
+          // the ref.
+          assert(Type::isSubType(ref->type, curr->type));
+          if (curr->type != ref->type) {
+            refinalize = true;
+          }
+          // If there were no intermediate expressions, we can just skip the
+          // cast.
+          if (ref == curr->ref) {
+            replaceCurrent(ref);
+            return;
+          }
+          // Otherwise we can't just remove the cast and replace it with `ref`
+          // because the intermediate expressions might have had side effects.
+          // We can replace the cast with a drop followed by a direct return of
+          // the value, though.
           if (ref->type.isNull()) {
+            // We can materialize the resulting null value directly.
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                                 builder.makeRefNull(nullType)));
             return;
           }
+          // We need to use a tee to return the value since we can't materialize
+          // it directly.
+          auto scratch = builder.addVar(getFunction(), ref->type);
+          *refp = builder.makeLocalTee(scratch, ref, ref->type);
+          replaceCurrent(
+            builder.makeSequence(builder.makeDrop(curr->ref),
+                                 builder.makeLocalGet(scratch, ref->type)));
+          return;
         } else if (result == GCTypeUtils::Failure) {
           // This cast cannot succeed, so it will trap.
           // Make sure to emit a block with the same type as us; leave updating
@@ -1965,10 +1986,10 @@ struct OptimizeInstructions
           return;
         }
 
-        auto* last = ref;
-        ref = Properties::getImmediateFallthrough(
-          ref, getPassOptions(), *getModule());
-        if (ref == last) {
+        auto** last = refp;
+        refp = Properties::getImmediateFallthroughPtr(
+          refp, getPassOptions(), *getModule());
+        if (refp == last) {
           break;
         }
       }
