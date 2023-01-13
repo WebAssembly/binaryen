@@ -851,8 +851,9 @@
 )
 
 ;; Due to function subtyping, we cannot prune fields from $func.B without also
-;; pruning them in $func.A, if they have a subtyping relationship. Atm we do not
-;; prune such "cycles" so we do not optimize here. TODO
+;; pruning them in $func.A, and vice versa, if they have a subtyping
+;; relationship. Atm we do not prune such "cycles" so we do not optimize here.
+;; TODO
 (module
   ;; CHECK:      (type $array.A (array (ref $struct.A)))
 
