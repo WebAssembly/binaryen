@@ -54,7 +54,13 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   // A queue of reachable things that we need to process. These appear in
   // |reachable|, and the work we do when we pop them from the queue is to look
   // at the things they reach.
-  std::vector<ModuleElement> queue;
+  //
+  // The queue can contain either module elements, or individual expressions. We
+  // need to allow expressions here so that we can queue addition expressions to
+  // be processed even while in the middle of processing another expression (we
+  // cannot "nest" a walk in another walk; see visitStructGet below).
+  using QueueElement = std::variant<ModuleElement, Expression*>;
+  std::vector<QueueElement> queue;
 
   bool usesMemory = false;
 
@@ -107,8 +113,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
     for (auto& element : roots) {
       reachable.insert(element);
+      queue.push_back(element);
     }
-    queue = roots;
 
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->dataSegments) {
@@ -126,8 +132,15 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     while (queue.size()) {
       auto curr = queue.back();
       queue.pop_back();
-      assert(reachable.count(curr));
-      auto& [kind, value] = curr;
+
+      if (auto** expr = std::get_if<Expression*>(&curr)) {
+        walk(*expr);
+        continue;
+      }
+
+      auto moduleElement = std::get<ModuleElement>(curr);
+      assert(reachable.count(moduleElement));
+      auto& [kind, value] = moduleElement;
       if (kind == ModuleElementKind::Function) {
         // if not an import, walk it
         auto* func = module->getFunction(value);
@@ -142,7 +155,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         }
       } else if (kind == ModuleElementKind::Table) {
         ModuleUtils::iterTableSegments(
-          *module, curr.second, [&](ElementSegment* segment) {
+          *module, value, [&](ElementSegment* segment) {
             walk(segment->offset);
           });
       }
@@ -340,7 +353,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         auto iter = unreadStructFieldExprMap.find(sf);
         if (iter != unreadStructFieldExprMap.end()) {
           for (auto* expr : iter->second) {
-            walk(expr);
+            // Note that we cannot walk this immediately, because we are in the
+            // middle of a walk right now (we cannot "nest" walks, as that is
+            // risky and assertions prevent it). Queue it for later.
+            queue.push_back(expr);
           }
         }
       });
