@@ -510,3 +510,74 @@
   (func $target-keep-2 (type $A)
   )
 )
+
+;; Test reachability of struct fields in globals. Only fields that have actual
+;; reads need to be processed.
+(module
+  (type $void (func))
+
+  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+
+  (global $vtable (ref $vtable) (struct.new $vtable
+    (ref.func $a)
+    (ref.func $b)
+  ))
+
+  (global $vtable-2 (ref $vtable) (struct.new $vtable
+    (ref.func $c)
+    (ref.func $d)
+  ))
+
+  (func $export (export "export")
+    ;; Call $b but not $a or $c
+    (call $b)
+  )
+
+  (func $a (type $void)
+    ;; $a calls field #0 in the vtable.
+    ;;
+    ;; Even though $a is in the vtable, it is dead, since the vtable is alive
+    ;; but there is no live read of field #0 - the only read is in here, which
+    ;; is basically an unreachable cycle that we can collect. We can empty out
+    ;; this function since it is dead, but we cannot remove it entirely due to
+    ;; the ref in the vtable.
+    (call_ref $void
+      (struct.get $vtable 0
+        (global.get $vtable)
+      )
+    )
+  )
+
+  (func $b (type $void)
+    ;; $b calls field #1 in the vtable.
+    ;;
+    ;; As $b is called from the export, this function is not dead.
+    (call_ref $void
+      (struct.get $vtable 1
+        (global.get $vtable)
+      )
+    )
+  )
+
+  (func $c (type $void)
+    ;; $c is parallel to $a, but using vtable-2, which has no other references,
+    ;; so this is dead like $a.
+    (call_ref $void
+      (struct.get $vtable 0
+        (global.get $vtable-2)
+      )
+    )
+  )
+
+  (func $d (type $void)
+    ;; $d is parallel to $b, but using vtable-2, which has no other references.
+    ;; This is dead, even though the struct type + index have a use (due to the
+    ;; other vtable) - there is no use of vtable-2 (except from unreachable
+    ;; places like here), so this cannot be reached.
+    (call_ref $void
+      (struct.get $vtable 0
+        (global.get $vtable-2)
+      )
+    )
+  )
+)
