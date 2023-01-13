@@ -152,7 +152,7 @@ struct SignaturePruning : public Pass {
 
     // Types with subtypes cannot be pruned: for a function type B to be a
     // subtype of A, we need them to have the same number of parameters, as B's
-    // parameters must be a subtype of A's, and tuple types are only subtypes if
+    // parameters must be supertypes of A's, and tuple types are only subtypes if
     // their sizes match.
     SubTypes subTypes(*module);
 
