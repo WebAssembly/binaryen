@@ -167,6 +167,20 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
   void walkGlobalInit(Expression* curr) {
     if (auto* new_ = curr->dynCast<StructNew>()) {
+      auto type = curr->type.getHeapType());
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        // TODO: We could recurse into nested StructNew operations. For now,
+        //       just look at the top level. That is enough for a vtable.
+        auto* operand = curr->operands[i];
+        auto sf = StructField{type, i};
+        if (readStructFields.count(sf)) {
+          // This data can be read, so just walk it.
+          walk(operand);
+        } else {
+          // This data might be read later.
+          unreadStructFieldExprMap[sf].push_back(operand);
+        }
+      }
       return;
     }
 
