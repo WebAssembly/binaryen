@@ -31,6 +31,7 @@
 #include "ir/intrinsics.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "param-utils.h"
 #include "pass.h"
@@ -149,6 +150,12 @@ struct SignaturePruning : public Pass {
       }
     }
 
+    // Types with subtypes cannot be pruned (for a function type B to be a
+    // subtype of A, we need them to have the same number of parameters, as B's
+    // parameters must be a subtype of A's, and tuple types are only subtypes if
+    // their sizes match.
+    SubTypes subTypes(*module);
+
     // Find parameters to prune.
     for (auto& [type, funcs] : sigFuncs) {
       auto sig = type.getSignature();
@@ -157,6 +164,10 @@ struct SignaturePruning : public Pass {
       auto numParams = sig.params.size();
 
       if (!info.optimizable) {
+        continue;
+      }
+
+      if (!subTypes.getStrictSubTypes(type).empty()) {
         continue;
       }
 
