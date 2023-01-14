@@ -138,15 +138,14 @@
   ;; CHECK:      (type $A (struct (field (ref null $A))))
   (type $A (struct_subtype (field (ref null $A)) data))
   (type $B (struct_subtype (field (ref null $A)) $A))
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (type $C (struct_subtype (field (ref null $A)) $A))
   (type $C (struct_subtype (field (ref null $B)) $A))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
-  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local $c (ref null $A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -154,9 +153,8 @@
     (local $a (ref null $A))
     ;; $B can be merged into $A.
     (local $b (ref null $B))
-    ;; $C refines the field, so it cannot be merged. However, separately, in
-    ;; the type definition of $C, its field of type $B should become $A. That
-    ;; is, $B should no longer be used anywhere.
+    ;; $C refines the field, so normally it wouldn't be able to be merged, but
+    ;; since that refinement does not survive merging, we can still merge $C.
     (local $c (ref null $C))
   )
 )
