@@ -4,30 +4,29 @@
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY
 
-;; Check that the the call to bar first checks if the secondary module is loaded.
+;; Check that the call to bar first checks if the secondary module is loaded and
+;; that bar is moved to the secondary module.
 
 (module
- ;; PRIMARY:      (type $externref_i32_=>_i32 (func (param externref i32) (result i32)))
-
  ;; PRIMARY:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
  ;; PRIMARY:      (type $externref_=>_none (func (param externref)))
+
+ ;; PRIMARY:      (type $externref_i32_=>_i32 (func (param externref i32) (result i32)))
 
  ;; PRIMARY:      (type $none_=>_none (func))
 
  ;; PRIMARY:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (param externref)))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param externref i32) (result i32)))
-
- ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (global $suspender (mut externref) (ref.null noextern))
 
  ;; PRIMARY:      (global $global$1 (mut i32) (i32.const 0))
 
- ;; PRIMARY:      (table $0 2 funcref)
+ ;; PRIMARY:      (table $0 1 funcref)
 
- ;; PRIMARY:      (elem (i32.const 0) $placeholder_0 $placeholder_1)
+ ;; PRIMARY:      (elem (i32.const 0) $placeholder_0)
 
  ;; PRIMARY:      (export "foo" (func $export$foo))
  (export "foo" (func $foo))
@@ -50,7 +49,7 @@
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT:  (call_indirect (type $i32_=>_i32)
  ;; PRIMARY-NEXT:   (i32.const 0)
- ;; PRIMARY-NEXT:   (i32.const 1)
+ ;; PRIMARY-NEXT:   (i32.const 0)
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $foo (param i32) (result i32)
@@ -58,9 +57,7 @@
  )
  ;; SECONDARY:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
- ;; SECONDARY:      (type $externref_i32_=>_i32 (func (param externref i32) (result i32)))
-
- ;; SECONDARY:      (import "primary" "%table" (table $timport$0 2 funcref))
+ ;; SECONDARY:      (import "primary" "%table" (table $timport$0 1 funcref))
 
  ;; SECONDARY:      (import "primary" "%global" (global $suspender (mut externref)))
 
@@ -68,7 +65,7 @@
 
  ;; SECONDARY:      (import "primary" "%foo" (func $foo (param i32) (result i32)))
 
- ;; SECONDARY:      (elem (i32.const 0) $export$foo $bar)
+ ;; SECONDARY:      (elem (i32.const 0) $bar)
 
  ;; SECONDARY:      (func $bar (param $0 i32) (result i32)
  ;; SECONDARY-NEXT:  (call $foo
@@ -79,6 +76,15 @@
   (call $foo (i32.const 1))
  )
 )
+
+;; PRIMARY:      (func $export$foo (param $susp externref) (param $0 i32) (result i32)
+;; PRIMARY-NEXT:  (global.set $suspender
+;; PRIMARY-NEXT:   (local.get $susp)
+;; PRIMARY-NEXT:  )
+;; PRIMARY-NEXT:  (call $foo
+;; PRIMARY-NEXT:   (local.get $0)
+;; PRIMARY-NEXT:  )
+;; PRIMARY-NEXT: )
 
 ;; PRIMARY:      (func $__load_secondary_module
 ;; PRIMARY-NEXT:  (local $0 externref)
@@ -92,20 +98,3 @@
 ;; PRIMARY-NEXT:   (local.get $0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
-
-;; PRIMARY:      (func $export$foo (param $0 externref) (param $1 i32) (result i32)
-;; PRIMARY-NEXT:  (call_indirect (type $externref_i32_=>_i32)
-;; PRIMARY-NEXT:   (local.get $0)
-;; PRIMARY-NEXT:   (local.get $1)
-;; PRIMARY-NEXT:   (i32.const 0)
-;; PRIMARY-NEXT:  )
-;; PRIMARY-NEXT: )
-
-;; SECONDARY:      (func $export$foo (param $susp externref) (param $0 i32) (result i32)
-;; SECONDARY-NEXT:  (global.set $suspender
-;; SECONDARY-NEXT:   (local.get $susp)
-;; SECONDARY-NEXT:  )
-;; SECONDARY-NEXT:  (call $foo
-;; SECONDARY-NEXT:   (local.get $0)
-;; SECONDARY-NEXT:  )
-;; SECONDARY-NEXT: )
