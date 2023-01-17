@@ -352,8 +352,9 @@ void TypeMerging::applyMerges(const TypeUpdates& merges) {
 }
 
 bool TypeMerging::mayBeMergeable(HeapType sub, HeapType super) {
-  // If the type is distinguishable from its supertype, we cannot merge it.
-  if (castTypes.count(sub)) {
+  // If the type is distinguishable from its supertype or public, we cannot
+  // merge it.
+  if (castTypes.count(sub) || !privateTypes.count(sub)) {
     return false;
   }
   // Check whether `sub` and `super` have the same top-level structure,

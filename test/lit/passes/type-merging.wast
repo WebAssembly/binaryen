@@ -449,6 +449,47 @@
   )
 )
 
+;; Check that public types are not merged.
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))            ;; public
+  (type $B (func_subtype $A)) ;; public
+  (type $C (func_subtype $B)) ;; private
+
+  ;; CHECK:      (export "foo" (func $foo))
+  (export "foo" (func $foo))
+  ;; CHECK:      (export "bar" (func $bar))
+  (export "bar" (func $bar))
+
+  ;; A stays the same.
+  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $foo (type $A)
+    (unreachable)
+  )
+
+  ;; B is not merged because it is public.
+  ;; CHECK:      (func $bar (type $A)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $bar (type $B)
+    (unreachable)
+  )
+
+  ;; C can be merged into B because it is private.
+  ;; CHECK:      (func $baz (type $A)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $baz (type $C)
+    (unreachable)
+  )
+
+  (func $quux (param (ref $A) (ref $B) (ref $C))
+    (unreachable)
+  )
+)
+
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (type $A (struct ))
