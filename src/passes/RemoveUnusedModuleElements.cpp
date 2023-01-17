@@ -390,11 +390,15 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unique_ptr<SubTypes> subTypes;
 
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
+    if (curr->ref->type.isRef() == Type::unreachable) {
       return;
     }
 
     auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      return;
+    }
+
     if (!readStructFields.count({type, curr->index})) {
       // This is the first time we see a read of this data. Note that it is
       // read, and also all subtypes since we might be reading from them as
@@ -418,6 +422,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       });
     }
   }
+
   void visitArrayNewSeg(ArrayNewSeg* curr) {
     switch (curr->op) {
       case NewData:

@@ -650,9 +650,10 @@
   ))
 
   (func $func (export "func")
-    (local $x (ref $vtable))
+    (local $ref (ref $struct))
+    (local $vtable (ref $vtable))
 
-    (drop
+    (local.set $ref
       (struct.new $struct
         ;; Init one field using the global vtable.
         (global.get $vtable)
@@ -664,7 +665,7 @@
         )
         ;; Another nested one, but now there is a side effect. Everything here
         ;; is considered to escape due to that.
-        (local.tee $x
+        (local.tee $vtable
           (struct.new $vtable
             (ref.func $e)
             (ref.func $f)
@@ -681,24 +682,24 @@
     ;; Read from all fields of $struct except for the last.
     (drop
       (struct.get $struct 0
-        (ref.null $struct)
+        (local.get $ref)
       )
     )
     (drop
       (struct.get $struct 1
-        (ref.null $struct)
+        (local.get $ref)
       )
     )
     (drop
       (struct.get $struct 2
-        (ref.null $struct)
+        (local.get $ref)
       )
     )
 
     ;; Read from all field #1 of the vtable type, but not #0.
     (drop
       (struct.get $vtable 1
-        (ref.null $vtable)
+        (local.get $vtable)
       )
     )
   )
