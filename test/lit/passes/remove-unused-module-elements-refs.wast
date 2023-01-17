@@ -806,7 +806,7 @@
       )
     )
 
-    ;; Read from all field #1 of the vtable type, but not #0.
+    ;; Read from field #1 of the vtable type, but not #0.
     (drop
       (struct.get $vtable 1
         (local.get $vtable)
