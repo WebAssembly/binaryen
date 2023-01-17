@@ -634,21 +634,127 @@
 
 ;; Test struct.news not in globals.
 (module
+  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+
   ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
+  ;; CHECK:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
+  ;; OPEN_WORLD:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
   (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
 
+  ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $a)
+  ;; CHECK-NEXT:  (ref.func $b)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $vtable (ref $vtable) (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:  (ref.func $a)
+  ;; OPEN_WORLD-NEXT:  (ref.func $b)
+  ;; OPEN_WORLD-NEXT: ))
   (global $vtable (ref $vtable) (struct.new $vtable
     (ref.func $a)
     (ref.func $b)
   ))
 
+  ;; CHECK:      (elem declare func $c $d $e $f $g $h)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $void)
+  ;; CHECK-NEXT:  (local $ref (ref $struct))
+  ;; CHECK-NEXT:  (local $vtable (ref $vtable))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (global.get $vtable)
+  ;; CHECK-NEXT:    (struct.new $vtable
+  ;; CHECK-NEXT:     (ref.func $c)
+  ;; CHECK-NEXT:     (ref.func $d)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.tee $vtable
+  ;; CHECK-NEXT:     (struct.new $vtable
+  ;; CHECK-NEXT:      (ref.func $e)
+  ;; CHECK-NEXT:      (ref.func $f)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $vtable
+  ;; CHECK-NEXT:     (ref.func $g)
+  ;; CHECK-NEXT:     (ref.func $h)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 1
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable 1
+  ;; CHECK-NEXT:    (local.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $c $d $e $f $g $h)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $void)
+  ;; OPEN_WORLD-NEXT:  (local $ref (ref $struct))
+  ;; OPEN_WORLD-NEXT:  (local $vtable (ref $vtable))
+  ;; OPEN_WORLD-NEXT:  (local.set $ref
+  ;; OPEN_WORLD-NEXT:   (struct.new $struct
+  ;; OPEN_WORLD-NEXT:    (global.get $vtable)
+  ;; OPEN_WORLD-NEXT:    (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:     (ref.func $c)
+  ;; OPEN_WORLD-NEXT:     (ref.func $d)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:    (local.tee $vtable
+  ;; OPEN_WORLD-NEXT:     (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:      (ref.func $e)
+  ;; OPEN_WORLD-NEXT:      (ref.func $f)
+  ;; OPEN_WORLD-NEXT:     )
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:    (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:     (ref.func $g)
+  ;; OPEN_WORLD-NEXT:     (ref.func $h)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $struct 0
+  ;; OPEN_WORLD-NEXT:    (local.get $ref)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $struct 1
+  ;; OPEN_WORLD-NEXT:    (local.get $ref)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $struct 2
+  ;; OPEN_WORLD-NEXT:    (local.get $ref)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 1
+  ;; OPEN_WORLD-NEXT:    (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
   (func $func (export "func")
     (local $ref (ref $struct))
     (local $vtable (ref $vtable))
@@ -704,41 +810,89 @@
     )
   )
 
+  ;; CHECK:      (func $a (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $a (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $a (type $void)
     ;; This is unreachable since a reference to it only exists in field #0 of
     ;; the vtable type, which is never read from.
   )
 
+  ;; CHECK:      (func $b (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $b (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $b (type $void)
     ;; This is reachable. It is in field #1, which is read, and the global
     ;; vtable is also read.
   )
 
+  ;; CHECK:      (func $c (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $c (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $c (type $void)
     ;; Like $a, this is unreachable. That it is in a nested struct.new, and not
     ;; in a global, does not matter.
   )
 
+  ;; CHECK:      (func $d (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $d (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $d (type $void)
     ;; Like $b, this is reachable. That it is in a nested struct.new, and not
     ;; in a global, does not matter.
   )
 
+  ;; CHECK:      (func $e (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $e (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $e (type $void)
     ;; Side effects on the struct field this appears in cause this to be
     ;; reachable (even though field #0 is never read).
   )
 
+  ;; CHECK:      (func $f (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $f (type $void)
     ;; Side effects on the struct field this appears in cause this to be
     ;; reachable.
   )
 
+  ;; CHECK:      (func $g (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $g (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $g (type $void)
     ;; This is in a struct written to a field that is never read in $struct, so
     ;; it is unreachable.
   )
 
+  ;; CHECK:      (func $h (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $h (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
   (func $h (type $void)
     ;; This is in a struct written to a field that is never read in $struct, so
     ;; it is unreachable.
