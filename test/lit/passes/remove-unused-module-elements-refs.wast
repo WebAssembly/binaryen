@@ -634,14 +634,12 @@
 
 ;; Test struct.news not in globals.
 (module
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-
   ;; CHECK:      (type $void (func))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
+  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
   ;; CHECK:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
@@ -661,7 +659,7 @@
     (ref.func $b)
   ))
 
-  ;; CHECK:      (elem declare func $c $d $e $f $g $h)
+  ;; CHECK:      (elem declare func $c $d $e $f $g $h $void)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -707,8 +705,11 @@
   ;; CHECK-NEXT:    (local.get $vtable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $void)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $c $d $e $f $g $h)
+  ;; OPEN_WORLD:      (elem declare func $c $d $e $f $g $h $void)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -753,6 +754,9 @@
   ;; OPEN_WORLD-NEXT:   (struct.get $vtable 1
   ;; OPEN_WORLD-NEXT:    (local.get $vtable)
   ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (ref.func $void)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
   (func $func (export "func")
@@ -808,6 +812,21 @@
         (local.get $vtable)
       )
     )
+
+    ;; Call something of type void so we don't eliminate them all instantly.
+    (call_ref $void
+      (ref.func $void)
+    )
+  )
+
+  ;; CHECK:      (func $void (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $void (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $void (type $void)
+    ;; Helper function. This is reached via a call_ref.
   )
 
   ;; CHECK:      (func $a (type $void)
@@ -829,7 +848,7 @@
   ;; OPEN_WORLD-NEXT: )
   (func $b (type $void)
     ;; This is reachable. It is in field #1, which is read, and the global
-    ;; vtable is also read.
+    ;; vtable is also read, and the type $void is call_reffed.
   )
 
   ;; CHECK:      (func $c (type $void)
@@ -901,3 +920,4 @@
 
 ;; TODO: test removing the vtable, and handling its refs.
 ;; TODO: cycle of those
+;; TODO; remove call to $void and they all fall
