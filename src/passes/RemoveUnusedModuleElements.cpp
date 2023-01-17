@@ -130,8 +130,8 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
-  // Functions for whom there is a ref.func. We cannot remove these blah blah XXX
-  // use this instead of scouring uRFM?
+  // Functions for whom there is a ref.func. We cannot remove these blah blah
+  // XXX use this instead of scouring uRFM?
   std::unordered_set<Name> danglingRefFuncs;
 
   ReachabilityAnalyzer(Module* module,
@@ -533,7 +533,8 @@ struct RemoveUnusedModuleElements : public Pass {
         return false;
       }
 
-      if (uncalledRefFuncs.count(curr->name) || analyzer.danglingRefFuncs.count(curr->name)) {
+      if (uncalledRefFuncs.count(curr->name) ||
+          analyzer.danglingRefFuncs.count(curr->name)) {
         // This is not reached, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {
