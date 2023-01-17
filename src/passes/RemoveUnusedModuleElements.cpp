@@ -158,46 +158,45 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
 
     // Main loop on both the module queue and the expression stack.
     while (expressionStack.size() || moduleQueue.size()) {
-      if (expressionStack.size()) {
-        while (expressionStack.size()) {
-          auto* curr = expressionStack.back();
-          expressionStack.pop_back();
+      while (expressionStack.size()) {
+        auto* curr = expressionStack.back();
+        expressionStack.pop_back();
 
-          visit(curr);
-          maybeWalkChildren(curr);
-        }
-
-        continue;
+        visit(curr);
+        maybeWalkChildren(curr);
       }
 
-      auto curr = moduleQueue.back();
-      moduleQueue.pop_back();
+      while (moduleQueue.size()) {
+        auto curr = moduleQueue.back();
+        moduleQueue.pop_back();
 
-      if (auto** expr = std::get_if<Expression*>(&curr)) {
-        expressionStack.push_back(*expr);
-        continue;
-      }
+        // TODO: func
+        if (auto** expr = std::get_if<Expression*>(&curr)) {
+          expressionStack.push_back(*expr);
+          continue;
+        }
 
-      auto moduleElement = std::get<ModuleElement>(curr);
-      assert(reachable.count(moduleElement));
-      auto& [kind, value] = moduleElement;
-      if (kind == ModuleElementKind::Function) {
-        // if not an import, walk it
-        auto* func = module->getFunction(value);
-        if (!func->imported()) {
-          expressionStack.push_back(func->body);
+        auto moduleElement = std::get<ModuleElement>(curr);
+        assert(reachable.count(moduleElement));
+        auto& [kind, value] = moduleElement;
+        if (kind == ModuleElementKind::Function) {
+          // if not an import, walk it
+          auto* func = module->getFunction(value);
+          if (!func->imported()) {
+            expressionStack.push_back(func->body);
+          }
+        } else if (kind == ModuleElementKind::Global) {
+          // if not imported, it has an init expression we can walk
+          auto* global = module->getGlobal(value);
+          if (!global->imported()) {
+            expressionStack.push_back(global->init);
+          }
+        } else if (kind == ModuleElementKind::Table) {
+          ModuleUtils::iterTableSegments(
+            *module, value, [&](ElementSegment* segment) {
+              expressionStack.push_back(segment->offset);
+            });
         }
-      } else if (kind == ModuleElementKind::Global) {
-        // if not imported, it has an init expression we can walk
-        auto* global = module->getGlobal(value);
-        if (!global->imported()) {
-          walkGlobalInit(global->init);
-        }
-      } else if (kind == ModuleElementKind::Table) {
-        ModuleUtils::iterTableSegments(
-          *module, value, [&](ElementSegment* segment) {
-            expressionStack.push_back(segment->offset);
-          });
       }
     }
   }
@@ -217,13 +216,26 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   }
 
   void maybeWalkChildren(Expression* curr) {
-    auto* new_ = curr->dynCast<StructNew>();
-    if (!closedWorld || !new_) {
+    auto walkChildren = [&]() {
+      for (auto* child : ChildIterator(curr)) {
+        expressionStack.push_back(child);
+      }
+    };
+
+    // For now, the only special handling we have is fields of struct.new, which
+    // we defer walking of to when we know there is a read that can actually
+    // read them, see comments above on |expressionStack|.
+
+    if (!closedWorld) {
       // If we are in open world then we cannot optimize based on which struct
-      // fields we see read, since reads can happen on the outside. And if this
-      // is not a StructNew, then it is not valid for that optimization anyhow.
-      // Just walk this normally.
-      expressionStack.push_back(curr);
+      // fields we see read, since reads can happen on the outside.
+      walkChildren();
+      return;
+    }
+
+    auto* new_ = curr->dynCast<StructNew>();
+    if (!new_) {
+      walkChildren();
       return;
     }
 
@@ -233,12 +245,15 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       //       just look at the top level. That is enough for a vtable.
       auto* operand = new_->operands[i];
       auto sf = StructField{type, i};
-      // or effects!
-      if (readStructFields.count(sf)) {
-        // This data can be read, so just walk it.
+      if (readStructFields.count(sf) ||
+          EffectAnalyzer(operand).hasSideEffects()) {
+        // This data can be read, so just walk it. Or, this has side effects,
+        // which is tricky to reason about - the side effects must happen even
+        // if we never read the struct field - so give up and walk it.
         expressionStack.push_back(operand);
       } else {
-        // This data might be read later. Note it as unread.
+        // This data does not need to be read now, but might be read later. Note
+        // it as unread.
         unreadStructFieldExprMap[sf].push_back(operand);
 
         // We also must note any RefFuncs here as potentially dangling: they
