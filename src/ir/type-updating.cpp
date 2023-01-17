@@ -20,6 +20,7 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "support/topological_sort.h"
+#include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -33,32 +34,9 @@ void GlobalTypeRewriter::update() {
   // be reflected on or used for linking. Figure out where each private type
   // will be located in the builder. Sort the private types so that supertypes
   // come before their subtypes.
-  struct SortedPrivateTypes : TopologicalSort<HeapType, SortedPrivateTypes> {
-    SortedPrivateTypes(Module& wasm) {
-      auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
-      std::unordered_set<HeapType> supertypes;
-      for (auto type : privateTypes) {
-        if (auto super = type.getSuperType()) {
-          supertypes.insert(*super);
-        }
-      }
-      // Types that are not supertypes of others are the roots.
-      for (auto type : privateTypes) {
-        if (!supertypes.count(type)) {
-          push(type);
-        }
-      }
-    }
-
-    void pushPredecessors(HeapType type) {
-      if (auto super = type.getSuperType()) {
-        push(*super);
-      }
-    }
-  };
-
   Index i = 0;
-  for (auto type : SortedPrivateTypes(wasm)) {
+  auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
+  for (auto type : HeapTypeOrdering::SupertypesFirst(privateTypes)) {
     typeIndices[type] = i++;
   }
 

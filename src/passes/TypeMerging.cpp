@@ -41,6 +41,7 @@
 #include "pass.h"
 #include "support/small_set.h"
 #include "wasm-builder.h"
+#include "wasm-type-ordering.h"
 #include "wasm.h"
 
 namespace wasm {
