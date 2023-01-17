@@ -276,9 +276,9 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
-      // else. For now, just make it reachable.
+      // else. TODO For now, just make it reachable.
       maybeAdd(
-        ModuleElement(ModuleElementKind::Function, refGlobal->name)
+        ModuleElement(ModuleElementKind::Global, refGlobal->name)
       );
     }
     // As side effects are assumed to not exist, global.set is not an issue.
@@ -569,12 +569,8 @@ struct RemoveUnusedModuleElements : public Pass {
       return true;
     });
     module->removeGlobals([&](Global* curr) {
-      auto moduleElement = ModuleElement(ModuleElementKind::Function, curr->name);
-      if (analyzer.reachable.count(moduleElement)) {
-        return false;
-      }
-
-      return true;
+      return analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
     });
     module->removeTags([&](Tag* curr) {
       return analyzer.reachable.count(
