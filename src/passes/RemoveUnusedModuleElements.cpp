@@ -277,7 +277,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
       // else. For now, just make it reachable.
-      moduleQueue.emplace_back(
+      maybeAdd(
         ModuleElement(ModuleElementKind::Function, refGlobal->name)
       );
     }
