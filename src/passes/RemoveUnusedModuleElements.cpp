@@ -253,22 +253,35 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         // We also must note any relevant references here as potentially
         // dangling: they cannot be simply removed if they have no other
         // references.
-        //
-        // Note that we already ruled out the case of side effects before, so a
-        // GlobalSet is not possible.
-        for (auto* refFunc : FindAll<RefFunc>(operand).list) {
-          danglingRefs.insert(
-            ModuleElement(ModuleElementKind::Function, refFunc->func)
-          );
-        }
-        for (auto* refGlobal : FindAll<GlobalGet>(operand).list) {
-          danglingRefs.insert(
-            ModuleElement(ModuleElementKind::Function, refGlobal->name)
-          );
-          // TODO the global's init too..! And cycles
-        }
+        addReference(operand);
       }
     }
+  }
+
+  // Add references to all things referred to by an expression, without
+  // necessarily making them reachable.
+  //
+  // This is only called on things without side effects (if there are such
+  // effects then we would have had to assume the worst earlier, and not get
+  // here).
+  void addReference(Expression* curr) {
+    // Some module elements can be "emptied out", like a function which we can
+    // set its body to an unreachable without breaking validation. But others
+    // require more care.
+    for (auto* refFunc : FindAll<RefFunc>(curr).list) {
+      danglingRefs.insert(
+        ModuleElement(ModuleElementKind::Function, refFunc->func)
+      );
+    }
+    for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
+      // We could try to empty the global out, for example, replace it with a
+      // null if it is non-nullable, or replace all gets of it with something
+      // else. For now, just make it reachable.
+      moduleQueue.emplace_back(
+        ModuleElement(ModuleElementKind::Function, refGlobal->name)
+      );
+    }
+    // As side effects are assumed to not exist, global.set is not an issue.
   }
 
   // Visitors
@@ -557,12 +570,7 @@ struct RemoveUnusedModuleElements : public Pass {
     });
     module->removeGlobals([&](Global* curr) {
       auto moduleElement = ModuleElement(ModuleElementKind::Function, curr->name);
-      if (analyzer.reachable.count(moduleElement) ||
-          analyzer.danglingRefs.count(moduleElement)) {
-        // This is not reached, but has a reference.
-        // TODO: We could try to empty it out, for example, replace it with a
-        //       null if it is non-nullable, or replace all gets of it with
-        //       something else.
+      if (analyzer.reachable.count(moduleElement)) {
         return false;
       }
 
