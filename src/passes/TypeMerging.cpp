@@ -398,11 +398,25 @@ bool TypeMerging::mayBeMergeable(Field a, Field b) {
 }
 
 bool TypeMerging::mayBeMergeable(Type a, Type b) {
+  if (a == b) {
+    return true;
+  }
   if (a.isTuple() && b.isTuple()) {
     return mayBeMergeable(a.getTuple(), b.getTuple());
   }
-  return a == b || (a.isRef() && b.isRef() && !a.getHeapType().isBasic() &&
-                    !b.getHeapType().isBasic());
+  // The only thing allowed to differ is the non-basic heap type child, since we
+  // don't know before running the DFA partition refinement whether different
+  // heap type children will end up being merged.
+  if (!a.isRef() || !b.isRef()) {
+    return false;
+  }
+  if (a.getHeapType().isBasic() || b.getHeapType().isBasic()) {
+    return false;
+  }
+  if (a.getNullability() != b.getNullability()) {
+    return false;
+  }
+  return true;
 }
 
 bool TypeMerging::mayBeMergeable(const Tuple& a, const Tuple& b) {

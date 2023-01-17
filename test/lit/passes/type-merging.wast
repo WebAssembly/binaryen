@@ -5,15 +5,17 @@
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct_subtype (field anyref) data))
   (type $B (struct_subtype (field anyref) $A))
-  ;; CHECK:      (type $E (struct_subtype (field anyref) $A))
+  ;; CHECK:      (type $F (struct_subtype (field anyref) $A))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $C (struct_subtype (field anyref) (field f64) $A))
   (type $C (struct_subtype (field anyref) (field f64) $A))
-  ;; CHECK:      (type $D (struct_subtype (field eqref) $A))
-  (type $D (struct_subtype (field eqref) $A))
-  (type $E (struct_subtype (field anyref) $A))
+  ;; CHECK:      (type $D (struct_subtype (field (ref any)) $A))
+  (type $D (struct_subtype (field (ref any)) $A))
+  ;; CHECK:      (type $E (struct_subtype (field eqref) $A))
+  (type $E (struct_subtype (field eqref) $A))
+  (type $F (struct_subtype (field anyref) $A))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
@@ -21,13 +23,14 @@
   ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (local $d (ref null $D))
   ;; CHECK-NEXT:  (local $e (ref null $E))
+  ;; CHECK-NEXT:  (local $f (ref null $F))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast null $A
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $E
+  ;; CHECK-NEXT:   (ref.cast null $F
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -39,10 +42,12 @@
     (local $b (ref null $B))
     ;; $C cannot because it adds a field.
     (local $c (ref null $C))
-    ;; $D cannot because it refines a field.
+    ;; $D cannot because it refines a field's nullability.
     (local $d (ref null $D))
-    ;; $E cannot because it has a cast.
+    ;; $E cannot because it refines a field's heap type.
     (local $e (ref null $E))
+    ;; $F cannot because it has a cast.
+    (local $f (ref null $F))
 
     ;; A cast of $A has no effect.
     (drop
@@ -50,9 +55,9 @@
         (local.get $a)
       )
     )
-    ;; A cast of $E prevents it from being merged.
+    ;; A cast of $F prevents it from being merged.
     (drop
-      (ref.cast null $E
+      (ref.cast null $F
         (local.get $a)
       )
     )
@@ -142,17 +147,20 @@
 (module
   ;; CHECK:      (type $A (struct (field (ref null $X))))
 
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $X (struct ))
   (type $X (struct))
   (type $Y (struct_subtype $X))
   (type $A (struct (field (ref null $X))))
   (type $B (struct_subtype (field (ref null $Y)) $A))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $C (struct_subtype (field (ref $X)) $A))
+  (type $C (struct_subtype (field (ref $Y)) $A))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -160,6 +168,8 @@
     ;; refinement will no longer happen after X and Y are also merged.
     (local $a (ref null $A))
     (local $b (ref null $B))
+    ;; C cannot be merged because it refines the field's nullability.
+    (local $c (ref null $C))
   )
 )
 
