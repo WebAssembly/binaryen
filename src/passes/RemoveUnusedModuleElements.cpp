@@ -130,9 +130,10 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
-  // Functions for whom there is a ref.func. We cannot remove these blah blah
-  // XXX use this instead of scouring uRFM?
-  std::unordered_set<Name> danglingRefFuncs;
+  // Things for whom there is a reference, but may be unused. For example, a
+  // RefFunc in the IR requires us to have a function for it to refer to, even
+  // if that function's contents are unreachable.
+  std::unordered_set<ModuleElement> danglingRefs;
 
   ReachabilityAnalyzer(Module* module,
                        const PassOptions& options,
@@ -249,10 +250,22 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         // it as unread.
         unreadStructFieldExprMap[sf].push_back(operand);
 
-        // We also must note any RefFuncs here as potentially dangling: they
-        // cannot be simply removed if they have no other references.
+        // We also must note any relevant references here as potentially
+        // dangling: they cannot be simply removed if they have no other
+        // references.
+        //
+        // Note that we already ruled out the case of side effects before, so a
+        // GlobalSet is not possible.
         for (auto* refFunc : FindAll<RefFunc>(operand).list) {
-          danglingRefFuncs.insert(refFunc->func);
+          danglingRefs.insert(
+            ModuleElement(ModuleElementKind::Function, refFunc->func)
+          );
+        }
+        for (auto* refGlobal : FindAll<GlobalGet>(operand).list) {
+          danglingRefs.insert(
+            ModuleElement(ModuleElementKind::Function, refGlobal->name)
+          );
+          // TODO the global's init too..! And cycles
         }
       }
     }
@@ -518,14 +531,14 @@ struct RemoveUnusedModuleElements : public Pass {
 #endif
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
-      if (analyzer.reachable.count(
-            ModuleElement(ModuleElementKind::Function, curr->name))) {
+      auto moduleElement = ModuleElement(ModuleElementKind::Function, curr->name);
+      if (analyzer.reachable.count(moduleElement)) {
         // This is reached.
         return false;
       }
 
-      if (uncalledRefFuncs.count(curr->name) ||
-          analyzer.danglingRefFuncs.count(curr->name)) {
+      if (uncalledRefFuncs.count(curr->name) || // TODO unify these 2?
+          analyzer.danglingRefs.count(moduleElement)) {
         // This is not reached, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {
@@ -538,8 +551,17 @@ struct RemoveUnusedModuleElements : public Pass {
       return true;
     });
     module->removeGlobals([&](Global* curr) {
-      return analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
+      auto moduleElement = ModuleElement(ModuleElementKind::Function, curr->name);
+      if (analyzer.reachable.count(moduleElement) ||
+          analyzer.danglingRefs.count(moduleElement)) {
+        // This is not reached, but has a reference.
+        // TODO: We could try to empty it out, for example, replace it with a
+        //       null if it is non-nullable, or replace all gets of it with
+        //       something else.
+        return false;
+      }
+
+      return true;
     });
     module->removeTags([&](Tag* curr) {
       return analyzer.reachable.count(
