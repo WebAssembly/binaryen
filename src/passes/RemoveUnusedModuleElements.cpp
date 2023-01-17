@@ -44,23 +44,31 @@ using ModuleElement = std::pair<ModuleElementKind, Name>;
 // TODO: use Effects to determine if a memory is used
 // This pass does not have multi-memories support
 
-struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
+struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   Module* module;
   bool closedWorld;
 
   // The set of all reachable things we've seen so far.
   std::set<ModuleElement> reachable;
 
-  // A queue of reachable things that we need to process. These appear in
-  // |reachable|, and the work we do when we pop them from the queue is to look
-  // at the things they reach.
+  // A queue of reachable module elements that we need to process. These appear
+  // in |reachable|, and the work we do when we pop them from the queue is to
+  // look at the things they reach.
+  std::vector<ModuleElement> moduleQueue;
+
+  // A stack of reachable expressions to walk. We do *not* use the normal
+  // walking mechanism because we need more control. Specifically, we may defer
+  // certain walks, such as this:
   //
-  // The queue can contain either module elements, or individual expressions. We
-  // need to allow expressions here so that we can queue addition expressions to
-  // be processed even while in the middle of processing another expression (we
-  // cannot "nest" a walk in another walk; see visitStructGet below).
-  using QueueElement = std::variant<ModuleElement, Expression*>;
-  std::vector<QueueElement> queue;
+  //   new Foo{ &func1 }
+  // i.e.
+  //   (struct.new $Foo (ref.func $func1))
+  //
+  // If we walked the child immediately then we would make $func1 reachable. But
+  // that function is only reached if we actually read that field from the
+  // struct. We perform that analysis in readStructFields /
+  // unreadStructFieldExprMap, below.
+  std::vector<Expression*> expressionStack;
 
   bool usesMemory = false;
 
@@ -113,6 +121,11 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   //        field #0
   //      }
   //    }
+  //
+  // TODO: replace walk with a manual loop over ChildIterator.chlidren etc.
+  //       and special case walking into the children of a struct.new - do the
+  //       same to them as for structnew in a global.
+  // TODO: remove QueueElement as with a manual walk we can just do a subwalk.
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
@@ -128,7 +141,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
     for (auto& element : roots) {
       reachable.insert(element);
-      queue.push_back(element);
+      moduleQueue.push_back(element);
     }
 
     // Globals used in memory/table init expressions are also roots
@@ -143,13 +156,25 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       }
     }
 
-    // main loop
-    while (queue.size()) {
-      auto curr = queue.back();
-      queue.pop_back();
+    // Main loop on both the module queue and the expression stack.
+    while (expressionStack.size() || moduleQueue.size()) {
+      if (expressionStack.size()) {
+        while (expressionStack.size()) {
+          auto* curr = expressionStack.back();
+          expressionStack.pop_back();
+
+          visit(curr);
+          maybeWalkChildren(curr);
+        }
+
+        continue;
+      }
+
+      auto curr = moduleQueue.back();
+      moduleQueue.pop_back();
 
       if (auto** expr = std::get_if<Expression*>(&curr)) {
-        walk(*expr);
+        expressionStack.push_back(*expr);
         continue;
       }
 
@@ -160,7 +185,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         // if not an import, walk it
         auto* func = module->getFunction(value);
         if (!func->imported()) {
-          walk(func->body);
+          expressionStack.push_back(func->body);
         }
       } else if (kind == ModuleElementKind::Global) {
         // if not imported, it has an init expression we can walk
@@ -171,7 +196,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       } else if (kind == ModuleElementKind::Table) {
         ModuleUtils::iterTableSegments(
           *module, value, [&](ElementSegment* segment) {
-            walk(segment->offset);
+            expressionStack.push_back(segment->offset);
           });
       }
     }
@@ -179,7 +204,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 
   void maybeAdd(ModuleElement element) {
     if (reachable.emplace(element).second) {
-      queue.emplace_back(element);
+      moduleQueue.emplace_back(element);
     }
   }
 
@@ -191,14 +216,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     });
   }
 
-  void walkGlobalInit(Expression* curr) {
+  void maybeWalkChildren(Expression* curr) {
     auto* new_ = curr->dynCast<StructNew>();
     if (!closedWorld || !new_) {
       // If we are in open world then we cannot optimize based on which struct
       // fields we see read, since reads can happen on the outside. And if this
       // is not a StructNew, then it is not valid for that optimization anyhow.
       // Just walk this normally.
-      walk(curr);
+      expressionStack.push_back(curr);
       return;
     }
 
@@ -208,9 +233,10 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       //       just look at the top level. That is enough for a vtable.
       auto* operand = new_->operands[i];
       auto sf = StructField{type, i};
+      // or effects!
       if (readStructFields.count(sf)) {
         // This data can be read, so just walk it.
-        walk(operand);
+        expressionStack.push_back(operand);
       } else {
         // This data might be read later. Note it as unread.
         unreadStructFieldExprMap[sf].push_back(operand);
@@ -367,7 +393,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
             // Note that we cannot walk this immediately, because we are in the
             // middle of a walk right now (we cannot "nest" walks, as that is
             // risky and assertions prevent it). Queue it for later.
-            queue.push_back(expr);
+            moduleQueue.push_back(expr);
           }
         }
       });
