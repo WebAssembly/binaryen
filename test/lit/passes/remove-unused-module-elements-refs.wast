@@ -632,4 +632,78 @@
   )
 )
 
-;; test itable ?
+;; Test struct.news not in globals.
+(module
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $void (func))
+  (type $void (func))
+
+  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+
+  (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
+
+  (global $vtable (ref $vtable) (struct.new $vtable
+    (ref.func $a)
+    (ref.func $b)
+  ))
+
+  (func $func (export "func")
+    (local $x (ref $vtable))
+    (drop
+      ;; Read from field #1 of the vtable type, but not from #0
+      (struct.get $struct 1
+        (struct.new $struct
+          ;; Init one field using the global vtable.
+          (global.get $vtable)
+          ;; Init another field using a vtable we create here - a nested
+          ;; struct.new inside this one.
+          (struct.new $vtable
+            (ref.func $c)
+            (ref.func $d)
+          )
+          ;; Another nested one, but now there is a side effect. Everything here
+          ;; is considered to escape due to that.
+          (local.tee $x
+            (struct.new $vtable
+              (ref.func $e)
+              (ref.func $f)
+            )
+          )
+        )
+      )
+    )
+  )
+
+  (func $a (type $void)
+    ;; This is unreachable since a reference to it only exists in field #0 of
+    ;; the vtable type, which is never read from.
+  )
+
+  (func $b (type $void)
+    ;; This is reachable. It is in field #1, which is read, and the global
+    ;; vtable is also read.
+  )
+
+  (func $c (type $void)
+    ;; Like $a, this is unreachable. That it is in a nested struct.new, and not
+    ;; in a global, does not matter.
+  )
+
+  (func $d (type $void)
+    ;; Like $b, this is reachable. That it is in a nested struct.new, and not
+    ;; in a global, does not matter.
+  )
+
+  (func $e (type $void)
+    ;; Side effects on the struct field this appears in cause this to be
+    ;; reachable (even though field #0 is never read).
+  )
+
+  (func $f (type $void)
+    ;; Side effects on the struct field this appears in cause this to be
+    ;; reachable.
+  )
+)
+
