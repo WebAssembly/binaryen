@@ -817,8 +817,8 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $a (type $void)
-    ;; This is unreachable since a reference to it only exists in field #0 of
-    ;; the vtable type, which is never read from.
+    ;; This is unreachable (in closed world) since a reference to it only exists
+    ;; in field #0 of the vtable type, which is never read from.
   )
 
   ;; CHECK:      (func $b (type $void)
