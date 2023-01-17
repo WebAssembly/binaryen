@@ -642,7 +642,7 @@
   ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
-  (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
+  (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
 
   (global $vtable (ref $vtable) (struct.new $vtable
     (ref.func $a)
