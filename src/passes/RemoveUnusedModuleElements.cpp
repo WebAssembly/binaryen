@@ -46,7 +46,7 @@ using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   Module* module;
-  bool closedWorld;
+  const PassOptions& options;
 
   // The set of all reachable things we've seen so far.
   std::set<ModuleElement> reachable;
@@ -135,9 +135,9 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unordered_set<Name> danglingRefFuncs;
 
   ReachabilityAnalyzer(Module* module,
-                       const std::vector<ModuleElement>& roots,
-                       bool closedWorld)
-    : module(module), closedWorld(closedWorld) {
+                       const PassOptions& options,
+                       const std::vector<ModuleElement>& roots)
+    : module(module), options(options) {
 
     for (auto& element : roots) {
       reachable.insert(element);
@@ -147,12 +147,12 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->dataSegments) {
       if (!segment->isPassive) {
-        walk(segment->offset);
+        expressionStack.push_back(segment->offset);
       }
     }
     for (auto& segment : module->elementSegments) {
       if (segment->table.is()) {
-        walk(segment->offset);
+        expressionStack.push_back(segment->offset);
       }
     }
 
@@ -170,15 +170,8 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         auto curr = moduleQueue.back();
         moduleQueue.pop_back();
 
-        // TODO: func
-        if (auto** expr = std::get_if<Expression*>(&curr)) {
-          expressionStack.push_back(*expr);
-          continue;
-        }
-
-        auto moduleElement = std::get<ModuleElement>(curr);
-        assert(reachable.count(moduleElement));
-        auto& [kind, value] = moduleElement;
+        assert(reachable.count(curr));
+        auto& [kind, value] = curr;
         if (kind == ModuleElementKind::Function) {
           // if not an import, walk it
           auto* func = module->getFunction(value);
@@ -226,7 +219,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     // we defer walking of to when we know there is a read that can actually
     // read them, see comments above on |expressionStack|.
 
-    if (!closedWorld) {
+    if (!options.closedWorld) {
       // If we are in open world then we cannot optimize based on which struct
       // fields we see read, since reads can happen on the outside.
       walkChildren();
@@ -246,7 +239,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       auto* operand = new_->operands[i];
       auto sf = StructField{type, i};
       if (readStructFields.count(sf) ||
-          EffectAnalyzer(operand).hasSideEffects()) {
+          EffectAnalyzer(options, *module, operand).hasSideEffects()) {
         // This data can be read, so just walk it. Or, this has side effects,
         // which is tricky to reason about - the side effects must happen even
         // if we never read the struct field - so give up and walk it.
@@ -347,7 +340,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
-    if (!closedWorld) {
+    if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
       maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
@@ -405,11 +398,9 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         auto iter = unreadStructFieldExprMap.find(sf);
         if (iter != unreadStructFieldExprMap.end()) {
           for (auto* expr : iter->second) {
-            // Note that we cannot walk this immediately, because we are in the
-            // middle of a walk right now (we cannot "nest" walks, as that is
-            // risky and assertions prevent it). Queue it for later.
-            moduleQueue.push_back(expr);
+            expressionStack.push_back(expr);
           }
+          // TODO erase?
         }
       });
     }
@@ -496,8 +487,8 @@ struct RemoveUnusedModuleElements : public Pass {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
     // Compute reachability starting from the root set.
-    auto closedWorld = getPassOptions().closedWorld;
-    ReachabilityAnalyzer analyzer(module, roots, closedWorld);
+    auto& options = getPassOptions();
+    ReachabilityAnalyzer analyzer(module, options, roots);
 
     // RefFuncs that are never called are a special case: We cannot remove the
     // function, since then (ref.func $foo) would not validate. But if we know
@@ -509,7 +500,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // principle track, see the TODO earlier in this file). So in the case of an
     // open world we should not have noted anything in uncalledRefFuncMap
     // earlier and not do any related optimizations there.
-    assert(closedWorld || analyzer.uncalledRefFuncMap.empty());
+    assert(options.closedWorld || analyzer.uncalledRefFuncMap.empty());
     std::unordered_set<Name> uncalledRefFuncs;
     for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
       for (auto target : targets) {
