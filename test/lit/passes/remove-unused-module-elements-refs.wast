@@ -611,7 +611,7 @@
 
   (func $c (type $void)
     ;; $c is parallel to $a, but using vtable-2, which has no other references,
-    ;; so this is dead like $a.
+    ;; so this is dead like $a, and can be removed entirely.
     (call_ref $void
       (struct.get $vtable 0
         (global.get $vtable-2)
