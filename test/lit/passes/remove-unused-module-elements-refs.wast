@@ -651,27 +651,54 @@
 
   (func $func (export "func")
     (local $x (ref $vtable))
+
     (drop
-      ;; Read from field #1 of the vtable type, but not from #0
-      (struct.get $struct 1
-        (struct.new $struct
-          ;; Init one field using the global vtable.
-          (global.get $vtable)
-          ;; Init another field using a vtable we create here - a nested
-          ;; struct.new inside this one.
+      (struct.new $struct
+        ;; Init one field using the global vtable.
+        (global.get $vtable)
+        ;; Init another field using a vtable we create here - a nested
+        ;; struct.new inside this one.
+        (struct.new $vtable
+          (ref.func $c)
+          (ref.func $d)
+        )
+        ;; Another nested one, but now there is a side effect. Everything here
+        ;; is considered to escape due to that.
+        (local.tee $x
           (struct.new $vtable
-            (ref.func $c)
-            (ref.func $d)
-          )
-          ;; Another nested one, but now there is a side effect. Everything here
-          ;; is considered to escape due to that.
-          (local.tee $x
-            (struct.new $vtable
-              (ref.func $e)
-              (ref.func $f)
-            )
+            (ref.func $e)
+            (ref.func $f)
           )
         )
+        ;; Another nested one. This field will not be read.
+        (struct.new $vtable
+          (ref.func $g)
+          (ref.func $h)
+        )
+      )
+    )
+
+    ;; Read from all fields of $struct except for the last.
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 1
+        (ref.null $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 2
+        (ref.null $struct)
+      )
+    )
+
+    ;; Read from all field #1 of the vtable type, but not #0.
+    (drop
+      (struct.get $vtable 1
+        (ref.null $vtable)
       )
     )
   )
@@ -705,5 +732,17 @@
     ;; Side effects on the struct field this appears in cause this to be
     ;; reachable.
   )
+
+  (func $g (type $void)
+    ;; This is in a struct written to a field that is never read in $struct, so
+    ;; it is unreachable.
+  )
+
+  (func $h (type $void)
+    ;; This is in a struct written to a field that is never read in $struct, so
+    ;; it is unreachable.
+  )
 )
 
+;; TODO: test removing the vtable, and handling its refs.
+;; TODO: cycle of those
