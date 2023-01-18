@@ -1213,3 +1213,316 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct (field funcref)))
+
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
+
+  ;; OPEN_WORLD:      (type $void (func))
+  (type $void (func))
+
+  (type $struct (struct (field funcref)))
+
+  ;; CHECK:      (global $g1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (ref.func $f1)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $g1 (ref $struct) (struct.new $struct
+  ;; OPEN_WORLD-NEXT:  (ref.func $f1)
+  ;; OPEN_WORLD-NEXT: ))
+  (global $g (ref $struct) (struct.new $struct
+    (ref.func $f)
+  ))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $func)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $void)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (global.get $g1)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (global.get $g2)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (ref.func $func)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (export "func")
+    ;; Refer to the global.
+    (drop
+      (global.get $g)
+    )
+
+    ;; Call the function type to allow functions to be used.
+    (call_ref $void
+      (ref.func $func)
+    )
+  )
+
+  (func $void (type $void)
+    ;; Helper function. This is reached via a call_ref.
+  )
+
+  ;; CHECK:      (func $f1 (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f1 (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $f (type $void)
+    ;; This is unreachable in closed world. The global it is in has a reference
+    ;; but the struct there has no reads of its field.
+  )
+)
+
+;; Test references to global function references. We do not optimize this fully
+;; yet as once a global is referenced we just mark it used, so when it contains
+;; a function reference that is reached. If the global contained a struct.new
+;; then we could optimize this.
+;; TODO: Optimize this as well.
+(module
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $void (func))
+  (type $void (func))
+
+  ;; CHECK:      (type $A (struct (field funcref)))
+  ;; OPEN_WORLD:      (type $A (struct (field funcref)))
+  (type $A (struct (field funcref)))
+
+  ;; CHECK:      (global $g1 (ref func) (ref.func $f1))
+  ;; OPEN_WORLD:      (global $g1 (ref func) (ref.func $f1))
+  (global $g1 (ref func) (ref.func $f1))
+
+  ;; CHECK:      (global $g2 (ref func) (ref.func $f2))
+  ;; OPEN_WORLD:      (global $g2 (ref func) (ref.func $f2))
+  (global $g2 (ref func) (ref.func $f2))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (global.get $g2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $func)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $void)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (global.get $g1)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.new $A
+  ;; OPEN_WORLD-NEXT:    (global.get $g2)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (ref.func $func)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (export "func")
+    ;; Refer to $g1 directly.
+    (drop
+      (global.get $g1)
+    )
+    ;; Refer to $g2 from a struct field that is never read.
+    (drop
+      (struct.new $A
+        (global.get $g2)
+      )
+    )
+
+    ;; Call the function type to allow functions to be used.
+    (call_ref $void
+      (ref.func $func)
+    )
+  )
+
+  (func $void (type $void)
+    ;; Helper function. This is reached via a call_ref.
+  )
+
+  ;; CHECK:      (func $f1 (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f1 (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $f1 (type $void)
+  )
+
+  ;; CHECK:      (func $f2 (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f2 (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $f2 (type $void)
+    ;; This could be unreachable, but due to the TODO above it is not.
+  )
+)
+
+;; As above, but now the globals are struct.news. We still do not fully optimize
+;; this. TODO
+(module
+  ;; CHECK:      (type $A (struct (field funcref)))
+
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $A (struct (field funcref)))
+
+  ;; OPEN_WORLD:      (type $void (func))
+  (type $void (func))
+
+  (type $A (struct (field funcref)))
+
+  ;; CHECK:      (type $B (struct (field (ref $A))))
+  ;; OPEN_WORLD:      (type $B (struct (field (ref $A))))
+  (type $B (struct (field (ref $A))))
+
+  ;; CHECK:      (global $g1 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (ref.func $f1)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $g1 (ref $A) (struct.new $A
+  ;; OPEN_WORLD-NEXT:  (ref.func $f1)
+  ;; OPEN_WORLD-NEXT: ))
+  (global $g1 (ref $A) (struct.new $A
+    (ref.func $f1)
+  ))
+
+  ;; CHECK:      (global $g2 (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (ref.func $f2)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $g2 (ref $A) (struct.new $A
+  ;; OPEN_WORLD-NEXT:  (ref.func $f2)
+  ;; OPEN_WORLD-NEXT: ))
+  (global $g2 (ref $A) (struct.new $A
+    (ref.func $f2)
+  ))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $g1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (global.get $g2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $func)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $void)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (global.get $g1)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.new $B
+  ;; OPEN_WORLD-NEXT:    (global.get $g2)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (ref.func $func)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $A 0
+  ;; OPEN_WORLD-NEXT:    (block (result (ref $A))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (export "func")
+    ;; Refer to $g1 directly.
+    (drop
+      (global.get $g1)
+    )
+    ;; Refer to $g2 from a struct field that is never read.
+    (drop
+      (struct.new $B
+        (global.get $g2)
+      )
+    )
+
+    ;; Call the function type to allow functions to be used.
+    (call_ref $void
+      (ref.func $func)
+    )
+
+    ;; Read $A's field.
+    (drop
+      (struct.get $A 0
+        (block (result (ref $A))
+          (unreachable)
+        )
+      )
+    )
+  )
+
+  (func $void (type $void)
+    ;; Helper function. This is reached via a call_ref.
+  )
+
+  ;; CHECK:      (func $f1 (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f1 (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $f1 (type $void)
+  )
+
+  ;; CHECK:      (func $f2 (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f2 (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $f2 (type $void)
+    ;; This could be unreachable, but due to the TODO above it is not.
+  )
+)
