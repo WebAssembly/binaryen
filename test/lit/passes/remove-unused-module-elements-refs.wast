@@ -1020,6 +1020,196 @@
   )
 )
 
-;; TODO (one back): test removing the vtable, and handling its refs.
-;; TODO: cycle of those
-;; TODO; remove call to $void and they all fall
+;; Cycles.
+(module
+  (rec
+    ;; CHECK:      (type $vtable-func (func (param (ref $vtable))))
+    ;; OPEN_WORLD:      (type $vtable-func (func (param (ref $vtable))))
+    (type $vtable-func (func (param (ref $vtable))))
+    ;; CHECK:      (type $vtable (struct (field (ref $vtable-func)) (field (ref $vtable-func))))
+    ;; OPEN_WORLD:      (type $vtable (struct (field (ref $vtable-func)) (field (ref $vtable-func))))
+    (type $vtable (struct_subtype (field (ref $vtable-func)) (field (ref $vtable-func)) data))
+  )
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem declare func $a $b $c $d)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (call_ref $vtable-func
+  ;; CHECK-NEXT:   (struct.new $vtable
+  ;; CHECK-NEXT:    (ref.func $a)
+  ;; CHECK-NEXT:    (ref.func $b)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (struct.new $vtable
+  ;; CHECK-NEXT:     (ref.func $a)
+  ;; CHECK-NEXT:     (ref.func $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (struct.new $vtable
+  ;; CHECK-NEXT:     (ref.func $c)
+  ;; CHECK-NEXT:     (ref.func $d)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (type $none_=>_none (func))
+
+  ;; OPEN_WORLD:      (elem declare func $a $b $c $d)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $none_=>_none)
+  ;; OPEN_WORLD-NEXT:  (call_ref $vtable-func
+  ;; OPEN_WORLD-NEXT:   (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:    (ref.func $a)
+  ;; OPEN_WORLD-NEXT:    (ref.func $b)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 0
+  ;; OPEN_WORLD-NEXT:    (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:     (ref.func $a)
+  ;; OPEN_WORLD-NEXT:     (ref.func $b)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 0
+  ;; OPEN_WORLD-NEXT:    (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:     (ref.func $c)
+  ;; OPEN_WORLD-NEXT:     (ref.func $d)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (export "func")
+    ;; Read field 0, and call it.
+    (call_ref $vtable-func
+      (struct.new $vtable
+        (ref.func $a)
+        (ref.func $b)
+      )
+      (struct.get $vtable 0
+        ;; Duplicate the first vtable.
+        (struct.new $vtable
+          (ref.func $a)
+          (ref.func $b)
+        )
+      )
+    )
+
+    ;; Again, read field #0. No need to call it here (the call before makes the
+    ;; type used).
+    (drop
+      (struct.get $vtable 0
+        ;; Make a new vtable with new funcs.
+        (struct.new $vtable
+          (ref.func $c)
+          (ref.func $d)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $a (type $vtable-func) (param $vtable (ref $vtable))
+  ;; CHECK-NEXT:  (call_ref $vtable-func
+  ;; CHECK-NEXT:   (local.get $vtable)
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (local.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $a (type $vtable-func) (param $vtable (ref $vtable))
+  ;; OPEN_WORLD-NEXT:  (call_ref $vtable-func
+  ;; OPEN_WORLD-NEXT:   (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 0
+  ;; OPEN_WORLD-NEXT:    (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $a (type $vtable-func) (param $vtable (ref $vtable))
+    ;; $a calls $a or $c (using field #0).
+    ;; $a is reached from $func, so it is reachable.
+    (call_ref $vtable-func
+      (local.get $vtable)
+      (struct.get $vtable 0
+        (local.get $vtable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $b (type $vtable-func) (param $vtable (ref $vtable))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $b (type $vtable-func) (param $vtable (ref $vtable))
+  ;; OPEN_WORLD-NEXT:  (call_ref $vtable-func
+  ;; OPEN_WORLD-NEXT:   (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 1
+  ;; OPEN_WORLD-NEXT:    (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $b (type $vtable-func) (param $vtable (ref $vtable))
+    ;; $b calls $b or $d (using field #1).
+    ;; But $b is not reached from $func, so it remains unreachable in closed
+    ;; world.
+    (call_ref $vtable-func
+      (local.get $vtable)
+      (struct.get $vtable 1
+        (local.get $vtable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $c (type $vtable-func) (param $vtable (ref $vtable))
+  ;; CHECK-NEXT:  (call_ref $vtable-func
+  ;; CHECK-NEXT:   (local.get $vtable)
+  ;; CHECK-NEXT:   (struct.get $vtable 0
+  ;; CHECK-NEXT:    (local.get $vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $c (type $vtable-func) (param $vtable (ref $vtable))
+  ;; OPEN_WORLD-NEXT:  (call_ref $vtable-func
+  ;; OPEN_WORLD-NEXT:   (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 0
+  ;; OPEN_WORLD-NEXT:    (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $c (type $vtable-func) (param $vtable (ref $vtable))
+    ;; $c forms a cycle with $a.
+    (call_ref $vtable-func
+      (local.get $vtable)
+      (struct.get $vtable 0
+        (local.get $vtable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $d (type $vtable-func) (param $vtable (ref $vtable))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $d (type $vtable-func) (param $vtable (ref $vtable))
+  ;; OPEN_WORLD-NEXT:  (call_ref $vtable-func
+  ;; OPEN_WORLD-NEXT:   (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   (struct.get $vtable 1
+  ;; OPEN_WORLD-NEXT:    (local.get $vtable)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $d (type $vtable-func) (param $vtable (ref $vtable))
+    ;; $d forms a cycle with $b.
+    (call_ref $vtable-func
+      (local.get $vtable)
+      (struct.get $vtable 1
+        (local.get $vtable)
+      )
+    )
+  )
+)
