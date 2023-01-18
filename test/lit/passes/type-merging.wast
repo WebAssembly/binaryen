@@ -444,9 +444,6 @@
 )
 
 ;; Check that public types are not merged.
-;; TODO: $C still appears in the output because type-updating.cpp does not
-;; support merging private types into their public supertypes very well. Fix
-;; this.
 (module
   ;; CHECK:      (type $A (func))
   (type $A (func))            ;; public
