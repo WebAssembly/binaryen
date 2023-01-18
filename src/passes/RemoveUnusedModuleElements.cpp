@@ -117,19 +117,19 @@ struct Analyzer : public Visitor<Analyzer> {
   using StructField = std::pair<HeapType, Index>;
 
   // Similar to calledSignatures/uncalledRefFuncMap, we store the StructFields
-  // we've seen reads from, and also expressions stored in such fields that could be
-  // read if ever we see a read of that field in the future. That is, for an
-  // expression stored into a struct field to be read, we need to both see that
-  // expression written to the field, and see some other place read that field
-  // (similar to with functions that we need to see the RefFunc and also a
-  // CallRef that can actually call it).
+  // we've seen reads from, and also expressions stored in such fields that
+  // could be read if ever we see a read of that field in the future. That is,
+  // for an expression stored into a struct field to be read, we need to both
+  // see that expression written to the field, and see some other place read
+  // that field (similar to with functions that we need to see the RefFunc and
+  // also a CallRef that can actually call it).
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
   Analyzer(Module* module,
-                       const PassOptions& options,
-                       const std::vector<ModuleElement>& roots)
+           const PassOptions& options,
+           const std::vector<ModuleElement>& roots)
     : module(module), options(options) {
 
     for (auto& element : roots) {
@@ -149,7 +149,8 @@ struct Analyzer : public Visitor<Analyzer> {
     }
 
     // Main loop on both the module and the expression queues.
-    while (processExpressions() || processModule()) {}
+    while (processExpressions() || processModule()) {
+    }
   }
 
   // Process expressions in the expression queue while we have any, visiting
@@ -558,13 +559,11 @@ struct RemoveUnusedModuleElements : public Pass {
     auto needed = [&](ModuleElement element) {
       // We need to emit something in the output if it has either a reference or
       // a use.
-      return analyzer.used.count(element) ||
-             analyzer.referenced.count(element);
+      return analyzer.used.count(element) || analyzer.referenced.count(element);
     };
-    
+
     module->removeFunctions([&](Function* curr) {
-      auto element =
-        ModuleElement(ModuleElementKind::Function, curr->name);
+      auto element = ModuleElement(ModuleElementKind::Function, curr->name);
       if (analyzer.used.count(element)) {
         // This is used.
         return false;
@@ -587,12 +586,11 @@ struct RemoveUnusedModuleElements : public Pass {
       return !needed(ModuleElement(ModuleElementKind::Global, curr->name));
     });
     module->removeTags([&](Tag* curr) {
-      return !needed(
-               ModuleElement(ModuleElementKind::Tag, curr->name));
+      return !needed(ModuleElement(ModuleElementKind::Tag, curr->name));
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return !needed(ModuleElement(
-               ModuleElementKind::ElementSegment, curr->name));
+      return !needed(
+        ModuleElement(ModuleElementKind::ElementSegment, curr->name));
     });
     // Since we've removed all empty element segments, here we mark all tables
     // that have a segment left.
@@ -602,8 +600,7 @@ struct RemoveUnusedModuleElements : public Pass {
       [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
     module->removeTables([&](Table* curr) {
       return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
-             !needed(
-               ModuleElement(ModuleElementKind::Table, curr->name));
+             !needed(ModuleElement(ModuleElementKind::Table, curr->name));
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
@@ -632,4 +629,4 @@ Pass* createRemoveUnusedNonFunctionModuleElementsPass() {
   return new RemoveUnusedModuleElements(true);
 }
 
-} // namespace wasm // TODO: grep for "reach"
+} // namespace wasm
