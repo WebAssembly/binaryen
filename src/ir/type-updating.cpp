@@ -89,7 +89,7 @@ void GlobalTypeRewriter::update() {
     }
 
     // Apply a super, if there is one
-    if (auto super = type.getSuperType()) {
+    if (auto super = getSuperType(type)) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
         assert(it->second < i);
         typeBuilder[i].subTypeOf(typeBuilder[it->second]);

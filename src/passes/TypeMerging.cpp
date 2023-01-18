@@ -46,6 +46,12 @@
 #include "wasm-type-ordering.h"
 #include "wasm.h"
 
+#define TYPE_MERGING_DEBUG 0
+
+#if TYPE_MERGING_DEBUG
+#include "wasm-type-printing.h"
+#endif
+
 namespace wasm {
 
 namespace {
@@ -160,6 +166,22 @@ void TypeMerging::run(Module* module_) {
   // Map each type to its partition in the list.
   std::unordered_map<HeapType, Partitions::iterator> typePartitions;
 
+#if TYPE_MERGING_DEBUG
+  auto dumpPartitions = [&]() {
+    using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
+    Fallback printPrivate(privates, "private.");
+    ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
+    size_t i = 0;
+    for (auto& partition : partitions) {
+      std::cerr << i++ << ": " << print(partition[0].val) << "\n";
+      for (size_t j = 1; j < partition.size(); ++j) {
+        std::cerr << "   " << print(partition[j].val) << "\n";
+      }
+      std::cerr << "\n";
+    }
+  };
+#endif // TYPE_MERGING_DEBUG
+
   // Ensure the type has a partition and return a reference to it.
   auto ensurePartition = [&](HeapType type) {
     auto [it, inserted] = typePartitions.insert({type, partitions.end()});
@@ -194,6 +216,11 @@ void TypeMerging::run(Module* module_) {
     it->push_back(makeDFAState(type));
     typePartitions[type] = it;
   }
+
+#if TYPE_MERGING_DEBUG
+  std::cerr << "Initial partitions:\n";
+  dumpPartitions();
+#endif
 
   // Construct and refine the partitioned DFA.
   std::vector<Partition> dfa(std::make_move_iterator(partitions.begin()),
@@ -323,6 +350,15 @@ void TypeMerging::applyMerges(const TypeUpdates& merges) {
       auto oldSig = oldSignatureType.getSignature();
       sig.params = getUpdatedTypeList(oldSig.params);
       sig.results = getUpdatedTypeList(oldSig.results);
+    }
+    std::optional<HeapType> getSuperType(HeapType oldType) override {
+      auto super = oldType.getSuperType();
+      if (super) {
+        if (auto it = merges.find(*super); it != merges.end()) {
+          return it->second;
+        }
+      }
+      return super;
     }
   } rewriter(*module, merges);
 }
