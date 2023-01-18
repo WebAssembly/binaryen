@@ -19,30 +19,40 @@
 
 #include <unordered_set>
 
+#include "support/insert_ordered.h"
 #include "support/topological_sort.h"
 #include "wasm-type.h"
 
 namespace wasm::HeapTypeOrdering {
 
-struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst> {
-  SupertypesFirst(const std::vector<HeapType>& types) {
-    std::unordered_set<HeapType> supertypes;
+// Given a collection of types, iterate through it such that each type in the
+// collection is visited only after its immediate children in the collection are
+// visited.
+template<typename T>
+struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst<T>> {
+  // For each type in the input collection, whether it is a supertype. Used to
+  // track membership in the input collection.
+  InsertOrderedMap<HeapType, bool> typeSet;
+
+  SupertypesFirst(const T& types) {
     for (auto type : types) {
+      typeSet.insert({type, false});
       if (auto super = type.getSuperType()) {
-        supertypes.insert(*super);
+        typeSet[*super] = true;
       }
     }
     // Types that are not supertypes of others are the roots.
-    for (auto type : types) {
-      if (!supertypes.count(type)) {
-        push(type);
+    for (auto [type, isSuper] : typeSet) {
+      if (!isSuper) {
+        this->template push(type);
       }
     }
   }
 
   void pushPredecessors(HeapType type) {
-    if (auto super = type.getSuperType()) {
-      push(*super);
+    // Do not visit types that weren't in the input collection.
+    if (auto super = type.getSuperType(); super && typeSet.count(*super)) {
+      this->push(*super);
     }
   }
 };
