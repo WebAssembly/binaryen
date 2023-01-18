@@ -290,7 +290,7 @@ struct Analyzer : public Visitor<Analyzer> {
       // If a function ends up referenced but not used then later down we will
       // empty it out by replacing its body with an unreachable, which always
       // validates. For that reason all we need to do here is mark the function
-      // as reachable - we don't need to do anything with the body.
+      // as referenced - we don't need to do anything with the body.
     }
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
       referenced.insert(
@@ -550,7 +550,8 @@ struct RemoveUnusedModuleElements : public Pass {
     ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
-    // Compute reachability starting from the root set.
+
+    // Analyze the module.
     auto& options = getPassOptions();
     Analyzer analyzer(module, options, roots);
 
@@ -578,7 +579,7 @@ struct RemoveUnusedModuleElements : public Pass {
         return false;
       }
 
-      // The function is not reached and has no reference; remove it.
+      // The function is not used or referenced; remove it entirely.
       return true;
     });
     module->removeGlobals([&](Global* curr) {
