@@ -450,11 +450,19 @@
 )
 
 ;; Check that public types are not merged.
+;; TODO: $C still appears in the output because type-updating.cpp does not
+;; support merging private types into their public supertypes very well. Fix
+;; this.
 (module
   ;; CHECK:      (type $A (func))
   (type $A (func))            ;; public
+  ;; CHECK:      (type $B (func_subtype $A))
   (type $B (func_subtype $A)) ;; public
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $C (func_subtype $B))
   (type $C (func_subtype $B)) ;; private
+
+  ;; CHECK:       (type $ref|$A|_ref|$B|_ref|$B|_=>_none (func (param (ref $A) (ref $B) (ref $B))))
 
   ;; CHECK:      (export "foo" (func $foo))
   (export "foo" (func $foo))
@@ -470,7 +478,7 @@
   )
 
   ;; B is not merged because it is public.
-  ;; CHECK:      (func $bar (type $A)
+  ;; CHECK:      (func $bar (type $B)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $bar (type $B)
@@ -478,13 +486,16 @@
   )
 
   ;; C can be merged into B because it is private.
-  ;; CHECK:      (func $baz (type $A)
+  ;; CHECK:      (func $baz (type $B)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $baz (type $C)
     (unreachable)
   )
 
+  ;; CHECK:      (func $quux (type $ref|$A|_ref|$B|_ref|$B|_=>_none) (param $0 (ref $A)) (param $1 (ref $B)) (param $2 (ref $B))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $quux (param (ref $A) (ref $B) (ref $C))
     (unreachable)
   )
