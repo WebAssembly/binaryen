@@ -273,7 +273,9 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     }
   }
 
-  // Add references to all things referred to by an expression
+  // Add references to all things appearing in an expression. This is called
+  // when we think an expression will appear in the output, which means it must
+  // remain valid IR and not refer to nonexistent things.
   //
   // This is only called on things without side effects (if there are such
   // effects then we would have had to assume the worst earlier, and not get
