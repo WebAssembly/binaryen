@@ -30,8 +30,6 @@
 
  ;; PRIMARY:      (export "foo" (func $export$foo))
  (export "foo" (func $foo))
- ;; PRIMARY:      (export "__load_secondary_module" (func $__load_secondary_module))
-
  ;; PRIMARY:      (export "load_secondary_module_status" (global $global$1))
 
  ;; PRIMARY:      (export "%foo" (func $foo))

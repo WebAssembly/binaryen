@@ -275,6 +275,9 @@ struct ModuleSplitter {
   // Map placeholder indices to the names of the functions they replace.
   std::map<size_t, Name> placeholderMap;
 
+  // Internal name of the LOAD_SECONDARY_MODULE function.
+  Name internalLoadSecondaryModule;
+
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
@@ -316,6 +319,10 @@ struct ModuleSplitter {
 void ModuleSplitter::setupJSPI() {
   assert(primary.getExportOrNull(LOAD_SECONDARY_MODULE) &&
          "The load secondary module function must exist");
+  // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
+  // internally.
+  internalLoadSecondaryModule = primary.getExport(LOAD_SECONDARY_MODULE)->value;
+  primary.removeExport(LOAD_SECONDARY_MODULE);
   Builder builder(primary);
   // Add a global to track whether the secondary module has been loaded yet.
   primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
@@ -338,10 +345,10 @@ std::pair<std::set<Name>, std::set<Name>>
 ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
   std::set<Name> primaryFuncs, secondaryFuncs;
   for (auto& func : primary.functions) {
-    // In JSPI mode exported functions cannot to be moved to the secondary
+    // In JSPI mode exported functions cannot be moved to the secondary
     // module since that would make them async when they may not have the JSPI
     // wrapper. Exported JSPI functions can still benefit from splitting though
-    // since the only the JSPI wrapper stub will remain in the primary module.
+    // since only the JSPI wrapper stub will remain in the primary module.
     if (func->imported() || config.primaryFuncs.count(func->name) ||
         (config.jspi && primary.isExported(*func))) {
       primaryFuncs.insert(func->name);
@@ -436,17 +443,16 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
 
 Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
                                                Expression* callIndirect) {
-  if (config.jspi) {
-    // Check if the secondary module is loaded and if it isn't, call the
-    // function to load it.
-    auto* loadSecondary = builder.makeIf(
-      builder.makeUnary(
-        EqZInt32, builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
-      builder.makeCall(
-        primary.getExport(LOAD_SECONDARY_MODULE)->value, {}, Type::none));
-    return builder.makeSequence(loadSecondary, callIndirect);
+  if (!config.jspi) {
+    return callIndirect;
   }
-  return callIndirect;
+  // Check if the secondary module is loaded and if it isn't, call the
+  // function to load it.
+  auto* loadSecondary = builder.makeIf(
+    builder.makeUnary(EqZInt32,
+                      builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
+    builder.makeCall(internalLoadSecondaryModule, {}, Type::none));
+  return builder.makeSequence(loadSecondary, callIndirect);
 }
 
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {

@@ -205,15 +205,14 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            placeholderNamespace = argument;
          })
-    .add(
-      "--jspi",
-      "",
-      "Transform the module to support loading the secondary module before any "
-      "placeholder functions have been called.",
-      WasmSplitOption,
-      {Mode::Split},
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& argument) { jspi = true; })
+    .add("--jspi",
+         "",
+         "Transform the module to support asynchronously loading the secondary "
+         "module before any placeholder functions have been called.",
+         WasmSplitOption,
+         {Mode::Split},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { jspi = true; })
     .add(
       "--export-prefix",
       "",

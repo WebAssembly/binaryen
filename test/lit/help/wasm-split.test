@@ -67,8 +67,9 @@
 ;; CHECK-NEXT:                                        primary module.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --jspi                               [split] Transform the module to support
-;; CHECK-NEXT:                                        loading the secondary module before any
-;; CHECK-NEXT:                                        placeholder functions have been called.
+;; CHECK-NEXT:                                        asynchronously loading the secondary
+;; CHECK-NEXT:                                        module before any placeholder functions
+;; CHECK-NEXT:                                        have been called.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
 ;; CHECK-NEXT:                                        to new export names created by module

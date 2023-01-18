@@ -250,10 +250,7 @@ void splitModule(const WasmSplitOptions& options) {
 
   if (options.jspi) {
     // The load secondary module function must be kept in the main module.
-    if (keepFuncs.find(ModuleSplitting::LOAD_SECONDARY_MODULE) ==
-        keepFuncs.end()) {
-      keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
-    }
+    keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
   }
 
   if (!options.quiet && keepFuncs.size() == 0) {

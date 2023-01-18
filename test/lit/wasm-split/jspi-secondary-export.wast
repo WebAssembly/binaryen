@@ -47,8 +47,6 @@
   (i32.const 0)
  )
 )
-;; PRIMARY:      (export "__load_secondary_module" (func $__load_secondary_module))
-
 ;; PRIMARY:      (export "load_secondary_module_status" (global $global$1))
 
 ;; PRIMARY:      (export "%table" (table $0))
