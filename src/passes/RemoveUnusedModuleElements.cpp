@@ -518,10 +518,9 @@ struct RemoveUnusedModuleElements : public Pass {
     // open world we should not have noted anything in uncalledRefFuncMap
     // earlier and not do any related optimizations there.
     assert(options.closedWorld || analyzer.uncalledRefFuncMap.empty());
-    std::unordered_set<Name> uncalledRefFuncs;
     for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
       for (auto target : targets) {
-        uncalledRefFuncs.insert(target);
+        analyzer.referenced.insert(ModuleElement(ModuleElementKind::Function, target));
       }
 
       // We cannot have a type in both this map and calledSignatures.
@@ -535,15 +534,14 @@ struct RemoveUnusedModuleElements : public Pass {
 #endif
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
-      auto moduleElement =
+      auto element =
         ModuleElement(ModuleElementKind::Function, curr->name);
-      if (analyzer.used.count(moduleElement)) {
+      if (analyzer.used.count(element)) {
         // This is reached.
         return false;
       }
 
-      if (uncalledRefFuncs.count(curr->name) || // TODO unify these 2?
-          analyzer.referenced.count(moduleElement)) {
+      if (analyzer.referenced.count(element)) {
         // This is not reached, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {
