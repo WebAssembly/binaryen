@@ -103,19 +103,57 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 
   std::stringstream stream;
   stream << print(built[0]);
-  EXPECT_EQ(stream.str(), "(struct (field (ref null $array1)))");
+  EXPECT_EQ(stream.str(),
+            "(type $struct0 (struct (field (ref null $array1))))");
 
   stream.str("");
   stream << print(built[1]);
-  EXPECT_EQ(stream.str(), "(struct (field (ref null $struct0)))");
+  EXPECT_EQ(stream.str(),
+            "(type $struct1 (struct (field (ref null $struct0))))");
 
   stream.str("");
   stream << print(built[2]);
-  EXPECT_EQ(stream.str(), "(array (ref null $struct1))");
+  EXPECT_EQ(stream.str(), "(type $array0 (array (ref null $struct1)))");
 
   stream.str("");
   stream << print(built[3]);
-  EXPECT_EQ(stream.str(), "(array (ref null $array0))");
+  EXPECT_EQ(stream.str(), "(type $array1 (array (ref null $array0)))");
+}
+
+TEST_F(TypeTest, ModuleTypePrinter) {
+  TypeBuilder builder(2);
+  builder.createRecGroup(0, 2);
+  builder[0] = Struct({Field(Type::i32, Immutable)});
+  builder[1] = Struct({Field(Type::i32, Immutable)});
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  Module module;
+  module.typeNames[built[0]] = {"A", {}};
+
+  ModuleTypeNameGenerator printDefault(module);
+
+  std::stringstream stream;
+  stream << printDefault(built[0]);
+  EXPECT_EQ(stream.str(), "(type $A (struct (field i32)))");
+
+  stream.str("");
+  stream << printDefault(built[1]);
+  EXPECT_EQ(stream.str(), "(type $struct.0 (struct (field i32)))");
+
+  using IndexedFallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
+  IndexedTypeNameGenerator fallback(built);
+  ModuleTypeNameGenerator<IndexedFallback> printIndexed(module, fallback);
+
+  stream.str("");
+  stream << printIndexed(built[0]);
+  EXPECT_EQ(stream.str(), "(type $A (struct (field i32)))");
+
+  stream.str("");
+  stream << printIndexed(built[1]);
+  EXPECT_EQ(stream.str(), "(type $1 (struct (field i32)))");
 }
 
 TEST_F(IsorecursiveTest, Basics) {
