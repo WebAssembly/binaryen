@@ -1215,21 +1215,19 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct (field funcref)))
-
   ;; CHECK:      (type $void (func))
-  ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
-
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
+  ;; CHECK:      (type $struct (struct (field funcref)))
+  ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
   (type $struct (struct (field funcref)))
 
-  ;; CHECK:      (global $g1 (ref $struct) (struct.new $struct
-  ;; CHECK-NEXT:  (ref.func $f1)
+  ;; CHECK:      (global $g (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (ref.func $f)
   ;; CHECK-NEXT: ))
-  ;; OPEN_WORLD:      (global $g1 (ref $struct) (struct.new $struct
-  ;; OPEN_WORLD-NEXT:  (ref.func $f1)
+  ;; OPEN_WORLD:      (global $g (ref $struct) (struct.new $struct
+  ;; OPEN_WORLD-NEXT:  (ref.func $f)
   ;; OPEN_WORLD-NEXT: ))
   (global $g (ref $struct) (struct.new $struct
     (ref.func $f)
@@ -1241,10 +1239,7 @@
 
   ;; CHECK:      (func $func (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $g1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $g2)
+  ;; CHECK-NEXT:   (global.get $g)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $void
   ;; CHECK-NEXT:   (ref.func $func)
@@ -1256,10 +1251,7 @@
 
   ;; OPEN_WORLD:      (func $func (type $void)
   ;; OPEN_WORLD-NEXT:  (drop
-  ;; OPEN_WORLD-NEXT:   (global.get $g1)
-  ;; OPEN_WORLD-NEXT:  )
-  ;; OPEN_WORLD-NEXT:  (drop
-  ;; OPEN_WORLD-NEXT:   (global.get $g2)
+  ;; OPEN_WORLD-NEXT:   (global.get $g)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (call_ref $void
   ;; OPEN_WORLD-NEXT:   (ref.func $func)
@@ -1281,10 +1273,10 @@
     ;; Helper function. This is reached via a call_ref.
   )
 
-  ;; CHECK:      (func $f1 (type $void)
+  ;; CHECK:      (func $f (type $void)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $f1 (type $void)
+  ;; OPEN_WORLD:      (func $f (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $f (type $void)
