@@ -1867,6 +1867,10 @@ std::ostream& TypePrinter::print(HeapType type) {
     }
   }
 
+  os << "(type ";
+  printHeapTypeName(type);
+  os << " ";
+
   if (isTemp(type)) {
     os << "(; temp ;) ";
   }
@@ -1885,7 +1889,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   } else {
     WASM_UNREACHABLE("unexpected type");
   }
-  return os;
+  return os << ")";
 }
 
 std::ostream& TypePrinter::print(const Tuple& tuple) {
