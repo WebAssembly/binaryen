@@ -44,7 +44,7 @@ struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst<T>> {
     // Types that are not supertypes of others are the roots.
     for (auto [type, isSuper] : typeSet) {
       if (!isSuper) {
-        this->template push(type);
+        this->push(type);
       }
     }
   }
