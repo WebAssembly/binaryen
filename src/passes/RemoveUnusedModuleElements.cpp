@@ -270,16 +270,13 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     // require more care.
     for (auto* refFunc : FindAll<RefFunc>(curr).list) {
       danglingRefs.insert(
-        ModuleElement(ModuleElementKind::Function, refFunc->func)
-      );
+        ModuleElement(ModuleElementKind::Function, refFunc->func));
     }
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
       // else. TODO For now, just make it reachable.
-      maybeAdd(
-        ModuleElement(ModuleElementKind::Global, refGlobal->name)
-      );
+      maybeAdd(ModuleElement(ModuleElementKind::Global, refGlobal->name));
     }
     // As side effects are assumed to not exist, global.set is not an issue.
   }
@@ -549,7 +546,8 @@ struct RemoveUnusedModuleElements : public Pass {
 #endif
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
-      auto moduleElement = ModuleElement(ModuleElementKind::Function, curr->name);
+      auto moduleElement =
+        ModuleElement(ModuleElementKind::Function, curr->name);
       if (analyzer.reachable.count(moduleElement)) {
         // This is reached.
         return false;
