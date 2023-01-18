@@ -79,9 +79,9 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // walking mechanism because we need more control. Specifically, we may defer
   // certain walks, such as this:
   //
-  //   new Foo{ &func1 }
-  // i.e.
-  //   (struct.new $Foo (ref.func $func1))
+  //   (struct.new $Foo
+  //     (ref.func $func1)
+  //   )
   //
   // If we walked the child immediately then we would make $func1 used. But
   // that function is only reached if we actually read that field from the
@@ -99,7 +99,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // All the RefFuncs we've seen, grouped by heap type. When we see a CallRef of
   // one of the types here, we know all the RefFuncs corresponding to it are
   // used. This is the reverse side of calledSignatures: for a function to
-  // be reached via a reference, we need the combination of a RefFunc of it as
+  // be used via a reference, we need the combination of a RefFunc of it as
   // well as a CallRef of that, and we may see them in any order. (Or, if the
   // RefFunc is in a table, we need a CallIndirect, which is handled in the
   // table logic.)
