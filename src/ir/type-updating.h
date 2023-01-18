@@ -357,6 +357,13 @@ public:
   virtual void modifyArray(HeapType oldType, Array& array) {}
   virtual void modifySignature(HeapType oldType, Signature& sig) {}
 
+  // Subclasses can override this method to modify supertypes. The new
+  // supertype, if any, must be a supertype (or the same as) the original
+  // supertype.
+  virtual std::optional<HeapType> getSuperType(HeapType oldType) {
+    return oldType.getSuperType();
+  }
+
   // Map an old type to a temp type. This can be called from the above hooks,
   // so that they can use a proper temp type of the TypeBuilder while modifying
   // things.
