@@ -64,6 +64,8 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
 
   // Things for whom there is a reference, but may be unused. It is ok for a
   // thing to appear both in |used| and here; we will check |used| first anyhow.
+  // (That is, we don't need to be careful to remove things from here if they
+  // begin as referenced and later become used.)
   std::unordered_set<ModuleElement> referenced;
 
   // A queue of used module elements that we need to process. These appear
@@ -83,7 +85,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // that function is only reached if we actually read that field from the
   // struct. We perform that analysis in readStructFields /
   // unreadStructFieldExprMap, below.
-  std::vector<Expression*> expressionStack;
+  std::vector<Expression*> expressionQueue;
 
   bool usesMemory = false;
 
@@ -137,20 +139,20 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->dataSegments) {
       if (!segment->isPassive) {
-        expressionStack.push_back(segment->offset);
+        expressionQueue.push_back(segment->offset);
       }
     }
     for (auto& segment : module->elementSegments) {
       if (segment->table.is()) {
-        expressionStack.push_back(segment->offset);
+        expressionQueue.push_back(segment->offset);
       }
     }
 
     // Main loop on both the module queue and the expression stack.
-    while (expressionStack.size() || moduleQueue.size()) {
-      while (expressionStack.size()) {
-        auto* curr = expressionStack.back();
-        expressionStack.pop_back();
+    while (expressionQueue.size() || moduleQueue.size()) {
+      while (expressionQueue.size()) {
+        auto* curr = expressionQueue.back();
+        expressionQueue.pop_back();
 
         visit(curr);
         maybeWalkChildren(curr);
@@ -166,18 +168,18 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
           // if not an import, walk it
           auto* func = module->getFunction(value);
           if (!func->imported()) {
-            expressionStack.push_back(func->body);
+            expressionQueue.push_back(func->body);
           }
         } else if (kind == ModuleElementKind::Global) {
           // if not imported, it has an init expression we can walk
           auto* global = module->getGlobal(value);
           if (!global->imported()) {
-            expressionStack.push_back(global->init);
+            expressionQueue.push_back(global->init);
           }
         } else if (kind == ModuleElementKind::Table) {
           ModuleUtils::iterTableSegments(
             *module, value, [&](ElementSegment* segment) {
-              expressionStack.push_back(segment->offset);
+              expressionQueue.push_back(segment->offset);
             });
         }
       }
@@ -201,13 +203,13 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   void maybeWalkChildren(Expression* curr) {
     auto walkChildren = [&]() {
       for (auto* child : ChildIterator(curr)) {
-        expressionStack.push_back(child);
+        expressionQueue.push_back(child);
       }
     };
 
     // For now, the only special handling we have is fields of struct.new, which
     // we defer walking of to when we know there is a read that can actually
-    // read them, see comments above on |expressionStack|.
+    // read them, see comments above on |expressionQueue|.
 
     if (!options.closedWorld) {
       // If we are in open world then we cannot optimize based on which struct
@@ -233,7 +235,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         // This data can be read, so just walk it. Or, this has side effects,
         // which is tricky to reason about - the side effects must happen even
         // if we never read the struct field - so give up and walk it.
-        expressionStack.push_back(operand);
+        expressionQueue.push_back(operand);
       } else {
         // This data does not need to be read now, but might be read later. Note
         // it as unread.
@@ -414,7 +416,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         auto iter = unreadStructFieldExprMap.find(sf);
         if (iter != unreadStructFieldExprMap.end()) {
           for (auto* expr : iter->second) {
-            expressionStack.push_back(expr);
+            expressionQueue.push_back(expr);
           }
           // TODO erase?
         }
