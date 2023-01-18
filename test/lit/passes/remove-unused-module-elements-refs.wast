@@ -918,6 +918,108 @@
   )
 )
 
-;; TODO: test removing the vtable, and handling its refs.
+;; Test side effects causing a value to "leak."
+(module
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $void (func))
+  (type $void (func))
+
+  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+
+  ;; CHECK:      (elem declare func $a $b $void)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $void)
+  ;; CHECK-NEXT:  (local $vtable (ref $vtable))
+  ;; CHECK-NEXT:  (local $void (ref $void))
+  ;; CHECK-NEXT:  (local.set $vtable
+  ;; CHECK-NEXT:   (struct.new $vtable
+  ;; CHECK-NEXT:    (ref.func $a)
+  ;; CHECK-NEXT:    (local.tee $void
+  ;; CHECK-NEXT:     (ref.func $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $void)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $a $b $void)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $void)
+  ;; OPEN_WORLD-NEXT:  (local $vtable (ref $vtable))
+  ;; OPEN_WORLD-NEXT:  (local $void (ref $void))
+  ;; OPEN_WORLD-NEXT:  (local.set $vtable
+  ;; OPEN_WORLD-NEXT:   (struct.new $vtable
+  ;; OPEN_WORLD-NEXT:    (ref.func $a)
+  ;; OPEN_WORLD-NEXT:    (local.tee $void
+  ;; OPEN_WORLD-NEXT:     (ref.func $b)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (ref.func $void)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (export "func")
+    (local $vtable (ref $vtable))
+    (local $void (ref $void))
+
+    ;; Init one field using a tee, and one normally.
+    (local.set $vtable
+      (struct.new $vtable
+        (ref.func $a)
+        (local.tee $void
+          (ref.func $b)
+        )
+      )
+    )
+
+    ;; Call the type so it is reachable.
+    (call_ref $void
+      (ref.func $void)
+    )
+  )
+
+  ;; CHECK:      (func $void (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $void (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $void (type $void)
+    ;; Helper function. This is reached via a call_ref.
+  )
+
+  ;; CHECK:      (func $a (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $a (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $a (type $void)
+    ;; This is unreachable (in closed world) because we have no reads from the
+    ;; struct field it is written in.
+  )
+
+  ;; CHECK:      (func $b (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $b (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $b (type $void)
+    ;; The local.tee makes this reachable: the value is not known to only reside
+    ;; in the struct field, so we must assume it can be used even if the struct
+    ;; field is not.
+  )
+)
+
+;; TODO (one back): test removing the vtable, and handling its refs.
 ;; TODO: cycle of those
 ;; TODO; remove call to $void and they all fall
