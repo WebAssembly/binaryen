@@ -110,34 +110,12 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   using StructField = std::pair<HeapType, Index>;
 
   // Similar to calledSignatures/uncalledRefFuncMap, we store the StructFields
-  // we seen reads from, and also expresions stored in such fields that could be
+  // we've seen reads from, and also expressions stored in such fields that could be
   // read if ever we see a read of that field in the future. That is, for an
   // expression stored into a struct field to be read, we need to both see that
   // expression written to the field, and see some other place read that field
   // (similar to with functions that we need to see the RefFunc and also a
   // CallRef that can actually call it).
-  //
-  // This is used for global data only so far. In global data there are no side
-  // effects, so when we see a struct.new we can look into the fields only when
-  // we see reads of them, while doing that in general would take more work. But
-  // global data is a major use case, since that is where vtables and so forth
-  // are stored, so even just looking there is quite useful.
-  //
-  // XXX we need more than this. the global.get of a vtable into a struct field
-  //     IS NOT AN ACTUAL READ if there is no read frommm that field.
-  // XXX but also nested structs:
-  //    struct.new{
-  //      field #0
-  //      struct.new{  - this entire struct.new is only read if field #1 in the
-  //                     parent is read
-  //        field #0
-  //      }
-  //    }
-  //
-  // TODO: replace walk with a manual loop over ChildIterator.chlidren etc.
-  //       and special case walking into the children of a struct.new - do the
-  //       same to them as for structnew in a global.
-  // TODO: remove QueueElement as with a manual walk we can just do a subwalk.
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
