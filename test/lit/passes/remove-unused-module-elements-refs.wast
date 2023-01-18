@@ -1488,3 +1488,128 @@
     ;; global it is in is only referenced and not used.
   )
 )
+
+;; As above, but read $B's field. Now $f is reachable.
+(module
+  ;; CHECK:      (type $A (struct (field funcref)))
+
+  ;; CHECK:      (type $void (func))
+  ;; OPEN_WORLD:      (type $A (struct (field funcref)))
+
+  ;; OPEN_WORLD:      (type $void (func))
+  (type $void (func))
+
+  (type $A (struct (field funcref)))
+
+  ;; CHECK:      (type $B (struct (field (ref $A))))
+  ;; OPEN_WORLD:      (type $B (struct (field (ref $A))))
+  (type $B (struct (field (ref $A))))
+
+  ;; CHECK:      (global $g (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (ref.func $f)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $g (ref $A) (struct.new $A
+  ;; OPEN_WORLD-NEXT:  (ref.func $f)
+  ;; OPEN_WORLD-NEXT: ))
+  (global $g (ref $A) (struct.new $A
+    (ref.func $f)
+  ))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (global.get $g)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (block (result (ref $B))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $func)
+
+  ;; OPEN_WORLD:      (export "func" (func $func))
+
+  ;; OPEN_WORLD:      (func $func (type $void)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.new $B
+  ;; OPEN_WORLD-NEXT:    (global.get $g)
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_ref $void
+  ;; OPEN_WORLD-NEXT:   (ref.func $func)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $A 0
+  ;; OPEN_WORLD-NEXT:    (block (result (ref $A))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $B 0
+  ;; OPEN_WORLD-NEXT:    (block (result (ref $B))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (export "func")
+    (drop
+      (struct.new $B
+        (global.get $g)
+      )
+    )
+
+    (call_ref $void
+      (ref.func $func)
+    )
+
+    (drop
+      (struct.get $A 0
+        (block (result (ref $A))
+          (unreachable)
+        )
+      )
+    )
+
+    ;; The change in this testcase is to read $B's field.
+    (drop
+      (struct.get $B 0
+        (block (result (ref $B))
+          (unreachable)
+        )
+      )
+    )
+  )
+
+  (func $void (type $void)
+    ;; Helper function. This is reached via a call_ref.
+  )
+
+  ;; CHECK:      (func $f (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $f (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $f (type $void)
+  )
+)
