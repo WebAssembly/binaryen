@@ -383,6 +383,11 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       use(ModuleElement(ModuleElementKind::Function, curr->func));
       return;
     }
+
+    // Otherwise, we are in a closed world, and so we can try to optimize the
+    // case where the target function is referenced but not used.
+    auto element = ModuleElement(ModuleElementKind::Function, curr->func);
+
     auto type = curr->type.getHeapType();
     if (calledSignatures.count(type)) {
       // We must not have a type in both calledSignatures and
@@ -391,10 +396,12 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       assert(uncalledRefFuncMap.count(type) == 0);
 
       // We've seen a RefFunc for this, so it is used.
-      use(ModuleElement(ModuleElementKind::Function, curr->func));
+      use(element);
     } else {
       // We've never seen a CallRef for this, but might see one later.
       uncalledRefFuncMap[type].insert(curr->func);
+
+      referenced.insert(element);
     }
   }
   void visitTableGet(TableGet* curr) { useTable(curr->table); }
@@ -532,31 +539,6 @@ struct RemoveUnusedModuleElements : public Pass {
     auto& options = getPassOptions();
     ReachabilityAnalyzer analyzer(module, options, roots);
 
-    // RefFuncs that are never called are a special case: We cannot remove the
-    // function, since then (ref.func $foo) would not validate. But if we know
-    // it is never called, at least the contents do not matter, so we can
-    // empty it out.
-    //
-    // We can only do this in a closed world, as otherwise function references
-    // may be called outside of the module (if they escape, which we could in
-    // principle track, see the TODO earlier in this file). So in the case of an
-    // open world we should not have noted anything in uncalledRefFuncMap
-    // earlier and not do any related optimizations there.
-    assert(options.closedWorld || analyzer.uncalledRefFuncMap.empty());
-    for (auto& [type, targets] : analyzer.uncalledRefFuncMap) {
-      for (auto target : targets) {
-        analyzer.referenced.insert(ModuleElement(ModuleElementKind::Function, target));
-      }
-
-      // We cannot have a type in both this map and calledSignatures.
-      assert(analyzer.calledSignatures.count(type) == 0);
-    }
-
-#ifndef NDEBUG
-    for (auto type : analyzer.calledSignatures) {
-      assert(analyzer.uncalledRefFuncMap.count(type) == 0);
-    }
-#endif
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
       auto element =
