@@ -880,9 +880,9 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $e (type $void)
-    ;; Side effects on the struct field this appears in cause this to be
-    ;; reachable (even though field #0 is never read).
-    ;; XXX
+    ;; Side effects on the struct field are not enough to make this reachable:
+    ;; there is a tee on the struct.new we are in, but field #0 is still not
+    ;; read from the relevant struct.
   )
 
   ;; CHECK:      (func $f (type $void)
@@ -892,8 +892,7 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $f (type $void)
-    ;; Side effects on the struct field this appears in cause this to be
-    ;; reachable.
+    ;; Like $b, this is reachable (the tee does not matter).
   )
 
   ;; CHECK:      (func $g (type $void)
