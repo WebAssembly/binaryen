@@ -1504,6 +1504,7 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $f1 (type $void)
+    ;; This is reached as the global it is in is reached directly from $func.
   )
 
   ;; CHECK:      (func $f2 (type $void)
@@ -1513,7 +1514,7 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $f2 (type $void)
-    ;; This could be unreachable, but due to the TODO above it is not.
-    ;; XXX
+    ;; This is unreachable in closed world since $B's field is not read, so the
+    ;; global it is in is only referenced and not used.
   )
 )
