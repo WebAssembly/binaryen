@@ -253,47 +253,43 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
 
     auto type = curr->type.getHeapType();
     for (Index i = 0; i < new_->operands.size(); i++) {
-      // TODO: We could recurse into nested StructNew operations. For now,
-      //       just look at the top level. That is enough for a vtable.
       auto* operand = new_->operands[i];
       auto sf = StructField{type, i};
       if (readStructFields.count(sf) ||
           EffectAnalyzer(options, *module, operand).hasSideEffects()) {
         // This data can be read, so just walk it. Or, this has side effects,
         // which is tricky to reason about - the side effects must happen even
-        // if we never read the struct field - so give up and walk it.
+        // if we never read the struct field - so give up and consider it used.
         use(operand);
       } else {
         // This data does not need to be read now, but might be read later. Note
         // it as unread.
         unreadStructFieldExprMap[sf].push_back(operand);
 
-        // We also must note any relevant references here as potentially
-        // dangling: they cannot be simply removed if they have no other
-        // references.
-        addReference(operand);
+        // We also must note that anything in this operand is referenced, even
+        // if it never ends up used.
+        addReferences(operand);
       }
     }
   }
 
-  // Add references to all things referred to by an expression, without
-  // necessarily making them used.
+  // Add references to all things referred to by an expression
   //
   // This is only called on things without side effects (if there are such
   // effects then we would have had to assume the worst earlier, and not get
   // here).
-  void addReference(Expression* curr) {
-    // Some module elements can be "emptied out", like a function which we can
-    // set its body to an unreachable without breaking validation. But others
-    // require more care.
+  void addReferences(Expression* curr) {
     for (auto* refFunc : FindAll<RefFunc>(curr).list) {
+      // If a function ends up referenced but not used then later down we will
+      // empty it out by replacing its body with an unreachable, which always
+      // validates.
       referenced.insert(
         ModuleElement(ModuleElementKind::Function, refFunc->func));
     }
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
-      // else. TODO For now, just make it used.
+      // else, but that is not trivial. TODO For now, just mark it used.
       use(ModuleElement(ModuleElementKind::Global, refGlobal->name));
     }
     // As side effects are assumed to not exist, global.set is not an issue.
